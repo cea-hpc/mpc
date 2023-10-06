@@ -58,7 +58,7 @@ static char * __dump_addr(char * buff, int outlen, char *p, size_t len)
    return buff;
 }
 
-void mpc_ofi_dns_dump_addr(char * context, char * buff, size_t len)
+void _mpc_ofi_dns_dump_addr(char * context, char * buff, size_t len)
 {
    char outbuff[512];
    mpc_common_debug_error("[OFI DNS] %s OFI ADDR len %d : %s", context, len, __dump_addr(outbuff, 512, buff, len));
@@ -69,19 +69,19 @@ void mpc_ofi_dns_dump_addr(char * context, char * buff, size_t len)
  * THE CENTRAL DNS *
  *******************/
 
-int mpc_ofi_dns_init(struct mpc_ofi_dns_t * dns)
+int _mpc_ofi_dns_init(struct _mpc_ofi_dns_t * dns)
 {
    mpc_common_hashtable_init(&dns->cache, MPC_OFI_DNS_DEFAULT_HT_SIZE);
 
    return 0;
 }
-int mpc_ofi_dns_release(struct mpc_ofi_dns_t * dns)
+int _mpc_ofi_dns_release(struct _mpc_ofi_dns_t * dns)
 {
-   struct mpc_ofi_dns_name_entry_t * tmp = NULL;
+   struct _mpc_ofi_dns_name_entry_t * tmp = NULL;
 
    MPC_HT_ITER(&dns->cache, tmp )
    {
-      mpc_ofi_dns_name_entry_release(tmp);
+      _mpc_ofi_dns_name_entry_release(tmp);
    }
    MPC_HT_ITER_END(&dns->cache)
 
@@ -91,9 +91,9 @@ int mpc_ofi_dns_release(struct mpc_ofi_dns_t * dns)
 }
 
 
-struct mpc_ofi_dns_name_entry_t * mpc_ofi_dns_name_entry(char * buff, size_t len, struct fid_ep * endpoint)
+struct _mpc_ofi_dns_name_entry_t * _mpc_ofi_dns_name_entry(char * buff, size_t len, struct fid_ep * endpoint)
 {
-   struct mpc_ofi_dns_name_entry_t *entry = malloc(sizeof(struct mpc_ofi_dns_name_entry_t));
+   struct _mpc_ofi_dns_name_entry_t *entry = malloc(sizeof(struct _mpc_ofi_dns_name_entry_t));
 
    if(!entry)
    {
@@ -116,9 +116,9 @@ struct mpc_ofi_dns_name_entry_t * mpc_ofi_dns_name_entry(char * buff, size_t len
    return entry;
 }
 
-void mpc_ofi_dns_name_entry_release(void *pentry)
+void _mpc_ofi_dns_name_entry_release(void *pentry)
 {
-   struct mpc_ofi_dns_name_entry_t * entry = (struct mpc_ofi_dns_name_entry_t *)pentry;
+   struct _mpc_ofi_dns_name_entry_t * entry = (struct _mpc_ofi_dns_name_entry_t *)pentry;
 
    free(entry->value);
    free(entry);
@@ -126,10 +126,10 @@ void mpc_ofi_dns_name_entry_release(void *pentry)
 
 
 
-struct fid_ep * mpc_ofi_dns_resolve(struct mpc_ofi_dns_t * dns, uint64_t rank, char * outbuff, size_t *outlen, int * found)
+struct fid_ep * _mpc_ofi_dns_resolve(struct _mpc_ofi_dns_t * dns, uint64_t rank, char * outbuff, size_t *outlen, int * found)
 {
    /* First look in local cache */
-   struct mpc_ofi_dns_name_entry_t *entry = (struct mpc_ofi_dns_name_entry_t *)mpc_common_hashtable_get(&dns->cache, rank);
+   struct _mpc_ofi_dns_name_entry_t *entry = (struct _mpc_ofi_dns_name_entry_t *)mpc_common_hashtable_get(&dns->cache, rank);
 
    if(entry)
    {
@@ -164,9 +164,9 @@ struct fid_ep * mpc_ofi_dns_resolve(struct mpc_ofi_dns_t * dns, uint64_t rank, c
    return NULL;
 }
 
-int mpc_ofi_dns_set_endpoint(struct mpc_ofi_dns_t * dns, uint64_t rank, struct fid_ep * endpoint)
+int _mpc_ofi_dns_set_endpoint(struct _mpc_ofi_dns_t * dns, uint64_t rank, struct fid_ep * endpoint)
 {
-   struct mpc_ofi_dns_name_entry_t *entry = (struct mpc_ofi_dns_name_entry_t *)mpc_common_hashtable_get(&dns->cache, rank);
+   struct _mpc_ofi_dns_name_entry_t *entry = (struct _mpc_ofi_dns_name_entry_t *)mpc_common_hashtable_get(&dns->cache, rank);
 
    assume(entry != NULL);
    assume(entry->endpoint == NULL);
@@ -177,10 +177,10 @@ int mpc_ofi_dns_set_endpoint(struct mpc_ofi_dns_t * dns, uint64_t rank, struct f
 }
 
 
-int mpc_ofi_dns_register(struct mpc_ofi_dns_t * dns, uint64_t rank, char * buff, size_t len, struct fid_ep * endpoint)
+int _mpc_ofi_dns_register(struct _mpc_ofi_dns_t * dns, uint64_t rank, char * buff, size_t len, struct fid_ep * endpoint)
 {
    /* Copy address out of the input buff for persistence */
-   struct mpc_ofi_dns_name_entry_t *entry = mpc_ofi_dns_name_entry(buff, len, endpoint);
+   struct _mpc_ofi_dns_name_entry_t *entry = _mpc_ofi_dns_name_entry(buff, len, endpoint);
 
 #ifdef DEBUG_DNS_ADDR
    char outbuff[512];
@@ -200,8 +200,8 @@ int mpc_ofi_dns_register(struct mpc_ofi_dns_t * dns, uint64_t rank, char * buff,
 
 
 
-int mpc_ofi_domain_dns_init(struct mpc_ofi_domain_dns_t *ddns,
-                           struct mpc_ofi_dns_t * main_dns,
+int _mpc_ofi_domain_dns_init(struct _mpc_ofi_domain_dns_t *ddns,
+                           struct _mpc_ofi_dns_t * main_dns,
                            struct fid_domain *domain,
                            bool is_passive)
 {
@@ -228,7 +228,7 @@ int mpc_ofi_domain_dns_init(struct mpc_ofi_domain_dns_t *ddns,
 }
 
 
-struct fid * mpc_ofi_domain_dns_av(struct mpc_ofi_domain_dns_t *ddns)
+struct fid * _mpc_ofi_domain_dns_av(struct _mpc_ofi_domain_dns_t *ddns)
 {
    if(ddns->is_passive)
    {
@@ -237,14 +237,14 @@ struct fid * mpc_ofi_domain_dns_av(struct mpc_ofi_domain_dns_t *ddns)
    return &ddns->av->fid;
 }
 
-int mpc_ofi_domain_dns_release(struct mpc_ofi_domain_dns_t *ddns)
+int _mpc_ofi_domain_dns_release(struct _mpc_ofi_domain_dns_t *ddns)
 {
    if(!ddns->is_passive)
    {
       MPC_OFI_CHECK_RET(fi_close(&ddns->av->fid));
    }
 
-   struct mpc_ofi_dns_name_entry_t * tmp = NULL;
+   struct _mpc_ofi_dns_name_entry_t * tmp = NULL;
 
    MPC_HT_ITER(&ddns->cache, tmp )
    {
@@ -253,7 +253,7 @@ int mpc_ofi_domain_dns_release(struct mpc_ofi_domain_dns_t *ddns)
          TODO("Understand why we get -EBUSY");
          fi_close(&tmp->endpoint->fid);
       }
-      mpc_ofi_dns_name_entry_release(tmp);
+      _mpc_ofi_dns_name_entry_release(tmp);
    }
    MPC_HT_ITER_END(&ddns->cache)
 
@@ -261,10 +261,10 @@ int mpc_ofi_domain_dns_release(struct mpc_ofi_domain_dns_t *ddns)
    return 0;
 }
 
-struct fid_ep * mpc_ofi_domain_dns_resolve(struct mpc_ofi_domain_dns_t * ddns, uint64_t rank, fi_addr_t *addr)
+struct fid_ep * _mpc_ofi_domain_dns_resolve(struct _mpc_ofi_domain_dns_t * ddns, uint64_t rank, fi_addr_t *addr)
 {
 
-   struct mpc_ofi_dns_name_entry_t * entry = mpc_common_hashtable_get(&ddns->cache, rank);
+   struct _mpc_ofi_dns_name_entry_t * entry = mpc_common_hashtable_get(&ddns->cache, rank);
 
    if(!entry)
    {
@@ -275,7 +275,7 @@ struct fid_ep * mpc_ofi_domain_dns_resolve(struct mpc_ofi_domain_dns_t * ddns, u
       int addr_found = 0;
 
       /* We need to insert it */
-      struct fid_ep * ep = mpc_ofi_dns_resolve(ddns->main_dns, rank, buff, &len, &addr_found);
+      struct fid_ep * ep = _mpc_ofi_dns_resolve(ddns->main_dns, rank, buff, &len, &addr_found);
 
       /* We need to make sure the endpoint exists prior to trying to sending messages on it
          it means the central DNS MUST know this endpoint */
@@ -289,7 +289,7 @@ struct fid_ep * mpc_ofi_domain_dns_resolve(struct mpc_ofi_domain_dns_t * ddns, u
          len = sizeof(fi_addr_t);
       }
 
-      struct mpc_ofi_dns_name_entry_t * new_entry = mpc_ofi_dns_name_entry(buff, len, ep);
+      struct _mpc_ofi_dns_name_entry_t * new_entry = _mpc_ofi_dns_name_entry(buff, len, ep);
 
       /* and now save in HT for next lookup */
       mpc_common_hashtable_set(&ddns->cache, rank, new_entry);

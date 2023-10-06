@@ -43,9 +43,9 @@
  * ALLOC ALIGNED *
  *****************/
 
-mpc_ofi_aligned_mem_t mpc_ofi_alloc_aligned(size_t size)
+_mpc_ofi_aligned_mem_t _mpc_ofi_alloc_aligned(size_t size)
 {
-	mpc_ofi_aligned_mem_t ret;
+	_mpc_ofi_aligned_mem_t ret;
 
 	ret.orig = sctk_malloc(size + MPC_COMMON_PAGE_SIZE);
 
@@ -60,13 +60,13 @@ mpc_ofi_aligned_mem_t mpc_ofi_alloc_aligned(size_t size)
 
 	return ret;
 }
-void mpc_ofi_free_aligned(mpc_ofi_aligned_mem_t * mem)
+void _mpc_ofi_free_aligned(_mpc_ofi_aligned_mem_t * mem)
 {
 	sctk_free(mem->orig);
 }
 
 
-int mpc_ofi_decode_mr_mode(uint64_t flags)
+int _mpc_ofi_decode_mr_mode(uint64_t flags)
 {
 	(void)fprintf(stderr, "MR MODE %ld =", flags);
 
@@ -124,7 +124,7 @@ int mpc_ofi_decode_mr_mode(uint64_t flags)
 	return 0;
 }
 
-const char * mpc_ofi_decode_endpoint_type(enum fi_ep_type type)
+const char * _mpc_ofi_decode_endpoint_type(enum fi_ep_type type)
 {
 	switch (type)
 	{
@@ -145,7 +145,7 @@ const char * mpc_ofi_decode_endpoint_type(enum fi_ep_type type)
 	return "UNKNOWN Endpoint type";
 }
 
-enum fi_ep_type mpc_ofi_encode_endpoint_type(const char * type)
+enum fi_ep_type _mpc_ofi_encode_endpoint_type(const char * type)
 {
 	if(!strcmp(type, "FI_EP_UNSPEC"))
 	{
@@ -181,7 +181,7 @@ enum fi_ep_type mpc_ofi_encode_endpoint_type(const char * type)
 }
 
 
-int mpc_ofi_decode_cq_flags(uint64_t flags)
+int _mpc_ofi_decode_cq_flags(uint64_t flags)
 {
 	(void)fprintf(stderr, "CQ FLAG %ld =", flags);
 
@@ -250,7 +250,7 @@ int mpc_ofi_decode_cq_flags(uint64_t flags)
 }
 
 
-struct fi_info * mpc_ofi_get_requested_hints(const char * provider, const char *endpoint_type)
+struct fi_info * _mpc_ofi_get_requested_hints(const char * provider, const char *endpoint_type)
 {
 	struct fi_info * hints = fi_allocinfo();
 
@@ -271,7 +271,7 @@ struct fi_info * mpc_ofi_get_requested_hints(const char * provider, const char *
 
 	hints->mode = FI_CONTEXT | FI_LOCAL_MR;
 	hints->caps = FI_MSG | FI_RMA;
-	hints->ep_attr->type          = mpc_ofi_encode_endpoint_type(endpoint_type);
+	hints->ep_attr->type          = _mpc_ofi_encode_endpoint_type(endpoint_type);
 	hints->fabric_attr->prov_name = provider?strdup(provider):NULL;
 	hints->domain_attr->threading = FI_THREAD_DOMAIN;
 	hints->domain_attr->data_progress = FI_PROGRESS_MANUAL;

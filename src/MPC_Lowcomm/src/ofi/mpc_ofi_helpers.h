@@ -47,23 +47,23 @@
 * ALLOC ALIGNED *
 *****************/
 
-typedef struct mpc_ofi_aligned_mem_s
+typedef struct _mpc_ofi_aligned_mem_s
 {
 	void *orig;
 	void *ret;
-}mpc_ofi_aligned_mem_t;
+}_mpc_ofi_aligned_mem_t;
 
-mpc_ofi_aligned_mem_t mpc_ofi_alloc_aligned(size_t size);
-void mpc_ofi_free_aligned(mpc_ofi_aligned_mem_t *mem);
+_mpc_ofi_aligned_mem_t _mpc_ofi_alloc_aligned(size_t size);
+void _mpc_ofi_free_aligned(_mpc_ofi_aligned_mem_t *mem);
 
 /*************
 * PRINTINGS *
 *************/
 
-int mpc_ofi_decode_cq_flags(uint64_t flags);
-int mpc_ofi_decode_mr_mode(uint64_t flags);
-const char *mpc_ofi_decode_endpoint_type(enum fi_ep_type);
-enum fi_ep_type mpc_ofi_encode_endpoint_type(const char *type);
+int _mpc_ofi_decode_cq_flags(uint64_t flags);
+int _mpc_ofi_decode_mr_mode(uint64_t flags);
+const char *_mpc_ofi_decode_endpoint_type(enum fi_ep_type);
+enum fi_ep_type _mpc_ofi_encode_endpoint_type(const char *type);
 
 /************
 * RETCODES *
@@ -96,6 +96,6 @@ enum fi_ep_type mpc_ofi_encode_endpoint_type(const char *type);
 * HINTS *
 *********/
 
-struct fi_info *mpc_ofi_get_requested_hints(const char *provider, const char *endpoint_type);
+struct fi_info *_mpc_ofi_get_requested_hints(const char *provider, const char *endpoint_type);
 
 #endif /* MPC_OFI_HELPERS_H */

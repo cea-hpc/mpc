@@ -47,16 +47,16 @@
 #include <rdma/fabric.h>
 
 
-int mpc_ofi_context_init(struct mpc_ofi_context_t *ctx,
+int _mpc_ofi_context_init(struct _mpc_ofi_context_t *ctx,
                         char * provider,
-                        mpc_ofi_context_policy_t policy,
-                        mpc_ofi_context_recv_callback_t recv_callback,
+                        _mpc_ofi_context_policy_t policy,
+                        _mpc_ofi_context_recv_callback_t recv_callback,
                         void * callback_arg,
-                        mpc_ofi_context_accept_callback_t accept_cb,
+                        _mpc_ofi_context_accept_callback_t accept_cb,
                         void *accept_cb_arg,
                         struct _mpc_lowcomm_config_struct_net_driver_ofi * config)
 {
-   memset(ctx, 0, sizeof(struct mpc_ofi_context_t));
+   memset(ctx, 0, sizeof(struct _mpc_ofi_context_t));
 
    ctx->rail_config = config;
 
@@ -86,7 +86,7 @@ int mpc_ofi_context_init(struct mpc_ofi_context_t *ctx,
 
    ctx->ctx_policy = policy;
 
-   if(mpc_ofi_dns_init(&ctx->dns))
+   if(_mpc_ofi_dns_init(&ctx->dns))
    {
       mpc_common_errorpoint("Failed to initialize central DNS");
       return 1;
@@ -94,7 +94,7 @@ int mpc_ofi_context_init(struct mpc_ofi_context_t *ctx,
 
    /* Allocate and set libfabric configuration */
 
-   struct fi_info * hints = mpc_ofi_get_requested_hints(provider, config->endpoint_type);
+   struct fi_info * hints = _mpc_ofi_get_requested_hints(provider, config->endpoint_type);
 
 
    if( fi_getinfo(FI_VERSION(1, 5), NULL, NULL, 0, hints, &ctx->config) < 0)
@@ -126,7 +126,7 @@ int mpc_ofi_context_init(struct mpc_ofi_context_t *ctx,
    /* Setup domains */
 
 
-   ctx->domain = calloc(1, sizeof(struct mpc_ofi_domain_t));
+   ctx->domain = calloc(1, sizeof(struct _mpc_ofi_domain_t));
 
    if(ctx->domain == NULL)
    {
@@ -134,7 +134,7 @@ int mpc_ofi_context_init(struct mpc_ofi_context_t *ctx,
       return 1;
    }
 
-	if(mpc_ofi_domain_init(ctx->domain, ctx, ctx->rail_config))
+	if(_mpc_ofi_domain_init(ctx->domain, ctx, ctx->rail_config))
 	{
 		mpc_common_errorpoint("Failed to initialize a domain");
 		return 1;
@@ -149,7 +149,7 @@ int mpc_ofi_context_init(struct mpc_ofi_context_t *ctx,
    }
 
    /* Now register my rank as bound to this address (possibly with a NULL endpoint for passive case ) */
-   if( mpc_ofi_dns_register(&ctx->dns, mpc_lowcomm_monitor_get_uid(), ctx->domain->address, ctx->domain->address_len, ep) < 0 )
+   if( _mpc_ofi_dns_register(&ctx->dns, mpc_lowcomm_monitor_get_uid(), ctx->domain->address, ctx->domain->address_len, ep) < 0 )
    {
       mpc_common_errorpoint("Failed to register new view's address");
       return -1;
@@ -162,10 +162,10 @@ int mpc_ofi_context_init(struct mpc_ofi_context_t *ctx,
 }
 
 
-int mpc_ofi_context_release(struct mpc_ofi_context_t *ctx)
+int _mpc_ofi_context_release(struct _mpc_ofi_context_t *ctx)
 {
 
-	if(mpc_ofi_domain_release(ctx->domain))
+	if(_mpc_ofi_domain_release(ctx->domain))
 	{
 		mpc_common_errorpoint("Failed to release a domain");
 	}
@@ -174,7 +174,7 @@ int mpc_ofi_context_release(struct mpc_ofi_context_t *ctx)
    TODO("Understand why we get -EBUSY");
    fi_close(&ctx->fabric->fid);
 
-   if(mpc_ofi_dns_release(&ctx->dns))
+   if(_mpc_ofi_dns_release(&ctx->dns))
    {
       mpc_common_errorpoint("Failed to release central DNS");
       return 1;

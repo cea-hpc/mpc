@@ -55,40 +55,40 @@ Here we need to persist two kind of info
  * THE CENTRAL DNS *
  *******************/
 
-struct mpc_ofi_dns_name_entry_t
+struct _mpc_ofi_dns_name_entry_t
 {
    char * value;
    struct fid_ep * endpoint;
    size_t len;
 };
 
-struct mpc_ofi_dns_name_entry_t * mpc_ofi_dns_name_entry(char * buff, size_t len, struct fid_ep * endpoint);
-void mpc_ofi_dns_name_entry_release(void *pentry);
+struct _mpc_ofi_dns_name_entry_t * _mpc_ofi_dns_name_entry(char * buff, size_t len, struct fid_ep * endpoint);
+void _mpc_ofi_dns_name_entry_release(void *pentry);
 
 
-typedef struct fid_ep * (*mpc_ofi_dns_operation_t)(void * first_arg, uint64_t rank, char *addr, size_t *len);
+typedef struct fid_ep * (*_mpc_ofi_dns_operation_t)(void * first_arg, uint64_t rank, char *addr, size_t *len);
 
-struct mpc_ofi_dns_t
+struct _mpc_ofi_dns_t
 {
    struct mpc_common_hashtable cache;
 };
 
 
-int mpc_ofi_dns_init(struct mpc_ofi_dns_t * dns);
-int mpc_ofi_dns_release(struct mpc_ofi_dns_t * dns);
+int _mpc_ofi_dns_init(struct _mpc_ofi_dns_t * dns);
+int _mpc_ofi_dns_release(struct _mpc_ofi_dns_t * dns);
 
-struct fid_ep * mpc_ofi_dns_resolve(struct mpc_ofi_dns_t * dns, uint64_t rank, char * outbuff, size_t *outlen, int * found);
-int mpc_ofi_dns_register(struct mpc_ofi_dns_t * dns, uint64_t rank, char * buff, size_t len, struct fid_ep * endpoint);
-void mpc_ofi_dns_dump_addr(char * context, char * buff, size_t len);
-int mpc_ofi_dns_set_endpoint(struct mpc_ofi_dns_t * dns, uint64_t rank, struct fid_ep * endpoint);
+struct fid_ep * _mpc_ofi_dns_resolve(struct _mpc_ofi_dns_t * dns, uint64_t rank, char * outbuff, size_t *outlen, int * found);
+int _mpc_ofi_dns_register(struct _mpc_ofi_dns_t * dns, uint64_t rank, char * buff, size_t len, struct fid_ep * endpoint);
+void _mpc_ofi_dns_dump_addr(char * context, char * buff, size_t len);
+int _mpc_ofi_dns_set_endpoint(struct _mpc_ofi_dns_t * dns, uint64_t rank, struct fid_ep * endpoint);
 
 /**********************
  * THE PER DOMAIN DNS *
  **********************/
 
-struct mpc_ofi_domain_dns_t
+struct _mpc_ofi_domain_dns_t
 {
-   struct mpc_ofi_dns_t * main_dns;
+   struct _mpc_ofi_dns_t * main_dns;
    /* Local fi_addr_t cache */
    struct mpc_common_hashtable cache;
    /* The addess vector */
@@ -97,16 +97,16 @@ struct mpc_ofi_domain_dns_t
    bool is_passive;
 };
 
-int mpc_ofi_domain_dns_init(struct mpc_ofi_domain_dns_t *ddns,
-                           struct mpc_ofi_dns_t * main_dns,
+int _mpc_ofi_domain_dns_init(struct _mpc_ofi_domain_dns_t *ddns,
+                           struct _mpc_ofi_dns_t * main_dns,
                            struct fid_domain *domain,
                            bool is_passive);
 
-struct fid * mpc_ofi_domain_dns_av(struct mpc_ofi_domain_dns_t *ddns);
+struct fid * _mpc_ofi_domain_dns_av(struct _mpc_ofi_domain_dns_t *ddns);
 
-struct fid_ep * mpc_ofi_domain_dns_resolve(struct mpc_ofi_domain_dns_t * ddns, uint64_t rank, fi_addr_t *addr);
+struct fid_ep * _mpc_ofi_domain_dns_resolve(struct _mpc_ofi_domain_dns_t * ddns, uint64_t rank, fi_addr_t *addr);
 
-int mpc_ofi_domain_dns_release(struct mpc_ofi_domain_dns_t *ddns);
+int _mpc_ofi_domain_dns_release(struct _mpc_ofi_domain_dns_t *ddns);
 
 
 

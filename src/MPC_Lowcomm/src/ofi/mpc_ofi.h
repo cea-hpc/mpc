@@ -36,13 +36,13 @@
 
 typedef struct _mpc_lowcomm_ofi_rail_info_s
 {
-   struct mpc_ofi_context_t ctx;
+   struct _mpc_ofi_context_t ctx;
 }_mpc_lowcomm_ofi_rail_info_t;
 
 #define MPC_OFI_EP_MEMPOOL_MIN 10
 #define MPC_OFI_EP_MEMPOOL_MAX 100
 
-struct mpc_ofi_domain_buffer_manager_t;
+struct _mpc_ofi_domain_buffer_manager_t;
 typedef struct _mpc_lowcomm_ofi_endpoint_info_s
 {
    mpc_mempool bsend;
@@ -56,17 +56,17 @@ typedef struct lcr_ofi_am_hdr {
    char * data[0];
 } lcr_ofi_am_hdr_t;
 
-struct mpc_ofi_shared_pinning_context
+struct _mpc_ofi_shared_pinning_context
 {
 	uint64_t ofi_remote_mr_key;
    void * addr;
    size_t size;
 };
 
-struct mpc_ofi_pinning_context
+struct _mpc_ofi_pinning_context
 {
 	struct fid_mr *ofi;
-   struct mpc_ofi_shared_pinning_context shared;
+   struct _mpc_ofi_shared_pinning_context shared;
 };
 
 

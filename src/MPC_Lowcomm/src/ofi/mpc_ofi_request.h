@@ -40,11 +40,11 @@
 #define MPC_OFI_IOVEC_SIZE 16
 #define MPC_OFI_REQUEST_PAD 64
 
-struct mpc_ofi_request_cache_t;
-struct mpc_ofi_domain_t;
+struct _mpc_ofi_request_cache_t;
+struct _mpc_ofi_domain_t;
 
 
-struct mpc_ofi_request_t
+struct _mpc_ofi_request_t
 {
    /* State and lock */
    volatile int done;
@@ -53,42 +53,42 @@ struct mpc_ofi_request_t
    char _pad_[MPC_OFI_REQUEST_PAD];
    /* Internal completion callback */
    void * arg;
-   int (*comptetion_cb)(struct mpc_ofi_request_t * req, void * arg);
+   int (*comptetion_cb)(struct _mpc_ofi_request_t * req, void * arg);
    /* External completion callback */
    void * arg_ext;
-   int (*comptetion_cb_ext)(struct mpc_ofi_request_t * req, void * arg_ext);
+   int (*comptetion_cb_ext)(struct _mpc_ofi_request_t * req, void * arg_ext);
    /* MR to be freed */
    struct fid_mr *mr[MPC_OFI_IOVEC_SIZE];
    unsigned int mr_count;
-   struct mpc_ofi_domain_t * domain;
+   struct _mpc_ofi_domain_t * domain;
    short was_allocated;
 };
 
-__UNUSED__ static int mpc_ofi_request_test(struct mpc_ofi_request_t*req)
+__UNUSED__ static int _mpc_ofi_request_test(struct _mpc_ofi_request_t*req)
 {
    return req->done;
 }
 
-struct mpc_ofi_request_cache_t
+struct _mpc_ofi_request_cache_t
 {
    unsigned int request_count;
-   struct mpc_ofi_request_t *requests;
-   struct mpc_ofi_domain_t *domain;
+   struct _mpc_ofi_request_t *requests;
+   struct _mpc_ofi_domain_t *domain;
    mpc_common_spinlock_t lock;
 };
 
 
-int mpc_ofi_request_cache_init(struct mpc_ofi_request_cache_t *cache, struct mpc_ofi_domain_t *domain);
+int _mpc_ofi_request_cache_init(struct _mpc_ofi_request_cache_t *cache, struct _mpc_ofi_domain_t *domain);
 
 
-struct mpc_ofi_request_t * mpc_ofi_request_acquire(struct mpc_ofi_request_cache_t *cache,
-                                                   int (*comptetion_cb)(struct mpc_ofi_request_t *, void *),
+struct _mpc_ofi_request_t * _mpc_ofi_request_acquire(struct _mpc_ofi_request_cache_t *cache,
+                                                   int (*comptetion_cb)(struct _mpc_ofi_request_t *, void *),
                                                    void *arg,
-                                                   int (*comptetion_cb_ext)(struct mpc_ofi_request_t *, void *),
+                                                   int (*comptetion_cb_ext)(struct _mpc_ofi_request_t *, void *),
                                                    void *arg_ext);
 
 
-__UNUSED__ static int mpc_ofi_request_done(struct mpc_ofi_request_t *request)
+__UNUSED__ static int _mpc_ofi_request_done(struct _mpc_ofi_request_t *request)
 {
    int ret = 0;
 
@@ -121,7 +121,7 @@ __UNUSED__ static int mpc_ofi_request_done(struct mpc_ofi_request_t *request)
 }
 
 
-int mpc_ofi_request_cache_release(struct mpc_ofi_request_cache_t *cache);
+int _mpc_ofi_request_cache_release(struct _mpc_ofi_request_cache_t *cache);
 
 
 #endif /* MPC_OFI_REQUEST */

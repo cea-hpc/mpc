@@ -1213,7 +1213,7 @@ int mpc_shm_iface_open(__UNUSED__ const char *device_name, int id,
    rail->put_zcopy = mpc_shm_put_zcopy;
 
 #if 0
-   rail->driver_finalize = mpc_ofi_release;
+   rail->driver_finalize = _mpc_ofi_release;
 #endif
 
    /* Init capabilities */

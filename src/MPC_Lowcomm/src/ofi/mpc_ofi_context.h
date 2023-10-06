@@ -54,27 +54,27 @@ typedef enum
    MPC_OFI_POLICY_NUMA_RR,
    MPC_OFI_POLICY_RANDOM,
    MPC_OFI_POLICY_COUNT
-}mpc_ofi_context_policy_t;
+}_mpc_ofi_context_policy_t;
 
 
-typedef int (*mpc_ofi_context_recv_callback_t)(void *buffer, size_t len, struct mpc_ofi_request_t * req, void * callback_arg);
-typedef int (*mpc_ofi_context_accept_callback_t)(mpc_lowcomm_peer_uid_t uid, void * accept_cb_arg);
+typedef int (*_mpc_ofi_context_recv_callback_t)(void *buffer, size_t len, struct _mpc_ofi_request_t * req, void * callback_arg);
+typedef int (*_mpc_ofi_context_accept_callback_t)(mpc_lowcomm_peer_uid_t uid, void * accept_cb_arg);
 
 
 /* Opaque declaration of the domain */
-struct mpc_ofi_domain_t;
+struct _mpc_ofi_domain_t;
 
-struct mpc_ofi_context_t
+struct _mpc_ofi_context_t
 {
    mpc_common_spinlock_t lock;
 
    /* Topology */
    uint16_t numa_count;
    uint16_t current_domain;
-   mpc_ofi_context_policy_t ctx_policy;
+   _mpc_ofi_context_policy_t ctx_policy;
 
    /* Domains */
-   struct mpc_ofi_domain_t * domain;
+   struct _mpc_ofi_domain_t * domain;
 
    /* Provider Name */
    char *provider;
@@ -84,29 +84,29 @@ struct mpc_ofi_context_t
    struct fid_fabric *fabric;
 
    /* Main DNS */
-   struct mpc_ofi_dns_t dns;
+   struct _mpc_ofi_dns_t dns;
 
    /* Central Callback for Recv */
-   mpc_ofi_context_recv_callback_t recv_callback;
+   _mpc_ofi_context_recv_callback_t recv_callback;
    void * callback_arg;
 
    /* Callback for accepting connections (for passive endpoints only)*/
-   mpc_ofi_context_accept_callback_t accept_cb;
+   _mpc_ofi_context_accept_callback_t accept_cb;
    void *accept_cb_arg;
 
    struct _mpc_lowcomm_config_struct_net_driver_ofi * rail_config;
 };
 
-int mpc_ofi_context_init(struct mpc_ofi_context_t *ctx,
+int _mpc_ofi_context_init(struct _mpc_ofi_context_t *ctx,
                         char * provider,
-                        mpc_ofi_context_policy_t policy,
-                        mpc_ofi_context_recv_callback_t recv_callback,
+                        _mpc_ofi_context_policy_t policy,
+                        _mpc_ofi_context_recv_callback_t recv_callback,
                         void * callback_arg,
-                        mpc_ofi_context_accept_callback_t accept_cb,
+                        _mpc_ofi_context_accept_callback_t accept_cb,
                         void *accept_cb_arg,
                         struct _mpc_lowcomm_config_struct_net_driver_ofi * config);
 
-int mpc_ofi_context_release(struct mpc_ofi_context_t *ctx);
+int _mpc_ofi_context_release(struct _mpc_ofi_context_t *ctx);
 
 
 

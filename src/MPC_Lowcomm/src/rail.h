@@ -78,7 +78,7 @@ typedef union
 	struct sctk_ptl_rdma_ctx       ptl;
 #endif /* MPC_USE_PORTALS */
 #ifdef MPC_USE_OFI
-struct mpc_ofi_pinning_context ofipin;
+struct _mpc_ofi_pinning_context ofipin;
 #endif
 	_mpc_lowcomm_shm_pinning_ctx_t shm;
 }sctk_rail_pin_ctx_internal_t;

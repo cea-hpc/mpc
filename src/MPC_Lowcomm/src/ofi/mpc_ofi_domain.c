@@ -52,8 +52,8 @@
 #include <unistd.h>
 
 
-int mpc_ofi_domain_buffer_init(struct mpc_ofi_domain_buffer_t * buff,
-                               struct mpc_ofi_domain_t * domain,
+int _mpc_ofi_domain_buffer_init(struct _mpc_ofi_domain_buffer_t * buff,
+                               struct _mpc_ofi_domain_t * domain,
                                struct fid_ep * endpoint,
                                unsigned int eager_size,
                                unsigned int eager_per_buff,
@@ -62,7 +62,7 @@ int mpc_ofi_domain_buffer_init(struct mpc_ofi_domain_buffer_t * buff,
    buff->endpoint = endpoint;
    buff->size = (size_t)eager_per_buff * eager_size;
    buff->has_multi_recv = has_multi_recv;
-   buff->aligned_mem = mpc_ofi_alloc_aligned(buff->size);
+   buff->aligned_mem = _mpc_ofi_alloc_aligned(buff->size);
 
    buff->buffer = buff->aligned_mem.ret;
 
@@ -93,7 +93,7 @@ int mpc_ofi_domain_buffer_init(struct mpc_ofi_domain_buffer_t * buff,
    return 0;
 }
 
-void mpc_ofi_domain_buffer_acquire(struct mpc_ofi_domain_buffer_t * buff)
+void _mpc_ofi_domain_buffer_acquire(struct _mpc_ofi_domain_buffer_t * buff)
 {
    assert(buff);
    if(buff->has_multi_recv)
@@ -104,7 +104,7 @@ void mpc_ofi_domain_buffer_acquire(struct mpc_ofi_domain_buffer_t * buff)
    }
 }
 
-int mpc_ofi_domain_buffer_relax(struct mpc_ofi_domain_buffer_t * buff)
+int _mpc_ofi_domain_buffer_relax(struct _mpc_ofi_domain_buffer_t * buff)
 {
    int ret = 0;
 
@@ -117,7 +117,7 @@ int mpc_ofi_domain_buffer_relax(struct mpc_ofi_domain_buffer_t * buff)
 
       if(!buff->pending_operations && !buff->is_posted)
       {
-         ret = mpc_ofi_domain_buffer_post(buff);
+         ret = _mpc_ofi_domain_buffer_post(buff);
       }
 
       mpc_common_spinlock_unlock(&buff->lock);
@@ -125,13 +125,13 @@ int mpc_ofi_domain_buffer_relax(struct mpc_ofi_domain_buffer_t * buff)
    else
    {
       buff->is_posted = 0;
-      ret = mpc_ofi_domain_buffer_post(buff);
+      ret = _mpc_ofi_domain_buffer_post(buff);
    }
 
    return ret;
 }
 
-int mpc_ofi_domain_buffer_post(struct mpc_ofi_domain_buffer_t * buff)
+int _mpc_ofi_domain_buffer_post(struct _mpc_ofi_domain_buffer_t * buff)
 {
    assert(!buff->is_posted);
 
@@ -157,7 +157,7 @@ int mpc_ofi_domain_buffer_post(struct mpc_ofi_domain_buffer_t * buff)
 }
 
 
-void mpc_ofi_domain_buffer_set_unposted(struct mpc_ofi_domain_buffer_t * buff)
+void _mpc_ofi_domain_buffer_set_unposted(struct _mpc_ofi_domain_buffer_t * buff)
 {
    assert(buff);
    mpc_common_spinlock_lock(&buff->lock);
@@ -168,18 +168,18 @@ void mpc_ofi_domain_buffer_set_unposted(struct mpc_ofi_domain_buffer_t * buff)
 }
 
 
-int mpc_ofi_domain_buffer_release(struct mpc_ofi_domain_buffer_t * buff)
+int _mpc_ofi_domain_buffer_release(struct _mpc_ofi_domain_buffer_t * buff)
 {
    MPC_OFI_CHECK_RET(fi_close(&buff->mr->fid));
 
-   mpc_ofi_free_aligned(&buff->aligned_mem);
+   _mpc_ofi_free_aligned(&buff->aligned_mem);
 
    return 0;
 }
 
 
-int mpc_ofi_domain_buffer_manager_init(struct mpc_ofi_domain_buffer_manager_t * buffs,
-                                       struct mpc_ofi_domain_t * domain,
+int _mpc_ofi_domain_buffer_manager_init(struct _mpc_ofi_domain_buffer_manager_t * buffs,
+                                       struct _mpc_ofi_domain_t * domain,
                                        struct fid_ep * endpoint,
                                        unsigned int eager_size,
                                        unsigned int eager_per_buff,
@@ -201,7 +201,7 @@ int mpc_ofi_domain_buffer_manager_init(struct mpc_ofi_domain_buffer_manager_t * 
       buffs->buffer_count = eager_per_buff;
    }
 
-   buffs->rx_buffers = sctk_malloc(sizeof(struct mpc_ofi_domain_buffer_t) * buffs->buffer_count);
+   buffs->rx_buffers = sctk_malloc(sizeof(struct _mpc_ofi_domain_buffer_t) * buffs->buffer_count);
    assume(buffs->rx_buffers);
 
    buffs->pending_repost_count = buffs->buffer_count;
@@ -212,13 +212,13 @@ int mpc_ofi_domain_buffer_manager_init(struct mpc_ofi_domain_buffer_manager_t * 
 
    for(i = 0 ; i < buffs->buffer_count ; i++)
    {
-      if(mpc_ofi_domain_buffer_init(&buffs->rx_buffers[i], domain, endpoint, buffs->eager_size, buffs->eager_per_buff, has_multi_recv))
+      if(_mpc_ofi_domain_buffer_init(&buffs->rx_buffers[i], domain, endpoint, buffs->eager_size, buffs->eager_per_buff, has_multi_recv))
       {
          mpc_common_errorpoint("Error initializing a RX buff");
          return 1;
       }
 
-      if(mpc_ofi_domain_buffer_post(&buffs->rx_buffers[i]))
+      if(_mpc_ofi_domain_buffer_post(&buffs->rx_buffers[i]))
       {
          mpc_common_errorpoint("Error posting recv buffer");
          return 1;
@@ -229,13 +229,13 @@ int mpc_ofi_domain_buffer_manager_init(struct mpc_ofi_domain_buffer_manager_t * 
 }
 
 
-int mpc_ofi_domain_buffer_manager_release(struct mpc_ofi_domain_buffer_manager_t * buffs)
+int _mpc_ofi_domain_buffer_manager_release(struct _mpc_ofi_domain_buffer_manager_t * buffs)
 {
    unsigned int i = 0;
 
    for(i = 0 ; i < buffs->buffer_count ; i++)
    {
-      if(mpc_ofi_domain_buffer_release(&buffs->rx_buffers[i]))
+      if(_mpc_ofi_domain_buffer_release(&buffs->rx_buffers[i]))
       {
          mpc_common_errorpoint("Error releasing a RX buff");
          return 1;
@@ -252,7 +252,7 @@ int mpc_ofi_domain_buffer_manager_release(struct mpc_ofi_domain_buffer_manager_t
  ********************/
 
 
-struct fid_ep * __new_endpoint(struct mpc_ofi_domain_t *domain, struct fi_info * info)
+struct fid_ep * __new_endpoint(struct _mpc_ofi_domain_t *domain, struct fi_info * info)
 {
    struct fi_info * pinfo = (info)?info:domain->ctx->config;
 
@@ -277,7 +277,7 @@ struct fid_ep * __new_endpoint(struct mpc_ofi_domain_t *domain, struct fi_info *
 
 
 
-int mpc_ofi_domain_create_passive_endpoint(struct mpc_ofi_domain_t * domain)
+int _mpc_ofi_domain_create_passive_endpoint(struct _mpc_ofi_domain_t * domain)
 {
    MPC_OFI_CHECK_RET(fi_passive_ep(domain->ctx->fabric, domain->ctx->config, &domain->pep, domain));
 
@@ -292,13 +292,13 @@ int mpc_ofi_domain_create_passive_endpoint(struct mpc_ofi_domain_t * domain)
    return 0;
 }
 
-int mpc_ofi_domain_create_connectionless_endpoint(struct mpc_ofi_domain_t * domain)
+int _mpc_ofi_domain_create_connectionless_endpoint(struct _mpc_ofi_domain_t * domain)
 {
    domain->ep = __new_endpoint(domain, NULL);
 
    /* Only for connectionless endpoints */
    MPC_OFI_CHECK_RET(fi_ep_bind(domain->ep,
-                  mpc_ofi_domain_dns_av(&domain->ddns),
+                  _mpc_ofi_domain_dns_av(&domain->ddns),
                   0));
 
    /* Finally enable the EP */
@@ -316,12 +316,12 @@ int mpc_ofi_domain_create_connectionless_endpoint(struct mpc_ofi_domain_t * doma
  * THE BUFFER   LIST *
  *********************/
 
-int mpc_ofi_domain_buffer_entry_add(struct mpc_ofi_domain_t * domain, struct fid_ep * endpoint)
+int _mpc_ofi_domain_buffer_entry_add(struct _mpc_ofi_domain_t * domain, struct fid_ep * endpoint)
 {
-   struct mpc_ofi_domain_buffer_entry_t * new = sctk_malloc(sizeof(struct mpc_ofi_domain_buffer_entry_t));
+   struct _mpc_ofi_domain_buffer_entry_t * new = sctk_malloc(sizeof(struct _mpc_ofi_domain_buffer_entry_t));
    assume(new);
 
-   if(mpc_ofi_domain_buffer_manager_init(&new->buff,
+   if(_mpc_ofi_domain_buffer_manager_init(&new->buff,
                                        domain,
                                        endpoint,
                                        domain->config->eager_size,
@@ -342,16 +342,16 @@ int mpc_ofi_domain_buffer_entry_add(struct mpc_ofi_domain_t * domain, struct fid
    return 0;
 }
 
-int mpc_ofi_domain_buffer_entry_release(struct mpc_ofi_domain_t * domain)
+int _mpc_ofi_domain_buffer_entry_release(struct _mpc_ofi_domain_t * domain)
 {
-   struct mpc_ofi_domain_buffer_entry_t * tmp = domain->buffers;
-   struct mpc_ofi_domain_buffer_entry_t * to_free = NULL;
+   struct _mpc_ofi_domain_buffer_entry_t * tmp = domain->buffers;
+   struct _mpc_ofi_domain_buffer_entry_t * to_free = NULL;
 
    while (tmp)
    {
       to_free = tmp;
       tmp = tmp->next;
-      if(mpc_ofi_domain_buffer_manager_release(&to_free->buff))
+      if(_mpc_ofi_domain_buffer_manager_release(&to_free->buff))
       {
          mpc_common_errorpoint("Failed to release per domain buffers");
       }
@@ -368,7 +368,7 @@ int mpc_ofi_domain_buffer_entry_release(struct mpc_ofi_domain_t * domain)
 
 #define MPC_OFI_DOMAIN_CONNECTION_HT_SIZE 16
 
-int mpc_ofi_domain_init(struct mpc_ofi_domain_t * domain, struct mpc_ofi_context_t *ctx, struct _mpc_lowcomm_config_struct_net_driver_ofi * config)
+int _mpc_ofi_domain_init(struct _mpc_ofi_domain_t * domain, struct _mpc_ofi_context_t *ctx, struct _mpc_lowcomm_config_struct_net_driver_ofi * config)
 {
    mpc_common_spinlock_init(&domain->lock, 0);
    mpc_common_spinlock_init(&domain->buffer_lock, 0);
@@ -377,13 +377,13 @@ int mpc_ofi_domain_init(struct mpc_ofi_domain_t * domain, struct mpc_ofi_context
    domain->ctx = ctx;
    domain->config = config;
 
-	mpc_ofi_domain_connection_tracker_init(&domain->conntrack);
+	_mpc_ofi_domain_conntrack_init(&domain->conntrack);
 
    domain->ep = NULL;
    domain->pep = NULL;
 
    /* Initialize request cache */
-   if(mpc_ofi_request_cache_init(&domain->rcache, domain))
+   if(_mpc_ofi_request_cache_init(&domain->rcache, domain))
    {
       mpc_common_errorpoint("Failed to initialize request cache");
       return -1;
@@ -426,7 +426,7 @@ int mpc_ofi_domain_init(struct mpc_ofi_domain_t * domain, struct mpc_ofi_context
    }
 
    /* And the local DNS */
-   if( mpc_ofi_domain_dns_init(&domain->ddns,
+   if( _mpc_ofi_domain_dns_init(&domain->ddns,
                               &ctx->dns,
                               domain->domain,
                               domain->is_passive_endpoint) < 0)
@@ -441,18 +441,18 @@ int mpc_ofi_domain_init(struct mpc_ofi_domain_t * domain, struct mpc_ofi_context
    /* Create a connectionless endpoint */
    if( domain->is_passive_endpoint )
    {
-      MPC_OFI_CHECK_RET(mpc_ofi_domain_create_passive_endpoint(domain));
+      MPC_OFI_CHECK_RET(_mpc_ofi_domain_create_passive_endpoint(domain));
    }
    else
    {
-      MPC_OFI_CHECK_RET(mpc_ofi_domain_create_connectionless_endpoint(domain));
+      MPC_OFI_CHECK_RET(_mpc_ofi_domain_create_connectionless_endpoint(domain));
    }
 
 
    if(!domain->is_passive_endpoint)
    {
       /* Eventually Prepare the Buffers directly if the domain is connectionless */
-      if(mpc_ofi_domain_buffer_entry_add(domain, domain->ep))
+      if(_mpc_ofi_domain_buffer_entry_add(domain, domain->ep))
       {
          mpc_common_errorpoint("Failed to allocate buffers");
          return 1;
@@ -463,31 +463,31 @@ int mpc_ofi_domain_init(struct mpc_ofi_domain_t * domain, struct mpc_ofi_context
    return 0;
 }
 
-int mpc_ofi_domain_release(struct mpc_ofi_domain_t * domain)
+int _mpc_ofi_domain_release(struct _mpc_ofi_domain_t * domain)
 {
    domain->ctx = NULL;
 
-   mpc_ofi_domain_buffer_entry_release(domain);
+   _mpc_ofi_domain_buffer_entry_release(domain);
 
    if(!domain->is_passive_endpoint)
    {
       MPC_OFI_CHECK_RET(fi_close(&domain->ep->fid));
    }
 
-   if( mpc_ofi_domain_dns_release(&domain->ddns) < 0)
+   if( _mpc_ofi_domain_dns_release(&domain->ddns) < 0)
    {
       mpc_common_errorpoint("Failed to free domain local DNS");
       return -1;
    }
 
    /* release request cache */
-   if(mpc_ofi_request_cache_release(&domain->rcache))
+   if(_mpc_ofi_request_cache_release(&domain->rcache))
    {
       mpc_common_errorpoint("Failed to release request cache");
       return -1;
    }
 
-	mpc_ofi_domain_connection_tracker_release(&domain->conntrack);
+	_mpc_ofi_domain_conntrack_release(&domain->conntrack);
 
    TODO("Understand why we get -EBUSY");
 
@@ -499,16 +499,16 @@ int mpc_ofi_domain_release(struct mpc_ofi_domain_t * domain)
    return 0;
 }
 
-static int _ofi_domain_per_req_recv_completion_callback(__UNUSED__ struct mpc_ofi_request_t *req, void * arg)
+static int _ofi_domain_per_req_recv_completion_callback(__UNUSED__ struct _mpc_ofi_request_t *req, void * arg)
 {
-   struct mpc_ofi_domain_buffer_t * buff = (struct mpc_ofi_domain_buffer_t *)arg;
-   return mpc_ofi_domain_buffer_relax(buff);
+   struct _mpc_ofi_domain_buffer_t * buff = (struct _mpc_ofi_domain_buffer_t *)arg;
+   return _mpc_ofi_domain_buffer_relax(buff);
 }
 
-static struct mpc_ofi_request_t * _ofi_domain_poll_for_recv_request(struct mpc_ofi_domain_t * domain,
-                                                                   struct mpc_ofi_domain_buffer_t * buff)
+static struct _mpc_ofi_request_t * _ofi_domain_poll_for_recv_request(struct _mpc_ofi_domain_t * domain,
+                                                                   struct _mpc_ofi_domain_buffer_t * buff)
 {
-      struct mpc_ofi_request_t *req = mpc_ofi_request_acquire(&domain->rcache,
+      struct _mpc_ofi_request_t *req = _mpc_ofi_request_acquire(&domain->rcache,
                                                             _ofi_domain_per_req_recv_completion_callback,
                                                             buff,
                                                             NULL,
@@ -516,7 +516,7 @@ static struct mpc_ofi_request_t * _ofi_domain_poll_for_recv_request(struct mpc_o
 
       while(!req)
       {
-         req = mpc_ofi_request_acquire(&domain->rcache,
+         req = _mpc_ofi_request_acquire(&domain->rcache,
                                       _ofi_domain_per_req_recv_completion_callback,
                                       buff,
                                       NULL,
@@ -527,7 +527,7 @@ static struct mpc_ofi_request_t * _ofi_domain_poll_for_recv_request(struct mpc_o
          }
 
 #if 0
-         if(mpc_ofi_domain_poll(domain, 0))
+         if(_mpc_ofi_domain_poll(domain, 0))
          {
             mpc_common_errorpoint("Error polling for requests");
             return NULL;
@@ -539,19 +539,19 @@ static struct mpc_ofi_request_t * _ofi_domain_poll_for_recv_request(struct mpc_o
 }
 
 
-static inline int _ofi_domain_cq_process_event(struct mpc_ofi_domain_t * domain, struct fi_cq_data_entry*evt)
+static inline int _ofi_domain_cq_process_event(struct _mpc_ofi_domain_t * domain, struct fi_cq_data_entry*evt)
 {
    if(evt->flags & FI_MULTI_RECV)
    {
-      struct mpc_ofi_domain_buffer_t * buff = (struct mpc_ofi_domain_buffer_t *)evt->op_context;
+      struct _mpc_ofi_domain_buffer_t * buff = (struct _mpc_ofi_domain_buffer_t *)evt->op_context;
 
       /* The buffer is about to be exausted it is then not posted anymore */
-      mpc_ofi_domain_buffer_set_unposted(buff);
+      _mpc_ofi_domain_buffer_set_unposted(buff);
    }
 
    if((evt->flags & FI_RECV) && (evt->flags & FI_MSG))
    {
-      struct mpc_ofi_domain_buffer_t * buff = (struct mpc_ofi_domain_buffer_t *)evt->op_context;
+      struct _mpc_ofi_domain_buffer_t * buff = (struct _mpc_ofi_domain_buffer_t *)evt->op_context;
 
       /* This is a RECV */
       size_t size = evt->len;
@@ -566,9 +566,9 @@ static inline int _ofi_domain_cq_process_event(struct mpc_ofi_domain_t * domain,
 
       /* Flag the buffer as in flight
          it will be relaxed when the associated request will be completed */
-      mpc_ofi_domain_buffer_acquire(buff);
+      _mpc_ofi_domain_buffer_acquire(buff);
 
-      struct mpc_ofi_request_t * req = _ofi_domain_poll_for_recv_request(domain,  buff);
+      struct _mpc_ofi_request_t * req = _ofi_domain_poll_for_recv_request(domain,  buff);
 
       if(!req)
       {
@@ -587,31 +587,31 @@ static inline int _ofi_domain_cq_process_event(struct mpc_ofi_domain_t * domain,
 
    if(evt->flags & FI_RMA)
    {
-      struct mpc_ofi_request_t *request = (struct mpc_ofi_request_t *)evt->op_context;
+      struct _mpc_ofi_request_t *request = (struct _mpc_ofi_request_t *)evt->op_context;
       /* This is a Send */
-      mpc_ofi_request_done(request);
+      _mpc_ofi_request_done(request);
 
       return 0;
    }
 
    if( (evt->flags & FI_SEND) && (evt->flags & FI_MSG))
    {
-      struct mpc_ofi_request_t *request = (struct mpc_ofi_request_t *)evt->op_context;
+      struct _mpc_ofi_request_t *request = (struct _mpc_ofi_request_t *)evt->op_context;
       /* This is a Send */
-      mpc_ofi_request_done(request);
+      _mpc_ofi_request_done(request);
 
       return 0;
    }
 
    /* Leave it here for unhandled events */
-   mpc_ofi_decode_cq_flags(evt->flags);
+   _mpc_ofi_decode_cq_flags(evt->flags);
 
    return 0;
 }
 
 #define OFI_DATA_BUFF_SIZE 64
 
-static inline int _ofi_domain_cq_poll(struct mpc_ofi_domain_t * domain, struct fid_cq * cq, int * did_poll)
+static inline int _ofi_domain_cq_poll(struct _mpc_ofi_domain_t * domain, struct fid_cq * cq, int * did_poll)
 {
    int return_code = 0;
 
@@ -684,7 +684,7 @@ unlock_cq_poll:
 }
 
 
-int _mpc_ofi_domain_handle_incoming_connection(struct mpc_ofi_domain_t * domain, struct fi_eq_cm_entry *cm_data )
+int __mpc_ofi_domain_handle_incoming_connection(struct _mpc_ofi_domain_t * domain, struct fi_eq_cm_entry *cm_data )
 {
 	mpc_common_tracepoint("");
    mpc_lowcomm_peer_uid_t *pfrom = (mpc_lowcomm_peer_uid_t*)cm_data->data;
@@ -693,32 +693,32 @@ int _mpc_ofi_domain_handle_incoming_connection(struct mpc_ofi_domain_t * domain,
 
    mpc_lowcomm_peer_uid_t uid = mpc_lowcomm_monitor_get_uid();
 
-	struct mpc_ofi_domain_connection_state * cstate = mpc_ofi_domain_connection_tracker_get_by_remote(&domain->conntrack, *pfrom);
+	struct _mpc_ofi_domain_conn * cstate = _mpc_ofi_domain_conntrack_get_by_remote(&domain->conntrack, *pfrom);
 	assume(cstate != NULL);
 
 
-	mpc_ofi_domain_connection_state_endpoint_set(cstate, new_ep);
+	_mpc_ofi_domain_conn_endpoint_set(cstate, new_ep);
 
    MPC_OFI_CHECK_RET(fi_accept(new_ep, &uid, sizeof(mpc_lowcomm_peer_uid_t)));
 
    return 0;
 }
 
-int _mpc_ofi_domain_notify_connection(struct mpc_ofi_domain_t * domain, struct fi_eq_cm_entry *cm_data )
+int __mpc_ofi_domain_notify_connection(struct _mpc_ofi_domain_t * domain, struct fi_eq_cm_entry *cm_data )
 {
-   struct mpc_ofi_domain_connection_state * conn_info = mpc_ofi_domain_connection_tracker_get_by_endpoint(&domain->conntrack, (struct fid_ep*)cm_data->fid);
+   struct _mpc_ofi_domain_conn * conn_info = _mpc_ofi_domain_conntrack_get_by_endpoint(&domain->conntrack, (struct fid_ep*)cm_data->fid);
    assume(conn_info != NULL);
 	mpc_common_tracepoint_fmt("[OFI] Connected to %s", mpc_lowcomm_peer_format(conn_info->remote_uid));
 
 	/* Now add the response to the DNS */
-	if( mpc_ofi_dns_register(&domain->ctx->dns, (uint64_t)conn_info->remote_uid, NULL, 0, (struct fid_ep*)cm_data->fid))
+	if( _mpc_ofi_dns_register(&domain->ctx->dns, (uint64_t)conn_info->remote_uid, NULL, 0, (struct fid_ep*)cm_data->fid))
 	{
 		mpc_common_errorpoint_fmt("Failed to register OFI address for remote UID %d", conn_info->remote_uid);
 	}
 
-	mpc_ofi_domain_connection_state_set(conn_info, MPC_OFI_DOMAIN_ENDPOINT_CONNECTED);
+	_mpc_ofi_domain_conn_set(conn_info, MPC_OFI_DOMAIN_ENDPOINT_CONNECTED);
 
-   mpc_ofi_domain_async_connection_state_t prev_state = conn_info->state;
+   _mpc_ofi_domain_conn_state_t prev_state = conn_info->state;
 
 	/* If we are on the listening side we forward the event to the UID key (from the context key to the UID)*/
 	if(prev_state == MPC_OFI_DOMAIN_ENDPOINT_ACCEPTING)
@@ -727,13 +727,13 @@ int _mpc_ofi_domain_notify_connection(struct mpc_ofi_domain_t * domain, struct f
 		(domain->ctx->accept_cb)(conn_info->remote_uid, domain->ctx->accept_cb_arg);
 	}
 
-   mpc_ofi_domain_buffer_entry_add(domain, (struct fid_ep*)cm_data->fid);
+   _mpc_ofi_domain_buffer_entry_add(domain, (struct fid_ep*)cm_data->fid);
 
    return 0;
 }
 
 
-static inline int _mpc_ofi_domain_eq_poll(struct mpc_ofi_domain_t * domain)
+static inline int __mpc_ofi_domain_eq_poll(struct _mpc_ofi_domain_t * domain)
 {
    int return_code = 0;
 
@@ -782,7 +782,7 @@ static inline int _mpc_ofi_domain_eq_poll(struct mpc_ofi_domain_t * domain)
       assume((ssize_t)sizeof(struct fi_eq_cm_entry) <= rd);
 
 
-      if( _mpc_ofi_domain_handle_incoming_connection(domain, cm_data) != 0)
+      if( __mpc_ofi_domain_handle_incoming_connection(domain, cm_data) != 0)
       {
          mpc_common_debug_fatal("Failed to accept connection");
       }
@@ -792,7 +792,7 @@ static inline int _mpc_ofi_domain_eq_poll(struct mpc_ofi_domain_t * domain)
       struct fi_eq_cm_entry *cm_data = (struct fi_eq_cm_entry*)data_buff;
       assume((ssize_t)sizeof(struct fi_eq_cm_entry) <= rd);
 
-      if( _mpc_ofi_domain_notify_connection(domain, cm_data) != 0)
+      if( __mpc_ofi_domain_notify_connection(domain, cm_data) != 0)
       {
          mpc_common_debug_fatal("Failed to accept connection");
       }
@@ -812,7 +812,7 @@ unlock_eq_poll:
 }
 
 
-int mpc_ofi_domain_poll(struct mpc_ofi_domain_t * domain, int type)
+int _mpc_ofi_domain_poll(struct _mpc_ofi_domain_t * domain, int type)
 {
    if(domain->being_polled)
    {
@@ -848,7 +848,7 @@ int mpc_ofi_domain_poll(struct mpc_ofi_domain_t * domain, int type)
 
    if(!did_poll)
    {
-      if( _mpc_ofi_domain_eq_poll(domain) )
+      if( __mpc_ofi_domain_eq_poll(domain) )
       {
          domain->being_polled = 0;
          mpc_common_errorpoint("CQ reported an error");
@@ -862,7 +862,7 @@ int mpc_ofi_domain_poll(struct mpc_ofi_domain_t * domain, int type)
 
 #define MPC_OFI_DOMAIN_MR_INTERNAL_KEY 1337
 
-int mpc_ofi_domain_memory_register_no_lock(struct mpc_ofi_domain_t * domain,
+int _mpc_ofi_domain_memory_register_no_lock(struct _mpc_ofi_domain_t * domain,
                                            void *buff,
                                            size_t size,
                                            uint64_t acs,
@@ -884,7 +884,7 @@ int mpc_ofi_domain_memory_register_no_lock(struct mpc_ofi_domain_t * domain,
 }
 
 
-int mpc_ofi_domain_memory_register(struct mpc_ofi_domain_t * domain,
+int _mpc_ofi_domain_memory_register(struct _mpc_ofi_domain_t * domain,
                                   void *buff,
                                   size_t size,
                                   uint64_t acs,
@@ -893,25 +893,25 @@ int mpc_ofi_domain_memory_register(struct mpc_ofi_domain_t * domain,
 
    mpc_common_spinlock_lock(&domain->lock);
 
-   int ret = mpc_ofi_domain_memory_register_no_lock(domain, buff, size, acs, mr);
+   int ret = _mpc_ofi_domain_memory_register_no_lock(domain, buff, size, acs, mr);
 
    mpc_common_spinlock_unlock(&domain->lock);
 
    return ret;
 }
 
-int mpc_ofi_domain_memory_unregister_no_lock(struct fid_mr *mr)
+int _mpc_ofi_domain_memory_unregister_no_lock(struct fid_mr *mr)
 {
    MPC_OFI_CHECK_RET(fi_close(&mr->fid));
 
    return 0;
 }
 
-int mpc_ofi_domain_memory_unregister(struct mpc_ofi_domain_t * domain, struct fid_mr *mr)
+int _mpc_ofi_domain_memory_unregister(struct _mpc_ofi_domain_t * domain, struct fid_mr *mr)
 {
    mpc_common_spinlock_lock(&domain->lock);
 
-   int ret = mpc_ofi_domain_memory_unregister_no_lock(mr);
+   int ret = _mpc_ofi_domain_memory_unregister_no_lock(mr);
 
    mpc_common_spinlock_unlock(&domain->lock);
 
@@ -919,14 +919,14 @@ int mpc_ofi_domain_memory_unregister(struct mpc_ofi_domain_t * domain, struct fi
 }
 
 
-static inline int __free_mr(struct mpc_ofi_domain_t * domain, struct fid_mr **mr)
+static inline int __free_mr(struct _mpc_ofi_domain_t * domain, struct fid_mr **mr)
 {
    if(!*mr)
    {
       return 0;
    }
 
-   if( mpc_ofi_domain_memory_unregister(domain, *mr) )
+   if( _mpc_ofi_domain_memory_unregister(domain, *mr) )
    {
       mpc_common_errorpoint("Failed to unregister send buffer");
       return -1;
@@ -938,7 +938,7 @@ static inline int __free_mr(struct mpc_ofi_domain_t * domain, struct fid_mr **mr
 }
 
 
-int _mpc_ofi_domain_request_complete(struct mpc_ofi_request_t * req, __UNUSED__ void *dummy)
+int __mpc_ofi_domain_request_complete(struct _mpc_ofi_request_t * req, __UNUSED__ void *dummy)
 {
    unsigned int i = 0;
 
@@ -952,23 +952,23 @@ int _mpc_ofi_domain_request_complete(struct mpc_ofi_request_t * req, __UNUSED__ 
 }
 
 
-static struct mpc_ofi_request_t * __acquire_request(struct mpc_ofi_domain_t * domain,
-                                                    int (*comptetion_cb)(struct mpc_ofi_request_t *, void *),
+static struct _mpc_ofi_request_t * __acquire_request(struct _mpc_ofi_domain_t * domain,
+                                                    int (*comptetion_cb)(struct _mpc_ofi_request_t *, void *),
                                                     void *arg,
-                                                    int (*comptetion_cb_ext)(struct mpc_ofi_request_t *, void *),
+                                                    int (*comptetion_cb_ext)(struct _mpc_ofi_request_t *, void *),
                                                     void *arg_ext)
 {
-   struct mpc_ofi_request_t * ret = NULL;
+   struct _mpc_ofi_request_t * ret = NULL;
 
    do
    {
-      ret = mpc_ofi_request_acquire(&domain->rcache, comptetion_cb, arg, comptetion_cb_ext, arg_ext );
+      ret = _mpc_ofi_request_acquire(&domain->rcache, comptetion_cb, arg, comptetion_cb_ext, arg_ext );
 
       if(ret)
          break;
 
 #if 0
-      if(mpc_ofi_domain_poll(domain, 0))
+      if(_mpc_ofi_domain_poll(domain, 0))
       {
          mpc_common_errorpoint("Error raised when polling for request");
       }
@@ -980,16 +980,16 @@ static struct mpc_ofi_request_t * __acquire_request(struct mpc_ofi_domain_t * do
 }
 
 
-int mpc_ofi_domain_send(struct mpc_ofi_domain_t * domain,
+int _mpc_ofi_domain_send(struct _mpc_ofi_domain_t * domain,
                        uint64_t dest,
                        void *buff,
                        size_t size,
-                       struct mpc_ofi_request_t **preq,
-                       int (*comptetion_cb_ext)(struct mpc_ofi_request_t *, void *),
+                       struct _mpc_ofi_request_t **preq,
+                       int (*comptetion_cb_ext)(struct _mpc_ofi_request_t *, void *),
                        void *arg_ext)
 {
-   struct mpc_ofi_request_t ** req = preq;
-   struct mpc_ofi_request_t * __req = NULL;
+   struct _mpc_ofi_request_t ** req = preq;
+   struct _mpc_ofi_request_t * __req = NULL;
    int retcode = 0;
 
    if(!req)
@@ -999,9 +999,9 @@ int mpc_ofi_domain_send(struct mpc_ofi_domain_t * domain,
 
    mpc_common_spinlock_lock(&domain->lock);
 
-   *req = __acquire_request(domain, _mpc_ofi_domain_request_complete, NULL, comptetion_cb_ext, arg_ext);
+   *req = __acquire_request(domain, __mpc_ofi_domain_request_complete, NULL, comptetion_cb_ext, arg_ext);
 
-   if( mpc_ofi_domain_memory_register_no_lock(domain, buff, size, FI_SEND, &(*req)->mr[0]) )
+   if( _mpc_ofi_domain_memory_register_no_lock(domain, buff, size, FI_SEND, &(*req)->mr[0]) )
    {
       mpc_common_errorpoint("Failed to register send buffer");
       retcode = -1;
@@ -1012,7 +1012,7 @@ int mpc_ofi_domain_send(struct mpc_ofi_domain_t * domain,
 
    fi_addr_t addr = 0;
 
-   struct fid_ep * ep = mpc_ofi_domain_dns_resolve(&domain->ddns, dest, &addr);
+   struct fid_ep * ep = _mpc_ofi_domain_dns_resolve(&domain->ddns, dest, &addr);
 
    if(!ep)
    {
@@ -1046,16 +1046,16 @@ send_unlock:
    return retcode;
 }
 
-int mpc_ofi_domain_sendv(struct mpc_ofi_domain_t * domain,
+int _mpc_ofi_domain_sendv(struct _mpc_ofi_domain_t * domain,
                         uint64_t dest,
                         const struct iovec *iov,
                         size_t iovcnt,
-                        struct mpc_ofi_request_t **preq,
-                        int (*comptetion_cb_ext)(struct mpc_ofi_request_t *, void *),
+                        struct _mpc_ofi_request_t **preq,
+                        int (*comptetion_cb_ext)(struct _mpc_ofi_request_t *, void *),
                         void *arg_ext)
 {
-   struct mpc_ofi_request_t ** req = preq;
-   struct mpc_ofi_request_t * __req = NULL;
+   struct _mpc_ofi_request_t ** req = preq;
+   struct _mpc_ofi_request_t * __req = NULL;
    int retcode = 0;
 
    if(!req)
@@ -1067,13 +1067,13 @@ int mpc_ofi_domain_sendv(struct mpc_ofi_domain_t * domain,
    mpc_common_spinlock_lock(&domain->lock);
 
 
-   *req = __acquire_request(domain, _mpc_ofi_domain_request_complete, NULL, comptetion_cb_ext, arg_ext);
+   *req = __acquire_request(domain, __mpc_ofi_domain_request_complete, NULL, comptetion_cb_ext, arg_ext);
 
    unsigned int i = 0;
 
    for(i=0 ; i < iovcnt; i++)
    {
-      if( mpc_ofi_domain_memory_register_no_lock(domain, iov[i].iov_base, iov[i].iov_len, FI_SEND, &(*req)->mr[i]) )
+      if( _mpc_ofi_domain_memory_register_no_lock(domain, iov[i].iov_base, iov[i].iov_len, FI_SEND, &(*req)->mr[i]) )
       {
          mpc_common_errorpoint("Failed to register send buffer");
          retcode = -1;
@@ -1084,7 +1084,7 @@ int mpc_ofi_domain_sendv(struct mpc_ofi_domain_t * domain,
 
    fi_addr_t addr = 0;
 
-   struct fid_ep * ep = mpc_ofi_domain_dns_resolve(&domain->ddns, dest, &addr);
+   struct fid_ep * ep = _mpc_ofi_domain_dns_resolve(&domain->ddns, dest, &addr);
 
    if(!ep)
    {
@@ -1127,18 +1127,18 @@ sendv_unlock:
 
 
 
-int mpc_ofi_domain_get(struct mpc_ofi_domain_t *domain,
+int _mpc_ofi_domain_get(struct _mpc_ofi_domain_t *domain,
                        void *buf,
                        size_t len,
                        uint64_t dest,
                        uint64_t remote_addr,
                        uint64_t key,
-                       struct mpc_ofi_request_t **preq,
-                       int (*comptetion_cb_ext)(struct mpc_ofi_request_t *, void *),
+                       struct _mpc_ofi_request_t **preq,
+                       int (*comptetion_cb_ext)(struct _mpc_ofi_request_t *, void *),
                        void *arg_ext)
 {
-   struct mpc_ofi_request_t ** req = preq;
-   struct mpc_ofi_request_t * __req = NULL;
+   struct _mpc_ofi_request_t ** req = preq;
+   struct _mpc_ofi_request_t * __req = NULL;
    int retcode = 0;
 
    if(!req)
@@ -1148,9 +1148,9 @@ int mpc_ofi_domain_get(struct mpc_ofi_domain_t *domain,
 
    mpc_common_spinlock_lock(&domain->lock);
 
-   *req = __acquire_request(domain, _mpc_ofi_domain_request_complete, NULL, comptetion_cb_ext, arg_ext);
+   *req = __acquire_request(domain, __mpc_ofi_domain_request_complete, NULL, comptetion_cb_ext, arg_ext);
 
-   if( mpc_ofi_domain_memory_register_no_lock(domain, buf, len, FI_READ, &(*req)->mr[0]) )
+   if( _mpc_ofi_domain_memory_register_no_lock(domain, buf, len, FI_READ, &(*req)->mr[0]) )
    {
       mpc_common_errorpoint("Failed to register send buffer");
       retcode = -1;
@@ -1161,7 +1161,7 @@ int mpc_ofi_domain_get(struct mpc_ofi_domain_t *domain,
 
    fi_addr_t target_addr = 0;
 
-   struct fid_ep * ep = mpc_ofi_domain_dns_resolve(&domain->ddns, dest, &target_addr);
+   struct fid_ep * ep = _mpc_ofi_domain_dns_resolve(&domain->ddns, dest, &target_addr);
 
    if(!ep)
    {
@@ -1235,18 +1235,18 @@ get_unlock:
 }
 
 
-int mpc_ofi_domain_put(struct mpc_ofi_domain_t *domain,
+int _mpc_ofi_domain_put(struct _mpc_ofi_domain_t *domain,
                        void *buf,
                        size_t len,
                        uint64_t dest,
                        uint64_t remote_addr,
                        uint64_t key,
-                       struct mpc_ofi_request_t **preq,
-                       int (*comptetion_cb_ext)(struct mpc_ofi_request_t *, void *),
+                       struct _mpc_ofi_request_t **preq,
+                       int (*comptetion_cb_ext)(struct _mpc_ofi_request_t *, void *),
                        void *arg_ext)
 {
-   struct mpc_ofi_request_t ** req = preq;
-   struct mpc_ofi_request_t * __req = NULL;
+   struct _mpc_ofi_request_t ** req = preq;
+   struct _mpc_ofi_request_t * __req = NULL;
    int retcode = 0;
 
    if(!req)
@@ -1256,9 +1256,9 @@ int mpc_ofi_domain_put(struct mpc_ofi_domain_t *domain,
 
    mpc_common_spinlock_lock(&domain->lock);
 
-   *req = __acquire_request(domain, _mpc_ofi_domain_request_complete, NULL, comptetion_cb_ext, arg_ext);
+   *req = __acquire_request(domain, __mpc_ofi_domain_request_complete, NULL, comptetion_cb_ext, arg_ext);
 
-   if( mpc_ofi_domain_memory_register_no_lock(domain, buf, len, FI_READ, &(*req)->mr[0]) )
+   if( _mpc_ofi_domain_memory_register_no_lock(domain, buf, len, FI_READ, &(*req)->mr[0]) )
    {
       mpc_common_errorpoint("Failed to register send buffer");
       retcode = -1;
@@ -1269,7 +1269,7 @@ int mpc_ofi_domain_put(struct mpc_ofi_domain_t *domain,
 
    fi_addr_t target_addr = 0;
 
-   struct fid_ep * ep = mpc_ofi_domain_dns_resolve(&domain->ddns, dest, &target_addr);
+   struct fid_ep * ep = _mpc_ofi_domain_dns_resolve(&domain->ddns, dest, &target_addr);
 
    if(!ep)
    {
@@ -1329,9 +1329,9 @@ get_unlock:
  * CONNECTION STATE TRACKING *
  *****************************/
 
-struct mpc_ofi_domain_connection_state * mpc_ofi_domain_connection_state_new( uint64_t key, mpc_lowcomm_peer_uid_t remote_uid, mpc_ofi_domain_async_connection_state_t state)
+struct _mpc_ofi_domain_conn * _mpc_ofi_domain_conn_new( uint64_t key, mpc_lowcomm_peer_uid_t remote_uid, _mpc_ofi_domain_conn_state_t state)
 {
-   struct mpc_ofi_domain_connection_state * ret = sctk_malloc(sizeof(struct mpc_ofi_domain_connection_state));
+   struct _mpc_ofi_domain_conn * ret = sctk_malloc(sizeof(struct _mpc_ofi_domain_conn));
    assume(ret != NULL);
 
    ret->key = key;
@@ -1346,13 +1346,13 @@ struct mpc_ofi_domain_connection_state * mpc_ofi_domain_connection_state_new( ui
    return ret;
 }
 
-int mpc_ofi_domain_connection_state_release(struct mpc_ofi_domain_connection_state * cstate)
+int _mpc_ofi_domain_conn_release(struct _mpc_ofi_domain_conn * cstate)
 {
    sctk_free(cstate);
 	return 0;
 }
 
-int mpc_ofi_domain_connection_state_set(struct mpc_ofi_domain_connection_state * cstate, mpc_ofi_domain_async_connection_state_t new_state)
+int _mpc_ofi_domain_conn_set(struct _mpc_ofi_domain_conn * cstate, _mpc_ofi_domain_conn_state_t new_state)
 {
    assume(cstate != NULL);
    mpc_common_spinlock_lock(&cstate->lock);
@@ -1362,9 +1362,9 @@ int mpc_ofi_domain_connection_state_set(struct mpc_ofi_domain_connection_state *
    return 0;
 }
 
-mpc_ofi_domain_async_connection_state_t mpc_ofi_domain_connection_state_get(struct mpc_ofi_domain_connection_state * cstate)
+_mpc_ofi_domain_conn_state_t _mpc_ofi_domain_conn_get(struct _mpc_ofi_domain_conn * cstate)
 {
-   mpc_ofi_domain_async_connection_state_t ret = MPC_OFI_DOMAIN_ENDPOINT_NO_STATE;
+   _mpc_ofi_domain_conn_state_t ret = MPC_OFI_DOMAIN_ENDPOINT_NO_STATE;
    assume(cstate != NULL);
    mpc_common_spinlock_lock(&cstate->lock);
    ret = cstate->state;
@@ -1373,7 +1373,7 @@ mpc_ofi_domain_async_connection_state_t mpc_ofi_domain_connection_state_get(stru
    return ret;
 }
 
-int mpc_ofi_domain_connection_state_key_set(struct mpc_ofi_domain_connection_state * cstate, uint64_t key)
+int _mpc_ofi_domain_conn_key_set(struct _mpc_ofi_domain_conn * cstate, uint64_t key)
 {
    assume(cstate != NULL);
    mpc_common_spinlock_lock(&cstate->lock);
@@ -1384,7 +1384,7 @@ int mpc_ofi_domain_connection_state_key_set(struct mpc_ofi_domain_connection_sta
 }
 
 
-int mpc_ofi_domain_connection_state_endpoint_set(struct mpc_ofi_domain_connection_state * cstate, struct fid_ep * ep)
+int _mpc_ofi_domain_conn_endpoint_set(struct _mpc_ofi_domain_conn * cstate, struct fid_ep * ep)
 {
    assume(cstate != NULL);
    mpc_common_spinlock_lock(&cstate->lock);
@@ -1395,7 +1395,7 @@ int mpc_ofi_domain_connection_state_endpoint_set(struct mpc_ofi_domain_connectio
    return 0;
 }
 
-struct fid_ep * mpc_ofi_domain_connection_state_endpoint_get(struct mpc_ofi_domain_connection_state * cstate)
+struct fid_ep * _mpc_ofi_domain_conn_endpoint_get(struct _mpc_ofi_domain_conn * cstate)
 {
    struct fid_ep * ret = NULL;
    assume(cstate != NULL);
@@ -1406,31 +1406,31 @@ struct fid_ep * mpc_ofi_domain_connection_state_endpoint_get(struct mpc_ofi_doma
    return ret;
 }
 
-int mpc_ofi_domain_connection_tracker_init(struct mpc_ofi_domain_connection_tracker * tracker)
+int _mpc_ofi_domain_conntrack_init(struct _mpc_ofi_domain_conntrack * tracker)
 {
    tracker->connections = NULL;
    mpc_common_spinlock_init(&tracker->lock, 0);
    return 0;
 }
 
-int mpc_ofi_domain_connection_tracker_release(struct mpc_ofi_domain_connection_tracker * tracker)
+int _mpc_ofi_domain_conntrack_release(struct _mpc_ofi_domain_conntrack * tracker)
 {
-	struct mpc_ofi_domain_connection_state * ret = tracker->connections;
-	struct mpc_ofi_domain_connection_state * to_free = NULL;
+	struct _mpc_ofi_domain_conn * ret = tracker->connections;
+	struct _mpc_ofi_domain_conn * to_free = NULL;
 
 	while(ret)
 	{
 		to_free = ret;
 		ret = ret->next;
-		mpc_ofi_domain_connection_state_release(to_free);
+		_mpc_ofi_domain_conn_release(to_free);
 	}
 
    return 0;
 }
 
-struct mpc_ofi_domain_connection_state * _tracker_get_by_remote_no_lock(struct mpc_ofi_domain_connection_tracker * tracker, mpc_lowcomm_peer_uid_t remote_uid)
+struct _mpc_ofi_domain_conn * _tracker_get_by_remote_no_lock(struct _mpc_ofi_domain_conntrack * tracker, mpc_lowcomm_peer_uid_t remote_uid)
 {
-   struct mpc_ofi_domain_connection_state * ret = tracker->connections;
+   struct _mpc_ofi_domain_conn * ret = tracker->connections;
 
    while (ret)
    {
@@ -1446,9 +1446,9 @@ struct mpc_ofi_domain_connection_state * _tracker_get_by_remote_no_lock(struct m
 }
 
 
-struct mpc_ofi_domain_connection_state * mpc_ofi_domain_connection_tracker_get_by_remote(struct mpc_ofi_domain_connection_tracker * tracker, mpc_lowcomm_peer_uid_t remote_uid)
+struct _mpc_ofi_domain_conn * _mpc_ofi_domain_conntrack_get_by_remote(struct _mpc_ofi_domain_conntrack * tracker, mpc_lowcomm_peer_uid_t remote_uid)
 {
-   struct mpc_ofi_domain_connection_state * ret = NULL;
+   struct _mpc_ofi_domain_conn * ret = NULL;
 
    mpc_common_spinlock_lock(&tracker->lock);
 
@@ -1459,9 +1459,9 @@ struct mpc_ofi_domain_connection_state * mpc_ofi_domain_connection_tracker_get_b
    return ret;
 }
 
-struct mpc_ofi_domain_connection_state * _tracker_get_by_key_no_lock(struct mpc_ofi_domain_connection_tracker * tracker, struct fid_ep * ep)
+struct _mpc_ofi_domain_conn * _tracker_get_by_key_no_lock(struct _mpc_ofi_domain_conntrack * tracker, struct fid_ep * ep)
 {
-   struct mpc_ofi_domain_connection_state * ret = tracker->connections;
+   struct _mpc_ofi_domain_conn * ret = tracker->connections;
 
    while (ret)
    {
@@ -1476,9 +1476,9 @@ struct mpc_ofi_domain_connection_state * _tracker_get_by_key_no_lock(struct mpc_
    return NULL;
 }
 
-struct mpc_ofi_domain_connection_state * mpc_ofi_domain_connection_tracker_get_by_endpoint(struct mpc_ofi_domain_connection_tracker * tracker, struct fid_ep * ep)
+struct _mpc_ofi_domain_conn * _mpc_ofi_domain_conntrack_get_by_endpoint(struct _mpc_ofi_domain_conntrack * tracker, struct fid_ep * ep)
 {
-   struct mpc_ofi_domain_connection_state * ret = NULL;
+   struct _mpc_ofi_domain_conn * ret = NULL;
 
    mpc_common_spinlock_lock(&tracker->lock);
 
@@ -1489,18 +1489,18 @@ struct mpc_ofi_domain_connection_state * mpc_ofi_domain_connection_tracker_get_b
    return ret;
 }
 
-struct mpc_ofi_domain_connection_state * mpc_ofi_domain_connection_tracker_add(struct mpc_ofi_domain_connection_tracker * tracker,
+struct _mpc_ofi_domain_conn * _mpc_ofi_domain_conntrack_add(struct _mpc_ofi_domain_conntrack * tracker,
                                                                                uint64_t key,
                                                                                mpc_lowcomm_peer_uid_t remote_uid,
-                                                                               mpc_ofi_domain_async_connection_state_t state,
+                                                                               _mpc_ofi_domain_conn_state_t state,
                                                                                int * is_first)
 {
 
-   struct mpc_ofi_domain_connection_state * ret = NULL;
+   struct _mpc_ofi_domain_conn * ret = NULL;
 
    mpc_common_spinlock_lock(&tracker->lock);
 
-   struct mpc_ofi_domain_connection_state * previous = _tracker_get_by_remote_no_lock(tracker, remote_uid);
+   struct _mpc_ofi_domain_conn * previous = _tracker_get_by_remote_no_lock(tracker, remote_uid);
 
    if(previous)
    {
@@ -1514,7 +1514,7 @@ struct mpc_ofi_domain_connection_state * mpc_ofi_domain_connection_tracker_add(s
    }
 
 
-   ret = mpc_ofi_domain_connection_state_new( key, remote_uid, state);
+   ret = _mpc_ofi_domain_conn_new( key, remote_uid, state);
 
    /* Insert in List */
    ret->next = tracker->connections;
@@ -1527,12 +1527,12 @@ unlock:
 }
 
 
-int mpc_ofi_domain_connection_tracker_pop_endpoint(struct mpc_ofi_domain_connection_tracker * tracker, struct fid_ep * ep)
+int _mpc_ofi_domain_conntrack_pop_endpoint(struct _mpc_ofi_domain_conntrack * tracker, struct fid_ep * ep)
 {
    mpc_common_spinlock_lock(&tracker->lock);
 
-	struct mpc_ofi_domain_connection_state * tmp = NULL;
-	struct mpc_ofi_domain_connection_state * to_free = NULL;
+	struct _mpc_ofi_domain_conn * tmp = NULL;
+	struct _mpc_ofi_domain_conn * to_free = NULL;
 
 
 	if(tracker->connections)
@@ -1541,7 +1541,7 @@ int mpc_ofi_domain_connection_tracker_pop_endpoint(struct mpc_ofi_domain_connect
 		{
 			to_free = tracker->connections;
 			tracker->connections = tracker->connections->next;
-			mpc_ofi_domain_connection_state_release(to_free);
+			_mpc_ofi_domain_conn_release(to_free);
 		}
 	}
 
@@ -1555,7 +1555,7 @@ int mpc_ofi_domain_connection_tracker_pop_endpoint(struct mpc_ofi_domain_connect
 			{
 				to_free = tmp->next;
 				tmp->next = tmp->next->next;
-				mpc_ofi_domain_connection_state_release(to_free);
+				_mpc_ofi_domain_conn_release(to_free);
 			}
 		}
 	}
@@ -1572,7 +1572,7 @@ int mpc_ofi_domain_connection_tracker_pop_endpoint(struct mpc_ofi_domain_connect
  * CONNECTION TO DOMAIN *
  ************************/
 
-struct fid_ep * mpc_ofi_domain_connect(struct mpc_ofi_domain_t *domain, mpc_lowcomm_peer_uid_t uid, void *addr, size_t addrlen)
+struct fid_ep * _mpc_ofi_domain_connect(struct _mpc_ofi_domain_t *domain, mpc_lowcomm_peer_uid_t uid, void *addr, size_t addrlen)
 {
    if(!domain->is_passive_endpoint)
    {
@@ -1587,10 +1587,10 @@ struct fid_ep * mpc_ofi_domain_connect(struct mpc_ofi_domain_t *domain, mpc_lowc
    struct fid_ep * new_ep = __new_endpoint(domain, infos);
 
 
-	struct mpc_ofi_domain_connection_state * cstate = mpc_ofi_domain_connection_tracker_get_by_remote(&domain->conntrack, uid);
+	struct _mpc_ofi_domain_conn * cstate = _mpc_ofi_domain_conntrack_get_by_remote(&domain->conntrack, uid);
 	assume(cstate != NULL);
-	assume(mpc_ofi_domain_connection_state_get(cstate) == MPC_OFI_DOMAIN_ENDPOINT_CONNECTING);
-	mpc_ofi_domain_connection_state_endpoint_set(cstate, new_ep);
+	assume(_mpc_ofi_domain_conn_get(cstate) == MPC_OFI_DOMAIN_ENDPOINT_CONNECTING);
+	_mpc_ofi_domain_conn_endpoint_set(cstate, new_ep);
 
    TODO("Do not know why it crash yet");
    //fi_freeinfo(infos);
