@@ -105,7 +105,8 @@ static inline void __mpc_comm_request_init(mpc_lowcomm_request_t *request,
 		request->pointer_to_shadow_request = NULL;
 		request->pointer_to_source_request = NULL;
 		request->msg = NULL;
-		request->dt_magic = 0;
+		TODO("Setting it breaks add_pack there is a mismatch in initialization");
+		//request->dt_magic = 0;
 	}
 }
 
