@@ -38,7 +38,7 @@ lcp_context_h lcp_context_get();
 
 int lcp_context_create(lcp_context_h *ctx_p, lcp_context_param_t *param);
 
-void lcp_context_task_get(lcp_context_h ctx, int tid, lcp_task_h *task_p);
+lcp_task_h lcp_context_task_get(lcp_context_h ctx, int tid);
 
 int lcp_context_fini(lcp_context_h ctx);
 

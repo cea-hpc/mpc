@@ -637,7 +637,9 @@ inline void sctk_delete_internal_request_clean(MPI_internal_request_t *tmp)
 {
 	/* Release the internal request */
 	tmp->used = 0;
-	sctk_free(tmp->saved_datatype);
+        if (tmp->saved_datatype != NULL) {
+	        sctk_free(tmp->saved_datatype);
+        }
 	tmp->saved_datatype = NULL;
 }
 

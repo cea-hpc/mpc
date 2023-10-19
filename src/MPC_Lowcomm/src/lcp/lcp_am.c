@@ -431,7 +431,7 @@ static int lcp_eager_am_handler(void *arg, void *data,
         void *data_ptr     = (hdr + 1) + hdr->hdr_size;
         size_t data_size   = length - sizeof(*hdr) - hdr->hdr_size;
 
-        lcp_context_task_get(ctx, hdr->dest_tid, &task);  
+        task = lcp_context_task_get(ctx, hdr->dest_tid);  
         if (task == NULL) {
                 mpc_common_errorpoint_fmt("LCP: could not find task with tid=%d length=%ld", hdr->dest_tid, hdr->hdr_size);
                 rc = LCP_ERROR;
@@ -500,7 +500,7 @@ static int lcp_rndv_am_handler(void *arg, void *data,
         lcp_rndv_hdr_t *hdr = data;
         lcp_am_user_handler_t handler; 
 
-        lcp_context_task_get(ctx, hdr->am.dest_tid, &task);  
+        task = lcp_context_task_get(ctx, hdr->am.dest_tid);  
         if (task == NULL) {
                 mpc_common_errorpoint_fmt("LCP: could not find task with tid=%d length=%ld", hdr->am.dest_tid, hdr->am.hdr_size);
 

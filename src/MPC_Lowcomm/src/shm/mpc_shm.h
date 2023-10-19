@@ -156,9 +156,9 @@ struct _mpc_shm_fragment_factory
    uint64_t fragment_id;
    uint64_t segment_id;
    struct mpc_common_hashtable frags;
-   mpc_mempool frag_pool;
+   mpc_mempool_t frag_pool;
    struct mpc_common_hashtable regs;
-   mpc_mempool reg_pool;
+   mpc_mempool_t reg_pool;
 };
 
 /*******************

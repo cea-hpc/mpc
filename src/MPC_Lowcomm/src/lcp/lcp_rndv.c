@@ -36,16 +36,12 @@
 #include "lcp_prototypes.h"
 #include "lcp_mem.h"
 #include "lcp_context.h"
-#include "lcp_task.h"
 #include "lcp_datatype.h"
 #include "lcp_header.h"
-#include "lcp_pending.h"
 #include "lcp_request.h"
 
 #include "mpc_common_debug.h"
 #include "mpc_lowcomm_types.h"
-#include "sctk_alloc.h"
-#include "msg_cpy.h"
 
 /* ============================================== */
 /* Packing                                        */
@@ -167,7 +163,6 @@ int lcp_rndv_rma_progress(lcp_request_t *rndv_req)
 
                 length = (remaining < frag_length) ? remaining : frag_length;
 
-                //FIXME: error managment => NO_RESOURCE not handled
                 if (rndv_req->ctx->config.rndv_mode == LCP_RNDV_GET) {
                         /* Get source address */
                         rc = lcp_send_do_get_zcopy(ep->lct_eps[cc],

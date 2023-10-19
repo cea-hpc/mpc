@@ -36,8 +36,7 @@
 #include <mpc_mempool.h>
 #include <mpc_common_spinlock.h>
 
-/* forward reference */
-typedef struct lcp_request lcp_request_t;
+#include "lcp_def.h"
 
 /*******************************************************
  * Data structures - Control message
@@ -52,7 +51,7 @@ typedef struct
 typedef struct 
 {
 	mpc_common_spinlock_t  table_lock;
-	mpc_mempool pending_pool;
+	mpc_mempool_t pending_pool;
 	lcp_pending_entry_t   *table;
 } lcp_pending_table_t;
 

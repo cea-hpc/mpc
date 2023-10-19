@@ -111,7 +111,6 @@ void *lcp_prq_find_dequeue(lcp_mtch_prq_list_t *list, int tag, uint64_t peer)
 	return 0;
 }
 
-//FIXME: add malloc check
 /**
  * @brief Add a request to the PRQ.
  * 
@@ -149,7 +148,6 @@ void lcp_prq_append(lcp_mtch_prq_list_t *list, void *payload, int tag, uint64_t 
 	DL_APPEND(list->list, elem);
 }
 
-//FIXME: add malloc check
 /**
  * @brief Allocate and initialize a PRQ.
  * 
@@ -282,7 +280,6 @@ void *lcp_umq_find_dequeue(lcp_mtch_umq_list_t *list, int tag, uint64_t peer)
 	return 0;
 }
 
-//FIXME: add malloc check
 /**
  * @brief Add a request in an UMQ.
  * 

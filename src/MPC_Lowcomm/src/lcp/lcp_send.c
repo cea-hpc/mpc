@@ -33,17 +33,15 @@
 #include "lcp_ep.h"
 #include "lcp_context.h"
 #include "lcp_request.h"
-#include "lcp_pending.h"
-//FIXME: remove header here since header should only be used in lcp_tag.c
-#include "lcp_header.h"
 #include "lcp_tag.h"
 #include "lcp_tag_offload.h"
 #include "lcp_task.h"
 
 #include "mpc_common_debug.h"
-#include "opa_primitives.h"
 
-//FIXME: static inline ?
+#define LCP_SEND_TAG_IS_TASK(_req) \
+        ((_req)->send.tag.dest_uid == (_req)->ctx->process_uid) 
+
 /**
  * @brief Switch between protocols. Available protocols are : 
  * - buffered copy
@@ -61,6 +59,7 @@ int lcp_tag_send_start(lcp_ep_h ep, lcp_request_t *req,
         int rc = LCP_SUCCESS;
         size_t size;
 
+        /* First check offload */
         if (ep->ep_config.offload && (ep->ctx->config.offload ||
             (param->flags & LCP_REQUEST_TRY_OFFLOAD))) {
                 size = req->send.length;
@@ -81,16 +80,29 @@ int lcp_tag_send_start(lcp_ep_h ep, lcp_request_t *req,
                         req->request->synchronized = 0;
                         rc = lcp_send_rndv_offload_start(req);
                 }
-        } else {
-                if (param->flags & LCP_REQUEST_TAG_SYNC) {
-                        req->is_sync = 1;
+        } else if (LCP_SEND_TAG_IS_TASK(req)){ /* Thread-based send */
+                req->state.offloaded = 0;
+
+                /* Get the total payload size */
+                size = lcp_send_get_total_tag_payload(req->send.length);
+
+                //NOTE: there are no rendez-vous for thread-based send.
+                if ((size <= ep->ep_config.am.max_bcopy) || 
+                    (param->datatype & LCP_DATATYPE_DERIVED)) {
+                        req->send.func = lcp_send_task_tag_bcopy;
+                } else {
+                       assume(size <= ep->ep_config.am.max_zcopy); 
+                       req->send.func = lcp_send_task_tag_zcopy;
                 }
+        } else { /* Process-based send */
                 //NOTE: multiplexing might not always be efficient (IO NUMA
                 //      effects). A specific scheduling policy should be 
                 //      implemented to decide
                 req->state.offloaded = 0;
-                //FIXME: remove usage of header structure
-                size = req->send.length + sizeof(lcp_tag_hdr_t);
+
+                /* Get the total payload size */
+                size = lcp_send_get_total_tag_payload(req->send.length);
+
                 if (size <= ep->ep_config.am.max_bcopy || 
                     ((req->send.length <= ep->ep_config.tag.max_zcopy) &&
                      (param->datatype & LCP_DATATYPE_DERIVED))) {
@@ -130,6 +142,7 @@ int lcp_tag_send_nb(lcp_ep_h ep, lcp_task_h task, const void *buffer,
 
         // create the request to send
         req = lcp_request_get(task);
+        //rc = lcp_request_create(&req);
         if (req == NULL) {
                 mpc_common_debug_error("LCP: could not create request.");
                 return LCP_ERROR;
@@ -137,13 +150,12 @@ int lcp_tag_send_nb(lcp_ep_h ep, lcp_task_h task, const void *buffer,
         req->flags |= LCP_REQUEST_MPI_COMPLETE;
 
         // initialize request
-        //FIXME: sequence number should be task specific. Following works in
-        //       process-based but not in thread-based.
-        //       Reorder is to be reimplemented.
         LCP_REQUEST_INIT_TAG_SEND(req, ep->ctx, task, request, param->recv_info, 
-                                  count, ep, (void *)buffer, 
-                                  OPA_fetch_and_incr_int(&ep->seqn),
-                                  param->datatype);
+                                  count, ep, (void *)buffer, 0, param->datatype,
+                                  param->flags & LCP_REQUEST_TAG_SYNC ? 1 : 0);
+
+        /* Increment sequence number */
+        req->seqn = task->seqn[req->send.tag.dest_tid]++;
 
         /* prepare request depending on its type */
         rc = lcp_tag_send_start(ep, req, param);

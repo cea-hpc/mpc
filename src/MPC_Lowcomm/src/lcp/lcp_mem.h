@@ -32,10 +32,10 @@
 #ifndef LCP_MEM_H
 #define LCP_MEM_H
 
-#include "lcp_types.h"
 #include "lcr/lcr_def.h"
 #include "lcp_def.h"
 
+#include <bitmap.h>
 
 /**
  * @brief memory object

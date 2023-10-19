@@ -974,13 +974,24 @@ fi
 
 AM_CONDITIONAL([MPC_BUILD_OPENPA], [test "x$build_openpa" = "xyes"])
 
-MPC_DETECT_DEPENDENCY([ck_stack.h],[ck], [ck_stack_pop_upmc], [CK], [], [], [ck])
-MPC_REQUIRED_DEPENDENCY([ck], [$mpc_dep_found])
+AC_ARG_ENABLE([ck],
+              [AS_HELP_STRING([--enable-ck],
+                              [If CK is to be used])],
+                              [use_ck=$enableval],
+                              [use_ck=maybe])
+
+if test "x$use_ck" = "xyes"; then
+    MPC_DETECT_DEPENDENCY([ck_stack.h],[ck], [ck_stack_pop_upmc], [CK], [], [], [ck])
+    MPC_REQUIRED_DEPENDENCY([ck], [$mpc_dep_found])
+    AC_DEFINE([MPC_USE_CK], [1], [concurrency-kit support is enabled])
+    ck_enabled="yes"
+fi
+
+AM_CONDITIONAL([CK_ENABLED], [test "x$ck_enabled" = "xyes"])
 
 #
 # Detect MPC Allocator
 #
-
 
 AC_ARG_ENABLE([mpcalloc],
 [AS_HELP_STRING([--enable-mpcalloc],

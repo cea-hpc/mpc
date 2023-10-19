@@ -90,7 +90,7 @@ int _mpc_lowcomm_monitor_teardown();
 * ID MANIPULATION *
 *******************/
 
-typedef uint16_t   mpc_lowcomm_set_uid_t;
+typedef uint32_t   mpc_lowcomm_set_uid_t;
 typedef uint64_t   mpc_lowcomm_peer_uid_t;
 
 /**
@@ -115,7 +115,7 @@ mpc_lowcomm_set_uid_t mpc_lowcomm_monitor_get_gid();
  */
 static inline mpc_lowcomm_set_uid_t mpc_lowcomm_peer_get_set(mpc_lowcomm_peer_uid_t uid)
 {
-	return MPC_LOWCOMM_MONITOR_GET_SET(uid);
+	return (mpc_lowcomm_set_uid_t)(uid >> 32);
 }
 
 /**
@@ -126,7 +126,7 @@ static inline mpc_lowcomm_set_uid_t mpc_lowcomm_peer_get_set(mpc_lowcomm_peer_ui
  */
 static inline int mpc_lowcomm_peer_get_rank(mpc_lowcomm_peer_uid_t uid)
 {
-	return MPC_LOWCOMM_MONITOR_GET_RANK(uid);
+	return (int)uid;
 }
 
 /**
@@ -136,13 +136,13 @@ static inline int mpc_lowcomm_peer_get_rank(mpc_lowcomm_peer_uid_t uid)
  * @param peer_rank peer rank
  * @return mpc_lowcomm_peer_uid_t corresponding UID
  */
-static inline mpc_lowcomm_peer_uid_t mpc_lowcomm_monitor_uid_of(uint16_t set_uid, int peer_rank)
+static inline mpc_lowcomm_peer_uid_t mpc_lowcomm_monitor_uid_of(uint32_t set_uid, int peer_rank)
 {
 	uint64_t ret      = 0;
 	uint64_t lset_uid = set_uid;
 
-	ret |= lset_uid << 48;
-	ret |= peer_rank << 16;
+	ret |= lset_uid << 32;
+	ret |= (uint64_t)peer_rank;
 
 	return ret;
 }

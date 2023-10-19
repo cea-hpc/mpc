@@ -54,6 +54,7 @@ ssize_t lcr_ptl_send_am_bcopy(_mpc_lowcomm_endpoint_t *ep,
         _mpc_lowcomm_endpoint_info_portals_t* infos   = &ep->data.ptl;
         lcr_ptl_send_comp_t *ptl_comp;
 
+        //FIXME: use a memory pool.
         start = sctk_malloc(srail->eager_limit);
         if (start == NULL) {
                 mpc_common_debug_error("LCR PTL: could not allocate bcopy buffer");
@@ -61,6 +62,7 @@ ssize_t lcr_ptl_send_am_bcopy(_mpc_lowcomm_endpoint_t *ep,
                 goto err;
         }
         size = pack(start, arg);
+        assert(size <= srail->eager_limit);
         remote = infos->dest;
 
         ptl_comp = sctk_malloc(sizeof(lcr_ptl_send_comp_t));

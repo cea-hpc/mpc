@@ -33,16 +33,40 @@
 #define LCP_TAG_H
 
 #include "lcp_def.h"
-#include "lcp_types.h"
+#include "lcp_header.h"
 
+#include <stdint.h>
+#include <mpc_math.h>
+
+struct lcp_tag_data {
+        size_t length;
+        int tag;
+        int32_t src_tid;
+        int32_t dest_tid;
+        uint16_t comm;
+        uint64_t seqn;
+};
 //FIXME: move tag header over here.
 
+//NOTE: choose the maximum size of all header. Optimal would be to check if
+//      request is sync etc... But did not want to add this logic.
+static inline size_t lcp_send_get_total_tag_payload(size_t data_length)
+{
+        size_t hdr_size = MPC_MAX(sizeof(lcp_tag_hdr_t), 
+                                  MPC_MAX(sizeof(lcp_tag_sync_hdr_t),
+                                          sizeof(lcp_rndv_hdr_t)));
+        return data_length + hdr_size;
+}
+
 int lcp_send_eager_sync_ack(lcp_request_t *super, void *data);
+int lcp_send_task_tag_zcopy(lcp_request_t *req);
+int lcp_send_task_tag_bcopy(lcp_request_t *req);
 int lcp_send_eager_tag_zcopy(lcp_request_t *req);
 int lcp_send_eager_tag_bcopy(lcp_request_t *req);
 int lcp_send_rndv_tag_start(lcp_request_t *req);
 
-int lcp_recv_eager_tag_data(lcp_request_t *req, void *hdr, void *data, size_t length);
+int lcp_recv_eager_tag_data(lcp_request_t *req, struct lcp_tag_data *tag_data, 
+                            void *data, size_t length);
 void lcp_recv_rndv_tag_data(lcp_request_t *req, void *data);
 
 #endif

@@ -2692,9 +2692,7 @@ static inline void __mpc_comm_ptp_msg_wait(struct mpc_lowcomm_ptp_msg_progress_s
 /* This is the exported version */
 void mpc_lowcomm_ptp_msg_progress(struct mpc_lowcomm_ptp_msg_progress_s *wait)
 {
-        lcp_progress(lcp_ctx_loc);
-        return;
-	//return __mpc_comm_ptp_msg_wait(wait);
+	return __mpc_comm_ptp_msg_wait(wait);
 }
 
 /********************************************************************/
@@ -3452,9 +3450,11 @@ int _mpc_lowcomm_isend(int dest, const void *data, size_t size, int tag,
 	                                size, MPC_DATATYPE_IGNORE,
 	                                REQUEST_SEND, req);
         
+#if 0
         if (req->header.destination == req->header.source) {
                 req->header.destination |= (uint16_t) req->header.destination_task;
         }
+#endif
 
 	lcp_ep_get_or_create(lcp_ctx_loc, req->header.destination, &ep, 0);
 	if(ep == NULL)
@@ -3463,7 +3463,7 @@ int _mpc_lowcomm_isend(int dest, const void *data, size_t size, int tag,
 		                       req->header.destination);
 	}
 
-	lcp_context_task_get(lcp_ctx_loc, tid, &task);
+	task = lcp_context_task_get(lcp_ctx_loc, tid);
 	if(task == NULL)
 	{
 		mpc_common_debug_fatal("LCP: Could not find task with tid %d.",
@@ -3508,7 +3508,7 @@ int mpc_lowcomm_irecv(int src, void *data, size_t size, int tag,
 	                                REQUEST_RECV, req);
 
 
-	lcp_context_task_get(lcp_ctx_loc, tid, &task);
+	task = lcp_context_task_get(lcp_ctx_loc, tid);
 	if(task == NULL)
 	{
 		mpc_common_debug_fatal("LCP: Could not find task with tid %d.",
@@ -3677,7 +3677,7 @@ int mpc_lowcomm_iprobe_src_dest(const int world_source, const int world_destinat
 		*status = status_init;
 	}
 
-	lcp_context_task_get(lcp_ctx_loc, world_destination, &task);
+	task = lcp_context_task_get(lcp_ctx_loc, world_destination);
 	if(task == NULL)
 	{
 		mpc_common_debug_fatal("LCP: Could not find task with tid %d.",

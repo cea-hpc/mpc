@@ -31,21 +31,17 @@
 
 #include "lcp_context.h"
 
-#include <alloca.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <uthash.h>
 
 #include <mpc_common_debug.h>
 #include <mpc_common_rank.h>
-#include <mpc_keywords.h>
 #include <sctk_alloc.h>
 #include <mpc_common_flags.h>
 
 #include "lowcomm_config.h"
 #include "mpc_common_datastructure.h"
-#include "mpc_lowcomm.h"
 #include "rail.h"
 
 #include "lcp.h"
@@ -55,11 +51,6 @@
 #include "lcp_task.h"
 #include "lcr/lcr_component.h"
 #include "lcr/lcr_def.h"
-#include "sctk_alloc_posix.h"
-
-//TODO: memset to 0 all allocated structure (especially those containing
-//      pointers). Creates non-null valid dummy pointers that can segfault 
-//      later on.
 
 lcp_am_handler_t lcp_am_handlers[LCP_AM_ID_LAST] = {{NULL, 0}};
 //FIXME: add context param to decide whether to allocate context statically or
@@ -234,9 +225,9 @@ static inline void lcp_context_resource_init(lcp_rsc_desc_t *resource_p,
         resource_p->used = 0;
 }
 
-void lcp_context_task_get(lcp_context_h ctx, int tid, lcp_task_h *task_p)
+lcp_task_h lcp_context_task_get(lcp_context_h ctx, int tid)
 {
-        *task_p = ctx->tasks[tid % ctx->num_tasks];
+        return ctx->tasks[tid];
 }
 
 /**
@@ -788,7 +779,6 @@ int lcp_context_create(lcp_context_h *ctx_p, lcp_context_param_t *param)
                 goto out_free_ctx;
         }
 
-        //FIXME: set in config variable.
         ctx->config.max_num_tasks        = 512;
         if (param->num_tasks <= 0) {
                 mpc_common_debug_error("LCP: wrong number of tasks");
@@ -803,6 +793,10 @@ int lcp_context_create(lcp_context_h *ctx_p, lcp_context_param_t *param)
 	ctx->config.rndv_mode            = (lcp_rndv_mode_t)config->rndv_mode;
         ctx->config.offload              = config->offload;
         ctx->process_uid                 = param->process_uid;
+        //FIXME: number of tasks is currently number of MPI ranks. This is
+        //       because the number of local tasks with
+        //       mpc_common_get_local_task_count() is not set yet. There might
+        //       be another way.
         ctx->num_tasks                   = param->num_tasks;
 
 	/* init random seed to generate unique msg_id */

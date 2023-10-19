@@ -32,11 +32,11 @@
 #ifndef LCP_EP_H
 #define LCP_EP_H
 
-#include "lcp.h"
+#include "lcp_def.h"
 #include "lcp_types.h"
 #include "lcr/lcr_def.h"
+#include "bitmap.h"
 
-#include "rail.h"
 #include "opa_primitives.h"
 
 typedef uint16_t lcp_ep_flags_t;

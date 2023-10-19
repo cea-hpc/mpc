@@ -28,29 +28,188 @@
 /* # - MOREAU Gilles gilles.moreau@cea.fr                                 # */
 /* #                                                                      # */
 /* ######################################################################## */
-
 #include "lcp_task.h"
-
-#include <mpc_common_rank.h>
-
 
 #include "lcp.h"
 #include "lcp_common.h"
-#include "mpc_common_datastructure.h"
 #include "mpc_common_debug.h"
-#include "mpc_lowcomm_types.h"
 
 #include "lcp_def.h"
 #include "lcp_context.h"
-
-
-#include "sctk_alloc.h"
-
+#include "lcp_header.h"
 #include "lcp_request.h"
 
+static size_t lcp_send_task_tag_zcopy_pack(void *dest, void *data)
+{
+	lcp_tag_sync_hdr_t *hdr = dest;
+	lcp_request_t  *req = data;
 
-#include "sctk_alloc_posix.h"
-#include "uthash.h"
+        hdr->base.comm     = req->send.tag.comm;
+        hdr->base.tag      = req->send.tag.tag;
+        hdr->base.src_tid  = req->send.tag.src_tid;
+        hdr->base.dest_tid = req->send.tag.dest_tid;
+        hdr->base.seqn     = req->seqn;
+
+        hdr->src_uid      = req->send.tag.src_uid;
+        hdr->msg_id       = (uint64_t)req;
+
+	return sizeof(*hdr);
+}
+
+int lcp_send_task_bcopy(lcp_request_t *sreq, lcp_request_t **matched_req, 
+                        lcr_pack_callback_t pack_cb, unsigned flags, 
+                        lcp_unexp_ctnr_t **ctnr_p) 
+{
+        int rc = LCP_SUCCESS;
+        lcp_context_h ctx = sreq->ctx;
+        lcp_unexp_ctnr_t *ctnr;
+        lcp_request_t *rreq;
+        lcp_task_h recv_task = NULL;
+
+        /* Ensure provided matching is null */
+        assume(*matched_req == NULL);
+
+        recv_task = lcp_context_task_get(ctx, sreq->send.tag.dest_tid);  
+        if (recv_task == NULL) {
+                mpc_common_errorpoint_fmt("LCP: could not find task with tid=%d", 
+                                          sreq->send.tag.dest_tid);
+
+                rc = LCP_ERROR;
+                goto err;
+        }
+
+        if (recv_task->expected_seqn[sreq->send.tag.src_tid] != sreq->seqn) {
+                mpc_common_debug_warning("LCP SELF: wrong sequence number. Expected %d, "
+                                         "got %d", recv_task->expected_seqn[sreq->send.tag.src_tid],
+                                         sreq->seqn);
+        }
+
+        /* For buffered copy, data is systematically copied to a shaddow buffer
+         * before being sent. */
+        rc = lcp_request_init_unexp_ctnr(recv_task, &ctnr, sreq->send.buffer, 
+                                         0, flags);
+        if (rc != LCP_SUCCESS) {
+                goto err;
+        }
+        ctnr->length = pack_cb(ctnr + 1, sreq);
+
+        if (ctnr->length < 0) {
+                mpc_common_debug_error("LCP SELF: could not pack data.");
+                goto err;
+        }
+
+        /* If data successfully copied, then set container pointer so it can be
+         * retrieved by caller. */
+        *ctnr_p = ctnr;
+
+	LCP_TASK_LOCK(recv_task);
+
+        recv_task->expected_seqn[sreq->send.tag.src_tid]++;
+	/* Try to match it with a posted message */
+        rreq = (lcp_request_t *)lcp_match_prq(recv_task->prq_table, 
+                                             sreq->send.tag.comm, 
+                                             sreq->send.tag.tag,
+                                             sreq->send.tag.src_tid);
+
+	/* If request is not matched */
+	if (rreq == NULL) {
+                mpc_common_debug_info("LCP: recv unexp tag src=%d, tag=%d, dest=%d, "
+                                      "length=%d, sequence=%d, req=%p", sreq->send.tag.src_tid, 
+                                      sreq->send.tag.tag, sreq->send.tag.dest_tid, 
+                                      sreq->send.length, sreq->seqn, sreq);
+
+
+		// add the request to the unexpected messages
+		lcp_append_umq(recv_task->umq_table, (void *)ctnr, 
+                               sreq->send.tag.comm, 
+                               sreq->send.tag.tag,
+                               sreq->send.tag.src_tid);
+
+		LCP_TASK_UNLOCK(recv_task);
+		return rc;
+	}
+	LCP_TASK_UNLOCK(recv_task);
+
+        /* Request has been matched so set corresponding flag so it can be
+         * completed by caller */
+        *matched_req = rreq;
+
+err:
+	return rc;
+}
+
+int lcp_send_task_zcopy(lcp_request_t *sreq, lcp_request_t **matched_req) 
+{
+        int rc = LCP_SUCCESS;
+        lcp_context_h ctx = sreq->ctx;
+        lcp_unexp_ctnr_t *ctnr;
+        lcp_request_t *rreq;
+        lcp_task_h recv_task = NULL;
+
+        /* Ensure provided matching is null */
+        assume(*matched_req == NULL);
+
+        recv_task = lcp_context_task_get(ctx, sreq->send.tag.dest_tid);
+        if (recv_task == NULL) {
+                mpc_common_errorpoint_fmt("LCP: could not find task with tid=%d", 
+                                          sreq->send.tag.dest_tid);
+
+                rc = LCP_ERROR;
+                goto err;
+        }
+
+        if (recv_task->expected_seqn[sreq->send.tag.src_tid] != sreq->seqn) {
+                mpc_common_debug_warning("LCP SELF: wrong sequence number. Expected %d, "
+                                         "got %d", recv_task->expected_seqn[sreq->send.tag.src_tid],
+                                         sreq->seqn);
+        }
+
+	LCP_TASK_LOCK(recv_task);
+
+        recv_task->expected_seqn[sreq->send.tag.src_tid]++;
+	/* Try to match it with a posted message */
+        rreq = (lcp_request_t *)lcp_match_prq(recv_task->prq_table, 
+                                             sreq->send.tag.comm, 
+                                             sreq->send.tag.tag,
+                                             sreq->send.tag.src_tid);
+
+	/* If request is not matched */
+	if (rreq == NULL) {
+                mpc_common_debug_info("LCP: recv unexp tag src=%d, tag=%d, dest=%d, "
+                                      "length=%d, sequence=%d, req=%p", sreq->send.tag.src_tid, 
+                                      sreq->send.tag.tag, sreq->send.tag.dest_tid, 
+                                      sreq->send.length, sreq->seqn, sreq);
+
+                rc = lcp_request_init_unexp_ctnr(recv_task, &ctnr, sreq->send.buffer, 
+                                                 0, LCP_RECV_CONTAINER_UNEXP_TASK_TAG_ZCOPY);
+                if (rc != LCP_SUCCESS) {
+                        goto err;
+                }
+                ctnr->length = lcp_send_task_tag_zcopy_pack(ctnr + 1, sreq);
+
+                if (ctnr->length < 0) {
+                        mpc_common_debug_error("LCP SELF: could not pack data.");
+                        goto err;
+                }
+
+		// add the request to the unexpected messages
+		lcp_append_umq(recv_task->umq_table, (void *)ctnr, 
+                               sreq->send.tag.comm, 
+                               sreq->send.tag.tag,
+                               sreq->send.tag.src_tid);
+
+		LCP_TASK_UNLOCK(recv_task);
+		return rc;
+	}
+	LCP_TASK_UNLOCK(recv_task);
+
+        /* Request has been matched so set corresponding flag so it can be
+         * completed by caller */
+        *matched_req = rreq;
+
+err:
+	return rc;
+}
 
 int lcp_am_set_handler_callback(lcp_task_h task, uint8_t am_id,
                                 void *user_arg, lcp_am_callback_t cb,
@@ -103,8 +262,8 @@ int lcp_task_create(lcp_context_h ctx, int tid, lcp_task_h *task_p)
 	mpc_common_spinlock_init(&task->task_lock, 0);
 
         /* Init memory pool of requests */
-        task->req_mp = sctk_malloc(sizeof(ck_stack_t));
-        mpc_mpool_param_t mp_req_params = {
+        task->req_mp = sctk_malloc(sizeof(mpc_mempool_t));
+        mpc_mempool_param_t mp_req_params = {
                 .alignment = MPC_SYS_CACHE_LINE_SIZE,
                 .elem_per_chunk = 512,
                 .elem_size = sizeof(lcp_request_t),
@@ -119,12 +278,15 @@ int lcp_task_create(lcp_context_h ctx, int tid, lcp_task_h *task_p)
         }
 
         /* Init memory pool of requests */
-        task->unexp_mp = sctk_malloc(sizeof(ck_stack_t));
-        mpc_mpool_param_t mp_unexp_params = {
+        task->unexp_mp = sctk_malloc(sizeof(mpc_mempool_t));
+        //FIXME: define suitable size for unexpected buffers. Could be a set of
+        //       memory pools, based on size to be copied the appropriate memory
+        //       pool would be chosen.
+        mpc_mempool_param_t mp_unexp_params = {
                 .alignment = MPC_SYS_CACHE_LINE_SIZE,
-                .elem_per_chunk = 64,
+                .elem_per_chunk = 128,
                 .elem_size = 8192,
-                .max_elems = 512,
+                .max_elems = 1024,
                 .malloc_func = sctk_malloc,
                 .free_func = sctk_free
         };
@@ -142,6 +304,13 @@ int lcp_task_create(lcp_context_h ctx, int tid, lcp_task_h *task_p)
                 goto err;
         }
         memset(task->am, 0, LCP_AM_ID_USER_MAX * sizeof(lcp_am_user_handler_t));
+
+        task->seqn          = sctk_malloc(ctx->num_tasks * sizeof(uint64_t));
+        task->expected_seqn = sctk_malloc(ctx->num_tasks * sizeof(uint64_t));
+        for (int i = 0; i < ctx->num_tasks; i++) {
+                task->seqn[i] = 0;
+                task->expected_seqn[i] = 0;
+        }
 
         /* Compute task index used in */
         task_idx = tid % ctx->num_tasks;

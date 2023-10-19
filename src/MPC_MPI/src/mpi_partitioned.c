@@ -71,7 +71,7 @@ int mpi_partitioned_complete_tag(mpc_lowcomm_request_t *req)
                 mpc_container_of(prtd, MPI_internal_request_t,
                                  partitioned);
  
-        lcp_context_task_get(ctx, mpc_common_get_task_rank(), &task);
+        task = lcp_context_task_get(ctx, mpc_common_get_task_rank());
         if (task == NULL) {
                 mpc_common_debug_fatal("LCP: task %d not fount", 
                                        mpc_common_get_task_rank());
@@ -211,7 +211,7 @@ int mpi_partitioned_complete_put_partition(mpc_lowcomm_request_t *req)
         MPI_internal_request_t *mpi_req = mpc_container_of(req, MPI_internal_request_t,
                                                            req);
 
-        lcp_context_task_get(ctx, mpc_common_get_task_rank(), &task);
+        task = lcp_context_task_get(ctx, mpc_common_get_task_rank());
         if (task == NULL) {
                 mpc_common_debug_fatal("LCP: task %d not fount", 
                                        mpc_common_get_task_rank());
@@ -408,7 +408,7 @@ int mpi_pstart(MPI_internal_request_t *req)
 
         //FIXME: 
         req->is_active = 1;
-        lcp_context_task_get(ctx, mpc_common_get_task_rank(), &task);
+        task = lcp_context_task_get(ctx, mpc_common_get_task_rank());
         if (task == NULL) {
                 mpc_common_debug_fatal("LCP: task %d not fount", 
                                        mpc_common_get_task_rank());
@@ -478,7 +478,7 @@ int mpi_pready(int partition, MPI_internal_request_t *req)
         uint64_t remote_offset;
         size_t partition_length;
 
-        lcp_context_task_get(ctx, mpc_common_get_task_rank(), &task);
+        task = lcp_context_task_get(ctx, mpc_common_get_task_rank());
         if (task == NULL) {
                 mpc_common_debug_fatal("LCP: task %d not fount", 
                                        mpc_common_get_task_rank());

@@ -34,18 +34,15 @@
 #include <mpc_common_rank.h>
 
 #include "lcp_def.h"
-#include "lcp_ep.h"
 #include "lcp_pending.h"
 #include "lcp_context.h"
 #include "mpc_common_debug.h"
-#include "mpc_common_spinlock.h"
 #include "mpc_mempool.h"
-
 
 #include <sctk_alloc.h>
 #include <string.h>
 
-static mpc_mempool *__request_mempool = NULL;
+static mpc_mempool_t *__request_mempool = NULL;
 static unsigned int __request_mempool_count = 0;
 
 void lcp_request_storage_init()
@@ -54,7 +51,7 @@ void lcp_request_storage_init()
 
 	__request_mempool_count = mpc_common_get_local_task_count();
 	assume(__request_mempool_count >= 1);
-	__request_mempool = sctk_malloc(sizeof(mpc_mempool) * __request_mempool_count);
+	__request_mempool = sctk_malloc(sizeof(mpc_mempool_t) * __request_mempool_count);
 	assume(__request_mempool != NULL);
 
 	unsigned int i = 0;
@@ -97,8 +94,8 @@ int lcp_request_create(lcp_request_t **req_p)
 		local_rank = 0;
 	}
 
-	req = mpc_mempool_alloc(&__request_mempool[local_rank]);
-	//req = (lcp_request_t *)sctk_malloc(sizeof(lcp_request_t));
+	//req = mpc_mempool_alloc(&__request_mempool[local_rank]);
+	req = (lcp_request_t *)sctk_malloc(sizeof(lcp_request_t));
 	if (req == NULL) {
 		mpc_common_debug_error("LCP: could not allocate recv request.");
 		return LCP_ERROR;
@@ -126,18 +123,21 @@ int lcp_request_init_unexp_ctnr(lcp_task_h task, lcp_unexp_ctnr_t **ctnr_p, void
 {
 	lcp_unexp_ctnr_t *ctnr;
 
-	ctnr = (lcp_unexp_ctnr_t *)mpc_mpool_pop(task->unexp_mp);
+	ctnr = lcp_container_get(task);
 	if (ctnr == NULL) {
-		mpc_common_debug_error("LCP: could not allocate recv "
-				       "container.");
+		mpc_common_debug_error("LCP: could not allocate recv container.");
 		return LCP_ERROR;
 	}
+
+        size_t elem_size = mpc_mpool_get_elem_size(task->unexp_mp);
+        assert(sizeof(lcp_unexp_ctnr_t) + length < elem_size);
 
 	ctnr->length = length;
 	ctnr->flags  = 0;
 	ctnr->flags |= flags;
 
-	memcpy(ctnr + 1, data, length);
+        //NOTE: check the standard but data could be NULL and length equal to 0.
+        memcpy(ctnr + 1, data, length);
 
 	*ctnr_p = ctnr;
 	return LCP_SUCCESS;

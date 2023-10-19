@@ -29,19 +29,17 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#include "bitmap.h"
 #include "lcp.h"
 
 #include "lcp/lcp_ep.h"
-#include "lcp_context.h"
-#include "lcp_task.h"
 #include "lcp_def.h"
 #include "lcp_prototypes.h"
 #include "lcp_request.h"
 #include "lcp_mem.h"
 
+#include <bitmap.h>
+
 #include "mpc_common_debug.h"
-#include "sctk_alloc.h"
 
 /**
  * @brief Copy buffer from argument request to destination
@@ -94,14 +92,15 @@ int lcp_rma_put_bcopy(lcp_request_t *req)
                                              req->send.rma.remote_addr,
                                              &req->send.rma.rkey->mems[cc]);
 
-	//FIXME: handle error
 	if (payload_size < 0) {
 		mpc_common_debug_error("LCP: error packing bcopy.");
 		rc = LCP_ERROR;
+                goto err;
 	}
 
         lcp_request_complete(req);
 
+err:
         return rc;
 }
 
@@ -178,7 +177,7 @@ static inline int lcp_rma_put_start(lcp_ep_h ep, lcp_request_t *req)
         if (req->send.length <= ep->ep_config.rma.max_put_bcopy) {
                 req->send.func = lcp_rma_put_bcopy;
         } else if (req->send.length <= ep->ep_config.rma.max_put_zcopy) {
-                //FIXME: Non contiguous datatype not supported for zcopy put
+                //NOTE: Non contiguous datatype not supported for zcopy put
                 assert(req->datatype == LCP_DATATYPE_CONTIGUOUS);
                 req->send.func = lcp_rma_put_zcopy;
         }

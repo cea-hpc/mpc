@@ -50,7 +50,7 @@ typedef struct lcp_tag_hdr {
 	int32_t  src_tid;  /* source task identifier         */
 	int32_t  dest_tid; /* destination process identifier */
 	int32_t  tag;      /* tag                            */
-	int16_t  seqn;     /* message sequence number        */
+	uint16_t seqn;     /* message sequence number        */
 	uint16_t comm;     /* communicator identifier        */
 } lcp_tag_hdr_t;
 

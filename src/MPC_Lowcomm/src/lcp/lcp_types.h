@@ -33,8 +33,6 @@
 #define LCP_TYPES_H
 
 #include <stdint.h>
-#include "bitmap.h"
-#include "queue.h"
 #include <sys/uio.h> //iovec
 
 /* Config */

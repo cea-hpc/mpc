@@ -23,13 +23,10 @@
 /* ######################################################################## */
 
 #include <mpc_common_debug.h>
-#include "msg_cpy.h"
 #include <sctk_alloc.h> 
 
 
 #include "lcp_pending.h"
-#include "lcp_context.h"
-#include "lcp_request.h"
 #include "uthash.h"
 
 

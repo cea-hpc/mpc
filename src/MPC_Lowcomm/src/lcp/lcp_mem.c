@@ -31,18 +31,16 @@
 
 #include "lcp_mem.h"
 
-#include "bitmap.h"
-
 #include <mpc_common_datastructure.h>
 
 #include "lcp_context.h"
 #include "lcp_def.h"
 #include "mpc_common_debug.h"
 #include "mpc_common_spinlock.h"
-#include "mpc_lowcomm_types.h"
 #include <sctk_alloc.h>
 #include <rail.h>
 #include <stdint.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>

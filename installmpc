@@ -1163,13 +1163,13 @@ You may track issued commands using the "-v" flag.
   --disable-fortran                       : Disable fortran
   --disable-hydra                         : Disable Hydra
   --disable-romio                         : Disable ROMIO MPI-IO support
+  --enable-ck                             : Enable Concurrency-Kit (spack only) 
   --{enable,disable}-gdb                  : Enable/Disable gdb
   --{enable,disable}-tbb                  : Enable/Disable TBB
 
 # Specify system subpackages
   --with-mpc-comp=*                       : Specify mpc compiler additions prefix on the system
   --with-openpa=*                         : Specify openpa prefix on the system
-  --with-concurrency-kit=*                : Specify concurrency-kit prefix on the system
   --with-hwloc=*                          : Specify hwloc prefix on the system
   --with-cuda=*                           : Specify Cuda prefix on the system
   --with-openacc=*                        : Specify OpenACC prefix on the system (NIMPL)
@@ -1201,7 +1201,6 @@ You may track issued commands using the "-v" flag.
   --mpc-comp=*                            : Add options to mpc-compiler-additions' configure
   --gdb=*                                 : Add options to gdb configure
   --openpa=*                              : Add options to openpa configure
-  --concurrency-kit=*                     : Add options to concurrency-kit configure
   --hydra=*                               : Add options to Hydra configure
   --hwloc=*                               : Add options to hwloc configure
   --mpcalloc=*                            : Add options to MPCALLOC configure
@@ -1235,6 +1234,8 @@ OFI_PREFIX=""
 MPC_DMTCP_PREFIX="disabled"
 MPC_GDB_PREFIX='disabled'
 TBB_PREFIX="disabled"
+# Concurrency Kit disabled by default
+CK_PREFIX="disabled"
 
 # Empty means mpc-compiler-additions's default
 GCC_VERSION=""
@@ -1281,13 +1282,6 @@ do
 			;;
 		--openpa=*)
 			extractAndAddPackageOption 'OPENPA_BUILD_PARAMETERS' 'openpa=' "$arg"
-			;;
-		#################### OPENPA #################
-		--with-concurrency-kit=*)
-			extractParamValue 'LIBCK_PREFIX' 'with-concurrency-kit' "$arg"
-			;;
-		--concurrency-kit=*)
-			extractAndAddPackageOption 'LIBCK_BUILD_PARAMETERS' 'concurrency-kit=' "$arg"
 			;;
 		################### MPC GDB #################
 		--with-gdb=*)
@@ -1366,6 +1360,11 @@ do
 			;;
 		--disable-ofi|--disable-libfabric)
 			OFI_PREFIX="disabled"
+			;;
+		#################### Concurrency Kit #################
+		--enable-ck)
+			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --enable-ck"
+            CK_PREFIX="enabled"
 			;;
 		--ofi=*)
 			extractAndAddPackageOption 'OFI_BUILD_PARAMETERS' 'ofi=' "$arg"
@@ -1634,11 +1633,9 @@ if test "x${DEP_FOUND}" = "xno"; then
 	build_configure_based_package "openpa" "$(package_version "openpa")" "$OPENPA_BUILD_PARAMETERS"
 fi
 
-find_in_prefix_or_use_spack "concurrency-kit" "$(package_version "concurrency-kit")" "${LIBCK_PREFIX}"
-
-if test "x${DEP_FOUND}" = "xno"; then
-	# Could not use spack now installing manually
-	build_configure_based_package "concurrency-kit" "$(package_version "concurrency-kit")" "$LIBCK_BUILD_PARAMETERS"
+# Concurrency Kit only available through spack
+if test "x${CK_PREFIX}" = "xenabled"; then
+    find_in_prefix_or_use_spack "concurrency-kit" "$(package_version "concurrency-kit")" "${CK_PREFIX}"
 fi
 
 find_in_prefix_or_use_spack "hwloc" "$(package_version "hwloc")" "${HWLOC_PREFIX}"

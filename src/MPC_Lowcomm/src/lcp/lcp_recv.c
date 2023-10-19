@@ -36,10 +36,8 @@
 #include "lcp_tag_offload.h"
 #include "lcp_rndv.h"
 #include "lcp_task.h"
-#include "mpc_mempool.h"
 
 #include "mpc_common_debug.h"
-#include "lcp_tag.h"
 
 int lcp_tag_recv_nb(lcp_task_h task, void *buffer, size_t count, 
                     mpc_lowcomm_request_t *request,
@@ -76,9 +74,9 @@ int lcp_tag_recv_nb(lcp_task_h task, void *buffer, size_t count,
 	}
 
         mpc_common_debug_info("LCP: post recv am comm=%d, src=%d, tag=%d, "
-                              "length=%d, buf=%p, req=%p",
+                              "length=%d, buf=%p, req=%p, lcreq=%p",
                               req->recv.tag.comm, req->recv.tag.src_tid, 
-                              req->recv.tag.tag, count, buffer, req);
+                              req->recv.tag.tag, count, buffer, req, request);
 
         req->state.offloaded = 0;
 
@@ -99,6 +97,7 @@ int lcp_tag_recv_nb(lcp_task_h task, void *buffer, size_t count,
 
 	LCP_TASK_UNLOCK(task);
 
+        /* Get pointer to payload */
 	if (match->flags & LCP_RECV_CONTAINER_UNEXP_RNDV_TAG) {
 		mpc_common_debug_info("LCP: matched rndv unexp req=%p, flags=%x", 
 				      match, match->flags);
@@ -107,31 +106,94 @@ int lcp_tag_recv_nb(lcp_task_h task, void *buffer, size_t count,
                 rc = lcp_rndv_process_rts(req, match + 1,
                                           match->length - sizeof(lcp_rndv_hdr_t));
 
-	} else if (match->flags & LCP_RECV_CONTAINER_UNEXP_EAGER_TAG) {
-                size_t data_length;
-                void *data_ptr;
-                /* If synchronization was asked, send ack message */
-		if(match->flags & LCP_RECV_CONTAINER_UNEXP_EAGER_TAG_SYNC) {
-			lcp_send_eager_sync_ack(req, match + 1);
-                        data_ptr    = (lcp_tag_sync_hdr_t *)(match + 1) + 1;
-                        data_length = match->length - sizeof(lcp_tag_sync_hdr_t);
-                } else {
-                        data_ptr    = (lcp_tag_hdr_t *)(match + 1) + 1;
-                        data_length = match->length - sizeof(lcp_tag_hdr_t);
+                if (rc != LCP_SUCCESS) {
+                        mpc_common_debug_error("LCP: could not process rts.");
                 }
+	} else if (match->flags & (LCP_RECV_CONTAINER_UNEXP_EAGER_TAG |
+                                   LCP_RECV_CONTAINER_UNEXP_TASK_TAG_BCOPY)) {
 
-                rc = lcp_recv_eager_tag_data(req, match + 1, data_ptr, data_length);
+		mpc_common_debug_info("LCP: matched eager bcopy unexp req=%p, flags=%x", 
+				      match, match->flags);
+
+                lcp_tag_hdr_t *hdr = (lcp_tag_hdr_t *)(match + 1);
+
+                /* Init tag info */
+                struct lcp_tag_data tag_data = {
+                        .length   = match->length - sizeof(lcp_tag_hdr_t),
+                        .src_tid  = hdr->src_tid,
+                        .dest_tid = hdr->dest_tid,
+                        .comm     = hdr->comm,
+                        .tag      = hdr->tag,
+                        .seqn     = hdr->seqn
+                };
+                        
+                rc = lcp_recv_eager_tag_data(req, &tag_data, hdr + 1, tag_data.length);
 
                 if (rc != LCP_SUCCESS) {
                         mpc_common_debug_error("LCP: could not unpack unexpected "
-                                               "data.");
+                                               "bcopy eager data.");
                 }
-	} else {
+	} else if (match->flags & (LCP_RECV_CONTAINER_UNEXP_EAGER_TAG_SYNC |
+                                   LCP_RECV_CONTAINER_UNEXP_TASK_TAG_SYNC  |
+                                   LCP_RECV_CONTAINER_UNEXP_TASK_TAG_ZCOPY)) {
+		mpc_common_debug_info("LCP: matched eager zcopy unexp req=%p, flags=%x", 
+				      match, match->flags);
+                void *data;
+                size_t length;
+                lcp_request_t *sreq = NULL;
+                lcp_tag_sync_hdr_t *hdr = (lcp_tag_sync_hdr_t *)(match + 1);
+
+                /* Ack was requested, send it for inter-process communications. */
+                if (match->flags & LCP_RECV_CONTAINER_UNEXP_EAGER_TAG_SYNC) {
+                        rc = lcp_send_eager_sync_ack(req, hdr);
+                        if (rc != LCP_SUCCESS) {
+                                mpc_common_debug_error("LCP: could not send ack.");
+                        }
+                }
+
+                if (match->flags & (LCP_RECV_CONTAINER_UNEXP_EAGER_TAG_SYNC |
+                                    LCP_RECV_CONTAINER_UNEXP_TASK_TAG_SYNC)) {
+                        /* Data pointer from eager protocol is after hdr. */
+                        data = (void *)(hdr + 1);
+                        length = match->length - sizeof(lcp_tag_sync_hdr_t);
+                } else {
+                        /* Data pointer from task zcopy protocol is in send buffer. */
+                        sreq = (lcp_request_t *)hdr->msg_id;
+                        data = sreq->send.buffer;
+                        length = sreq->send.length;
+                }
+
+                /* Init tag info */
+                struct lcp_tag_data tag_data = {
+                        .length   = length,
+                        .src_tid  = hdr->base.src_tid,
+                        .dest_tid = hdr->base.dest_tid,
+                        .tag      = hdr->base.tag,
+                        .seqn     = hdr->base.seqn,
+                        .comm     = hdr->base.comm 
+                };
+                        
+                /* Complete the receive request */
+                rc = lcp_recv_eager_tag_data(req, &tag_data, data, length);
+
+                if (rc != LCP_SUCCESS) {
+                        mpc_common_debug_error("LCP: could not unpack unexpected "
+                                               "sync eager data.");
+                }
+                
+                /* Complete the send request for TASK_TAG_ZCOPY, see
+                 * lcp_send_self_tag_zcopy */
+                if (match->flags & LCP_RECV_CONTAINER_UNEXP_TASK_TAG_ZCOPY) {
+                        sreq->flags |= LCP_REQUEST_REMOTE_COMPLETED;
+                        sreq->state.comp.comp_cb(&(sreq->state.comp));
+                }
+        } else {
 		mpc_common_debug_error("LCP: unkown match flag=%x.", match->flags);
 		rc = LCP_ERROR;
 	}
 
-        mpc_mpool_push(match);
+        /* Data has been copied out, so container can be released */
+        lcp_container_put(match);
 
 	return rc;
 }

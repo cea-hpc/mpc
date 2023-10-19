@@ -17,8 +17,8 @@ static char  __set_dir[512]        = { 0 };
 static short __set_dir_initialized = 0;
 
 
-#define __UID_WIDTH     8 
-#define __RANK_WIDTH    8 
+#define __UID_WIDTH     20
+#define __RANK_WIDTH    12
 
 typedef union
 {
@@ -346,11 +346,11 @@ static inline int32_t __get_free_rank_slot(__set_uid_t *set_id, char *uri)
 	return 0;
 }
 
-mpc_lowcomm_set_uid_t _mpc_lowcomm_uid_new(char *rank_zero_uri)
+uint32_t _mpc_lowcomm_uid_new(char *rank_zero_uri)
 {
 	__set_uid_t set_id = { 0 };
 
-	//assume(sizeof(set_id.members) == sizeof(set_id.value) );
+	assume(sizeof(set_id.members) == sizeof(set_id.value) );
 
 
 	if(__get_free_rank_slot(&set_id, rank_zero_uri) != 0)

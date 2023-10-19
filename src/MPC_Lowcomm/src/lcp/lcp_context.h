@@ -37,10 +37,8 @@
 #include "lcr/lcr_def.h"
 #include "lcp_types.h"
 #include "lcp_pending.h"
-#include "lcp_types.h"
-#include "uthash.h"
-#include "opa_primitives.h"
 #include <mpc_common_datastructure.h>
+#include <queue.h>
 
 #define LCP_CONTEXT_LOCK(_ctx) \
 	mpc_common_spinlock_lock_yield(&( (_ctx)->ctx_lock) )
@@ -71,16 +69,12 @@ extern lcp_am_handler_t lcp_am_handlers[];
  */
 typedef struct lcp_ep_ctx
 {
-	UT_hash_handle hh;
-
 	uint64_t       ep_key;
 	lcp_ep_h       ep;
 } lcp_ep_ctx_t;
 
 typedef struct lcp_match_ctx
 {
-	UT_hash_handle hh;
-
 	int            muid_key;
 	lcp_request_t *req;
 } lcp_match_ctx_t;

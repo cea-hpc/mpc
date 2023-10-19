@@ -35,7 +35,6 @@
 #include "lcp_task.h"
 #include "lcp_tag_matching.h"
 #include "lcp_tag_offload.h"
-#include "lcp_prototypes.h"
 #include "lcp_request.h"
 #include "lcp_header.h"
 
@@ -58,12 +57,22 @@ int lcp_tag_probe_nb(lcp_task_h task, const int src,
         LCP_TASK_LOCK(task);
         match = lcp_search_umq(task->umq_table, (uint16_t)comm, tag, src);
         if (match != NULL) {
-                if (match->flags & LCP_RECV_CONTAINER_UNEXP_EAGER_TAG) {
+                if (match->flags & (LCP_RECV_CONTAINER_UNEXP_EAGER_TAG |
+                                    LCP_RECV_CONTAINER_UNEXP_TASK_TAG_BCOPY)) {
                         lcp_tag_hdr_t *hdr = (lcp_tag_hdr_t *)(match + 1);
                         
                         recv_info->tag    = hdr->tag;
                         recv_info->length = match->length - sizeof(lcp_tag_hdr_t);
                         recv_info->src    = hdr->src_tid;
+
+                } else if (match->flags & (LCP_RECV_CONTAINER_UNEXP_EAGER_TAG_SYNC |
+                                           LCP_RECV_CONTAINER_UNEXP_TASK_TAG_ZCOPY | 
+                                           LCP_RECV_CONTAINER_UNEXP_TASK_TAG_SYNC) ) {
+                        lcp_tag_sync_hdr_t *hdr = (lcp_tag_sync_hdr_t *)(match + 1);
+                        
+                        recv_info->tag    = hdr->base.tag;
+                        recv_info->length = match->length - sizeof(lcp_tag_sync_hdr_t);
+                        recv_info->src    = hdr->base.src_tid;
 
                 } else if (match->flags & LCP_RECV_CONTAINER_UNEXP_RNDV_TAG) {
                         lcp_rndv_hdr_t *hdr = (lcp_rndv_hdr_t *)(match + 1);

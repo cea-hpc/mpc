@@ -8,18 +8,6 @@
 
 #define LCP_BIT(i) (1ul << (i))
 
-#define mpc_padding(_n, _alignment) \
-        ( ((_alignment) - ((_n) % (_alignment))) % (_alignment) )
-
-#define mpc_is_pow2(_n) \
-        (((_n) > 0) && !((_n) & ((_n) - 1)))
-
-#define mpc_align_down_pow2(_n, _alignment) \
-        ( (_n) & ~((_alignment) - 1) ) 
-
-#define mpc_align_up_pow2(_n, _alignment) \
-        mpc_align_down_pow2( (_n) + (_alignment) - 1, _alignment)
-
 //FIXME: redefine unicity
 #define MPC_PP_UNIQUE_ID __LINE__
 
@@ -38,9 +26,6 @@
 	 const typeof( ((type *)0)->member ) *__mptr = (ptr); \
 	 (type *)( (char *)__mptr - offsetof(type,member) ); \
 	 })
-
-#define LCP_MIN(a,b) ((a) < (b) ? (a) : (b))
-#define LCP_MAX(a,b) ((a) < (b) ? (b) : (a))
 
 void rand_seed_init(void);
 uint64_t lcp_rand_uint64(void);

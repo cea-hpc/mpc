@@ -33,23 +33,21 @@
 #define LCP_REQUEST_H
 
 #include "lcp_def.h"
-#include "lcp_types.h"
 
 #include "lcp.h"
 //FIXME: try to remove lcp_ep.h. Currently needed to make progress on
 //       endpoint connection.
 #include "lcp_ep.h"
+//FIXME: rail.h is needed here for lcr_tag_context_t struct in request.
+//       See if we could use a pointer instead to avoid including rail.
+#include "rail.h"
 #include "lcp_context.h"
-#include "lcp_header.h"
-#include "lcp_pending.h"
 #include "mpc_mempool.h"
 #include "lcp_task.h"
 
-#include "rail.h"
-
 #include <sctk_alloc.h>
 
-//FIXME: LCP_REQUEST prefix confusing with those defined in lcp.h
+//TODO: LCP_REQUEST prefix confusing with those defined in lcp.h
 enum {
 	LCP_REQUEST_RECV_TRUNC          = LCP_BIT(1), /* flags if request is truncated */
         LCP_REQUEST_MPI_COMPLETE        = LCP_BIT(2), /* call MPI level completion callback, 
@@ -61,18 +59,24 @@ enum {
         LCP_REQUEST_USER_COMPLETE       = LCP_BIT(7),
 };
 
+//TODO: rename "unexpected container" to "receive descriptor". It was initially
+//      used only for receiving unexpected data but it was then extended to
+//      receive data for inter-thread communication.
 enum {
 	LCP_RECV_CONTAINER_UNEXP_RNDV_TAG       = LCP_BIT(0),
 	LCP_RECV_CONTAINER_UNEXP_EAGER_TAG      = LCP_BIT(1),
 	LCP_RECV_CONTAINER_UNEXP_EAGER_TAG_SYNC = LCP_BIT(2),
 	LCP_RECV_CONTAINER_UNEXP_RNDV_AM        = LCP_BIT(3),
+	LCP_RECV_CONTAINER_UNEXP_TASK_TAG_BCOPY = LCP_BIT(4),
+	LCP_RECV_CONTAINER_UNEXP_TASK_TAG_SYNC  = LCP_BIT(5),
+	LCP_RECV_CONTAINER_UNEXP_TASK_TAG_ZCOPY = LCP_BIT(6),
 };
 
 /* Store data for unexpected am messages
  * Data is stored after (at lcp_unexp_cntr + 1)
  */
 struct lcp_unexp_ctnr {
-	size_t length;
+	ssize_t length;
 	unsigned flags;
 };
 
@@ -162,7 +166,7 @@ struct lcp_request {
 	mpc_lowcomm_request_t *request;   /* Upper layer request */
         lcp_tag_recv_info_t   *info;
         void                  *user_data;
-	int16_t                seqn;      /* Sequence number */
+	uint16_t                seqn;      /* Sequence number */
 	uint64_t               msg_id;    /* Unique message identifier */
         struct lcp_request    *super;     /* master request */
         struct lcp_request    *rndv_req;  /* rndv request */
@@ -184,7 +188,7 @@ struct lcp_request {
 };
 
 #define LCP_REQUEST_INIT_TAG_SEND(_req, _ctx, _task, _mpi_req, _info, _length, \
-                                  _ep, _buf, _seqn, _dt) \
+                                  _ep, _buf, _seqn, _dt, _is_sync) \
 { \
 	(_req)->request           = _mpi_req;                                \
         (_req)->send.tag.src_tid  = (_mpi_req)->header.source_task;          \
@@ -199,6 +203,7 @@ struct lcp_request {
 	(_req)->task              = _task;                                   \
 	(_req)->msg_id            = (uint64_t)(_req);                        \
 	(_req)->datatype          = _dt;                                     \
+	(_req)->is_sync           = _is_sync;                                \
 	\
 	(_req)->send.buffer       = _buf;                                    \
 	(_req)->send.ep           = _ep;                                     \
@@ -295,7 +300,6 @@ struct lcp_request {
         _msg_id  = (_msg_id << 32);                 \
         _msg_id |= (_seqn & 0xffffffffull);
 
-#define LCP_REQUEST_INVALID 0
 #define lcp_request_get(_task) \
         ({ \
                 lcp_request_t *__req = mpc_mpool_pop((_task)->req_mp); \
@@ -308,9 +312,26 @@ struct lcp_request {
 #define lcp_request_put(_req) \
         mpc_mpool_push(_req); 
 
+#define lcp_container_get(_task) \
+        ({ \
+                lcp_unexp_ctnr_t *__ctnr = mpc_mpool_pop((_task)->unexp_mp); \
+                if (__ctnr != NULL) { \
+                        lcp_container_reset(__ctnr); \
+                } \
+                __ctnr; \
+         }) 
+
+#define lcp_container_put(_ctnr) \
+        mpc_mpool_push(_ctnr); 
+
 static inline void lcp_request_reset(lcp_request_t *req) 
 {
         req->flags = 0;
+}
+
+static inline void lcp_container_reset(lcp_unexp_ctnr_t *ctnr) 
+{
+        ctnr->flags = 0;
 }
 
 static inline void lcp_request_init_rma_put(lcp_request_t *req, 
@@ -341,6 +362,7 @@ static inline int lcp_request_send(lcp_request_t *req)
         case LCP_SUCCESS:
                 break;
         case MPC_LOWCOMM_NO_RESOURCE:
+                //TODO: implement thread-safe pending queue
                 mpc_queue_push(&req->ctx->pending_queue, &req->queue);
                 break;
         case LCP_ERROR:
@@ -361,5 +383,6 @@ int lcp_request_create(lcp_request_t **req_p);
 int lcp_request_complete(lcp_request_t *req);
 int lcp_request_init_unexp_ctnr(lcp_task_h task, lcp_unexp_ctnr_t **ctnr_p, void *data, 
 				size_t length, unsigned flags);
+void *lcp_request_get_unexp_ctnr_payload(lcp_unexp_ctnr_t *ctnr);
 
 #endif

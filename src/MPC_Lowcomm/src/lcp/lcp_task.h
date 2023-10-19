@@ -33,6 +33,7 @@
 #define LCP_TASK_H
 
 #include "lcp_def.h"
+#include "lcr/lcr_def.h"
 
 #include "lcp_tag_matching.h"
 #include "mpc_mempool.h"
@@ -43,8 +44,8 @@
 	mpc_common_spinlock_unlock(&((_task)->task_lock))
 
 typedef struct lcp_am_user_handler {
-        lcp_am_callback_t cb;
-        void *user_arg;
+        lcp_am_callback_t cb; /* User defined callback */
+        void *user_arg; /* User data */
         uint64_t flags;
 } lcp_am_user_handler_t;
 
@@ -55,17 +56,26 @@ struct lcp_task {
 
         mpc_common_spinlock_t task_lock;
 
-        //FIXME: pointer not needed
-        //FIXME: table lock not needed
 	lcp_prq_match_table_t *prq_table; /* Posted Receive Queue */
 	lcp_umq_match_table_t *umq_table; /* Unexpected Message Queue */
 
         lcp_am_user_handler_t *am; /* Table of user AM callbacks */
 
-        mpc_mpool_t *req_mp;   /* Request memory pool */
-        mpc_mpool_t *unexp_mp; /* Unexpected memory pool */
+        //TODO: investigate the bug when memory pools are not allocated
+        //      dynamically with Concurrency Kit
+        mpc_mempool_t *req_mp;   /* Request memory pool */
+        mpc_mempool_t *unexp_mp; /* Unexpected memory pool */
+
+        //TODO: implement reordering.
+        uint16_t *seqn;
+        uint16_t *expected_seqn;
 };
 
+/* Function for sending data between two tasks */
+int lcp_send_task_bcopy(lcp_request_t *req, lcp_request_t **matched_req, 
+                        lcr_pack_callback_t pack_cb, unsigned flags,
+                        lcp_unexp_ctnr_t **ctnr_p);
+int lcp_send_task_zcopy(lcp_request_t *req, lcp_request_t **matched_req);
 int lcp_task_fini(lcp_task_h task);
 
 #endif

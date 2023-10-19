@@ -10,10 +10,10 @@
 #include <sctk_alloc.h>
 
 #include <stdint.h>
-#include <utlist.h>
 
 #include <lcr/lcr_component.h>
 
+#if 0
 typedef struct lcr_tbsm_pkg {
         uint8_t             am_id; /* active message id */
         size_t              size;
@@ -154,8 +154,8 @@ static inline int lcr_tbsm_invoke_am(sctk_rail_info_t *rail,
 
 	return rc;
 }
+#endif
 
-int lcr_tbsm_iface_progress(sctk_rail_info_t *rail);
 void lcr_tbsm_connect_on_demand(sctk_rail_info_t *rail, uint64_t uid)
 {
 	_mpc_lowcomm_tbsm_rail_info_t *tbsm_info = &(rail->network.tbsm);
@@ -171,6 +171,7 @@ void lcr_tbsm_connect_on_demand(sctk_rail_info_t *rail, uint64_t uid)
                         return;
                 }
 
+#if 0
                 /* Acquire queue index in pool */
                 mpc_common_spinlock_lock(&(tbsm_info->conn_lock));
                 int queue_index = tbsm_info->nb_queues;
@@ -182,8 +183,6 @@ void lcr_tbsm_connect_on_demand(sctk_rail_info_t *rail, uint64_t uid)
                         goto err;
                 }
                 /* Init endpoint common data */
-                _mpc_lowcomm_endpoint_init(ep, uid, rail, 
-                                           _MPC_LOWCOMM_ENDPOINT_DYNAMIC);
 
                 /* Acquire one queue from pool */
                 ep->data.tbsm.tx = &(tbsm_info->queues[queue_index]);
@@ -192,6 +191,10 @@ void lcr_tbsm_connect_on_demand(sctk_rail_info_t *rail, uint64_t uid)
                 //      so that no progress if nb_queues is 0
                 tbsm_info->nb_queues++;
                 mpc_common_spinlock_unlock(&(tbsm_info->conn_lock));
+#endif
+                
+                _mpc_lowcomm_endpoint_init(ep, uid, rail, 
+                                           _MPC_LOWCOMM_ENDPOINT_DYNAMIC);
 
                 /* Append endpoint to table */
                 sctk_rail_add_dynamic_route(rail, ep);
@@ -199,10 +202,11 @@ void lcr_tbsm_connect_on_demand(sctk_rail_info_t *rail, uint64_t uid)
                 /* Make sure the route is flagged connected */
                 _mpc_lowcomm_endpoint_set_state(ep, _MPC_LOWCOMM_ENDPOINT_CONNECTED);
         }
-err:
+
         return;
 }
 
+#if 0
 int lcr_tbsm_iface_progress(sctk_rail_info_t *rail)
 {
         int rc = MPC_LOWCOMM_SUCCESS;
@@ -248,6 +252,8 @@ err:
         return rc;
 }
 
+#endif
+
 //TODO: write finalize function...
 
 int lcr_tbsm_get_attr(sctk_rail_info_t *rail,
@@ -255,20 +261,20 @@ int lcr_tbsm_get_attr(sctk_rail_info_t *rail,
 {
         _mpc_lowcomm_tbsm_rail_info_t *tbsm_iface = &(rail->network.tbsm);
 
+        //NOTE: This should already include the payload necessary for sending
+        //      data by the current rail (header added by the transport layer
+        //      for example).
         attr->iface.cap.am.max_iovecs = 6; //FIXME: arbitrary value...
-        attr->iface.cap.am.max_bcopy  = tbsm_iface->eager_limit;
-        //FIXME: no support for zcopy since data has to be passed as a 
-        //       single buffer through the am callback. For zero copy, we 
-        //       use rndv.
-        attr->iface.cap.am.max_zcopy  = 0;
+        attr->iface.cap.am.max_bcopy  = 0;
+        attr->iface.cap.am.max_zcopy  = tbsm_iface->max_msg_size;
 
         attr->iface.cap.tag.max_bcopy  = 0; /* No tag-matching capabilities */
         attr->iface.cap.tag.max_zcopy  = 0; /* No tag-matching capabilities */
         attr->iface.cap.tag.max_iovecs = 0; /* No tag-matching capabilities */
 
-        attr->iface.cap.rndv.max_put_zcopy = tbsm_iface->max_msg_size;
-        attr->iface.cap.rndv.max_get_zcopy = tbsm_iface->max_msg_size;
-        attr->iface.cap.rndv.min_frag_size = tbsm_iface->max_msg_size;
+        attr->iface.cap.rndv.max_put_zcopy = 0; /* No rendez-vous for tbsm comm */
+        attr->iface.cap.rndv.max_get_zcopy = 0; /* No rendez-vous for tbsm comm */
+        attr->iface.cap.rndv.min_frag_size = 0; /* No rendez-vous for tbsm comm */
 
         return MPC_LOWCOMM_SUCCESS;
 }
@@ -280,7 +286,6 @@ int lcr_tbsm_is_reachable(sctk_rail_info_t *rail, uint64_t uid) {
                 (mpc_lowcomm_peer_get_rank(uid) == mpc_lowcomm_peer_get_rank(my_uid));
 }
 
-
 int lcr_tbsm_iface_init(sctk_rail_info_t *iface)
 {
         int rc = MPC_LOWCOMM_SUCCESS;
@@ -289,8 +294,17 @@ int lcr_tbsm_iface_init(sctk_rail_info_t *iface)
                 iface->runtime_config_driver_config->driver.value.tbsm;
          
         /* Init queuing mecanism */
-        mpc_common_spinlock_init(&(tbsm_iface->poll_lock), 0);
         mpc_common_spinlock_init(&(tbsm_iface->conn_lock), 0);
+
+        /* Init capabilities */
+        iface->cap = 0;
+
+        tbsm_iface->bcopy_buf_size = tbsm_info.bcopy_buf_size;
+        tbsm_iface->eager_limit    = tbsm_info.eager_limit;
+        tbsm_iface->max_msg_size   = tbsm_info.max_msg_size;
+
+#if 0
+        mpc_common_spinlock_init(&(tbsm_iface->poll_lock), 0);
         for (int i = 0; i < LCR_TBSM_MAX_QUEUES; i++) {
                 tbsm_iface->queues[i].ck_queue = sctk_malloc(sizeof(ck_fifo_mpmc_t));
                 ck_fifo_mpmc_init(tbsm_iface->queues[i].ck_queue, &tbsm_iface->queues[i].stub);
@@ -308,13 +322,6 @@ int lcr_tbsm_iface_init(sctk_rail_info_t *iface)
         };
         mpc_mpool_init(&tbsm_iface->pkg_mp, &mp_pkg_params);  
 
-        /* Init capabilities */
-        iface->cap = LCR_IFACE_CAP_SELF | LCR_IFACE_CAP_RMA;
-
-        tbsm_iface->bcopy_buf_size = tbsm_info.bcopy_buf_size;
-        tbsm_iface->eager_limit    = tbsm_info.eager_limit;
-        tbsm_iface->max_msg_size   = tbsm_info.max_msg_size;
-
         /* Endpoint functions */
         iface->send_am_bcopy = lcr_tbsm_send_am_bcopy;
         iface->put_zcopy     = lcr_tbsm_send_put_zcopy;
@@ -325,11 +332,14 @@ int lcr_tbsm_iface_init(sctk_rail_info_t *iface)
         iface->iface_unpack_memp  = lcr_tbsm_unpack_rkey; 
         iface->rail_pin_region    = lcr_tbsm_mem_register;
         iface->rail_unpin_region  = lcr_tbsm_mem_unregister;
-        iface->iface_get_attr     = lcr_tbsm_get_attr;
-        iface->iface_progress     = lcr_tbsm_iface_progress;
+#endif
+
+        //FIXME: set progress function to null since all communication are down
+        //       within LCP, see lcp_self.c
+        iface->iface_progress     = NULL;
         iface->connect_on_demand  = lcr_tbsm_connect_on_demand;
         iface->iface_is_reachable = lcr_tbsm_is_reachable;
-
+        iface->iface_get_attr     = lcr_tbsm_get_attr;
         return rc;
 }
 
@@ -383,6 +393,12 @@ int lcr_tbsm_iface_open(__UNUSED__ const char *device_name, int id,
 err:
         return rc;
 }
+
+//NOTE: Thread-based Shared Memory component is still present as it could be
+//      preferable to keep some of the lcp semantic that requires an actual
+//      interface:
+//      - endpoint creation: for lcp_ep_get for example, use of interface
+//      capabilities and thresholds (eager, bcopy, zcopy).
 
 lcr_component_t tbsm_component = {
         .name = { "tbsm" },

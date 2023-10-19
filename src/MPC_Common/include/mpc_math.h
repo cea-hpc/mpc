@@ -29,68 +29,22 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#include "lcp_def.h"
-#include "lcp.h"
-#include "lcp_context.h"
-#include "lcp_request.h"
+#ifndef MPC_MATH_H
+#define MPC_MATH_H
 
-#include <string.h>
+#define mpc_padding(_n, _alignment) \
+        ( ((_alignment) - ((_n) % (_alignment))) % (_alignment) )
 
-int lcp_datatype_pack(lcp_context_h ctx, lcp_request_t *req, 
-                      lcp_datatype_t datatype, void *dest, 
-                      const void *src, size_t length)
-{
-        size_t packed_len = 0;
-        if (!length) {
-                return length;
-        }
+#define mpc_is_pow2(_n) \
+        (((_n) > 0) && !((_n) & ((_n) - 1)))
 
-        switch (datatype) {
-        case LCP_DATATYPE_CONTIGUOUS:
-                assert(src);
-                memcpy(dest, src, length); 
-                packed_len = length;
-                break;
-        case LCP_DATATYPE_DERIVED:
-                ctx->dt_ops.pack(req->request, dest);
-                //FIXME: verify packed length
-                packed_len = length;
-                break;
-        default:
-                mpc_common_debug_error("LCP: unknown datatype");
-                packed_len = -1;
-                break;
-        }
-        
-        return packed_len;
-}
+#define mpc_align_down_pow2(_n, _alignment) \
+        ( (_n) & ~((_alignment) - 1) ) 
 
-//FIXME: Ambiguity because for DERIVED, dest argument could have any value set
-//       by the calling function which would not have any impact.
-//       This is not readable...
-int lcp_datatype_unpack(lcp_context_h ctx, lcp_request_t *req, 
-                        lcp_datatype_t datatype, void *dest, 
-                        const void *src, size_t length)
-{
-        size_t unpacked_len = 0;
-        if (!length) {
-                return length;
-        }
+#define mpc_align_up_pow2(_n, _alignment) \
+        mpc_align_down_pow2( (_n) + (_alignment) - 1, _alignment)
 
-        switch (datatype) {
-        case LCP_DATATYPE_CONTIGUOUS:
-               memcpy(dest, src, length); 
-               unpacked_len = length;
-               break;
-        case LCP_DATATYPE_DERIVED:
-               ctx->dt_ops.unpack(req->request, (void *)src);
-               unpacked_len = length;
-               break;
-        default:
-               mpc_common_debug_error("LCP: unknown datatype");
-               unpacked_len = -1;
-               break;
-        }
-        
-        return unpacked_len;
-}
+#define MPC_MIN(a,b) ((a) < (b) ? (a) : (b))
+#define MPC_MAX(a,b) ((a) < (b) ? (b) : (a))
+
+#endif
