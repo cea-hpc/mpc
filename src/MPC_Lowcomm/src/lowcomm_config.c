@@ -429,6 +429,11 @@ static inline mpc_conf_config_type_t *__mpc_lowcomm_driver_conf_default_driver(c
 	{
 		driver = __init_driver_ofi(&new_conf->driver, "shm");
 	}
+	else if(!strcmp(driver_type, "ofi"))
+	{
+		/* The default driver is added with the TCP provider */
+		driver = __init_driver_ofi(&new_conf->driver, "tcp");
+	}
 #endif
 
 	if(!driver)
@@ -695,7 +700,7 @@ mpc_conf_config_type_t *___new_default_rail(char *name)
 {
 	return __new_rail_conf_instance(name,
 	                                1,
-	                                "default",
+	                                "any",
 	                                1,
 	                                0,
 									0,
