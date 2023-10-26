@@ -140,6 +140,9 @@ static int lcp_context_init_structures(lcp_context_h ctx)
 		rc = LCP_ERROR;
 		goto out_free_pending_tables;
 	}
+        //NOTE: to release tasks, lcp_context_fini relies on the fact that all entries 
+        //      are memset to NULL. 
+        memset(ctx->tasks, 0, ctx->num_tasks * sizeof(lcp_task_h));
 
         mpc_common_hashtable_init(&ctx->ep_htable, 1024);
 

@@ -191,13 +191,14 @@ int lcp_put_nb(lcp_ep_h ep, lcp_task_h task, const void *buffer, size_t length,
                uint64_t remote_addr, lcp_mem_h rkey,
                const lcp_request_param_t *param) 
 {
-        int rc;
+        int rc = LCP_SUCCESS;
         lcp_request_t *req;
 
         assert(param->flags & LCP_REQUEST_USER_REQUEST);
 
-        rc = lcp_request_create(&req);
-        if (rc != LCP_SUCCESS) {
+        req = lcp_request_get(task);
+        if (req == NULL) {
+                rc = LCP_ERROR;
                 goto err;
         }
         req->flags |= LCP_REQUEST_RMA_COMPLETE;

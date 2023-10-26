@@ -325,8 +325,8 @@ int lcp_am_send_nb(lcp_ep_h ep, lcp_task_h task, int32_t dest_tid,
         lcp_request_t *req;
 
         // create the request to send
-        rc = lcp_request_create(&req);
-        if (rc != LCP_SUCCESS) {
+        req = lcp_request_get(task);
+        if (req == NULL) {
                 mpc_common_debug_error("LCP: could not create request.");
                 return LCP_ERROR;
         }
@@ -372,7 +372,7 @@ int lcp_am_send_nb(lcp_ep_h ep, lcp_task_h task, int32_t dest_tid,
 int lcp_am_recv_nb(lcp_task_h task, void *data_ctnr, void *buffer, 
                    size_t count, lcp_request_param_t *param)
 {
-        int rc, packed_data_size;
+        int packed_data_size;
         lcp_request_t *req;
         lcp_rndv_hdr_t *hdr;
         lcp_unexp_ctnr_t *ctnr = (lcp_unexp_ctnr_t *)data_ctnr - 1;;
@@ -382,8 +382,8 @@ int lcp_am_recv_nb(lcp_task_h task, void *data_ctnr, void *buffer,
         assert(ctnr->flags & LCP_RECV_CONTAINER_UNEXP_RNDV_AM);
 
         /* Create the request associated to the container */
-        rc = lcp_request_create(&req);
-        if (rc != LCP_SUCCESS) {
+        req = lcp_request_get(task);
+        if (req == NULL) {
                 mpc_common_debug_error("LCP: could not create request.");
                 return LCP_ERROR;
         }

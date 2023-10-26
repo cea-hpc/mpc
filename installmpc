@@ -1633,9 +1633,11 @@ if test "x${DEP_FOUND}" = "xno"; then
 	build_configure_based_package "openpa" "$(package_version "openpa")" "$OPENPA_BUILD_PARAMETERS"
 fi
 
+find_in_prefix_or_use_spack "concurrency-kit" "$(package_version "concurrency-kit")" "${CK_PREFIX}"
+
 # Concurrency Kit only available through spack
-if test "x${CK_PREFIX}" = "xenabled"; then
-    find_in_prefix_or_use_spack "concurrency-kit" "$(package_version "concurrency-kit")" "${CK_PREFIX}"
+if test "x${DEP_FOUND}" = "xno" && test "x$CK_PREFIX" != "xdisabled"; then
+	build_configure_based_package "concurrency-kit" "$(package_version "concurrency-kit")" "$ck_build_parameters"
 fi
 
 find_in_prefix_or_use_spack "hwloc" "$(package_version "hwloc")" "${HWLOC_PREFIX}"
@@ -1695,7 +1697,7 @@ find_in_prefix_or_use_spack "libfabric" "$(package_version "libfabric")" "$OFI_P
 
 if test "x${DEP_FOUND}" = "xno" && test "x$OFI_PREFIX" != "xdisabled"; then
 	# Could not use spack now installing manually
-	build_configure_based_package "libfabric" "$(package_version "libfabric")" "$OFI_BUILD_PARAMETERS"
+	build_configure_based_package "libfabric" "$(package_version "libfabric")" "$ofi_build_parameters"
 fi
 
 #

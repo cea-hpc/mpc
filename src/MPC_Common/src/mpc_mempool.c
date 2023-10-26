@@ -5,6 +5,10 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#if MPC_USE_CK
+#include <ck_stack.h>
+#endif
+
 int count_inertia;
 #ifdef MPC_MP_LOG
 int mempool_number;
@@ -264,7 +268,7 @@ void mpc_mpool_grow(mpc_mempool_t *mp)
         mpc_common_spinlock_lock(&data->lock);
         /* Grow only if free list empty. This prevents multiple producer from
          * growing the queue at the same time */
-        if (!CK_STACK_ISEMPTY(&mp->free_list)) {
+        if (!CK_STACK_ISEMPTY(mp->ck_free_list)) {
                 return;
         }
 #endif
@@ -285,7 +289,7 @@ void mpc_mpool_grow(mpc_mempool_t *mp)
                 mpc_mempool_elem_t *elem = mpc_mempool_chunk_elem(data, chunk, i);
                 /* Push elem with no lock */
 #if MPC_USE_CK
-                ck_stack_push_mpmc(&mp->free_list, (ck_stack_entry_t *)elem);
+                ck_stack_push_mpmc(mp->ck_free_list, (ck_stack_entry_t *)elem);
 #else
                 elem->next = mp->free_list;
                 mp->free_list = elem;
@@ -308,7 +312,7 @@ static mpc_mempool_elem_t *mpc_mpool_get_grow(mpc_mempool_t *mp)
         mpc_mempool_elem_t *elem;
         mpc_mpool_grow(mp);
 
-        if ((elem = (mpc_mempool_elem_t *)ck_stack_pop_mpmc(&mp->free_list)) == NULL) {
+        if ((elem = (mpc_mempool_elem_t *)ck_stack_pop_mpmc(mp->ck_free_list)) == NULL) {
                 return NULL;
         }
 
@@ -322,7 +326,7 @@ void *mpc_mpool_pop(mpc_mempool_t *mp)
         mpc_mempool_elem_t *elem;
 
 #if MPC_USE_CK
-        elem = (mpc_mempool_elem_t *)ck_stack_pop_mpmc(&mp->free_list);
+        elem = (mpc_mempool_elem_t *)ck_stack_pop_mpmc(mp->ck_free_list);
 #else 
         mpc_common_spinlock_lock(&mp->data->lock);
         elem = mp->free_list;
@@ -353,7 +357,7 @@ void mpc_mpool_push(void *obj)
         mpc_mempool_elem_t *elem = mpc_mempool_elem_shift_back(obj);
 
 #if MPC_USE_CK
-        ck_stack_push_mpmc(&elem->mp->free_list, (ck_stack_entry_t *)elem);
+        ck_stack_push_mpmc(elem->mp->ck_free_list, (ck_stack_entry_t *)elem);
 #else 
         mpc_mempool_t *mp = elem->mp;
         mpc_common_spinlock_lock(&mp->data->lock);
@@ -376,7 +380,8 @@ int mpc_mpool_init(mpc_mempool_t *mp, mpc_mempool_param_t *params)
         }
 
 #if MPC_USE_CK
-        ck_stack_init(&mp->free_list);
+        mp->ck_free_list = sctk_malloc(sizeof(ck_stack_t));
+        ck_stack_init(mp->ck_free_list);
 #else
         mp->free_list = NULL;
 #endif
@@ -420,4 +425,8 @@ void mpc_mpool_fini(mpc_mempool_t *mp)
         }
 
         sctk_free(mp->data);
+
+#if MPC_USE_CK
+        sctk_free(mp->ck_free_list);
+#endif
 }

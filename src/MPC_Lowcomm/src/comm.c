@@ -3450,12 +3450,6 @@ int _mpc_lowcomm_isend(int dest, const void *data, size_t size, int tag,
 	                                size, MPC_DATATYPE_IGNORE,
 	                                REQUEST_SEND, req);
         
-#if 0
-        if (req->header.destination == req->header.source) {
-                req->header.destination |= (uint16_t) req->header.destination_task;
-        }
-#endif
-
 	lcp_ep_get_or_create(lcp_ctx_loc, req->header.destination, &ep, 0);
 	if(ep == NULL)
 	{

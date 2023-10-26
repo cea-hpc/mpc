@@ -13,149 +13,6 @@
 
 #include <lcr/lcr_component.h>
 
-#if 0
-typedef struct lcr_tbsm_pkg {
-        uint8_t             am_id; /* active message id */
-        size_t              size;
-        uint64_t            seqn;
-        /* data is after */
-} lcr_tbsm_pkg_t;
-
-static ssize_t lcr_tbsm_send_am_bcopy(_mpc_lowcomm_endpoint_t *ep, uint8_t id, 
-                                      lcr_pack_callback_t pack, void *arg,
-                                      __UNUSED__ unsigned flags)
-{
-	_mpc_lowcomm_tbsm_rail_info_t *tbsm_info = &(ep->rail->network.tbsm);
-        _mpc_lowcomm_endpoint_info_tbsm_t *tbsm_ep = &(ep->data.tbsm);
-	int32_t payload_length          = -1;
-
-        /* Allocate TBSM package */
-        lcr_tbsm_pkg_t *tbsm_pkg = mpc_mpool_pop(&tbsm_info->pkg_mp); 
-        if (tbsm_pkg == NULL) {
-                mpc_common_debug_error("TBSM: could not allocate bcopy tbsm "
-                                       "pkg.");
-                goto err;
-        }
-
-	tbsm_pkg->am_id = id;
-        tbsm_pkg->size  = payload_length = pack(tbsm_pkg + 1, arg);
-        if (payload_length < 0) {
-                mpc_common_debug_error("TBSM: could not pack data.");
-                goto err;
-        }
-
-        /* Insert package in list */
-        mpc_common_debug("LCR TBSM: pushing package on ep queue=%p, pkg=%p, seqn=%d, "
-                         "size=%d", tbsm_ep->tx->ck_queue, tbsm_pkg, tbsm_pkg->seqn);
-        ck_fifo_mpmc_enqueue(tbsm_ep->tx->ck_queue, 
-                             sctk_malloc(sizeof(ck_fifo_mpmc_entry_t)), 
-                             tbsm_pkg);
-        
-err:
-        return payload_length;
-}
-
-int lcr_tbsm_send_put_zcopy(_mpc_lowcomm_endpoint_t *ep,
-                            uint64_t local_addr,
-                            uint64_t remote_offset,
-                            lcr_memp_t *remote_key,
-                            size_t size,
-                            lcr_completion_t *comp) 
-{
-        UNUSED(ep);
-        void *dest = remote_key->pin.sm.buf;
-        memcpy(dest, (void *)local_addr + remote_offset, size);
-
-        comp->sent = size;
-        comp->comp_cb(comp);
-        return MPC_LOWCOMM_SUCCESS;
-}
-
-int lcr_tbsm_send_get_zcopy(_mpc_lowcomm_endpoint_t *ep,
-                            uint64_t local_addr,
-                            uint64_t remote_offset,
-                            lcr_memp_t *remote_key,
-                            size_t size,
-                            lcr_completion_t *comp) 
-{
-        UNUSED(ep);
-        void *src = remote_key->pin.sm.buf;
-        memcpy((void *)local_addr, src + remote_offset, size);
-
-        mpc_common_debug("TBSM: performed get memcpy remote addr=%p, size=%d",
-                         src, size);
-        comp->sent = size;
-        comp->comp_cb(comp);
-        return MPC_LOWCOMM_SUCCESS;
-}
-
-void lcr_tbsm_mem_register(struct sctk_rail_info_s *rail, 
-                           lcr_memp_t *list, 
-                           void *addr, size_t size)
-{
-        UNUSED(rail);
-        list->pin.sm.buf  = addr; 
-        list->pin.sm.size = size;
-}
-
-void lcr_tbsm_mem_unregister(struct sctk_rail_info_s *rail, 
-                             lcr_memp_t *list)
-{
-        UNUSED(rail);
-        UNUSED(list);
-        return;
-}
-
-int lcr_tbsm_pack_rkey(sctk_rail_info_t *rail,
-                       lcr_memp_t *memp, void *dest)
-{
-        UNUSED(rail);
-        int packed_size = 0;
-        void *p = dest;
-
-        *(uint64_t *)p = (uint64_t)memp->pin.sm.buf; packed_size += sizeof(uint64_t);
-        p += sizeof(uint64_t);
-        *(size_t *)p   = memp->pin.sm.size; packed_size += sizeof(size_t);
-        
-        return packed_size;
-}
-
-int lcr_tbsm_unpack_rkey(sctk_rail_info_t *rail,
-                        lcr_memp_t *memp, void *dest)
-{
-        UNUSED(rail);
-        int unpacked_size = 0;
-        void *p = dest;	
-
-        memp->pin.sm.buf  = *(uint64_t *)p; unpacked_size += sizeof(uint64_t);
-        p += sizeof(uint64_t);
-        memp->pin.sm.size = *(size_t *)p; unpacked_size += sizeof(size_t);
-
-        return unpacked_size;
-}
-
-//FIXME: this function could be factorize between all components
-static inline int lcr_tbsm_invoke_am(sctk_rail_info_t *rail, 
-                                     uint8_t am_id,
-                                     size_t length,
-                                     void *data)
-{
-	int rc = MPC_LOWCOMM_SUCCESS;
-
-	lcr_am_handler_t handler = rail->am[am_id];
-	if (handler.cb == NULL) {
-		mpc_common_debug_fatal("LCP: handler id %d not supported.", am_id);
-	}
-
-	rc = handler.cb(handler.arg, data, length, 0);
-	if (rc != MPC_LOWCOMM_SUCCESS) {
-		mpc_common_debug_error("LCP: handler id %d failed.", am_id);
-	}
-
-	return rc;
-}
-#endif
-
 void lcr_tbsm_connect_on_demand(sctk_rail_info_t *rail, uint64_t uid)
 {
 	_mpc_lowcomm_tbsm_rail_info_t *tbsm_info = &(rail->network.tbsm);
@@ -171,28 +28,6 @@ void lcr_tbsm_connect_on_demand(sctk_rail_info_t *rail, uint64_t uid)
                         return;
                 }
 
-#if 0
-                /* Acquire queue index in pool */
-                mpc_common_spinlock_lock(&(tbsm_info->conn_lock));
-                int queue_index = tbsm_info->nb_queues;
-                if (queue_index >= LCR_TBSM_MAX_QUEUES) {
-                        mpc_common_debug_error("LCR TBSM: maximum number of queue"
-                                               " exceeded, %d", LCR_TBSM_MAX_QUEUES);
-                        mpc_common_spinlock_unlock(&(tbsm_info->conn_lock));
-                        sctk_free(ep);
-                        goto err;
-                }
-                /* Init endpoint common data */
-
-                /* Acquire one queue from pool */
-                ep->data.tbsm.tx = &(tbsm_info->queues[queue_index]);
-
-                //NOTE: make sure queue is set up before incrementing nb_queues
-                //      so that no progress if nb_queues is 0
-                tbsm_info->nb_queues++;
-                mpc_common_spinlock_unlock(&(tbsm_info->conn_lock));
-#endif
-                
                 _mpc_lowcomm_endpoint_init(ep, uid, rail, 
                                            _MPC_LOWCOMM_ENDPOINT_DYNAMIC);
 
@@ -205,54 +40,6 @@ void lcr_tbsm_connect_on_demand(sctk_rail_info_t *rail, uint64_t uid)
 
         return;
 }
-
-#if 0
-int lcr_tbsm_iface_progress(sctk_rail_info_t *rail)
-{
-        int rc = MPC_LOWCOMM_SUCCESS;
-        lcr_tbsm_pkg_t *pkg = NULL;
-        ck_fifo_mpmc_entry_t *garbage = NULL;
-
-        _mpc_lowcomm_tbsm_rail_info_t *tbsm_info = &(rail->network.tbsm);
-
-        if (tbsm_info->nb_queues == 0) {
-                return rc;
-        }
-
-        lcr_tbsm_tx_queue_t *tx_queue = &tbsm_info->queues[tbsm_info->iterator];
-        /* Fast path if queue is empty */
-        if (CK_FIFO_MPMC_ISEMPTY(tx_queue->ck_queue)) {
-                tbsm_info->iterator = (tbsm_info->iterator + 1) % tbsm_info->nb_queues;
-                return rc;
-        }
-
-        /* Try dequeuing and return if unsuccessful (queue empty or already
-         * locked) */ 
-        if (!ck_fifo_mpmc_dequeue(tx_queue->ck_queue, &pkg, &garbage)) {
-                tbsm_info->iterator = (tbsm_info->iterator + 1) % tbsm_info->nb_queues;
-                return rc;
-        }
-        tbsm_info->iterator = (tbsm_info->iterator + 1) % tbsm_info->nb_queues;
-
-        mpc_common_debug("LCR TBSM: pulling package. queue=%p, pkg=%p, seqn=%llu, "
-                         "size=%d", tx_queue->ck_queue, pkg, pkg->seqn);
-
-        /* Call handler of protocol layer (lcp) */
-        rc = lcr_tbsm_invoke_am(rail, pkg->am_id, pkg->size, pkg + 1);
-
-        if (rc != MPC_LOWCOMM_SUCCESS) {
-                goto err;
-        }
-
-        //NOTE: pkg must be a bcopy, so free buffer. This would have to change
-        //      if zcopy is implemented.
-        mpc_mpool_push(pkg);
-        //FIXME: ck_entry never freed
-err:
-        return rc;
-}
-
-#endif
 
 //TODO: write finalize function...
 
@@ -302,37 +89,6 @@ int lcr_tbsm_iface_init(sctk_rail_info_t *iface)
         tbsm_iface->bcopy_buf_size = tbsm_info.bcopy_buf_size;
         tbsm_iface->eager_limit    = tbsm_info.eager_limit;
         tbsm_iface->max_msg_size   = tbsm_info.max_msg_size;
-
-#if 0
-        mpc_common_spinlock_init(&(tbsm_iface->poll_lock), 0);
-        for (int i = 0; i < LCR_TBSM_MAX_QUEUES; i++) {
-                tbsm_iface->queues[i].ck_queue = sctk_malloc(sizeof(ck_fifo_mpmc_t));
-                ck_fifo_mpmc_init(tbsm_iface->queues[i].ck_queue, &tbsm_iface->queues[i].stub);
-        }
-        tbsm_iface->iterator = 0;
-
-        /* Init pool of bounce (or shadow) buffers */
-        mpc_mpool_param_t mp_pkg_params = {
-                .alignment = MPC_SYS_CACHE_LINE_SIZE,
-                .elem_per_chunk = 64,
-                .elem_size = sizeof(lcr_tbsm_pkg_t) + tbsm_info.bcopy_buf_size,
-                .max_elems = 2048,
-                .malloc_func = sctk_malloc,
-                .free_func = sctk_free
-        };
-        mpc_mpool_init(&tbsm_iface->pkg_mp, &mp_pkg_params);  
-
-        /* Endpoint functions */
-        iface->send_am_bcopy = lcr_tbsm_send_am_bcopy;
-        iface->put_zcopy     = lcr_tbsm_send_put_zcopy;
-        iface->get_zcopy     = lcr_tbsm_send_get_zcopy;
-
-        /* Interface functions */
-        iface->iface_pack_memp    = lcr_tbsm_pack_rkey; 
-        iface->iface_unpack_memp  = lcr_tbsm_unpack_rkey; 
-        iface->rail_pin_region    = lcr_tbsm_mem_register;
-        iface->rail_unpin_region  = lcr_tbsm_mem_unregister;
-#endif
 
         //FIXME: set progress function to null since all communication are down
         //       within LCP, see lcp_self.c

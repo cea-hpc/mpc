@@ -73,7 +73,6 @@ typedef union
 
 typedef union
 {
-	struct mpc_lowcomm_tbsm_rma_ctx sm;
 #ifdef MPC_USE_PORTALS
 	struct sctk_ptl_rdma_ctx       ptl;
 #endif /* MPC_USE_PORTALS */

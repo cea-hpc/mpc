@@ -5,10 +5,6 @@
 #include <sctk_alloc.h>
 #include <mpc_common_spinlock.h>
 
-#if MPC_USE_CK
-#include <ck_stack.h>
-#endif
-
 typedef struct mpc_mempool_elem  mpc_mempool_elem_t;
 typedef struct mpc_mempool_chunk mpc_mempool_chunk_t;
 typedef struct mpc_mempool_param mpc_mempool_param_t;
@@ -17,14 +13,15 @@ typedef struct mpc_mempool       mpc_mempool_t;
 
 /* Forward declaration for concurrency kit stack */
 typedef struct ck_stack        ck_stack_t;
-typedef struct ck_stack_entry  ck_stack_entry_t;
 
+//FIXME: CK implementation is based on the fact that ck_stack_entry_t has the
+//       same structure has mpc_mempool_elem_t (first elem is a next pointer).
+//       As a consequence, a simple cast works fine but it does not seems like
+//       a good solution. 
+//       On the plus side, this allows to have all implementations working with
+//       the same data structures.
 struct mpc_mempool_elem {
-#if MPC_USE_CK
-    ck_stack_entry_t      *next;
-#else
     struct mpc_mempool_elem *next;
-#endif
     char         canary;
     mpc_mempool_t *mp;
 };
@@ -66,10 +63,9 @@ struct mpc_mempool_data {
 
 struct mpc_mempool {
 #if MPC_USE_CK
-        ck_stack_t        free_list;
-#else 
-        mpc_mempool_elem_t *free_list;
+        ck_stack_t        *ck_free_list;
 #endif
+        mpc_mempool_elem_t *free_list;
         mpc_mempool_data_t *data;
 };
 
