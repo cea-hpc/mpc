@@ -59,7 +59,8 @@ get_date()
 get_authors()
 {
     FILE_DIR=$(dirname "$1")
-    git -C "$FILE_DIR" log --follow --pretty="%an <%aE>" -- "$1" | sort -u | uniq -i | git -C "$FILE_DIR" check-mailmap --stdin | sort -u
+    FILE_NAME=$(basename "$1")
+    git -C "$FILE_DIR" log --follow --pretty="%an <%aE>" -- "$FILE_NAME" | sort -u | uniq -i | git -C "$FILE_DIR" check-mailmap --stdin | sort -u
 }
 
 wrap()
