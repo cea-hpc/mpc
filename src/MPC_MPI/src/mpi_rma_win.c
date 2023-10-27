@@ -1163,7 +1163,6 @@ int mpc_MPI_Win_get_attr(MPI_Win win, int keyval, void *attr_val, int *flag)
 	}
 
 	struct mpc_lowcomm_rdma_window *low_win = sctk_win_translate(win);
-	uintptr_t val;
 
 	/* First handle special values */
 	switch(keyval)
@@ -1175,24 +1174,22 @@ int mpc_MPI_Win_get_attr(MPI_Win win, int keyval, void *attr_val, int *flag)
 
 		case MPI_WIN_SIZE:
 			*flag = 1;
-			*( (void **)attr_val) = (void *)low_win->size;
+			*( (void **)attr_val) = (void *)&low_win->size;
 			return MPI_SUCCESS;
 
 		case MPI_WIN_DISP_UNIT:
 			*flag = 1;
-			*( (void **)attr_val) = (void *)low_win->disp_unit;
+			*( (void **)attr_val) = (void *)&low_win->disp_unit;
 			return MPI_SUCCESS;
 
 		case MPI_WIN_CREATE_FLAVOR:
 			*flag = 1;
-			val   = desc->flavor;
-			*( (void **)attr_val) = (void *)val;
+			*( (void **)attr_val) = (void *)&desc->flavor;
 			return MPI_SUCCESS;
 
 		case MPI_WIN_MODEL:
 			*flag = 1;
-			val   = desc->model;
-			*( (void **)attr_val) = (void *)val;
+			*( (void **)attr_val) = (void *)&desc->model;
 			return MPI_SUCCESS;
 	}
 
