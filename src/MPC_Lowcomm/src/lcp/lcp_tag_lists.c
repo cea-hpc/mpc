@@ -168,7 +168,8 @@ lcp_mtch_prq_list_t *lcp_prq_init()
  */
 void lcp_mtch_prq_destroy(lcp_mtch_prq_list_t *list)
 {
-	sctk_free(list->list);
+        assert(list->size == 0);
+	sctk_free(list);
 }
 
 /*******************************************************
@@ -310,5 +311,6 @@ lcp_mtch_umq_list_t *lcp_umq_init()
  */
 void lcp_mtch_umq_destroy(lcp_mtch_umq_list_t *list)
 {
-	sctk_free(list->list);
+        assert(list->size == 0);
+	sctk_free(list);
 }
