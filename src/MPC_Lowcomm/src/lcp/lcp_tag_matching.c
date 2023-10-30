@@ -87,7 +87,6 @@ lcp_mtch_prq_list_t *_prq_match_create_entry(lcp_prq_match_table_t *prq, uint16_
         if ((list = prq->prq_table[comm_id]) != NULL) {
                 return list;
         }
-        assert(comm_id < LCP_MATCH_MAX_NUM_COMM && comm_id >= 0);
         //FIXME: no memory check
 	return prq->prq_table[comm_id] = lcp_prq_init();
 }
@@ -115,7 +114,6 @@ void* _umq_match_create_entry(lcp_umq_match_table_t *umq, uint16_t comm_id)
         if ((list = umq->umq_table[comm_id]) != NULL) {
                 return list;
         }
-        assert(comm_id < LCP_MATCH_MAX_NUM_COMM && comm_id >= 0);
         //FIXME: no memory check
 	return umq->umq_table[comm_id] = lcp_umq_init();
 }
