@@ -38,17 +38,18 @@
 #include "mpc_common_datastructure.h"
 #include "mpc_common_debug.h"
 
+#define LCP_MATCH_MAX_NUM_COMM 4096
 
 int lcp_prq_match_table_init(lcp_prq_match_table_t *prq)
 {
         int rc = LCP_SUCCESS;
-        prq->prq_table = sctk_malloc(4096 * sizeof(lcp_mtch_prq_list_t *));
+        prq->prq_table = sctk_malloc(LCP_MATCH_MAX_NUM_COMM * sizeof(lcp_mtch_prq_list_t *));
         if (prq->prq_table == NULL) {
                 mpc_common_debug_error("MATCH: could not allocated prq table.");
                 rc = LCP_ERROR;
                 goto err;
         }
-        memset(prq->prq_table, 0, 4096 * sizeof(lcp_mtch_prq_list_t *));
+        memset(prq->prq_table, 0, LCP_MATCH_MAX_NUM_COMM * sizeof(lcp_mtch_prq_list_t *));
 
 err:
 	return rc;
@@ -63,14 +64,14 @@ err:
 void lcp_fini_matching_engine(lcp_umq_match_table_t *umq, 
 			      lcp_prq_match_table_t *prq)
 {
-        for (int i = 0; i < 4096; i++) {
+        for (int i = 0; i < LCP_MATCH_MAX_NUM_COMM; i++) {
                 if (prq->prq_table[i] != NULL) {
                         lcp_mtch_prq_destroy(prq->prq_table[i]);
                 }
 	}
         sctk_free(prq->prq_table);
 
-        for (int i = 0; i < 4096; i++) {
+        for (int i = 0; i < LCP_MATCH_MAX_NUM_COMM; i++) {
                 if (umq->umq_table[i] != NULL) {
                         lcp_mtch_umq_destroy(umq->umq_table[i]);
                 }
@@ -86,7 +87,7 @@ lcp_mtch_prq_list_t *_prq_match_create_entry(lcp_prq_match_table_t *prq, uint16_
         if ((list = prq->prq_table[comm_id]) != NULL) {
                 return list;
         }
-        assert(comm_id < 4096 && comm_id >= 0);
+        assert(comm_id < LCP_MATCH_MAX_NUM_COMM && comm_id >= 0);
         //FIXME: no memory check
 	return prq->prq_table[comm_id] = lcp_prq_init();
 }
@@ -114,7 +115,7 @@ void* _umq_match_create_entry(lcp_umq_match_table_t *umq, uint16_t comm_id)
         if ((list = umq->umq_table[comm_id]) != NULL) {
                 return list;
         }
-        assert(comm_id < 4096 && comm_id >= 0);
+        assert(comm_id < LCP_MATCH_MAX_NUM_COMM && comm_id >= 0);
         //FIXME: no memory check
 	return umq->umq_table[comm_id] = lcp_umq_init();
 }
@@ -219,13 +220,13 @@ void lcp_append_umq(lcp_umq_match_table_t *umq, void *req,
 int lcp_umq_match_table_init(lcp_umq_match_table_t *umq)
 {
         int rc = LCP_SUCCESS;
-        umq->umq_table = sctk_malloc(4096 * sizeof(lcp_mtch_umq_list_t));
+        umq->umq_table = sctk_malloc(LCP_MATCH_MAX_NUM_COMM * sizeof(lcp_mtch_umq_list_t));
         if (umq->umq_table == NULL) {
                 mpc_common_debug_error("MATCH: could not allocated prq table.");
                 rc = LCP_ERROR;
                 goto err;
         }
-        memset(umq->umq_table, 0, 4096 * sizeof(lcp_mtch_umq_list_t));
+        memset(umq->umq_table, 0, LCP_MATCH_MAX_NUM_COMM * sizeof(lcp_mtch_umq_list_t));
 
 err:
 	return rc;
