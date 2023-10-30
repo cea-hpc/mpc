@@ -106,7 +106,7 @@ int lcp_send_task_bcopy(lcp_request_t *sreq, lcp_request_t **matched_req,
 
         recv_task->expected_seqn[sreq->send.tag.src_tid]++;
 	/* Try to match it with a posted message */
-        rreq = (lcp_request_t *)lcp_match_prq(recv_task->prq_table, 
+        rreq = (lcp_request_t *)lcp_match_prq(&recv_task->prq_table, 
                                              sreq->send.tag.comm, 
                                              sreq->send.tag.tag,
                                              sreq->send.tag.src_tid);
@@ -120,7 +120,7 @@ int lcp_send_task_bcopy(lcp_request_t *sreq, lcp_request_t **matched_req,
 
 
 		// add the request to the unexpected messages
-		lcp_append_umq(recv_task->umq_table, (void *)ctnr, 
+		lcp_append_umq(&recv_task->umq_table, (void *)ctnr, 
                                sreq->send.tag.comm, 
                                sreq->send.tag.tag,
                                sreq->send.tag.src_tid);
@@ -168,7 +168,7 @@ int lcp_send_task_zcopy(lcp_request_t *sreq, lcp_request_t **matched_req)
 
         recv_task->expected_seqn[sreq->send.tag.src_tid]++;
 	/* Try to match it with a posted message */
-        rreq = (lcp_request_t *)lcp_match_prq(recv_task->prq_table, 
+        rreq = (lcp_request_t *)lcp_match_prq(&recv_task->prq_table, 
                                              sreq->send.tag.comm, 
                                              sreq->send.tag.tag,
                                              sreq->send.tag.src_tid);
@@ -193,7 +193,7 @@ int lcp_send_task_zcopy(lcp_request_t *sreq, lcp_request_t **matched_req)
                 }
 
 		// add the request to the unexpected messages
-		lcp_append_umq(recv_task->umq_table, (void *)ctnr, 
+		lcp_append_umq(&recv_task->umq_table, (void *)ctnr, 
                                sreq->send.tag.comm, 
                                sreq->send.tag.tag,
                                sreq->send.tag.src_tid);
@@ -249,12 +249,12 @@ int lcp_task_create(lcp_context_h ctx, int tid, lcp_task_h *task_p)
         task->ctx = ctx;
 
         /* Allocate tag matching lists */
-        task->prq_table = lcp_prq_match_table_init();
-        task->umq_table = lcp_umq_match_table_init();
-        if (task->prq_table == NULL || task->umq_table == NULL) {
-                mpc_common_debug_error("LCP: could not allocate prq "
-                                       "or umq table for tid=%d", tid);
-                rc = LCP_ERROR;
+        rc = lcp_prq_match_table_init(&task->prq_table);
+        if (rc != LCP_SUCCESS) {
+                goto err;
+        }
+        rc = lcp_umq_match_table_init(&task->umq_table);
+        if (rc != LCP_SUCCESS) {
                 goto err;
         }
 
@@ -324,10 +324,7 @@ err:
 
 int lcp_task_fini(lcp_task_h task) {
 
-        lcp_fini_matching_engine(task->umq_table, task->prq_table);
-
-        sctk_free(task->umq_table);
-        sctk_free(task->prq_table);
+        lcp_fini_matching_engine(&task->umq_table, &task->prq_table);
 
         mpc_mpool_fini(task->req_mp);
 

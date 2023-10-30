@@ -181,21 +181,28 @@ int lcp_ep_insert(lcp_context_h ctx, lcp_ep_h ep)
 {
 	int rc;
 
-	lcp_ep_ctx_t *elem = sctk_malloc(sizeof(lcp_ep_ctx_t) );
+        //NOTE: insert in slow hash table if not in same set, otherwiser insert
+        //      in fast preallocated table of endpoints.
+        if (mpc_lowcomm_peer_get_set(ep->uid) != 
+            mpc_lowcomm_peer_get_set(ctx->process_uid)) {
+                lcp_ep_ctx_t *elem = sctk_malloc(sizeof(lcp_ep_ctx_t) );
 
-	if(elem == NULL)
-	{
-		mpc_common_debug_error("LCP: could not allocate endpoint table entry.");
-		rc = LCP_ERROR;
-		goto err;
-	}
-	memset(elem, 0, sizeof(lcp_ep_ctx_t) );
+                if(elem == NULL)
+                {
+                        mpc_common_debug_error("LCP: could not allocate endpoint table entry.");
+                        rc = LCP_ERROR;
+                        goto err;
+                }
+                memset(elem, 0, sizeof(lcp_ep_ctx_t) );
 
-	/* Init table entry */
-	elem->ep_key = ep->uid;
-	elem->ep     = ep;
+                /* Init table entry */
+                elem->ep_key = ep->uid;
+                elem->ep     = ep;
 
-	mpc_common_hashtable_set(&ctx->ep_htable, elem->ep_key, elem);
+                mpc_common_hashtable_set(&ctx->ep_set, elem->ep_key, elem);
+        } else {
+                ctx->eps[mpc_lowcomm_peer_get_rank(ep->uid)] = ep;
+        }
 
 	/* Update context */
 	ctx->num_eps++;
@@ -492,16 +499,17 @@ void lcp_ep_delete(lcp_ep_h ep)
 
 lcp_ep_h lcp_ep_get(lcp_context_h ctx, mpc_lowcomm_peer_uid_t uid)
 {
-	lcp_ep_ctx_t *elem = mpc_common_hashtable_get_no_lock(&ctx->ep_htable, uid);
+        if (mpc_lowcomm_peer_get_set(uid) != 
+            mpc_lowcomm_peer_get_set(ctx->process_uid)) {
+                lcp_ep_ctx_t *elem = mpc_common_hashtable_get_no_lock(&ctx->ep_set, uid);
+                if(elem == NULL)
+                {
+                        return NULL;
+                }
+                return elem->ep;
+        }
 
-	if(elem == NULL)
-	{
-		return NULL;
-	}
-	else
-	{
-		return elem->ep;
-	}
+        return ctx->eps[mpc_lowcomm_peer_get_rank(uid)];
 }
 
 /**

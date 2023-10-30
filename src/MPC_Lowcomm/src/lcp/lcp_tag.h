@@ -44,7 +44,7 @@ struct lcp_tag_data {
         int32_t src_tid;
         int32_t dest_tid;
         uint16_t comm;
-        uint64_t seqn;
+        uint16_t seqn;
 };
 //FIXME: move tag header over here.
 

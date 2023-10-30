@@ -144,7 +144,17 @@ static int lcp_context_init_structures(lcp_context_h ctx)
         //      are memset to NULL. 
         memset(ctx->tasks, 0, ctx->num_tasks * sizeof(lcp_task_h));
 
-        mpc_common_hashtable_init(&ctx->ep_htable, 1024);
+	ctx->eps = sctk_malloc(ctx->num_processes * sizeof(lcp_ep_h));
+	if (ctx->eps == NULL) {
+		mpc_common_debug_error("LCP: Could not allocate tasks table.");
+		rc = LCP_ERROR;
+		goto out_free_task_table;
+	}
+        //NOTE: to release endpoints, lcp_context_fini relies on the fact that
+        //      all entries are memset to NULL. 
+        memset(ctx->eps, 0, ctx->num_processes * sizeof(lcp_ep_h));
+
+        mpc_common_hashtable_init(&ctx->ep_set, 1024);
 
         lcp_pinning_mmu_init();
 
@@ -152,6 +162,8 @@ static int lcp_context_init_structures(lcp_context_h ctx)
 
         return rc;
 
+out_free_task_table:
+        sctk_free(ctx->tasks);
 out_free_pending_tables:
         sctk_free(ctx->match_ht); 
 err:
@@ -782,6 +794,12 @@ int lcp_context_create(lcp_context_h *ctx_p, lcp_context_param_t *param)
                 goto out_free_ctx;
         }
 
+        if (!(param->flags & LCP_CONTEXT_NUM_PROCESSES)) {
+                mpc_common_debug_error("LCP: number of processes not set");
+                rc = LCP_ERROR;
+                goto out_free_ctx;
+        }
+
         ctx->config.max_num_tasks        = 512;
         if (param->num_tasks <= 0) {
                 mpc_common_debug_error("LCP: wrong number of tasks");
@@ -801,10 +819,7 @@ int lcp_context_create(lcp_context_h *ctx_p, lcp_context_param_t *param)
         //       mpc_common_get_local_task_count() is not set yet. There might
         //       be another way.
         ctx->num_tasks                   = param->num_tasks;
-
-	/* init random seed to generate unique msg_id */
-	rand_seed_init();
-        OPA_store_int(&ctx->msg_id, 0);
+        ctx->num_processes               = param->num_processes;
 
         /* init match uid when using match request */
         OPA_store_int(&ctx->muid, 0);
@@ -886,12 +901,19 @@ int lcp_context_fini(lcp_context_h ctx)
 	/* Free allocated endpoints */
 	lcp_ep_ctx_t *e_ep = NULL;
 
-	MPC_HT_ITER(&ctx->ep_htable, e_ep)
+	MPC_HT_ITER(&ctx->ep_set, e_ep)
         {
                 lcp_ep_delete(e_ep->ep);
 		sctk_free(e_ep);
 	}
-        MPC_HT_ITER_END(&ctx->ep_htable);
+        MPC_HT_ITER_END(&ctx->ep_set);
+
+        for (i = 0; i < ctx->num_processes; i++) {
+                if (ctx->eps[i] != NULL) {
+                        lcp_ep_delete(ctx->eps[i]);
+                }
+        }
+        sctk_free(ctx->eps);
 
 	sctk_rail_info_t *iface = NULL;
 	for (i=0; i<ctx->num_resources; i++) {

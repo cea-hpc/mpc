@@ -55,7 +55,7 @@ int lcp_tag_probe_nb(lcp_task_h task, const int src,
         }
 
         LCP_TASK_LOCK(task);
-        match = lcp_search_umq(task->umq_table, (uint16_t)comm, tag, src);
+        match = lcp_search_umq(&task->umq_table, (uint16_t)comm, tag, src);
         if (match != NULL) {
                 if (match->flags & (LCP_RECV_CONTAINER_UNEXP_EAGER_TAG |
                                     LCP_RECV_CONTAINER_UNEXP_TASK_TAG_BCOPY)) {

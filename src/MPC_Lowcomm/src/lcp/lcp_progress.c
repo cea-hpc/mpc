@@ -37,8 +37,6 @@
 #include "lcp_context.h"
 #include "lcp_request.h"
 
-#include <uthash.h>
-
 /**
  * @brief progress in the pending request list
  * 
@@ -52,16 +50,18 @@ int lcp_progress(lcp_context_h ctx)
         unsigned char progress_counter = ctx->current_progress_value;
 
         for (i=0; i<ctx->num_resources; i++) {
+                sctk_rail_info_t *iface = ctx->resources[i].iface;
+                if (iface->iface_progress == NULL)
+                        continue;
+
                 /* This implements progress in function of rail priority */
                 unsigned int ressource_cnt = ctx->progress_counter[i];
                 if(!ctx->resources[i].used)
                         ressource_cnt = 1;
                 if( ressource_cnt < progress_counter  )
                         continue;
-                sctk_rail_info_t *iface = ctx->resources[i].iface;
 
-                if (iface->iface_progress != NULL)
-                        iface->iface_progress(iface);
+                iface->iface_progress(iface);
         }
 
         ctx->current_progress_value++;

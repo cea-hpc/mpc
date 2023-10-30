@@ -596,8 +596,7 @@ int lcr_ptl_unpack_rkey(sctk_rail_info_t *rail,
         void *p = dest;	
 
         /* deserialize data */
-        //FIXME: warning
-        memp->pin.ptl.start = *(uint64_t *)p;
+        *(uint64_t *)memp->pin.ptl.start = *(uint64_t *)p;
 
         return sizeof(uint64_t);
 }

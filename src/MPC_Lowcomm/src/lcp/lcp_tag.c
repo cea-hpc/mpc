@@ -625,7 +625,7 @@ static int lcp_eager_tag_sync_handler(void *arg, void *data,
 
 	LCP_TASK_LOCK(task);
 	/* Try to match it with a posted message */
-        req = (lcp_request_t *)lcp_match_prq(task->prq_table, 
+        req = (lcp_request_t *)lcp_match_prq(&task->prq_table, 
                                              hdr->base.comm, 
                                              hdr->base.tag,
                                              hdr->base.src_tid);
@@ -639,7 +639,7 @@ static int lcp_eager_tag_sync_handler(void *arg, void *data,
 			goto err;
 		}
 		// add the request to the unexpected messages
-		lcp_append_umq(task->umq_table, (void *)ctnr, 
+		lcp_append_umq(&task->umq_table, (void *)ctnr, 
 			       hdr->base.comm,
 			       hdr->base.tag,
 			       hdr->base.src_tid);
@@ -689,7 +689,7 @@ static int lcp_eager_tag_handler(void *arg, void *data,
 
 	LCP_TASK_LOCK(task);
 	/* Try to match it with a posted message */
-        req = (lcp_request_t *)lcp_match_prq(task->prq_table, 
+        req = (lcp_request_t *)lcp_match_prq(&task->prq_table, 
                                              hdr->comm, 
                                              hdr->tag,
                                              hdr->src_tid);
@@ -705,7 +705,7 @@ static int lcp_eager_tag_handler(void *arg, void *data,
 			goto err;
 		}
 		// add the request to the unexpected messages
-		lcp_append_umq(task->umq_table, (void *)ctnr, 
+		lcp_append_umq(&task->umq_table, (void *)ctnr, 
 			       hdr->comm,
 			       hdr->tag,
 			       hdr->src_tid);
@@ -781,7 +781,7 @@ static int lcp_rndv_tag_handler(void *arg, void *data,
 
         LCP_TASK_LOCK(task);
         mpc_common_debug("LCP: task match. tid=%d", hdr->tag.dest_tid);
-	req = (lcp_request_t *)lcp_match_prq(task->prq_table, 
+	req = (lcp_request_t *)lcp_match_prq(&task->prq_table, 
 					     hdr->tag.comm, 
 					     hdr->tag.tag,
 					     hdr->tag.src_tid);
@@ -794,7 +794,7 @@ static int lcp_rndv_tag_handler(void *arg, void *data,
                         LCP_TASK_UNLOCK(task);
 			goto err;
 		}
-		lcp_append_umq(task->umq_table, (void *)ctnr, 
+		lcp_append_umq(&task->umq_table, (void *)ctnr, 
 			       hdr->tag.comm,
 			       hdr->tag.tag,
 			       hdr->tag.src_tid);

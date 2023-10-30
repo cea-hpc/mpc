@@ -75,8 +75,6 @@ typedef struct lcp_mtch_umq_elem_s
 
 typedef struct  
 {
-	mpc_common_spinlock_t lock;
-	mpc_mempool_t elem_pool;
 	lcp_mtch_umq_elem_t *list;
 	int size;
 } lcp_mtch_umq_list_t;

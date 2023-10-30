@@ -32,22 +32,26 @@
 #include <sctk_alloc.h>
 #include <uthash.h>
 
+#include "queue.h"
 #include "lcp_tag_matching.h"
 #include "lcp_request.h"
 #include "mpc_common_datastructure.h"
 #include "mpc_common_debug.h"
-#include "mpc_common_spinlock.h"
 
 
-lcp_prq_match_table_t * lcp_prq_match_table_init()
+int lcp_prq_match_table_init(lcp_prq_match_table_t *prq)
 {
-	lcp_prq_match_table_t * ret = sctk_malloc(sizeof(lcp_prq_match_table_t));
-	assume(ret != NULL);
+        int rc = LCP_SUCCESS;
+        prq->prq_table = sctk_malloc(4096 * sizeof(lcp_mtch_prq_list_t *));
+        if (prq->prq_table == NULL) {
+                mpc_common_debug_error("MATCH: could not allocated prq table.");
+                rc = LCP_ERROR;
+                goto err;
+        }
+        memset(prq->prq_table, 0, 4096 * sizeof(lcp_mtch_prq_list_t *));
 
-	mpc_common_spinlock_init(&ret->lock, 0);
-	mpc_common_hashtable_init(&ret->ht, 2048);
-
-	return ret;
+err:
+	return rc;
 }
 
 /**
@@ -59,34 +63,32 @@ lcp_prq_match_table_t * lcp_prq_match_table_init()
 void lcp_fini_matching_engine(lcp_umq_match_table_t *umq, 
 			      lcp_prq_match_table_t *prq)
 {
-	lcp_prq_match_entry_t *prq_entry = NULL;
-	lcp_umq_match_entry_t *umq_entry = NULL;
-
-	MPC_HT_ITER( &prq->ht, prq_entry ) {
-		lcp_mtch_prq_destroy(prq_entry->pr_queue);
-		sctk_free(prq_entry->pr_queue);
-		sctk_free(prq_entry);
+        for (int i = 0; i < 4096; i++) {
+                if (prq->prq_table[i] != NULL) {
+                        lcp_mtch_prq_destroy(prq->prq_table[i]);
+                }
 	}
-	MPC_HT_ITER_END(&prq->ht)
+        sctk_free(prq->prq_table);
 
-	MPC_HT_ITER( &umq->ht, umq_entry ) {
-		lcp_mtch_umq_destroy(umq_entry->um_queue);
-		sctk_free(umq_entry->um_queue);
-		sctk_free(umq_entry);
+        for (int i = 0; i < 4096; i++) {
+                if (umq->umq_table[i] != NULL) {
+                        lcp_mtch_umq_destroy(umq->umq_table[i]);
+                }
 	}
-	MPC_HT_ITER_END(&umq->ht)
+        sctk_free(umq->umq_table);
 
 }
 
-void* _prq_match_create_entry( uint64_t key )
+lcp_mtch_prq_list_t *_prq_match_create_entry(lcp_prq_match_table_t *prq, uint16_t comm_id)
 {
-	lcp_prq_match_entry_t *item = sctk_malloc(sizeof(lcp_prq_match_entry_t));
-	assume(item != NULL);
-
-	item->comm_key = key;
-	item->pr_queue = lcp_prq_init();
-
-	return item;
+        lcp_mtch_prq_list_t *list;
+        /* Check if prq list already created */
+        if ((list = prq->prq_table[comm_id]) != NULL) {
+                return list;
+        }
+        assert(comm_id < 4096 && comm_id >= 0);
+        //FIXME: no memory check
+	return prq->prq_table[comm_id] = lcp_prq_init();
 }
 
 
@@ -97,24 +99,24 @@ void* _prq_match_create_entry( uint64_t key )
  * @param comm communicator linked to the prq
  * @return lcp_prq_match_entry_t* 
  */
-lcp_prq_match_entry_t *lcp_get_prq_entry(
+lcp_mtch_prq_list_t *lcp_get_prq_entry(
 		 lcp_prq_match_table_t *table,
-		 uint64_t comm)
+		 uint16_t comm_id)
 {
-	int did_create = 0;
-	return mpc_common_hashtable_get_or_create( &table->ht, comm, _prq_match_create_entry, &did_create);;
+        return table->prq_table[comm_id];
 }
 
 
-void* _umq_match_create_entry( uint64_t key )
+void* _umq_match_create_entry(lcp_umq_match_table_t *umq, uint16_t comm_id)
 {
-	lcp_umq_match_entry_t *item = sctk_malloc(sizeof(lcp_umq_match_entry_t));
-	assume(item != NULL);
-
-	item->comm_key = key;
-	item->um_queue = lcp_umq_init();
-
-	return item;
+        lcp_mtch_umq_list_t *list;
+        /* Check if prq list already created */
+        if ((list = umq->umq_table[comm_id]) != NULL) {
+                return list;
+        }
+        assert(comm_id < 4096 && comm_id >= 0);
+        //FIXME: no memory check
+	return umq->umq_table[comm_id] = lcp_umq_init();
 }
 
 
@@ -125,12 +127,11 @@ void* _umq_match_create_entry( uint64_t key )
  * @param comm communicator linked to the umq
  * @return lcp_prq_match_entry_t* 
  */
-lcp_umq_match_entry_t *lcp_get_umq_entry(
+lcp_mtch_umq_list_t *lcp_get_umq_entry(
 		 lcp_umq_match_table_t *table,
-		 uint64_t comm)
+		 uint16_t comm_id)
 {
-	int did_create = 0;
-	return mpc_common_hashtable_get_or_create( &table->ht, comm, _umq_match_create_entry, &did_create);;
+        return table->umq_table[comm_id];
 }
 
 /**
@@ -143,18 +144,20 @@ lcp_umq_match_entry_t *lcp_get_umq_entry(
  * @param src request source
  */
 void lcp_append_prq(lcp_prq_match_table_t *prq, lcp_request_t *req,
-		    uint64_t comm, int tag, uint64_t src)
+		    uint16_t comm_id, int tag, uint64_t src)
 {
 
-	lcp_prq_match_entry_t *entry;
+	lcp_mtch_prq_list_t *prq_list;
 
-	entry = lcp_get_prq_entry(prq, comm);
-	mpc_common_spinlock_lock(&(entry->pr_queue->lock));
-	lcp_prq_append(entry->pr_queue, req, tag, src);
+	prq_list = lcp_get_prq_entry(prq, comm_id);
+        if (prq_list == NULL) {
+                prq_list = _prq_match_create_entry(prq, comm_id);
+        }
+
+	lcp_prq_append(prq_list, req, tag, src);
 	mpc_common_debug("LCP: prq added req=%p, msg_n=%lu, "
 			 "comm_id=%llu, tag=%d, src=%llu.", 
-			 req, req->seqn, comm, tag, src);
-	mpc_common_spinlock_unlock(&(entry->pr_queue->lock));
+			 req, req->seqn, comm_id, tag, src);
 }
 
 
@@ -168,19 +171,20 @@ void lcp_append_prq(lcp_prq_match_table_t *prq, lcp_request_t *req,
  * @return lcp_request_t* dequeued request
  */
 lcp_request_t *lcp_match_prq(lcp_prq_match_table_t *prq, 
-			     uint64_t comm_id, int tag, 
+			     uint16_t comm_id, int tag, 
 			     uint64_t src)
 {
-	lcp_prq_match_entry_t *entry;
+	lcp_mtch_prq_list_t *prq_list;
 	lcp_request_t *found = NULL;
 
-	entry = lcp_get_prq_entry(prq, comm_id);
-	mpc_common_spinlock_lock(&(entry->pr_queue->lock));
-	found =	lcp_prq_find_dequeue(entry->pr_queue, tag, src);
+	prq_list = lcp_get_prq_entry(prq, comm_id);
+        if (prq_list == NULL) {
+                prq_list = _prq_match_create_entry(prq, comm_id);
+        }
+	found =	lcp_prq_find_dequeue(prq_list, tag, src);
 	mpc_common_debug("LCP: prq tag matching FOUND=%p, "
-			 "comm_id=%llu, tag=%d, src=%llu.", 
+			 "comm_id=%lu, tag=%d, src=%llu.", 
 			 found, comm_id, tag, src);
-	mpc_common_spinlock_unlock(&(entry->pr_queue->lock));
 
 	return found;
 }
@@ -197,29 +201,34 @@ lcp_request_t *lcp_match_prq(lcp_prq_match_table_t *prq,
  * @param src request source
  */
 void lcp_append_umq(lcp_umq_match_table_t *umq, void *req,
-		    uint64_t comm, int tag, uint64_t src)
+		    uint16_t comm_id, int tag, uint64_t src)
 {
-	lcp_umq_match_entry_t *entry;
+	lcp_mtch_umq_list_t *umq_list;
 
-	entry = lcp_get_umq_entry(umq, comm);
-	mpc_common_spinlock_lock(&(entry->um_queue->lock));
-	lcp_umq_append(entry->um_queue, req, tag, src);
-	mpc_common_debug("LCP: umq added req=%p, comm_id=%llu, tag=%d, "
-			 "src=%llu.", req, comm, tag, src);
-	mpc_common_spinlock_unlock(&(entry->um_queue->lock));
+	umq_list = lcp_get_umq_entry(umq, comm_id);
+        if (umq_list == NULL) {
+                umq_list = _umq_match_create_entry(umq, comm_id);
+        }
+	lcp_umq_append(umq_list, req, tag, src);
+	mpc_common_debug("LCP: umq added req=%p, comm_id=%lu, tag=%d, "
+			 "src=%llu.", req, comm_id, tag, src);
 }
 
 
 
-lcp_umq_match_table_t * lcp_umq_match_table_init()
+int lcp_umq_match_table_init(lcp_umq_match_table_t *umq)
 {
-	lcp_umq_match_table_t * ret = sctk_malloc(sizeof(lcp_umq_match_table_t));
-	assume(ret != NULL);
+        int rc = LCP_SUCCESS;
+        umq->umq_table = sctk_malloc(4096 * sizeof(lcp_mtch_umq_list_t));
+        if (umq->umq_table == NULL) {
+                mpc_common_debug_error("MATCH: could not allocated prq table.");
+                rc = LCP_ERROR;
+                goto err;
+        }
+        memset(umq->umq_table, 0, 4096 * sizeof(lcp_mtch_umq_list_t));
 
-	mpc_common_spinlock_init(&ret->lock, 0);
-	mpc_common_hashtable_init(&ret->ht, 128);
-
-	return ret;
+err:
+	return rc;
 }
 
 /**
@@ -232,33 +241,37 @@ lcp_umq_match_table_t * lcp_umq_match_table_init()
  * @return lcp_request_t* dequeued request
  */
 void *lcp_match_umq(lcp_umq_match_table_t *umq, 
-		    uint64_t comm_id, int tag, 
+		    uint16_t comm_id, int tag, 
 		    uint64_t src)
 {
-	lcp_umq_match_entry_t *entry;
+	lcp_mtch_umq_list_t *umq_list;
 	void *found = NULL;
 
-	entry = lcp_get_umq_entry(umq, comm_id);
-	mpc_common_spinlock_lock(&(entry->um_queue->lock));
-	found =	lcp_umq_find_dequeue(entry->um_queue, tag, src);
-	mpc_common_spinlock_unlock(&(entry->um_queue->lock));
+	umq_list = lcp_get_umq_entry(umq, comm_id);
+        if (umq_list == NULL) {
+                umq_list = _umq_match_create_entry(umq, comm_id);
+        }
+	found =	lcp_umq_find_dequeue(umq_list, tag, src);
+	mpc_common_debug("LCP: umq tag matching FOUND=%p, comm_id=%llu, tag=%d, "
+			 "src=%llu.", found, comm_id, tag, src);
 
 	return found;
 }
 
 void *lcp_search_umq(lcp_umq_match_table_t *umq,
-                     uint64_t comm_id, int tag,
+                     uint16_t comm_id, int tag,
                      uint64_t src)
 {
-	lcp_umq_match_entry_t *entry;
+	lcp_mtch_umq_list_t *umq_list;
 	void *found = NULL;
 
-	entry = lcp_get_umq_entry(umq, comm_id);
-	mpc_common_spinlock_lock(&(entry->um_queue->lock));
-	found =	lcp_umq_find(entry->um_queue, tag, src);
+	umq_list = lcp_get_umq_entry(umq, comm_id);
+        if (umq_list == NULL) {
+                umq_list = _umq_match_create_entry(umq, comm_id);
+        }
+	found =	lcp_umq_find(umq_list, tag, src);
 	mpc_common_debug("LCP: umq tag matching FOUND=%p, comm_id=%llu, tag=%d, "
 			 "src=%llu.", found, comm_id, tag, src);
-	mpc_common_spinlock_unlock(&(entry->um_queue->lock));
 
 	return found;
 }

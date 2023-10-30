@@ -141,5 +141,7 @@ size_t mpc_mpool_get_elem_size(mpc_mempool_t *mp);
 void mpc_mpool_fini(mpc_mempool_t *mp);
 void mpc_mpool_push(void *obj);
 void *mpc_mpool_pop(mpc_mempool_t *mp);
+void mpc_mpool_push_no_lock(void *obj);
+void *mpc_mpool_pop_no_lock(mpc_mempool_t *mp);
 
 #endif

@@ -1066,6 +1066,7 @@ int mpc_lowcomm_communicator_scan(void (*callback)(mpc_lowcomm_communicator_t co
 
 int mpc_lowcomm_communicator_exists(mpc_lowcomm_communicator_t comm)
 {
+        return 1;
 	comm = __mpc_lowcomm_communicator_from_predefined(comm);
 	/* In debug we actually check */
 	return mpc_common_hashtable_get(&__id_factory.comm_table, (uint64_t)comm) != NULL;

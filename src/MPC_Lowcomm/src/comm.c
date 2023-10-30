@@ -4217,18 +4217,20 @@ static void __initialize_drivers()
 #ifdef MPC_LOWCOMM_PROTOCOL
         //FIXME: task count is number of MPI task while ctx->num_tasks should be
         //       the number of local tasks. At this point,
-        //       mpc_common_get_locak_task_count() is not setup yet. 
+        //       mpc_common_get_local_task_count() is not setup yet. 
 	lcp_context_param_t param =
 	{
-		.flags          = LCP_CONTEXT_DATATYPE_OPS |
-		                  LCP_CONTEXT_PROCESS_UID,
+		.flags          = LCP_CONTEXT_DATATYPE_OPS  |
+		                  LCP_CONTEXT_PROCESS_UID   |
+                                  LCP_CONTEXT_NUM_PROCESSES,
 		.dt_ops         =
 		{
 			.pack   = mpc_lowcomm_request_pack,
 			.unpack = mpc_lowcomm_request_unpack,
 		},
 		.process_uid    = mpc_lowcomm_monitor_get_uid(),
-                .num_tasks      = mpc_common_get_task_count()
+                .num_tasks      = mpc_common_get_task_count(),
+                .num_processes  = mpc_common_get_process_count(),
 	};
 	rc = lcp_context_create(&lcp_ctx_loc, &param);
 	if(rc != MPC_LOWCOMM_SUCCESS)

@@ -81,12 +81,12 @@ int lcp_tag_recv_nb(lcp_task_h task, void *buffer, size_t count,
         req->state.offloaded = 0;
 
 	LCP_TASK_LOCK(task);
-	match = lcp_match_umq(task->umq_table,
+	match = lcp_match_umq(&task->umq_table,
 			      req->recv.tag.comm,
 			      req->recv.tag.tag,
 			      req->recv.tag.src_tid);
 	if (match == NULL) {
-		lcp_append_prq(task->prq_table, req,
+		lcp_append_prq(&task->prq_table, req,
 			       req->recv.tag.comm,
 			       req->recv.tag.tag,
 			       req->recv.tag.src_tid);

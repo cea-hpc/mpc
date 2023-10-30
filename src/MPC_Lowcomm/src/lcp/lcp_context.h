@@ -115,8 +115,6 @@ struct lcp_context
 
 	unsigned              flags;
 
-	OPA_int_t             msg_id;        /* unique message identifier */
-
 	OPA_int_t             muid;          /* matching unique identifier */
 	lcp_pending_table_t * match_ht;      /* ht of matching request */
 
@@ -131,13 +129,14 @@ struct lcp_context
 	unsigned int *        progress_counter; /* Add a counter for priority-based polling */
 	unsigned char         current_progress_value; /* This is the counter for progress calls */
 
-
 	mpc_common_spinlock_t ctx_lock;      /* Context lock */
 
 	int                   num_eps;       /* number of endpoints created */
-	struct mpc_common_hashtable  ep_htable;         /* Hash table of created endpoint */
+        lcp_ep_h             *eps;           /* table of endpoints */
+	struct mpc_common_hashtable  ep_set; /* Hash table of endpoints for other sets */
 
 	uint64_t              process_uid;   /* process uid used for endpoint creation */
+        int                   num_processes; /* number of processes in the run */
 
 	mpc_queue_head_t      pending_queue; /* Queue of pending requests to be sent */
 

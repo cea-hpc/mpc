@@ -15,8 +15,9 @@ typedef enum {
 
 /* Context parameter flags */
 enum {
-        LCP_CONTEXT_DATATYPE_OPS = LCP_BIT(0),
-        LCP_CONTEXT_PROCESS_UID  = LCP_BIT(1)
+        LCP_CONTEXT_DATATYPE_OPS  = LCP_BIT(0),
+        LCP_CONTEXT_PROCESS_UID   = LCP_BIT(1),
+        LCP_CONTEXT_NUM_PROCESSES = LCP_BIT(2),
 };
 
 /* Datatype */
@@ -30,11 +31,9 @@ typedef struct lcp_context_param {
         uint32_t     flags;
         uint64_t     process_uid;
         int          num_tasks;
+        int          num_processes;
         lcp_dt_ops_t dt_ops;
 } lcp_context_param_t;
-
-lcp_context_h lcp_context_get();
-
 
 int lcp_context_create(lcp_context_h *ctx_p, lcp_context_param_t *param);
 
