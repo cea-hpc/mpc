@@ -23,7 +23,8 @@ const char *mpc_conf_type_name(mpc_conf_type_t type)
 		"STRING",
 		"FUNCTION",
 		"CONFIG",
-		"BOOL"
+		"BOOL",
+    "ENUM"
 	};
 
 
@@ -40,6 +41,7 @@ int mpc_conf_type_is_string(mpc_conf_type_t type)
 		case MPC_CONF_TYPE:
 		case MPC_CONF_TYPE_NONE:
 		case MPC_CONF_BOOL:
+    case MPC_CONF_ENUM:
 			return 0;
 
 		case MPC_CONF_FUNC:
@@ -50,7 +52,28 @@ int mpc_conf_type_is_string(mpc_conf_type_t type)
 	return 0;
 }
 
-int mpc_conf_type_print_value(mpc_conf_type_t type, char *buf, int len, void *ptr, int add_color)
+static inline int __print_enum(char *buff, int len, int *ptr, int add_color, mpc_conf_enum_keyval_t * ekv, int ekv_length) {
+  int index = -1;
+  for(int i = 0; i < ekv_length; i++) {
+    if(ekv[i].value == *ptr) {
+      index = i;
+      break;
+    }
+  }
+  
+  if(index == -1) {
+    _utils_verbose_output(0,"unknown enum value '%d'\n", *ptr);
+    return -1;
+  }
+
+  if(add_color) {
+  	return snprintf(buff, len, MAGENTA("%s"), ekv[index].key);
+  } else {
+  	return snprintf(buff, len, "%s", ekv[index].key);
+  }
+}
+
+int mpc_conf_type_print_value(mpc_conf_type_t type, char *buf, int len, void *ptr, int add_color, mpc_conf_enum_keyval_t * ekv, int ekv_length)
 {
 	buf[0] = '\0';
 
@@ -108,6 +131,8 @@ int mpc_conf_type_print_value(mpc_conf_type_t type, char *buf, int len, void *pt
 			{
 				return snprintf(buf, len, "%s", *( (int *)ptr) ? "true" : "false");
 			}
+    case MPC_CONF_ENUM:
+      return __print_enum(buf, len, ptr, add_color, ekv, ekv_length);
 
 		case MPC_CONF_TYPE:
 		{
@@ -134,6 +159,7 @@ ssize_t mpc_conf_type_size(mpc_conf_type_t type)
 	{
 		case MPC_CONF_INT:
 		case MPC_CONF_BOOL:
+    case MPC_CONF_ENUM:
 			return sizeof(int);
 
 		case MPC_CONF_LONG_INT:
@@ -164,6 +190,7 @@ int mpc_conf_type_set_value(mpc_conf_type_t type, void **dest, void *from)
 		case MPC_CONF_DOUBLE:
 		case MPC_CONF_FUNC:
 		case MPC_CONF_STRING:
+    case MPC_CONF_ENUM:
 			memcpy(*dest, from, mpc_conf_type_size(type) );
 			break;
 		case MPC_CONF_TYPE:
@@ -224,7 +251,27 @@ static inline int __parse_double(char *buff, double *val)
 	return 0;
 }
 
-int __mpc_conf_type_parse_from_string(mpc_conf_type_t type, void *dest, char *from)
+static inline int __parse_enum(char *buff, int *val, mpc_conf_enum_keyval_t * ekv, int ekv_length) {
+  for(int i = 0; i < ekv_length; i++) {
+    if(strcmp(buff, ekv[i].key) == 0) {
+      *val = ekv[i].value;
+      return 0;
+    }
+  }
+  
+  char err_msg[1024] = "\0";
+  for(int i = 0; i < ekv_length; i++) {
+    if(i != 0) {
+      snprintf(&(err_msg[strlen(err_msg)]), 1023 - strlen(err_msg), ", ");
+    }
+    snprintf(&(err_msg[strlen(err_msg)]), 1023 - strlen(err_msg), "%s", ekv[i].key);
+  }
+
+  _utils_verbose_output(0,"could not parse bool expected {%s} got '%s'\n", err_msg, buff);
+  return 1;
+}
+
+int __mpc_conf_type_parse_from_string(mpc_conf_type_t type, void *dest, char *from, mpc_conf_enum_keyval_t * ekv, int ekv_length)
 {
 	switch(type)
 	{
@@ -279,6 +326,10 @@ int __mpc_conf_type_parse_from_string(mpc_conf_type_t type, void *dest, char *fr
 		{
 			return __parse_double(from, (double *)dest);
 		}
+    case MPC_CONF_ENUM:
+    {
+      return __parse_enum(from, (int*)dest, ekv, ekv_length);
+    }
 
 		case MPC_CONF_FUNC:
 		case MPC_CONF_STRING:
@@ -292,10 +343,10 @@ int __mpc_conf_type_parse_from_string(mpc_conf_type_t type, void *dest, char *fr
 	return 1;
 }
 
-int mpc_conf_type_set_value_from_string(mpc_conf_type_t type, void **dest, char *from)
+int mpc_conf_type_set_value_from_string(mpc_conf_type_t type, void **dest, char *from, mpc_conf_enum_keyval_t * ekv, int ekv_length)
 {
 	/* String can only be assigned to actual values */
-	if(type ==MPC_CONF_TYPE)
+	if(type == MPC_CONF_TYPE)
 	{
 		_utils_verbose_output(0,"cannot assign string value '%s' toMPC_CONF_TYPE\n", from);
 		return 1;
@@ -308,7 +359,7 @@ int mpc_conf_type_set_value_from_string(mpc_conf_type_t type, void **dest, char 
 	if(0 <= tsize)
 	{
 		/* Now we need to parse */
-		if(__mpc_conf_type_parse_from_string(type, *dest, from) != 0)
+		if(__mpc_conf_type_parse_from_string(type, *dest, from, ekv, ekv_length) != 0)
 		{
 			_utils_verbose_output(0,"Failed parsing %s from string '%s'\n", mpc_conf_type_name(type), from);
 			return 1;
@@ -343,7 +394,7 @@ mpc_conf_type_t mpc_conf_type_infer_from_string(char *string)
 
 	/* Can I parse it as a double ? */
 	double test;
-	if( __mpc_conf_type_parse_from_string(MPC_CONF_DOUBLE, &test, string) == 0 )
+	if( __mpc_conf_type_parse_from_string(MPC_CONF_DOUBLE, &test, string, NULL, 0) == 0 )
 	{
 		return MPC_CONF_DOUBLE;
 	}

@@ -791,7 +791,7 @@ static void __register_mqd_config(void)
 	if(dbg)
 	{
 		mpc_conf_config_type_t *dbg_elem = mpc_conf_config_type_elem_get_inner(dbg);
-		mpc_conf_config_type_append(dbg_elem, ret->name, ret, MPC_CONF_TYPE, "Message Queues Debug Configuration");
+		mpc_conf_config_type_append(dbg_elem, ret->name, ret, MPC_CONF_TYPE, "Message Queues Debug Configuration", NULL, 0);
 	}
 }
 

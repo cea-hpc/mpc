@@ -77,7 +77,7 @@ static inline char * __stringtolower(char * string)
 }
 
 
-mpc_conf_config_type_elem_t *mpc_conf_config_type_elem_init(char *name, void *addr, mpc_conf_type_t type, char *doc)
+mpc_conf_config_type_elem_t *mpc_conf_config_type_elem_init(char *name, void *addr, mpc_conf_type_t type, char *doc, mpc_conf_enum_keyval_t * ekv, int ekv_length)
 {
 	_utils_verbose_output(2, "ELEM: init %s @ %p type %s // %s\n", name, addr, mpc_conf_type_name(type), doc);
 	mpc_conf_config_type_elem_t *ret = malloc(sizeof(mpc_conf_config_type_elem_t) );
@@ -88,6 +88,10 @@ mpc_conf_config_type_elem_t *mpc_conf_config_type_elem_init(char *name, void *ad
 	ret->is_locked       = 0;
 	ret->name            = __stringtolower(strdup(name));
 	ret->parent          = NULL;
+  ret->ekv_length      = ekv_length;
+  ret->ekv             = malloc(ekv_length * sizeof(mpc_conf_enum_keyval_t));
+
+  memcpy(ret->ekv, ekv, ekv_length * sizeof(mpc_conf_enum_keyval_t));
 
 	if(strchr(name, '_'))
 	{
@@ -121,6 +125,7 @@ void mpc_conf_config_type_elem_release(mpc_conf_config_type_elem_t **elem)
 	_utils_verbose_output(3, "ELEM: release %s\n", (*elem)->name);
 	free( (*elem)->name);
 	free( (*elem)->doc);
+  free( (*elem)->ekv);
 
 	if( (*elem)->addr_is_to_free )
 	{
@@ -390,7 +395,7 @@ int mpc_conf_config_type_elem_set_from_string(mpc_conf_config_type_elem_t *elem,
 		
 	}
 
-	return mpc_conf_type_set_value_from_string(elem->type, &elem->addr, string);
+	return mpc_conf_type_set_value_from_string(elem->type, &elem->addr, string, elem->ekv, elem->ekv_length);
 }
 
 void mpc_conf_config_type_elem_set_to_free(mpc_conf_config_type_elem_t *elem, int to_free)
@@ -417,7 +422,7 @@ static inline int __mpc_conf_config_type_elem_print_xml(FILE *fd, mpc_conf_confi
 
 	int can_do_color = _utils_conf_can_do_color(fd) ? 1 : 0;
 
-	mpc_conf_type_print_value(elem->type, value_buff, 256, elem->addr, can_do_color);
+	mpc_conf_type_print_value(elem->type, value_buff, 256, elem->addr, can_do_color, elem->ekv, elem->ekv_length);
 
 	char __spacebuff[128];
 
@@ -484,7 +489,7 @@ static inline int __mpc_conf_config_type_elem_print_gen(FILE *fd, mpc_conf_confi
 {
 	char  value_buff[256];
 	int can_do_color = _utils_conf_can_do_color(fd) ? 1 : 0;
-	mpc_conf_type_print_value(elem->type, value_buff, 256, elem->addr, can_do_color);
+	mpc_conf_type_print_value(elem->type, value_buff, 256, elem->addr, can_do_color, elem->ekv, elem->ekv_length);
 
 	char path[512];
 	mpc_conf_config_type_elem_get_path_to(elem, path, 512, separator);
@@ -596,13 +601,21 @@ mpc_conf_config_type_t *mpc_conf_config_type_init(char *name, ...)
 		mpc_conf_type_t type = va_arg(ap, mpc_conf_type_t);
 		char *          pdoc = va_arg(ap, char *);
 
+    mpc_conf_enum_keyval_t * pekv = NULL;
+    int pekv_length = 0;
+    if(type == MPC_CONF_ENUM)
+    {
+      pekv_length = va_arg(ap, int);
+      pekv = va_arg(ap, mpc_conf_enum_keyval_t*);
+    }
+
 		if(mpc_conf_config_type_get(ret, pname) )
 		{
 			_utils_verbose_output(0, "'%s' is already present in '%s'\n", pname, ret->name);
 			break;
 		}
 
-		mpc_conf_config_type_elem_t *elem = mpc_conf_config_type_elem_init(pname, pptr, type, pdoc);
+		mpc_conf_config_type_elem_t *elem = mpc_conf_config_type_elem_init(pname, pptr, type, pdoc, pekv, pekv_length);
 		assert(elem != NULL);
 
 		ret->elems[ret->elem_count] = elem;
@@ -635,7 +648,7 @@ int mpc_config_type_append_elem(mpc_conf_config_type_t *type, mpc_conf_config_ty
 }
 
 
-mpc_conf_config_type_elem_t *mpc_conf_config_type_append(mpc_conf_config_type_t *type, char *ename, void *eptr, mpc_conf_type_t etype, char *edoc)
+mpc_conf_config_type_elem_t *mpc_conf_config_type_append(mpc_conf_config_type_t *type, char *ename, void *eptr, mpc_conf_type_t etype, char *edoc, mpc_conf_enum_keyval_t * eekv, int eekv_length)
 {
 	assert(type != NULL);
 
@@ -653,7 +666,7 @@ mpc_conf_config_type_elem_t *mpc_conf_config_type_append(mpc_conf_config_type_t 
 		return NULL;
 	}
 
-	mpc_conf_config_type_elem_t *elem = mpc_conf_config_type_elem_init(ename, eptr, etype, edoc);
+	mpc_conf_config_type_elem_t *elem = mpc_conf_config_type_elem_init(ename, eptr, etype, edoc, eekv, eekv_length);
 	assert(elem != NULL);
 
 	type->elems[type->elem_count] = elem;
@@ -1222,7 +1235,7 @@ int mpc_conf_self_config_check_init(mpc_conf_self_config_t *config)
 																		  "valid",
 																		  &config->is_valid,
 																		  MPC_CONF_BOOL,
-																		  "Utility variable to check for configuration validity");
+																		  "Utility variable to check for configuration validity", NULL, 0);
 			mpc_conf_config_type_elem_set_locked(ve, 1);
 	}
 	else
@@ -1401,7 +1414,7 @@ int mpc_conf_root_config_append(char *conf_name, mpc_conf_config_type_t *conf, c
 		return 1;
 	}
 
-	mpc_conf_config_type_append(root_node, conf->name, conf,MPC_CONF_TYPE, doc);
+	mpc_conf_config_type_append(root_node, conf->name, conf,MPC_CONF_TYPE, doc, NULL, 0);
 
 	return 0;
 }
@@ -1511,7 +1524,7 @@ int mpc_conf_root_config_init(char *conf_name)
 	}
 
 	mpc_conf_config_type_t *     root_node   = mpc_conf_config_type_init(conf_name, NULL);
-	mpc_conf_config_type_elem_t *config_elem = mpc_conf_config_type_elem_init(conf_name, root_node,MPC_CONF_TYPE, "Config ROOT Node");
+	mpc_conf_config_type_elem_t *config_elem = mpc_conf_config_type_elem_init(conf_name, root_node,MPC_CONF_TYPE, "Config ROOT Node", NULL, 0);
 
 	if(__append_global_config(conf_name, config_elem) )
 	{
@@ -1684,7 +1697,7 @@ static inline mpc_conf_config_type_t *__create_container(char *name, char *separ
 		{
 			/* We need to create */
 			mpc_conf_config_type_t *new_type = mpc_conf_config_type_init(token, NULL);
-			mpc_conf_config_type_append(type, token, new_type,MPC_CONF_TYPE, "Dynamically inserted");
+			mpc_conf_config_type_append(type, token, new_type,MPC_CONF_TYPE, "Dynamically inserted", NULL, 0);
 			type = new_type;
 		}
 		else
@@ -1796,7 +1809,7 @@ mpc_conf_config_type_elem_t *mpc_conf_root_config_set_sep(char *name, char *sepa
 			return NULL;
 		}
 
-		elem = mpc_conf_config_type_append(pcont, value_name, eptr, etype, "Dynamically inserted");
+		elem = mpc_conf_config_type_append(pcont, value_name, eptr, etype, "Dynamically inserted", NULL, 0);
 	}
 
 	free(where_to_set);
@@ -2039,7 +2052,7 @@ int mpc_conf_root_config_search_path(char *conf_name, char * system, char * user
 	char doc[512];
 	snprintf(doc, 512, "Search paths for %s", conf_name);
 
-	mpc_conf_config_type_append(search_paths_type, conf_name, new_conf,MPC_CONF_TYPE, doc);
+	mpc_conf_config_type_append(search_paths_type, conf_name, new_conf,MPC_CONF_TYPE, doc, NULL, 0);
 
 
 

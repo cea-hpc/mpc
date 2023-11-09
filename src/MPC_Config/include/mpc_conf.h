@@ -25,15 +25,17 @@ mpc_conf_output_type_t mpc_conf_output_type_infer_from_file(char *path);
 typedef struct mpc_conf_config_type_elem_s
 {
 	struct mpc_conf_config_type_elem_s * parent;
-	char *          name;
-	void *          addr;
-	mpc_conf_type_t type;
-	char *          doc;
-	short           addr_is_to_free;
-	short           is_locked;
+	char *                    name;
+	void *                    addr;
+	mpc_conf_type_t           type;
+	char *                    doc;
+  mpc_conf_enum_keyval_t *  ekv;
+  int                       ekv_length;
+	short                     addr_is_to_free;
+	short                     is_locked;
 }mpc_conf_config_type_elem_t;
 
-mpc_conf_config_type_elem_t *mpc_conf_config_type_elem_init(char *name, void *addr, mpc_conf_type_t type, char *doc);
+mpc_conf_config_type_elem_t *mpc_conf_config_type_elem_init(char *name, void *addr, mpc_conf_type_t type, char *doc, mpc_conf_enum_keyval_t * ekv, int ekv_length);
 
 void mpc_conf_config_type_elem_release(mpc_conf_config_type_elem_t **elem);
 
@@ -73,7 +75,8 @@ typedef struct mpc_conf_config_type_s
 	int                          is_array;
 }mpc_conf_config_type_t;
 
-#define PARAM(name, ptr, type, doc)    name, ptr, (int)type, doc
+#define PARAM(name, ptr, type, doc, ...)    name, ptr, (int)type, doc __VA_OPT__(, __VA_ARGS__)
+#define ENUM_KEYVAL(...) (sizeof((mpc_conf_enum_keyval_t[])__VA_ARGS__) / sizeof(mpc_conf_enum_keyval_t)), ((mpc_conf_enum_keyval_t[])__VA_ARGS__)
 
 mpc_conf_config_type_t *mpc_conf_config_type_init(char *name, ...);
 
@@ -87,7 +90,9 @@ mpc_conf_config_type_elem_t *mpc_conf_config_type_append(mpc_conf_config_type_t 
 														 char *ename,
 														 void *eptr,
 														 mpc_conf_type_t etype,
-														 char *edoc);
+														 char *edoc, 
+                             mpc_conf_enum_keyval_t * eekv, 
+                             int eekv_length);
 
 mpc_conf_config_type_t * mpc_conf_config_type_elem_update(mpc_conf_config_type_t * ref, mpc_conf_config_type_t * updater, int force_content);
 
