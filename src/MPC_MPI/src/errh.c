@@ -382,7 +382,10 @@ _mpc_mpi_errhandler_t _mpc_mpi_handle_get_errhandler(sctk_handle id,
 
 	_mpc_mpi_errhandler_t ret = hctx->handler;
 
-	ret->ref_count++;
+	if (ret != SCTK_ERRHANDLER_NULL) {
+		ret->ref_count++;
+	}
+
 	mpc_common_spinlock_unlock(&errorhandlers_lock);
 
 	mpc_common_debug("GET at %p == %d for %d", hctx, hctx->handler, id);
