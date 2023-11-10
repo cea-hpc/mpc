@@ -435,14 +435,25 @@ static inline int __mpc_conf_config_type_elem_print_xml(FILE *fd, mpc_conf_confi
 		snprintf(outbuf, 1024, "%s"BOLD (GREEN("<%s>") ) "%s"BOLD (GREEN("</%s>") ), indentstr, elem->name, value_buff, elem->name);
 	}
 
+  char enumbuf[1024] = "";
+  if(elem->type == MPC_CONF_ENUM) {
+    if(elem->ekv_length > 0) {
+      snprintf(enumbuf, 1024, " {%s", elem->ekv[0].key);
+    }
+    for(int i = 1; i < elem->ekv_length; i++) {
+      snprintf(&(enumbuf[strlen(enumbuf)]), 1024 - strlen(enumbuf), ", %s", elem->ekv[i].key);
+    }
+    snprintf(&(enumbuf[strlen(enumbuf)]), 1024 - strlen(enumbuf), "}");
+  }
+
 	char docbuf[1024];
 	if(can_do_color)
 	{
-		snprintf(docbuf, 1024, CYAN("<!-- [%s]%s %s -->"), mpc_conf_type_name(elem->type), elem->is_locked?"[LOCKED]":"", elem->doc);
+		snprintf(docbuf, 1024, CYAN("<!-- [%s%s]%s %s -->"), mpc_conf_type_name(elem->type), enumbuf, elem->is_locked?"[LOCKED]":"", elem->doc);
 	}
 	else
 	{
-		snprintf(docbuf, 1024, "<!-- [%s] %s -->", mpc_conf_type_name(elem->type), elem->doc);
+		snprintf(docbuf, 1024, "<!-- [%s%s] %s -->", mpc_conf_type_name(elem->type), enumbuf, elem->doc);
 	}
 
 	if(len < COMMENT_OFFSET)
