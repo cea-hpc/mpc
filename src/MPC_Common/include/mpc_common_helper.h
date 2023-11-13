@@ -107,6 +107,15 @@
 
 #define mpc_common_abs(a) (((a) < 0)?(-(a)):(a) )
 
+#define mpc_common_padding(_n, _alignment) \
+        ( ((_alignment) - ((_n) % (_alignment))) % (_alignment) )
+
+#define mpc_common_align_down_pow2(_n, _alignment) \
+        ( (_n) & ~((_alignment) - 1) ) 
+
+#define mpc_common_align_up_pow2(_n, _alignment) \
+        mpc_common_align_down_pow2( (_n) + (_alignment) - 1, _alignment)
+
 /*********************
  * HASHING FUNCTIONS *
  *********************/

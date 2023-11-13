@@ -311,7 +311,7 @@ sctk_handle _mpc_mpi_handle_new_from_id(sctk_handle previous_id, sctk_handle_typ
 
 	if(__ctx_get_no_lock(previous_id, type) == NULL)
 	{
-		/* Create an unique i */
+		/* Create an unique id */
 		new_handle_id = previous_id;
 
 		/* Create the handler payload */

@@ -1,7 +1,7 @@
 #include "mpc_mempool.h"
-#include "mpc_math.h"
 #include "mpc_common_debug.h"
 #include "mpc_common_spinlock.h"
+#include "mpc_common_helper.h"
 #include <stddef.h>
 #include <stdint.h>
 
@@ -233,7 +233,7 @@ size_t mpc_mpool_get_elem_size(mpc_mempool_t *mp)
 }
 
 static size_t mpc_mempool_elem_real_size(mpc_mempool_data_t *data) {
-        return mpc_align_up_pow2(data->elem_size, data->alignment);
+        return mpc_common_align_up_pow2(data->elem_size, data->alignment);
 }
 
 static void *mpc_mempool_chunk_elems(mpc_mempool_data_t *data, mpc_mempool_chunk_t *chunk) {
@@ -242,7 +242,7 @@ static void *mpc_mempool_chunk_elems(mpc_mempool_data_t *data, mpc_mempool_chunk
         uintptr_t chunk_header = (uintptr_t)chunk + sizeof(mpc_mempool_chunk_t) + 
                 sizeof(mpc_mempool_elem_t);
 
-        chunk_header_padding = mpc_padding(chunk_header, data->alignment);
+        chunk_header_padding = mpc_common_padding(chunk_header, data->alignment);
         return (void *)(chunk_header + (intptr_t)chunk_header_padding -
                         sizeof(mpc_mempool_elem_t));
 }
@@ -375,7 +375,7 @@ int mpc_mpool_init(mpc_mempool_t *mp, mpc_mempool_param_t *params)
 {
         int rc = 0;
 
-        if (params->alignment == 0 || !mpc_is_pow2(params->alignment) ||
+        if (params->alignment == 0 || !mpc_common_is_powerof2(params->alignment) ||
             params->elem_per_chunk == 0 || params->max_elems < params->elem_per_chunk) 
         {
                 mpc_common_debug_error("COMMON: wrong parameter, could not "

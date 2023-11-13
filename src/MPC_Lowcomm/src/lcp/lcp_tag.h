@@ -36,7 +36,7 @@
 #include "lcp_header.h"
 
 #include <stdint.h>
-#include <mpc_math.h>
+#include <mpc_common_helper.h>
 
 struct lcp_tag_data {
         size_t length;
@@ -52,8 +52,8 @@ struct lcp_tag_data {
 //      request is sync etc... But did not want to add this logic.
 static inline size_t lcp_send_get_total_tag_payload(size_t data_length)
 {
-        size_t hdr_size = MPC_MAX(sizeof(lcp_tag_hdr_t), 
-                                  MPC_MAX(sizeof(lcp_tag_sync_hdr_t),
+        size_t hdr_size = mpc_common_max(sizeof(lcp_tag_hdr_t), 
+                                  mpc_common_max(sizeof(lcp_tag_sync_hdr_t),
                                           sizeof(lcp_rndv_hdr_t)));
         return data_length + hdr_size;
 }

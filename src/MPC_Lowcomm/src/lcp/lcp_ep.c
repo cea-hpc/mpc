@@ -8,7 +8,7 @@
 #include "lcp_context.h"
 
 #include <assert.h>
-#include <mpc_math.h>
+#include <mpc_common_helper.h>
 
 static int lcp_ep_check_if_valid(lcp_ep_h ep)
 {
@@ -131,32 +131,32 @@ int lcp_ep_init_config(lcp_context_h ctx, lcp_ep_h ep)
 		if(iface->runtime_config_rail->offload)
 		{
 			ep->ep_config.offload       = 1;
-			ep->ep_config.tag.max_bcopy = MPC_MIN(ep->ep_config.tag.max_bcopy,
+			ep->ep_config.tag.max_bcopy = mpc_common_min(ep->ep_config.tag.max_bcopy,
 			                                      attr.iface.cap.tag.max_bcopy);
-			ep->ep_config.tag.max_zcopy = MPC_MIN(ep->ep_config.tag.max_zcopy,
+			ep->ep_config.tag.max_zcopy = mpc_common_min(ep->ep_config.tag.max_zcopy,
 			                                      attr.iface.cap.tag.max_zcopy);
-			ep->ep_config.tag.max_iovecs = MPC_MIN(ep->ep_config.tag.max_iovecs,
+			ep->ep_config.tag.max_iovecs = mpc_common_min(ep->ep_config.tag.max_iovecs,
 			                                       attr.iface.cap.tag.max_iovecs);
 		}
 		//NOTE: if tbsm + portals for example, eager and rndv frag
 		//       will be limited by portals capabilities. Is this the
 		//       correct behavior ?
-		ep->ep_config.am.max_bcopy = MPC_MIN(ep->ep_config.am.max_bcopy,
+		ep->ep_config.am.max_bcopy = mpc_common_min(ep->ep_config.am.max_bcopy,
 		                                     attr.iface.cap.am.max_bcopy);
-		ep->ep_config.am.max_zcopy = MPC_MIN(ep->ep_config.am.max_zcopy,
+		ep->ep_config.am.max_zcopy = mpc_common_min(ep->ep_config.am.max_zcopy,
 		                                     attr.iface.cap.am.max_zcopy);
-		ep->ep_config.am.max_iovecs = MPC_MIN(ep->ep_config.am.max_iovecs,
+		ep->ep_config.am.max_iovecs = mpc_common_min(ep->ep_config.am.max_iovecs,
 		                                      attr.iface.cap.am.max_iovecs);
-		ep->ep_config.rndv.max_get_zcopy = MPC_MIN(ep->ep_config.rndv.max_get_zcopy,
+		ep->ep_config.rndv.max_get_zcopy = mpc_common_min(ep->ep_config.rndv.max_get_zcopy,
 		                                           attr.iface.cap.rndv.max_get_zcopy);
-		ep->ep_config.rndv.max_put_zcopy = MPC_MIN(ep->ep_config.rndv.max_put_zcopy,
+		ep->ep_config.rndv.max_put_zcopy = mpc_common_min(ep->ep_config.rndv.max_put_zcopy,
 		                                           attr.iface.cap.rndv.max_put_zcopy);
 
 		if(iface->runtime_config_rail->rdma)
 		{
-			ep->ep_config.rma.max_put_bcopy = MPC_MIN(ep->ep_config.rma.max_put_bcopy,
+			ep->ep_config.rma.max_put_bcopy = mpc_common_min(ep->ep_config.rma.max_put_bcopy,
 			                                          attr.iface.cap.rma.max_put_bcopy);
-			ep->ep_config.rma.max_put_bcopy = MPC_MIN(ep->ep_config.rma.max_put_zcopy,
+			ep->ep_config.rma.max_put_bcopy = mpc_common_min(ep->ep_config.rma.max_put_zcopy,
 			                                          attr.iface.cap.rma.max_put_zcopy);
 		}
 	}

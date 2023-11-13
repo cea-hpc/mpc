@@ -37,7 +37,7 @@
 
 #include <mpc_common_debug.h>
 #include <mpc_common_rank.h>
-#include <mpc_math.h>
+#include <mpc_common_helper.h>
 #include <sctk_alloc.h>
 #include <mpc_common_flags.h>
 
@@ -509,7 +509,7 @@ static inline int __init_rails(lcp_context_h ctx)
 	{
                 //NOTE: maximum number of interface is configurable, so select
                 //      the minimum between detected devices and configuration.
-                resource_count += MPC_MIN((int)ctx->cmpts[k].num_devices,
+                resource_count += mpc_common_min((int)ctx->cmpts[k].num_devices,
                                           sorted_rails[k]->max_ifaces);
 
                 //FIXME: there was a loop before with some unknown bug.
@@ -528,7 +528,7 @@ static inline int __init_rails(lcp_context_h ctx)
         for(k = 0; k < ctx->num_cmpts; ++k)
 	{
                 struct lcr_component * tmp = &ctx->cmpts[k];
-                unsigned int num_devices = MPC_MIN((int)ctx->cmpts[k].num_devices,
+                unsigned int num_devices = mpc_common_min((int)ctx->cmpts[k].num_devices,
                                                    sorted_rails[k]->max_ifaces);
                 for(l=0; l < num_devices; l++)
                 {
