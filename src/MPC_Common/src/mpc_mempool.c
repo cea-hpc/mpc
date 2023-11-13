@@ -225,9 +225,11 @@ void *mpc_mempool_alloc_and_init(mpc_mempool_t *mp,
 	return mpc_mempool_alloc(mp);
 }
 
+//TODO: do a ascii schematic of the memory.
+
 size_t mpc_mpool_get_elem_size(mpc_mempool_t *mp)
 {
-        return mp->data->elem_size;
+        return mp->data->elem_size - sizeof(mpc_mempool_elem_t);
 }
 
 static size_t mpc_mempool_elem_real_size(mpc_mempool_data_t *data) {
@@ -236,6 +238,7 @@ static size_t mpc_mempool_elem_real_size(mpc_mempool_data_t *data) {
 
 static void *mpc_mempool_chunk_elems(mpc_mempool_data_t *data, mpc_mempool_chunk_t *chunk) {
         size_t chunk_header_padding;
+        //FIXME: approximative use of intptr_t and uintptr_t
         uintptr_t chunk_header = (uintptr_t)chunk + sizeof(mpc_mempool_chunk_t) + 
                 sizeof(mpc_mempool_elem_t);
 
@@ -273,8 +276,9 @@ void mpc_mpool_grow(mpc_mempool_t *mp)
         }
 #endif
 
-        chunk_size = sizeof(mpc_mempool_chunk_t) + data->elem_per_chunk *
-                mpc_mempool_elem_real_size(data);
+        //FIXME: explain why data->alignment needs to be in size.
+        chunk_size = sizeof(mpc_mempool_chunk_t) + data->alignment + 
+                data->elem_per_chunk * mpc_mempool_elem_real_size(data);
 
         ptr   = data->malloc_func(chunk_size); 
         if (ptr == NULL) {
