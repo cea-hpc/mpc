@@ -34,6 +34,7 @@
 #include "lcp_context.h"
 #include "lcp_task.h"
 #include "lcp_tag_matching.h"
+#include "lcp_tag_match.h"
 #include "lcp_tag_offload.h"
 #include "lcp_request.h"
 #include "lcp_header.h"
@@ -45,17 +46,19 @@ int lcp_tag_probe_nb(lcp_task_h task, const int src,
         int rc = LCP_SUCCESS;
         lcp_context_h ctx = task->ctx;
 	lcp_unexp_ctnr_t *match = NULL;
-	sctk_rail_info_t *iface;
 
-	iface = ctx->resources[ctx->priority_rail].iface;
-	if (LCR_IFACE_IS_TM(iface) && ctx->config.offload) {
+        int tmask = tag == MPC_ANY_TAG ? 0 : ~0;
+        int smask = src == MPC_ANY_SOURCE ? 0 : ~0;
+
+	if (ctx->config.offload) {
+	        sctk_rail_info_t *iface = ctx->resources[ctx->priority_rail].iface;
                 rc = lcp_recv_tag_probe(task, iface, src, tag, comm, recv_info);
 
                 return rc;
         }
 
         LCP_TASK_LOCK(task);
-        match = lcp_search_umq(&task->umq_table, (uint16_t)comm, tag, src);
+        match = lcp_search_umqueue(task->umqs, (uint16_t)comm, tag, tmask, src, smask);
         if (match != NULL) {
                 if (match->flags & (LCP_RECV_CONTAINER_UNEXP_EAGER_TAG |
                                     LCP_RECV_CONTAINER_UNEXP_TASK_TAG_BCOPY)) {

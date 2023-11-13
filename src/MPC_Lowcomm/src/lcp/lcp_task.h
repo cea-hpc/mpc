@@ -34,6 +34,7 @@
 
 #include "lcp_def.h"
 #include "lcr/lcr_def.h"
+#include "queue.h"
 
 #include "lcp_tag_matching.h"
 #include "mpc_mempool.h"
@@ -56,8 +57,8 @@ struct lcp_task {
 
         mpc_common_spinlock_t task_lock;
 
-	lcp_prq_match_table_t prq_table; /* Posted Receive Queue */
-	lcp_umq_match_table_t umq_table; /* Unexpected Message Queue */
+        mpc_queue_head_t *umqs;
+        mpc_queue_head_t *prqs;
 
         lcp_am_user_handler_t *am; /* Table of user AM callbacks */
 
@@ -67,15 +68,12 @@ struct lcp_task {
         mpc_mempool_t *unexp_mp; /* Unexpected memory pool */
 
         //TODO: implement reordering.
-        uint16_t *seqn;
-        uint16_t *expected_seqn;
 };
 
 /* Function for sending data between two tasks */
-int lcp_send_task_bcopy(lcp_request_t *req, lcp_request_t **matched_req, 
-                        lcr_pack_callback_t pack_cb, unsigned flags,
-                        lcp_unexp_ctnr_t **ctnr_p);
-int lcp_send_task_zcopy(lcp_request_t *req, lcp_request_t **matched_req);
+int lcp_send_task_bcopy(lcp_request_t *req, lcr_pack_callback_t pack_cb, 
+                        unsigned flags, lcp_task_completion_t *comp);
+int lcp_send_task_zcopy(lcp_request_t *req, lcp_task_completion_t *comp);
 int lcp_task_fini(lcp_task_h task);
 
 #endif

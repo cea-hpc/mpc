@@ -39,6 +39,7 @@
 #include <mpc_common_rank.h>
 
 static volatile short rail_is_ready = 0;
+static int max_num_devices = 0;
 
 /**
  * @brief Main entry point for sending message (called by higher layers)
@@ -287,7 +288,7 @@ int lcr_ptl_get_attr(sctk_rail_info_t *rail,
 
         attr->iface.cap.rndv.max_send_zcopy = rail->network.ptl.max_mr;
         attr->iface.cap.rndv.max_put_zcopy  = rail->network.ptl.max_put;
-        attr->iface.cap.rndv.max_get_zcopy  = rail->network.ptl.max_get;
+        attr->iface.cap.rndv.max_get_zcopy  = 512*1024;
         attr->iface.cap.rndv.min_frag_size  = rail->network.ptl.min_frag_size;
 
         attr->iface.cap.rma.max_put_bcopy   = rail->network.ptl.eager_limit;
@@ -369,7 +370,8 @@ int lcr_ptl_query_devices(__UNUSED__ lcr_component_t *component,
                 ++num_devices;
         }
 
-
+        //FIXME: hack to be sure the ptl device have correct id in iface_open
+        max_num_devices = num_devices;
 close_dir:
         closedir(dir);
 
@@ -395,7 +397,8 @@ int lcr_ptl_iface_open(__UNUSED__ const char *device_name, int id,
                 goto err;
         }
 
-	iface->rail_number = id; /* used as tag for pmi registration */
+        //FIXME: modulo on max_num_devices so that they are correctly setup
+	iface->rail_number = id % max_num_devices; /* used as tag for pmi registration */
 
         sctk_network_init_ptl(iface);
 

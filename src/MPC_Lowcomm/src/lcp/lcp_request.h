@@ -42,8 +42,8 @@
 //       See if we could use a pointer instead to avoid including rail.
 #include "rail.h"
 #include "lcp_context.h"
-#include "mpc_mempool.h"
 #include "lcp_task.h"
+#include "lcp_header.h"
 
 #include <sctk_alloc.h>
 
@@ -78,6 +78,20 @@ enum {
 struct lcp_unexp_ctnr {
 	ssize_t length;
 	unsigned flags;
+        mpc_queue_elem_t elem; /* element in the list of unexpected list */
+};
+
+typedef struct lcp_task_completion lcp_task_completion_t;
+typedef void (*lcp_task_completion_callback_t)(lcp_task_completion_t *self);
+
+//NOTE: ctnr member must be first;
+struct lcp_task_completion {
+        struct lcp_unexp_ctnr ctnr;
+        lcp_tag_hdr_t  hdr;
+        lcp_request_t *sreq; /* Send request */
+        lcp_request_t *mreq; /* Matched request */
+        void *buffer;        /* Address in case of bcopy */
+        lcp_task_completion_callback_t comp_cb;
 };
 
 /* Generatic send function */
@@ -147,8 +161,10 @@ struct lcp_request {
                                         uint64_t src_uid;
                                         uint64_t dest_uid;
                                         int32_t  src_tid;
+                                        int32_t  smask;
                                         int32_t  dest_tid;
                                         int32_t  tag;
+                                        int32_t  tmask;
                                 } tag;
 
                                 struct {
@@ -169,8 +185,10 @@ struct lcp_request {
 	uint16_t                seqn;      /* Sequence number */
 	uint64_t               msg_id;    /* Unique message identifier */
         struct lcp_request    *super;     /* master request */
-        struct lcp_request    *rndv_req;  /* rndv request */
+        struct lcp_request    *rndv_req;  /* rndv request */ //FIXME: try avoid
+                                                             //       having this req
         mpc_queue_elem_t       queue;     /* element in pending queue */
+        mpc_queue_elem_t       match;     /* element in matching queue */
         
         struct {
                 lcr_tag_t imm;
@@ -178,12 +196,13 @@ struct lcp_request {
         } tm;
 
 	struct {
-                void *           pack_buf;
-                size_t           offset;
-                size_t           remaining;
-                lcr_completion_t comp;
-                lcp_mem_h        lmem;
-                int              offloaded;
+                void *                pack_buf;
+                size_t                offset;
+                size_t                remaining;
+                lcr_completion_t      comp;  /* Completion for rail send */
+                lcp_task_completion_t tcomp; /* Completion for task send */
+                lcp_mem_h             lmem;
+                int                   offloaded;
 	} state;
 };
 
@@ -216,22 +235,23 @@ struct lcp_request {
 #define LCP_REQUEST_INIT_TAG_RECV(_req, _ctx, _task, _mpi_req, _info, _length, \
                                   _buf, _dt) \
 { \
-	(_req)->request           = _mpi_req;                                \
-        (_req)->recv.tag.src_tid  = (_mpi_req)->header.source_task;          \
-        (_req)->recv.tag.dest_tid = (_mpi_req)->header.destination_task;     \
-        (_req)->recv.tag.dest_uid = (_mpi_req)->header.destination;          \
-        (_req)->recv.tag.src_uid  = (_mpi_req)->header.source;               \
-        (_req)->recv.tag.tag      = (_mpi_req)->header.message_tag;          \
-        (_req)->recv.tag.comm     = (_mpi_req)->header.communicator_id;      \
-	(_req)->info              = _info;                                   \
-	(_req)->msg_id            = 0;                                       \
-	(_req)->seqn              = 0;                                       \
 	(_req)->ctx               = _ctx;                                    \
 	(_req)->task              = _task;                                   \
 	(_req)->datatype          = _dt;                                     \
 	\
 	(_req)->recv.buffer       = _buf;                                    \
 	(_req)->recv.length       = _length;                                 \
+        (_req)->recv.tag.comm     = (_mpi_req)->header.communicator_id;      \
+        (_req)->recv.tag.src_uid  = (_mpi_req)->header.source;               \
+        (_req)->recv.tag.dest_uid = (_mpi_req)->header.destination;          \
+        (_req)->recv.tag.src_tid  = (_mpi_req)->header.source_task;          \
+        (_req)->recv.tag.dest_tid = (_mpi_req)->header.destination_task;     \
+        (_req)->recv.tag.smask    = (_mpi_req)->header.source_task == MPC_ANY_SOURCE ? 0 : ~0; \
+        (_req)->recv.tag.tag      = (_mpi_req)->header.message_tag;          \
+        (_req)->recv.tag.tmask    = (_mpi_req)->header.message_tag == MPC_ANY_TAG ? 0 : ~0; \
+        \
+	(_req)->request           = _mpi_req;                                \
+	(_req)->info              = _info;                                   \
 	\
 	(_req)->state.remaining   = _length;                                 \
 	(_req)->state.offset      = 0;                                       \

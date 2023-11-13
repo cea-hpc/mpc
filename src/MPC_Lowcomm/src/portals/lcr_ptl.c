@@ -307,6 +307,11 @@ int lcr_ptl_post_tag_zcopy(sctk_rail_info_t *rail,
                                 persistant           
         };
 
+        mpc_common_debug_info("LCR PTL: post recv zcopy to %p (idx=%d, tag=%llu, "
+                              "sz=%llu, buf=%p)", rail, tag.t,
+                              srail->ptl_info.tag_pte, iov[0].iov_len, 
+                              iov[0].iov_base);
+
         ptl_comp = sctk_malloc(sizeof(lcr_ptl_send_comp_t));
         if (ptl_comp == NULL) {
                 mpc_common_debug_error("LCR PTL: could not allocate ptl coop");
@@ -348,10 +353,6 @@ int lcr_ptl_post_tag_zcopy(sctk_rail_info_t *rail,
                          persistant_post);
         }
 
-        mpc_common_debug_info("LCR PTL: post recv zcopy to %p (iface=%llu, idx=%d, "
-                              "sz=%llu, buf=%p)", rail, srail->iface, 
-                              srail->ptl_info.tag_pte, iov[0].iov_len, 
-                              iov[0].iov_base);
 err:
         return rc;
 }
@@ -410,8 +411,8 @@ int lcr_ptl_send_put_bcopy(_mpc_lowcomm_endpoint_t *ep,
                                                 //       behabior is same as AM
         ptl_comp->bcopy_buf = start;
 
-        mpc_common_debug_info("lcr ptl: send am bcopy to %d (iface=%llu, "
-                              "remote=%llu, sz=%llu, pte=%d)", ep->dest, srail->iface, 
+        mpc_common_debug_info("lcr ptl: send am bcopy to %d ("
+                              "remote=%llu, sz=%llu, pte=%d)", ep->dest, 
                               remote, size, srail->ptl_info.am_pte);
 
         //FIXME: there are questions around the completion of bcopy requests.
@@ -532,8 +533,8 @@ int lcr_ptl_get_tag_zcopy(_mpc_lowcomm_endpoint_t *ep,
         lcr_ptl_send_comp_t *ptl_comp = NULL;
 
         mpc_common_debug_info("PTL: get tag remote key. "
-                              "remote=%llu, remote off=%llu, pte idx=%d, "
-                              "local addr=%p", remote, remote_offset, 
+                              "iface=%p, remote=%llu, remote off=%llu, pte idx=%d, "
+                              "local addr=%p", ep->rail, remote, remote_offset, 
                               srail->ptl_info.tag_pte, local_offset);
 
         ptl_comp = sctk_malloc(sizeof(lcr_ptl_send_comp_t));

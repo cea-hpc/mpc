@@ -65,8 +65,7 @@ int lcp_send_eager_tag_zcopy(lcp_request_t *req);
 int lcp_send_eager_tag_bcopy(lcp_request_t *req);
 int lcp_send_rndv_tag_start(lcp_request_t *req);
 
-int lcp_recv_eager_tag_data(lcp_request_t *req, struct lcp_tag_data *tag_data, 
-                            void *data, size_t length);
+int lcp_recv_eager_tag_data(lcp_request_t *req, void *data);
 void lcp_recv_rndv_tag_data(lcp_request_t *req, void *data);
 
 #endif

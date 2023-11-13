@@ -85,7 +85,7 @@ static __UNUSED__ char * __sctk_ptl_str_prot[] = {
 /**************************************************************/
 
 /* Hardware-related init */
-sctk_ptl_rail_info_t sctk_ptl_hardware_init();
+sctk_ptl_rail_info_t sctk_ptl_hardware_init(sctk_ptl_interface_t iface);
 void sctk_ptl_hardware_fini(sctk_ptl_rail_info_t *srail);
 
 /* Software-related init */

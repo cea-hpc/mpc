@@ -91,8 +91,7 @@ typedef struct lcp_ep_config {
 struct lcp_ep {
         lcp_ep_config_t ep_config;
 
-        lcp_chnl_idx_t priority_chnl;
-        lcp_chnl_idx_t tag_chnl;
+        lcp_chnl_idx_t tag_chnl; /* Channel for tag offload */
         lcp_chnl_idx_t cc; /* Round-Robin Communication Chanel */
         lcp_chnl_idx_t next_cc; /* Next cc to be used */
 
@@ -102,7 +101,6 @@ struct lcp_ep {
         lcp_context_h ctx; /* Back reference to context */
 
         uint64_t  uid; /* Remote peer uid */
-        OPA_int_t seqn;
 
         int num_chnls; /* Number of channels */
         _mpc_lowcomm_endpoint_t **lct_eps; //FIXME: rename (lct not ok)

@@ -39,6 +39,7 @@
 #include "lcp_pending.h"
 #include <mpc_common_datastructure.h>
 #include <queue.h>
+#include <list.h>
 
 #define LCP_CONTEXT_LOCK(_ctx) \
 	mpc_common_spinlock_lock_yield(&( (_ctx)->ctx_lock) )
@@ -82,7 +83,7 @@ typedef struct lcp_match_ctx
 typedef struct lcp_rsc_desc
 {
 	int                  priority;
-	char                 name[LCP_CONF_STRING_SIZE];
+	char                *name;
 	sctk_rail_info_t *   iface; /* Rail interface */
 	lcr_rail_config_t *  iface_config;
 	lcr_driver_config_t *driver_config;
@@ -100,7 +101,6 @@ typedef struct lcp_context_config
 	int             multirail_heterogeneous_enabled;
 	lcp_rndv_mode_t rndv_mode;
 	int             offload;
-        int             max_num_tasks;
 } lcp_context_config_t;
 
 /**
@@ -132,8 +132,7 @@ struct lcp_context
 	mpc_common_spinlock_t ctx_lock;      /* Context lock */
 
 	int                   num_eps;       /* number of endpoints created */
-        lcp_ep_h             *eps;           /* table of endpoints */
-	struct mpc_common_hashtable  ep_set; /* Hash table of endpoints for other sets */
+	struct mpc_common_hashtable eps; /* Hash table of endpoints for other sets */
 
 	uint64_t              process_uid;   /* process uid used for endpoint creation */
         int                   num_processes; /* number of processes in the run */
@@ -144,6 +143,8 @@ struct lcp_context
         int                   num_tasks;     /* Number of tasks */
 
 	lcp_dt_ops_t          dt_ops;        /* pack/unpack functions */
+
+        mpc_list_elem_t       progress_head; /* List of interface registered for progress */
 };
 
 #endif

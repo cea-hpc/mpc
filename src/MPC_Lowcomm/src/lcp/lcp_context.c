@@ -37,6 +37,7 @@
 
 #include <mpc_common_debug.h>
 #include <mpc_common_rank.h>
+#include <mpc_math.h>
 #include <sctk_alloc.h>
 #include <mpc_common_flags.h>
 
@@ -92,6 +93,8 @@ static int lcp_context_open_interfaces(lcp_context_h ctx)
         int i = 0;
         lcp_rsc_desc_t *rsc = NULL;
 
+        mpc_list_init_head(&ctx->progress_head);
+
 	for (i=0; i<ctx->num_resources; i++) {
                 rsc = &ctx->resources[i];
                 rc = rsc->component->iface_open(rsc->name, i,
@@ -102,9 +105,21 @@ static int lcp_context_open_interfaces(lcp_context_h ctx)
 			goto err;
 		}
 
+                //FIXME: in case of offload with multirail, the priority rail
+                //       chosen will be the first interface. Maybe we could find
+                //       a more formal way of setting it.
+                if (ctx->config.offload && i == 0) {
+                        ctx->priority_rail = i;
+                }
+
 		rc = lcp_context_set_am_handler(ctx, rsc->iface);
 		if (rc != LCP_SUCCESS) 
 			goto err;
+
+                if (rsc->iface->iface_progress != NULL) {
+                        mpc_list_push_head(&ctx->progress_head, &rsc->iface->progress);
+                }
+
 	}
 	
 	rc = LCP_SUCCESS;
@@ -144,17 +159,7 @@ static int lcp_context_init_structures(lcp_context_h ctx)
         //      are memset to NULL. 
         memset(ctx->tasks, 0, ctx->num_tasks * sizeof(lcp_task_h));
 
-	ctx->eps = sctk_malloc(ctx->num_processes * sizeof(lcp_ep_h));
-	if (ctx->eps == NULL) {
-		mpc_common_debug_error("LCP: Could not allocate tasks table.");
-		rc = LCP_ERROR;
-		goto out_free_task_table;
-	}
-        //NOTE: to release endpoints, lcp_context_fini relies on the fact that
-        //      all entries are memset to NULL. 
-        memset(ctx->eps, 0, ctx->num_processes * sizeof(lcp_ep_h));
-
-        mpc_common_hashtable_init(&ctx->ep_set, 1024);
+        mpc_common_hashtable_init(&ctx->eps, 1024);
 
         lcp_pinning_mmu_init();
 
@@ -162,8 +167,6 @@ static int lcp_context_init_structures(lcp_context_h ctx)
 
         return rc;
 
-out_free_task_table:
-        sctk_free(ctx->tasks);
 out_free_pending_tables:
         sctk_free(ctx->match_ht); 
 err:
@@ -236,8 +239,8 @@ static inline void lcp_context_resource_init(lcp_rsc_desc_t *resource_p,
         resource_p->iface         = NULL;
         resource_p->priority      = iface_config->priority;
         resource_p->component     = component;
-        strcpy(resource_p->name, device->name);
-        resource_p->used = 0;
+        resource_p->name          = strdup(device->name);
+        resource_p->used          = 0;
 }
 
 lcp_task_h lcp_context_task_get(lcp_context_h ctx, int tid)
@@ -344,7 +347,7 @@ static inline int __init_lcr_component(struct _mpc_lowcomm_config_struct_net_rai
  * @param rail_count a pointer to the number of rails (to be changed if needed)
  * @return int 0 on success
  */
-static inline int __detect_most_optimal_network_config(struct _mpc_lowcomm_config_struct_net_rail * rails[RAIL_BUFFER_SIZE],  unsigned int * rail_count)
+static inline int __detect_most_optimal_network_config(lcp_context_h ctx, struct _mpc_lowcomm_config_struct_net_rail * rails[RAIL_BUFFER_SIZE],  unsigned int * rail_count)
 {
 TODO(understand why it crashes running without networking);
 #if 0
@@ -374,6 +377,18 @@ TODO(understand why it crashes running without networking);
                 }
         }
 
+        /* Tag offload special case */
+        if (ctx->config.offload) {
+                for (i=0; i < *rail_count; i++)
+                {
+                        /* Do not take rail if it does not have offload
+                         * capabilities */
+                        if(!rails[i]->offload)
+                        {
+                                rails[i] = NULL;
+                        }
+                }
+        }
 
         /* Common END, we only keep the non-removed rails */
 
@@ -385,7 +400,7 @@ TODO(understand why it crashes running without networking);
         {
                 if(rails[i])
                 {
-                        returned_rails[i] = rails[i];
+                        returned_rails[final_count] = rails[i];
                         final_count++;
                 }
         }
@@ -466,7 +481,7 @@ static inline int __init_rails(lcp_context_h ctx)
 	}
 
         /* Now filter reasonable configurations as per current process layout */
-        __detect_most_optimal_network_config(sorted_rails, &num_rails);
+        __detect_most_optimal_network_config(ctx, sorted_rails, &num_rails);
 
 
         /* Now we sort the rails by prioriy to allow their resource unfolding in order */
@@ -490,14 +505,14 @@ static inline int __init_rails(lcp_context_h ctx)
            to do so we first need to count all devices
            then we allocate and initialize each device */
         int resource_count = 0;
-        unsigned int l = 0;
         for(k = 0; k < ctx->num_cmpts; ++k)
 	{
-                struct lcr_component * tmp = &ctx->cmpts[k];
-                for(l=0; l < tmp->num_devices; l++)
-                {
-                        resource_count++;
-                }
+                //NOTE: maximum number of interface is configurable, so select
+                //      the minimum between detected devices and configuration.
+                resource_count += MPC_MIN((int)ctx->cmpts[k].num_devices,
+                                          sorted_rails[k]->max_ifaces);
+
+                //FIXME: there was a loop before with some unknown bug.
         }
 
         ctx->num_resources = resource_count;
@@ -509,10 +524,13 @@ static inline int __init_rails(lcp_context_h ctx)
         /* Walk again to initialize each ressource */
         resource_count = 0;
 
+        unsigned int l = 0;
         for(k = 0; k < ctx->num_cmpts; ++k)
 	{
                 struct lcr_component * tmp = &ctx->cmpts[k];
-                for(l=0; l < tmp->num_devices; l++)
+                unsigned int num_devices = MPC_MIN((int)ctx->cmpts[k].num_devices,
+                                                   sorted_rails[k]->max_ifaces);
+                for(l=0; l < num_devices; l++)
                 {
                         lcp_context_resource_init(&ctx->resources[resource_count],
                                                   tmp,
@@ -527,7 +545,7 @@ static inline int __init_rails(lcp_context_h ctx)
 
         unsigned int total_priorities = 0;
 
-        for(k = 0; k < ctx->num_resources; ++k)
+        for(k = 0; k < (unsigned int)ctx->num_resources; ++k)
 	{
                 total_priorities += ctx->progress_counter[k]; 
         }
@@ -535,7 +553,7 @@ static inline int __init_rails(lcp_context_h ctx)
         unsigned int max_prio = 0;
 
         /* Normalize priorities */
-        for(k = 0; k < ctx->num_resources; ++k)
+        for(k = 0; k < (unsigned int)ctx->num_resources; ++k)
 	{
                 ctx->progress_counter[k] = ctx->progress_counter[k] * 100 / total_priorities;
                 /* And minimum 1 */
@@ -564,7 +582,7 @@ static inline int __init_rails(lcp_context_h ctx)
         ctx->current_progress_value = 0;
 
 
-        return 0;
+        return LCP_SUCCESS;
 }
 
 /**
@@ -612,14 +630,14 @@ __UNUSED__ static inline unsigned int __get_component_device_count(lcp_context_h
  * @param ctx the context to generate the description of
  * @return int 0 on success
  */
-#define NETWORK_DESC_BUFFER_SIZE (4*1024llu)
+#define NETWORK_DESC_BUFFER_SIZE (8*1024llu)
 static inline int __generate_configuration_summary(lcp_context_h ctx)
 {
         if(mpc_common_get_flags()->sctk_network_description_string)
         {
-                free( mpc_common_get_flags()->sctk_network_description_string);
+                sctk_free(mpc_common_get_flags()->sctk_network_description_string);
         }
-        mpc_common_get_flags()->sctk_network_description_string = malloc(NETWORK_DESC_BUFFER_SIZE);
+        mpc_common_get_flags()->sctk_network_description_string = sctk_malloc(NETWORK_DESC_BUFFER_SIZE);
 
 
         unsigned int i = 0;
@@ -661,7 +679,7 @@ static inline int __generate_configuration_summary(lcp_context_h ctx)
                 strncat(name, tmp, NETWORK_DESC_BUFFER_SIZE- 1);
         }
 
-        return 0;
+        return LCP_SUCCESS;
 }
 
 
@@ -671,7 +689,7 @@ static inline int __generate_configuration_summary(lcp_context_h ctx)
  * @param ctx context to count from
  * @return unsigned number of rails not counting TBSM and SHM
  */
-unsigned int __count_non_composable_rails(lcp_context_h ctx)
+static unsigned int __count_non_composable_rails(lcp_context_h ctx)
 {
         unsigned int num_composable = 0;
 
@@ -691,6 +709,47 @@ unsigned int __count_non_composable_rails(lcp_context_h ctx)
 }
 
 
+static int lcp_context_check_offload(lcp_context_h ctx)
+{
+        int rc = LCP_SUCCESS, i;
+        int has_offload = 0;
+        lcp_rsc_desc_t rsc;
+        lcr_rail_config_t *iface_config;
+
+        for (i = 0; i<ctx->num_resources; i++) {
+                rsc = ctx->resources[i];
+                iface_config = _mpc_lowcomm_conf_rail_unfolded_get(rsc.component->rail_name);
+
+                if (iface_config->offload) {
+                        has_offload = 1;
+                        break;
+                }
+        }
+
+        if (ctx->config.offload && 
+            mpc_common_get_process_count() != (int)mpc_common_get_task_count()) {
+                mpc_common_debug_error("LCP CTX: offload must be run in "
+                                       "process mode.");
+                rc = LCP_ERROR;
+                goto err;
+        }
+
+        if (ctx->config.offload && !has_offload) {
+                mpc_common_debug_error("LCP CTX: offload requested but no available "
+                                       "interface to support it");
+                rc = LCP_ERROR;
+                goto err;
+        }
+
+        if (ctx->config.offload && __count_non_composable_rails(ctx) > 1 && has_offload) {
+                mpc_common_debug_error("LCP CONTEXT: offload interface not "
+                                       "supported with heterogenous multirail");
+                rc = LCP_ERROR;
+                goto err;
+        } 
+err:
+        return rc;
+}
 
 
 /**
@@ -699,12 +758,14 @@ unsigned int __count_non_composable_rails(lcp_context_h ctx)
  * @param ctx the context to validate
  * @return int 1 on error.
  */
-static inline int __check_configuration(lcp_context_h ctx)
+static int __check_configuration(lcp_context_h ctx)
 {
+        int rc = LCP_SUCCESS;
+
         /* Does not support heterogeous multirail (tsbm and shm not counted) */
         if(__count_non_composable_rails(ctx) > 1) {
                 mpc_common_debug_error("LCP: heterogeous multirail not supported");
-                return -1;
+                return LCP_ERROR;
         }
 
         /* Does not support multirail with tcp */
@@ -722,39 +783,18 @@ static inline int __check_configuration(lcp_context_h ctx)
                 if(tcp_cmpt->num_devices > 1)
                 {
                         mpc_common_debug_warning("LCP: cannot use multiple device with tcp.");
-                        return -1;
+                        return LCP_ERROR;
                 }
+        }
+
+        rc = lcp_context_check_offload(ctx);
+        if (rc != LCP_SUCCESS) {
+                return LCP_ERROR;
         }
 
         return __generate_configuration_summary(ctx);
 }
 
-static int lcp_context_check_offload(lcp_context_h ctx)
-{
-        int rc = LCP_SUCCESS, i;
-        int has_offload = 0;
-        lcp_rsc_desc_t rsc;
-        lcr_rail_config_t *iface_config;
-
-        for (i = 0; i<ctx->num_resources; i++) {
-                rsc = ctx->resources[i];
-               iface_config = _mpc_lowcomm_conf_rail_unfolded_get(rsc.component->rail_name);
-
-                if (iface_config->offload) {
-                        has_offload = 1;
-                        break;
-                }
-        }
-
-        if (ctx->config.offload && ctx->num_cmpts > 1 && has_offload) {
-                mpc_common_debug_error("LCP CONTEXT: offload interface not "
-                                       "supported with heterogenous multirail");
-                rc = LCP_ERROR;
-                goto err;
-        } 
-err:
-        return rc;
-}
 
 /**
  * @brief This is the main entry point to configure LCP
@@ -800,7 +840,6 @@ int lcp_context_create(lcp_context_h *ctx_p, lcp_context_param_t *param)
                 goto out_free_ctx;
         }
 
-        ctx->config.max_num_tasks        = 512;
         if (param->num_tasks <= 0) {
                 mpc_common_debug_error("LCP: wrong number of tasks");
                 rc = LCP_ERROR;
@@ -870,7 +909,8 @@ out_free_resources:
         }
         sctk_free(ctx->resources);
 out_free_components:
-        lcr_free_components(&ctx->cmpts, ctx->num_cmpts, 0);
+        //FIXME: wrong release of components 
+        //lcr_free_components(&ctx->cmpts, ctx->num_cmpts, 0);
 out_free_ctx:
         sctk_free(ctx);
 err:
@@ -901,19 +941,12 @@ int lcp_context_fini(lcp_context_h ctx)
 	/* Free allocated endpoints */
 	lcp_ep_ctx_t *e_ep = NULL;
 
-	MPC_HT_ITER(&ctx->ep_set, e_ep)
+	MPC_HT_ITER(&ctx->eps, e_ep)
         {
                 lcp_ep_delete(e_ep->ep);
 		sctk_free(e_ep);
 	}
-        MPC_HT_ITER_END(&ctx->ep_set);
-
-        for (i = 0; i < ctx->num_processes; i++) {
-                if (ctx->eps[i] != NULL) {
-                        lcp_ep_delete(ctx->eps[i]);
-                }
-        }
-        sctk_free(ctx->eps);
+        MPC_HT_ITER_END(&ctx->eps);
 
 	sctk_rail_info_t *iface = NULL;
 	for (i=0; i<ctx->num_resources; i++) {
@@ -921,6 +954,8 @@ int lcp_context_fini(lcp_context_h ctx)
 		if (iface->driver_finalize)
 			iface->driver_finalize(iface);
 		sctk_free(iface);
+                
+                sctk_free(ctx->resources[i].name);
 	}
 	sctk_free(ctx->resources);
 

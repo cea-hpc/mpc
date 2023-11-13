@@ -160,8 +160,7 @@ int lcp_request_complete(lcp_request_t *req)
 
         if (req->flags & LCP_REQUEST_MPI_COMPLETE) {
                 assert(req->request);
-                //FIXME: calling request completion here breaks modularity
-                req->request->request_completion_fn(req->request);
+	        req->request->completion_flag = MPC_LOWCOMM_MESSAGE_DONE;
         }
 
         if (req->flags & LCP_REQUEST_RMA_COMPLETE) {

@@ -179,7 +179,10 @@ int lcp_rndv_offload_rma_progress(lcp_request_t *rndv_req)
         LCP_OFFLOAD_SET_MUID(muid, rndv_req->send.tag.src_tid, rndv_req->tm.mid);
 
         /* Get next communication channel on which to communicate */
-        cc = lcp_ep_get_next_cc(ep);
+        //FIXME: because ep->next_cc is set to ep->tag_chnl the following works.
+        //       It also acts as a hack to increment ep->next_cc
+        cc = ep->cc = ep->next_cc = ep->tag_chnl;
+        lcp_ep_get_next_cc(ep);
 
         /* Get maximum frag size attribute */
         //NOTE: this suppose that all rails involved in fragmentation are
@@ -354,7 +357,7 @@ static int lcp_send_rndv_tag_rts_progress(lcp_request_t *req)
         int rc = LCP_SUCCESS;
         ssize_t payload_size;
         lcp_ep_h ep = req->send.ep;
-        lcp_chnl_idx_t cc = lcp_ep_get_next_cc(ep);
+        lcp_chnl_idx_t cc = ep->tag_chnl;
 
         lcr_tag_t tag = { 0 };
         LCP_TM_SET_MATCHBITS(tag.t, 
@@ -364,7 +367,7 @@ static int lcp_send_rndv_tag_rts_progress(lcp_request_t *req)
 
         /* Immediate data set beforehand since needed to post memory */
 
-        mpc_common_debug_info("LCP: send rndv get off req=%p, comm_id=%lu, "
+        mpc_common_debug_info("LCP: send rndv get offload req=%p, comm_id=%lu, "
                               "tag=%d, src=%d, dest=%d, mid=%d, buf=%p.", req, 
                               req->send.tag.comm, 
                               req->send.tag.tag, req->send.tag.src_tid, 
@@ -662,6 +665,7 @@ void lcp_recv_tag_callback(lcr_completion_t *comp)
 
         mpc_common_debug_info("LCP: tag callback req=%p, size=%d, "
                               "matching[src:tag:comm]=[%d:%d:%d]", req, 
+                              req->recv.send_length,
                               tag.t_tag.src, tag.t_tag.tag, tag.t_tag.comm);
 
         switch(op) {
@@ -774,8 +778,8 @@ int lcp_recv_tag_zcopy(lcp_request_t *rreq, sctk_rail_info_t *iface)
                               tag.t_tag.comm, ign_tag.t_tag.tag, ign_tag.t_tag.src,
                               ign_tag.t_tag.comm);
         rc = lcp_post_do_tag_zcopy(iface, tag, ign_tag,
-                                     &iov, iovcnt,
-                                     flags, &(rreq->recv.t_ctx));
+                                   &iov, iovcnt,
+                                   flags, &(rreq->recv.t_ctx));
 
 err:
         return rc;

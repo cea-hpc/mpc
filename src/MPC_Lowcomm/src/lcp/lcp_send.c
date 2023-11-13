@@ -154,9 +154,6 @@ int lcp_tag_send_nb(lcp_ep_h ep, lcp_task_h task, const void *buffer,
                                   count, ep, (void *)buffer, 0, param->datatype,
                                   param->flags & LCP_REQUEST_TAG_SYNC ? 1 : 0);
 
-        /* Increment sequence number */
-        req->seqn = task->seqn[req->send.tag.dest_tid]++;
-
         /* prepare request depending on its type */
         rc = lcp_tag_send_start(ep, req, param);
         if (rc != LCP_SUCCESS) {

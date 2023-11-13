@@ -83,7 +83,8 @@ int lcp_rma_put_bcopy(lcp_request_t *req)
         int rc = LCP_SUCCESS;
         int payload_size;
         lcp_ep_h ep = req->send.ep;
-        lcp_chnl_idx_t cc = ep->priority_chnl;
+        lcp_chnl_idx_t cc = lcp_ep_get_next_cc(ep); //FIXME: not sure this works
+                                                    //       in multirail
 
 	mpc_common_debug_info("LCP: send put bcopy remote addr=%p, dest=%d",
 			      req->send.rma.remote_addr, ep->uid);

@@ -38,36 +38,18 @@
 #include "lcp_context.h"
 #include "lcp_header.h"
 #include "lcp_request.h"
+#include "lcp_tag_match.h"
 
-static size_t lcp_send_task_tag_zcopy_pack(void *dest, void *data)
-{
-	lcp_tag_sync_hdr_t *hdr = dest;
-	lcp_request_t  *req = data;
+#define NUM_QUEUES UINT16_MAX
 
-        hdr->base.comm     = req->send.tag.comm;
-        hdr->base.tag      = req->send.tag.tag;
-        hdr->base.src_tid  = req->send.tag.src_tid;
-        hdr->base.dest_tid = req->send.tag.dest_tid;
-        hdr->base.seqn     = req->seqn;
-
-        hdr->src_uid      = req->send.tag.src_uid;
-        hdr->msg_id       = (uint64_t)req;
-
-	return sizeof(*hdr);
-}
-
-int lcp_send_task_bcopy(lcp_request_t *sreq, lcp_request_t **matched_req, 
-                        lcr_pack_callback_t pack_cb, unsigned flags, 
-                        lcp_unexp_ctnr_t **ctnr_p) 
+int lcp_send_task_bcopy(lcp_request_t *sreq, lcr_pack_callback_t pack_cb, unsigned flags, 
+                        lcp_task_completion_t *comp) 
 {
         int rc = LCP_SUCCESS;
         lcp_context_h ctx = sreq->ctx;
-        lcp_unexp_ctnr_t *ctnr;
-        lcp_request_t *rreq;
+        lcp_unexp_ctnr_t *ctnr = NULL;
+        lcp_request_t *rreq = NULL;
         lcp_task_h recv_task = NULL;
-
-        /* Ensure provided matching is null */
-        assume(*matched_req == NULL);
 
         recv_task = lcp_context_task_get(ctx, sreq->send.tag.dest_tid);  
         if (recv_task == NULL) {
@@ -76,12 +58,6 @@ int lcp_send_task_bcopy(lcp_request_t *sreq, lcp_request_t **matched_req,
 
                 rc = LCP_ERROR;
                 goto err;
-        }
-
-        if (recv_task->expected_seqn[sreq->send.tag.src_tid] != sreq->seqn) {
-                mpc_common_debug_warning("LCP SELF: wrong sequence number. Expected %d, "
-                                         "got %d", recv_task->expected_seqn[sreq->send.tag.src_tid],
-                                         sreq->seqn);
         }
 
         /* For buffered copy, data is systematically copied to a shaddow buffer
@@ -98,18 +74,13 @@ int lcp_send_task_bcopy(lcp_request_t *sreq, lcp_request_t **matched_req,
                 goto err;
         }
 
-        /* If data successfully copied, then set container pointer so it can be
-         * retrieved by caller. */
-        *ctnr_p = ctnr;
-
 	LCP_TASK_LOCK(recv_task);
 
-        recv_task->expected_seqn[sreq->send.tag.src_tid]++;
 	/* Try to match it with a posted message */
-        rreq = (lcp_request_t *)lcp_match_prq(&recv_task->prq_table, 
-                                             sreq->send.tag.comm, 
-                                             sreq->send.tag.tag,
-                                             sreq->send.tag.src_tid);
+        rreq = lcp_match_prqueue(recv_task->prqs, 
+                                 sreq->send.tag.comm, 
+                                 sreq->send.tag.tag,
+                                 sreq->send.tag.src_tid);
 
 	/* If request is not matched */
 	if (rreq == NULL) {
@@ -118,36 +89,32 @@ int lcp_send_task_bcopy(lcp_request_t *sreq, lcp_request_t **matched_req,
                                       sreq->send.tag.tag, sreq->send.tag.dest_tid, 
                                       sreq->send.length, sreq->seqn, sreq);
 
-
 		// add the request to the unexpected messages
-		lcp_append_umq(&recv_task->umq_table, (void *)ctnr, 
-                               sreq->send.tag.comm, 
-                               sreq->send.tag.tag,
-                               sreq->send.tag.src_tid);
+                lcp_append_umqueue(recv_task->umqs, &ctnr->elem, 
+                                   sreq->send.tag.comm);
 
 		LCP_TASK_UNLOCK(recv_task);
 		return rc;
 	}
 	LCP_TASK_UNLOCK(recv_task);
 
-        /* Request has been matched so set corresponding flag so it can be
-         * completed by caller */
-        *matched_req = rreq;
+        /* Request has been matched so call the completion callback */
+        comp->buffer = (void *)(ctnr + 1);
+        comp->mreq = rreq;
+        comp->comp_cb(comp);
 
+        /* Container can then be released */
+        lcp_container_put(ctnr);
 err:
 	return rc;
 }
 
-int lcp_send_task_zcopy(lcp_request_t *sreq, lcp_request_t **matched_req) 
+int lcp_send_task_zcopy(lcp_request_t *sreq, lcp_task_completion_t *comp) 
 {
         int rc = LCP_SUCCESS;
         lcp_context_h ctx = sreq->ctx;
-        lcp_unexp_ctnr_t *ctnr;
         lcp_request_t *rreq;
         lcp_task_h recv_task = NULL;
-
-        /* Ensure provided matching is null */
-        assume(*matched_req == NULL);
 
         recv_task = lcp_context_task_get(ctx, sreq->send.tag.dest_tid);
         if (recv_task == NULL) {
@@ -158,54 +125,34 @@ int lcp_send_task_zcopy(lcp_request_t *sreq, lcp_request_t **matched_req)
                 goto err;
         }
 
-        if (recv_task->expected_seqn[sreq->send.tag.src_tid] != sreq->seqn) {
-                mpc_common_debug_warning("LCP SELF: wrong sequence number. Expected %d, "
-                                         "got %d", recv_task->expected_seqn[sreq->send.tag.src_tid],
-                                         sreq->seqn);
-        }
-
 	LCP_TASK_LOCK(recv_task);
 
-        recv_task->expected_seqn[sreq->send.tag.src_tid]++;
 	/* Try to match it with a posted message */
-        rreq = (lcp_request_t *)lcp_match_prq(&recv_task->prq_table, 
-                                             sreq->send.tag.comm, 
-                                             sreq->send.tag.tag,
-                                             sreq->send.tag.src_tid);
+        rreq = lcp_match_prqueue(recv_task->prqs, 
+                                 sreq->send.tag.comm, 
+                                 sreq->send.tag.tag,
+                                 sreq->send.tag.src_tid);
 
 	/* If request is not matched */
 	if (rreq == NULL) {
-                mpc_common_debug_info("LCP: recv unexp tag src=%d, tag=%d, dest=%d, "
+                mpc_common_debug_info("LCP: recv unexp task tag src=%d, tag=%d, dest=%d, "
                                       "length=%d, sequence=%d, req=%p", sreq->send.tag.src_tid, 
                                       sreq->send.tag.tag, sreq->send.tag.dest_tid, 
                                       sreq->send.length, sreq->seqn, sreq);
 
-                rc = lcp_request_init_unexp_ctnr(recv_task, &ctnr, sreq->send.buffer, 
-                                                 0, LCP_RECV_CONTAINER_UNEXP_TASK_TAG_ZCOPY);
-                if (rc != LCP_SUCCESS) {
-                        goto err;
-                }
-                ctnr->length = lcp_send_task_tag_zcopy_pack(ctnr + 1, sreq);
-
-                if (ctnr->length < 0) {
-                        mpc_common_debug_error("LCP SELF: could not pack data.");
-                        goto err;
-                }
-
+                comp->ctnr.flags = LCP_RECV_CONTAINER_UNEXP_TASK_TAG_ZCOPY;
 		// add the request to the unexpected messages
-		lcp_append_umq(&recv_task->umq_table, (void *)ctnr, 
-                               sreq->send.tag.comm, 
-                               sreq->send.tag.tag,
-                               sreq->send.tag.src_tid);
+                lcp_append_umqueue(recv_task->umqs, &comp->ctnr.elem, 
+                                   sreq->send.tag.comm);
 
 		LCP_TASK_UNLOCK(recv_task);
 		return rc;
 	}
 	LCP_TASK_UNLOCK(recv_task);
 
-        /* Request has been matched so set corresponding flag so it can be
-         * completed by caller */
-        *matched_req = rreq;
+        /* Request has been matched so call the completion callback */
+        comp->mreq = rreq;
+        comp->comp_cb(comp);
 
 err:
 	return rc;
@@ -228,8 +175,8 @@ int lcp_am_set_handler_callback(lcp_task_h task, uint8_t am_id,
 
 int lcp_task_create(lcp_context_h ctx, int tid, lcp_task_h *task_p)
 {
+        int i;
         int rc = LCP_SUCCESS;
-        int task_idx;
         lcp_task_h task;
 
         assert(ctx); assert(tid >= 0);
@@ -248,14 +195,21 @@ int lcp_task_create(lcp_context_h ctx, int tid, lcp_task_h *task_p)
         task->tid = tid;
         task->ctx = ctx;
 
-        /* Allocate tag matching lists */
-        rc = lcp_prq_match_table_init(&task->prq_table);
-        if (rc != LCP_SUCCESS) {
+        task->umqs = sctk_malloc(NUM_QUEUES * sizeof(mpc_queue_head_t));
+        if (task->umqs == NULL) {
+                rc = LCP_ERROR;
                 goto err;
         }
-        rc = lcp_umq_match_table_init(&task->umq_table);
-        if (rc != LCP_SUCCESS) {
+
+        task->prqs = sctk_malloc(NUM_QUEUES * sizeof(mpc_queue_head_t));
+        if (task->prqs == NULL) {
+                rc = LCP_ERROR;
                 goto err;
+        }
+
+        for (i = 0; i < NUM_QUEUES; i++) {
+                mpc_queue_init_head(&task->umqs[i]);
+                mpc_queue_init_head(&task->prqs[i]);
         }
 
         /* Init task lock used for matching lists */
@@ -305,28 +259,24 @@ int lcp_task_create(lcp_context_h ctx, int tid, lcp_task_h *task_p)
         }
         memset(task->am, 0, LCP_AM_ID_USER_MAX * sizeof(lcp_am_user_handler_t));
 
-        task->seqn          = sctk_malloc(ctx->num_tasks * sizeof(uint64_t));
-        task->expected_seqn = sctk_malloc(ctx->num_tasks * sizeof(uint64_t));
-        for (int i = 0; i < ctx->num_tasks; i++) {
-                task->seqn[i] = 0;
-                task->expected_seqn[i] = 0;
-        }
-
         /* Compute task index used in */
-        task_idx = tid % ctx->num_tasks;
-        ctx->tasks[task_idx] = task;
+        ctx->tasks[tid] = task;
 
         *task_p = task;
-        mpc_common_debug_info("LCP: created task tid=%d with idx=%d", tid, task_idx);
+        mpc_common_debug_info("LCP: created task tid=%d", tid);
 err:
         return rc;
 }
 
 int lcp_task_fini(lcp_task_h task) {
 
-        lcp_fini_matching_engine(&task->umq_table, &task->prq_table);
-
         mpc_mpool_fini(task->req_mp);
+        mpc_mpool_fini(task->unexp_mp);
+
+        sctk_free(task->umqs);
+        sctk_free(task->prqs);
+
+        sctk_free(task->am);
 
         sctk_free(task);
         task = NULL;

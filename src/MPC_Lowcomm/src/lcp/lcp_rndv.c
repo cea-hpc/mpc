@@ -254,8 +254,9 @@ void lcp_rndv_complete(lcr_completion_t *comp)
         if (rndv_req->state.remaining == 0) {
                 lcp_ep_h ep = rndv_req->send.ep;
                 lcp_request_t *super = rndv_req->super;
+                lcp_chnl_idx_t cc = lcp_ep_get_next_cc(ep);
 
-                payload = lcp_send_do_am_bcopy(ep->lct_eps[ep->priority_chnl],
+                payload = lcp_send_do_am_bcopy(ep->lct_eps[cc],
                                                LCP_AM_ID_RFIN,
                                                lcp_rndv_fin_pack,
                                                rndv_req);

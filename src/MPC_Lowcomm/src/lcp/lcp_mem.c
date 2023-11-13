@@ -359,6 +359,7 @@ struct lcp_pinning_mmu
 
 static struct lcp_pinning_mmu __mmu;
 
+//FIXME: void return type instead?
 int lcp_pinning_mmu_init()
 {
         lcp_pinning_entry_list_init(&__mmu.list);
@@ -371,6 +372,7 @@ void __unpin(struct lcp_pinning_entry *entry)
         lcp_mem_deregister(entry->ctx, entry->mem_entry);
 }
 
+//FIXME: void return type instead?
 int lcp_pinning_mmu_release()
 {
         lcp_pinning_entry_list_release(&__mmu.list, __unpin);
@@ -717,6 +719,7 @@ int lcp_mem_post_from_map(lcp_context_h ctx,
 
         iface->iface_get_attr(iface, &attr);
 
+        //FIXME: this behavior is multirail specific while is should not be.
         while (length > nb_posted * attr.iface.cap.rndv.max_get_zcopy) {
                 if (!MPC_BITMAP_GET(bm, i)) {
                         i = (i + 1) % ctx->num_resources;
@@ -736,6 +739,7 @@ int lcp_mem_post_from_map(lcp_context_h ctx,
                     (flags & LCR_IFACE_TM_PERSISTANT_MEM)) {
                         break;
                 }
+                i++;
         }
 
 err:

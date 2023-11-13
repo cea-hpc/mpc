@@ -23,7 +23,7 @@ int lcp_ep_get_next_cc(lcp_ep_h ep)
 	lcp_chnl_idx_t cc_idx;
 
 	/* Set ep comm channel to next. Both are first set as priority channel
-	 * during request initialization. */
+	 * during endpoint creation. */
 	ep->cc = ep->next_cc;
 
 	/* Set next comm channel */
@@ -118,6 +118,9 @@ int lcp_ep_init_config(lcp_context_h ctx, lcp_ep_h ep)
 		sctk_rail_info_t *iface   = ctx->resources[i].iface;
 		lcr_rail_attr_t   attr;
 
+                //FIXME: in case of offload with multirail, the priority rail
+                //       chosen will be the first interface. Maybe we could find
+                //       a more formal way of setting it.
 		if(max_prio < if_desc.priority)
 		{
 			max_prio = if_desc.priority;
@@ -161,7 +164,8 @@ int lcp_ep_init_config(lcp_context_h ctx, lcp_ep_h ep)
 	//FIXME: should it be two distinct threshold? One for tag, one for am?
 	ep->ep_config.rndv_threshold = ep->ep_config.am.max_zcopy;
 
-	ep->priority_chnl = ep->cc = ep->next_cc = prio_idx;
+	ep->cc = ep->next_cc = prio_idx;
+
 	if(ep->ep_config.offload)
 	{
 		ep->tag_chnl = prio_idx;
@@ -183,26 +187,21 @@ int lcp_ep_insert(lcp_context_h ctx, lcp_ep_h ep)
 
         //NOTE: insert in slow hash table if not in same set, otherwiser insert
         //      in fast preallocated table of endpoints.
-        if (mpc_lowcomm_peer_get_set(ep->uid) != 
-            mpc_lowcomm_peer_get_set(ctx->process_uid)) {
-                lcp_ep_ctx_t *elem = sctk_malloc(sizeof(lcp_ep_ctx_t) );
+        lcp_ep_ctx_t *elem = sctk_malloc(sizeof(lcp_ep_ctx_t) );
 
-                if(elem == NULL)
-                {
-                        mpc_common_debug_error("LCP: could not allocate endpoint table entry.");
-                        rc = LCP_ERROR;
-                        goto err;
-                }
-                memset(elem, 0, sizeof(lcp_ep_ctx_t) );
-
-                /* Init table entry */
-                elem->ep_key = ep->uid;
-                elem->ep     = ep;
-
-                mpc_common_hashtable_set(&ctx->ep_set, elem->ep_key, elem);
-        } else {
-                ctx->eps[mpc_lowcomm_peer_get_rank(ep->uid)] = ep;
+        if(elem == NULL)
+        {
+                mpc_common_debug_error("LCP: could not allocate endpoint table entry.");
+                rc = LCP_ERROR;
+                goto err;
         }
+        memset(elem, 0, sizeof(lcp_ep_ctx_t) );
+
+        /* Init table entry */
+        elem->ep_key = ep->uid;
+        elem->ep     = ep;
+
+        mpc_common_hashtable_set(&ctx->eps, elem->ep_key, elem);
 
 	/* Update context */
 	ctx->num_eps++;
@@ -395,7 +394,6 @@ int lcp_context_ep_create(lcp_context_h ctx, lcp_ep_h *ep_p,
 
 	ep->uid = uid;
 	ep->ctx = ctx;
-	OPA_store_int(&ep->seqn, 0);
 
 	/* Create all transport endpoints */
 	rc = lcp_ep_init_channels(ctx, ep);
@@ -447,8 +445,6 @@ int lcp_ep_create(lcp_context_h ctx, lcp_ep_h *ep_p,
 	ep = lcp_ep_get(ctx, uid);
 	if(ep != NULL)
 	{
-		mpc_common_debug_warning("LCP: ep already exists. uid=%llu.",
-		                         uid);
 		*ep_p = ep;
 		goto unlock;
 	}
@@ -499,17 +495,12 @@ void lcp_ep_delete(lcp_ep_h ep)
 
 lcp_ep_h lcp_ep_get(lcp_context_h ctx, mpc_lowcomm_peer_uid_t uid)
 {
-        if (mpc_lowcomm_peer_get_set(uid) != 
-            mpc_lowcomm_peer_get_set(ctx->process_uid)) {
-                lcp_ep_ctx_t *elem = mpc_common_hashtable_get_no_lock(&ctx->ep_set, uid);
-                if(elem == NULL)
-                {
-                        return NULL;
-                }
-                return elem->ep;
+        lcp_ep_ctx_t *elem = mpc_common_hashtable_get_no_lock(&ctx->eps, uid);
+        if(elem == NULL)
+        {
+                return NULL;
         }
-
-        return ctx->eps[mpc_lowcomm_peer_get_rank(uid)];
+        return elem->ep;
 }
 
 /**

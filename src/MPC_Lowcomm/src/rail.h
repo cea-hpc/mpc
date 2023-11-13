@@ -38,6 +38,7 @@
 
 #include <mpc_lowcomm_monitor.h>
 #include <stdint.h>
+#include <list.h>
 
 
 /************************************************************************/
@@ -255,6 +256,8 @@ struct sctk_rail_info_s
 	lcr_iface_pack_memp_func_t                           iface_pack_memp;
 	lcr_iface_unpack_memp_func_t                         iface_unpack_memp;
         lcr_iface_is_reachable_func_t                        iface_is_reachable;
+
+        mpc_list_elem_t progress;
 
 	/* Task Init and release */
 	void                                                 ( *finalize_task ) (struct sctk_rail_info_s *, int taskid, int rank);

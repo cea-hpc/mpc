@@ -36,6 +36,7 @@
 
 #include "lcp_context.h"
 #include "lcp_request.h"
+#include "list.h"
 
 /**
  * @brief progress in the pending request list
@@ -45,42 +46,27 @@
  */
 int lcp_progress(lcp_context_h ctx)
 {
-	int i, rc = LCP_SUCCESS;
+        sctk_rail_info_t *iface;
 
-        unsigned char progress_counter = ctx->current_progress_value;
-
-        for (i=0; i<ctx->num_resources; i++) {
-                sctk_rail_info_t *iface = ctx->resources[i].iface;
-                if (iface->iface_progress == NULL)
-                        continue;
-
-                /* This implements progress in function of rail priority */
-                unsigned int ressource_cnt = ctx->progress_counter[i];
-                if(!ctx->resources[i].used)
-                        ressource_cnt = 1;
-                if( ressource_cnt < progress_counter  )
-                        continue;
-
+        mpc_list_for_each(iface, &ctx->progress_head, sctk_rail_info_t, progress) {
                 iface->iface_progress(iface);
         }
+        
+        ///* Loop to try sending requests within the pending queue only once. */
+        //size_t nb_pending = mpc_queue_length(&ctx->pending_queue); 
+        //while (nb_pending > 0) {
+        //        LCP_CONTEXT_LOCK(ctx);
+        //        /* One request is pulled from pending queue. */
+        //        lcp_request_t *req = mpc_queue_pull_elem(&ctx->pending_queue,
+        //                                                 lcp_request_t, queue);
+        //        LCP_CONTEXT_UNLOCK(ctx);
 
-        ctx->current_progress_value++;
+        //        /* Send request which will be pushed back in pending queue if 
+        //         * it could not be sent */
+        //        lcp_request_send(req);
 
-        /* Loop to try sending requests within the pending queue only once. */
-        size_t nb_pending = mpc_queue_length(&ctx->pending_queue); 
-        while (nb_pending > 0) {
-                LCP_CONTEXT_LOCK(ctx);
-                /* One request is pulled from pending queue. */
-                lcp_request_t *req = mpc_queue_pull_elem(&ctx->pending_queue,
-                                                         lcp_request_t, queue);
-                LCP_CONTEXT_UNLOCK(ctx);
+        //        nb_pending--; 
+        //}
 
-                /* Send request which will be pushed back in pending queue if 
-                 * it could not be sent */
-                lcp_request_send(req);
-
-                nb_pending--; 
-        }
-
-	return rc;
+	return LCP_SUCCESS;
 }
