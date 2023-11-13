@@ -218,7 +218,7 @@ int lcp_task_create(lcp_context_h ctx, int tid, lcp_task_h *task_p)
         /* Init memory pool of requests */
         task->req_mp = sctk_malloc(sizeof(mpc_mempool_t));
         mpc_mempool_param_t mp_req_params = {
-                .alignment = MPC_SYS_CACHE_LINE_SIZE,
+                .alignment = MPC_COMMON_SYS_CACHE_LINE_SIZE,
                 .elem_per_chunk = 512,
                 .elem_size = sizeof(lcp_request_t),
                 .max_elems = 2048,
@@ -237,7 +237,7 @@ int lcp_task_create(lcp_context_h ctx, int tid, lcp_task_h *task_p)
         //       memory pools, based on size to be copied the appropriate memory
         //       pool would be chosen.
         mpc_mempool_param_t mp_unexp_params = {
-                .alignment = MPC_SYS_CACHE_LINE_SIZE,
+                .alignment = MPC_COMMON_SYS_CACHE_LINE_SIZE,
                 .elem_per_chunk = 128,
                 .elem_size = 8192,
                 .max_elems = 1024,

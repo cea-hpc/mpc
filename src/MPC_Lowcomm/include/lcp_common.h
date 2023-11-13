@@ -3,9 +3,6 @@
 
 #include <stdint.h>
 
-//FIXME: should be arch dependant
-#define MPC_SYS_CACHE_LINE_SIZE 64
-
 #define LCP_BIT(i) (1ul << (i))
 
 //FIXME: redefine unicity
