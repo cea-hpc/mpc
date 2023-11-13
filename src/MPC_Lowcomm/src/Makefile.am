@@ -69,7 +69,7 @@ AM_CPPFLAGS += -I$(abs_srcdir)/lcp/
 AM_CPPFLAGS += -I$(abs_srcdir)/lcr/
 libmpclowcomm_la_SOURCES += ./tbsm/tbsm.c
 libmpclowcomm_la_SOURCES += ./lcp/lcp_context.c ./lcp/lcp_ep.c ./lcp/lcp_pending.c ./lcp/lcp_progress.c ./lcp/lcp_recv.c ./lcp/lcp_send.c ./lcp/lcp_tag_lists.c ./lcp/lcp_datatype.c ./lcp/lcp_probe.c ./lcp/lcp_eager.c ./lcp/lcp_am.c
-libmpclowcomm_la_SOURCES += ./lcp/lcp_tag_matching.c ./lcp/lcp_tag.c ./lcp/lcp_request.c ./lcp/lcp_common.c ./lcp/lcp_rndv.c ./lcp/lcp_tag_offload.c ./lcp/lcp_mem.c ./lcp/lcp_rma.c ./lcp/lcp_task.c
+libmpclowcomm_la_SOURCES += ./lcp/lcp_tag_matching.c ./lcp/lcp_tag.c ./lcp/lcp_request.c ./lcp/lcp_common.c ./lcp/lcp_rndv.c ./lcp/lcp_tag_offload.c ./lcp/lcp_mem.c ./lcp/lcp_rma.c ./lcp/lcp_task.c ./lcp/lcp_tag_match.c
 libmpclowcomm_la_SOURCES += ./lcr/lcr_component.c ./shm/mpc_shm.c
 endif
 

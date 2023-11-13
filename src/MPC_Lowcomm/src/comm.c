@@ -2702,10 +2702,6 @@ void mpc_lowcomm_ptp_msg_progress(struct mpc_lowcomm_ptp_msg_progress_s *wait)
 int mpc_lowcomm_request_complete(mpc_lowcomm_request_t *request)
 {
 	request->completion_flag = MPC_LOWCOMM_MESSAGE_DONE;
-	if(request->msg)
-	{
-		request->msg->tail.free_memory(request->msg);
-	}
 	return 0;
 }
 
@@ -3442,7 +3438,7 @@ int _mpc_lowcomm_isend(int dest, const void *data, size_t size, int tag,
 #ifdef MPC_LOWCOMM_PROTOCOL
 	int      src;
 	int      tid = mpc_common_get_task_rank();
-	lcp_ep_h ep; 
+	lcp_ep_h ep = NULL; 
         lcp_task_h task;
 	//FIXME: how to handle task rank? Using only get_task_rank for now.
 	src = mpc_lowcomm_communicator_rank_of(comm, tid);
@@ -3450,11 +3446,13 @@ int _mpc_lowcomm_isend(int dest, const void *data, size_t size, int tag,
 	                                size, MPC_DATATYPE_IGNORE,
 	                                REQUEST_SEND, req);
         
-	lcp_ep_get_or_create(lcp_ctx_loc, req->header.destination, &ep, 0);
+	ep = lcp_ep_get(lcp_ctx_loc, req->header.destination);
 	if(ep == NULL)
 	{
-		mpc_common_debug_fatal("LCP: Could not get or create endpoint %d.",
-		                       req->header.destination);
+                int rc = lcp_ep_create(lcp_ctx_loc, &ep, req->header.destination, 0);
+                if (rc != 0) {
+                        mpc_common_debug_fatal("Could not create endpoint.");
+                }
 	}
 
 	task = lcp_context_task_get(lcp_ctx_loc, tid);

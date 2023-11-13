@@ -16,6 +16,7 @@ typedef struct lcp_mem              *lcp_mem_h;
 typedef struct lcp_tag_recv_info     lcp_tag_recv_info_t;
 typedef struct lcp_request_param     lcp_request_param_t;
 typedef struct lcp_am_recv_param     lcp_am_recv_param_t;
+typedef struct lcp_task_completion   lcp_task_completion_t;
 
 typedef struct mpc_lowcomm_request_s                        mpc_lowcomm_request_t;
 typedef struct _mpc_lowcomm_config_struct_net_driver_config lcr_driver_config_t;
