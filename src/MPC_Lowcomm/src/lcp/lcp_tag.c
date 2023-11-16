@@ -291,7 +291,7 @@ int lcp_send_task_tag_bcopy(lcp_request_t *req)
         if (req->is_sync) {
                 req->msg_id = (uint64_t)req;
                 pack_cb     = lcp_send_tag_eager_sync_pack;
-                flags      |= LCP_RECV_CONTAINER_UNEXP_TASK_TAG_SYNC;
+                flags      |= LCP_RECV_CONTAINER_UNEXP_TASK_TAG_ZCOPY;
                 //NOTE: REMOTE_COMPLETED flag set whenever ack has been received
                 //      or task send matched, see below.
         } else {

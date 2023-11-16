@@ -112,7 +112,8 @@ int lcp_tag_recv_nb(lcp_task_h task, void *buffer, size_t count,
                 lcp_container_put(match);
 
 	} else if (match->flags & (LCP_RECV_CONTAINER_UNEXP_EAGER_TAG |
-                                   LCP_RECV_CONTAINER_UNEXP_TASK_TAG_BCOPY)) {
+                                   LCP_RECV_CONTAINER_UNEXP_TASK_TAG_BCOPY |
+                                   LCP_RECV_CONTAINER_UNEXP_EAGER_TAG_SYNC )) {
                 intptr_t data_offset;
 		mpc_common_debug_info("LCP: matched eager bcopy unexp req=%p, flags=%x", 
 				      req, match->flags);
@@ -132,7 +133,7 @@ int lcp_tag_recv_nb(lcp_task_h task, void *buffer, size_t count,
                 req->recv.tag.src_tid  = hdr->src_tid;
                 req->seqn              = hdr->seqn;
                 req->recv.tag.tag      = hdr->tag;
-                req->recv.send_length  = match->length - sizeof(lcp_tag_hdr_t);
+                req->recv.send_length  = match->length - data_offset;
                         
                 rc = lcp_recv_eager_tag_data(req, (void *)hdr + data_offset);
 
