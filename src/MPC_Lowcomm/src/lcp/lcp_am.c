@@ -424,8 +424,8 @@ static int lcp_eager_am_handler(void *arg, void *data,
         lcp_ep_h ep;
         lcp_am_recv_param_t param;
         int rc             = LCP_SUCCESS;
-        lcp_task_h task    = arg;
-        lcp_context_h ctx  = task->ctx;
+        lcp_task_h task    = NULL;
+        lcp_context_h ctx  = arg;
         lcp_am_hdr_t *hdr  = data;
         lcp_am_user_handler_t handler;
         void *data_ptr     = (hdr + 1) + hdr->hdr_size;
