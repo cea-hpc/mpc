@@ -2543,7 +2543,6 @@ mpc_lowcomm_communicator_t mpc_lowcomm_communicator_get_remote(mpc_lowcomm_commu
 	return mpc_lowcomm_communicator_get_remote_as(comm, mpc_lowcomm_get_rank(), mpc_lowcomm_monitor_get_uid() );
 }
 
-// C'est ici qu'il faut continuer !!
 int mpc_lowcomm_communicator_remote_size(const mpc_lowcomm_communicator_t comm)
 {
 	mpc_lowcomm_communicator_t remote_comm = mpc_lowcomm_communicator_get_remote(comm);
