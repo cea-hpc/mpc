@@ -72,23 +72,18 @@ test -n "$am" || err "No 'automake' command in PATH. Please install automake fir
 test -n "$lt" || err "No 'libtoolize' command in PATH. Please install libtool first."
 test -n "$ptch" || err "No 'patch' command in PATH. Please install patch first."
 
-if test "$ret" = "1"; then
-	exit 1
+if test "$ret" = "0"; then
+	$arc -vi -W syntax
+	ret=$?
 fi
 
-if test "$ret" = "0"; then
-	$arc -vi
-	ret=$?
-else
+if test "$ret" != "0"; then
 	die "Abort configuration due to error(s) above.\n"
 fi
 
 #
 # Patching Phase
 #
-
-SCRIPT=$(readlink -f "$0")
-SCRIPTPATH=$(dirname "$SCRIPT")
 
 #
 # Check if a patch is already applied to a given file
