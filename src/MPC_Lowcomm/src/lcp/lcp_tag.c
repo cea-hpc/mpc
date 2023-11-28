@@ -326,7 +326,7 @@ int lcp_send_eager_tag_bcopy(lcp_request_t *req)
         ssize_t payload;
 	int rc = LCP_SUCCESS;
 
-        mpc_common_debug_info("LCP: send am eager tag bcopy comm=%d, src=%d, "
+        mpc_common_debug_info("LCP: send eager tag bcopy comm=%d, src=%d, "
                               "dest=%d, length=%d, tag=%d, seqn=%d, buf=%p, req=%p.", 
                               req->send.tag.comm, req->send.tag.src_tid, 
                               req->send.tag.dest_tid, req->send.length, 

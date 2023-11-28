@@ -71,7 +71,7 @@ int lcp_tag_recv_nb(lcp_task_h task, void *buffer, size_t count,
 		return rc;
 	}
 
-        mpc_common_debug_info("LCP: post recv am comm=%d, src=%d, tag=%d, "
+        mpc_common_debug_info("LCP: post recv tag comm=%d, src=%d, tag=%d, "
                               "length=%d, buf=%p, req=%p, lcreq=%p",
                               req->recv.tag.comm, req->recv.tag.src_tid, 
                               req->recv.tag.tag, count, buffer, req, request);

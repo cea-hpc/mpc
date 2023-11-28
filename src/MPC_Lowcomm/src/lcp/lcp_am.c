@@ -200,7 +200,7 @@ int lcp_send_eager_am_bcopy(lcp_request_t *req)
         ssize_t payload;
 	int rc = LCP_SUCCESS;
 
-	mpc_common_debug_info("LCP: send am eager tag bcopy comm=%d, src=%d, "
+	mpc_common_debug_info("LCP: send eager am bcopy comm=%d, src=%d, "
                               "dest=%d, length=%d, tag=%d, lcreq=%p.", req->send.tag.comm,
                               req->send.tag.src_tid, req->send.tag.dest_tid, 
                               req->send.length, req->send.tag.tag, req->request);
@@ -375,7 +375,7 @@ int lcp_am_recv_nb(lcp_task_h task, void *data_ctnr, void *buffer,
         int packed_data_size;
         lcp_request_t *req;
         lcp_rndv_hdr_t *hdr;
-        lcp_unexp_ctnr_t *ctnr = (lcp_unexp_ctnr_t *)data_ctnr - 1;;
+        lcp_unexp_ctnr_t *ctnr = (lcp_unexp_ctnr_t *)data_ctnr - 1;
         lcp_context_h ctx = task->ctx;
 
         /* Get back receive container */
