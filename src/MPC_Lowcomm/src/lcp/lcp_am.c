@@ -422,7 +422,7 @@ static int lcp_eager_am_handler(void *arg, void *data,
 {
         UNUSED(flags);
         lcp_ep_h ep;
-        lcp_am_recv_param_t param;
+        lcp_am_recv_param_t param = {};
         int rc             = LCP_SUCCESS;
         lcp_task_h task    = NULL;
         lcp_context_h ctx  = arg;
