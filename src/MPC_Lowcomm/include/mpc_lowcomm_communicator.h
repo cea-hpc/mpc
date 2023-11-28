@@ -98,7 +98,7 @@ mpc_lowcomm_communicator_t mpc_lowcomm_communicator_world();
 /**
  * @brief Get the set id corresponding to a given comm ID
  *
- * @param comm_id the comm to querry
+ * @param comm_id the comm to query
  * @return The set ID holding this comm
  */
 mpc_lowcomm_set_uid_t mpc_lowcomm_get_comm_gid(mpc_lowcomm_communicator_id_t comm_id);
@@ -158,7 +158,7 @@ static inline mpc_lowcomm_communicator_t __mpc_lowcomm_communicator_to_predefine
  */
 static inline mpc_lowcomm_communicator_t __mpc_lowcomm_communicator_from_predefined(const mpc_lowcomm_communicator_t comm)
 {
-	// Already an non predefined handle
+	// Already a non-predefined handle
 	if(comm >= (mpc_lowcomm_communicator_t)4096)
 	{
 		return comm;
@@ -183,7 +183,7 @@ static inline mpc_lowcomm_communicator_t __mpc_lowcomm_communicator_from_predefi
 /**
  * @brief Get a communicator from its integer identifier
  *
- * @param id iteger identifier of the comm
+ * @param id integer identifier of the comm
  * @return mpc_lowcomm_communicator_t pointer to the comm NULL is not existing
  */
 mpc_lowcomm_communicator_t mpc_lowcomm_get_communicator_from_id(mpc_lowcomm_communicator_id_t id);
@@ -221,7 +221,7 @@ int mpc_lowcomm_communicator_scan(void (*callback)(mpc_lowcomm_communicator_t co
 * INTRACOMMS *
 **************/
 
-/* Constructors & Desctructors */
+/* Constructors & Destructors */
 
 /**
  * @brief Create a communicator from another communicator and comm_world ranks
@@ -260,7 +260,7 @@ mpc_lowcomm_communicator_t mpc_lowcomm_communicator_from_group(mpc_lowcomm_commu
                                                                mpc_lowcomm_group_t *group);
 
 /**
- * @brief Creare a communicator with a group using a pre-exchanged ID (see @ref mpc_lowcomm_communicator_gen_local_id)
+ * @brief Create a communicator with a group using a pre-exchanged ID (see @ref mpc_lowcomm_communicator_gen_local_id)
  *
  * @param comm the comm to rely on to build the new comm
  * @param group the group to use for exchange
@@ -336,7 +336,7 @@ int mpc_lowcomm_communicator_size(const mpc_lowcomm_communicator_t comm);
 /**
  * @brief Check is a communicator does exist using its pointer
  *
- * @param comm Communicator to be checked for existency
+ * @param comm Communicator to be checked for existence
  * @return int 1 if it does exists 0 otherwise
  */
 int mpc_lowcomm_communicator_exists(mpc_lowcomm_communicator_t comm);
@@ -373,7 +373,7 @@ int mpc_lowcomm_communicator_rank_of(const mpc_lowcomm_communicator_t comm, cons
  *
  * @param comm communicator to be queried
  * @param comm_world_rank world rank to be resolved in group
- * @param lookup_cw_rank which rank to adop the point of view of
+ * @param lookup_cw_rank which rank to adopt the point of view of
  * @return int
  */
 int mpc_lowcomm_communicator_rank_of_as(const mpc_lowcomm_communicator_t comm,
@@ -477,7 +477,7 @@ int mpc_lowcomm_communicator_is_intercomm(mpc_lowcomm_communicator_t comm);
 /**
  * @brief Return one group of the two coherently in the two groups (master)
  *
- * @param communicator the inter-communicator to querry
+ * @param communicator the inter-communicator to query
  * @return int one in one of the two groups (coherently)
  */
 int mpc_lowcomm_communicator_in_master_group(const mpc_lowcomm_communicator_t communicator);
@@ -525,7 +525,7 @@ int mpc_lowcomm_communicator_in_right_group_rank(const mpc_lowcomm_communicator_
 /**
  * @brief Get the local communicator (on intracomm returns intracomm)
  *
- * @param comm the communicator to querry
+ * @param comm the communicator to query
  * @return mpc_lowcomm_communicator_t the local comm for current rank
  */
 mpc_lowcomm_communicator_t mpc_lowcomm_communicator_get_local(mpc_lowcomm_communicator_t comm);
@@ -533,7 +533,7 @@ mpc_lowcomm_communicator_t mpc_lowcomm_communicator_get_local(mpc_lowcomm_commun
 /**
  * @brief Get the local communicator (on intracomm returns intracomm) for a given rank
  *
- * @param comm the communicator to querry
+ * @param comm the communicator to query
  * @param lookup_cw_rank the rank to check for membership in the comm (in comm_world)
  * @return mpc_lowcomm_communicator_t the local comm for lookup_cw_rank
  */
@@ -544,7 +544,7 @@ mpc_lowcomm_communicator_t mpc_lowcomm_communicator_get_local_as(mpc_lowcomm_com
 /**
  * @brief Get the remote communicator (on intracomm returns intracomm)
  *
- * @param comm the communicator to querry
+ * @param comm the communicator to query
  * @return mpc_lowcomm_communicator_t the remote comm for current rank
  */
 mpc_lowcomm_communicator_t mpc_lowcomm_communicator_get_remote(mpc_lowcomm_communicator_t comm);
@@ -552,7 +552,7 @@ mpc_lowcomm_communicator_t mpc_lowcomm_communicator_get_remote(mpc_lowcomm_commu
 /**
  * @brief Get the remote communicator (on intracomm returns intracomm) from a given cw rank
  *
- * @param comm the communicator to querry
+ * @param comm the communicator to query
  * @param lookup_cw_rank the rank to check for membership in the comm (in comm_world)
  * @return mpc_lowcomm_communicator_t the remote comm for current rank
  */
@@ -563,7 +563,7 @@ mpc_lowcomm_communicator_t mpc_lowcomm_communicator_get_remote_as(mpc_lowcomm_co
 /**
  * @brief Get the size for the remote comm
  *
- * @param comm intercomm to querry
+ * @param comm intercomm to query
  * @return int the size of the remote comm
  */
 int mpc_lowcomm_communicator_remote_size(mpc_lowcomm_communicator_t comm);
@@ -596,7 +596,7 @@ int mpc_lowcomm_communicator_build_remote(mpc_lowcomm_peer_uid_t remote,
 /**
  * @brief Build the remote comm_world as seen by the remote group
  *
- * @param gid the identifier of the group to be targetted
+ * @param gid the identifier of the group to be targeted
  * @param comm output communicator
  * @return int MPC_LOWCOMM_SUCCESS if all OK
  */
@@ -633,7 +633,7 @@ int mpc_lowcomm_communicator_set_context_pointer(mpc_lowcomm_communicator_t comm
 /**
  * @brief Get the extra context pointer from the communicator object (it is inherited from parents)
  *
- * @param comm the communicator to querry
+ * @param comm the communicator to query
  * @return mpc_lowcomm_handle_ctx_t the context pointer (NULL if none)
  */
 mpc_lowcomm_handle_ctx_t mpc_lowcomm_communicator_get_context_pointer(mpc_lowcomm_communicator_t comm);
@@ -715,7 +715,7 @@ typedef struct mpc_hardware_split_info_s
 {
 	int                         highest_local_hardware_level;
 	int                         deepest_hardware_level;
-	mpc_lowcomm_communicator_t *hwcomm;            /* communicator of hardware splited topological level */
+	mpc_lowcomm_communicator_t *hwcomm;            /* communicator of hardware split topological level */
 	mpc_lowcomm_communicator_t *rootcomm;          /* communicator of master node topological level */
 
 	int **                      childs_data_count; /* For each topological level, an array containing the number of ranks under each rank of the same hwcomm of this level in the topological tree. */

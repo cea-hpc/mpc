@@ -210,7 +210,7 @@ struct lcr_rail_attr {
 
 /** This structure gathers all informations linked to a network rail
  *
- *  All rails informations are stored in the sctk_route file
+ *  All rail information is stored in the sctk_route file
  *  using the \ref sctk_route_set_rail_infos function
  */
 struct sctk_rail_info_s
@@ -220,12 +220,12 @@ struct sctk_rail_info_s
 	int                                                  priority;     /**< Priority of this rail */
 	char *                                               network_name; /**< Name of this rail */
 	mpc_topology_device_t *                              rail_device;  /**< Device associated with the rail */
-	sctk_rail_state_t                                    state;        /**< is this rail usable ? */
+	sctk_rail_state_t                                    state;        /**< is this rail usable? */
 	lcr_am_handler_t                                     am[LCR_AM_ID_MAX];
 
-	/* Network Infos */
+	/* Network Info */
 	sctk_rail_info_spec_t                                network;                 /**< Network dependent rail info */
-	char                                                 on_demand;               /**< If the rail allows on demand-connexions */
+	char                                                 on_demand;               /**< If the rail allows on-demand connections */
 	char                                                 is_rdma;                 /**< If the rail supports RDMA operations */
 
 	/* Configuration Info */

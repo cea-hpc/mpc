@@ -167,7 +167,7 @@ static inline mpc_lowcomm_peer_uid_t mpc_lowcomm_monitor_local_uid_of(int peer_r
  *
  * @param uid the UID to print
  * @param buff the buffer to store in
- * @param len the lenght of the storage buffer
+ * @param len the length of the storage buffer
  * @return char* pointer to buff
  */
 char *mpc_lowcomm_peer_format_r(mpc_lowcomm_peer_uid_t uid, char *buff, int len);
@@ -182,7 +182,7 @@ char *mpc_lowcomm_peer_format_r(mpc_lowcomm_peer_uid_t uid, char *buff, int len)
 char *mpc_lowcomm_peer_format(mpc_lowcomm_peer_uid_t uid);
 
 /**
- * @brief Check if a peer is closer than anoter one
+ * @brief Check if a peer is closer than another one
  *
  * @param dest the destination peer
  * @param current current peer to check for (0 means none)
@@ -202,7 +202,7 @@ int mpc_lowcomm_monitor_peer_reachable_directly(mpc_lowcomm_peer_uid_t target_pe
 /**
  * @brief Check if a peer exists
  *
- * @param peer the peer to check for existency
+ * @param peer the peer to check for existence
  * @return int 1 if it does exists
  */
 int mpc_lowcomm_monitor_peer_exists(mpc_lowcomm_peer_uid_t peer);
@@ -220,9 +220,9 @@ typedef void *mpc_lowcomm_monitor_set_t;
 /**
  * @brief Iterate all sets with a callback
  *
- * @param callback the callback function (returning -1 interupts walk)
+ * @param callback the callback function (returning -1 interrupts walk)
  * @param arg extra argument to pass to the callback
- * @return int 0 if not interupted
+ * @return int 0 if not interrupted
  */
 int mpc_lowcomm_monitor_set_iterate(int (*callback)(mpc_lowcomm_monitor_set_t set, void *arg),
                                     void *arg);
@@ -295,7 +295,7 @@ int mpc_lowcomm_monitor_set_peers(mpc_lowcomm_monitor_set_t set, mpc_lowcomm_mon
 * PORT INTERFACE *
 ******************/
 
-/* This mimicks the MPI Port Mechanism */
+/* This mimics the MPI Port Mechanism */
 
 /**
  * @brief Open a new port for Connect accept
@@ -307,7 +307,7 @@ int mpc_lowcomm_monitor_set_peers(mpc_lowcomm_monitor_set_t set, mpc_lowcomm_mon
 int mpc_lowcomm_monitor_open_port(char *id, int id_len);
 
 /**
- * @brief Close a previously openned port
+ * @brief Close a previously opened port
  *
  * @param id the port to be freed
  * @return int 0 on success
@@ -533,7 +533,7 @@ mpc_lowcomm_monitor_response_t mpc_lowcomm_monitor_get_set_info(mpc_lowcomm_peer
 *****************/
 
 /**
- * @brief Get informations about a remote peer as seen by anoter peer
+ * @brief Get informations about a remote peer as seen by another peer
  *
  * @param dest the peer to query on
  * @param requested_peer the peer which information are requested
@@ -584,7 +584,7 @@ mpc_lowcomm_monitor_response_t mpc_lowcomm_monitor_comm_info(mpc_lowcomm_peer_ui
 typedef int (*mpc_lowcomm_on_demand_callback_t)(mpc_lowcomm_peer_uid_t from, /** < Who called the RPC (UID) */
                                                 char *data,                  /**< The incoming data */
                                                 char *return_data,           /**< The returned data (to be mutated by the RPC) */
-                                                int return_data_len,         /**< The return data lenght */
+                                                int return_data_len,         /**< The return data length */
                                                 void *ctx);                  /**< Context pointer set at @ref mpc_lowcomm_monitor_register_on_demand_callback */
 
 /**
@@ -661,8 +661,8 @@ void mpc_lowcomm_monitor_synchronous_connectivity_dump(void);
  * @param dest destination UID to do naming operation on
  * @param operation the operation to be done see @ref mpc_lowcomm_monitor_command_naming_t
  * @param hosting_peer the hosting peer (only meaningful on PUT)
- * @param name the key name (not meaningfull on LIST)
- * @param port_name the key value (only meaninfull on PUT)
+ * @param name the key name (not meaningful on LIST)
+ * @param port_name the key value (only meaningful on PUT)
  * @param ret the return code
  * @return mpc_lowcomm_monitor_response_t the response
  */

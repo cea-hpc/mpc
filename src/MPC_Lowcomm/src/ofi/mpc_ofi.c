@@ -264,7 +264,7 @@ void _mpc_ofi_connect_on_demand(struct sctk_rail_info_s *rail, mpc_lowcomm_peer_
 		/* Now add route as remote connecting */
 		__add_route(dest, rail, _MPC_LOWCOMM_ENDPOINT_CONNECTING);
 
-		/* We were ellected as the initiator */
+		/* We were elected as the initiator */
 		/* May create a new endpoint if the endpoint is passive (returns the connectionless endpoint otherwise) */
 		_mpc_ofi_domain_connect(rail->network.ofi.ctx.domain, dest, remote_info->addr, remote_info->size);
 		_mpc_ofi_wait_for_connection(rail, cstate);
@@ -354,7 +354,7 @@ static int __ofi_on_demand_callback(mpc_lowcomm_peer_uid_t from,
 
 		if(_mpc_ofi_domain_conn_get(cstate) == MPC_OFI_DOMAIN_ENDPOINT_BOOTSTRAP )
 		{
-			/* Here both endpoints are connecting concurently we only keep the largest UID one */
+			/* Here both endpoints are connecting concurrently we only keep the largest UID one */
 			if(mpc_lowcomm_monitor_get_uid() < from)
 			{
 				is_connecting = 0;

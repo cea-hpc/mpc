@@ -66,7 +66,7 @@ void mpc_lowcomm_communicator_print(mpc_lowcomm_communicator_t comm, int root_on
 	int is_lead      = 1;
 	int is_intercomm = mpc_lowcomm_communicator_is_intercomm(comm);
 
-	/* In the low level layers of MPC the rank might not be availaible
+	/* In the low level layers of MPC the rank might not be available
 	 * in this case we print for all */
 	if(0 <= mpc_lowcomm_get_rank() )
 	{
@@ -374,7 +374,7 @@ static inline void __recv_connect_infos(struct _mpc_lowcomm_connect_desc_s *remo
 {
 	mpc_lowcomm_request_t req;
 
-	/* Now Post a RECV on universe for incomming connections
+	/* Now Post a RECV on universe for incoming connections
 	 * this recv will contain the remote root ID and communicator ID as the rank in peer comm */
 	mpc_lowcomm_universe_irecv(from,
 	                           remote_desc,
@@ -406,9 +406,9 @@ static inline int __comm_connect_accept(const char *port_name,
 
 	comm = mpc_lowcomm_communicator_dup(comm);
 
-	/* Only meaningfull at root */
+	/* Only meaningful at root */
 	mpc_lowcomm_communicator_t remote_world = MPC_COMM_NULL;
-	/* Only meaningfull at root */
+	/* Only meaningful at root */
 	struct _mpc_lowcomm_connect_desc_s remote_desc;
 
 
@@ -471,7 +471,7 @@ static inline int __comm_connect_accept(const char *port_name,
 			mpc_lowcomm_communicator_build_remote_world(mpc_lowcomm_peer_get_set(listening_peer),
 			                                            &remote_world);
 
-			/* Send my connection infos
+			/* Send my connection info
 			 * note that it is in this function that we generate comm id */
 			new_comm_id = __send_connect_infos(listening_peer,
 			                                   port_tag,
@@ -1080,7 +1080,7 @@ static inline mpc_lowcomm_communicator_id_t  __communicator_id_new(void)
 
 	if(__id_factory.local_used == __id_factory.local_count)
 	{
-		mpc_common_debug_fatal("You exhausted communicator id dynamic (up to %d) communicators on ranl %d", __id_factory.local_count, mpc_common_get_task_rank() );
+		mpc_common_debug_fatal("You exhausted communicator id dynamic (up to %d) communicators on rank %d", __id_factory.local_count, mpc_common_get_task_rank() );
 	}
 
 	ret = __id_factory.first_local + __id_factory.local_used;
@@ -2515,7 +2515,7 @@ mpc_lowcomm_communicator_t mpc_lowcomm_communicator_get_remote_as(mpc_lowcomm_co
                                                                   mpc_lowcomm_peer_uid_t uid)
 {
 	comm = __mpc_lowcomm_communicator_from_predefined(comm);
-	/* Only meaningfull for intercomms */
+	/* Only meaningful for intercomms */
 	if(!mpc_lowcomm_communicator_is_intercomm(comm) )
 	{
 		return MPC_COMM_NULL;

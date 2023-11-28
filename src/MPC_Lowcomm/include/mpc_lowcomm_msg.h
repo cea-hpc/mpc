@@ -331,7 +331,7 @@ typedef enum
 	MPC_LOWCOMM_MESSAGE_CANCELED = 2
 } mpc_lowcomm_completion_flag_t;
 
-/*Data to tranfers in inter-process communications*/
+/*Data to transfer in inter-process communications*/
 typedef struct
 {
 	mpc_lowcomm_ptp_message_header_t header;

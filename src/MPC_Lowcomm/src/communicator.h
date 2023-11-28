@@ -69,12 +69,12 @@ typedef struct MPI_ABI_Comm
 
 	/* Intercomms */
 
-	/* These are the internall intracomm for
+	/* These are the internal intracomm for
 	 * intercomms. If the group is NULL
 	 * it means the communicator is an intercomm
-	 * and then functions will refer to this functions */
-	mpc_lowcomm_communicator_t    left_comm;        /**< The left comm for intercomms */
-	mpc_lowcomm_communicator_t    right_comm;       /**< The right comm for intercomms */
+	 * and then functions will refer to these functions */
+	mpc_lowcomm_communicator_t    left_comm;        /**< The left comm for intercomms. This must always be the local communicator. */
+	mpc_lowcomm_communicator_t    right_comm;       /**< The right comm for intercomms. This must always be the remote communicator. */
 
 	/* Topological comm */
 	mpc_lowcomm_topo_comms *      topo_comms; /**< Topological communicators. */

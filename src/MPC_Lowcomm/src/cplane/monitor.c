@@ -711,7 +711,7 @@ _mpc_lowcomm_client_ctx_t *__accept_incoming(struct _mpc_lowcomm_monitor_s *moni
 			{
 #ifdef MONITOR_DEBUG
 				char b1[128];
-				mpc_common_debug_error("[REJECT] %s UID %s is alreary connected closing",mpc_lowcomm_peer_format_r(mpc_lowcomm_monitor_get_uid(), b1, 128), mpc_lowcomm_peer_format(uid));
+				mpc_common_debug_error("[REJECT] %s UID %s is already connected, closing",mpc_lowcomm_peer_format_r(mpc_lowcomm_monitor_get_uid(), b1, 128), mpc_lowcomm_peer_format(uid));
 #endif
 				/* Notify remote end of our refusal */
 				already_present = 1;
@@ -1965,7 +1965,7 @@ mpc_lowcomm_monitor_response_t mpc_lowcomm_monitor_get_set_info(mpc_lowcomm_peer
 	if(!resp)
 	{
         *ret = MPC_LOWCOMM_MONITOR_RET_NOT_REACHABLE;
-		mpc_common_debug_warning("mpc_lowcomm_monitor_get_set_info timed out when targetting %llu", target_peer);
+		mpc_common_debug_warning("mpc_lowcomm_monitor_get_set_info timed out when targeting %llu", target_peer);
 	}
 	else
 	{
@@ -2094,7 +2094,7 @@ mpc_lowcomm_monitor_response_t mpc_lowcomm_monitor_naming(mpc_lowcomm_peer_uid_t
 	if(!resp)
 	{
         *ret = MPC_LOWCOMM_MONITOR_RET_NOT_REACHABLE;
-		mpc_common_debug_warning("mpc_lowcomm_monitor_naming timed out when targetting %llu", dest);
+		mpc_common_debug_warning("mpc_lowcomm_monitor_naming timed out when targeting %llu", dest);
 	}
 
 	return (mpc_lowcomm_monitor_response_t)resp;

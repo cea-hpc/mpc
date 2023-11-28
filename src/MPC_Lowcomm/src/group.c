@@ -1281,7 +1281,7 @@ void _mpc_lowcomm_group_create_world(void)
 	{
 		if(_mpc_lowcomm_group_rank_descriptor_set(&cw_desc[i], i) != MPC_LOWCOMM_SUCCESS)
 		{
-			mpc_common_debug_fatal("An error occured when creating descriptor for RANK %d in COMM_WORLD", i);
+			mpc_common_debug_fatal("An error occurred when creating descriptor for RANK %d in COMM_WORLD", i);
 		}
 	}
 

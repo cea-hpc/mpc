@@ -311,7 +311,7 @@ static void _mpc_coll_messages_table_wait( _mpc_coll_messages_table_t *tab )
 
 	for ( i = 0; i < tab->nb_used; i++ )
 	{
-		mpc_common_nodebug( "Wait for messag %d", i );
+		mpc_common_nodebug( "Wait for message %d", i );
 		mpc_lowcomm_request_wait( &( tab->msg_req[i].request ) );
 	}
 
@@ -1604,29 +1604,29 @@ void _mpc_coll_noalloc_bcast( void *buffer, const size_t size,
 		int total_max;
 		int i;
 		_mpc_coll_messages_table_t table;
-		int BROADCAST_ARRITY;
+		int BROADCAST_ARITY;
 		_mpc_coll_message_table_init( &table );
-		BROADCAST_ARRITY = broadcast_max_size / size;
+		BROADCAST_ARITY = broadcast_max_size / size;
 
-		if ( BROADCAST_ARRITY < 2 )
+		if ( BROADCAST_ARITY < 2 )
 		{
-			BROADCAST_ARRITY = 2;
+			BROADCAST_ARITY = 2;
 		}
 
-		if ( BROADCAST_ARRITY > broadcast_arity_max )
+		if ( BROADCAST_ARITY > broadcast_arity_max )
 		{
-			BROADCAST_ARRITY = broadcast_arity_max;
+			BROADCAST_ARITY = broadcast_arity_max;
 		}
 
 		total = mpc_lowcomm_communicator_size( communicator );
 		myself = mpc_lowcomm_communicator_rank_of( communicator, mpc_common_get_task_rank() );
 		related_myself = ( myself + total - root ) % total;
-		total_max = log( total ) / log( BROADCAST_ARRITY );
-		total_max = pow( BROADCAST_ARRITY, total_max );
+		total_max = log( total ) / log( BROADCAST_ARITY );
+		total_max = pow( BROADCAST_ARITY, total_max );
 
 		if ( total_max < total )
 		{
-			total_max = total_max * BROADCAST_ARRITY;
+			total_max = total_max * BROADCAST_ARITY;
 		}
 
 		assume( total_max >= total );
@@ -1634,8 +1634,8 @@ void _mpc_coll_noalloc_bcast( void *buffer, const size_t size,
 		              "myself = %d, BROADCAST_ARRITY = %d",
 		              total, total_max, myself, BROADCAST_ARRITY );
 
-		for ( i = BROADCAST_ARRITY; i <= total_max;
-		      i = i * BROADCAST_ARRITY )
+		for ( i = BROADCAST_ARITY; i <= total_max;
+		      i = i * BROADCAST_ARITY )
 		{
 			if ( related_myself % i != 0 )
 			{
@@ -1655,7 +1655,7 @@ void _mpc_coll_noalloc_bcast( void *buffer, const size_t size,
 			}
 		}
 
-		for ( ; i >= BROADCAST_ARRITY; i = i / BROADCAST_ARRITY )
+		for ( ; i >= BROADCAST_ARITY; i = i / BROADCAST_ARITY )
 		{
 			if ( related_myself % i == 0 )
 			{
@@ -1663,13 +1663,13 @@ void _mpc_coll_noalloc_bcast( void *buffer, const size_t size,
 				int j;
 				dest = related_myself;
 
-				for ( j = 1; j < BROADCAST_ARRITY; j++ )
+				for ( j = 1; j < BROADCAST_ARITY; j++ )
 				{
-					if ( ( dest + ( j * ( i / BROADCAST_ARRITY ) ) ) < total )
+					if ( ( dest + ( j * ( i / BROADCAST_ARITY ) ) ) < total )
 					{
 						_mpc_coll_message_send(
 						    communicator, myself,
-						    ( dest + root + ( j * ( i / BROADCAST_ARRITY ) ) ) %
+						    ( dest + root + ( j * ( i / BROADCAST_ARITY ) ) ) %
 						    total,
 						    root, buffer, size, MPC_LOWCOMM_BROADCAST_MESSAGE,
 						    _mpc_coll_message_table_get_item( &table, OPT_NOALLOC_MAX_ASYNC ), 	( size < (size_t)broadcast_check_threshold ) );
@@ -2319,7 +2319,7 @@ static inline int ___gather_intra(void *sendbuf, void *recvbuf, const size_t siz
 	}
 	else
 	{
-		/* MPC_IN_PLACE is only meaninfull at root */
+		/* MPC_IN_PLACE is only meaningful at root */
 		assume(rank == root);
 	}
 

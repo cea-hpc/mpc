@@ -2654,7 +2654,7 @@ static inline void __mpc_comm_ptp_msg_wait(struct mpc_lowcomm_ptp_msg_progress_s
 	if(request->completion_flag != MPC_LOWCOMM_MESSAGE_DONE)
 	{
 		/* Check the source of the request. We try to poll the
-		 *         source in order to retreive messages from the network */
+		 *         source in order to retrieve messages from the network */
 
 		/* We try to poll for finding a message with a MPC_ANY_SOURCE source
 		 * also in case we are blocked we punctually poll any-source */
@@ -2912,7 +2912,7 @@ void _mpc_comm_ptp_message_recv_check(mpc_lowcomm_ptp_message_t *msg,
 	/* We add the message to the pending list */
 	__mpc_comm_ptp_message_list_add_incoming_recv(recv_ptp, msg);
 
-	/* Iw we ask for a matching, we run it */
+	/* If we ask for a matching, we run it */
 	if(perform_check)
 	{
 		__mpc_comm_ptp_perform_msg_pair_trylock(recv_ptp);

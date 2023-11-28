@@ -46,7 +46,7 @@ typedef struct _mpc_lowcomm_set_s
 }_mpc_lowcomm_set_t;
 
 /*****************
-* SETUP TEADOWN *
+* SETUP TEARDOWN *
 *****************/
 
 /**
