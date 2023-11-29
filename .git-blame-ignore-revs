@@ -1,0 +1,30 @@
+# Source_Format: Make mpc/MPC_Config sources compatible with MPC coding rules.
+d106d876dbb9a999e7725fdf912ade29ed4ce820
+
+# Source_Format: Make mpc/MPC_Common/sctk_helpers sources compatible with MPC coding rules.
+9249b46e1e5376a72013b054f67854503a70481c
+
+# MPC_Format: for MPC_Accelerators Work
+7ca0f6f6547c9d42d85c11a2b1abb126c8e32754
+
+# MPC_Format: reformatting MPC_Common
+b120977fa0947ec1f58106d2601732fd61a678e0
+
+# MPC_Format: reformat "inlining usage" modifications (MPC_Allocator, MPC_MPI, MPC_Threads)
+1d4a98d1e77594c9b0e655f61ded03398e94ce21
+
+# MPC_Format: MPC_OpenMP task deliverable
+0a4928b13d94e0aa4b53917cd7fa7a6331a823fb
+
+# Remove ctrl M in sctk_topology.h
+d57285208c3e5a12525df58140e4c798b6ffc614
+
+# Reformat NBC changes
+bce21bb2d0792ee3423439d44a17dc986f6757f8
+
+# MPC_Format: MPC_MPI, MPC_Threads + regen config
+b06f69b28ad67b6a25f75430e7db11620b3169ab
+
+# MPI ABI: Uncrustify all modified files
+864f9517c7a28368275f40a35a20eb3587a44720
+
