@@ -14860,7 +14860,7 @@ int PMPI_Intercomm_merge(MPI_Comm intercomm, int high, MPI_Comm *newintracomm)
 
 	if(!mpc_lowcomm_communicator_is_intercomm(intercomm) )
 	{
-		MPI_ERROR_REPORT(intercomm, MPI_ERR_COMM, "MPI_Intercomm_merge expects a communicator");
+		MPI_ERROR_REPORT(intercomm, MPI_ERR_COMM, "MPI_Intercomm_merge expects an inter-communicator as input");
 	}
 
 	/************************
