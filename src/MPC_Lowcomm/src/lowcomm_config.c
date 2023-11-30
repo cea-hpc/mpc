@@ -522,9 +522,11 @@ static inline mpc_conf_config_type_t *__mpc_lowcomm_driver_conf_init()
 	mpc_conf_config_type_t * tcp  = __mpc_lowcomm_driver_conf_default_driver("tcpconfigmpi", "tcp");
 	mpc_conf_config_type_t * tbsm = __mpc_lowcomm_driver_conf_default_driver("tbsmconfigmpi", "tbsm");
 
+#if defined (MPC_USE_OFI)
 	mpc_conf_config_type_t * tcp_ofi = __mpc_lowcomm_driver_conf_default_driver("tcpofi", "tcpofi");
 	mpc_conf_config_type_t * verbs_ofi = __mpc_lowcomm_driver_conf_default_driver("verbsofi", "verbsofi");
 	mpc_conf_config_type_t * shm_ofi = __mpc_lowcomm_driver_conf_default_driver("shmofi", "shmofi");
+#endif
 
 #if defined(MPC_USE_PORTALS)
 	mpc_conf_config_type_t *portals = __mpc_lowcomm_driver_conf_default_driver("portalsconfigmpi", "portals");
