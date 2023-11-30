@@ -201,6 +201,7 @@ static inline void __append_new_driver_to_unfolded(struct _mpc_lowcomm_config_st
 }
 
 
+#ifdef MPC_USE_OFI
 static inline mpc_conf_config_type_t *__init_driver_ofi(struct _mpc_lowcomm_config_struct_net_driver *driver, char * provider)
 {
 	driver->type = MPC_LOWCOMM_CONFIG_DRIVER_OFI;
@@ -214,7 +215,6 @@ static inline mpc_conf_config_type_t *__init_driver_ofi(struct _mpc_lowcomm_conf
 	driver->value.ofi.bcopy_size = 1024;
 	driver->value.ofi.enable_multi_recv = 1;
 	(void)snprintf(driver->value.ofi.endpoint_type, MPC_CONF_STRING_SIZE, "FI_EP_RDM");
-
 	/* We set some verbs specific configurations*/
 	if(!strcmp(driver, "verbs"))
 	{
@@ -245,6 +245,7 @@ static inline mpc_conf_config_type_t *__init_driver_ofi(struct _mpc_lowcomm_conf
                                                 "Name of the requested OFI provider."),
                                           NULL);
 }
+#endif
 
 static inline mpc_conf_config_type_t *__init_driver_shm(struct _mpc_lowcomm_config_struct_net_driver *driver)
 {
@@ -846,7 +847,7 @@ static mpc_conf_config_type_t *__mpc_lowcomm_cli_conf_init(void)
 	                                                           PARAM("verbs", ___mpc_lowcomm_cli_conf_option_init("verbs", "tbsmmpi", "verbsofirail", NULL), MPC_CONF_TYPE, "Combination of Verbs and TBSM"),
 	                                                           PARAM("verbsshm", ___mpc_lowcomm_cli_conf_option_init("verbsshm", "tbsmmpi", "shmmpi", "verbsofirail"), MPC_CONF_TYPE, "Combination of Verbs and TBSM"),
 #else
-	                                                           PARAM("tcp", ___mpc_lowcomm_cli_conf_option_init("tcp", "tbsmmpi", "tcpmpi"), MPC_CONF_TYPE, "TCP Alone"),
+	                                                           PARAM("tcp", ___mpc_lowcomm_cli_conf_option_init("tcp", "tbsmmpi", "tcpmpi", NULL), MPC_CONF_TYPE, "TCP Alone"),
 #endif
 #ifdef MPC_USE_PORTALS
 	                                                           PARAM("portals4", ___mpc_lowcomm_cli_conf_option_init("portals4", "tbsmmpi", "portalsmpi", NULL), MPC_CONF_TYPE, "Combination of Portals and SHM"),
