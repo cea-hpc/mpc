@@ -322,7 +322,7 @@ int mpc_lowcomm_recv(int src, void *buffer, size_t size, int tag, mpc_lowcomm_co
  * @param src Source of the message
  * @param comm Communicator of the message
  */
-int mpc_lowcomm_sendrecv(void *sendbuf, size_t size, int dest, int tag, void *recvbuf, int src, mpc_lowcomm_communicator_t comm);
+int mpc_lowcomm_sendrecv(const void *sendbuf, size_t size, int dest, int tag, void *recvbuf, int src, mpc_lowcomm_communicator_t comm);
 
 /**
  * @brief Probe for a given message as both a given source and destination (advanced thread-based use)

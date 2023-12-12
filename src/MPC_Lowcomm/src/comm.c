@@ -3518,7 +3518,7 @@ int mpc_lowcomm_irecv(int src, void *data, size_t size, int tag,
 #endif
 }
 
-int mpc_lowcomm_sendrecv(void *sendbuf, size_t size, int dest, int tag, void *recvbuf,
+int mpc_lowcomm_sendrecv(const void *sendbuf, size_t size, int dest, int tag, void *recvbuf,
                          int src, mpc_lowcomm_communicator_t comm)
 {
 	mpc_lowcomm_request_t sendreq, recvreq;
