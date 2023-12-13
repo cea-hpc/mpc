@@ -14908,7 +14908,7 @@ int PMPI_Intercomm_merge(MPI_Comm intercomm, int high, MPI_Comm *newintracomm)
 	if(*newintracomm != MPI_COMM_NULL)
 	{
 		MPI_Errhandler errh;
-		res = PMPI_Errhandler_get(local_comm, &errh);
+		res = PMPI_Errhandler_get(intercomm, &errh);
 		MPI_HANDLE_ERROR(res, intercomm, "Cannot retrieve errhandler");
 
 		res = PMPI_Errhandler_set(*newintracomm, errh);
@@ -18200,21 +18200,36 @@ int PMPI_Comm_accept(const char *port_name,
                      MPI_Comm comm,
                      MPI_Comm *newcomm)
 {
-	int ret = mpc_lowcomm_communicator_accept(port_name,
+  mpc_common_nodebug("Enter Comm_accept");
+
+	mpi_check_comm(comm);
+
+	if(newcomm == NULL)
+	{
+		MPI_ERROR_REPORT(comm, MPI_ERR_COMM, "Comm_accept was provided with a NULL newcomm");
+	}
+	
+  int ret = mpc_lowcomm_communicator_accept(port_name,
 	                                          root,
 	                                          comm,
 	                                          newcomm);
 
-	if(ret != 0)
+	ret = ret != 0 ? MPI_ERR_INTERN : MPI_SUCCESS;
+
+  MPI_HANDLE_ERROR(ret, comm, "Comm accept failed");
+
+  if(*newcomm != MPI_COMM_NULL)
 	{
-		ret = MPI_ERR_INTERN;
-	}
-	else
-	{
-		ret = MPI_SUCCESS;
+		MPI_Errhandler errh;
+		ret = PMPI_Errhandler_get(comm, &errh);
+		MPI_HANDLE_ERROR(ret, comm, "Cannot retrieve errhandler");
+
+		ret = PMPI_Errhandler_set(*newcomm, errh);
+		MPI_HANDLE_ERROR(ret, comm, "Cannot set errhandler");
+		PMPI_Errhandler_free(&errh);
 	}
 
-	MPI_HANDLE_RETURN_VAL(ret, MPI_COMM_SELF);
+	MPI_HANDLE_RETURN_VAL(ret, comm);
 }
 
 int PMPI_Comm_connect(const char *port_name,
@@ -18223,21 +18238,36 @@ int PMPI_Comm_connect(const char *port_name,
                       MPI_Comm comm,
                       MPI_Comm *newcomm)
 {
-	int ret = mpc_lowcomm_communicator_connect(port_name,
-	                                           root,
-	                                           comm,
-	                                           newcomm);
+  mpc_common_nodebug("Enter Comm_connect");
 
-	if(ret != 0)
+	mpi_check_comm(comm);
+
+	if(newcomm == NULL)
 	{
-		ret = MPI_ERR_INTERN;
-	}
-	else
-	{
-		ret = MPI_SUCCESS;
+		MPI_ERROR_REPORT(comm, MPI_ERR_COMM, "Comm_connect was provided with a NULL newcomm");
 	}
 
-	MPI_HANDLE_RETURN_VAL(ret, MPI_COMM_SELF);
+  int ret = mpc_lowcomm_communicator_connect(port_name,
+      root,
+      comm,
+      newcomm);
+	ret = ret != 0 ? MPI_ERR_INTERN : MPI_SUCCESS;
+
+  MPI_HANDLE_ERROR(ret, comm, "Comm connect failed");
+
+  if(*newcomm != MPI_COMM_NULL)
+	{
+		MPI_Errhandler errh;
+		ret = PMPI_Errhandler_get(comm, &errh);
+		MPI_HANDLE_ERROR(ret, comm, "Cannot retrieve errhandler");
+
+		ret = PMPI_Errhandler_set(*newcomm, errh);
+		MPI_HANDLE_ERROR(ret, comm, "Cannot set errhandler");
+
+		PMPI_Errhandler_free(&errh);
+	}
+
+	MPI_HANDLE_RETURN_VAL(ret, comm);
 }
 
 /************************************************************************/
