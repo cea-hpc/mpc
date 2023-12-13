@@ -14894,7 +14894,7 @@ int PMPI_Intercomm_merge(MPI_Comm intercomm, int high, MPI_Comm *newintracomm)
 
 	if(in_error)
 	{
-		MPI_ERROR_REPORT(intercomm, MPI_ERR_ARG, "MPI_Intercomm_merge mismatchinh high values");
+		MPI_ERROR_REPORT(intercomm, MPI_ERR_ARG, "MPI_Intercomm_merge mismatching high values");
 	}
 
 	/********************
