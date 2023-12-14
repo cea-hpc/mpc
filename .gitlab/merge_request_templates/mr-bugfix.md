@@ -8,7 +8,7 @@ I ensure the proposed changes:
 - [ ] do not break basic MPC build process: `./installmpc --prefix=$PREFIX`
 - [ ] can still run a simple MPI `main()`
 - [ ] have been tested under multiple configurations, in respect of C & Fortran
-  compatibilites
+  compatibilities
 
 ## Related ticket(s)
 

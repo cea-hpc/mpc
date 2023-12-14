@@ -4,7 +4,7 @@
 runtime**, it may include (but not bound to):
 * New Documentation
 * New utils scripts (**not** related to the build system)
-* Gitlab/Gitbhub/git related (mailmap, gitlab-ci, templates,etc.)
+* Gitlab/Github/git related (mailmap, gitlab-ci, templates,etc.)
 
 
 ## Prerequisites

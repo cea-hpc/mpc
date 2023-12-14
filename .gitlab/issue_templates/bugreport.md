@@ -3,7 +3,7 @@
 * **Build revision**: <Hash/Gitlab branch/Release>
 * **Architecture**: `<uname -a>`
 * **Privatisation**: `Yes | No`
-* **Reproductible on a single node**: `Yes | No`
+* **Reproducible on a single node**: `Yes | No`
 * **I have checked this issue is**:
   - [ ] not a duplicate
   - [ ] not a misunderstanding of what MPC is supposed to do

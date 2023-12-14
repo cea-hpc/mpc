@@ -9,7 +9,7 @@ I ensure the proposed changes:
 - [ ] do not break basic MPC build process: `./installmpc --prefix=$PREFIX`
 - [ ] can still run a simple MPI `main()`
 - [ ] have been tested under multiple configurations, in respect of C & Fortran
-  compatibilites + with & without privatisation.
+  compatibilities + with & without privatisation.
 - [ ] are properly documented thanks to Doxygen (or at least in-place
   documentation) and Markdown (in `*.md` for major modifications)
 

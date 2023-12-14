@@ -24,7 +24,7 @@ This MR is intended to help releasing a new version of PCVS.
     * `python3 -m twine check dist/*`
 2. [ ] Upload to **TEST** PyPI database: `python3 -m twine upload --repository
    testpypi dist/*`
-3. [ ] Install from this test database (Docker recommanded):
+3. [ ] Install from this test database (Docker recommended):
     * `python3 -m pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ pcvs==X.Y.Z`
 4. [ ] Documentation can be built by [ReadTheDocs](https://readthedocs.org)
 

@@ -7,7 +7,7 @@ want go in-depth on this subject.
 ## Description
 
 Content in this section does not have any guidelines. Note some Gitlab-specific
-Markdon stylish guides:
+Markdown stylish guides:
 * Reference issues by prefixing its number with `#`: #30
 * Reference MR by prefixing its number with `!`: !11
 * Reference a commit by putting the SHA1 (shorten or not)

@@ -54,8 +54,8 @@ perspective), including:*
 
 ### Performances
 
-*This topic will ensure the MPC framework is still conformant with its
-perforamnce standard. An in-depth nalysis of performance assessment should be
+*This topic will ensure the MPC framework still conforms to its
+performance standard. An in-depth analysis of performance assessment should be
 conducted to evaluate potential regression from the previous release. This
 evaluation should at least include:*
 * [ ] MPI performance (through benchmarks like IMB & proxy apps)
