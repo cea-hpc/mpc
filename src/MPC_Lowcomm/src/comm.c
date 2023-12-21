@@ -909,7 +909,7 @@ inline void mpc_lowcomm_ptp_message_copy(mpc_lowcomm_ptp_message_content_to_copy
 							size = send->tail.message.contiguous.size - total;
 						}
 
-						memcpy( (void *)(recv->tail.message.pack.list.absolute[i].addr) +
+						memcpy( (char *)(recv->tail.message.pack.list.absolute[i].addr) +
 						        recv->tail.message.pack.list.absolute[i].begins[j] *
 						        (long)recv->tail.message.pack.list.absolute[i].elem_size,
 						        send->tail.message.contiguous.addr, size);
