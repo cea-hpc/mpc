@@ -135,7 +135,7 @@ int lcp_tag_recv_nb(lcp_task_h task, void *buffer, size_t count,
                 req->recv.tag.tag      = hdr->tag;
                 req->recv.send_length  = match->length - data_offset;
                         
-                rc = lcp_recv_eager_tag_data(req, (void *)hdr + data_offset);
+                rc = lcp_recv_eager_tag_data(req, (char *)hdr + data_offset);
 
                 if (rc != LCP_SUCCESS) {
                         mpc_common_debug_error("LCP: could not unpack unexpected "

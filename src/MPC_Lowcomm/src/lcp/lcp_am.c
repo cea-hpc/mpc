@@ -53,7 +53,7 @@ static size_t lcp_send_am_eager_pack(void *dest, void *data)
 	lcp_request_t *req = data;
         void *src = req->datatype == LCP_DATATYPE_CONTIGUOUS ?
                req->send.buffer : NULL; 
-        void *ptr = (void *)(hdr + 1) + req->send.am.hdr_size;
+        void *ptr = (char *)(hdr + 1) + req->send.am.hdr_size;
 	
         /* Pack AM data */
         hdr->am_id    = req->send.am.am_id;
@@ -92,7 +92,7 @@ static size_t lcp_send_am_rndv_pack(void *dest, void *data)
         packed_length = lcp_rndv_rts_pack(req, hdr + 1);
 
         /* Pack user header */
-        ptr = (void *)(hdr + 1) + packed_length;
+        ptr = (char *)(hdr + 1) + packed_length;
         memcpy(ptr, req->send.am.hdr, req->send.am.hdr_size);
 
 	return sizeof(*hdr) + req->send.am.hdr_size + packed_length;
@@ -523,13 +523,13 @@ static int lcp_rndv_am_handler(void *arg, void *data,
         
         /* Reset address of hdr */
         user_hdr_offset = length - hdr->am.hdr_size;
-        user_hdr = (void *)(ctnr + 1) + user_hdr_offset;
+        user_hdr = (char *)(ctnr + 1) + user_hdr_offset;
 
         //FIXME: no support for non contiguous data
         //FIXME: how to handle return code ?
         param.flags   |= LCP_AM_RNDV;
         param.reply_ep = ep;
-        data_ptr       = (void *)(ctnr + 1);
+        data_ptr       = (char *)(ctnr + 1);
         data_length    = length - hdr->am.hdr_size - sizeof(*hdr);
         handler.cb(handler.user_arg, user_hdr, hdr->am.hdr_size,
                    data_ptr, data_length, &param);
