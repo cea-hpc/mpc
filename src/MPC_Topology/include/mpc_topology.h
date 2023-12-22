@@ -78,7 +78,7 @@ extern "C" {
 /** @brief Initialize the topology module
 */
 void mpc_topology_init(void);
-void mpc_topology_init_sleep_factors(int*,int);
+void mpc_topology_init_distance_simulation_factors(int*,int);
 
 /** @brief Destroy the topology module
 */

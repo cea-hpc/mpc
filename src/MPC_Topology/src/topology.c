@@ -1389,7 +1389,49 @@ int _mpc_topology_get_effectors(char * input, int ** effectors_depth, long ** fa
   return size;
 }
 
-void mpc_topology_init_sleep_factors(int * tab_cpuid, int size) {
+
+/**
+ * Add an hwloc distance matrix to the global topology.
+ * Primarily used for latency and bandwidth simulation.
+ * \return \c 0 on success
+ * \return \c -1 on error
+ * \see hwloc_distances_add_create, hwloc_distances_add_values
+ *      and hwloc_distances_add_commit from hwloc for more
+ *      information on supplied parameters.
+ */
+int _mpc_topology_add_distance(hwloc_topology_t topology, int object_count,
+    hwloc_obj_t* hwloc_objects, hwloc_uint64_t* distance_matrix,
+    unsigned long hwloc_kind)
+{
+  hwloc_distances_add_handle_t handle;
+  // Create the empty distance structure 
+  handle = hwloc_distances_add_create(topology, NULL, hwloc_kind, 0);
+
+  if (!handle)
+  {
+    return -1;
+  }
+
+  // Add the latency/bandwidth/... distance matrix
+  int err = hwloc_distances_add_values(topology, handle, object_count,
+    hwloc_objects, distance_matrix, 0);
+
+  if (!err)
+  {
+    // Insert distances into the topology
+    err = hwloc_distances_add_commit(topology, handle, 0);
+    if (!err)
+    {
+      // handle is already freed by hwloc_distances_add_values/commit on error
+      sctk_free(handle);
+    }
+  }
+
+  return err;
+}
+
+
+void mpc_topology_init_distance_simulation_factors(int * tab_cpuid, int size) {
 
   int * latency_effectors_depth;
   long * latency_factors;
@@ -1482,9 +1524,15 @@ void mpc_topology_init_sleep_factors(int * tab_cpuid, int size) {
 
 
   if(latency_size)
-    hwloc_distances_add(global_topology, size, objs, latency_matrix, HWLOC_DISTANCES_KIND_FROM_USER | HWLOC_DISTANCES_KIND_MEANS_LATENCY, 0);
-  if(bandwidth_size)
-    hwloc_distances_add(global_topology, size, objs, bandwidth_matrix, HWLOC_DISTANCES_KIND_FROM_USER | HWLOC_DISTANCES_KIND_MEANS_BANDWIDTH, 0);
+  {
+    _mpc_topology_add_distance(global_topology, size, objs, latency_matrix,
+        HWLOC_DISTANCES_KIND_FROM_USER | HWLOC_DISTANCES_KIND_MEANS_LATENCY);    
+  }
+
+  if(bandwidth_size) {
+    _mpc_topology_add_distance(global_topology, size, objs, bandwidth_matrix,
+        HWLOC_DISTANCES_KIND_FROM_USER | HWLOC_DISTANCES_KIND_MEANS_BANDWIDTH);    
+  }
 
 
   sctk_free(latency_matrix);
