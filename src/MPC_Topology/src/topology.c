@@ -1104,7 +1104,7 @@ int mpc_topology_unguided_compute_color(int *colors, int *cpuids, int size)
 
 	assume(new_ancestor != NULL);
 
-	/* check oversuscribing */
+	/* check oversubscribing */
 	int split_over = 0;
 
 	if(new_ancestor->type == HWLOC_OBJ_CORE || new_ancestor->type == HWLOC_OBJ_PU)
@@ -1362,7 +1362,7 @@ int _mpc_topology_get_effectors(char * input, int ** effectors_depth, long ** fa
     size += (input[i] == ',');
   }
   if(!(size & 1)) {
-    bad_parameter("Wrong number of parametter for latency/bandwidth sleep factors. Need to be pair of hwloc_type & long (type1,long1,type2,long2,...):\n\t%s\n", input);
+    bad_parameter("Wrong number of parameter for latency/bandwidth sleep factors. Need to be pair of hwloc_type & long (type1,long1,type2,long2,...):\n\t%s\n", input);
   }
   size = (size + 1) / 2;
 
