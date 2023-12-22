@@ -548,7 +548,7 @@ static int lcp_rndv_am_handler(void *arg, void *data,
         }
         handler = task->am[hdr->am.am_id];
 
-        //FIXME: what happen when ep is in CONNECTING state ?
+        //FIXME: what happens when ep is in CONNECTING state ?
         rc = lcp_ep_get_or_create(ctx, hdr->am.src_uid, &ep, 0);
         if (rc != LCP_SUCCESS) {
                 goto err;

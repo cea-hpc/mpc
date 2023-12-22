@@ -365,7 +365,7 @@ err:
 
 //FIXME: should data be the actual rndv data which is the memory key or the rndv
 //       header ? Some necessary info are in the tag/am part of the request.
-//       Acceeding them here would break rndv modularity
+//       Acceding them here would break rndv modularity
 int lcp_rndv_process_rts(lcp_request_t *rreq,
                          void *data, size_t length) 
 {
@@ -388,7 +388,7 @@ int lcp_rndv_process_rts(lcp_request_t *rreq,
         rndv_req->state.offset    = 0;
 
         /* Set message identifiers from incoming message */
-        //NOTE: on receive side, msg_id is set to hdr->msg_id which correspond
+        //NOTE: on receive side, msg_id is set to hdr->msg_id which corresponds
         //      to the sender's rndv_req address.
         rndv_req->msg_id = hdr->msg_id;
 

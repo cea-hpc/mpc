@@ -155,7 +155,7 @@ int lcp_tag_recv_nb(lcp_task_h task, void *buffer, size_t count,
                 tcomp->mreq = req;
                 tcomp->comp_cb(tcomp);
 	} else {
-		mpc_common_debug_error("LCP: unkown match flag=%x.", match->flags);
+		mpc_common_debug_error("LCP: unknown match flag=%x.", match->flags);
 		rc = LCP_ERROR;
 	}
 

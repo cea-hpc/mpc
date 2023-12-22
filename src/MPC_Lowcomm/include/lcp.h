@@ -424,7 +424,7 @@ int lcp_am_send_nb(lcp_ep_h ep, lcp_task_h task, int32_t dest_tid,
  *
  * This routine may be called to provide to LCP the necessary user buffer to
  * receive the data in case it is sent through the rendez-vous protocol. This
- * routine may thus be used in conjonction with \ref LCP_AM_RNDV flags that
+ * routine may thus be used in conjunction with \ref LCP_AM_RNDV flags that
  * would have been set within the user callback through \ref
  * lcp_am_recv_param_t.
  * To be notified for completion, user must provide set the completion callback

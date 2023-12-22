@@ -464,7 +464,7 @@ unlock:
 	return rc;
 }
 
-//NOTE: should it be the users responsability to delete it ?
+//NOTE: should it be the users' responsibility to delete it?
 void lcp_ep_delete(lcp_ep_h ep)
 {
 	int i;
