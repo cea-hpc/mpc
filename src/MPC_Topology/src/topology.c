@@ -1436,10 +1436,20 @@ void mpc_topology_init_distance_simulation_factors(int * tab_cpuid, int size) {
   int * latency_effectors_depth;
   long * latency_factors;
   int latency_size = _mpc_topology_get_effectors(__mpc_topo_config.latency_factors, &latency_effectors_depth, &latency_factors);
+  if (latency_size)
+  {
+    mpc_common_debug_warning("TOPOLOGY: Simulation latency factors have been set in your user configuration. "
+        "Performance on send operations will be DEGRADED purposefully.");
+  }
 
   int * bandwidth_effectors_depth;
   long * bandwidth_factors;
   int bandwidth_size = _mpc_topology_get_effectors(__mpc_topo_config.bandwidth_factors, &bandwidth_effectors_depth, &bandwidth_factors);
+  if (bandwidth_size)
+  {
+    mpc_common_debug_warning("TOPOLOGY: Simulation bandwidth factors have been set in your user configuration. "
+        "Performance on send operations will be DEGRADED purposefully.");
+  }
 
 
 
