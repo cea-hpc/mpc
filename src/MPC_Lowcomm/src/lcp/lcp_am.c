@@ -397,6 +397,14 @@ int lcp_am_send_nb(lcp_ep_h ep, lcp_task_h task, int32_t dest_tid,
                 return LCP_ERROR;
         }
 
+#ifdef MPC_ENABLE_TOPOLOGY_SIMULATION
+        /* Simulate latency/bandwidth if needed */
+        mpc_topology_simulate_distance(
+                mpc_lowcomm_peer_get_rank(mpc_lowcomm_monitor_get_uid()), 
+                req->send.am.dest_tid, 
+                hdr_size + data_size);
+#endif
+
         /* send the request */
         rc = lcp_request_send(req);
 

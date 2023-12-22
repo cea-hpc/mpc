@@ -150,6 +150,14 @@ int lcp_tag_send_nb(lcp_ep_h ep, lcp_task_h task, const void *buffer,
                 return LCP_ERROR;
         }
 
+#ifdef MPC_ENABLE_TOPOLOGY_SIMULATION
+        /* simulate latency/bandwidth if needed */
+        mpc_topology_simulate_distance(
+                mpc_lowcomm_peer_get_rank(mpc_lowcomm_monitor_get_uid()), 
+                req->send.tag.dest_tid, 
+                size);
+#endif
+
         /* send the request */
         rc = lcp_request_send(req);
 

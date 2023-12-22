@@ -284,8 +284,21 @@ int mpc_topology_get_mcdram_node();
  */
 int mpc_topology_has_nvdimm();
 
-int mpc_topology_is_latency_factors();
-int mpc_topology_is_bandwidth_factors();
+#ifdef MPC_ENABLE_TOPOLOGY_SIMULATION
+/**
+ * @brief Sleep the execution based on the user-defined
+ *        latency/bandwidth matrix distances.
+ *        This is used for simulation purposes; the default
+ *        MPC configuration sets all distances to 0 to avoid
+ *        waiting.
+ * @param[in] src_rank Source rank / task ID
+ * @param[in] dest_rank Destination rank / task ID
+ * @param[in] size Total message size including headers.
+ *                 Determine the simulated transfer time.
+ */
+void mpc_topology_simulate_distance(int src_rank, int dest_rank, int size);
+#endif
+
 /***************************************
  * MPC TOPOLOGY HARDWARE TOPOLOGY SPLIT*
  ***************************************/

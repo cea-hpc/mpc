@@ -3066,6 +3066,17 @@ if test "x${mpc_debug}" = "xno"; then
         AC_DEFINE([NDEBUG], [1], [Disable assert function])
 fi
 
+AC_ARG_ENABLE([topology-simulation],
+[AS_HELP_STRING([--enable-topology-simulation],
+                [Enable topology simulation: add sleep in sends])],
+[mpc_topo_simu=$enableval],
+[mpc_topo_simu=no]
+)
+
+if test "x${mpc_simu_topo}" = "xyes"; then
+        AC_DEFINE([MPC_ENABLE_TOPOLOGY_SIMULATION], [1], [MPC Topology simulation])
+fi
+
 USING_ASAN="no"
 
 if test "x${mpc_debug_mem}" = "xyes"; then
@@ -3222,7 +3233,7 @@ chmod +x ./reconfigure
 
 # Generate configuration summary
 
-if test "x${mpc_debug_messages}" = "xyes" -o "x${mpc_debug_mem}" = "xyes" -o "x${mpc_debug}" = "xyes"; then
+if test "x${mpc_debug_messages}" = "xyes" -o "x${mpc_debug_mem}" = "xyes" -o "x${mpc_debug}" = "xyes" -o "x${mpc_simu_topo}" = "xyes"; then
         PERF_WARNING="WARNING: some debug options are turned on. This impacts performance."
 else
         PERF_WARNING=""
@@ -3292,6 +3303,7 @@ MPC_CONFIG_RESULT="\
 #\n\
 # Embedded profiler.... $MPC_HAVE_PROFILER\n\
 # Debug symbols........ $mpc_debug ($MPC_DEBUG_FLAGS)\n\
+# Simulate topology.... $mpc_topo_simu\n\
 # Memory Debug......... $mpc_debug_mem\n\
 # Debug messages....... $mpc_debug_messages\n\
 # Enable workshare..... $mpc_enable_workshare\n\

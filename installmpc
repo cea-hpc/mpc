@@ -1158,6 +1158,7 @@ You may track issued commands using the "-v" flag.
   --{enable,disable}-mpc-ft               : Activate/Deactivate checkpoint/restart support
   --{enable,disable}-color                : Disable colors in display
   --enable-debug                          : Enable maximum debug (symbols, messages)
+  --enable-topology-simulation            : Enable fake network topology simulation
 
 # Disable sub packages
   --disable-ofi                           : Disable libfabric support
@@ -1415,6 +1416,9 @@ do
 		--enable-debug)
 			enable_debug
 			;;
+    --enable-topology-simulation)
+			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --enable-topology-simulation"
+      ;;
 		--with-pmi1=*)
 			PMIX_PREFIX=""
 			extractParamValue 'PMIX_PREFIX' 'with-pmi1=' "$arg"

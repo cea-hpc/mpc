@@ -1349,6 +1349,8 @@ void mpc_topology_init()
 	__mpc_module_topology_loaded = 1;
 }
 
+
+#ifdef MPC_ENABLE_TOPOLOGY_SIMULATION
 int _mpc_topology_get_effectors(char * input, int ** effectors_depth, long ** factors) {
   int size = 0;
   *effectors_depth = NULL;
@@ -1429,7 +1431,6 @@ int _mpc_topology_add_distance(hwloc_topology_t topology, int object_count,
 
   return err;
 }
-
 
 void mpc_topology_init_distance_simulation_factors(int * tab_cpuid, int size) {
 
@@ -1554,13 +1555,14 @@ void mpc_topology_init_distance_simulation_factors(int * tab_cpuid, int size) {
   sctk_free(bandwidth_factors);
 }
 
-int mpc_topology_is_latency_factors() {
+int mpc_topology_has_simulation_latency() {
   return strlen(__mpc_topo_config.latency_factors) > 0;
 }
 
-int mpc_topology_is_bandwidth_factors() {
+int mpc_topology_has_simulation_bandwidth() {
   return strlen(__mpc_topo_config.bandwidth_factors) > 0;
 }
+#endif /* MPC_ENABLE_TOPOLOGY_SIMULATION */
 
 #if (HWLOC_API_VERSION >= 0x00020000)
 void _mpc_topology_mcdram_detection(hwloc_topology_t topology)
@@ -1779,3 +1781,40 @@ int mpc_topology_convert_os_pu_to_logical( int pu_os_id )
 {
 	return _mpc_topology_convert_os_pu_to_logical(__mpc_module_topology, pu_os_id);
 }
+
+#ifdef MPC_ENABLE_TOPOLOGY_SIMULATION
+void mpc_topology_simulate_distance(int src_rank, int dest_rank, int size) {
+  hwloc_topology_t topology = mpc_topology_global_get();
+
+  struct hwloc_distances_s * latency_matrix;
+  struct hwloc_distances_s * bandwidth_matrix;
+
+  unsigned int nr1 = 1, nr2 = 1;
+  float sleep_time = 0;
+
+  if(mpc_topology_has_simulation_latency()) {
+    hwloc_distances_get(topology, &nr1, &latency_matrix, HWLOC_DISTANCES_KIND_FROM_USER | HWLOC_DISTANCES_KIND_MEANS_LATENCY, 0);
+    if(nr1) {
+      unsigned long latency = latency_matrix->values[src_rank + dest_rank * latency_matrix->nbobjs];
+      hwloc_distances_release(topology, latency_matrix);
+
+      sleep_time += latency;
+    }
+  }
+
+  if(mpc_topology_has_simulation_bandwidth()) {
+    hwloc_distances_get(topology, &nr2, &bandwidth_matrix, HWLOC_DISTANCES_KIND_FROM_USER | HWLOC_DISTANCES_KIND_MEANS_BANDWIDTH, 0);
+    if(nr2) {
+      unsigned long bandwidth = bandwidth_matrix->values[src_rank + dest_rank * bandwidth_matrix->nbobjs];
+      hwloc_distances_release(topology, bandwidth_matrix);
+
+      if(bandwidth)
+        sleep_time += (float)size / bandwidth;
+    }
+  }
+
+  if(sleep_time)
+    usleep(sleep_time);
+}
+#endif /* MPC_ENABLE_TOPOLOGY_SIMULATION */
+
