@@ -689,6 +689,11 @@ void mpc_thread_pthread_engine_init(void)
 	                   int (*)(mpc_thread_cond_t *, mpc_thread_mutex_t *,
 	                           const struct timespec *) );
 #endif
+#ifdef HAVE_PTHREAD_COND_CLOCKWAIT
+	sctk_add_func_type(pthread, cond_clockwait,
+	                   int (*)(mpc_thread_cond_t *, mpc_thread_mutex_t *,
+	                           const struct timespec *) );
+#endif
 #ifdef HAVE_PTHREAD_COND_BROADCAST
 	sctk_add_func_type(pthread, cond_broadcast, int (*)(mpc_thread_cond_t *) );
 #endif
@@ -750,6 +755,17 @@ void mpc_thread_pthread_engine_init(void)
 	sctk_add_func_type(pthread, rwlock_tryrdlock,
 	                   int (*)(mpc_thread_rwlock_t *) );
 #endif
+#ifdef HAVE_PTHREAD_RWLOCK_TIMEDRDLOCK
+	sctk_add_func_type(pthread, rwlock_timedrdlock,
+	                   int (*)(mpc_thread_rwlock_t *,
+	                           const struct timespec *) );
+#endif
+#ifdef HAVE_PTHREAD_RWLOCK_CLOCKRDLOCK
+	sctk_add_func_type(pthread, rwlock_clockrdlock,
+	                   int (*)(mpc_thread_rwlock_t *,
+	                           clockid_t,
+	                           const struct timespec *) );
+#endif
 #ifdef HAVE_PTHREAD_RWLOCK_WRLOCK
 	sctk_add_func_type(pthread, rwlock_wrlock,
 	                   int (*)(mpc_thread_rwlock_t *) );
@@ -757,6 +773,17 @@ void mpc_thread_pthread_engine_init(void)
 #ifdef HAVE_PTHREAD_RWLOCK_TRYWRLOCK
 	sctk_add_func_type(pthread, rwlock_trywrlock,
 	                   int (*)(mpc_thread_rwlock_t *) );
+#endif
+#ifdef HAVE_PTHREAD_RWLOCK_TIMEDWRLOCK
+	sctk_add_func_type(pthread, rwlock_timedwrlock,
+	                   int (*)(mpc_thread_rwlock_t *,
+	                           const struct timespec *) );
+#endif
+#ifdef HAVE_PTHREAD_RWLOCK_CLOCKWRLOCK
+	sctk_add_func_type(pthread, rwlock_timedwrlock,
+	                   int (*)(mpc_thread_rwlock_t *,
+	                           clockid_t,
+	                           const struct timespec *) );
 #endif
 #ifdef HAVE_PTHREAD_RWLOCK_UNLOCK
 	sctk_add_func_type(pthread, rwlock_unlock,
@@ -877,6 +904,12 @@ void mpc_thread_pthread_engine_init(void)
 #ifdef HAVE_PTHREAD_MUTEX_TIMEDLOCK
 	sctk_add_func_type(pthread, mutex_timedlock,
 	                   int (*)(mpc_thread_mutex_t *,
+	                           const struct timespec *) );
+#endif
+#ifdef HAVE_PTHREAD_MUTEX_CLOCKLOCK
+	sctk_add_func_type(pthread, mutex_clocklock,
+	                   int (*)(mpc_thread_mutex_t *,
+	                           clockid_t,
 	                           const struct timespec *) );
 #endif
 

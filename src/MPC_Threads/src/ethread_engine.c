@@ -19,6 +19,9 @@
 /* #   - PERACHE Marc marc.perache@cea.fr                                 # */
 /* #                                                                      # */
 /* ######################################################################## */
+#define _GNU_SOURCE
+#include <sched.h>
+
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
@@ -442,6 +445,27 @@ static int _mpc_thread_ethread_barrier_wait(_mpc_thread_ethread_barrier_t *barri
 	return _mpc_thread_ethread_posix_barrier_wait(barrier, _mpc_thread_ethread_return_task);
 }
 
+
+/****************
+* NON PORTABLE *
+****************/
+
+int _mpc_thread_ethread_engine_setaffinity_np(_mpc_thread_ethread_t thread, size_t cpusetsize,
+                              const mpc_cpu_set_t *cpuset)
+{
+	mpc_common_debug_warning("setaffinity_np not supported");
+	return EINVAL;
+}
+
+int _mpc_thread_ethread_engine_getaffinity_np(_mpc_thread_ethread_t thread, size_t cpusetsize,
+                              mpc_cpu_set_t *cpuset)
+{
+	CPU_ZERO_S(cpusetsize, (cpu_set_t*) cpuset);
+	int pu = mpc_thread_get_pu();
+	CPU_SET_S(pu, cpusetsize, (cpu_set_t*) cpuset);
+	return 0;
+}
+
 /********************************
 * ENGINE REGISTRATION FUNCTION *
 ********************************/
@@ -766,9 +790,9 @@ void mpc_thread_ethread_engine_init(void)
 	/*non portable */
 	sctk_add_func_type(_mpc_thread_ethread_posix, getattr_np,
 	                   int (*)(mpc_thread_t, mpc_thread_attr_t *) );
-	sctk_add_func_type(_mpc_thread_ethread_posix, setaffinity_np,
+	sctk_add_func_type(_mpc_thread_ethread_engine, setaffinity_np,
 	                   int (*)(mpc_thread_t, size_t, const mpc_cpu_set_t *) );
-	sctk_add_func_type(_mpc_thread_ethread_posix, getaffinity_np,
+	sctk_add_func_type(_mpc_thread_ethread_engine, getaffinity_np,
 	                   int (*)(mpc_thread_t, size_t, mpc_cpu_set_t *) );
 
 	/* Current */

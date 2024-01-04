@@ -1977,6 +1977,8 @@ AC_CHECK_FUNCS(pthread_kill)
 AC_CHECK_FUNCS(sched_get_priority_max)
 AC_CHECK_FUNCS(sched_get_priority_min)
 
+AC_CHECK_FUNCS(pthread_getattr_np)
+
 #
 # Configure MPC_Arch
 #

@@ -1505,9 +1505,9 @@ static inline void ___mpc_thread_ethread_idle_task(void *arg)
 	while(1)
 	{
 		__sctk_grab_zombie(vp);
-		int no_work = ___mpc_thread_ethread_sched_yield_vp_idle(vp, th_data);
+		int work = ___mpc_thread_ethread_sched_yield_vp_idle(vp, th_data);
 		assert(vp->idle == th_data);
-		if(___timer_thread_ticks != last_timer)
+		if((___timer_thread_ticks / 10000) != (last_timer / 10000))
 		{
 			double activity;
 			double idle_activity;
@@ -1519,12 +1519,16 @@ static inline void ___mpc_thread_ethread_idle_task(void *arg)
 			last_timer        = ___timer_thread_ticks;
 		}
 
-		if(no_work)
-		{
+		if(work)
+    {
 			if(!___timer_thread_running)
-			{
-				break;
-			}
+      {
+        break;
+      }
+		} else {
+			// don't busy wait if user threads are not used.
+			if (vp->activity <= 1 && vp->idle_activity > 100)
+				kthread_usleep(1000);
 		}
 	}
 	/** ** **/

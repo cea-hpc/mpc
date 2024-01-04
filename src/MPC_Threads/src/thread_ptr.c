@@ -134,6 +134,10 @@ int ( *_funcptr_mpc_thread_cond_timedwait )(mpc_thread_cond_t *__cond,
                                             mpc_thread_mutex_t *__mutex,
                                             const struct timespec *
                                             __abstime) = NULL;
+int ( *_funcptr_mpc_thread_cond_clockwait )(mpc_thread_cond_t *__cond,
+                                            mpc_thread_mutex_t *__mutex,
+                                            clockid_t __clock_id,
+                                            const struct timespec * __abstime) = NULL;
 int ( *_funcptr_mpc_thread_cond_wait )(mpc_thread_cond_t *__cond,
                                        mpc_thread_mutex_t *__mutex) = NULL;
 int ( *_funcptr_mpc_thread_create )(mpc_thread_t *__threadp,
@@ -207,6 +211,9 @@ int ( *_funcptr_mpc_thread_mutex_spinlock )(mpc_thread_mutex_t *__mutex) = NULL;
 int ( *_funcptr_mpc_thread_mutex_timedlock )(mpc_thread_mutex_t *__mutex,
                                              const struct timespec *
                                              __abstime) = NULL;
+int ( *_funcptr_mpc_thread_mutex_clocklock )(mpc_thread_mutex_t *__mutex,
+                                             clockid_t __clock_id,
+                                             const struct timespec * __abstime) = NULL;
 int ( *_funcptr_mpc_thread_mutex_trylock )(mpc_thread_mutex_t *__mutex) = NULL;
 int ( *_funcptr_mpc_thread_mutex_unlock )(mpc_thread_mutex_t *__mutex) = NULL;
 
@@ -254,6 +261,12 @@ int ( *_funcptr_mpc_thread_rwlock_timedwrlock )(mpc_thread_rwlock_t *
                                                 __rwlock,
                                                 const struct timespec *
                                                 __abstime) = NULL;
+int ( *_funcptr_mpc_thread_rwlock_clockrdlock )(mpc_thread_rwlock_t *__rwlock,
+                                                clockid_t __clock_id,
+                                                const struct timespec *__abstime) = NULL;
+int ( *_funcptr_mpc_thread_rwlock_clockwrlock )(mpc_thread_rwlock_t *__rwlock,
+                                                clockid_t __clock_id,
+                                                const struct timespec *__abstime) = NULL;
 
 int ( *_funcptr_mpc_thread_rwlock_tryrdlock )(mpc_thread_rwlock_t *
                                               __rwlock) = NULL;

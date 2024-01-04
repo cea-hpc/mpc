@@ -19,6 +19,9 @@
 /* #   - PERACHE Marc marc.perache@cea.fr                                 # */
 /* #                                                                      # */
 /* ######################################################################## */
+#define _GNU_SOURCE
+#include <sched.h>
+
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
@@ -377,7 +380,9 @@ static int _mpc_thread_ethread_mxn_engine_user_create(_mpc_thread_ethread_t *thr
                                                       _mpc_thread_ethread_attr_t *attr,
                                                       void *(*start_routine)(void *), void *arg)
 {
+	/* OpenMP Compat: pos should start at 1. */
 	static unsigned int pos = 0;
+	pos = (pos + 1) % sctk_nb_vp_initialized;
 
 	assume(pos < sctk_nb_vp_initialized);
 	assume(_mpc_thread_ethread_mxn_engine_vp_list[pos] != NULL);
@@ -389,7 +394,6 @@ static int _mpc_thread_ethread_mxn_engine_user_create(_mpc_thread_ethread_t *thr
 	_mpc_thread_ethread_virtual_processor_t *current_vp = _mpc_thread_ethread_mxn_engine_vp_list[pos];
 
 	mpc_common_debug("Non VP thread creation on VP %d / %d", pos, sctk_nb_vp_initialized);
-	pos = (pos + 1) % sctk_nb_vp_initialized;
 
 	if(attr != NULL)
 	{
@@ -889,6 +893,63 @@ static int _mpc_thread_ethread_mxn_engine_barrier_wait(_mpc_thread_ethread_barri
 	return _mpc_thread_ethread_posix_barrier_wait(barrier, _mpc_thread_ethread_mxn_engine_return_task);
 }
 
+/****************
+* NON PORTABLE *
+****************/
+
+
+/* OpenMP Compat */
+int _mpc_thread_ethread_mxn_engine_setaffinity_np(_mpc_thread_ethread_t thread, size_t cpusetsize,
+                              const mpc_cpu_set_t *cpuset)
+{
+	_mpc_thread_ethread_per_thread_t *       current;
+	_mpc_thread_ethread_virtual_processor_t *current_vp;
+	cpu_set_t *_cpuset;
+	
+	if (thread != 0)
+	{
+		//mpc_common_debug_warning("setaffinity_np not supported");
+		return 0; /* OpenMP Compat */
+	}
+
+	_cpuset = (cpu_set_t *) cpuset;
+
+	// avoid changing vp if we already are on a valide one.
+	_mpc_thread_ethread_mxn_engine_self_all(&current_vp, &current);
+	if (CPU_ISSET_S(current_vp->rank, cpusetsize, _cpuset))
+		return 0;
+
+	int i;
+	for (i = 0 ; i < cpusetsize ; i++)
+	{
+		if(CPU_ISSET_S(i, cpusetsize, _cpuset))
+		{
+			(_funcptr_mpc_thread_proc_migration)(i);
+			break;
+		}
+	}
+
+	return 0;
+}
+
+/* OpenMP Compat */
+int _mpc_thread_ethread_mxn_engine_getaffinity_np(_mpc_thread_ethread_t thread, size_t cpusetsize,
+                              mpc_cpu_set_t *cpuset)
+{
+	_mpc_thread_ethread_per_thread_t *current;
+	cpu_set_t *_cpuset;
+
+	current = _mpc_thread_ethread_mxn_engine_self();
+	_cpuset = (cpu_set_t *) cpuset;
+
+	CPU_ZERO_S(cpusetsize, _cpuset);
+
+	for(size_t i = 0; i < sctk_nb_vp_initialized; ++i)
+		CPU_SET_S(_mpc_thread_ethread_mxn_engine_vp_list[i]->rank, cpusetsize, _cpuset);
+
+	return 0;
+}
+
 void mpc_thread_ethread_mxn_engine_init(void)
 {
 	mpc_common_debug_only_once();
@@ -1196,9 +1257,9 @@ void mpc_thread_ethread_mxn_engine_init(void)
 	/*non portable */
 	sctk_add_func_type(_mpc_thread_ethread_posix, getattr_np,
 	                   int (*)(mpc_thread_t, mpc_thread_attr_t *) );
-	sctk_add_func_type(_mpc_thread_ethread_posix, setaffinity_np,
+	sctk_add_func_type(_mpc_thread_ethread_mxn_engine, setaffinity_np,
 	                   int (*)(mpc_thread_t, size_t, const mpc_cpu_set_t *) );
-	sctk_add_func_type(_mpc_thread_ethread_posix, getaffinity_np,
+	sctk_add_func_type(_mpc_thread_ethread_mxn_engine, getaffinity_np,
 	                   int (*)(mpc_thread_t, size_t, mpc_cpu_set_t *) );
 
 	/* Current */

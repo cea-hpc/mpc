@@ -227,12 +227,6 @@ int _mpc_thread_ethread_posix_barrierattr_destroy(_mpc_thread_ethread_barrieratt
 
 int _mpc_thread_ethread_posix_getattr_np(_mpc_thread_ethread_t th, _mpc_thread_ethread_attr_t *attr);
 
-int _mpc_thread_ethread_posix_setaffinity_np(_mpc_thread_ethread_t thread, size_t cpusetsize,
-                              const mpc_cpu_set_t *cpuset);
-
-int _mpc_thread_ethread_posix_getaffinity_np(_mpc_thread_ethread_t thread, size_t cpusetsize,
-                              mpc_cpu_set_t *cpuset);
-
 #ifdef __cplusplus
 }
 #endif

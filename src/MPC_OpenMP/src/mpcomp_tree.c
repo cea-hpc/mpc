@@ -1273,6 +1273,8 @@ mpc_omp_init_seq_region() {
 	assert( seq_instance->team );
 	memset( seq_instance->team, 0, sizeof( mpc_omp_team_t ) );
 
+	seq_instance->team->critical_lock = ( omp_lock_t * ) mpc_omp_alloc( sizeof( omp_lock_t ) );
+	
 	seq_instance->team->depth = 0;
 	seq_instance->root = NULL;
 	seq_instance->nb_mvps = 1;

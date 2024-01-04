@@ -124,7 +124,7 @@ static inline void __thread_module_config_defaults(void)
 {
 	/* Here we set default values for thread config */
 	snprintf(__thread_module_config.thread_layout, MPC_CONF_STRING_SIZE, "default");
-	__thread_module_config.thread_timer_interval = 10;
+	__thread_module_config.thread_timer_interval = 1;
 	__thread_module_config.kthread_stack_size = (10 * 1024 * 1024);
 	__thread_module_config.ethread_spin_delay = 10;
 
@@ -713,7 +713,7 @@ static void *___timer_thread_main(void *arg)
 
 	while(___timer_thread_running)
 	{
-		kthread_usleep(__thread_module_config.thread_timer_interval * 1000);
+		kthread_usleep(__thread_module_config.thread_timer_interval);
 		___timer_thread_ticks++;
 	}
 
@@ -1621,13 +1621,8 @@ int mpc_thread_once(mpc_thread_once_t *__once_control,
 int mpc_thread_atfork(void (*__prepare)(void), void (*__parent)(void),
                       void (*__child)(void) )
 {
-	__check_mpc_initialized();
-	int res;
-
-	assert(_funcptr_mpc_thread_atfork != NULL);
-	res = _funcptr_mpc_thread_atfork(__prepare, __parent, __child);
-	sctk_check(res, 0);
-	return res;
+	/* OpenMP Compat (use by openmp to reinitialize itself on processus ofrking) */
+	return pthread_atfork(__prepare, __parent, __child);
 }
 
 /**********
@@ -2209,6 +2204,20 @@ int mpc_thread_cond_timedwait(mpc_thread_cond_t *restrict __cond,
 	return res;
 }
 
+int mpc_thread_cond_clockwait(mpc_thread_cond_t *restrict __cond,
+                              mpc_thread_mutex_t *restrict __mutex,
+                              clockid_t __clock_id,
+                              const struct timespec *restrict __abstime)
+{
+	__check_mpc_initialized();
+	int res;
+
+	assert(_funcptr_mpc_thread_cond_clockwait != NULL);
+	res = _funcptr_mpc_thread_cond_clockwait(__cond, __mutex, __clock_id, __abstime);
+	sctk_check(res, 0);
+	return res;
+}
+
 int mpc_thread_cond_wait(mpc_thread_cond_t *restrict __cond,
                          mpc_thread_mutex_t *restrict __mutex)
 {
@@ -2587,6 +2596,19 @@ int mpc_thread_mutex_timedlock(mpc_thread_mutex_t *restrict __mutex,
 	return res;
 }
 
+int mpc_thread_mutex_clocklock(mpc_thread_mutex_t *restrict __mutex,
+                               clockid_t __clock_id,
+                               const struct timespec *restrict __abstime)
+{
+	__check_mpc_initialized();
+	int res;
+
+	assert(_funcptr_mpc_thread_mutex_clocklock != NULL);
+	res = _funcptr_mpc_thread_mutex_clocklock(__mutex, __clock_id, __abstime);
+	sctk_check(res, 0);
+	return res;
+}
+
 int mpc_thread_mutex_trylock(mpc_thread_mutex_t *__mutex)
 {
 	__check_mpc_initialized();
@@ -2865,6 +2887,32 @@ int mpc_thread_rwlock_timedwrlock(mpc_thread_rwlock_t *restrict __rwlock,
 
 	assert(_funcptr_mpc_thread_rwlock_timedwrlock != NULL);
 	res = _funcptr_mpc_thread_rwlock_timedwrlock(__rwlock, __abstime);
+	sctk_check(res, 0);
+	return res;
+}
+
+int mpc_thread_rwlock_clockrdlock(mpc_thread_rwlock_t *restrict __rwlock,
+                                  clockid_t __clock_id,
+                                  const struct timespec *restrict __abstime)
+{
+	__check_mpc_initialized();
+	int res;
+
+	assert(_funcptr_mpc_thread_rwlock_clockrdlock != NULL);
+	res = _funcptr_mpc_thread_rwlock_clockrdlock(__rwlock, __clock_id, __abstime);
+	sctk_check(res, 0);
+	return res;
+}
+
+int mpc_thread_rwlock_clockwrlock(mpc_thread_rwlock_t *restrict __rwlock,
+                                  clockid_t __clock_id,
+                                  const struct timespec *restrict __abstime)
+{
+	__check_mpc_initialized();
+	int res;
+
+	assert(_funcptr_mpc_thread_rwlock_clockwrlock != NULL);
+	res = _funcptr_mpc_thread_rwlock_clockwrlock(__rwlock, __clock_id, __abstime);
 	sctk_check(res, 0);
 	return res;
 }

@@ -139,6 +139,12 @@ extern "C"
 /* pthread_getaffinity_np */
 #define pthread_getaffinity_np                 mpc_thread_getaffinity_np
 
+/* OpenMP Compat: sched_setaffinity */
+#define sched_setaffinity                 	   mpc_thread_setaffinity_np
+
+/* OpenMP Compat: sched_getaffinity */
+#define sched_getaffinity                      mpc_thread_getaffinity_np
+
 /* pthread_attr_getscope */
 #define pthread_attr_getscope                  mpc_thread_attr_getscope
 
@@ -244,6 +250,9 @@ extern "C"
 /* pthread_cond_timedwait */
 #define pthread_cond_timedwait         mpc_thread_cond_timedwait
 
+/* pthread_cond_clockwait */
+#define pthread_cond_clockwait         mpc_thread_cond_clockwait
+
 /* pthread_cond_wait */
 #define pthread_cond_wait              mpc_thread_cond_wait
 
@@ -333,6 +342,9 @@ extern "C"
 /* pthread_mutex_timedlock */
 #define pthread_mutex_timedlock    mpc_thread_mutex_timedlock
 
+/* pthread_mutex_clocklock */
+#define pthread_mutex_clocklock    mpc_thread_mutex_clocklock
+
 
 /* pthread_mutex_trylock */
 #define pthread_mutex_trylock    mpc_thread_mutex_trylock
@@ -399,9 +411,15 @@ extern "C"
 /* pthread_rwlock_timedrdlock */
 #define pthread_rwlock_timedrdlock    mpc_thread_rwlock_timedrdlock
 
+/* pthread_rwlock_clockrdlock */
+#define pthread_rwlock_clockrdlock    mpc_thread_rwlock_clockrdlock
+
 
 /* pthread_rwlock_timedwrlock */
 #define pthread_rwlock_timedwrlock    mpc_thread_rwlock_timedwrlock
+
+/* pthread_rwlock_clockwrlock */
+#define pthread_rwlock_clockwrlock    mpc_thread_rwlock_clockwrlock
 
 
 /* pthread_rwlock_tryrdlock */
