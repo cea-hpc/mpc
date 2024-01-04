@@ -32,48 +32,48 @@ extern "C" {
 #include "egreq_classes.h"
 #include "mpc_info.h"
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <stdio.h>
 
 /****************************
 * SPECIALIZED MESSAGE TAGS *
 ****************************/
 
-#define MPC_GATHERV_TAG                  -2
+#define MPC_GATHERV_TAG                  (-2)
 
-#define MPC_SCATTERV_TAG                 -4
-#define MPC_SCATTER_TAG                  -5
-#define MPC_ALLTOALL_TAG                 -6
-#define MPC_ALLTOALLV_TAG                -7
-#define MPC_ALLTOALLW_TAG                -8
-#define MPC_ALLGATHERV_TAG               -12
-#define MPC_REDUCE_TAG                   -13
-#define MPC_ALLREDUCE_TAG                -14
-#define MPC_REDUCE_SCATTER_TAG           -15
-#define MPC_REDUCE_SCATTER_BLOCK_TAG     -16
-#define MPC_SCAN_TAG                     -17
-#define MPC_EXSCAN_TAG                   -18
-#define MPC_IBARRIER_TAG                 -19
-#define MPC_IBCAST_TAG                   -20
-#define MPC_IGATHER_TAG                  -21
-#define MPC_IGATHERV_TAG                 -22
-#define MPC_ISCATTER_TAG                 -23
-#define MPC_ISCATTERV_TAG                -24
-#define MPC_IALLGATHER_TAG               -25
-#define MPC_IALLGATHERV_TAG              -26
-#define MPC_IALLTOALL_TAG                -27
-#define MPC_IALLTOALLV_TAG               -28
-#define MPC_IALLTOALLW_TAG               -29
-#define MPC_IREDUCE_TAG                  -30
-#define MPC_IALLREDUCE_TAG               -31
-#define MPC_IREDUCE_SCATTER_TAG          -32
-#define MPC_IREDUCE_SCATTER_BLOCK_TAG    -33
-#define MPC_ISCAN_TAG                    -34
-#define MPC_IEXSCAN_TAG                  -35
-#define MPC_COPY_TAG                     -36
+#define MPC_SCATTERV_TAG                 (-4)
+#define MPC_SCATTER_TAG                  (-5)
+#define MPC_ALLTOALL_TAG                 (-6)
+#define MPC_ALLTOALLV_TAG                (-7)
+#define MPC_ALLTOALLW_TAG                (-8)
+#define MPC_ALLGATHERV_TAG               (-12)
+#define MPC_REDUCE_TAG                   (-13)
+#define MPC_ALLREDUCE_TAG                (-14)
+#define MPC_REDUCE_SCATTER_TAG           (-15)
+#define MPC_REDUCE_SCATTER_BLOCK_TAG     (-16)
+#define MPC_SCAN_TAG                     (-17)
+#define MPC_EXSCAN_TAG                   (-18)
+#define MPC_IBARRIER_TAG                 (-19)
+#define MPC_IBCAST_TAG                   (-20)
+#define MPC_IGATHER_TAG                  (-21)
+#define MPC_IGATHERV_TAG                 (-22)
+#define MPC_ISCATTER_TAG                 (-23)
+#define MPC_ISCATTERV_TAG                (-24)
+#define MPC_IALLGATHER_TAG               (-25)
+#define MPC_IALLGATHERV_TAG              (-26)
+#define MPC_IALLTOALL_TAG                (-27)
+#define MPC_IALLTOALLV_TAG               (-28)
+#define MPC_IALLTOALLW_TAG               (-29)
+#define MPC_IREDUCE_TAG                  (-30)
+#define MPC_IALLREDUCE_TAG               (-31)
+#define MPC_IREDUCE_SCATTER_TAG          (-32)
+#define MPC_IREDUCE_SCATTER_BLOCK_TAG    (-33)
+#define MPC_ISCAN_TAG                    (-34)
+#define MPC_IEXSCAN_TAG                  (-35)
+#define MPC_COPY_TAG                     (-36)
 /* TAG of minimum value */
-#define MPC_LAST_TAG                     -37
+#define MPC_LAST_TAG                     (-37)
 
 /********************
 * INIT AND RELEASE *
@@ -99,8 +99,10 @@ int _mpc_cl_abort(mpc_lowcomm_communicator_t, int);
  * Once the operation completes, the user has to call \ref _mpc_cl_grequest_complete
  *
  */
-int _mpc_cl_grequest_start(sctk_Grequest_query_function *query_fr, sctk_Grequest_free_function *free_fn,
-                           sctk_Grequest_cancel_function *cancel_fn, void *extra_state, mpc_lowcomm_request_t *request);
+int _mpc_cl_grequest_start(sctk_Grequest_query_function *query_fn,
+                           sctk_Grequest_free_function *free_fn,
+                           sctk_Grequest_cancel_function *cancel_fn,
+                           void *extra_state, mpc_lowcomm_request_t *request);
 
 /** \brief Starts an extended generalized request with a polling function
  *
@@ -131,10 +133,7 @@ int _mpc_cl_grequest_complete(mpc_lowcomm_request_t request);
  *  \param extra_state Extra pointer passed to every handler
  *  \param request The request object we are creating (output)
  */
-int _mpc_cl_grequest_start(sctk_Grequest_query_function *query_fn,
-                           sctk_Grequest_free_function *free_fn,
-                           sctk_Grequest_cancel_function *cancel_fn,
-                           void *extra_state, mpc_lowcomm_request_t *request);
+
 
 /** \brief This creates a request class which can be referred to later on
  *
@@ -299,9 +298,12 @@ int _mpc_cl_comm_split(mpc_lowcomm_communicator_t comm, int color, int key, mpc_
 * ERROR HANDLING *
 ******************/
 
-void _mpc_cl_default_error(mpc_lowcomm_communicator_t *comm, int *error, char *msg, char *function, char *file, int line);
+void _mpc_cl_default_error(mpc_lowcomm_communicator_t *comm, const int * error, char *msg, char *function, char *file, int line);
 
-void _mpc_cl_return_error(mpc_lowcomm_communicator_t *comm, int *error, char *message, char *function, char *file, int line);
+void _mpc_cl_return_error(mpc_lowcomm_communicator_t *comm, const int *error, char *message, char *function, char *file, int line);
+
+void _mpc_cl_abort_error(mpc_lowcomm_communicator_t *comm, const int *error, char *message, char *function, char *file,
+                         int line);
 
 int _mpc_cl_errhandler_create(MPC_Handler_function *function,
                               MPC_Errhandler *errhandler);
@@ -447,7 +449,7 @@ int _mpc_cl_type_size(mpc_lowcomm_datatype_t datatype, size_t *size);
  *  \param datatype target datatype
  *  \param          flag 1 if the type is commited [OUT]
  */
-int _mpc_cl_type_is_allocated(const mpc_lowcomm_datatype_t datatype, bool *flag);
+int _mpc_cl_type_is_allocated(mpc_lowcomm_datatype_t datatype, bool *flag);
 
 /** \brief Set a Struct datatype as a padded one to return the extent instead of
  * the size
@@ -461,13 +463,13 @@ int _mpc_cl_type_flag_padded(mpc_lowcomm_datatype_t datatype);
  *  The Datatype created is a general one, this function exists only to simplify
  *  contiguous datatype creation.
  *
- *  \param outtype  Output datatype to be created
+ *  \param datatype  Output datatype to be created
  *  \param count    Number of entries of type data_in
  *  \param data_in  Type of the entry to be created
  *
  */
-int _mpc_cl_type_hcontiguous(mpc_lowcomm_datatype_t *outtype, size_t count, mpc_lowcomm_datatype_t *data_in);
-
+int _mpc_cl_type_hcontiguous(mpc_lowcomm_datatype_t *datatype, size_t count,
+                             mpc_lowcomm_datatype_t *data_in);
 
 /** \brief Release a type
  *
@@ -564,10 +566,10 @@ bool __mpc_cl_type_general_check_footprint(mpc_mpi_cl_per_mpi_process_ctx_t *tas
 /**
  * \brief Commit and optimize a datatype
  *
- * \param type Type to commit
+ * \param datatype_p Type to commit
  * \return int MPC_LOWCOMM_SUCCESS if OK
  */
-int _mpc_cl_type_commit(mpc_lowcomm_datatype_t *type);
+int _mpc_cl_type_commit(mpc_lowcomm_datatype_t *datatype_p);
 
 /** \brief Serialize a general datatype in a contiguous segment
  *  \param type the general data-type to be serialized
@@ -641,7 +643,7 @@ int _mpc_cl_general_datatype(mpc_lowcomm_datatype_t *datatype,
                              const long ub, const bool is_ub,
                              struct _mpc_dt_context *ectx);
 
-int _mpc_cl_type_get_true_extent(const mpc_lowcomm_datatype_t datatype, long *true_lb, long *true_extent);
+int _mpc_cl_type_get_true_extent(mpc_lowcomm_datatype_t datatype, long *true_lb, long *true_extent);
 
 int _mpc_cl_type_use(mpc_lowcomm_datatype_t datatype);
 

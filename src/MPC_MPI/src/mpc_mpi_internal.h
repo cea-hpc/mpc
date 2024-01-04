@@ -73,8 +73,8 @@ int mpc_mpi_release(void);
 int _mpc_mpi_report_error(mpc_lowcomm_communicator_t comm, int error, char *message, char *function, char *file, int line);
 
 #define MPI_ERROR_REPORT(comm, error, message)      return _mpc_mpi_report_error(comm, error, message, (char *)__FUNCTION__, (char *)__FILE__, __LINE__)
-#define MPI_HANDLE_RETURN_VAL(res, comm)            do { if(res == MPI_SUCCESS){ return res; } else { MPI_ERROR_REPORT(comm, res, "Generic error return"); } } while(0)
-#define MPI_HANDLE_ERROR(res, comm, desc_string)    do { if(res != MPI_SUCCESS){ MPI_ERROR_REPORT(comm, res, desc_string); } } while(0)
+#define MPI_HANDLE_RETURN_VAL(res, comm)            do { if((res) == MPI_SUCCESS){ return res; } MPI_ERROR_REPORT(comm, res, "Generic error return"); } while(0)
+#define MPI_HANDLE_ERROR(res, comm, desc_string)    do { if((res) != MPI_SUCCESS){ MPI_ERROR_REPORT(comm, res, desc_string); } } while(0)
 
 
 
@@ -117,9 +117,6 @@ typedef struct mpc_mpi_data_s
 
 	/****** REQUESTS ******/
 	struct MPI_request_struct_s *requests;
-
-	/****** GROUPS ******/
-	struct MPI_group_struct_s *  groups;
 
 	/****** BUFFERS ******/
 	struct _mpc_mpi_buffer *     buffers;
