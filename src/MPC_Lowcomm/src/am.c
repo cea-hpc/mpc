@@ -1,3 +1,4 @@
+#include "mpc_lowcomm_msg.h"
 #include "am.h"
 
 #include <stdio.h>
@@ -443,7 +444,7 @@ int mpc_lowcomm_iam(mpc_lowcomm_am_ctx_t ctx,
 	else
 	{
 		/* Mark as complete */
-		req->completion_flag = 1;
+		req->completion_flag = MPC_LOWCOMM_MESSAGE_DONE;
 	}
 
 	if(to_free)
