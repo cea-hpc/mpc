@@ -571,9 +571,11 @@ int lcp_recv_eager_tag_data(lcp_request_t *req, void *data)
         int rc = LCP_SUCCESS;
         ssize_t unpacked_len = 0;
 
-        mpc_common_debug_info("LCP: recv tag data req=%p, src=%d, dest=%d, "
+        mpc_common_debug_info("LCP: recv tag data req=%p, src_tid=%d, src_uid=%lu, "
+                              "dest_tid=%d, dest_uid=%lu, "
                               "tag=%d, comm=%d, length=%d, seqn=%d", req, 
-                              req->recv.tag.src_tid, req->recv.tag.dest_tid, 
+                              req->recv.tag.src_tid, req->recv.tag.src_uid,
+                              req->recv.tag.dest_tid, req->recv.tag.dest_uid,
                               req->recv.tag.tag, req->recv.tag.comm, 
                               req->recv.send_length, req->seqn);
 

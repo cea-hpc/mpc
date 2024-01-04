@@ -368,11 +368,11 @@ static int lcp_send_rndv_tag_rts_progress(lcp_request_t *req)
         /* Immediate data set beforehand since needed to post memory */
 
         mpc_common_debug_info("LCP: send rndv get offload req=%p, comm_id=%lu, "
-                              "tag=%d, src=%d, dest=%d, mid=%d, buf=%p.", req, 
-                              req->send.tag.comm, 
+                              "tag=%d, src_tid=%d, src_uid=%lu, dest_tid=%d, "
+                              "mid=%d, buf=%p.", req, req->send.tag.comm, 
                               req->send.tag.tag, req->send.tag.src_tid, 
-                              req->send.tag.dest_tid, req->tm.mid, 
-                              req->send.buffer);
+                              req->send.tag.src_uid, req->send.tag.dest_tid,
+                              req->tm.mid, req->send.buffer);
 
 
         payload_size = lcp_send_do_tag_bcopy(ep->lct_eps[cc],
