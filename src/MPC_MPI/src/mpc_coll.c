@@ -20,11 +20,15 @@
 /* #   - PEPIN Thibaut thibaut.pepin@cea.fr                               # */
 /* #                                                                      # */
 /* ######################################################################## */
-#include <mpc_mpi_internal.h>
 #include <mpi_conf.h>
-#include <mpc_coll_weak.h>
+#include <stddef.h>
 
+#include "mpc_keywords.h"
+#include "mpc_mpi.h"
+#include "mpc_mpi_internal.h"
+#include "comm_lib.h"
 #include "egreq_nbc.h"
+#include "mpc_coll_weak.h"
 
 #define SCHED_SIZE (sizeof(int))
 #define BARRIER_SCHED_SIZE (sizeof(char))
@@ -71,7 +75,7 @@ INFO("MPC_COLL debugging is ENABLED this is incompatible with thread-based MPI")
 #endif
 
 
-static inline int __global_topo_allow = 0;
+static int __global_topo_allow = 0;
 
 void _mpc_mpi_coll_allow_topological_comm() {
   __global_topo_allow = 1;
@@ -108,8 +112,8 @@ typedef struct {
   int alloc_size;                               /**< Allocation size for the schedule. */
 
   void *tmpbuf;                                 /**< Adress of the temporary buffer for the schedule. */
-  int tmpbuf_size;                              /**< Size of the temporary buffer for the schedule. */
-  int tmpbuf_pos;                               /**< Offset from the staring adress of the temporary buffer to the current position. */
+  size_t tmpbuf_size;                              /**< Size of the temporary buffer for the schedule. */
+  size_t tmpbuf_pos;                               /**< Offset from the staring adress of the temporary buffer to the current position. */
 
   int flag;                                     /**< flag used to store initialisation states. */
   //int is_topo_comm_creation_allowed;
@@ -119,26 +123,26 @@ typedef struct {
 
 #define pointer_swap(a, b, swap) \
 {                                \
-  swap = (a);                    \
-  a = (b);                       \
-  b = (swap);                    \
+  (swap) = (a);                    \
+  (a) = (b);                       \
+  (b) = (swap);                    \
 }
 
 #ifndef RANK2VRANK
 #define RANK2VRANK(rank, vrank, root) \
 { \
-  vrank = (rank); \
-  if ((rank) == 0) vrank = (root); \
-  if ((rank) == (root)) vrank = 0; \
+  (vrank) = (rank); \
+  if ((rank) == 0) (vrank) = (root); \
+  if ((rank) == (root)) (vrank) = 0; \
 }
 #endif
 
 #ifndef VRANK2RANK
 #define VRANK2RANK(rank, vrank, root) \
 { \
-  rank = (vrank); \
-  if ((vrank) == 0) rank = (root); \
-  if ((vrank) == (root)) rank = 0; \
+  (rank) = (vrank); \
+  if ((vrank) == 0) (rank) = (root); \
+  if ((vrank) == (root)) (rank) = 0; \
 }
 #endif
 
@@ -147,9 +151,7 @@ typedef struct {
    COLLECTIVES PROTOTYPES
  **************/
 
-int PMPI_Ibcast (void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, MPI_Request *request);
 static inline int ___collectives_ibcast(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, NBC_Handle *handle);
-int PMPI_Bcast_init(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, MPI_Info info, MPI_Request *request);
 static inline int ___collectives_bcast_init(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, NBC_Handle* handle);
 int _mpc_mpi_collectives_bcast(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm);
 int ___collectives_bcast_switch(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
@@ -159,9 +161,7 @@ int ___collectives_bcast_scatter_allgather(void *buffer, int count, MPI_Datatype
 int ___collectives_bcast_topo(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
 
 
-int PMPI_Ireduce (const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm, MPI_Request *request);
 static inline int ___collectives_ireduce(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm, NBC_Handle *handle);
-int PMPI_Reduce_init(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm, MPI_Info info, MPI_Request *request);
 static inline int ___collectives_reduce_init(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm, NBC_Handle* handle);
 int _mpc_mpi_collectives_reduce(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm);
 int ___collectives_reduce_switch(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
@@ -172,9 +172,7 @@ int ___collectives_reduce_topo(const void *sendbuf, void* recvbuf, int count, MP
 int ___collectives_reduce_topo_commute(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
 
 
-int PMPI_Iallreduce (const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Request *request);
 static inline int ___collectives_iallreduce(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, NBC_Handle *handle);
-int PMPI_Allreduce_init(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Info info, MPI_Request *request);
 static inline int ___collectives_allreduce_init(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, NBC_Handle* handle);
 int _mpc_mpi_collectives_allreduce(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm);
 int ___collectives_allreduce_switch(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
@@ -186,9 +184,7 @@ int ___collectives_allreduce_ring(const void *sendbuf, void* recvbuf, int count,
 int ___collectives_allreduce_topo(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
 
 
-int PMPI_Iscatter (const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPI_Request *request);
 static inline int ___collectives_iscatter(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, NBC_Handle *handle);
-int PMPI_Scatter_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPI_Info info, MPI_Request *request);
 static inline int ___collectives_scatter_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, NBC_Handle* handle);
 int _mpc_mpi_collectives_scatter(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm);
 int ___collectives_scatter_switch(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
@@ -197,9 +193,7 @@ int ___collectives_scatter_binomial(const void *sendbuf, int sendcount, MPI_Data
 int ___collectives_scatter_topo(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
 
 
-int PMPI_Iscatterv (const void *sendbuf, const int *sendcounts, const int *displs, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPI_Request * request);
 static inline int ___collectives_iscatterv(const void *sendbuf, const int *sendcounts, const int *displs, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, NBC_Handle *handle);
-int PMPI_Scatterv_init(const void *sendbuf, const int *sendcounts, const int *displs, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPI_Info info, MPI_Request *request);
 static inline int ___collectives_scatterv_init(const void *sendbuf, const int *sendcounts, const int *displs, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, NBC_Handle* handle);
 int _mpc_mpi_collectives_scatterv(const void *sendbuf, const int *sendcounts, const int *displs, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm);
 int ___collectives_scatterv_switch(const void *sendbuf, const int *sendcounts, const int *displs, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
@@ -207,9 +201,7 @@ int ___collectives_scatterv_linear(const void *sendbuf, const int *sendcounts, c
 int ___collectives_scatterv_binomial(const void *sendbuf, const int *sendcounts, const int *displs, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
 
 
-int PMPI_Igather (const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPI_Request *request);
 static inline int ___collectives_igather(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, NBC_Handle *handle);
-int PMPI_Gather_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPI_Info info, MPI_Request *request);
 static inline int ___collectives_gather_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, NBC_Handle* handle);
 int _mpc_mpi_collectives_gather(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm);
 int ___collectives_gather_switch(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
@@ -218,9 +210,7 @@ int ___collectives_gather_binomial(const void *sendbuf, int sendcount, MPI_Datat
 int ___collectives_gather_topo(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
 
 
-int PMPI_Igatherv (const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype, int root, MPI_Comm comm, MPI_Request *request);
 static inline int ___collectives_igatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype, int root, MPI_Comm comm, NBC_Handle *handle);
-int PMPI_Gatherv_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype, int root, MPI_Comm comm, MPI_Info info, MPI_Request *request);
 static inline int ___collectives_gatherv_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype, int root, MPI_Comm comm, NBC_Handle* handle);
 int _mpc_mpi_collectives_gatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype, int root, MPI_Comm comm);
 int ___collectives_gatherv_switch(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
@@ -228,9 +218,7 @@ int ___collectives_gatherv_linear(const void *sendbuf, int sendcount, MPI_Dataty
 int ___collectives_gatherv_binomial(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
 
 
-int PMPI_Ireduce_scatter_block(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Request *request);
 static inline int ___collectives_ireduce_scatter_block(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, NBC_Handle *handle);
-int PMPI_Reduce_scatter_block_init(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Info info, MPI_Request *request);
 static inline int ___collectives_reduce_scatter_block_init(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, NBC_Handle* handle);
 int _mpc_mpi_collectives_reduce_scatter_block(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm);
 int ___collectives_reduce_scatter_block_switch(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
@@ -240,9 +228,7 @@ int ___collectives_reduce_scatter_block_distance_halving(const void *sendbuf, vo
 int ___collectives_reduce_scatter_block_pairwise(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
 
 
-int PMPI_Ireduce_scatter(const void *sendbuf, void* recvbuf, const int *recvcounts, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Request *request);
 static inline int ___collectives_ireduce_scatter(const void *sendbuf, void* recvbuf, const int *recvcounts, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, NBC_Handle *handle);
-int PMPI_Reduce_scatter_init(const void *sendbuf, void* recvbuf, const int *recvcounts, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Info info, MPI_Request *request);
 static inline int ___collectives_reduce_scatter_init(const void *sendbuf, void* recvbuf, const int *recvcounts, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, NBC_Handle* handle);
 int _mpc_mpi_collectives_reduce_scatter(const void *sendbuf, void* recvbuf, const int *recvcounts, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm);
 int ___collectives_reduce_scatter_switch(const void *sendbuf, void* recvbuf, const int *recvcounts, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
@@ -252,9 +238,7 @@ int ___collectives_reduce_scatter_distance_halving(const void *sendbuf, void* re
 int ___collectives_reduce_scatter_pairwise(const void *sendbuf, void* recvbuf, const int *recvcounts, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
 
 
-int PMPI_Iallgather (const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, MPI_Request *request);
 static inline int ___collectives_iallgather(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, NBC_Handle *handle);
-int PMPI_Allgather_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, MPI_Info info, MPI_Request *request);
 static inline int ___collectives_allgather_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, NBC_Handle* handle);
 int _mpc_mpi_collectives_allgather(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm);
 int ___collectives_allgather_switch(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
@@ -265,9 +249,7 @@ int ___collectives_allgather_ring(const void *sendbuf, int sendcount, MPI_Dataty
 int ___collectives_allgather_topo(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
 
 
-int PMPI_Iallgatherv (const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype, MPI_Comm comm, MPI_Request *request);
 static inline int ___collectives_iallgatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype, MPI_Comm comm, NBC_Handle *handle);
-int PMPI_Allgatherv_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype, MPI_Comm comm, MPI_Info info, MPI_Request *request);
 static inline int ___collectives_allgatherv_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype, MPI_Comm comm, NBC_Handle* handle);
 int _mpc_mpi_collectives_allgatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype, MPI_Comm comm);
 int ___collectives_allgatherv_switch(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
@@ -277,9 +259,7 @@ int ___collectives_allgatherv_bruck(const void *sendbuf, int sendcount, MPI_Data
 int ___collectives_allgatherv_ring(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
 
 
-int PMPI_Ialltoall (const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, MPI_Request *request);
 static inline int ___collectives_ialltoall(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, NBC_Handle *handle);
-int PMPI_Alltoall_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, MPI_Info info, MPI_Request *request);
 static inline int ___collectives_alltoall_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, NBC_Handle* handle);
 int _mpc_mpi_collectives_alltoall(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm);
 int ___collectives_alltoall_switch(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
@@ -289,9 +269,7 @@ int ___collectives_alltoall_pairwise(const void *sendbuf, int sendcount, MPI_Dat
 int ___collectives_alltoall_topo(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
 
 
-int PMPI_Ialltoallv (const void *sendbuf, const int *sendcounts, const int *sdispls, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *rdispls, MPI_Datatype recvtype, MPI_Comm comm, MPI_Request *request);
 static inline int ___collectives_ialltoallv(const void *sendbuf, const int *sendcounts, const int *sdispls, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *rdispls, MPI_Datatype recvtype, MPI_Comm comm, NBC_Handle *handle);
-int PMPI_Alltoallv_init(const void *sendbuf, const int *sendcounts, const int *sdispls, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *rdispls, MPI_Datatype recvtype, MPI_Comm comm, MPI_Info info, MPI_Request *request);
 static inline int ___collectives_alltoallv_init(const void *sendbuf, const int *sendcounts, const int *sdispls, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *rdispls, MPI_Datatype recvtype, MPI_Comm comm, NBC_Handle* handle);
 int _mpc_mpi_collectives_alltoallv(const void *sendbuf, const int *sendcounts, const int *sdispls, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *rdispls, MPI_Datatype recvtype, MPI_Comm comm);
 int ___collectives_alltoallv_switch(const void *sendbuf, const int *sendcounts, const int *sdispls, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *rdispls, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
@@ -300,9 +278,7 @@ int ___collectives_alltoallv_bruck(const void *sendbuf, const int *sendcounts, c
 int ___collectives_alltoallv_pairwise(const void *sendbuf, const int *sendcounts, const int *sdispls, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *rdispls, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
 
 
-int PMPI_Ialltoallw (const void *sendbuf, const int *sendcounts, const int *sdispls, const MPI_Datatype *sendtypes, void *recvbuf, const int *recvcounts, const int *rdispls, const MPI_Datatype *recvtypes, MPI_Comm comm, MPI_Request *request);
 static inline int ___collectives_ialltoallw(const void *sendbuf, const int *sendcounts, const int *sdispls, const MPI_Datatype *sendtypes, void *recvbuf, const int *recvcounts, const int *rdispls, const MPI_Datatype *recvtypes, MPI_Comm comm, NBC_Handle *handle);
-int PMPI_Alltoallw_init(const void *sendbuf, const int *sendcounts, const int *sdispls, const MPI_Datatype *sendtypes, void *recvbuf, const int *recvcounts, const int *rdispls, const MPI_Datatype *recvtypes, MPI_Comm comm, MPI_Info info, MPI_Request *request);
 static inline int ___collectives_alltoallw_init(const void *sendbuf, const int *sendcounts, const int *sdispls, const MPI_Datatype *sendtypes, void *recvbuf, const int *recvcounts, const int *rdispls, const MPI_Datatype *recvtypes, MPI_Comm comm, NBC_Handle* handle);
 int _mpc_mpi_collectives_alltoallw(const void *sendbuf, const int *sendcounts, const int *sdispls, const MPI_Datatype *sendtypes, void *recvbuf, const int *recvcounts, const int *rdispls, const MPI_Datatype *recvtypes, MPI_Comm comm);
 int ___collectives_alltoallw_switch(const void *sendbuf, const int *sendcounts, const int *sdispls, const MPI_Datatype *sendtypes, void *recvbuf, const int *recvcounts, const int *rdispls, const MPI_Datatype *recvtypes, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
@@ -311,9 +287,7 @@ int ___collectives_alltoallw_bruck(const void *sendbuf, const int *sendcounts, c
 int ___collectives_alltoallw_pairwise(const void *sendbuf, const int *sendcounts, const int *sdispls, const MPI_Datatype *sendtypes, void *recvbuf, const int *recvcounts, const int *rdispls, const MPI_Datatype *recvtypes, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
 
 
-int PMPI_Iscan (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Request *request);
 static inline int ___collectives_iscan (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, NBC_Handle *handle);
-int PMPI_Scan_init (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Info info, MPI_Request *request);
 static inline int ___collectives_scan_init (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, NBC_Handle* handle);
 int _mpc_mpi_collectives_scan (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm);
 int ___collectives_scan_switch (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
@@ -321,9 +295,7 @@ int ___collectives_scan_linear (const void *sendbuf, void *recvbuf, int count, M
 int ___collectives_scan_allgather (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
 
 
-int PMPI_Iexscan (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Request *request);
 static inline int ___collectives_iexscan (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, NBC_Handle *handle);
-int PMPI_Exscan_init (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Info info, MPI_Request *request);
 static inline int ___collectives_exscan_init (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, NBC_Handle* handle);
 int _mpc_mpi_collectives_exscan (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm);
 int ___collectives_exscan_switch (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
@@ -331,9 +303,7 @@ int ___collectives_exscan_linear (const void *sendbuf, void *recvbuf, int count,
 int ___collectives_exscan_allgather (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
 
 
-int PMPI_Ibarrier (MPI_Comm comm, MPI_Request *request);
 static inline int ___collectives_ibarrier (MPI_Comm comm, NBC_Handle *handle);
-int PMPI_Barrier_init (MPI_Comm comm, MPI_Info info, MPI_Request *request);
 static inline int ___collectives_barrier_init (MPI_Comm comm, NBC_Handle* handle);
 int _mpc_mpi_collectives_barrier (MPI_Comm comm);
 int ___collectives_barrier_switch (MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
@@ -493,7 +463,7 @@ static inline int ___collectives_sched_alloc_init(NBC_Handle *handle, NBC_Schedu
   */
 static inline int ___collectives_sched_send(const void *buffer, int count, MPI_Datatype datatype, int dest, MPI_Comm comm, NBC_Schedule *schedule, Sched_info *info) {
 
-  NBC_Args* send_args;
+  NBC_Args* send_args = NULL;
 
   /* adjust the function type */
   *(NBC_Fn_type *)((char *)*schedule + info->pos) = SEND;
@@ -501,7 +471,7 @@ static inline int ___collectives_sched_send(const void *buffer, int count, MPI_D
   /* store the passed arguments */
   send_args = (NBC_Args *)((char *)*schedule + info->pos + sizeof(NBC_Fn_type));
 
-  send_args->buf=buffer;
+  send_args->buf= (void *)buffer;
   send_args->tmpbuf=0;
   send_args->count=count;
   send_args->datatype=datatype;
@@ -529,7 +499,7 @@ static inline int ___collectives_sched_send(const void *buffer, int count, MPI_D
   */
 static inline int ___collectives_sched_recv(void *buffer, int count, MPI_Datatype datatype, int source, MPI_Comm comm, NBC_Schedule *schedule, Sched_info *info) {
 
-  NBC_Args* recv_args;
+  NBC_Args* recv_args = NULL;
 
   /* adjust the function type */
   *(NBC_Fn_type *)((char *)*schedule + info->pos) = RECV;
@@ -559,7 +529,7 @@ static inline int ___collectives_sched_recv(void *buffer, int count, MPI_Datatyp
   \return Error code
   */
 static inline int ___collectives_sched_barrier(NBC_Schedule *schedule, Sched_info *info) {
-  *(char *)((char *)*schedule + info->pos) = 1;
+  *((char *)*schedule + info->pos) = 1;
 
   info->pos += BARRIER_SCHED_SIZE;
 
@@ -585,7 +555,7 @@ static inline int ___collectives_sched_commit(NBC_Schedule *schedule, Sched_info
   *(int *)((char *)*schedule + info->round_start_pos) = info->round_comm_count;
 
   /* add the barrier char (0) because this is the last round */
-  *(char *)((char *)*schedule + info->pos) = 0;
+  *((char *)*schedule + info->pos) = 0;
 
   return MPI_SUCCESS;
 }
@@ -604,7 +574,7 @@ static inline int ___collectives_sched_commit(NBC_Schedule *schedule, Sched_info
   */
 static inline int ___collectives_sched_op(void *res_buf, void* left_op_buf, void* right_op_buf, int count, MPI_Datatype datatype, MPI_Op op, NBC_Schedule *schedule, Sched_info *info) {
 
-  NBC_Args* op_args;
+  NBC_Args* op_args = NULL;
   
   /* adjust the function type */
   *(NBC_Fn_type *)((char *)*schedule + info->pos) = OP;
@@ -644,14 +614,14 @@ static inline int ___collectives_sched_op(void *res_buf, void* left_op_buf, void
   */
 static inline int ___collectives_sched_copy(const void *src, int srccount, MPI_Datatype srctype, void *tgt, int tgtcount, MPI_Datatype tgttype, NBC_Schedule *schedule, Sched_info *info) {
 
-  NBC_Args *copy_args;
+  NBC_Args *copy_args = NULL;
 
   /* adjust the function type */
   *(NBC_Fn_type *)((char *)*schedule + info->pos) = COPY;
 
   /* store the passed arguments */
   copy_args = (NBC_Args *)((char *)*schedule + info->pos + sizeof(NBC_Fn_type));
-  copy_args->src = src;
+  copy_args->src = (void*)src;
   copy_args->tmpsrc = 0;
   copy_args->srccount = srccount;
   copy_args->srctype = srctype;
@@ -682,14 +652,14 @@ static inline int ___collectives_sched_copy(const void *src, int srccount, MPI_D
   */
 static inline int ___collectives_sched_move(const void *src, int srccount, MPI_Datatype srctype, void *tgt, int tgtcount, MPI_Datatype tgttype, NBC_Schedule *schedule, Sched_info *info) {
 
-  NBC_Args *copy_args;
+  NBC_Args *copy_args = NULL;
 
   /* adjust the function type */
   *(NBC_Fn_type *)((char *)*schedule + info->pos) = MOVE;
 
   /* store the passed arguments */
   copy_args = (NBC_Args *)((char *)*schedule + info->pos + sizeof(NBC_Fn_type));
-  copy_args->src = src;
+  copy_args->src = (void *)src;
   copy_args->tmpsrc = 0;
   copy_args->srccount = srccount;
   copy_args->srctype = srctype;
@@ -866,18 +836,18 @@ static inline int ___collectives_op_type( __UNUSED__ void *res_buf, const void* 
     case MPC_COLL_TYPE_BLOCKING:
       if(mpc_op.u_func != NULL)
       {
-        mpc_op.u_func(left_op_buf, right_op_buf, &count, &datatype);
+        mpc_op.u_func((void*)left_op_buf, right_op_buf, &count, &datatype);
       }
       else
       {
-        sctk_Op_f func;
+        sctk_Op_f func = NULL;
         func = sctk_get_common_function(datatype, mpc_op);
         func(left_op_buf, right_op_buf, count, datatype);
       }
       break;
     case MPC_COLL_TYPE_NONBLOCKING:
     case MPC_COLL_TYPE_PERSISTENT:
-      res = ___collectives_sched_op(right_op_buf, left_op_buf, right_op_buf, count, datatype, op, schedule, info);
+      res = ___collectives_sched_op(right_op_buf, (void*)left_op_buf, right_op_buf, count, datatype, op, schedule, info);
       break;
     case MPC_COLL_TYPE_COUNT:
       info->comm_count += 1;
@@ -990,7 +960,8 @@ static inline int ___collectives_create_hardware_comm_unguided(MPI_Comm comm, in
 
   hwcomm[level_num] = comm;
 
-  int rank, size, tmp_rank, tmp_size;
+  int rank = 0;
+  int size = 0;
   _mpc_cl_comm_rank(comm, &rank);
   _mpc_cl_comm_size(comm, &size);
 
@@ -1042,17 +1013,18 @@ static inline int ___collectives_create_master_hardware_comm_unguided(int vrank,
   int highest_level = deepest_level+1;
   //int highest_level = 0;
 
-  int rank, size, tmp_rank, tmp_size;
+  int rank = 0;
+  int size = 0;
   _mpc_cl_comm_rank(hwcomm[0], &rank);
   _mpc_cl_comm_size(hwcomm[0], &size);
 
 
-  int i;
+  int i = 0;
   //for(i = deepest_level - 1; i >= 0; i--) {
   for(i = 0; i < deepest_level; i++) {
     _mpc_cl_comm_rank(hwcomm[i+1],&rank_comm);
 
-    int color;
+    int color = 0;
     if(rank_comm == 0) {
       color = 0;
     } else {
@@ -1083,7 +1055,7 @@ static inline int ___collectives_create_master_hardware_comm_unguided(int vrank,
   }
 
   if(rootcomm[0] != MPI_COMM_NULL) {
-    int tmp;
+    int tmp = 0;
     _mpc_cl_comm_rank(rootcomm[0], &tmp);
     if(tmp == 0 ){
       highest_level--;
@@ -1108,10 +1080,10 @@ static inline int ___collectives_create_childs_counts(MPI_Comm comm, Sched_info 
   strcat(__debug_indentation, "\t");
 #endif
 
-  int rank;
+  int rank = 0;
   _mpc_cl_comm_rank(comm, &rank);
 
-  int data_count;
+  int data_count = 0;
 
   //info->hardware_info_ptr->childs_data_count = sctk_malloc(sizeof(int*) * (info->hardware_info_ptr->deepest_hardware_level));
   info->hardware_info_ptr->childs_data_count = sctk_malloc(sizeof(int*) * (info->hardware_info_ptr->deepest_hardware_level + 1));
@@ -1119,7 +1091,7 @@ static inline int ___collectives_create_childs_counts(MPI_Comm comm, Sched_info 
 
   //TODO a remplacer par un allreduce pour gerer le cas du gatherv
   _mpc_cl_comm_size(info->hardware_info_ptr->hwcomm[info->hardware_info_ptr->deepest_hardware_level], &data_count);
-  int i;
+  int i = 0;
 
   info->hardware_info_ptr->childs_data_count[info->hardware_info_ptr->deepest_hardware_level] = sctk_malloc(sizeof(int) * data_count);
   for(i = 0; i < data_count; i++) {
@@ -1128,7 +1100,7 @@ static inline int ___collectives_create_childs_counts(MPI_Comm comm, Sched_info 
 
   for(i = info->hardware_info_ptr->deepest_hardware_level - 1; i >= 0; i--) {
 
-    int rank_split;
+    int rank_split = 0;
     _mpc_cl_comm_rank(info->hardware_info_ptr->hwcomm[i + 1], &rank_split);
 
     if(rank_split == 0) {
@@ -1140,7 +1112,8 @@ static inline int ___collectives_create_childs_counts(MPI_Comm comm, Sched_info 
 
       MPI_Comm master_comm = info->hardware_info_ptr->rootcomm[i];
 
-      int rank_master, size_master;
+      int rank_master = 0;
+      int size_master = 0;
       _mpc_cl_comm_rank(master_comm, &rank_master);
       _mpc_cl_comm_size(master_comm, &size_master);
 
@@ -1152,7 +1125,7 @@ static inline int ___collectives_create_childs_counts(MPI_Comm comm, Sched_info 
 
       _mpc_mpi_config()->coll_algorithm_intracomm.gather(&data_count, 1, MPI_INT, buf, 1, MPI_INT, 0, info->hardware_info_ptr->rootcomm[i], MPC_COLL_TYPE_BLOCKING, NULL, info);
 
-      int j;
+      int j = 0;
 
       if(rank_master == 0) {
         data_count = 0;
@@ -1192,14 +1165,15 @@ static inline int ___collectives_create_childs_counts(MPI_Comm comm, Sched_info 
   \param info Adress on the information structure about the schedule
   \return error code
  */
-static inline int ___collectives_create_swap_array(MPI_Comm comm, int root, Sched_info *info) {
+static inline int ___collectives_create_swap_array(MPI_Comm comm, int root __UNUSED__, Sched_info *info) {
 
 #ifdef MPC_COLL_EXTRA_DEBUG_ENABLED
   mpc_common_debug_log("%sTOPO COMM INIT SWAP ARRAY", __debug_indentation);
   strcat(__debug_indentation, "\t");
 #endif
 
-  int rank, size;
+  int rank = 0;
+  int size = 0;
   _mpc_cl_comm_size(comm, &size);
   _mpc_cl_comm_rank(comm, &rank);
 
@@ -1262,11 +1236,12 @@ static inline int ___collectives_topo_comm_init(MPI_Comm comm, int root, int max
   strcat(__debug_indentation, "\t");
 #endif
 
-  int rank, size;
+  int rank = 0;
+  int size = 0;
   _mpc_cl_comm_size(comm, &size);
   _mpc_cl_comm_rank(comm, &rank);
 
-  int vrank;
+  int vrank = 0;
   RANK2VRANK(rank, vrank, root);
 
   info->hardware_info_ptr = (mpc_hardware_split_info_t *)sctk_malloc(sizeof(mpc_hardware_split_info_t));
@@ -1337,18 +1312,18 @@ int PMPI_Ibcast (void *buffer, int count, MPI_Datatype datatype, int root, MPI_C
   int res = MPI_ERR_INTERN;
   mpc_common_nodebug ("Entering IBCAST %d with count %d", comm, count);
   SCTK__MPI_INIT_REQUEST (request);
-  int csize;
+  int csize = 0;
   MPI_Comm_size(comm, &csize);
   if(csize == 1)
   {
     res = PMPI_Bcast (buffer, count, datatype, root, comm);
-    MPI_internal_request_t *tmp;
+    MPI_internal_request_t *tmp = NULL;
     tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
     tmp->req.completion_flag = MPC_LOWCOMM_MESSAGE_DONE;
   }
   else
   {
-    MPI_internal_request_t *tmp;
+    MPI_internal_request_t *tmp = NULL;
     tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
     tmp->is_nbc = 1;
     tmp->nbc_handle.is_persistent = 0;
@@ -1369,8 +1344,8 @@ int PMPI_Ibcast (void *buffer, int count, MPI_Datatype datatype, int root, MPI_C
   */
 static inline int ___collectives_ibcast( void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, NBC_Handle *handle ) {
 
-  int res;
-  NBC_Schedule *schedule;
+  int res = 0;
+  NBC_Schedule *schedule = NULL;
   Sched_info info;
   ___collectives_sched_info_init(&info, MPC_COLL_TYPE_NONBLOCKING, _mpc_mpi_config()->coll_opts.topo.bcast);
 
@@ -1416,7 +1391,7 @@ static inline int ___collectives_ibcast( void *buffer, int count, MPI_Datatype d
 int PMPI_Bcast_init(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, MPI_Info info, MPI_Request *request) {
   
   {
-    int size;
+    int size = 0;
     mpi_check_comm(comm);
     _mpc_cl_comm_size(comm, &size);
     mpi_check_root(root, size, comm);
@@ -1429,7 +1404,7 @@ int PMPI_Bcast_init(void *buffer, int count, MPI_Datatype datatype, int root, MP
 
   }
 
-  MPI_internal_request_t *req;
+  MPI_internal_request_t *req = NULL;
   SCTK__MPI_INIT_REQUEST (request);
   req = __sctk_new_mpc_request_internal (request,__sctk_internal_get_MPC_requests());
   req->freeable = 0;
@@ -1457,8 +1432,8 @@ int PMPI_Bcast_init(void *buffer, int count, MPI_Datatype datatype, int root, MP
   \return error code
   */
 static inline int ___collectives_bcast_init(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, NBC_Handle* handle){
-  int res;
-  NBC_Schedule *schedule;
+  int res = 0;
+  NBC_Schedule *schedule = NULL;
   Sched_info info;
   ___collectives_sched_info_init(&info, MPC_COLL_TYPE_PERSISTENT, _mpc_mpi_config()->coll_opts.topo.bcast);
   res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
@@ -1517,8 +1492,9 @@ int _mpc_mpi_collectives_bcast(void *buffer, int count, MPI_Datatype datatype, i
   */
 int ___collectives_bcast_switch(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
-  int rank, size;
-  MPI_Aint ext;
+  int rank = 0;
+  int size = 0;
+  MPI_Aint ext = 0;
   _mpc_cl_comm_size(comm, &size);
   _mpc_cl_comm_rank(comm, &rank);
   PMPI_Type_extent(datatype, &ext);
@@ -1563,7 +1539,7 @@ int ___collectives_bcast_switch(void *buffer, int count, MPI_Datatype datatype, 
     }
   }
 
-  int res;
+  int res = 0;
 
   switch(alg) {
     case NBC_BCAST_LINEAR:
@@ -1602,7 +1578,8 @@ int ___collectives_bcast_switch(void *buffer, int count, MPI_Datatype datatype, 
   */
 int ___collectives_bcast_linear(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
-  int rank, size;
+  int rank = 0;
+  int size = 0;
   _mpc_cl_comm_size(comm, &size);
   _mpc_cl_comm_rank(comm, &rank);
 
@@ -1632,7 +1609,7 @@ int ___collectives_bcast_linear(void *buffer, int count, MPI_Datatype datatype, 
     }
   } else {
     //if rank == root, send data to each rank
-      int i;
+      int i = 0;
       for(i = 0; i < size; i++) {
       if(i == rank) {
         continue;
@@ -1663,7 +1640,8 @@ int ___collectives_bcast_linear(void *buffer, int count, MPI_Datatype datatype, 
   */
 int ___collectives_bcast_binomial(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
-  int size, rank;
+  int size = 0;
+  int rank = 0;
 
   _mpc_cl_comm_size(comm, &size);
   _mpc_cl_comm_rank(comm, &rank);
@@ -2285,12 +2263,14 @@ int ___collectives_reduce_binomial(const void *sendbuf, void* recvbuf, int count
     return MPI_SUCCESS;
   }
 
-  void *tmp_recvbuf, *tmp_sendbuf, *swap;
+  void *tmp_recvbuf = NULL;
+  void *tmp_sendbuf = NULL;
+  void *swap = NULL;
   tmp_recvbuf = tmpbuf;
   if(sendbuf == MPI_IN_PLACE) {
     tmp_sendbuf = recvbuf;
   } else {
-    tmp_sendbuf = sendbuf;
+    tmp_sendbuf = (void*)sendbuf;
   }
   int i;
   for(i = 0; i < maxr; i++) {
@@ -2435,7 +2415,7 @@ int ___collectives_reduce_topo(const void *sendbuf, void* recvbuf, int count, MP
     ___collectives_topo_comm_init(comm, root, max_level, info);
   }
 
-  void *tmp_sendbuf = sendbuf;
+  void *tmp_sendbuf = (void *)sendbuf;
   if(sendbuf == MPI_IN_PLACE) {
     tmp_sendbuf = recvbuf;
   }
@@ -3257,8 +3237,9 @@ int ___collectives_allreduce_vector_halving_distance_doubling(const void *sendbu
   */
 int ___collectives_allreduce_binary_block(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
-  int rank, size;
-  MPI_Aint ext;
+  int rank = 0;
+  int size = 0;
+  MPI_Aint ext = 0;
   _mpc_cl_comm_size(comm, &size);
   _mpc_cl_comm_rank(comm, &rank);
   PMPI_Type_extent(datatype, &ext);
@@ -3266,20 +3247,20 @@ int ___collectives_allreduce_binary_block(const void *sendbuf, void* recvbuf, in
   void* tmpbuf = NULL;
 
   sctk_Op mpc_op;
-  sctk_op_t *mpi_op;
+  sctk_op_t *mpi_op = NULL;
 
-  int vrank/*, peer*/, maxr;
-  maxr = ___collectives_ceiled_log2(size);
+  int vrank = 0/*, peer*/;
+  unsigned int maxr = ___collectives_ceiled_log2(size);
   vrank = rank;
 
-  int block = maxr;
+  int block = (int)maxr;
   int previous_block = -1;
   int next_block = -1;
 
   while(block) {
     if(size & (1 << block)) {
       if(vrank >> block == 0) {
-        int j;
+        int j = 0;
         for(j = block - 1; j >= 0; j--) {
           if(size & (1 << j)) {
             next_block = j;
@@ -3307,11 +3288,13 @@ int ___collectives_allreduce_binary_block(const void *sendbuf, void* recvbuf, in
 
   int target_count = previous_block_size / block_size;
 
-  int start = 0, end = count, mid;
+  int start = 0;
+  int end = count;
+  int mid = 0;
 
   switch(coll_type) {
     case MPC_COLL_TYPE_BLOCKING:
-      tmpbuf = sctk_malloc(count * ext + 4 * block_size * sizeof(int));
+      tmpbuf = sctk_malloc(count * ext + (long)4 * block_size * sizeof(int));
       mpi_op = sctk_convert_to_mpc_op(op);
       mpc_op = mpi_op->op;
       break;
@@ -3319,25 +3302,25 @@ int ___collectives_allreduce_binary_block(const void *sendbuf, void* recvbuf, in
     case MPC_COLL_TYPE_NONBLOCKING:
     case MPC_COLL_TYPE_PERSISTENT:
       tmpbuf = info->tmpbuf + info->tmpbuf_pos;
-      info->tmpbuf_pos += count * ext + 4 * block_size * sizeof(int);
+      info->tmpbuf_pos += count * ext + (long)4 * block_size * sizeof(int);
       break;
 
     case MPC_COLL_TYPE_COUNT:
-      info->tmpbuf_size += count * ext + 4 * block_size * sizeof(int);
+      info->tmpbuf_size += count * ext + (long)4 * block_size * sizeof(int);
       break;
   }
 
 
-  int *group_starts      = (int*)(((void*)tmpbuf) + count * ext + 0 * block_size * sizeof(int));
-  int *group_ends        = (int*)(((void*)tmpbuf) + count * ext + 1 * block_size * sizeof(int));
-  int *prev_group_starts = (int*)(((void*)tmpbuf) + count * ext + 2 * block_size * sizeof(int));
-  int *prev_group_ends   = (int*)(((void*)tmpbuf) + count * ext + 3 * block_size * sizeof(int));
+  int *group_starts      = (int*)((tmpbuf) + count * ext + (long)0 * block_size * sizeof(int));
+  int *group_ends        = (int*)((tmpbuf) + count * ext + (long)1 * block_size * sizeof(int));
+  int *prev_group_starts = (int*)((tmpbuf) + count * ext + (long)2 * block_size * sizeof(int));
+  int *prev_group_ends   = (int*)((tmpbuf) + count * ext + (long)3 * block_size * sizeof(int));
   void *swap = NULL;
 
 
   if(coll_type != MPC_COLL_TYPE_COUNT) {
     // init group starts/ends
-    int j;
+    int j = 0;
     for(j = 0; j < block_size; j++) {
       group_starts[j] = 0;
       group_ends[j] = count;
@@ -3350,24 +3333,25 @@ int ___collectives_allreduce_binary_block(const void *sendbuf, void* recvbuf, in
   }
 
 
-  int send_bufsize;
-  int recv_bufsize;
+  int send_bufsize = 0;
+  int recv_bufsize = 0;
 
-  void *tmp_sendbuf;
-  void *tmp_recvbuf;
-  void *tmp_opbuf;
+  void *tmp_sendbuf = NULL;
+  void *tmp_recvbuf = NULL;
+  void *tmp_opbuf = NULL;
 
 
   void *resbuf = recvbuf;
   void *recv_resbuf = tmpbuf;
 
-  int peer, peer_vrank;
+  int peer = 0;
+  int peer_vrank;
 
 
 
   //REDUCE_SCATTER
   //distance doubling and vector halving
-  int i; 
+  int i = 0; 
   for( i = 0; i < block; i++) {
     peer_vrank = vrank ^ (1 << i);
     peer = first_rank_of_block + peer_vrank;
@@ -3376,11 +3360,11 @@ int ___collectives_allreduce_binary_block(const void *sendbuf, void* recvbuf, in
 
     if(peer_vrank > vrank) { // send second part of buffer
 
-      tmp_sendbuf = ((void*) resbuf) + mid * ext;
+      tmp_sendbuf = (resbuf) + mid * ext;
       send_bufsize = end - mid;
 
-      tmp_recvbuf = ((void*) recv_resbuf) + start * ext;
-      tmp_opbuf = ((void*) resbuf) + start * ext;
+      tmp_recvbuf = (recv_resbuf) + start * ext;
+      tmp_opbuf = (resbuf) + start * ext;
       recv_bufsize = mid - start;
 
       if(send_bufsize) {
@@ -3398,11 +3382,11 @@ int ___collectives_allreduce_binary_block(const void *sendbuf, void* recvbuf, in
       end = mid;
     } else { // send first part of buffer
       
-      tmp_sendbuf = ((void*) resbuf) + start * ext;
+      tmp_sendbuf = (resbuf) + start * ext;
       send_bufsize = mid - start;
 
-      tmp_recvbuf = ((void*) recv_resbuf) + mid * ext;
-      tmp_opbuf = ((void*) resbuf) + mid * ext;
+      tmp_recvbuf = (recv_resbuf) + mid * ext;
+      tmp_opbuf = (resbuf) + mid * ext;
       recv_bufsize = end - mid;
 
       if(recv_bufsize) {
@@ -3422,7 +3406,7 @@ int ___collectives_allreduce_binary_block(const void *sendbuf, void* recvbuf, in
       // update group starts/ends
       pointer_swap(prev_group_starts, group_starts, swap);
       pointer_swap(prev_group_ends, group_ends, swap);
-      int j;
+      int j = 0;
       for(j = 0; j < block_size; j++) {
 
         peer = j ^ (1 << i);
@@ -3442,12 +3426,14 @@ int ___collectives_allreduce_binary_block(const void *sendbuf, void* recvbuf, in
 
   // SEND/RECEIVE SEGMENTED DATA TO/FROM PREVIOUS/NEXT BLOCK
   int next_block_peer = -1;
-  int peer_start, peer_end, peer_mid;
+  int peer_start = 0;
+  int peer_end = 0;
+  int peer_mid = 0;
 
   if(next_block != -1) {
 
-    tmp_recvbuf = ((void*) recv_resbuf) + start * ext;
-    tmp_opbuf = ((void*) resbuf) + start * ext;
+    tmp_recvbuf = (recv_resbuf) + start * ext;
+    tmp_opbuf = (resbuf) + start * ext;
     recv_bufsize = end - start;
     //next_block_peer = vrank / (1 << (block - next_block)) + first_rank_of_next_block;
     //next_block_peer = vrank % (1 << (block - next_block)) + first_rank_of_next_block;
@@ -3468,13 +3454,13 @@ int ___collectives_allreduce_binary_block(const void *sendbuf, void* recvbuf, in
 
 
   if(previous_block != -1) {
-    int j;
+    int j = 0;
     for(j = 0; j < target_count; j++) {
       peer_vrank = vrank + j * block_size;
       peer = peer_vrank + first_rank_of_previous_block;
       peer_start = 0;
       peer_end = count;
-      int i;
+      int i = 0;
       for(i = 0; i < previous_block; i++) {
         int peer_peer_vrank = peer_vrank ^ (1 << i);
 
@@ -3487,7 +3473,7 @@ int ___collectives_allreduce_binary_block(const void *sendbuf, void* recvbuf, in
         }
       }
 
-      tmp_sendbuf = ((void*) recvbuf) + peer_start * ext;
+      tmp_sendbuf = (recvbuf) + peer_start * ext;
       send_bufsize = peer_end - peer_start;
 
       ___collectives_send_type(tmp_sendbuf, send_bufsize, datatype, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
@@ -3498,7 +3484,7 @@ int ___collectives_allreduce_binary_block(const void *sendbuf, void* recvbuf, in
       peer = peer_vrank + first_rank_of_previous_block;
       peer_start = 0;
       peer_end = count;
-      int i;
+      int i = 0;
       for(i = 0; i < previous_block; i++) {
         int peer_peer_vrank = peer_vrank ^ (1 << i);
 
@@ -3511,7 +3497,7 @@ int ___collectives_allreduce_binary_block(const void *sendbuf, void* recvbuf, in
         }
       }
 
-      tmp_sendbuf = ((void*) recvbuf) + peer_start * ext;
+      tmp_sendbuf = (recvbuf) + peer_start * ext;
       send_bufsize = peer_end - peer_start;
 
       ___collectives_recv_type(tmp_sendbuf, send_bufsize, datatype, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
@@ -3536,7 +3522,7 @@ int ___collectives_allreduce_binary_block(const void *sendbuf, void* recvbuf, in
     int peer_vrank = vrank ^ (1 << i);
     int peer = first_rank_of_block + peer_vrank;
 
-    tmp_sendbuf = ((void*) recvbuf) + start * ext;
+    tmp_sendbuf = (recvbuf) + start * ext;
     send_bufsize = end - start;
 
     if(coll_type != MPC_COLL_TYPE_COUNT) {
@@ -3544,7 +3530,7 @@ int ___collectives_allreduce_binary_block(const void *sendbuf, void* recvbuf, in
     }
 
     if(peer_vrank > vrank) { // receive second part of buffer
-      tmp_recvbuf = ((void*) recvbuf) + end * ext;
+      tmp_recvbuf = (recvbuf) + end * ext;
       
       ___collectives_send_type(tmp_sendbuf, send_bufsize, datatype, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
       ___collectives_recv_type(tmp_recvbuf, recv_bufsize, datatype, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
@@ -3552,7 +3538,7 @@ int ___collectives_allreduce_binary_block(const void *sendbuf, void* recvbuf, in
 
       end += recv_bufsize;
     } else { // receive first part of buffer
-      tmp_recvbuf = ((void*) recvbuf) + (start - recv_bufsize) * ext;
+      tmp_recvbuf = (recvbuf) + (start - recv_bufsize) * ext;
       
       ___collectives_recv_type(tmp_recvbuf, recv_bufsize, datatype, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
       ___collectives_send_type(tmp_sendbuf, send_bufsize, datatype, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
@@ -3566,7 +3552,7 @@ int ___collectives_allreduce_binary_block(const void *sendbuf, void* recvbuf, in
       // update group starts/ends
       pointer_swap(prev_group_starts, group_starts, swap);
       pointer_swap(prev_group_ends, group_ends, swap);
-      int j;
+      int j = 0;
       for(j = 0; j < block_size; j++) {
 
         peer = j ^ (1 << i);
@@ -3663,7 +3649,8 @@ int PMPI_Iscatter (const void *sendbuf, int sendcount, MPI_Datatype sendtype, vo
   mpc_common_nodebug ("Entering ISCATTER %d", comm);
   SCTK__MPI_INIT_REQUEST (request);
 
-  int csize,rank;
+  int csize = 0;
+  int rank = 0;
   MPI_Comm_size(comm, &csize);
   MPI_Comm_rank (comm, &rank);
   if(recvbuf == sendbuf && rank == root)
@@ -3673,13 +3660,13 @@ int PMPI_Iscatter (const void *sendbuf, int sendcount, MPI_Datatype sendtype, vo
   if(csize == 1)
   {
     res = PMPI_Scatter (sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm);
-    MPI_internal_request_t *tmp;
+    MPI_internal_request_t *tmp = NULL;
     tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
     tmp->req.completion_flag = MPC_LOWCOMM_MESSAGE_DONE;
   }
   else
   {
-    MPI_internal_request_t *tmp;
+    MPI_internal_request_t *tmp = NULL;
     tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
     tmp->is_nbc = 1;
     tmp->nbc_handle.is_persistent = 0;
@@ -3704,8 +3691,8 @@ int PMPI_Iscatter (const void *sendbuf, int sendcount, MPI_Datatype sendtype, vo
   */
 static inline int ___collectives_iscatter(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, NBC_Handle *handle) {
 
-  int res;
-  NBC_Schedule *schedule;
+  int res = 0;
+  NBC_Schedule *schedule = NULL;
   Sched_info info;
   ___collectives_sched_info_init(&info, MPC_COLL_TYPE_NONBLOCKING, _mpc_mpi_config()->coll_opts.topo.scatter);
 
@@ -3754,7 +3741,7 @@ static inline int ___collectives_iscatter(const void *sendbuf, int sendcount, MP
 int PMPI_Scatter_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPI_Info info, MPI_Request *request) {
   
   {
-    int size;
+    int size = 0;
     mpi_check_comm(comm);
     _mpc_cl_comm_size(comm, &size);
     mpi_check_root(root, size, comm);
@@ -3767,7 +3754,7 @@ int PMPI_Scatter_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
     }
 
   }
-  MPI_internal_request_t *req;
+  MPI_internal_request_t *req = NULL;
   SCTK__MPI_INIT_REQUEST (request);
   req = __sctk_new_mpc_request_internal (request,__sctk_internal_get_MPC_requests());
   req->freeable = 0;
@@ -5242,7 +5229,7 @@ int ___collectives_gather_topo(const void *sendbuf, int sendcount, MPI_Datatype 
   int rank, size, res = MPI_SUCCESS;
   MPI_Aint sendext, recvext;
 
-  void *tmp_sendbuf = sendbuf;
+  void *tmp_sendbuf = (void *)sendbuf;
   MPI_Datatype tmp_sendtype = sendtype;
   int tmp_sendcount = sendcount;
 
@@ -7000,15 +6987,22 @@ int ___collectives_allgather_distance_doubling(const void *sendbuf, int sendcoun
   }
 
 
-  int rank, size;
-  MPI_Aint sendext, recvext;
+  int rank = 0;
+  int size = 0;
+  MPI_Aint sendext = 0;
+  MPI_Aint recvext = 0;
   _mpc_cl_comm_size(comm, &size);
   _mpc_cl_comm_rank(comm, &rank);
   PMPI_Type_extent(tmp_sendtype, &sendext);
   PMPI_Type_extent(recvtype, &recvext);
 
-  int vrank, vsize, peer, maxr, count = 0, peer_count = 0;
-  maxr = ___collectives_floored_log2(size);
+  int vrank = 0;
+  int vsize = 0;
+  int peer = 0;
+  unsigned int maxr =  ___collectives_floored_log2(size);
+  int count = 0;
+  int peer_count = 0;
+
   vsize = (1 << maxr);
   int group = 2 * (size - (1 << maxr));
  
@@ -7018,9 +7012,10 @@ int ___collectives_allgather_distance_doubling(const void *sendbuf, int sendcoun
     vrank = rank - group / 2;
   }
 
-  void *tmpbuf = recvbuf + rank * recvcount * recvext;
+  void *tmpbuf = recvbuf + (MPI_Aint)rank * recvcount * recvext;
   void *tmpbuf2 = NULL;
-  int *countbuf = NULL, *prev_countbuf = NULL;
+  int *countbuf = NULL;
+  int *prev_countbuf = NULL;
   void *swap = NULL;
   
   switch(coll_type) {
@@ -7073,7 +7068,7 @@ int ___collectives_allgather_distance_doubling(const void *sendbuf, int sendcoun
     if(sendbuf != MPI_IN_PLACE) {
       ___collectives_copy_type(sendbuf , sendcount, sendtype, tmpbuf, recvcount, recvtype, comm, coll_type, schedule, info);
     }
-    int i;
+    unsigned int i = 0;
     // at each step, processes exchange their data with (rank XOR 2^i)
     for(i = 0; i < maxr; i++) {
       peer = vrank ^ (1 << i);
@@ -8030,7 +8025,7 @@ int ___collectives_alltoall_cluster(const void *sendbuf, int sendcount, MPI_Data
   int rank, size;
   MPI_Aint tmp_sendext, recvext;
 
-  void *tmp_sendbuf = sendbuf;
+  void *tmp_sendbuf = (void *)sendbuf;
   MPI_Datatype tmp_sendtype = sendtype;
   int tmp_sendcount = sendcount;
 
@@ -8129,7 +8124,7 @@ int ___collectives_alltoall_bruck( const void *sendbuf,  int sendcount,  MPI_Dat
   int rank, size;
   MPI_Aint tmp_sendext, recvext;
 
-  void *tmp_sendbuf = sendbuf;
+  void *tmp_sendbuf = (void *)sendbuf;
   MPI_Datatype tmp_sendtype = sendtype;
   int tmp_sendcount = sendcount;
 
@@ -8236,7 +8231,7 @@ int ___collectives_alltoall_pairwise(const void *sendbuf, int sendcount, MPI_Dat
   int rank, size;
   MPI_Aint tmp_sendext, recvext;
 
-  void *tmp_sendbuf = sendbuf;
+  void *tmp_sendbuf = (void *)sendbuf;
   MPI_Datatype tmp_sendtype = sendtype;
   int tmp_sendcount = sendcount;
 
@@ -8404,7 +8399,7 @@ int ___collectives_alltoall_topo(const void *sendbuf, int sendcount, MPI_Datatyp
   int rank, size, res;
   MPI_Aint sendext, recvext;
 
-  void *tmp_sendbuf = sendbuf;
+  void *tmp_sendbuf = (void *)sendbuf;
   MPI_Datatype tmp_sendtype = sendtype;
   int tmp_sendcount = sendcount;
 
@@ -8427,7 +8422,8 @@ int ___collectives_alltoall_topo(const void *sendbuf, int sendcount, MPI_Datatyp
 
   // We fetch the topological communicators if we can, if not we create them
   int root = 0;
-  if(!(info->hardware_info_ptr) && !(info->hardware_info_ptr = mpc_lowcomm_topo_comm_get(comm, root))) {
+  info->hardware_info_ptr = mpc_lowcomm_topo_comm_get(comm, root);
+  if(!(info->hardware_info_ptr) && !(info->hardware_info_ptr)) {
     if(!(initial_flag & SCHED_INFO_TOPO_COMM_ALLOWED)) {
       // For some reason, we ended up here.
       // We cannot create topological communicators and they aren't created already.
@@ -8481,7 +8477,7 @@ int ___collectives_alltoall_topo(const void *sendbuf, int sendcount, MPI_Datatyp
     //   with s = size of the branch in the topological tree under m-i
     //   d = s * (input_comm_size - s)
     for(int i = deepest_level; i >= highest_level; i--) {
-      int size_master;
+      int size_master = 0;
 
       if(i == deepest_level) {
         _mpc_cl_comm_size(info->hardware_info_ptr->hwcomm[i], &size_master);
@@ -8489,10 +8485,10 @@ int ___collectives_alltoall_topo(const void *sendbuf, int sendcount, MPI_Datatyp
         _mpc_cl_comm_size(info->hardware_info_ptr->rootcomm[i], &size_master);
       }
 
-      int j;
+      int j = 0;
       unsigned long tmp = 0;
       for(j = 0; j < size_master; j++) {
-        tmp += info->hardware_info_ptr->childs_data_count[i][j] * (size - info->hardware_info_ptr->childs_data_count[i][j]);
+        tmp += (long)info->hardware_info_ptr->childs_data_count[i][j] * (size - info->hardware_info_ptr->childs_data_count[i][j]);
       }
 
       tmpbuf_count = (tmpbuf_count > tmp)?tmpbuf_count:tmp;
@@ -8502,9 +8498,9 @@ int ___collectives_alltoall_topo(const void *sendbuf, int sendcount, MPI_Datatyp
     tmpbuf_count <<= 1;
 
     // TODO: fix, keepbuf, can be smaller
-    int highest_level_size;
+    int highest_level_size = 0;
     _mpc_cl_comm_size(info->hardware_info_ptr->hwcomm[highest_level + (highest_level == 0)], &highest_level_size);
-    keepbuf_count = highest_level_size * (highest_level_size - 1);
+    keepbuf_count = (long)highest_level_size * (highest_level_size - 1);
 
   }
 
@@ -8546,7 +8542,8 @@ int ___collectives_alltoall_topo(const void *sendbuf, int sendcount, MPI_Datatyp
   // rank 3 data: [30, 31, 32, 33, 34, 34] => [31, 30, 34, 32, 35]
   // We use the precomputed reverse swap array
   // As each rank doesn't need it's own data (XX, 33 with rank 3) in the buffer we need to skip it in the source buffer & to shift the following data in the destination buffer
-  int start = 0, end;
+  int start = 0;
+  int end = 0;
 
   if(rank == start) {
     start++;
@@ -8554,7 +8551,7 @@ int ___collectives_alltoall_topo(const void *sendbuf, int sendcount, MPI_Datatyp
 
   for(end = start + 1; end < size; end++) {
     if(info->hardware_info_ptr->reverse_swap_array[end] != info->hardware_info_ptr->reverse_swap_array[end - 1] + 1 || end == rank) {
-      ___collectives_copy_type(tmp_sendbuf + start * tmp_sendcount * sendext, tmp_sendcount * (end - start), tmp_sendtype, 
+      ___collectives_copy_type(tmp_sendbuf + (MPI_Aint)start * tmp_sendcount * sendext, tmp_sendcount * (end - start), tmp_sendtype, 
           tmpbuf + (info->hardware_info_ptr->reverse_swap_array[start] - (info->hardware_info_ptr->reverse_swap_array[start] > info->hardware_info_ptr->reverse_swap_array[rank])) * recvcount * recvext, recvcount * (end - start), recvtype,
           comm, coll_type, schedule, info);
 
@@ -8609,7 +8606,8 @@ int ___collectives_alltoall_topo(const void *sendbuf, int sendcount, MPI_Datatyp
   // STEP 3: last level gather
   MPI_Comm hardware_comm = info->hardware_info_ptr->hwcomm[deepest_level];
 
-  int hardware_comm_rank, hardware_comm_size;
+  int hardware_comm_rank = 0;
+  int hardware_comm_size = 0;
   _mpc_cl_comm_rank(hardware_comm, &hardware_comm_rank);
   _mpc_cl_comm_size(hardware_comm, &hardware_comm_size);
 
@@ -8666,9 +8664,6 @@ int ___collectives_alltoall_topo(const void *sendbuf, int sendcount, MPI_Datatyp
 
   void *gatherv_buf = NULL;
 
-  int total_move_data_count = 0;
-  int total_count = hardware_comm_size * (size - 1);
-
   int total_keep_data_count = 0;
 
   int i;
@@ -8676,7 +8671,7 @@ int ___collectives_alltoall_topo(const void *sendbuf, int sendcount, MPI_Datatyp
   for(i = deepest_level - 1; i >= 0; i--) {
     gatherv_buf = tmpbuf;
 
-    int hardware_comm_rank;
+    int hardware_comm_rank = 0;
     _mpc_cl_comm_rank(info->hardware_info_ptr->hwcomm[i + 1], &hardware_comm_rank);
     
     // STEP 4: data removal
@@ -8684,8 +8679,8 @@ int ___collectives_alltoall_topo(const void *sendbuf, int sendcount, MPI_Datatyp
     if(hardware_comm_rank == 0) {
 
       {
-        int size_master, rank_master;
-        MPI_Comm master_comm;
+        int size_master = 0;
+        MPI_Comm master_comm = MPI_COMM_NULL;
         
         // get the current level size
         if(i == deepest_level - 1) {
@@ -8702,7 +8697,9 @@ int ___collectives_alltoall_topo(const void *sendbuf, int sendcount, MPI_Datatyp
         // send data: send data block 1-1, send data block 1-2, ... , send data block n-1, send data block n-2
         // keep data: keep data block 1, keep data block n
 
-        int j, k, current_count = 0, current_displ = 0;
+        int j = 0;
+        int k = 0;
+        size_t current_displ = 0;
         // We loop through each group of send data & keep data block
         for(j = 0; j < size_master; j++) {
           int packet_count = size - info->hardware_info_ptr->childs_data_count[i + 1][j];
@@ -8710,10 +8707,10 @@ int ___collectives_alltoall_topo(const void *sendbuf, int sendcount, MPI_Datatyp
           for(k = 0; k < info->hardware_info_ptr->childs_data_count[i + 1][j]; k++) {
             int keep_data_count = info->hardware_info_ptr->send_data_count[i] - info->hardware_info_ptr->childs_data_count[i + 1][j];
 
-            void *keep_data_start = tmpbuf + displs[j] * recvext + (k * packet_count + info->hardware_info_ptr->topo_rank) * recvcount * recvext;
-            void *keep_data_end = keep_data_start + keep_data_count * recvcount * recvext;
+            void *keep_data_start = tmpbuf + displs[j] * recvext + ((MPI_Aint)k * packet_count + info->hardware_info_ptr->topo_rank) * recvcount * recvext;
+            void *keep_data_end = keep_data_start + (MPI_Aint)keep_data_count * recvcount * recvext;
 
-            int move_data_count;
+            int move_data_count = 0;
             if(j == size_master - 1 && k == info->hardware_info_ptr->childs_data_count[i + 1][j] - 1) {
               move_data_count = packet_count - keep_data_count - info->hardware_info_ptr->topo_rank;
             } else {
@@ -8726,7 +8723,7 @@ int ___collectives_alltoall_topo(const void *sendbuf, int sendcount, MPI_Datatyp
 
             //part to keep
             ___collectives_copy_type(keep_data_start, keep_data_count * recvcount, recvtype, 
-                keep_data_buf + total_keep_data_count * recvcount * recvext, keep_data_count * recvcount, recvtype,
+                keep_data_buf + (MPI_Aint)total_keep_data_count * recvcount * recvext, keep_data_count * recvcount, recvtype,
                 comm, coll_type, schedule, info);
 
 
@@ -8735,7 +8732,7 @@ int ___collectives_alltoall_topo(const void *sendbuf, int sendcount, MPI_Datatyp
                 keep_data_start - current_displ, move_data_count * recvcount, recvtype,
                 comm, coll_type, schedule, info);
 
-            current_displ += keep_data_count * recvcount * recvext;
+            current_displ += (MPI_Aint)keep_data_count * recvcount * recvext;
             total_keep_data_count += keep_data_count;
           }
         }
@@ -8789,20 +8786,20 @@ int ___collectives_alltoall_topo(const void *sendbuf, int sendcount, MPI_Datatyp
       // STEP 3:topological gather, gatherv phase
       MPI_Comm master_comm = info->hardware_info_ptr->rootcomm[i];
 
-      int size_master, rank_master;
+      int size_master = 0;
+      int rank_master = 0;
       _mpc_cl_comm_size(master_comm, &size_master);
       _mpc_cl_comm_rank(master_comm, &rank_master);
+
 
       if(rank_master == 0) {
         displs[0] = 0;
         counts[0] = info->hardware_info_ptr->childs_data_count[i][0] * (size - info->hardware_info_ptr->childs_data_count[i][0]) * recvcount;
-        total_count = counts[0];
 
-        int j;
+        int j = 0;
         for(j = 1; j < size_master; j++) {
           displs[j] = displs[j-1] + counts[j-1];
           counts[j] = info->hardware_info_ptr->childs_data_count[i][j] * (size - info->hardware_info_ptr->childs_data_count[i][j]) * recvcount;
-          total_count += counts[j];
         }
 
         gatherv_buf = MPI_IN_PLACE;
@@ -8817,8 +8814,7 @@ int ___collectives_alltoall_topo(const void *sendbuf, int sendcount, MPI_Datatyp
 
       if(rank_master != 0) {
         break;
-      } else {
-
+      }  
 #ifdef MPC_COLL_EXTRA_DEBUG_ENABLED
         if(coll_type == MPC_COLL_TYPE_BLOCKING) {
           char print_data[131072];
@@ -8845,77 +8841,77 @@ int ___collectives_alltoall_topo(const void *sendbuf, int sendcount, MPI_Datatyp
           mpc_common_nodebug ("%d GATHERV DATA: [%s]", rank, print_data);
         }
 #endif
-      }
+     
     }
   }
-
-  // STEP 6: Highest level data reorder
-  // In the exemple:
-  // rank 1 data: [13, 10, 14, 12, 15, 31, 32, 35, 01, 02, 05, 41, 42, 45, 21, 23, 20, 24, 51, 53, 50, 54]
-  // We use 3 nested loop to go through this array:
-  //   current master comm size (j):
-  //     [13, 10, 14, 12, 15 | 31, 32, 35, 01, 02, 05, 41, 42, 45 | 21, 23, 20, 24, 51, 53, 50, 54]
-  //   number of ranks under each branch of the current topological level (k):
-  //     [13, 10, 14, 12, 15 | 31, 32, 35 || 01, 02, 05 || 41, 42, 45 | 21, 23, 20, 24 || 51, 53, 50, 54]
-  //   current master comm size minus 1 (we dont send data to ourselves) (l):
-  //     [13, 10, 14 ||| 12, 15 | 31 ||| 32, 35 || 01 ||| 02, 05 || 41 ||| 42, 45 | 21 ||| 23, 20, 24 || 51 ||| 53, 50, 54]
-  //
-  // These nested loop allow to minimse the number of copy to be done:
-  //  __________  ______  __  ______  __  ______  __  ______  __  __________  __  __________
-  // [13, 10, 14, 12, 15, 31, 32, 35, 01, 02, 05, 41, 42, 45, 21, 23, 20, 24, 51, 53, 50, 54]
-  // here 12 copies instead of 22 if done element by element
-  // We can clearly see for each data block, the source rank stays the same, destination ranks stay in the same topological branch
-
-  // To correctly reorder the data, we must now figure out how to get the source & destination pointer and the data size.
-
-  // We can represent where each pack should go in order to get the basic feeling:
-  //            __________  ______  __  ______  __  ______  __  ______  __  __________  __  __________
-  //           [13, 10, 14, 12, 15, 31, 32, 35, 01, 02, 05, 41, 42, 45, 21, 23, 20, 24, 51, 53, 50, 54]
-  //            |           |       |   |       |   |       |   |       |   |           |   |         
-  // 0 (+0)  :  |           |       0   |       1   |       2   |       3   |           4   |         
-  // 1 (+5)  :  0           |           |           |           |           1               2         
-  // 2 (+14) :              0           1           2           3                                     
-  // On the left we have the destination rank in the master communicator
-  //   in the exemple rank 0 (master comm) is rank 1 (main comm), 1 is 3 & 2 is 2
-  // On each line are the packet order
-  // I added the displacement near the destination rank
-  //   it represent the number of data packet written before in the destination buffer
-  // It's more visible on the result:
-  //   [31, 01, 41, 21, 51, 13, 10, 14, 23, 20, 24, 53, 50, 54, 12, 15, 32, 35, 02, 05, 42, 45]
-  //    <----------------> (+5)
-  //    <----------------------------------------------------> (+14)
+/*
+  STEP 6: Highest level data reorder
+  In the exemple:
+  rank 1 data: [13, 10, 14, 12, 15, 31, 32, 35, 01, 02, 05, 41, 42, 45, 21, 23, 20, 24, 51, 53, 50, 54]
+  We use 3 nested loop to go through this array:
+    current master comm size (j):
+      [13, 10, 14, 12, 15 | 31, 32, 35, 01, 02, 05, 41, 42, 45 | 21, 23, 20, 24, 51, 53, 50, 54]
+    number of ranks under each branch of the current topological level (k):
+      [13, 10, 14, 12, 15 | 31, 32, 35 || 01, 02, 05 || 41, 42, 45 | 21, 23, 20, 24 || 51, 53, 50, 54]
+    current master comm size minus 1 (we dont send data to ourselves) (l):
+      [13, 10, 14 ||| 12, 15 | 31 ||| 32, 35 || 01 ||| 02, 05 || 41 ||| 42, 45 | 21 ||| 23, 20, 24 || 51 ||| 53, 50, 54]
   
-  // Each data block size is easy to get:
-  //   We send data to rank 3: how many rank bellow 3 in the topology at the current level ?
-  //   Here it's 3
-  // Data source pointer is also easy, we accumulate the data block size we already written, it's our start
-  // Data destination pointer is less trivial
-  //   We start by using the displacement mentionned above (which is pre-computed)
-  //   The only other information we need is how many previous rank already wrote data for this destination.
-  //   Another way to see this information is the topological rank
-  //
-  //    ________      
-  //   /   |    \
-  //   |  _|_   |
-  //   | / | \ / \
-  //   0 1 2 3 4 5
-  // The tree is the same as before but it uses the topological rank instead of the rank on the main communicator
-  // Here rank 2 (topo rank 4, main comm rank 2) should be the 4rth to write its data blocks
-  // One last thing, rank 3 (main comm) doesn't have any data block for rank in the same branch (3, 0, 4)
-  // To account for that we need to substract the size of the branch of the rank the destination rank 
-  //   IF the source topological rank is greater than the destination topological rank
+  These nested loop allow to minimse the number of copy to be done:
+   __________  ______  __  ______  __  ______  __  ______  __  __________  __  __________
+  [13, 10, 14, 12, 15, 31, 32, 35, 01, 02, 05, 41, 42, 45, 21, 23, 20, 24, 51, 53, 50, 54]
+  here 12 copies instead of 22 if done element by element
+  We can clearly see for each data block, the source rank stays the same, destination ranks stay in the same topological branch
 
-  // In the exemple, the data block [23, 20, 24] should be the i-th written with:
-  //   i = topo_rank(source) - (topo_rank(source) > topo_rank(dest))?branch_size(dest):0
-  //   i = topo_rank(2) - (topo_rank(2) > topo_rank(3))?branch_size(3):0
-  //   i = 4 - (4 > 1) 3 : 0
-  //   i = 1 (same index than shown before)
+  To correctly reorder the data, we must now figure out how to get the source & destination pointer and the data size.
 
+  We can represent where each pack should go in order to get the basic feeling:
+             __________  ______  __  ______  __  ______  __  ______  __  __________  __  __________
+            [13, 10, 14, 12, 15, 31, 32, 35, 01, 02, 05, 41, 42, 45, 21, 23, 20, 24, 51, 53, 50, 54]
+             |           |       |   |       |   |       |   |       |   |           |   |         
+  0 (+0)  :  |           |       0   |       1   |       2   |       3   |           4   |         
+  1 (+5)  :  0           |           |           |           |           1               2         
+  2 (+14) :              0           1           2           3                                     
+  On the left we have the destination rank in the master communicator
+    in the exemple rank 0 (master comm) is rank 1 (main comm), 1 is 3 & 2 is 2
+  On each line are the packet order
+  I added the displacement near the destination rank
+    it represent the number of data packet written before in the destination buffer
+  It's more visible on the result:
+    [31, 01, 41, 21, 51, 13, 10, 14, 23, 20, 24, 53, 50, 54, 12, 15, 32, 35, 02, 05, 42, 45]
+     <----------------> (+5)
+     <----------------------------------------------------> (+14)
+  
+  Each data block size is easy to get:
+    We send data to rank 3: how many rank bellow 3 in the topology at the current level ?
+    Here it's 3
+  Data source pointer is also easy, we accumulate the data block size we already written, it's our start
+  Data destination pointer is less trivial
+    We start by using the displacement mentionned above (which is pre-computed)
+    The only other information we need is how many previous rank already wrote data for this destination.
+    Another way to see this information is the topological rank
+  
+     ________      
+    /   |    \
+    |  _|_   |
+    | / | \ / \
+    0 1 2 3 4 5
+  The tree is the same as before but it uses the topological rank instead of the rank on the main communicator
+  Here rank 2 (topo rank 4, main comm rank 2) should be the 4rth to write its data blocks
+  One last thing, rank 3 (main comm) doesn't have any data block for rank in the same branch (3, 0, 4)
+  To account for that we need to substract the size of the branch of the rank the destination rank 
+    IF the source topological rank is greater than the destination topological rank
+
+  In the exemple, the data block [23, 20, 24] should be the i-th written with:
+    i = topo_rank(source) - (topo_rank(source) > topo_rank(dest))?branch_size(dest):0
+    i = topo_rank(2) - (topo_rank(2) > topo_rank(3))?branch_size(3):0
+    i = 4 - (4 > 1) 3 : 0
+    i = 1 (same index than shown before)
+*/
 
   if(highest_level == 0) {
     MPI_Comm master_comm = info->hardware_info_ptr->rootcomm[0];
 
-    int size_master, rank_master, total_count;
+    int size_master, rank_master;
     _mpc_cl_comm_size(master_comm, &size_master);
     _mpc_cl_comm_rank(master_comm, &rank_master);
 
@@ -9045,59 +9041,59 @@ int ___collectives_alltoall_topo(const void *sendbuf, int sendcount, MPI_Datatyp
       }
 #endif
 
+/*
+      STEP 8: data reorder
+      reorder data + insert data
+      Similar to the highest level reorder, with data insertion
+      In the exemple:
+      rank 3 data: [13, 10, 14, 23, 20, 24, 53, 50, 54], stored data: [30, 34, 03, 04, 43, 40]
+      We use 2 nested for to loop through the data:
+        global size minus number of rank under the current topological level (j):
+          [13, 10, 14 | 23, 20, 24 | 53, 50, 54]
+        size of the current master comm:
+          [13 || 10 || 14 | 23 || 20 || 24 | 53 || 50 || 54]
+      
+      These nested loop allow to minimse the number of copy to be done but the exemple tree isn't deep enough to see that:
+       __  __  __  __  __  __  __  __  __
+      [13, 10, 14, 23, 20, 24, 53, 50, 54]
+      
+      We can represent where each pack should go in order to get the basic feeling, data insertion is the next step but we still need to make room for it
+                __  __  __  __  __  __  __  __  __    __  __  __  __  __  __
+               [13, 10, 14, 23, 20, 24, 53, 50, 54], [30, 34, 03, 04, 43, 40]
+                |   |   |   |   |   |   |   |   |     |   |   |   |   |   | 
+      0 (+0) :  0   |   |   3   |   |   4   |   |     |   |   1   |   2   |  
+      1 (+5) :      0   |       3   |       4   |     1   |       |       2  
+      2 (+10):          0           3           4         1       2          
+      On the left we have the destination rank in the master communicator
+        in the exemple rank 0 (master comm) is rank 3 (main comm), 1 is 0 & 2 is 4
+      Displacement is also represented, see previous explanation
 
-      // STEP 8: data reorder
-      // reorder data + insert data
-      // Similar to the highest level reorder, with data insertion
-      // In the exemple:
-      // rank 3 data: [13, 10, 14, 23, 20, 24, 53, 50, 54], stored data: [30, 34, 03, 04, 43, 40]
-      // We use 2 nested for to loop through the data:
-      //   global size minus number of rank under the current topological level (j):
-      //     [13, 10, 14 | 23, 20, 24 | 53, 50, 54]
-      //   size of the current master comm:
-      //     [13 || 10 || 14 | 23 || 20 || 24 | 53 || 50 || 54]
-      //
-      // These nested loop allow to minimse the number of copy to be done but the exemple tree isn't deep enough to see that:
-      //  __  __  __  __  __  __  __  __  __
-      // [13, 10, 14, 23, 20, 24, 53, 50, 54]
-      //
-      // We can represent where each pack should go in order to get the basic feeling, data insertion is the next step but we still need to make room for it
-      //           __  __  __  __  __  __  __  __  __    __  __  __  __  __  __
-      //          [13, 10, 14, 23, 20, 24, 53, 50, 54], [30, 34, 03, 04, 43, 40]
-      //           |   |   |   |   |   |   |   |   |     |   |   |   |   |   | 
-      // 0 (+0) :  0   |   |   3   |   |   4   |   |     |   |   1   |   2   |  
-      // 1 (+5) :      0   |       3   |       4   |     1   |       |       2  
-      // 2 (+10):          0           3           4         1       2          
-      // On the left we have the destination rank in the master communicator
-      //   in the exemple rank 0 (master comm) is rank 3 (main comm), 1 is 0 & 2 is 4
-      // Displacement is also represented, see previous explanation
+      Each data block size is easy to get:
+        We send data to rank 3: how many rank bellow 3 in the topology at the current level ?
+        Here it's 1
+      Data source pointer is also easy, we accumulate the data block size we already written, it's our start
+      Data destination pointer is less trivial
+        We start by using the displacement mentionned above (which is pre-computed)
+        The only other information we need is how many previous rank already wrote data for this destination.
+        Another way to see this information is the topological rank
+      
+         ________      
+        /   |    \
+        |  _|_   |
+        | / | \ / \
+        0 1 2 3 4 5
+      The tree is the same as before but it uses the topological rank instead of the rank on the main communicator
+      Here rank 2 (topo rank 4) should be the 4rth to write its data blocks
+      One last thing, rank 3 doesn't have any data block for rank in the same branch (only itself in the exemple)
+      to account for that we need to substract the size of the branch of the rank the destination rank 
+        IF the source topological rank is greater than the destination topological rank
 
-      // Each data block size is easy to get:
-      //   We send data to rank 3: how many rank bellow 3 in the topology at the current level ?
-      //   Here it's 1
-      // Data source pointer is also easy, we accumulate the data block size we already written, it's our start
-      // Data destination pointer is less trivial
-      //   We start by using the displacement mentionned above (which is pre-computed)
-      //   The only other information we need is how many previous rank already wrote data for this destination.
-      //   Another way to see this information is the topological rank
-      //
-      //    ________      
-      //   /   |    \
-      //   |  _|_   |
-      //   | / | \ / \
-      //   0 1 2 3 4 5
-      // The tree is the same as before but it uses the topological rank instead of the rank on the main communicator
-      // Here rank 2 (topo rank 4) should be the 4rth to write its data blocks
-      // One last thing, rank 3 doesn't have any data block for rank in the same branch (only itself in the exemple)
-      // to account for that we need to substract the size of the branch of the rank the destination rank 
-      //   IF the source topological rank is greater than the destination topological rank
-
-      // In the exemple, the data block [20] should be the i-th written with:
-      //   i = topo_rank(source) - (topo_rank(source) > topo_rank(dest))?branch_size(dest):0
-      //   i = topo_rank(2) - (topo_rank(2) > topo_rank(0))?branch_size(0):0
-      //   i = 4 - (4 > 2) 1 : 0
-      //   i = 3 (same index than shown before)
-
+      In the exemple, the data block [20] should be the i-th written with:
+        i = topo_rank(source) - (topo_rank(source) > topo_rank(dest))?branch_size(dest):0
+        i = topo_rank(2) - (topo_rank(2) > topo_rank(0))?branch_size(0):0
+        i = 4 - (4 > 2) 1 : 0
+        i = 3 (same index than shown before)
+*/
       int j;
       int size_hwcomm, size_next_master;
       _mpc_cl_comm_size(info->hardware_info_ptr->hwcomm[i + 1], &size_hwcomm);
@@ -9359,8 +9355,8 @@ int PMPI_Ialltoallv(const void *sendbuf, const int *sendcounts, const int *sdisp
   */
 static inline int ___collectives_ialltoallv(const void *sendbuf, const int *sendcounts, const int *sdispls, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *rdispls, MPI_Datatype recvtype, MPI_Comm comm, NBC_Handle *handle) {
 
-  int res;
-  NBC_Schedule *schedule;
+  int res = 0;
+  NBC_Schedule *schedule = NULL;
   Sched_info info;
   ___collectives_sched_info_init(&info, MPC_COLL_TYPE_NONBLOCKING, _mpc_mpi_config()->coll_opts.topo.alltoallv);
 
@@ -9410,14 +9406,14 @@ static inline int ___collectives_ialltoallv(const void *sendbuf, const int *send
 int PMPI_Alltoallv_init(const void *sendbuf, const int *sendcounts, const int *sdispls, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *rdispls, MPI_Datatype recvtype, MPI_Comm comm, MPI_Info info, MPI_Request *request) {
 
   {
-    int size;
-    int rank;
+    int size = 0;
+    int rank = 0;
     mpi_check_comm(comm);
     _mpc_cl_comm_size(comm, &size);
     _mpc_cl_comm_rank(comm, &rank);
     mpi_check_type(sendtype, comm);
     mpi_check_type(recvtype, comm);
-    int i;
+    int i = 0;
     for(i = 0; i < size; i++)
     {
       mpi_check_count(recvcounts[i], comm);
@@ -9433,7 +9429,7 @@ int PMPI_Alltoallv_init(const void *sendbuf, const int *sendcounts, const int *s
     }
 
   }
-  MPI_internal_request_t *req;
+  MPI_internal_request_t *req = NULL;
   SCTK__MPI_INIT_REQUEST (request);
   req = __sctk_new_mpc_request_internal (request,__sctk_internal_get_MPC_requests());
   req->freeable = 0;
@@ -9467,8 +9463,8 @@ int PMPI_Alltoallv_init(const void *sendbuf, const int *sendcounts, const int *s
   */
 static inline int ___collectives_alltoallv_init(const void *sendbuf, const int *sendcounts, const int *sdispls, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *rdispls, MPI_Datatype recvtype, MPI_Comm comm, NBC_Handle* handle) {
   
-  int res;
-  NBC_Schedule *schedule;
+  int res = 0;
+  NBC_Schedule *schedule = NULL;
   Sched_info info;
   ___collectives_sched_info_init(&info, MPC_COLL_TYPE_PERSISTENT, _mpc_mpi_config()->coll_opts.topo.alltoallv);
 
@@ -9513,10 +9509,10 @@ static inline int ___collectives_alltoallv_init(const void *sendbuf, const int *
   */
 int _mpc_mpi_collectives_alltoallv(const void *sendbuf, const int *sendcounts, const int *sdispls, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *rdispls, MPI_Datatype recvtype, MPI_Comm comm) {
 
-  MPI_Request req;
+  MPI_Request req = MPI_REQUEST_NULL;
   MPI_Status status;
 
-  MPI_Ialltoallv(sendbuf, sendcounts, sdispls, sendtype, recvbuf, recvcounts, rdispls, recvtype, comm, &req);
+  PMPI_Ialltoallv(sendbuf, sendcounts, sdispls, sendtype, recvbuf, recvcounts, rdispls, recvtype, comm, &req);
   MPI_Wait(&req, &status);
 
   return status.MPI_ERROR;
@@ -9559,12 +9555,12 @@ int ___collectives_alltoallv_switch(const void *sendbuf, const int *sendcounts, 
     NBC_ALLTOALLV_PAIRWISE
   } alg;
 
-  int size;
+  int size = 0;
   _mpc_cl_comm_size(comm, &size);
   
   alg = NBC_ALLTOALLV_PAIRWISE;
 
-  int res;
+  int res = 0;
 
   switch(alg) {
     case NBC_ALLTOALLV_CLUSTER:
@@ -9779,7 +9775,7 @@ int ___collectives_alltoallv_pairwise(const void *sendbuf, const int *sendcounts
   }
 
   // Buffer is of size recvcount and stores elements of size smaller or equal to recvext
-  void *tmpbuf;
+  void *tmpbuf = NULL;
 
   switch(coll_type) {
     case MPC_COLL_TYPE_BLOCKING:
@@ -10077,7 +10073,7 @@ int _mpc_mpi_collectives_alltoallw(const void *sendbuf, const int *sendcounts, c
   MPI_Request req;
   MPI_Status status;
 
-  MPI_Ialltoallw(sendbuf, sendcounts, sdispls, sendtypes, recvbuf, recvcounts, rdispls, recvtypes, comm, &req);
+  PMPI_Ialltoallw(sendbuf, sendcounts, sdispls, sendtypes, recvbuf, recvcounts, rdispls, recvtypes, comm, &req);
   MPI_Wait(&req, &status);
 
   return status.MPI_ERROR;
@@ -10120,12 +10116,12 @@ int ___collectives_alltoallw_switch(const void *sendbuf, const int *sendcounts, 
     NBC_ALLTOALLW_PAIRWISE
   } alg;
 
-  int size;
+  int size = 0;
   _mpc_cl_comm_size(comm, &size);
   
   alg = NBC_ALLTOALLW_CLUSTER;
 
-  int res;
+  int res = 0;
 
   switch(alg) {
     case NBC_ALLTOALLW_CLUSTER:
@@ -10165,21 +10161,22 @@ int ___collectives_alltoallw_switch(const void *sendbuf, const int *sendcounts, 
   */
 int ___collectives_alltoallw_cluster(const void *sendbuf, const int *sendcounts, const int *sdispls, const MPI_Datatype *sendtypes, void *recvbuf, const int *recvcounts, const int *rdispls, const MPI_Datatype *recvtypes, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
-  int rank, size;
-  MPI_Aint ext;
+  int rank = 0;
+  int size = 0;
+  MPI_Aint ext = 0;
   _mpc_cl_comm_size(comm, &size);
   _mpc_cl_comm_rank(comm, &rank);
 
   void *tmpbuf = NULL;
 
-  int rsize = 0;
+  size_t rsize = 0;
   int totalext = 0;
 
-  int i;
+  int i = 0;
   for(i = 0; i < size; i++)
   {
     PMPI_Type_extent(recvtypes[i], &ext);
-    int size = rdispls[i] + recvcounts[i] * ext;
+    size_t size = rdispls[i] + recvcounts[i] * ext;
     rsize = (size > rsize) ? (size) : (rsize);
 
     totalext += recvcounts[i] * ext;
@@ -10313,7 +10310,7 @@ int ___collectives_alltoallw_pairwise(const void *sendbuf, const int *sendcounts
   }
 
   // Buffer is of size totalext bytes
-  void *tmpbuf;
+  void *tmpbuf = NULL;
 
   switch(coll_type) {
     case MPC_COLL_TYPE_BLOCKING:
@@ -10337,7 +10334,7 @@ int ___collectives_alltoallw_pairwise(const void *sendbuf, const int *sendcounts
       return MPI_SUCCESS;
   }
 
-  int distance;
+  int distance = 0;
   if(sendbuf == MPI_IN_PLACE) {
     // All send-related args are ignored
 
@@ -10410,7 +10407,7 @@ int PMPI_Iscan (const void *sendbuf, void *recvbuf, int count, MPI_Datatype data
   mpc_common_nodebug ("Entering ISCAN %d", comm);
   SCTK__MPI_INIT_REQUEST (request);
 
-  int csize;
+  int csize = 0;
   MPI_Comm_size(comm, &csize);
   
   if(recvbuf == sendbuf)
@@ -10421,13 +10418,13 @@ int PMPI_Iscan (const void *sendbuf, void *recvbuf, int count, MPI_Datatype data
   if(csize == 1)
   {
     res = PMPI_Scan (sendbuf, recvbuf, count, datatype, op, comm);
-    MPI_internal_request_t *tmp;
+    MPI_internal_request_t *tmp = NULL;
     tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
     tmp->req.completion_flag = MPC_LOWCOMM_MESSAGE_DONE;
   }
   else
   {
-    MPI_internal_request_t *tmp;
+    MPI_internal_request_t *tmp = NULL;
     tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
     tmp->is_nbc = 1;
     tmp->nbc_handle.is_persistent = 0;
@@ -10451,8 +10448,8 @@ int PMPI_Iscan (const void *sendbuf, void *recvbuf, int count, MPI_Datatype data
   */
 static inline int ___collectives_iscan (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, NBC_Handle *handle) {
 
-  int res;
-  NBC_Schedule *schedule;
+  int res = 0;
+  NBC_Schedule *schedule = NULL;
   Sched_info info;
   ___collectives_sched_info_init(&info, MPC_COLL_TYPE_NONBLOCKING, _mpc_mpi_config()->coll_opts.topo.scan);
 
@@ -10510,7 +10507,7 @@ int PMPI_Scan_init (const void *sendbuf, void *recvbuf, int count, MPI_Datatype 
     }
   }
 
-  MPI_internal_request_t *req;
+  MPI_internal_request_t *req = NULL;
   SCTK__MPI_INIT_REQUEST (request);
   req = __sctk_new_mpc_request_internal (request,__sctk_internal_get_MPC_requests());
   req->freeable = 0;
@@ -10542,8 +10539,8 @@ int PMPI_Scan_init (const void *sendbuf, void *recvbuf, int count, MPI_Datatype 
   */
 static inline int ___collectives_scan_init (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, NBC_Handle* handle) {
 
-  int res;
-  NBC_Schedule *schedule;
+  int res = 0;
+  NBC_Schedule *schedule = NULL;
   Sched_info info;
   ___collectives_sched_info_init(&info, MPC_COLL_TYPE_PERSISTENT, _mpc_mpi_config()->coll_opts.topo.scan);
 
@@ -10627,7 +10624,7 @@ int ___collectives_scan_switch (const void *sendbuf, void *recvbuf, int count, M
     NBC_SCAN_ALLGATHER
   } alg;
 
-  int size;
+  int size = 0;
   _mpc_cl_comm_size(comm, &size);
   
   alg = NBC_SCAN_LINEAR;
@@ -10666,8 +10663,9 @@ int ___collectives_scan_switch (const void *sendbuf, void *recvbuf, int count, M
   */
 int ___collectives_scan_linear (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
   
-  int rank, size;
-  MPI_Aint ext;
+  int rank = 0;
+  int size = 0;
+  MPI_Aint ext = 0;
   _mpc_cl_comm_size(comm, &size);
   _mpc_cl_comm_rank(comm, &rank);
   PMPI_Type_extent(datatype, &ext);
@@ -10677,7 +10675,7 @@ int ___collectives_scan_linear (const void *sendbuf, void *recvbuf, int count, M
   void* tmpbuf = NULL;
 
   sctk_Op mpc_op;
-  sctk_op_t *mpi_op; 
+  sctk_op_t *mpi_op = NULL; 
 
   switch(coll_type) {
     case MPC_COLL_TYPE_BLOCKING:
@@ -10738,8 +10736,9 @@ int ___collectives_scan_linear (const void *sendbuf, void *recvbuf, int count, M
   */
 int ___collectives_scan_allgather (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
  
-  int rank, size;
-  MPI_Aint ext;
+  int rank = 0;
+  int size = 0;
+  MPI_Aint ext = 0;
   _mpc_cl_comm_size(comm, &size);
   _mpc_cl_comm_rank(comm, &rank);
   PMPI_Type_extent(datatype, &ext);
@@ -10747,7 +10746,7 @@ int ___collectives_scan_allgather (const void *sendbuf, void *recvbuf, int count
   void* tmpbuf = NULL;
 
   sctk_Op mpc_op;
-  sctk_op_t *mpi_op; 
+  sctk_op_t *mpi_op = NULL; 
 
   switch(coll_type) {
     case MPC_COLL_TYPE_BLOCKING:
@@ -10775,12 +10774,12 @@ int ___collectives_scan_allgather (const void *sendbuf, void *recvbuf, int count
 
   _mpc_mpi_config()->coll_algorithm_intracomm.allgather(buf, count, datatype, tmpbuf, count, datatype, comm, coll_type, schedule, info);
   ___collectives_barrier_type(coll_type, schedule, info);
-  int i;
+  int i = 0;
   for( i = 1; i <= rank; i++) {
-    ___collectives_op_type(NULL, tmpbuf + (i-1) * count * ext, tmpbuf + i * count * rank, count, datatype, op, mpc_op, coll_type, schedule, info);
+    ___collectives_op_type(NULL, tmpbuf + ((MPI_Aint)i-1) * count * ext, tmpbuf + i * count * rank, count, datatype, op, mpc_op, coll_type, schedule, info);
   }
 
-  ___collectives_copy_type(tmpbuf + rank * count * ext, count, datatype, recvbuf, count, datatype, comm, coll_type, schedule, info);
+  ___collectives_copy_type(tmpbuf + (MPI_Aint)rank * count * ext, count, datatype, recvbuf, count, datatype, comm, coll_type, schedule, info);
 
   return MPI_SUCCESS;
 }
@@ -10810,7 +10809,7 @@ int PMPI_Iexscan (const void *sendbuf, void *recvbuf, int count, MPI_Datatype da
   mpc_common_nodebug ("Entering IEXSCAN %d", comm);
   SCTK__MPI_INIT_REQUEST (request);
 
-  int csize;
+  int csize = 0;
   MPI_Comm_size(comm, &csize);
 
   if(recvbuf == sendbuf)
@@ -10821,13 +10820,13 @@ int PMPI_Iexscan (const void *sendbuf, void *recvbuf, int count, MPI_Datatype da
   if(csize == 1)
   {
     res = PMPI_Exscan (sendbuf, recvbuf, count, datatype, op, comm);
-    MPI_internal_request_t *tmp;
+    MPI_internal_request_t *tmp = NULL;
     tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
     tmp->req.completion_flag = MPC_LOWCOMM_MESSAGE_DONE;
   }
   else
   {
-    MPI_internal_request_t *tmp;
+    MPI_internal_request_t *tmp = NULL;
     tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
     tmp->is_nbc = 1;
     tmp->nbc_handle.is_persistent = 0;
@@ -10852,7 +10851,7 @@ int PMPI_Iexscan (const void *sendbuf, void *recvbuf, int count, MPI_Datatype da
 static inline int ___collectives_iexscan (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, NBC_Handle *handle) {
 
   int res;
-  NBC_Schedule *schedule;
+  NBC_Schedule *schedule = NULL;
   Sched_info info;
   ___collectives_sched_info_init(&info, MPC_COLL_TYPE_NONBLOCKING, _mpc_mpi_config()->coll_opts.topo.exscan);
 
@@ -10910,7 +10909,7 @@ int PMPI_Exscan_init (const void *sendbuf, void *recvbuf, int count, MPI_Datatyp
     }
   }
 
-  MPI_internal_request_t *req;
+  MPI_internal_request_t *req = NULL;
   SCTK__MPI_INIT_REQUEST (request);
   req = __sctk_new_mpc_request_internal (request,__sctk_internal_get_MPC_requests());
   req->freeable = 0;
@@ -10942,8 +10941,8 @@ int PMPI_Exscan_init (const void *sendbuf, void *recvbuf, int count, MPI_Datatyp
   */
 static inline int ___collectives_exscan_init (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, NBC_Handle* handle) {
 
-  int res;
-  NBC_Schedule *schedule;
+  int res = 0;
+  NBC_Schedule *schedule = NULL;
   Sched_info info;
   ___collectives_sched_info_init(&info, MPC_COLL_TYPE_PERSISTENT, _mpc_mpi_config()->coll_opts.topo.exscan);
 
@@ -11026,7 +11025,7 @@ int ___collectives_exscan_switch (const void *sendbuf, void *recvbuf, int count,
     NBC_EXSCAN_ALLGATHER
   } alg;
 
-  int size;
+  int size = 0;
   _mpc_cl_comm_size(comm, &size);
   
   alg = NBC_EXSCAN_LINEAR;
@@ -11061,7 +11060,8 @@ int ___collectives_exscan_switch (const void *sendbuf, void *recvbuf, int count,
   */
 int ___collectives_exscan_linear (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
-  int rank, size;
+  int rank = 0;
+  int size = 0;
   MPI_Aint ext;
   _mpc_cl_comm_size(comm, &size);
   _mpc_cl_comm_rank(comm, &rank);
@@ -11429,9 +11429,10 @@ int ___collectives_barrier_reduce_broadcast (MPI_Comm comm, MPC_COLL_TYPE coll_t
   _mpc_cl_comm_size(comm, &size);
   _mpc_cl_comm_rank(comm, &rank);
 
-  int maxr, peer;
-  maxr = ___collectives_ceiled_log2(size);
-  int rmb = ___collectives_rmb_index(rank);
+  unsigned int maxr = ___collectives_ceiled_log2(size);
+  int peer = 0;
+
+  unsigned int rmb = ___collectives_rmb_index(rank);
   if(rank == 0) {
     rmb = maxr;
   }
@@ -11446,8 +11447,8 @@ int ___collectives_barrier_reduce_broadcast (MPI_Comm comm, MPC_COLL_TYPE coll_t
       ___collectives_barrier_type(coll_type, schedule, info);
     }
   }
-  int i;
-  for(i = rmb - 1; i >= 0; i--) {
+  int i = 0;
+  for(i = (int)rmb - 1; i >= 0; i--) {
     peer = rank ^ (1 << i);
     if(peer >= size) {
       continue;
@@ -11460,14 +11461,16 @@ int ___collectives_barrier_reduce_broadcast (MPI_Comm comm, MPC_COLL_TYPE coll_t
   ___collectives_barrier_type(coll_type, schedule, info);
 
 
-  for( i = 0; i < maxr; i++) {
+  for( i = 0; i < (int)maxr; i++) {
     if(rank & (1 << i)) {
       peer = rank ^ (1 << i);
       ___collectives_barrier_type(coll_type, schedule, info);
       ___collectives_send_type(&bar, 1, MPI_CHAR, peer, MPC_REDUCE_TAG, comm, coll_type, schedule, info);
       
       break;
-    } else if((rank | (1 << i)) < size) {
+    }
+    
+    if((rank | (1 << i)) < size) {
       peer = rank | (1 << i);
       ___collectives_recv_type(&bar, 1, MPI_CHAR, peer, MPC_REDUCE_TAG, comm, coll_type, schedule, info);
     }
