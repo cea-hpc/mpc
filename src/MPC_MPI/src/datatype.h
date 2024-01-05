@@ -23,18 +23,16 @@
 #ifndef MPC_DATATYPES_H
 #define MPC_DATATYPES_H
 
-#include <uthash.h>
 #include <stdlib.h>
+#include <uthash.h>
 
 
-#include <mpc_mpi_comm_lib.h>
-#include <mpc_common_asm.h>
-#include <mpc_common_debug.h>
-
-#include "mpc_lowcomm.h" /* mpc_lowcomm_datatype_t */
 #include "mpc_common_datastructure.h"
 #include "mpc_common_spinlock.h"
 #include "mpc_thread.h"
+#include <mpc_common_asm.h>
+#include <mpc_common_debug.h>
+#include <mpc_mpi_comm_lib.h>
 
 #include "mpc_lowcomm_datatypes.h"
 
@@ -237,15 +235,15 @@ struct _mpc_dt_layout *_mpc_dt_get_layout(struct _mpc_dt_footprint *ctx, size_t 
  */
 void _mpc_dt_contiguous_create(mpc_lowcomm_datatype_t *type, const size_t id_rank,
                                const size_t element_size, const size_t count,
-                               const mpc_lowcomm_datatype_t datatype);
+                               mpc_lowcomm_datatype_t datatype);
 
 /************************************************************************/
 /* General Datatype                                                     */
 /************************************************************************/
 
 /** \brief Theses macros allow us to manipulate the datatype refcounter more simply */
-#define _MPC_DT_USER_IS_FREE(datatype_ptr)    (datatype_ptr->ref_count == 0)
-#define _MPC_DT_USER_IS_USED(datatype_ptr)    (datatype_ptr->ref_count)
+#define _MPC_DT_USER_IS_FREE(datatype_ptr)    ((datatype_ptr)->ref_count == 0)
+#define _MPC_DT_USER_IS_USED(datatype_ptr)    ((datatype_ptr)->ref_count)
 
 /** \brief Create a general datatype
  *
@@ -339,7 +337,7 @@ int _mpc_dt_general_optimize(_mpc_lowcomm_general_datatype_t *target_type);
  *
  *  \param target_type Type to be displayed
  */
-void _mpc_dt_general_display(const mpc_lowcomm_datatype_t target_type);
+void _mpc_dt_general_display(mpc_lowcomm_datatype_t target_type);
 
 
 /************************************************************************/
@@ -381,7 +379,7 @@ typedef enum
  * \return true if the datatype is a boundary
  *         false otherwise
  */
-static inline bool _mpc_dt_is_boundary(const mpc_lowcomm_datatype_t data_in)
+static inline bool _mpc_dt_is_boundary(mpc_lowcomm_datatype_t data_in)
 {
 	if( (data_in == MPC_UB) || (data_in == MPC_LB) )
 	{
@@ -396,7 +394,7 @@ static inline bool _mpc_dt_is_boundary(const mpc_lowcomm_datatype_t data_in)
  * \param datatype Datatype to test
  * \return true if it is user defined, false otherwise
  */
-bool _mpc_dt_is_user_defined(const mpc_lowcomm_datatype_t datatype);
+bool _mpc_dt_is_user_defined(mpc_lowcomm_datatype_t datatype);
 
 /** \brief Checks whether a datatype is valid or not
  *
@@ -405,7 +403,7 @@ bool _mpc_dt_is_user_defined(const mpc_lowcomm_datatype_t datatype);
  * \param datatype Datatype to test
  * \return true if datatype is valid, false otherwise
  * */
-static inline bool mpc_dt_is_valid(const mpc_lowcomm_datatype_t datatype)
+static inline bool mpc_dt_is_valid(mpc_lowcomm_datatype_t datatype)
 {
 	return mpc_lowcomm_datatype_is_common(datatype) || _mpc_dt_is_user_defined(datatype);
 }
@@ -417,7 +415,7 @@ static inline bool mpc_dt_is_valid(const mpc_lowcomm_datatype_t datatype)
  * \param datatype Datatype to test
  * \return true if datatype is commited, false otherwise
  * */
-static inline bool mpc_dt_is_commited(const mpc_lowcomm_datatype_t datatype)
+static inline bool mpc_dt_is_commited(mpc_lowcomm_datatype_t datatype)
 {
 	if(!mpc_dt_is_valid(datatype) )
 	{
@@ -438,7 +436,7 @@ static inline bool mpc_dt_is_commited(const mpc_lowcomm_datatype_t datatype)
  * 	\param datatype Datatype to determine the kind of
  * 	\return Kind of the datatype see \ref mpc_dt_kind_t
  */
-static inline mpc_dt_kind_t _mpc_dt_get_kind(const mpc_lowcomm_datatype_t datatype)
+static inline mpc_dt_kind_t _mpc_dt_get_kind(mpc_lowcomm_datatype_t datatype)
 {
 	mpc_dt_kind_t ret = MPC_DATATYPES_UNKNOWN;
 
@@ -460,7 +458,7 @@ static inline mpc_dt_kind_t _mpc_dt_get_kind(const mpc_lowcomm_datatype_t dataty
  *  \return A pointer to the _mpc_lowomm_general_datatype_t in the datatype if valid
  *          MPC_LOWCOMM_DATATYPE_NULL otherwise
  */
-static inline mpc_lowcomm_datatype_t _mpc_dt_get_datatype(const mpc_lowcomm_datatype_t datatype)
+static inline mpc_lowcomm_datatype_t _mpc_dt_get_datatype(mpc_lowcomm_datatype_t datatype)
 {
 	mpc_lowcomm_datatype_t type = MPC_LOWCOMM_DATATYPE_NULL;
 
@@ -485,7 +483,7 @@ static inline mpc_lowcomm_datatype_t _mpc_dt_get_datatype(const mpc_lowcomm_data
  * \return true if data_in is contiguous in memory
  *         false otherwise
  */
-static inline bool _mpc_dt_is_contig_mem(const mpc_lowcomm_datatype_t data_in)
+static inline bool _mpc_dt_is_contig_mem(mpc_lowcomm_datatype_t data_in)
 {
 	/* Note that the general asumption can be optimized
 	 * for single segment general with no LB/UB */
@@ -526,7 +524,7 @@ struct _mpc_dt_storage *_mpc_dt_storage_init();
  *  \param da       A pointer to the datatype array
  *  \param datatype The datatype to be freed
  */
-bool _mpc_dt_storage_type_can_be_released(const mpc_lowcomm_datatype_t datatype);
+bool _mpc_dt_storage_type_can_be_released(mpc_lowcomm_datatype_t datatype);
 
 /** \brief Releases the datatype array and types not previously freed
  *  \param da A pointer to the datatype array
@@ -552,7 +550,7 @@ _mpc_lowcomm_general_datatype_t *_mpc_dt_storage_get_general_datatype(struct _mp
  *
  *  \warning The datatype must be a general datatype
  */
-void _mpc_dt_storage_set_general_datatype(struct _mpc_dt_storage *da, const size_t datatype_idx, const mpc_lowcomm_datatype_t value);
+void _mpc_dt_storage_set_general_datatype(struct _mpc_dt_storage *da, const size_t datatype_idx, mpc_lowcomm_datatype_t value);
 
 /************************************************************************/
 /* Datatype  Attribute Getters                                          */
@@ -616,6 +614,6 @@ int _mpc_dt_name_set(mpc_lowcomm_datatype_t datatype, const char *const name);
  *  \param datatype Requested data-type
  *  \return NULL if no name the name otherwise
  */
-char *_mpc_dt_name_get(const mpc_lowcomm_datatype_t datatype);
+char *_mpc_dt_name_get(mpc_lowcomm_datatype_t datatype);
 
 #endif /* MPC_DATATYPES_H */

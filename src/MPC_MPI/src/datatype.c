@@ -22,14 +22,11 @@
 /* ######################################################################## */
 #include "datatype.h"
 
-#include <string.h>
 #include <mpc_common_debug.h>
+#include <string.h>
 
-#include "mpc_reduction.h"
 #include "comm_lib.h"
-#include "errh.h"
-#include "mpc_common_types.h"
-#include "mpc_common_types.h"
+#include "mpc_reduction.h"
 #include "uthash.h"
 
 #include <sctk_alloc.h>
@@ -82,8 +79,6 @@ char *_mpc_dt_get_combiner_name(MPC_Type_combiner combiner)
 /************************************************************************/
 
 static volatile int __mpc_dt_initialized = 0;
-
-static inline void __mpc_common_types_init(void);
 static inline void __mpc_composed_common_types_init();
 
 void _mpc_dt_init()
@@ -210,14 +205,14 @@ static inline struct __mpc_dt_keyval *__mpc_dt_keyval_new(int *type_keyval)
 
 	int new_id = -1;
 
-	unsigned int i;
+	unsigned int i = 0;
 
 	/* Try to do some recycling */
 	for( i = 0; i < __keyval_array_offset; i++ )
 	{
 		if(__keyval_array[i].free_cell)
 		{
-			new_id = i;
+			new_id = (int)i;
 			break;
 		}
 	}
@@ -225,7 +220,7 @@ static inline struct __mpc_dt_keyval *__mpc_dt_keyval_new(int *type_keyval)
 	/* We create a new entry */
 	if(new_id < 0)
 	{
-		new_id = __keyval_array_offset;
+		new_id = (int)__keyval_array_offset;
 		__keyval_array_offset++;
 	}
 
@@ -250,7 +245,7 @@ static inline struct __mpc_dt_keyval *__mpc_dt_keyval_new(int *type_keyval)
 	}
 
 	/* Now that we booked a slot export its ID and prepare to return the entry */
-	*type_keyval = new_id;
+	*type_keyval = (int)new_id;
 	ret          = &__keyval_array[new_id];
 
 	mpc_common_spinlock_unlock(&__keyval_array_lock);
@@ -453,12 +448,13 @@ static inline void __mpc_common_dt_set_name(mpc_lowcomm_datatype_t datatype, con
 
 static inline void ___mpc_init_composed_common_type(mpc_lowcomm_datatype_t target_type,
                                                     const size_t disp,
-                                                    const mpc_lowcomm_datatype_t type_a,
-                                                    const mpc_lowcomm_datatype_t type_b,
+                                                    mpc_lowcomm_datatype_t type_a,
+                                                    mpc_lowcomm_datatype_t type_b,
                                                     const size_t struct_size)
 {
 	/* Compute data-type sizes */
-	size_t sa, sb;
+	size_t sa = 0;
+	size_t sb = 0;
 
 	_mpc_cl_type_size(type_a, &sa);
 	_mpc_cl_type_size(type_b, &sb);
@@ -487,7 +483,7 @@ static inline void ___mpc_init_composed_common_type(mpc_lowcomm_datatype_t targe
 	types[1] = type_b;
 
 	int *   blocklengths  = sctk_malloc(2 * sizeof(int) );
-	size_t *displacements = sctk_malloc(2 * sizeof(void *) );
+	ssize_t *displacements = sctk_malloc(2 * sizeof(ssize_t) );
 
 	assume(blocklengths != NULL);
 	assume(displacements != NULL);
@@ -539,8 +535,8 @@ static inline void ___mpc_init_composed_common_type(mpc_lowcomm_datatype_t targe
  */
 static inline void __mpc_composed_common_types_init()
 {
-	size_t disp;
-	mpc_lowcomm_datatype_t tmp;
+	size_t disp = 0;
+	mpc_lowcomm_datatype_t tmp = NULL;
 
 	/* MPC_COMPLEX4 (55) */
 	disp = 2;
@@ -768,7 +764,7 @@ static inline void __mpc_dt_footprint_clear(struct _mpc_dt_footprint *ctx);
 
 void _mpc_dt_contiguous_create(mpc_lowcomm_datatype_t *type, const size_t id_rank,
                                const size_t element_size, const size_t count,
-                               const mpc_lowcomm_datatype_t datatype)
+                               mpc_lowcomm_datatype_t datatype)
 {
 	size_t size = element_size * count;
 
@@ -862,7 +858,7 @@ mpc_lowcomm_datatype_t _mpc_dt_general_create(
 
 	/* Here we compute the total size of the type
 	 * by summing sections */
-	unsigned long j;
+	unsigned long j = 0;
 
 	for( j = 0; j < count; j++ )
 	{
@@ -965,8 +961,8 @@ int _mpc_dt_general_free(mpc_lowcomm_datatype_t *type_p, const bool enable_refco
 		 * no layout and was not handled in set_context */
 
 		/* Try to rely on the datatype layout */
-		size_t i;
-		size_t count;
+		size_t i = 0;
+		size_t count = 0;
 		struct _mpc_dt_layout *layout =
 			_mpc_dt_get_layout(type->context, &count);
 
@@ -1000,7 +996,7 @@ int _mpc_dt_general_free(mpc_lowcomm_datatype_t *type_p, const bool enable_refco
 
 			sctk_free(layout);
 
-			mpc_lowcomm_datatype_t tmp;
+			mpc_lowcomm_datatype_t tmp = NULL;
 			/* Now release each type only once */
 			for(i = 0; i < SCTK_USER_DATA_TYPES_MAX; i++)
 			{
@@ -1101,7 +1097,6 @@ int _mpc_dt_general_on_slot(mpc_lowcomm_datatype_t *type_p)
 	{
 		/* If it already exists, type_p now contains its address */
 		/* We have to deallocate the old type */
-		mpc_lowcomm_datatype_t tmp_type = old_type;
 		/* And free it */
 		sctk_free(old_type);
 		/* Release the datatype lock */
@@ -1163,10 +1158,12 @@ mpc_lowcomm_datatype_t _mpc_dt_on_slot_get(const size_t idx)
 
 void _mpc_dt_general_true_extend(const _mpc_lowcomm_general_datatype_t *type, long *true_lb, long *true_ub)
 {
-	long min_index = 0, max_index = 0;
-	int  min_set = 0, max_set = 0;
+	long min_index = 0;
+	long max_index = 0;
+	int  min_set = 0;
+	int  max_set = 0;
 
-	unsigned int i;
+	unsigned int i = 0;
 
 	for( i = 0; i < type->count; i++ )
 	{
@@ -1221,7 +1218,8 @@ int _mpc_dt_general_optimize(_mpc_lowcomm_general_datatype_t *target_type)
 
 	assume(cells != NULL);
 
-	size_t i, j;
+	size_t i = 0;
+	size_t j = 0;
 
 	for( i = 0; i < count; i++ )
 	{
@@ -1300,7 +1298,7 @@ int _mpc_dt_general_optimize(_mpc_lowcomm_general_datatype_t *target_type)
 	return MPC_LOWCOMM_SUCCESS;
 }
 
-void _mpc_dt_general_display(const mpc_lowcomm_datatype_t target_type)
+void _mpc_dt_general_display(mpc_lowcomm_datatype_t target_type)
 {
 	mpc_common_debug_error("================GENERAL===============");
 	mpc_common_debug_error("TYPE %d", target_type->id);
@@ -1310,12 +1308,15 @@ void _mpc_dt_general_display(const mpc_lowcomm_datatype_t target_type)
 	mpc_common_debug_error("COUNT %ld", target_type->count);
 	mpc_common_debug_error("OPT_COUNT %ld", target_type->opt_count);
 
-	int ni, na, nd, c;
+	int ni = 0;
+	int na = 0;
+	int nd = 0;
+	int c = 0;
 
 	_mpc_dt_fill_envelope(target_type->context, &ni, &na, &nd, &c);
 	mpc_common_debug_error("COMBINER : %s[%d]", _mpc_dt_get_combiner_name(c), c);
 
-	int i;
+	int i = 0;
 
 	mpc_common_debug_error("INT : [");
 	for( i = 0; i < ni; i++ )
@@ -1342,7 +1343,7 @@ void _mpc_dt_general_display(const mpc_lowcomm_datatype_t target_type)
 	}
 	mpc_common_debug_error("]");
 
-	unsigned int j;
+	unsigned int j = 0;
 
 	mpc_common_debug_error("OPT :");
 	for( j = 0; j < target_type->opt_count; j++ )
@@ -1354,7 +1355,7 @@ void _mpc_dt_general_display(const mpc_lowcomm_datatype_t target_type)
 	mpc_common_debug_error("==============================================");
 }
 
-bool _mpc_dt_is_user_defined(const mpc_lowcomm_datatype_t datatype)
+bool _mpc_dt_is_user_defined(mpc_lowcomm_datatype_t datatype)
 {
 	mpc_lowcomm_datatype_t user_array = _mpc_cl_per_mpi_process_ctx_user_datatype_array_get();
 
@@ -1382,7 +1383,7 @@ struct _mpc_dt_storage * _mpc_dt_storage_init()
 	return da;
 }
 
-bool _mpc_dt_storage_type_can_be_released(const mpc_lowcomm_datatype_t datatype)
+bool _mpc_dt_storage_type_can_be_released(mpc_lowcomm_datatype_t datatype)
 {
 	mpc_lowcomm_datatype_t dt = MPC_DATATYPE_NULL;
 
@@ -1407,7 +1408,7 @@ bool _mpc_dt_storage_type_can_be_released(const mpc_lowcomm_datatype_t datatype)
 
 void _mpc_dt_storage_release(struct _mpc_dt_storage *da)
 {
-	unsigned int i;
+	unsigned int i = 0;
 
 	/* Get the lock */
 	_mpc_cl_per_mpi_process_ctx_datatype_lock();
@@ -1439,7 +1440,7 @@ _mpc_lowcomm_general_datatype_t * _mpc_dt_storage_get_general_datatype(struct _m
 	return &(da->general_user_types[datatype_idx]);
 }
 
-void _mpc_dt_storage_set_general_datatype(struct _mpc_dt_storage *da, const size_t datatype_idx, const mpc_lowcomm_datatype_t value)
+void _mpc_dt_storage_set_general_datatype(struct _mpc_dt_storage *da, const size_t datatype_idx, mpc_lowcomm_datatype_t value)
 {
 	assume(datatype_idx < SCTK_USER_DATA_TYPES_MAX);
 
@@ -1453,7 +1454,7 @@ void _mpc_dt_storage_set_general_datatype(struct _mpc_dt_storage *da, const size
 /************************************************************************/
 
 static inline struct __mpc_dt_attr_store *
-__mpc_dt_get_attr_store(struct _mpc_dt_storage *da, mpc_lowcomm_datatype_t type)
+__mpc_dt_get_attr_store(struct _mpc_dt_storage *da __UNUSED__, mpc_lowcomm_datatype_t type)
 {
 	mpc_dt_kind_t kind = _mpc_dt_get_kind(type);
 
@@ -1611,9 +1612,9 @@ struct __mpc_dt_name_cell *datatype_names = NULL;
 /** \brief Lock protecting \ref datatype_names */
 mpc_common_spinlock_t datatype_names_lock = MPC_COMMON_SPINLOCK_INITIALIZER;
 
-static inline struct __mpc_dt_name_cell *__mpc_dt_get_name_cell(const mpc_lowcomm_datatype_t datatype)
+static inline struct __mpc_dt_name_cell *__mpc_dt_get_name_cell(mpc_lowcomm_datatype_t datatype)
 {
-	struct __mpc_dt_name_cell *cell;
+	struct __mpc_dt_name_cell *cell = NULL;
 
 	HASH_FIND_INT(datatype_names, datatype, cell);
 
@@ -1646,7 +1647,7 @@ int _mpc_dt_name_set(mpc_lowcomm_datatype_t datatype, const char *const name)
 	struct __mpc_dt_name_cell *new_cell = sctk_malloc(sizeof(struct __mpc_dt_name_cell) );
 
 	assume(new_cell != NULL);
-	snprintf(new_cell->name, MPC_MAX_OBJECT_NAME, "%s", name);
+	(void)snprintf(new_cell->name, MPC_MAX_OBJECT_NAME, "%s", name);
 	new_cell->datatype = datatype;
 
 	/* Save it */
@@ -1657,7 +1658,7 @@ int _mpc_dt_name_set(mpc_lowcomm_datatype_t datatype, const char *const name)
 	return 0;
 }
 
-char *_mpc_dt_name_get(const mpc_lowcomm_datatype_t datatype)
+char *_mpc_dt_name_get(mpc_lowcomm_datatype_t datatype)
 {
 	/* Special values */
 	if(datatype == MPC_LOWCOMM_DATATYPE_NULL)
@@ -1697,7 +1698,8 @@ char *_mpc_dt_name_get(const mpc_lowcomm_datatype_t datatype)
  */
 static inline void __mpc_dt_name_clear()
 {
-	struct __mpc_dt_name_cell *current, *tmp;
+	struct __mpc_dt_name_cell *current = NULL;
+	struct __mpc_dt_name_cell *tmp = NULL;
 
 	HASH_ITER(hh, datatype_names, current, tmp)
 	{
@@ -1743,7 +1745,7 @@ bool _mpc_dt_footprint_check_envelope(struct _mpc_dt_footprint *ref, struct _mpc
 	/* Now compare each array */
 
 	/* Type is generally the shortest */
-	int i;
+	int i = 0;
 
 	/*
 	 * for( i = 0 ; i < num_datatypes ; i++ )
@@ -1882,7 +1884,7 @@ static inline mpc_lowcomm_datatype_t *__alloc_datatype_array(int count)
 #define CHECK_OVERFLOW(cnt, limit)   \
 	do                           \
 	{                            \
-		assume(cnt < limit); \
+		assume((cnt) < (limit)); \
 	} while(0)
 
 void _mpc_dt_context_set(struct _mpc_dt_footprint *ctx, struct _mpc_dt_context *dctx)
@@ -1923,7 +1925,7 @@ static void __mpc_context_set_refcount(struct _mpc_dt_footprint *ctx, struct _mp
 	int n_int  = 0;
 	int n_addr = 0;
 	int n_type = 0;
-	int dummy_combiner;
+	int dummy_combiner = 0;
 
 	/* The context is not yet fully initialized but we can
 	 * already switch the data-type as we have just set it */
@@ -2215,7 +2217,7 @@ static void __mpc_context_set_refcount(struct _mpc_dt_footprint *ctx, struct _mp
 	memset(is_datatype_present, 0, sizeof(int) * SCTK_USER_DATA_TYPES_MAX);
 
 	/* Accumulate present datatypes */
-	int j;
+	int j = 0;
 
 	for( j = 0; j < n_type; j++ )
 	{
@@ -2231,7 +2233,7 @@ static void __mpc_context_set_refcount(struct _mpc_dt_footprint *ctx, struct _mp
 		is_datatype_present[ctx->array_of_types[j]->id] = 1;
 	}
 
-	mpc_lowcomm_datatype_t embedded_datatype;
+	mpc_lowcomm_datatype_t embedded_datatype = NULL;
 
 	/* Increment the refcounters of present datatypes */
 	for( j = 0; j < SCTK_USER_DATA_TYPES_MAX; j++ )
@@ -2389,10 +2391,10 @@ static inline int _mpc_dt_layout_fill(struct _mpc_dt_layout *l, mpc_lowcomm_data
 {
 	assume(l != NULL);
 	l->type = datatype;
-	size_t size;
+	size_t size = 0;
 
 	_mpc_cl_type_size(datatype, &size);
-	l->size = (size_t)size;
+	l->size = size;
 
 	return MPC_LOWCOMM_SUCCESS;
 }
@@ -2403,7 +2405,8 @@ struct _mpc_dt_layout *_mpc_dt_get_layout(struct _mpc_dt_footprint *ctx, size_t 
 	size_t count = 0;
 
 	unsigned int i = 0;
-	int          cnt = 0, j = 0;
+	int          cnt = 0;
+	int          j = 0;
 
 	*ly_count = 0;
 	bool is_allocated     = false;

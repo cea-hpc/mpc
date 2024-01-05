@@ -26,9 +26,9 @@
 #include "mpi_rma_ctrl_msg.h"
 #include <mpc_launch_shm.h>
 
-#include "mpi_rma_epoch.h"
 #include "mpc_lowcomm.h"
 #include "mpc_lowcomm_rdma.h"
+#include "mpi_rma_epoch.h"
 #include "sctk_window.h"
 
 #include <sctk_alloc.h>
@@ -192,7 +192,7 @@ struct mpc_MPI_Win *mpc_MPI_Win_init(int flavor, int model, MPI_Comm comm,
 		return NULL;
 	}
 
-	MPI_Comm win_com;
+	MPI_Comm win_com = NULL;
 
 	PMPI_Comm_dup(comm, &win_com);
 
@@ -243,7 +243,7 @@ struct mpc_MPI_Win *mpc_MPI_Win_init(int flavor, int model, MPI_Comm comm,
 	mpc_Win_target_ctx_init(&ret->target, win_com);
 
 	ret->is_single_process =
-		(mpc_common_get_task_count() == mpc_common_get_local_task_count() );
+		(mpc_common_get_task_count() == (unsigned int)mpc_common_get_local_task_count() );
 
 	ret->is_over_network = is_over_network || !ret->is_single_process;
 
@@ -273,10 +273,9 @@ struct mpc_MPI_Win *mpc_MPI_Win_init(int flavor, int model, MPI_Comm comm,
 		{
 			break;
 		}
-		else
-		{
-			mpc_thread_yield();
-		}
+		
+		mpc_thread_yield();
+	
 	}
 
 	mpc_thread_yield();
@@ -403,9 +402,9 @@ static inline int mpc_MPI_Win_do_registration(mpc_lowcomm_rdma_window_t internal
 
 	/* We now proceeed to individual remote window resolution
 	 * by mapping ourselved to the remote windows */
-	int i;
+	int i = 0;
 
-	int my_rank;
+	int my_rank = 0;
 
 	PMPI_Comm_rank(desc->comm, &my_rank);
 
@@ -463,11 +462,11 @@ int __mpc_MPI_Win_create(void *base, MPI_Aint size, int disp_unit,
                          int WIN_FLAVOR, int MEM_MODEL,
                          mpc_MPI_win_storage storage, void * true_base_addr)
 {
-	int my_rank;
+	int my_rank = 0;
 
 	PMPI_Comm_rank(comm, &my_rank);
 
-	int comm_size;
+	int comm_size = 0;
 
 	PMPI_Comm_size(comm, &comm_size);
 
@@ -535,13 +534,15 @@ int mpc_MPI_Win_allocate(MPI_Aint size, int disp_unit, MPI_Info info,
 	/* Start by checking the shifting to a shared window */
 	int youd_better_move_to_shared = 0;
 
-	if(mpc_common_get_task_count() != mpc_common_get_local_task_count() )
+	if(mpc_common_get_task_count() != (unsigned int)mpc_common_get_local_task_count() )
 	{
 		/* If we are here we are not all in the same process
 		 * which is the initial requirement to use a shared win */
-		MPI_Comm node_comm;
+		MPI_Comm node_comm = NULL;
 
-		int my_rank, source_size, node_size;
+		int my_rank = 0;
+		int source_size = 0;
+		int node_size = 0;
 		PMPI_Comm_rank(comm, &my_rank);
 		PMPI_Comm_size(comm, &source_size);
 
@@ -606,7 +607,7 @@ static inline int __barrier(void *pcomm)
 static inline int __rank(void *pcomm)
 {
 	MPI_Comm comm = (MPI_Comm)pcomm;
-	int      ret;
+	int      ret = 0;
 
 	PMPI_Comm_rank(comm, &ret);
 	return ret;
@@ -623,13 +624,13 @@ static inline int __bcast(void *buff, size_t len, void *pcomm)
 int mpc_MPI_Win_allocate_shared(MPI_Aint size, int disp_unit, MPI_Info info,
                                 MPI_Comm comm, void *base, MPI_Win *win)
 {
-	int rank;
+	int rank = 0;
 
 	PMPI_Comm_rank(comm, &rank);
-	int comm_size;
+	int comm_size = 0;
 
 	PMPI_Comm_size(comm, &comm_size);
-	uint64_t total_size;
+	uint64_t total_size = 0;
 	uint64_t tmp_size = size;
 
 	int ret = PMPI_Allreduce( (void *)&tmp_size, (void *)&total_size, 1,
@@ -642,7 +643,7 @@ int mpc_MPI_Win_allocate_shared(MPI_Aint size, int disp_unit, MPI_Info info,
 	mpc_MPI_win_storage storage_type = MPC_MPI_WIN_STORAGE_NONE;
 
 	/* Are all the tasks in the same process ? */
-	if(mpc_common_get_task_count() == mpc_common_get_local_task_count() )
+	if(mpc_common_get_task_count() == (unsigned int)mpc_common_get_local_task_count() )
 	{
 		/* Easy case we are all in the same process */
 		if(!rank)
@@ -667,7 +668,8 @@ int mpc_MPI_Win_allocate_shared(MPI_Aint size, int disp_unit, MPI_Info info,
 			is_master = 1;
 		}
 
-		MPI_Comm process_master_comm, node_comm;
+		MPI_Comm process_master_comm = MPI_COMM_NULL;
+		MPI_Comm node_comm = MPI_COMM_NULL;
 		PMPI_Comm_split_type(comm, MPI_COMM_TYPE_SHARED, rank, MPI_INFO_NULL,
 		                     &node_comm);
 
@@ -718,7 +720,7 @@ int mpc_MPI_Win_allocate_shared(MPI_Aint size, int disp_unit, MPI_Info info,
 
 	size_t local_offset = 0;
 
-	int i;
+	int i = 0;
 
 	for(i = 0; i < rank; i++)
 	{
@@ -789,7 +791,7 @@ int mpc_MPI_Win_free(MPI_Win *win)
 	PMPI_Barrier(desc->comm);
 
 	/* Deregister wins */
-	int i;
+	int i = 0;
 
 	for(i = 0; i < desc->comm_size; i++)
 	{
@@ -801,7 +803,7 @@ int mpc_MPI_Win_free(MPI_Win *win)
 		mpc_lowcomm_rdma_window_local_release(desc->remote_wins[i]);
 	}
 
-	int rank;
+	int rank = 0;
 	PMPI_Comm_rank(desc->comm, &rank);
 
 	/* Free win memory */
@@ -835,7 +837,7 @@ int mpc_MPI_Win_free(MPI_Win *win)
 			}
 
 
-			MPI_Comm process_master_comm;
+			MPI_Comm process_master_comm = MPI_COMM_NULL;
 			PMPI_Comm_split(desc->comm, is_master, rank, &process_master_comm);
 
 			if(mpc_common_get_local_task_rank() == 0)
@@ -912,7 +914,7 @@ int mpc_MPI_Win_shared_query(MPI_Win win, int rank, MPI_Aint *size,
 	if(rank == MPI_PROC_NULL)
 	{
 		/* Return the lowest rank with non-null size */
-		int i;
+		int i = 0;
 		for(i = 0; i < desc->comm_size; i++)
 		{
 			if(0 <= mpc_MPI_win_get_remote_win(desc, i, 0) )
@@ -936,18 +938,17 @@ int mpc_MPI_Win_shared_query(MPI_Win win, int rank, MPI_Aint *size,
 		*( (void **)baseptr) = NULL;
 		return MPI_SUCCESS;
 	}
-	else
-	{
-		low_win = sctk_win_translate(remote_win);
-	}
+	
+	low_win = sctk_win_translate(remote_win);
+
 
 	if(!low_win)
 	{
 		return MPI_ERR_WIN;
 	}
 
-	*size                = low_win->size;
-	*disp_unit           = low_win->disp_unit;
+	*size                = (MPI_Aint)low_win->size;
+	*disp_unit           = (int)low_win->disp_unit;
 	*( (void **)baseptr) = low_win->start_addr;
 
 	return MPI_SUCCESS;
@@ -1191,6 +1192,8 @@ int mpc_MPI_Win_get_attr(MPI_Win win, int keyval, void *attr_val, int *flag)
 			*flag = 1;
 			*( (void **)attr_val) = (void *)&desc->model;
 			return MPI_SUCCESS;
+		default:
+			assume("Unreachable");
 	}
 
 	/* If we are here it is an user-defined ATTR */

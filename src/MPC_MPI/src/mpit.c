@@ -28,9 +28,10 @@
 /* ######################################################################## */
 
 #include "mpit.h"
-#include <sctk_alloc.h>
-#include "mpc_mpi_internal.h"
 #include "mpc_common_spinlock.h"
+#include "mpc_mpi.h"
+#include "mpc_mpi_internal.h"
+#include <sctk_alloc.h>
 
 /*********************
  * VARIABLES STORAGE *
@@ -86,7 +87,7 @@ static inline _mpc_mpi_mpit_cat_t * __cat_recursive_scan_conf(mpc_conf_config_ty
 
     mpc_conf_config_type_t *conf_type = mpc_conf_config_type_elem_get_inner(elem);
 
-    unsigned int i;
+    unsigned int i = 0;
     unsigned int len = mpc_conf_config_type_count(conf_type);
 
     /* Count each element */
@@ -199,7 +200,7 @@ static inline int __expandable_array_add(volatile void ***parray, int *psize, in
 
 static inline void __expandable_array_free(volatile void ***parray, int *pcount)
 {
-    int i;
+    int i = 0;
     volatile void ** array = *parray;
 
     for( i = 0 ; i < *pcount; i++)
@@ -377,8 +378,8 @@ int PMPI_T_enum_get_info(MPI_T_enum enumtype, int *num, char *name, int *name_le
     }
 
     *num = mpc_conf_config_type_count(etype);
-    snprintf(name, *name_len, "%s", etype->name);
-    *name_len = strlen(name);
+    (void)snprintf(name, *name_len, "%s", etype->name);
+    *name_len = (int)strlen(name);
 
     return MPI_SUCCESS;
 }
@@ -389,7 +390,7 @@ int PMPI_T_enum_get_item(MPI_T_enum enumtype, int index, int *value, char *name,
 {
     mpc_conf_config_type_t * etype = (mpc_conf_config_type_t *)enumtype;
 
-    if(!etype || !name || !name || !name_len)
+    if(!etype || !name || !name_len)
     {
         MPI_ERROR_REPORT(MPI_COMM_SELF, MPI_T_ERR_INVALID, "One of the arguments was NULL");
     }
@@ -412,8 +413,8 @@ int PMPI_T_enum_get_item(MPI_T_enum enumtype, int index, int *value, char *name,
         }
 
         *value = mpc_conf_type_elem_get_as_int(elem);
-        snprintf(name, *name_len, "%s", elem->name);
-        *name_len = strlen(name);
+        (void)snprintf(name, *name_len, "%s", elem->name);
+        *name_len = (int)strlen(name);
 
     }
     else
@@ -447,7 +448,7 @@ int PMPI_T_category_get_categories(int cat_index, int len, int indices[])
 
     _mpc_mpi_mpit_cat_t * cat = __mpit.categories[cat_index];
 
-    int i;
+    int i = 0;
 
     for(i = 0 ; (i < len) && (i < cat->children_count); i++ )
     {
@@ -473,15 +474,17 @@ int PMPI_T_category_get_pvars(int cat_index, int len, int indices[])
         return MPI_SUCCESS;
     }
 
-    int i;
+    int i = 0;
 
     for( i = 0 ; (i < len) && (i < cat->var_count); i++)
     {
         indices[i] = cat->vars[i].id;
     }
+
+    return MPI_SUCCESS;
 }
 
-#pragma weal MPI_T_category_get_cvars = PMPI_T_category_get_cvars
+#pragma weak MPI_T_category_get_cvars = PMPI_T_category_get_cvars
 
 int PMPI_T_category_get_cvars(int cat_index, int len, int indices[])
 {
@@ -497,19 +500,21 @@ int PMPI_T_category_get_cvars(int cat_index, int len, int indices[])
         return MPI_SUCCESS;
     }
 
-    int i;
+    int i = 0;
 
     for( i = 0 ; (i < len) && (i < cat->var_count); i++)
     {
         indices[i] = cat->vars[i].id;
     }
+
+    return MPI_SUCCESS;
 }
 
 #pragma weak MPI_T_category_get_index = PMPI_T_category_get_index
 
 int PMPI_T_category_get_index(const char *name, int *cat_index)
 {
-    int i;
+    int i = 0;
 
     for( i = 0 ; i < __mpit.categories_count; i++)
     {
@@ -541,12 +546,12 @@ int PMPI_T_category_get_info(int cat_index,
 
     _mpc_mpi_mpit_cat_t * cat = __mpit.categories[cat_index];
 
-    snprintf(name, *name_len, "%s", cat->name);
-    *name_len = strlen(cat->name);
+    (void)snprintf(name, *name_len, "%s", cat->name);
+    *name_len = (int)strlen(cat->name);
 
     assume(cat->elem != NULL);
-    snprintf(desc, *desc_len, "%s", cat->elem->doc);
-    *desc_len = strlen(cat->elem->doc);
+    (void)snprintf(desc, *desc_len, "%s", cat->elem->doc);
+    *desc_len = (int)strlen(cat->elem->doc);
 
     /* Now fill counters */
     *num_categories = cat->children_count;
@@ -585,7 +590,7 @@ int PMPI_T_category_get_num(int *num_cat)
 
 int PMPI_T_cvar_get_index(const char *name, int *cvar_index)
 {
-    int i;
+    int i = 0;
 
     for( i = 0 ; i < __mpit.cvar_count; i++)
     {
@@ -611,14 +616,13 @@ static inline MPI_Datatype __conf_type_to_mpi(mpc_conf_type_t type)
         {
             return MPI_INT64_T;
         }
-        else if(sizeof(long int) == 4)
+        
+        if(sizeof(long int) == 4)
         {
             return MPI_INT32_T;
         }
-        else
-        {
-            not_implemented();
-        }
+        
+        not_implemented();
     }
 	case MPC_CONF_DOUBLE:
         return MPI_DOUBLE;
@@ -653,8 +657,8 @@ int PMPI_T_cvar_get_info(int cvar_index, char *name, int *name_len, int *verbosi
 
     _mpc_mpi_mpit_var_t * var = __mpit.cvars[cvar_index];
 
-    snprintf(name, *name_len, "%s", var->elem_node->name);
-    *name_len = strlen(var->elem_node->name);
+    (void)snprintf(name, *name_len, "%s", var->elem_node->name);
+    *name_len = (int)strlen(var->elem_node->name);
 
     /* Not supported yet */
     *verbosity = MPI_T_VERBOSITY_USER_ALL;
@@ -665,8 +669,8 @@ int PMPI_T_cvar_get_info(int cvar_index, char *name, int *name_len, int *verbosi
     *enumtype = NULL;
 
 
-    snprintf(desc, *desc_len, "%s", var->elem_node->doc);
-    *desc_len = strlen(var->elem_node->doc);
+    (void)snprintf(desc, *desc_len, "%s", var->elem_node->doc);
+    *desc_len = (int)strlen(var->elem_node->doc);
 
     /* Not supported */
     *bind = MPI_T_BIND_NO_OBJECT;
@@ -770,7 +774,7 @@ int PMPI_T_cvar_write(MPI_T_cvar_handle handle, const void *buf)
 
     _mpc_mpi_mpit_var_t * var = __mpit.cvars[handle];
 
-    int rc = mpc_conf_config_type_elem_set(var->elem_node, var->type, (void*)buf);
+    int rc = mpc_conf_config_type_elem_set(var->elem_node, var->elem_node->type, (void*)buf);
 
     if(rc != 0)
     {
@@ -786,9 +790,9 @@ int PMPI_T_cvar_write(MPI_T_cvar_handle handle, const void *buf)
 
 #pragma weak MPI_T_pvar_get_index = PMPI_T_pvar_get_index
 
-int PMPI_T_pvar_get_index(const char *name, int var_class, int *pvar_index)
+int PMPI_T_pvar_get_index(const char *name, int var_class __UNUSED__, int *pvar_index)
 {
-    int i;
+    int i = 0;
 
     for( i = 0 ; i < __mpit.pvar_count; i++)
     {
@@ -825,8 +829,8 @@ int PMPI_T_pvar_get_info(int pvar_index,
 
     _mpc_mpi_mpit_var_t * var = __mpit.pvars[pvar_index];
 
-    snprintf(name, *name_len, "%s", var->elem_node->name);
-    *name_len = strlen(var->elem_node->name);
+    (void)snprintf(name, *name_len, "%s", var->elem_node->name);
+    *name_len = (int)strlen(var->elem_node->name);
 
     /* Not supported yet */
     *verbosity = MPI_T_VERBOSITY_USER_ALL;
@@ -839,8 +843,8 @@ int PMPI_T_pvar_get_info(int pvar_index,
     /* Not supported yet (needs choices inside the config) */
     *enumtype = NULL;
 
-    snprintf(desc, *desc_len, "%s", var->elem_node->doc);
-    *desc_len = strlen(var->elem_node->doc);
+    (void)snprintf(desc, *desc_len, "%s", var->elem_node->doc);
+    *desc_len = (int)strlen(var->elem_node->doc);
 
     /* Not supported */
     *bind = MPI_T_BIND_NO_OBJECT;
@@ -1042,7 +1046,7 @@ int PMPI_T_pvar_write(MPI_T_pvar_session session, MPI_T_pvar_handle handle, cons
 
     _mpc_mpi_mpit_var_t * var = __mpit.pvars[handle];
 
-    int rc = mpc_conf_config_type_elem_set(var->elem_node, var->type, (void*)buf);
+    int rc = mpc_conf_config_type_elem_set(var->elem_node, var->elem_node->type, (void*)buf);
 
     if(rc != 0)
     {
