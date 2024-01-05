@@ -20,6 +20,7 @@
 
 #include "sctk_alloc.h"
 #include "mpc_common_debug.h"
+#include <stdint.h>
 #include <string.h>
 
 void mpc_common_bit_array_init_buff(struct mpc_common_bit_array *ba, uint64_t size,
@@ -81,9 +82,9 @@ void mpc_common_bit_array_replicate(struct mpc_common_bit_array *dest,
 void mpc_common_bit_array_dump(struct mpc_common_bit_array *ba) {
 
   unsigned int i = 0;
-  uint64_t size = ba->size * 8;
+  uint64_t size = ba->size * sizeof(uint64_t);
 
-  printf("Array size is %d \n", size);
+  printf("Array size is %ld \n", size);
 
   for (i = 0; i < size; i++) {
     printf("[%d]%d ", i, mpc_common_bit_array_get(ba, i));

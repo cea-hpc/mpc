@@ -759,8 +759,8 @@ static int PMII_getmaxes( int *kvsname_max, int *keylen_max, int *vallen_max )
 	PMI_Abort( -1, errmsg );
     }
     else {
-	char buf1[PMIU_MAXLINE];
-        PMIU_getval( "rc", buf, PMIU_MAXLINE );
+	char buf1[512];
+        PMIU_getval( "rc", buf, 512 );
         if ( strncmp( buf, "0", PMIU_MAXLINE ) != 0 ) {
             PMIU_getval( "pmi_version", buf, PMIU_MAXLINE );
             PMIU_getval( "pmi_subversion", buf1, PMIU_MAXLINE );
