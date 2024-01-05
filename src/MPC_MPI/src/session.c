@@ -21,10 +21,11 @@
 /* ######################################################################## */
 #include "session.h"
 
+#include "mpc_keywords.h"
 #include "mpc_mpi_internal.h"
+#include <mpc_common_datastructure.h>
 #include <mpc_common_debug.h>
 #include <mpc_lowcomm_group.h>
-#include <mpc_common_datastructure.h>
 
 
 #include <sctk_alloc.h>
@@ -218,7 +219,7 @@ int PMPI_Session_call_errhandler(MPI_Session session, int error_code)
 
 static inline int __session_report_error(MPI_Session session, int error_code, char *desc)
 {
-	MPI_Errhandler errh;
+	MPI_Errhandler errh = NULL;
 
 	PMPI_Session_get_errhandler(session, &errh);
 
@@ -334,13 +335,13 @@ int PMPI_Session_get_info(MPI_Session session, MPI_Info *info_used)
 	return PMPI_Info_dup(session->infos, info_used);
 }
 
-int PMPI_Session_get_num_psets(MPI_Session session, MPI_Info info, int *npset_names)
+int PMPI_Session_get_num_psets(MPI_Session session __UNUSED__, MPI_Info info __UNUSED__, int *npset_names)
 {
 	*npset_names = mpc_lowcomm_group_pset_count();
 	MPI_ERROR_SUCCESS();
 }
 
-int PMPI_Session_get_nth_pset(MPI_Session session, MPI_Info info, int n, int *pset_len, char *pset_name)
+int PMPI_Session_get_nth_pset(MPI_Session session, MPI_Info info __UNUSED__, int n, int *pset_len, char *pset_name)
 {
 	mpc_lowcomm_process_set_t *pset = mpc_lowcomm_group_pset_get_nth(n);
 
@@ -351,10 +352,10 @@ int PMPI_Session_get_nth_pset(MPI_Session session, MPI_Info info, int n, int *ps
 
 	if(*pset_len)
 	{
-		snprintf(pset_name, *pset_len + 1, "%s", pset->name);
+		(void)snprintf(pset_name, *pset_len + 1, "%s", pset->name);
 	}
 
-	*pset_len = strlen(pset->name);
+	*pset_len = (int)strlen(pset->name);
 
 	mpc_lowcomm_group_pset_free(pset);
 
@@ -378,11 +379,11 @@ int PMPI_Session_get_pset_info(MPI_Session session, const char *pset_name, MPI_I
 		return __session_report_error(session, res, "Could not create pset info object");
 	}
 
-	char smpi_size[64];
-	char sname[128];
+	char smpi_size[MPC_LOWCOMM_GROUP_MAX_PSET_NAME_LEN];
+	char sname[MPC_LOWCOMM_GROUP_MAX_PSET_NAME_LEN];
 
-	snprintf(smpi_size, 64, "%d", mpc_lowcomm_group_size(pset->group));
-	snprintf(sname, 128, "%s", pset->name);
+	(void)snprintf(smpi_size, MPC_LOWCOMM_GROUP_MAX_PSET_NAME_LEN, "%d", mpc_lowcomm_group_size(pset->group));
+	(void)snprintf(sname, MPC_LOWCOMM_GROUP_MAX_PSET_NAME_LEN, "%s", pset->name);
 
 	PMPI_Info_set(*info, "mpi_size", smpi_size);
 	PMPI_Info_set(*info, "name", sname);
@@ -402,7 +403,7 @@ int PMPI_Group_from_session_pset(MPI_Session session, const char *pset_name, MPI
 		return __session_report_error(session, MPI_ERR_ARG, "Could not retrieve PSET");
 	}
 
-	if(newgroup == MPI_GROUP_NULL)
+	if(*newgroup == MPI_GROUP_NULL)
 	{
 		return __session_report_error(session, MPI_ERR_ARG, "Cannot create group on MPI_GROUP_NULL");
 	}

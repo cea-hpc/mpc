@@ -245,7 +245,7 @@ static inline struct __mpc_dt_keyval *__mpc_dt_keyval_new(int *type_keyval)
 	}
 
 	/* Now that we booked a slot export its ID and prepare to return the entry */
-	*type_keyval = (int)new_id;
+	*type_keyval = new_id;
 	ret          = &__keyval_array[new_id];
 
 	mpc_common_spinlock_unlock(&__keyval_array_lock);
@@ -281,7 +281,7 @@ static inline void __mpc_dt_keyval_hit_delete(const int type_keyval, void *attri
  *  \param attribute_val_in old data-type value
  *  \param attribute_val_out new data-type value
  */
-static inline void __mpc_dt_keyval_hit_copy(const int type_keyval, const mpc_lowcomm_datatype_t oldtype,
+static inline void __mpc_dt_keyval_hit_copy(const int type_keyval, mpc_lowcomm_datatype_t oldtype,
                                             void **attribute_val_in, void **attribute_val_out,
                                             int *flag)
 {
@@ -473,11 +473,11 @@ static inline void ___mpc_init_composed_common_type(mpc_lowcomm_datatype_t targe
 
 	/* Fill type context according to collected data */
 	begins[0] = 0;
-	begins[1] = disp;
+	begins[1] = (long)disp;
 
 	/* YES datatypes bounds are inclusive ! */
-	ends[0] = sa - 1;
-	ends[1] = disp + sb - 1;
+	ends[0] = (long)sa - 1;
+	ends[1] = (long)(disp + sb - 1);
 
 	types[0] = type_a;
 	types[1] = type_b;
@@ -495,7 +495,7 @@ static inline void ___mpc_init_composed_common_type(mpc_lowcomm_datatype_t targe
 	displacements[1] = begins[1];
 
 	/* Create the general data-type */
-	mpc_lowcomm_datatype_t new_type = _mpc_dt_general_create( (intptr_t)target_type, count, begins, ends, types, 0, false, struct_size, true);
+	mpc_lowcomm_datatype_t new_type = _mpc_dt_general_create( (intptr_t)target_type, count, begins, ends, types, 0, false, (long)struct_size, true);
 
 	new_type->size = struct_size;
 
@@ -778,7 +778,7 @@ void _mpc_dt_contiguous_create(mpc_lowcomm_datatype_t *type, const size_t id_ran
 	assume(datatypes != NULL);
 
 	begins[0]    = 0;
-	ends[0]      = size - 1; /**< inslusive bound */
+	ends[0]      = (long)size - 1; /**< inslusive bound */
 	datatypes[0] = datatype;
 
 	/* creates a generic type */

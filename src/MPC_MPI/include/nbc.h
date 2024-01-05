@@ -620,17 +620,17 @@ static inline int NBC_Unpack(void *src, int srccount, MPI_Datatype srctype, void
 
 #define NBC_IN_PLACE(sendbuf, recvbuf, inplace)    \
 	{                                          \
-		inplace = 0;                       \
-		if(recvbuf == sendbuf){            \
-			inplace = 1;               \
+		(inplace) = 0;                       \
+		if((recvbuf) == (sendbuf)){            \
+			(inplace) = 1;               \
 		} else                             \
-		if(sendbuf == MPI_IN_PLACE){       \
-			sendbuf = recvbuf;         \
-			inplace = 1;               \
+		if((sendbuf) == MPI_IN_PLACE){       \
+			(sendbuf) = recvbuf;         \
+			(inplace) = 1;               \
 		} else                             \
-		if(recvbuf == MPI_IN_PLACE){       \
-			recvbuf = (void *)sendbuf; \
-			inplace = 1;               \
+		if((recvbuf) == MPI_IN_PLACE){       \
+			(recvbuf) = (void *)(sendbuf); \
+			(inplace) = 1;               \
 		}                                  \
 	}
 

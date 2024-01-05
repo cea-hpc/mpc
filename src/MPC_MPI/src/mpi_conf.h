@@ -17,7 +17,7 @@ struct _mpc_mpi_config_nbc
     int progress_thread;
     int thread_basic_prio;
     char thread_bind_function_name[MPC_CONF_STRING_SIZE];
-    void (*thread_bind_function)();
+    int (*thread_bind_function)();
 
     /* NBC EGREQ */
     int use_egreq_barrier;
