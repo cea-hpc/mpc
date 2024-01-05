@@ -44,9 +44,9 @@ extern "C"
 #endif
 
 
-#define SCTK_ETHREAD_STACK_SIZE            10 * 1024 * 1024
-#define SCTK_ETHREAD_THREAD_STACK_SIZE     4 * 1024 * 1024
-#define SCTK_ETHREAD_STACK_SIZE_FORTRAN    1024 * 1024 * 1024
+#define SCTK_ETHREAD_STACK_SIZE            (10ull * 1024 * 1024)
+#define SCTK_ETHREAD_THREAD_STACK_SIZE     (4ull * 1024 * 1024)
+#define SCTK_ETHREAD_STACK_SIZE_FORTRAN    (1024ull * 1024 * 1024)
 
 struct sched_param;
 struct mpc_thread_rank_info_s;

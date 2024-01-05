@@ -240,7 +240,7 @@ void mpc_common_debug_assert_print(FILE *stream, int line,
 		static int mpc_common_debug_only_once_initialized = 0;                                         \
 		if(mpc_common_debug_only_once_initialized == 1)                                                \
 		{                                                                                              \
-			fprintf(stderr, "Multiple intialisation on line %d in file %s\n", __LINE__, __FILE__); \
+			(void)fprintf(stderr, "Multiple intialisation on line %d in file %s\n", __LINE__, __FILE__); \
 			mpc_common_debug_abort();                                                              \
 		}                                                                                              \
 		mpc_common_debug_only_once_initialized++;                                                      \

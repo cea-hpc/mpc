@@ -22,16 +22,15 @@
 #define _GNU_SOURCE
 #include <sched.h>
 
-#include <stdio.h>
-#include <unistd.h>
-#include <string.h>
 #include "mpc_common_debug.h"
-#include "mpc_thread.h"
 #include "ethread_engine.h"
 #include "ethread_engine_internal.h"
+#include "mpc_thread.h"
 #include "sctk_alloc.h"
 #include "thread_ptr.h"
-#include "sctk_context.h"
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
 
 #include "mpc_topology.h"
 
@@ -54,8 +53,8 @@ mpc_thread_keys_t _mpc_thread_ethread_key;
 
 inline _mpc_thread_ethread_t _mpc_thread_ethread_self()
 {
-	_mpc_thread_ethread_virtual_processor_t *vp;
-	_mpc_thread_ethread_per_thread_t *       task;
+	_mpc_thread_ethread_virtual_processor_t *vp = NULL;
+	_mpc_thread_ethread_per_thread_t *       task = NULL;
 
 	vp   = _mpc_thread_kthread_getspecific(_mpc_thread_ethread_key);
 	task = (_mpc_thread_ethread_t)vp->current;
@@ -101,8 +100,8 @@ void _mpc_thread_ethread_return_task(_mpc_thread_ethread_per_thread_t *task)
 
 static int _mpc_thread_ethread_sched_yield()
 {
-	_mpc_thread_ethread_per_thread_t *       current;
-	_mpc_thread_ethread_virtual_processor_t *current_vp;
+	_mpc_thread_ethread_per_thread_t *       current = NULL;
+	_mpc_thread_ethread_virtual_processor_t *current_vp = NULL;
 
 	_mpc_thread_ethread_self_all(&current_vp, &current);
 
@@ -121,7 +120,7 @@ static int _mpc_thread_ethread_sched_yield()
 
 static int _mpc_thread_ethread_sched_dump(char *file)
 {
-	_mpc_thread_ethread_t self;
+	_mpc_thread_ethread_t self = NULL;
 
 	self               = _mpc_thread_ethread_self();
 	self->status       = ethread_dump;
@@ -133,7 +132,7 @@ static int _mpc_thread_ethread_sched_dump(char *file)
 
 static int _mpc_thread_ethread_sched_migrate()
 {
-	_mpc_thread_ethread_t self;
+	_mpc_thread_ethread_t self = NULL;
 
 	self                     = _mpc_thread_ethread_self();
 	self->status             = ethread_dump;
@@ -145,7 +144,7 @@ static int _mpc_thread_ethread_sched_migrate()
 
 static int _mpc_thread_ethread_sched_restore(mpc_thread_t thread, char *type, int vp)
 {
-	struct sctk_alloc_chain *tls;
+	struct sctk_alloc_chain *tls = NULL;
 
 	assume(vp == 0);
 
@@ -181,8 +180,8 @@ _mpc_thread_ethread_get_activity(int i)
 static void _mpc_thread_ethread_wait_for_value_and_poll(volatile int *data, int value,
                                                         void (*func)(void *), void *arg)
 {
-	_mpc_thread_ethread_per_thread_t *       current;
-	_mpc_thread_ethread_virtual_processor_t *current_vp;
+	_mpc_thread_ethread_per_thread_t *       current = NULL;
+	_mpc_thread_ethread_virtual_processor_t *current_vp = NULL;
 
 	_mpc_thread_ethread_self_all(&current_vp, &current);
 
@@ -193,8 +192,8 @@ static void _mpc_thread_ethread_wait_for_value_and_poll(volatile int *data, int 
 
 static int _mpc_thread_ethread_join(_mpc_thread_ethread_t th, void **val)
 {
-	_mpc_thread_ethread_per_thread_t *       current;
-	_mpc_thread_ethread_virtual_processor_t *current_vp;
+	_mpc_thread_ethread_per_thread_t *       current = NULL;
+	_mpc_thread_ethread_virtual_processor_t *current_vp = NULL;
 
 	_mpc_thread_ethread_self_all(&current_vp, &current);
 
@@ -203,7 +202,7 @@ static int _mpc_thread_ethread_join(_mpc_thread_ethread_t th, void **val)
 
 static void _mpc_thread_ethread_exit(void *retval)
 {
-	_mpc_thread_ethread_per_thread_t *current;
+	_mpc_thread_ethread_per_thread_t *current = NULL;
 
 	current = _mpc_thread_ethread_self();
 	___mpc_thread_ethread_exit(retval, current);
@@ -219,8 +218,8 @@ static int _mpc_thread_ethread_mutex_init(mpc_thread_mutex_t *lock,
 
 static int _mpc_thread_ethread_mutex_lock(_mpc_thread_ethread_mutex_t *lock)
 {
-	_mpc_thread_ethread_per_thread_t *       current;
-	_mpc_thread_ethread_virtual_processor_t *current_vp;
+	_mpc_thread_ethread_per_thread_t *       current = NULL;
+	_mpc_thread_ethread_virtual_processor_t *current_vp = NULL;
 
 	_mpc_thread_ethread_self_all(&current_vp, &current);
 
@@ -229,8 +228,8 @@ static int _mpc_thread_ethread_mutex_lock(_mpc_thread_ethread_mutex_t *lock)
 
 static int _mpc_thread_ethread_mutex_spinlock(_mpc_thread_ethread_mutex_t *lock)
 {
-	_mpc_thread_ethread_per_thread_t *       current;
-	_mpc_thread_ethread_virtual_processor_t *current_vp;
+	_mpc_thread_ethread_per_thread_t *       current = NULL;
+	_mpc_thread_ethread_virtual_processor_t *current_vp = NULL;
 
 	_mpc_thread_ethread_self_all(&current_vp, &current);
 
@@ -239,8 +238,8 @@ static int _mpc_thread_ethread_mutex_spinlock(_mpc_thread_ethread_mutex_t *lock)
 
 static int _mpc_thread_ethread_mutex_trylock(_mpc_thread_ethread_mutex_t *lock)
 {
-	_mpc_thread_ethread_per_thread_t *       current;
-	_mpc_thread_ethread_virtual_processor_t *current_vp;
+	_mpc_thread_ethread_per_thread_t *       current = NULL;
+	_mpc_thread_ethread_virtual_processor_t *current_vp = NULL;
 
 	_mpc_thread_ethread_self_all(&current_vp, &current);
 
@@ -249,8 +248,8 @@ static int _mpc_thread_ethread_mutex_trylock(_mpc_thread_ethread_mutex_t *lock)
 
 static int _mpc_thread_ethread_mutex_unlock(_mpc_thread_ethread_mutex_t *lock)
 {
-	_mpc_thread_ethread_per_thread_t *       current;
-	_mpc_thread_ethread_virtual_processor_t *current_vp;
+	_mpc_thread_ethread_per_thread_t *       current = NULL;
+	_mpc_thread_ethread_virtual_processor_t *current_vp = NULL;
 
 	_mpc_thread_ethread_self_all(&current_vp, &current);
 
@@ -306,12 +305,11 @@ static int _mpc_thread_ethread_create(_mpc_thread_ethread_t *threadp,
 		                                    _mpc_thread_ethread_self(),
 		                                    threadp, attr->ptr, start_routine, arg);
 	}
-	else
-	{
-		return ___mpc_thread_ethread_create(ethread_ready, &virtual_processor,
-		                                    _mpc_thread_ethread_self(),
-		                                    threadp, NULL, start_routine, arg);
-	}
+
+	return ___mpc_thread_ethread_create(ethread_ready, &virtual_processor,
+												_mpc_thread_ethread_self(),
+												threadp, NULL, start_routine, arg);
+
 }
 
 static int _mpc_thread_ethread_user_create(_mpc_thread_ethread_t *threadp,
@@ -324,19 +322,18 @@ static int _mpc_thread_ethread_user_create(_mpc_thread_ethread_t *threadp,
 		                                    _mpc_thread_ethread_self(),
 		                                    threadp, attr->ptr, start_routine, arg);
 	}
-	else
-	{
-		return ___mpc_thread_ethread_create(ethread_ready, &virtual_processor,
-		                                    _mpc_thread_ethread_self(),
-		                                    threadp, NULL, start_routine, arg);
-	}
+
+	return ___mpc_thread_ethread_create(ethread_ready, &virtual_processor,
+												_mpc_thread_ethread_self(),
+												threadp, NULL, start_routine, arg);
+
 }
 
 static void _mpc_thread_ethread_freeze_thread_on_vp(_mpc_thread_ethread_mutex_t *lock,
                                                     void **list_tmp)
 {
-	_mpc_thread_ethread_per_thread_t *       current;
-	_mpc_thread_ethread_virtual_processor_t *current_vp;
+	_mpc_thread_ethread_per_thread_t *       current = NULL;
+	_mpc_thread_ethread_virtual_processor_t *current_vp = NULL;
 
 	_mpc_thread_ethread_self_all(&current_vp, &current);
 
@@ -348,8 +345,8 @@ static void _mpc_thread_ethread_freeze_thread_on_vp(_mpc_thread_ethread_mutex_t 
 
 static void _mpc_thread_ethread_wake_thread_on_vp(void **list_tmp)
 {
-	_mpc_thread_ethread_per_thread_t *       current;
-	_mpc_thread_ethread_virtual_processor_t *current_vp;
+	_mpc_thread_ethread_per_thread_t *       current = NULL;
+	_mpc_thread_ethread_virtual_processor_t *current_vp = NULL;
 
 	_mpc_thread_ethread_self_all(&current_vp, &current);
 
@@ -368,7 +365,7 @@ static int _mpc_thread_ethread_kill(_mpc_thread_ethread_per_thread_t *thread, in
 
 static int _mpc_thread_ethread_sigmask(int how, const sigset_t *newmask, sigset_t *oldmask)
 {
-	_mpc_thread_ethread_per_thread_t *cur;
+	_mpc_thread_ethread_per_thread_t *cur = NULL;
 
 	cur = _mpc_thread_ethread_self();
 	return ___mpc_thread_ethread_sigmask(cur, how, newmask, oldmask);
@@ -376,8 +373,8 @@ static int _mpc_thread_ethread_sigmask(int how, const sigset_t *newmask, sigset_
 
 static int _mpc_thread_ethread_sigpending(sigset_t *set)
 {
-	int res;
-	_mpc_thread_ethread_per_thread_t *cur;
+	int res = 0;
+	_mpc_thread_ethread_per_thread_t *cur = NULL;
 
 	cur = _mpc_thread_ethread_self();
 	res = ___mpc_thread_ethread_sigpending(cur, set);
@@ -386,8 +383,8 @@ static int _mpc_thread_ethread_sigpending(sigset_t *set)
 
 static int _mpc_thread_ethread_sigsuspend(sigset_t *set)
 {
-	int res;
-	_mpc_thread_ethread_per_thread_t *cur;
+	int res = 0;
+	_mpc_thread_ethread_per_thread_t *cur = NULL;
 
 	cur = _mpc_thread_ethread_self();
 	res = ___mpc_thread_ethread_sigsuspend(cur, set);
@@ -450,14 +447,14 @@ static int _mpc_thread_ethread_barrier_wait(_mpc_thread_ethread_barrier_t *barri
 * NON PORTABLE *
 ****************/
 
-int _mpc_thread_ethread_engine_setaffinity_np(_mpc_thread_ethread_t thread, size_t cpusetsize,
-                              const mpc_cpu_set_t *cpuset)
+int _mpc_thread_ethread_engine_setaffinity_np(_mpc_thread_ethread_t thread __UNUSED__, size_t cpusetsize __UNUSED__,
+                              const mpc_cpu_set_t *cpuset __UNUSED__)
 {
 	mpc_common_debug_warning("setaffinity_np not supported");
 	return EINVAL;
 }
 
-int _mpc_thread_ethread_engine_getaffinity_np(_mpc_thread_ethread_t thread, size_t cpusetsize,
+int _mpc_thread_ethread_engine_getaffinity_np(_mpc_thread_ethread_t thread __UNUSED__, size_t cpusetsize,
                               mpc_cpu_set_t *cpuset)
 {
 	CPU_ZERO_S(cpusetsize, (cpu_set_t*) cpuset);
@@ -513,7 +510,7 @@ void mpc_thread_ethread_engine_init(void)
 	_mpc_thread_kthread_key_create(&_mpc_thread_ethread_key, NULL);
 	_mpc_thread_kthread_setspecific(_mpc_thread_ethread_key, &virtual_processor);
 
-	int i;
+	int i = 0;
 
 	for(i = 0; i < SCTK_THREAD_KEYS_MAX; i++)
 	{
@@ -602,7 +599,7 @@ void mpc_thread_ethread_engine_init(void)
 	}
 
 	{
-		_mpc_thread_ethread_t idle;
+		_mpc_thread_ethread_t idle = NULL;
 		___mpc_thread_ethread_create(ethread_idle,
 		                             &virtual_processor,
 		                             &_mpc_thread_ethread_main_thread,

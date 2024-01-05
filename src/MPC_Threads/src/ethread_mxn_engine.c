@@ -22,19 +22,18 @@
 #define _GNU_SOURCE
 #include <sched.h>
 
-#include <stdio.h>
-#include <unistd.h>
-#include <string.h>
-#include <pthread.h>
 #include "mpc_common_debug.h"
-#include "mpc_thread.h"
 #include "ethread_engine.h"
 #include "ethread_engine_internal.h"
+#include "mpc_common_spinlock.h"
+#include "mpc_thread.h"
+#include "mpc_topology.h"
 #include "sctk_alloc.h"
 #include "thread_ptr.h"
-#include "sctk_context.h"
-#include "mpc_common_spinlock.h"
-#include "mpc_topology.h"
+#include <pthread.h>
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
 
 #include "ethread_posix.h"
 
@@ -55,8 +54,8 @@ _mpc_thread_ethread_mxn_engine_init_kethread()
 inline _mpc_thread_ethread_t
 _mpc_thread_ethread_mxn_engine_self()
 {
-	_mpc_thread_ethread_virtual_processor_t *vp;
-	_mpc_thread_ethread_per_thread_t *       task;
+	_mpc_thread_ethread_virtual_processor_t *vp = NULL;
+	_mpc_thread_ethread_per_thread_t *       task = NULL;
 
 	vp = _mpc_thread_kthread_getspecific(_mpc_thread_ethread_key);
 	if(vp == NULL)
@@ -124,8 +123,8 @@ static void _mpc_thread_ethread_mxn_engine_migration_task_relocalise(_mpc_thread
 
 static int _mpc_thread_ethread_mxn_engine_sched_yield()
 {
-	_mpc_thread_ethread_per_thread_t *       current;
-	_mpc_thread_ethread_virtual_processor_t *current_vp;
+	_mpc_thread_ethread_per_thread_t *       current = NULL;
+	_mpc_thread_ethread_virtual_processor_t *current_vp = NULL;
 
 	_mpc_thread_ethread_mxn_engine_self_all(&current_vp, &current);
 
@@ -134,8 +133,8 @@ static int _mpc_thread_ethread_mxn_engine_sched_yield()
 
 int _mpc_thread_ethread_check_state()
 {
-	_mpc_thread_ethread_per_thread_t *       current;
-	_mpc_thread_ethread_virtual_processor_t *current_vp;
+	_mpc_thread_ethread_per_thread_t *       current = NULL;
+	_mpc_thread_ethread_virtual_processor_t *current_vp = NULL;
 
 	_mpc_thread_ethread_mxn_engine_self_all(&current_vp, &current);
 
@@ -157,7 +156,7 @@ int _mpc_thread_ethread_check_state()
 
 static int _mpc_thread_ethread_mxn_engine_sched_dump(char *file)
 {
-	_mpc_thread_ethread_t self;
+	_mpc_thread_ethread_t self = NULL;
 
 	self               = _mpc_thread_ethread_mxn_engine_self();
 	self->status       = ethread_dump;
@@ -169,8 +168,8 @@ static int _mpc_thread_ethread_mxn_engine_sched_dump(char *file)
 
 static int _mpc_thread_ethread_mxn_engine_sched_migrate()
 {
-	int res;
-	_mpc_thread_ethread_t self;
+	int res = 0;
+	_mpc_thread_ethread_t self = NULL;
 
 	self                     = _mpc_thread_ethread_mxn_engine_self();
 	self->status             = ethread_dump;
@@ -185,8 +184,8 @@ static int _mpc_thread_ethread_mxn_engine_sched_migrate()
 
 static int _mpc_thread_ethread_mxn_engine_sched_restore(mpc_thread_t thread, char *type, int vp)
 {
-	struct sctk_alloc_chain *tls;
-	_mpc_thread_ethread_virtual_processor_t *cpu;
+	struct sctk_alloc_chain *tls = NULL;
+	_mpc_thread_ethread_virtual_processor_t *cpu = NULL;
 
 	mpc_common_nodebug("Try to restore %p on vp %d", thread, vp);
 	__sctk_restore_tls(&tls, type);
@@ -240,8 +239,8 @@ static int _mpc_thread_ethread_mxn_engine_sched_dump_clean()
 static void _mpc_thread_ethread_mxn_engine_wait_for_value_and_poll(volatile int *data, int value,
                                                                    void (*func)(void *), void *arg)
 {
-	_mpc_thread_ethread_per_thread_t *       current;
-	_mpc_thread_ethread_virtual_processor_t *current_vp;
+	_mpc_thread_ethread_per_thread_t *       current = NULL;
+	_mpc_thread_ethread_virtual_processor_t *current_vp = NULL;
 
 	_mpc_thread_ethread_mxn_engine_self_all(&current_vp, &current);
 
@@ -252,8 +251,8 @@ static void _mpc_thread_ethread_mxn_engine_wait_for_value_and_poll(volatile int 
 
 static int _mpc_thread_ethread_mxn_engine_join(_mpc_thread_ethread_t th, void **val)
 {
-	_mpc_thread_ethread_per_thread_t *       current;
-	_mpc_thread_ethread_virtual_processor_t *current_vp;
+	_mpc_thread_ethread_per_thread_t *       current = NULL;
+	_mpc_thread_ethread_virtual_processor_t *current_vp = NULL;
 
 	_mpc_thread_ethread_mxn_engine_self_all(&current_vp, &current);
 
@@ -262,7 +261,7 @@ static int _mpc_thread_ethread_mxn_engine_join(_mpc_thread_ethread_t th, void **
 
 static void _mpc_thread_ethread_mxn_engine_exit(void *retval)
 {
-	_mpc_thread_ethread_per_thread_t *current;
+	_mpc_thread_ethread_per_thread_t *current = NULL;
 
 	current = _mpc_thread_ethread_mxn_engine_self();
 	___mpc_thread_ethread_exit(retval, current);
@@ -278,8 +277,8 @@ static int _mpc_thread_ethread_mxn_engine_mutex_init(mpc_thread_mutex_t *lock,
 
 static int _mpc_thread_ethread_mxn_engine_mutex_lock(_mpc_thread_ethread_mutex_t *lock)
 {
-	_mpc_thread_ethread_per_thread_t *       current;
-	_mpc_thread_ethread_virtual_processor_t *current_vp;
+	_mpc_thread_ethread_per_thread_t *       current = NULL;
+	_mpc_thread_ethread_virtual_processor_t *current_vp = NULL;
 
 	_mpc_thread_ethread_mxn_engine_self_all(&current_vp, &current);
 
@@ -288,8 +287,8 @@ static int _mpc_thread_ethread_mxn_engine_mutex_lock(_mpc_thread_ethread_mutex_t
 
 static int _mpc_thread_ethread_mxn_engine_mutex_trylock(_mpc_thread_ethread_mutex_t *lock)
 {
-	_mpc_thread_ethread_per_thread_t *       current;
-	_mpc_thread_ethread_virtual_processor_t *current_vp;
+	_mpc_thread_ethread_per_thread_t *       current = NULL;
+	_mpc_thread_ethread_virtual_processor_t *current_vp = NULL;
 
 	_mpc_thread_ethread_mxn_engine_self_all(&current_vp, &current);
 
@@ -298,10 +297,10 @@ static int _mpc_thread_ethread_mxn_engine_mutex_trylock(_mpc_thread_ethread_mute
 
 static int _mpc_thread_ethread_mxn_engine_mutex_spinlock(_mpc_thread_ethread_mutex_t *lock)
 {
-	_mpc_thread_ethread_per_thread_t *       current;
-	_mpc_thread_ethread_virtual_processor_t *current_vp;
-	int res;
-	int i;
+	_mpc_thread_ethread_per_thread_t *       current = NULL;
+	_mpc_thread_ethread_virtual_processor_t *current_vp = NULL;
+	int res = 0;
+	int i = 0;
 
 	_mpc_thread_ethread_mxn_engine_self_all(&current_vp, &current);
 
@@ -318,8 +317,8 @@ static int _mpc_thread_ethread_mxn_engine_mutex_spinlock(_mpc_thread_ethread_mut
 
 static int _mpc_thread_ethread_mxn_engine_mutex_unlock(_mpc_thread_ethread_mutex_t *lock)
 {
-	_mpc_thread_ethread_per_thread_t *       current;
-	_mpc_thread_ethread_virtual_processor_t *current_vp;
+	_mpc_thread_ethread_per_thread_t *       current = NULL;
+	_mpc_thread_ethread_virtual_processor_t *current_vp = NULL;
 
 	_mpc_thread_ethread_mxn_engine_self_all(&current_vp, &current);
 
@@ -342,7 +341,7 @@ static int _mpc_thread_ethread_mxn_engine_key_delete(int key)
 
 static int _mpc_thread_ethread_mxn_engine_setspecific(int key, void *val)
 {
-	_mpc_thread_ethread_per_thread_t *current;
+	_mpc_thread_ethread_per_thread_t *current = NULL;
 
 	current = _mpc_thread_ethread_mxn_engine_self();
 
@@ -352,7 +351,7 @@ static int _mpc_thread_ethread_mxn_engine_setspecific(int key, void *val)
 static void *
 _mpc_thread_ethread_mxn_engine_getspecific(int key)
 {
-	_mpc_thread_ethread_per_thread_t *current;
+	_mpc_thread_ethread_per_thread_t *current = NULL;
 
 	current = _mpc_thread_ethread_mxn_engine_self();
 	if(current == NULL)
@@ -406,11 +405,10 @@ static int _mpc_thread_ethread_mxn_engine_user_create(_mpc_thread_ethread_t *thr
 		                                    current, threadp, attr->ptr,
 		                                    start_routine, arg);
 	}
-	else
-	{
-		return ___mpc_thread_ethread_create(ethread_ready, current_vp,
-		                                    current, threadp, NULL, start_routine, arg);
-	}
+
+	return ___mpc_thread_ethread_create(ethread_ready, current_vp,
+												current, threadp, NULL, start_routine, arg);
+
 }
 
 // hmt
@@ -443,14 +441,14 @@ static int _mpc_thread_ethread_mxn_engine_create(_mpc_thread_ethread_t *threadp,
                                                  _mpc_thread_ethread_attr_t *attr,
                                                  void *(*start_routine)(void *), void *arg)
 {
-	int new_binding;
+	int new_binding = 0;
 
 	// pos is a useless variable now we have the patch which uses the arg
 	// structure which contain
 	// the new_binding for the thread
 	// static unsigned int pos = 0;
-	_mpc_thread_ethread_per_thread_t *       current;
-	_mpc_thread_ethread_virtual_processor_t *current_vp;
+	_mpc_thread_ethread_per_thread_t *       current = NULL;
+	_mpc_thread_ethread_virtual_processor_t *current_vp = NULL;
 
 	current = _mpc_thread_ethread_mxn_engine_self();
 
@@ -459,7 +457,7 @@ static int _mpc_thread_ethread_mxn_engine_create(_mpc_thread_ethread_t *threadp,
 	// PATCH : we dont need rerun mpc_thread_get_task_placement because you have the result in
 	// the arg structure
 	sctk_thread_data_t *tmp = (sctk_thread_data_t *)arg;
-	new_binding = tmp->bind_to;
+	new_binding = (int)tmp->bind_to;
 
 	current_vp = _mpc_thread_ethread_mxn_engine_vp_list[new_binding];
 
@@ -485,18 +483,17 @@ static int _mpc_thread_ethread_mxn_engine_create(_mpc_thread_ethread_t *threadp,
 		                                    current, threadp, attr->ptr,
 		                                    start_routine, arg);
 	}
-	else
-	{
-		return ___mpc_thread_ethread_create(ethread_ready, current_vp,
-		                                    current, threadp, NULL, start_routine, arg);
-	}
+
+	return ___mpc_thread_ethread_create(ethread_ready, current_vp,
+												current, threadp, NULL, start_routine, arg);
+
 }
 
 static void _mpc_thread_ethread_mxn_engine_freeze_thread_on_vp(_mpc_thread_ethread_mutex_t *lock,
                                                                void **list_tmp)
 {
-	_mpc_thread_ethread_per_thread_t *       current;
-	_mpc_thread_ethread_virtual_processor_t *current_vp;
+	_mpc_thread_ethread_per_thread_t *       current = NULL;
+	_mpc_thread_ethread_virtual_processor_t *current_vp = NULL;
 
 	_mpc_thread_ethread_mxn_engine_self_all(&current_vp, &current);
 
@@ -508,8 +505,8 @@ static void _mpc_thread_ethread_mxn_engine_freeze_thread_on_vp(_mpc_thread_ethre
 
 static void _mpc_thread_ethread_mxn_engine_wake_thread_on_vp(void **list_tmp)
 {
-	_mpc_thread_ethread_per_thread_t *       current;
-	_mpc_thread_ethread_virtual_processor_t *current_vp;
+	_mpc_thread_ethread_per_thread_t *       current = NULL;
+	_mpc_thread_ethread_virtual_processor_t *current_vp = NULL;
 
 	_mpc_thread_ethread_mxn_engine_self_all(&current_vp, &current);
 
@@ -520,7 +517,7 @@ static void *
 _mpc_thread_ethread_mxn_engine_func_kernel_thread(void *arg)
 {
 	_mpc_thread_ethread_per_thread_t         th_data;
-	_mpc_thread_ethread_virtual_processor_t *vp;
+	_mpc_thread_ethread_virtual_processor_t *vp = NULL;
 	sctk_thread_data_t tmp = SCTK_THREAD_DATA_INIT;
 
 	vp = (_mpc_thread_ethread_virtual_processor_t *)arg;
@@ -558,8 +555,8 @@ static void *
 _mpc_thread_ethread_gen_func_kernel_thread(void *arg)
 {
 	_mpc_thread_ethread_per_thread_t         th_data;
-	_mpc_thread_ethread_virtual_processor_t *vp;
-	int i;
+	_mpc_thread_ethread_virtual_processor_t *vp = NULL;
+	int i = 0;
 	sctk_thread_data_t tmp = SCTK_THREAD_DATA_INIT;
 
 	vp = (_mpc_thread_ethread_virtual_processor_t *)arg;
@@ -590,9 +587,9 @@ _mpc_thread_ethread_gen_func_kernel_thread(void *arg)
 
 static void _mpc_thread_ethread_mxn_engine_start_kernel_thread(int pos)
 {
-	mpc_thread_kthread_t pid;
+	mpc_thread_kthread_t pid = NULL;
 	_mpc_thread_ethread_virtual_processor_t  tmp_init = SCTK_ETHREAD_VP_INIT;
-	_mpc_thread_ethread_virtual_processor_t *tmp;
+	_mpc_thread_ethread_virtual_processor_t *tmp = NULL;
 
 	mpc_topology_bind_to_cpu(pos);
 	if(pos != 0)
@@ -616,9 +613,9 @@ static void _mpc_thread_ethread_mxn_engine_start_kernel_thread(int pos)
 _mpc_thread_ethread_virtual_processor_t *
 _mpc_thread_ethread_start_kernel_thread()
 {
-	mpc_thread_kthread_t pid;
+	mpc_thread_kthread_t pid = NULL;
 	_mpc_thread_ethread_virtual_processor_t  tmp_init = SCTK_ETHREAD_VP_INIT;
-	_mpc_thread_ethread_virtual_processor_t *tmp;
+	_mpc_thread_ethread_virtual_processor_t *tmp = NULL;
 	static mpc_thread_mutex_t lock = SCTK_THREAD_MUTEX_INITIALIZER;
 
 	mpc_common_nodebug("Create Kthread");
@@ -641,7 +638,7 @@ _mpc_thread_ethread_start_kernel_thread()
 static void _mpc_thread_ethread_mxn_engine_init_vp(_mpc_thread_ethread_per_thread_t *th_data,
                                                    _mpc_thread_ethread_virtual_processor_t *vp)
 {
-	int i;
+	int i = 0;
 
 	/*Init thread and virtual processor */
 	_mpc_thread_ethread_init_data(th_data);
@@ -661,7 +658,7 @@ static void _mpc_thread_ethread_mxn_engine_init_vp(_mpc_thread_ethread_per_threa
 	}
 
 	{
-		_mpc_thread_ethread_t idle;
+		_mpc_thread_ethread_t idle = NULL;
 		___mpc_thread_ethread_create(ethread_idle,
 		                             vp, th_data, &idle, NULL, NULL, NULL);
 	}
@@ -669,8 +666,8 @@ static void _mpc_thread_ethread_mxn_engine_init_vp(_mpc_thread_ethread_per_threa
 
 static void _mpc_thread_ethread_mxn_engine_init_virtual_processors()
 {
-	unsigned int cpu_number;
-	unsigned int i;
+	unsigned int cpu_number = 0;
+	unsigned int i = 0;
 
 	use_ethread_mxn = 1;
 	_mpc_thread_kthread_key_create(&_mpc_thread_ethread_key, NULL);
@@ -690,7 +687,7 @@ static void _mpc_thread_ethread_mxn_engine_init_virtual_processors()
 
 	for(i = 1; i < cpu_number; i++)
 	{
-		_mpc_thread_ethread_mxn_engine_start_kernel_thread(i);
+		_mpc_thread_ethread_mxn_engine_start_kernel_thread((int)i);
 	}
 	mpc_topology_bind_to_cpu(0);
 
@@ -709,7 +706,7 @@ static void _mpc_thread_ethread_mxn_engine_init_virtual_processors()
 
 static int _mpc_thread_ethread_mxn_engine_thread_attr_setbinding(mpc_thread_attr_t *__attr, int __binding)
 {
-	_mpc_thread_ethread_attr_t *attr;
+	_mpc_thread_ethread_attr_t *attr = NULL;
 
 	attr = (_mpc_thread_ethread_attr_t *)__attr;
 	if(attr == NULL)
@@ -728,7 +725,7 @@ static int _mpc_thread_ethread_mxn_engine_thread_attr_setbinding(mpc_thread_attr
 
 static int _mpc_thread_ethread_mxn_engine_thread_attr_getbinding(mpc_thread_attr_t *__attr, int *__binding)
 {
-	_mpc_thread_ethread_attr_t *attr;
+	_mpc_thread_ethread_attr_t *attr = NULL;
 
 	attr = (_mpc_thread_ethread_attr_t *)__attr;
 	if(attr == NULL)
@@ -741,16 +738,16 @@ static int _mpc_thread_ethread_mxn_engine_thread_attr_getbinding(mpc_thread_attr
 	}
 
 
-	*__binding = attr->ptr->binding;
+	*__binding = (int)attr->ptr->binding;
 
 	return 0;
 }
 
 static int _mpc_thread_ethread_mxn_engine_thread_proc_migration(const int cpu)
 {
-	int last;
-	_mpc_thread_ethread_per_thread_t *       current;
-	_mpc_thread_ethread_virtual_processor_t *current_vp;
+	int last = 0;
+	_mpc_thread_ethread_per_thread_t *       current = NULL;
+	_mpc_thread_ethread_virtual_processor_t *current_vp = NULL;
 
 	_mpc_thread_ethread_mxn_engine_self_all(&current_vp, &current);
 	last = current_vp->rank;
@@ -808,7 +805,7 @@ static int _mpc_thread_ethread_mxn_engine_kill(_mpc_thread_ethread_per_thread_t 
 static int _mpc_thread_ethread_mxn_engine_sigmask(int how, const sigset_t *newmask,
                                                   sigset_t *oldmask)
 {
-	_mpc_thread_ethread_per_thread_t *cur;
+	_mpc_thread_ethread_per_thread_t *cur = NULL;
 
 	cur = _mpc_thread_ethread_mxn_engine_self();
 	return ___mpc_thread_ethread_sigmask(cur, how, newmask, oldmask);
@@ -816,8 +813,8 @@ static int _mpc_thread_ethread_mxn_engine_sigmask(int how, const sigset_t *newma
 
 static int _mpc_thread_ethread_mxn_engine_sigpending(sigset_t *set)
 {
-	int res;
-	_mpc_thread_ethread_per_thread_t *cur;
+	int res = 0;
+	_mpc_thread_ethread_per_thread_t *cur = NULL;
 
 	cur = _mpc_thread_ethread_mxn_engine_self();
 	res = ___mpc_thread_ethread_sigpending(cur, set);
@@ -826,8 +823,8 @@ static int _mpc_thread_ethread_mxn_engine_sigpending(sigset_t *set)
 
 static int _mpc_thread_ethread_mxn_engine_sigsuspend(sigset_t *set)
 {
-	int res;
-	_mpc_thread_ethread_per_thread_t *cur;
+	int res = 0;
+	_mpc_thread_ethread_per_thread_t *cur = NULL;
 
 	cur = _mpc_thread_ethread_mxn_engine_self();
 	res = ___mpc_thread_ethread_sigsuspend(cur, set);
@@ -902,9 +899,9 @@ static int _mpc_thread_ethread_mxn_engine_barrier_wait(_mpc_thread_ethread_barri
 int _mpc_thread_ethread_mxn_engine_setaffinity_np(_mpc_thread_ethread_t thread, size_t cpusetsize,
                               const mpc_cpu_set_t *cpuset)
 {
-	_mpc_thread_ethread_per_thread_t *       current;
-	_mpc_thread_ethread_virtual_processor_t *current_vp;
-	cpu_set_t *_cpuset;
+	_mpc_thread_ethread_per_thread_t *       current = NULL;
+	_mpc_thread_ethread_virtual_processor_t *current_vp = NULL;
+	cpu_set_t *_cpuset = NULL;
 	
 	if (thread != 0)
 	{
@@ -919,12 +916,12 @@ int _mpc_thread_ethread_mxn_engine_setaffinity_np(_mpc_thread_ethread_t thread, 
 	if (CPU_ISSET_S(current_vp->rank, cpusetsize, _cpuset))
 		return 0;
 
-	int i;
+	unsigned int i = 0;
 	for (i = 0 ; i < cpusetsize ; i++)
 	{
 		if(CPU_ISSET_S(i, cpusetsize, _cpuset))
 		{
-			(_funcptr_mpc_thread_proc_migration)(i);
+			(_funcptr_mpc_thread_proc_migration)((int)i);
 			break;
 		}
 	}
@@ -933,13 +930,11 @@ int _mpc_thread_ethread_mxn_engine_setaffinity_np(_mpc_thread_ethread_t thread, 
 }
 
 /* OpenMP Compat */
-int _mpc_thread_ethread_mxn_engine_getaffinity_np(_mpc_thread_ethread_t thread, size_t cpusetsize,
+int _mpc_thread_ethread_mxn_engine_getaffinity_np(_mpc_thread_ethread_t thread __UNUSED__, size_t cpusetsize,
                               mpc_cpu_set_t *cpuset)
 {
-	_mpc_thread_ethread_per_thread_t *current;
-	cpu_set_t *_cpuset;
+	cpu_set_t *_cpuset = NULL;
 
-	current = _mpc_thread_ethread_mxn_engine_self();
 	_cpuset = (cpu_set_t *) cpuset;
 
 	CPU_ZERO_S(cpusetsize, _cpuset);
@@ -983,7 +978,7 @@ void mpc_thread_ethread_mxn_engine_init(void)
 	_mpc_thread_ethread_check_size(_mpc_thread_ethread_barrierattr_t,
 	                               mpc_thread_barrierattr_t);
 
-	int i;
+	int i = 0;
 
 	for(i = 0; i < SCTK_THREAD_KEYS_MAX; i++)
 	{
