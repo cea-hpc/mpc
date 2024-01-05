@@ -279,10 +279,10 @@ enum lcp_dt_type {
 typedef struct lcp_request_param {
         uint32_t                     flags; /**< Flags to indicate which parameter is used */
         lcp_tag_recv_info_t         *recv_info; /**< Receive info field upon matching completion */
-        lcp_complete_callback_func_t cb; /**< Completion callback for send RMA requests */
-        lcp_am_recv_callback_func_t  am_cb; /**< Completion callback for recv AM requests */
+        lcp_rma_completion_func_t   on_rma_completion; /**< Completion callback for send RMA requests */
+        lcp_am_completion_func_t    on_am_completion; /**< Completion callback for recv AM requests */
         void                        *user_request; /**< User data attached with the AM callback 
-                                                     \ref lcp_am_recv_callback_func_t */
+                                                     \ref lcp_am_completion_func_t */
         lcp_datatype_t               datatype; /**< Contiguous or non-contiguous data */
         mpc_lowcomm_request_t       *request; /**< Pointer to lowcomm request for completion */
         lcp_mem_h                    memh; /**< Memory handle for RMA requests */
@@ -390,7 +390,7 @@ typedef struct lcp_am_recv_param {
  * @return Error code returned.
  */
 int lcp_am_set_handler_callback(lcp_task_h task, uint8_t am_id,
-                                void *arg, lcp_am_callback_t cb,
+                                void *arg, lcp_am_user_func_t cb,
                                 unsigned flags);
 
 /**

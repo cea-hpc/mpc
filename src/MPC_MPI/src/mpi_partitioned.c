@@ -221,9 +221,9 @@ int mpi_partitioned_complete_put_partition(mpc_lowcomm_request_t *req)
         for (i=0; i<mpi_req->partitioned.partitions; i++) {
                 if (mpi_req->partitioned.send.send_cflags[i] == 1) {
                         lcp_request_param_t param = {
-                                .cb      = mpi_partitioned_complete_cflags,
-                                .request = &mpi_req->req,
-                                .flags   = LCP_REQUEST_USER_REQUEST
+                                .on_rma_completion = mpi_partitioned_complete_cflags,
+                                .request           = &mpi_req->req,
+                                .flags             = LCP_REQUEST_USER_REQUEST
                         };
                         ep = lcp_ep_get(ctx, mpi_req->req.header.destination);
                         rc = lcp_put_nb(ep, task, &mpi_req->partitioned.complete, 
@@ -502,7 +502,7 @@ int mpi_pready(int partition, MPI_internal_request_t *req)
 
         /* Send partition i */
         lcp_request_param_t param = {
-                .cb      = mpi_partitioned_complete_put_partition,
+                .on_rma_completion = mpi_partitioned_complete_put_partition,
                 .request = &req->req,
                 .flags   = LCP_REQUEST_USER_REQUEST
         };

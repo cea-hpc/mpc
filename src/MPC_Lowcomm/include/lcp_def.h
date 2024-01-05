@@ -22,11 +22,11 @@ typedef struct mpc_lowcomm_request_s                        mpc_lowcomm_request_
 typedef struct _mpc_lowcomm_config_struct_net_driver_config lcr_driver_config_t;
 typedef struct _mpc_lowcomm_config_struct_net_rail          lcr_rail_config_t;
 
-typedef int (*lcp_complete_callback_func_t)(mpc_lowcomm_request_t *req);
+// TODO: merge RMA & AM completion callbacks into one typedef
+typedef int (*lcp_rma_completion_func_t)(mpc_lowcomm_request_t *req);
+typedef int (*lcp_am_completion_func_t)(size_t sent, void *user_data);
 
-typedef int (*lcp_am_recv_callback_func_t)(size_t sent, void *user_data);
-
-typedef int (*lcp_am_callback_t)(void *arg, const void *user_hdr, const size_t hdr_size,
+typedef int (*lcp_am_user_func_t)(void *arg, const void *user_hdr, const size_t hdr_size,
                                  void *data, size_t length,
 				 lcp_am_recv_param_t *param);
 

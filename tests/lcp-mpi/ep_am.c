@@ -58,7 +58,7 @@ int am_handler(void *arg, void *user_hdr, size_t hdr_size,
                 gateway->request.reply_ep = am_param->reply_ep;
 
                 lcp_request_param_t param = {
-                        .am_cb = recv_completion,
+                        .on_am_completion = recv_completion,
                         .datatype = LCP_DATATYPE_CONTIGUOUS,
                         .flags = LCP_REQUEST_AM_CALLBACK,
                         .user_request = &gateway->request,
@@ -182,7 +182,7 @@ int main(int argc, char** argv) {
 	if (my_tid == 0) {
                 lcp_request_param_t param = {
                         .datatype     = LCP_DATATYPE_CONTIGUOUS,
-                        .am_cb        = recv_completion,
+                        .on_am_completion = recv_completion,
                         .user_request = &gateway.request,
                         .flags        = LCP_REQUEST_AM_CALLBACK
                 };

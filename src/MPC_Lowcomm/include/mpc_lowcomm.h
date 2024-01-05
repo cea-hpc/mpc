@@ -104,7 +104,7 @@ int mpc_lowcomm_request_wait(mpc_lowcomm_request_t *request);
 int mpc_lowcomm_request_cancel(mpc_lowcomm_request_t *request);
 
 /**
- * @brief Initalize a request (internal use)
+ * @brief Initialize a request (internal use)
  *
  * @param request request to be initialized
  * @param comm communicator to rely on
@@ -114,7 +114,7 @@ void mpc_lowcomm_request_init(mpc_lowcomm_request_t *request, mpc_lowcomm_commun
 void mpc_lowcomm_request_init_struct(mpc_lowcomm_request_t *request, 
                                      mpc_lowcomm_communicator_t comm, 
                                      int request_type, int src, int dest,
-                                     int tag, lcp_complete_callback_func_t cb);
+                                     int tag, lcp_rma_completion_func_t cb);
 
 
 /*********************

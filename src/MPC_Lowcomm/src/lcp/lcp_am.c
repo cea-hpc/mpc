@@ -142,7 +142,7 @@ static void lcp_am_send_complete(lcr_completion_t *comp) {
                         mpc_common_debug("LCP AM: comp user_request=%p", 
                                          req->send.am.request);
                         /* Call user complete callback */
-                        req->send.am.cb(req->send.length, 
+                        req->send.am.on_completion(req->send.length, 
                                         req->send.am.request);
                 }
 
@@ -385,7 +385,7 @@ int lcp_am_send_nb(lcp_ep_h ep, lcp_task_h task, int32_t dest_tid,
         if (param->flags & LCP_REQUEST_AM_CALLBACK) {
                 req->flags          |= LCP_REQUEST_USER_COMPLETE;
                 req->send.am.request = param->user_request;
-                req->send.am.cb      = param->am_cb;
+                req->send.am.on_completion      = param->on_am_completion;
                 mpc_common_debug("LCP AM: user_request=%p", 
                                  req->send.am.request);
         }
@@ -434,7 +434,7 @@ int lcp_am_recv_nb(lcp_task_h task, void *data_ctnr, void *buffer,
         if (param->flags & LCP_REQUEST_AM_CALLBACK) {
                 req->flags          |= LCP_REQUEST_USER_COMPLETE;
                 req->recv.am.request = param->user_request;
-                req->recv.am.cb      = param->am_cb;
+                req->recv.am.cb      = param->on_am_completion;
                 mpc_common_debug("LCP AM: user_request=%p", 
                                  req->recv.am.request);
         }

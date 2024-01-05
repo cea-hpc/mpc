@@ -159,7 +159,7 @@ err:
 }
 
 int lcp_am_set_handler_callback(lcp_task_h task, uint8_t am_id,
-                                void *user_arg, lcp_am_callback_t cb,
+                                void *user_arg, lcp_am_user_func_t cb,
                                 unsigned flags)
 {
         lcp_am_user_handler_t *user_handler = &task->am[am_id];

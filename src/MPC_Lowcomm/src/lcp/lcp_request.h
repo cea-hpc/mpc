@@ -109,7 +109,6 @@ struct lcp_request {
                         size_t length; /* Total length, in bytes */
 			void *buffer;
 			lcr_tag_context_t t_ctx;
-                        lcp_complete_callback_func_t cb;
 			union {
 				struct {
 					uint16_t comm;
@@ -126,7 +125,7 @@ struct lcp_request {
                                         size_t   hdr_size;
                                         uint64_t src_uid;
                                         int32_t  dest_tid;
-                                        lcp_am_recv_callback_func_t cb;
+                                        lcp_am_completion_func_t on_completion;
                                         void    *request;
                                 } am;
 
@@ -142,6 +141,13 @@ struct lcp_request {
                                 struct {
                                         uint64_t remote_addr;
                                         lcp_mem_h rkey;
+                                        /*
+                                         * TODO: merge RMA callback with the AM callback
+                                         * into a top-level struct field.
+                                         * Requires code refactoring to have compatible
+                                         * function prototypes.
+                                         */
+                                        lcp_rma_completion_func_t on_completion;
                                 } rma;
 			};
 
@@ -171,7 +177,7 @@ struct lcp_request {
                                         uint8_t  am_id;
                                         uint64_t src_uid;
                                         lcp_unexp_ctnr_t *ctnr;
-                                        lcp_am_recv_callback_func_t cb;
+                                        lcp_am_completion_func_t cb;
                                         void    *request;
                                 } am;
                         };
@@ -362,7 +368,6 @@ static inline void lcp_request_init_rma_put(lcp_request_t *req,
 {
         req->send.rma.remote_addr = remote_addr;
         req->send.rma.rkey        = rkey; 
-        req->send.cb              = param->cb;
         req->request              = param->request;
 };
 
