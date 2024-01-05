@@ -1239,7 +1239,7 @@ int _mpc_cl_type_get_envelope(mpc_lowcomm_datatype_t datatype, int *num_integers
 int _mpc_cl_type_get_contents(mpc_lowcomm_datatype_t datatype, const int max_integers,
                               const int max_addresses, const int max_datatypes,
                               int array_of_integers[],
-                              size_t array_of_addresses[],
+                              ssize_t array_of_addresses[],
                               mpc_lowcomm_datatype_t array_of_datatypes[])
 {
 	/* First make sure we were not called on a common type */

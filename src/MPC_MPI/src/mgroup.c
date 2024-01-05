@@ -85,7 +85,7 @@ int PMPI_Comm_create_group(MPI_Comm comm, MPI_Group group, int tag, MPI_Comm *ne
 	MPI_ERROR_SUCCESS();
 }
 
-int PMPI_Comm_create_from_group(MPI_Group group, const char *stringtag, MPI_Info info, MPI_Errhandler errhandler, MPI_Comm *newcomm)
+int PMPI_Comm_create_from_group(MPI_Group group, const char *stringtag, MPI_Info info __UNUSED__, MPI_Errhandler errhandler, MPI_Comm *newcomm)
 {
 	if(group == MPI_GROUP_NULL)
 	{
@@ -164,8 +164,7 @@ int PMPI_Comm_create_from_group(MPI_Group group, const char *stringtag, MPI_Info
 int PMPI_Comm_remote_group(MPI_Comm comm, MPI_Group *mpi_group)
 {
 	mpc_common_nodebug("Enter Comm_remote_group");
-	int res = MPI_ERR_INTERN;
-
+	
 	mpi_check_comm(comm);
 	if(mpc_lowcomm_communicator_is_intercomm(comm) == 0)
 	{
@@ -245,11 +244,11 @@ int PMPI_Group_translate_ranks(MPI_Group group1, int n, const int ranks1[], MPI_
 	MPC_EMPTY_GROUP_TO_LOWCOMM(group1);
 	MPC_EMPTY_GROUP_TO_LOWCOMM(group2);
 
-	int i;
+	int i = 0;
 
 	for(i = 0; i < n; i++)
 	{
-		if( (ranks1[i] < 0) || (mpc_lowcomm_group_size(group1) <= ranks1[i]) )
+		if( (ranks1[i] < 0) || (mpc_lowcomm_group_size(group1) <= (unsigned int)ranks1[i]) )
 		{
 			MPI_ERROR_REPORT(MPI_COMM_WORLD, MPI_ERR_RANK, "Invalid rank passed to PMPI_Group_translate_ranks");
 		}
@@ -267,11 +266,12 @@ int PMPI_Group_translate_ranks(MPI_Group group1, int n, const int ranks1[], MPI_
 
 static inline int __check_ranks_arrays(MPI_Group group, int n, const int ranks[])
 {
-	int size;
+	int size = 0;
 
 	PMPI_Group_size(group, &size);
 
-	int i, j;
+	int i = 0;
+	int j = 0;
 
 	for(i = 0; i < n; i++)
 	{
@@ -397,7 +397,7 @@ int PMPI_Group_size(MPI_Group group, int *size)
 	}
 	MPC_EMPTY_GROUP_TO_LOWCOMM(group);
 
-	*size = mpc_lowcomm_group_size(group);
+	*size = (int)mpc_lowcomm_group_size(group);
 	MPI_ERROR_SUCCESS();
 }
 
@@ -463,16 +463,16 @@ int PMPI_Group_union(MPI_Group group1, MPI_Group group2, MPI_Group *newgroup)
 
 int __check_ranges(MPI_Group group, int n, int ranges[][3])
 {
-	int i;
+	int i = 0;
 
-	int size;
+	int size = 0;
 
 	PMPI_Group_size(group, &size);
 
 
 	for(i = 0; i < n; i++)
 	{
-		int j;
+		int j = 0;
 
 		if(ranges[i][2] == 0)
 		{
@@ -514,7 +514,7 @@ int *__linearize_ranges(int n, int ranges[][3], int *new_size)
 {
 	unsigned int max_array_size = 0;
 
-	int i;
+	int i = 0;
 
 	for(i = 0; i < n; i++)
 	{
@@ -536,7 +536,7 @@ int *__linearize_ranges(int n, int ranges[][3], int *new_size)
 
 	for(i = 0; i < n; i++)
 	{
-		int j;
+		int j = 0;
 
 		if(ranges[i][2] < 0)
 		{
@@ -544,7 +544,7 @@ int *__linearize_ranges(int n, int ranges[][3], int *new_size)
 			{
 				ret[cnt] = j;
 				cnt++;
-				assume(cnt <= max_array_size);
+				assume(cnt <= (int)max_array_size);
 			}
 		}
 		else
@@ -553,7 +553,7 @@ int *__linearize_ranges(int n, int ranges[][3], int *new_size)
 			{
 				ret[cnt] = j;
 				cnt++;
-				assume(cnt <= max_array_size);
+				assume(cnt <= (int)max_array_size);
 			}
 		}
 	}

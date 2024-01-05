@@ -532,7 +532,7 @@ int _mpc_cl_type_get_contents(mpc_lowcomm_datatype_t datatype,
                               int max_addresses,
                               int max_datatypes,
                               int array_of_integers[],
-                              size_t array_of_addresses[],
+                              ssize_t array_of_addresses[],
                               mpc_lowcomm_datatype_t array_of_datatypes[]);
 
 /** \brief Check for an existing datatype in the task specific datatype array

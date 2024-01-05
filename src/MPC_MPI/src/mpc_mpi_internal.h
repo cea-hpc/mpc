@@ -89,8 +89,10 @@ struct sctk_list_elem
 
 typedef struct
 {
-	MPI_Copy_function *  copy_fn;
-	MPI_Delete_function *delete_fn;
+	/* MPI_Copy_function */
+	void *  copy_fn;
+	/* MPI_Delete_function */
+	void *delete_fn;
 	void *               extra_state;
 	int                  used;
 	int                  fortran_key;

@@ -20,6 +20,7 @@
 /* #   - JAEGER Julien julien.jaeger@cea.fr                               # */
 /* #                                                                      # */
 /* ######################################################################## */
+#include "mpc_mpi.h"
 #include <dlfcn.h>
 #include <stddef.h>
 #include <string.h>
@@ -7700,30 +7701,26 @@ static int SCTK__MPI_Attr_communicator_dup(MPI_Comm prev, MPI_Comm newcomm)
 		{
 			if(tmp_per_comm_old->key_vals[i].flag == 1)
 			{
-				void *arg;
+				void *arg = NULL;
 				int   flag = 0;
-				MPI_Copy_function *cpy;
-
-				cpy = tmp->attrs_fn[i].copy_fn;
+				void *cpy = tmp->attrs_fn[i].copy_fn;
 
 				if(tmp->attrs_fn[i].fortran_key == 0)
 				{
+					MPI_Copy_function * copy_fn = (MPI_Copy_function*)cpy;
 					res =
-						cpy(prev, i + MPI_MAX_KEY_DEFINED,
+						copy_fn(prev, i + MPI_MAX_KEY_DEFINED,
 						    tmp->attrs_fn[i].extra_state,
 						    tmp_per_comm_old->key_vals[i].attr, (void *)(&arg), &flag);
 				}
 				else
 				{
-					int  fort_key;
-					int  val;
-					int *ext;
-					int  val_out;
-					long long_val;
-					long_val = (long)(tmp_per_comm_old->key_vals[i].attr);
-					val      = (int)long_val;
-					fort_key = i + MPI_MAX_KEY_DEFINED;
-					ext      = (int *)(tmp->attrs_fn[i].extra_state);
+					int  fort_key = i + MPI_MAX_KEY_DEFINED;
+					int *ext = (int *)(tmp->attrs_fn[i].extra_state);;
+					int  val_out = 0;
+					long long_val = (long)(tmp_per_comm_old->key_vals[i].attr);
+					int  val =(int)long_val;
+
 					mpc_common_nodebug("%d val", val);
 					( (MPI_Copy_function_fortran *)cpy)(&prev, &fort_key, ext, &val, &val_out, &flag, &res);
 					mpc_common_nodebug("%d val_out", val_out);
@@ -13593,7 +13590,6 @@ int PMPI_Attr_delete(MPI_Comm comm, int keyval)
 
 					int fcomm   = MPI_Comm_c2f(comm);
 					int fkeyval = keyval + MPI_MAX_KEY_DEFINED;
-
 					fort_delete(&fcomm, &fkeyval,
 					            tmp_per_comm->key_vals[keyval].attr,
 					            tmp->attrs_fn[keyval].extra_state,
@@ -13604,7 +13600,8 @@ int PMPI_Attr_delete(MPI_Comm comm, int keyval)
 				}
 				else
 				{
-					res = tmp->attrs_fn[keyval].delete_fn(comm, keyval + MPI_MAX_KEY_DEFINED,
+					MPI_Delete_function * delfn = (MPI_Delete_function*)tmp->attrs_fn[keyval].delete_fn;
+					res = delfn(comm, keyval + MPI_MAX_KEY_DEFINED,
 					                                      tmp_per_comm->key_vals[keyval].attr,
 					                                      tmp->attrs_fn[keyval].extra_state);
 				}
