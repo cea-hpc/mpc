@@ -786,7 +786,7 @@ err:
 }
 
 int lcp_recv_tag_probe(lcp_task_h task, sctk_rail_info_t *rail, const int src, const int tag, 
-                       const uint64_t comm, lcp_tag_recv_info_t *recv_info) 
+                       const uint64_t comm, lcp_tag_info_t *recv_info) 
 {
         int rc = LCP_SUCCESS; 
         unsigned flags = 0;

@@ -139,7 +139,7 @@ int lcp_tag_send_nb(lcp_ep_h ep, lcp_task_h task, const void *buffer,
         req->flags |= LCP_REQUEST_MPI_COMPLETE;
 
         // initialize request
-        LCP_REQUEST_INIT_TAG_SEND(req, ep->ctx, task, request, param->recv_info, 
+        LCP_REQUEST_INIT_TAG_SEND(req, ep->ctx, task, request, param->tag_info, 
                                   size, ep, (void *)buffer, 0, param->datatype,
                                   param->flags & LCP_REQUEST_TAG_SYNC ? 1 : 0);
 

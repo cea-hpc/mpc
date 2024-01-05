@@ -176,10 +176,10 @@ int mpc_lowcomm_commit_status_from_request(mpc_lowcomm_request_t *request,
 	else if(status != MPC_LOWCOMM_STATUS_NULL)
 	{
 #ifdef MPC_LOWCOMM_PROTOCOL
-		status->MPC_SOURCE = request->recv_info.src;
-		status->MPC_TAG    = request->recv_info.tag;
+		status->MPC_SOURCE = request->tag_info.src;
+		status->MPC_TAG    = request->tag_info.tag;
 		status->MPC_ERROR  = request->status_error;
-		status->size       = (int)request->recv_info.length;
+		status->size       = (int)request->tag_info.length;
 #else
 		status->MPC_SOURCE = request->header.source_task;
 		status->MPC_TAG    = request->header.message_tag;
@@ -2758,7 +2758,7 @@ void _mpc_comm_ptp_message_send_check(mpc_lowcomm_ptp_message_t *msg, int poll_r
 			mpc_lowcomm_request_complete;
 		lcp_request_param_t param =
 		{
-			.recv_info = &msg->tail.request->recv_info,
+			.tag_info = &msg->tail.request->tag_info,
 		};
 		rc = lcp_tag_send_nb(ep, NULL, msg->tail.message.contiguous.addr,
 		                     msg->body.header.msg_size, msg->tail.request,
@@ -2895,7 +2895,7 @@ void _mpc_comm_ptp_message_recv_check(mpc_lowcomm_ptp_message_t *msg,
 			mpc_lowcomm_request_complete;
 		lcp_request_param_t param =
 		{
-			.recv_info = &msg->tail.request->recv_info,
+			.tag_info = &msg->tail.request->tag_info,
 		};
 		lcp_tag_recv_nb(NULL, msg->tail.message.contiguous.addr,
 		                msg->body.header.msg_size, msg->tail.request, &param);
@@ -3464,7 +3464,7 @@ int _mpc_lowcomm_isend(int dest, const void *data, size_t size, int tag,
 	/* fill up request */
 	lcp_request_param_t param =
 	{
-		.recv_info = &req->recv_info,
+		.tag_info = &req->tag_info,
                 .datatype  = req->dt_magic == (int)0xDDDDDDDD ? LCP_DATATYPE_DERIVED : LCP_DATATYPE_CONTIGUOUS,
 		.flags     = synchronized ? LCP_REQUEST_TAG_SYNC : 0,
 	};
@@ -3508,7 +3508,7 @@ int mpc_lowcomm_irecv(int src, void *data, size_t size, int tag,
 	}
 	lcp_request_param_t param =
 	{
-		.recv_info = &req->recv_info,
+		.tag_info = &req->tag_info,
 		.datatype  = req->dt_magic == (int)0xDDDDDDDD ?
 		             LCP_DATATYPE_DERIVED : LCP_DATATYPE_CONTIGUOUS,
 	};
@@ -3655,7 +3655,7 @@ int mpc_lowcomm_iprobe_src_dest(const int world_source, const int world_destinat
 	//FIXME: move code to mpc_lowcomm_iprobe
 	int                  rc          = MPC_LOWCOMM_SUCCESS;
 	lcp_task_h           task        = NULL;
-	lcp_tag_recv_info_t  recv_info   = { 0 };
+	lcp_tag_info_t  recv_info   = { 0 };
 	mpc_lowcomm_status_t status_init = MPC_LOWCOMM_STATUS_INIT;
 	int                  has_status  = 1;
         mpc_lowcomm_communicator_id_t comm_id = mpc_lowcomm_communicator_id(comm);

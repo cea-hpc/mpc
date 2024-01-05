@@ -57,7 +57,7 @@ int lcp_tag_recv_nb(lcp_task_h task, void *buffer, size_t count,
                 return LCP_ERROR;
         }
 	req->flags |= LCP_REQUEST_MPI_COMPLETE;
-	LCP_REQUEST_INIT_TAG_RECV(req, ctx, task, request, param->recv_info,
+	LCP_REQUEST_INIT_TAG_RECV(req, ctx, task, request, param->tag_info,
 										count, buffer, param->datatype);
 
 	// get interface for the request to go through

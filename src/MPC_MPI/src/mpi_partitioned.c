@@ -148,7 +148,7 @@ int mpi_partitioned_complete_tag(mpc_lowcomm_request_t *req)
 
                 /* Post FIN message */
                 lcp_request_param_t param = (lcp_request_param_t) {
-                        .recv_info = &mpi_req->req.recv_info,
+                        .tag_info = &mpi_req->req.tag_info,
                 };
                 rc = lcp_tag_recv_nb(task, &prtd->fin, sizeof(int), 
                                      &mpi_req->partitioned.fin_req, 
@@ -175,7 +175,7 @@ int mpi_partitioned_complete_rkey(mpc_lowcomm_request_t *req)
                                                    rkey_req);
         switch (req->request_type) {
         case REQUEST_RECV:
-                rkey_length = req->recv_info.length / 2;
+                rkey_length = req->tag_info.length / 2;
                 
                 /* Extract first remote key: cflags */
                 lcp_mem_unpack(ctx, &prtd->rkey_cflags, prtd->send.rkeys_buf,
@@ -435,7 +435,7 @@ int mpi_pstart(MPI_internal_request_t *req)
                 }
 
                 param = (lcp_request_param_t) {
-                        .recv_info = &prtd->rkey_req.recv_info,
+                        .tag_info = &prtd->rkey_req.tag_info,
 
                 };
                 rc = lcp_tag_recv_nb(task, prtd->send.rkeys_buf, prtd->send.rkeys_size,
@@ -452,7 +452,7 @@ int mpi_pstart(MPI_internal_request_t *req)
                 }
 
                 param = (lcp_request_param_t) {
-                        .recv_info = &prtd->tag_req.recv_info,
+                        .tag_info = &prtd->tag_req.tag_info,
 
                 };
                 rc = lcp_tag_recv_nb(task, &prtd->recv.send_partitions,

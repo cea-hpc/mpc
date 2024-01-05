@@ -249,12 +249,12 @@ enum {
  * (length, tag, source and found in case of probing).
  * For example, this can be used in MPI_Status.
  */
-typedef struct lcp_tag_recv_info {
+typedef struct lcp_tag_info {
         size_t length; /**< Length of the data received by the matched request */
         int32_t tag; /**< Tag of the matched request */
         int32_t src; /**< Source of the matched request */
         unsigned found; /**< Has request been found in matching list or not */
-} lcp_tag_recv_info_t;
+} lcp_tag_info_t;
 
 /**
  * @ingroup LCP_COMM
@@ -274,11 +274,11 @@ enum lcp_dt_type {
  *
  * Specifies a set of fields used to characterize how a request should be
  * handled by the communication primitives. It is primarily used to specify user
- * callback and to pass tag receive information (\ref lcp_tag_recv_info_t).
+ * callback and to pass tag information (\ref lcp_tag_info_t).
  */
 typedef struct lcp_request_param {
         uint32_t                     flags; /**< Flags to indicate which parameter is used */
-        lcp_tag_recv_info_t         *recv_info; /**< Receive info field upon matching completion */
+        lcp_tag_info_t         *tag_info; /**< Receive info field upon matching completion */
         lcp_rma_completion_func_t   on_rma_completion; /**< Completion callback for send RMA requests */
         lcp_am_completion_func_t    on_am_completion; /**< Completion callback for recv AM requests */
         void                        *user_request; /**< User data attached with the AM callback 
@@ -353,7 +353,7 @@ int lcp_tag_recv_nb(lcp_task_h task, void *buffer, size_t count,
 //FIXME: comm should be a const uint16_t
 int lcp_tag_probe_nb(lcp_task_h task, const int src, 
                      const int tag, const uint64_t comm,
-                     lcp_tag_recv_info_t *recv_info);
+                     lcp_tag_info_t *recv_info);
 
 enum {
         LCP_AM_EAGER = LCP_BIT(0),

@@ -41,7 +41,7 @@
 
 int lcp_tag_probe_nb(lcp_task_h task, const int src, 
                      const int tag, const uint64_t comm,
-                     lcp_tag_recv_info_t *recv_info)
+                     lcp_tag_info_t *recv_info)
 {
         int rc = LCP_SUCCESS;
         lcp_context_h ctx = task->ctx;

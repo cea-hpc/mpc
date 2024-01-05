@@ -186,7 +186,7 @@ struct lcp_request {
 
 	//NOTE: break LCP modularity
 	mpc_lowcomm_request_t *request;   /* Upper layer request */
-        lcp_tag_recv_info_t   *info;
+        lcp_tag_info_t   *info;
         void                  *user_data;
 	uint16_t                seqn;      /* Sequence number */
 	uint64_t               msg_id;    /* Unique message identifier */

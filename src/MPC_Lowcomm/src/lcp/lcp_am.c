@@ -366,7 +366,7 @@ int lcp_am_send_nb(lcp_ep_h ep, lcp_task_h task, int32_t dest_tid,
         //       data + header size ?
         LCP_REQUEST_INIT_AM_SEND(req, ep->ctx, task, am_id, 
                                  ep->ctx->process_uid, dest_tid, 
-                                 param->recv_info, data_size, 
+                                 param->tag_info, data_size, 
                                  ep, (void *)buffer, 0 /* no seqn for am */, 
                                  (uint64_t)req, param->datatype,
                                  param->flags & LCP_REQUEST_AM_SYNC ? 1 : 0);
@@ -428,7 +428,7 @@ int lcp_am_recv_nb(lcp_task_h task, void *data_ctnr, void *buffer,
         }
 
         // initialize request
-        LCP_REQUEST_INIT_AM_RECV(req, ctx, task, param->recv_info, 
+        LCP_REQUEST_INIT_AM_RECV(req, ctx, task, param->tag_info, 
                                  count, buffer, param->datatype);
 
         if (param->flags & LCP_REQUEST_AM_CALLBACK) {

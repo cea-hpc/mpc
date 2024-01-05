@@ -13,7 +13,7 @@ typedef struct lcp_task             *lcp_task_h;
 typedef struct lcp_request           lcp_request_t;
 typedef struct lcp_unexp_ctnr        lcp_unexp_ctnr_t;
 typedef struct lcp_mem              *lcp_mem_h;
-typedef struct lcp_tag_recv_info     lcp_tag_recv_info_t;
+typedef struct lcp_tag_info          lcp_tag_info_t;
 typedef struct lcp_request_param     lcp_request_param_t;
 typedef struct lcp_am_recv_param     lcp_am_recv_param_t;
 typedef struct lcp_task_completion   lcp_task_completion_t;

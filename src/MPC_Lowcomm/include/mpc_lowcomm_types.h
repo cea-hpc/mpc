@@ -196,7 +196,7 @@ typedef struct mpc_lowcomm_request_s
 
 	/* This is a pointer to the registered memory region
 	 * in order to unpin when request completes */
-	lcp_tag_recv_info_t               recv_info;
+	lcp_tag_info_t                    tag_info;
 	mpc_lowcomm_request_pack_t        dt;
 	mpc_lowcomm_rtype_t               dt_type;
 	int                               dt_magic;
