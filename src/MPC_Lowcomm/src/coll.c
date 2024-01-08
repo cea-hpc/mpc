@@ -1470,6 +1470,7 @@ void mpc_lowcomm_coll_init_hetero( mpc_lowcomm_communicator_t id )
 
 static void _mpc_coll_noalloc_barrier(const mpc_lowcomm_communicator_t communicator, __UNUSED__ struct mpc_lowcomm_coll_s *tmp)
 {
+	mpc_common_nodebug("Enter %s", __func__);
 	assert(!mpc_lowcomm_communicator_is_intercomm(communicator) );
 
 	int myself;
@@ -1516,15 +1517,20 @@ static void _mpc_coll_noalloc_barrier(const mpc_lowcomm_communicator_t communica
 				{
 					if( (src + (j * (i / barrier_arity) ) ) < total)
 					{
+            int dest = src + (j * (i / barrier_arity));
+            mpc_common_nodebug("Receive barrier message %d -> %d (l.%d)...",
+					src, dest, __LINE__);
 						_mpc_coll_message_recv(
-							communicator, src + (j * (i / barrier_arity) ),
+							communicator, dest,
 							myself, MPC_BARRIER_TAG, &c, 1, MPC_LOWCOMM_BARRIER_MESSAGE,
 							_mpc_coll_message_table_get_item(&table, OPT_NOALLOC_MAX_ASYNC),
 							0);
 					}
 				}
 
+        mpc_common_nodebug("Wait for messages (l.%d)...", __LINE__);
 				_mpc_coll_messages_table_wait(&table);
+        mpc_common_nodebug("Messages completed (l.%d)", __LINE__);
 			}
 			else
 			{
@@ -1532,24 +1538,31 @@ static void _mpc_coll_noalloc_barrier(const mpc_lowcomm_communicator_t communica
 				dest = (myself / i) * i;
 
 				if(dest >= 0)
-				{
+        {
+          mpc_common_nodebug("Send barrier message %d -> %d (l.%d)...", myself, dest, __LINE__);
 					_mpc_coll_message_send(
 						communicator, myself, dest, MPC_BARRIER_TAG, &c, 1,
 						MPC_LOWCOMM_BARRIER_MESSAGE,
 						_mpc_coll_message_table_get_item(&table, OPT_NOALLOC_MAX_ASYNC), 0);
+          mpc_common_debug_log("Receive barrier message %d -> %d (l.%d)...", dest, myself, __LINE__);
 					_mpc_coll_message_recv(
 						communicator, dest, myself, MPC_BARRIER_TAG, &c, 1,
 						MPC_LOWCOMM_BARRIER_MESSAGE,
 						_mpc_coll_message_table_get_item(&table, OPT_NOALLOC_MAX_ASYNC),
 						0);
+          mpc_common_nodebug("Wait for messages (l.%d)...", __LINE__);
 					_mpc_coll_messages_table_wait(&table);
+          mpc_common_nodebug("Messages completed (l.%d)", __LINE__);
+
 					break;
 				}
 			}
 		}
 	}
 
+  mpc_common_nodebug("Wait for messages (l.%d)...", __LINE__);
 	_mpc_coll_messages_table_wait(&table);
+  mpc_common_nodebug("Messages completed (l.%d)", __LINE__);
 
 	for(; i >= barrier_arity; i = i / barrier_arity)
 	{
@@ -1563,6 +1576,8 @@ static void _mpc_coll_noalloc_barrier(const mpc_lowcomm_communicator_t communica
 			{
 				if( (dest + (j * (i / barrier_arity) ) ) < total)
 				{
+          mpc_common_nodebug("Send barrier message %d -> %d (l.%d)...",
+              myself, dest + (j * (i / barrier_arity) ), __LINE__);
 					_mpc_coll_message_send(
 						communicator, myself,
 						dest + (j * (i / barrier_arity) ), MPC_BARRIER_TAG, &c, 1,
@@ -1573,7 +1588,12 @@ static void _mpc_coll_noalloc_barrier(const mpc_lowcomm_communicator_t communica
 		}
 	}
 
+  mpc_common_nodebug("Wait for messages (l.%d)...", __LINE__);
 	_mpc_coll_messages_table_wait(&table);
+  mpc_common_nodebug("Messages completed (l.%d)", __LINE__);
+
+  mpc_common_nodebug("Exit %s", __func__);
+
 }
 
 void _mpc_coll_noalloc_barrier_init( struct mpc_lowcomm_coll_s *tmp, __UNUSED__ mpc_lowcomm_communicator_t id )
@@ -2085,6 +2105,8 @@ int __intercomm_barrier( const mpc_lowcomm_communicator_t communicator )
 
 int __lowcomm_barrier( const mpc_lowcomm_communicator_t communicator, int can_shm )
 {
+  mpc_common_nodebug("Enter %s", __func__);
+
 	struct mpc_lowcomm_coll_s *tmp;
 
 	if ( communicator == MPC_COMM_SELF )
@@ -2108,14 +2130,18 @@ int __lowcomm_barrier( const mpc_lowcomm_communicator_t communicator, int can_sh
 		}
 
 		struct shared_mem_barrier *barrier_ctx = &coll->shm_barrier;
+    mpc_common_nodebug("Call to SHM barrier");
 		return mpc_lowcomm_barrier_shm_on_context(barrier_ctx, coll->comm_size);
 	}
 	else
 	{
 		/* Call the inter-node version */
 		tmp = _mpc_comm_get_internal_coll( communicator );
+    mpc_common_nodebug("Call to inter-node barrier");
 		tmp->barrier_func( communicator, tmp );
 	}
+
+  mpc_common_nodebug("Exit %s", __func__);
 
 	return MPC_LOWCOMM_SUCCESS;
 }
