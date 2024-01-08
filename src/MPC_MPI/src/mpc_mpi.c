@@ -13183,6 +13183,7 @@ int PMPI_Comm_split_type(MPI_Comm comm, int split_type, int key, __UNUSED__ MPI_
 
 int PMPI_Comm_free(MPI_Comm *comm)
 {
+  mpc_common_nodebug("Enter %s", __func__);
 	int res = MPI_ERR_INTERN;
 
 	if(comm == NULL)
@@ -13208,8 +13209,10 @@ int PMPI_Comm_free(MPI_Comm *comm)
 	{
 		return res;
 	}
-
+  
+  mpc_common_nodebug("Reaching barrier on %p...", comm);
 	PMPI_Barrier(*comm);
+  mpc_common_nodebug("Barrier completed");
 
 	res = SCTK__MPI_Comm_communicator_free(*comm);
 	if(res != MPI_SUCCESS)
@@ -13219,6 +13222,9 @@ int PMPI_Comm_free(MPI_Comm *comm)
 
 
 	res = _mpc_cl_comm_free(comm);
+  
+  mpc_common_nodebug("Exit %s", __func__);
+
 	MPI_HANDLE_RETURN_VAL(res, *comm);
 }
 
@@ -16863,6 +16869,7 @@ void mpc_mpi_init()
 
 int PMPI_Barrier(MPI_Comm comm)
 {
+  mpc_common_nodebug("Enter %s", __func__);
 	int res = MPI_ERR_INTERN;
 
 #ifndef ENABLE_COLLECTIVES_ON_INTERCOMM
@@ -16889,6 +16896,9 @@ int PMPI_Barrier(MPI_Comm comm)
 
 	/* Profiling */
 	SCTK_PROFIL_END(MPI_Barrier);
+  
+  mpc_common_nodebug("Exit %s", __func__);
+
 	MPI_HANDLE_RETURN_VAL(res, comm);
 }
 
