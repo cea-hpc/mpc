@@ -48,6 +48,7 @@
 #include "rail.h"
 #include "rdma/fabric.h"
 #include "rdma/fi_domain.h"
+#include "rdma/fi_errno.h"
 
 
 static inline char *__gen_rail_target_name(sctk_rail_info_t *rail, char *buff, int bufflen)
@@ -684,9 +685,37 @@ int _mpc_ofi_query_devices(lcr_component_t *component,
 
    struct fi_info *config = NULL;
 
-   if( fi_getinfo(FI_VERSION(1, 5), NULL, NULL, 0, hints, &config) < 0)
+   int requested_fi_major = 1, requested_fi_minor = 5;
+   int err = fi_getinfo(FI_VERSION(requested_fi_major, requested_fi_minor), NULL, NULL, 0, hints, &config);
+
+   if(err < 0)
    {
       mpc_common_debug_error("OFI Comm Library failed to start provider '%s' with given constraints.", hints->fabric_attr->prov_name);
+
+      if (err == -FI_EBADFLAGS)
+      {
+        mpc_common_debug_error("The specified endpoint or domain capability or operation flags are invalid.");
+      }
+      else if (err == -FI_ENODATA)
+      {
+        mpc_common_debug_error("Could not find any provider that complies with the provided hints. "
+            "Please check the provider name and the endpoint type.");
+      }
+      else if (err == -FI_ENOMEM)
+      {
+        mpc_common_debug_error("Insufficient memory to complete the operation");
+      }
+      else if (err == -FI_ENOSYS)
+      {
+        uint32_t provider_fi_version = fi_version();
+        mpc_common_debug_error("The requested libfabric version (%d.%d) is newer than the libfabric version being used (%d.%d)",
+            requested_fi_major, requested_fi_minor, FI_MAJOR(provider_fi_version), FI_MINOR(provider_fi_version));
+      }
+      else
+      {
+        mpc_common_debug_error("Unknown libfabric error: fi_getinfo returned error code %d", err);
+      }
+
       mpc_common_errorpoint("Initialization failed.");
       return 1;
    }
