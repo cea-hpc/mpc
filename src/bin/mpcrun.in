@@ -618,6 +618,7 @@ for arg in "$@" ; do
 				--mpmd=*)
 					MPMD="true"
 					MPMD_PROC_NUM="`echo A$arg | sed -e 's/A--mpmd=//g'`"
+          echo "WARNING: The option --mpmd is set, --task-nb / -n is ignored" >&2
 					;;
 				--config=* | --profiles=*)
 					#Already processed in a previous loop on arguments, but need to capture them otherwise
