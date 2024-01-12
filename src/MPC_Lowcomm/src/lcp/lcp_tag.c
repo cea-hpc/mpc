@@ -576,6 +576,9 @@ void lcp_recv_rndv_tag_data(lcp_request_t *req, void *data)
         req->recv.tag.dest_tid = hdr->tag.dest_tid;
         req->seqn              = hdr->tag.seqn;
         req->recv.send_length  = hdr->size;
+        //FIXME: msg_id for rndv is set to address of the rendez-vous request
+        //       through the hdr member msg_id. However, this is protocol logic
+        //       and should not appear here.
         req->msg_id            = hdr->msg_id;
         req->state.comp        = (lcr_completion_t) {
                 .comp_cb = lcp_tag_recv_complete,

@@ -89,7 +89,7 @@ static size_t lcp_send_am_rndv_pack(void *dest, void *data)
         hdr->msg_id      = req->msg_id;
 
         /* Pack rndv data */
-        packed_length = lcp_rndv_rts_pack(req, hdr + 1);
+        packed_length = lcp_rndv_rts_pack(req, hdr);
 
         /* Pack user header */
         ptr = (char *)(hdr + 1) + packed_length;
@@ -137,7 +137,7 @@ static void lcp_am_recv_complete(lcr_completion_t *comp)
                 req->recv.am.cb(req->recv.send_length, req->recv.am.request);
 
                 /* Free container */
-                sctk_free(req->recv.am.ctnr);
+                lcp_container_put(req->recv.am.ctnr);
         }
 
         lcp_request_complete(req);
@@ -154,7 +154,7 @@ static int lcp_send_rndv_am_rts_progress(lcp_request_t *req)
         lcp_ep_h ep = req->send.ep;
         lcp_chnl_idx_t cc = lcp_ep_get_next_cc(ep);
 
-        mpc_common_debug("LCP TAG: start am rndv. src=%d, dest=%d, am_id=%d, "
+        mpc_common_debug("LCP AM: start am rndv. src=%d, dest=%d, am_id=%d, "
                          "hdr_size=%d", req->send.am.src_uid, ep->uid, 
                          req->send.am.am_id, req->send.am.hdr_size);
 

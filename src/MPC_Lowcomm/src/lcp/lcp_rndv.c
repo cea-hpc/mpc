@@ -312,7 +312,6 @@ int lcp_send_rndv_start(lcp_request_t *req)
                 mpc_common_debug_error("LCP: could not create request.");
                 return LCP_ERROR;
         }
-        req->flags |= LCP_REQUEST_MPI_COMPLETE;
         rndv_req->super = req;
 
         rndv_req->ctx             = req->ctx;
@@ -327,6 +326,10 @@ int lcp_send_rndv_start(lcp_request_t *req)
         };
 
         /* Set pointer to rndv request to be used when packing */
+        //NOTE: on sender side, msg_id correspond to local rndv_req and will be
+        //      sent to receiver through hdr. This will be retransmitted by
+        //      receiver in FIN message so that rndv_req can be found and
+        //      completed.
         req->rndv_req    = rndv_req;
         rndv_req->msg_id = (uint64_t)rndv_req; 
 
@@ -383,8 +386,10 @@ int lcp_rndv_process_rts(lcp_request_t *rreq,
         rndv_req->state.remaining = rreq->recv.send_length;
         rndv_req->state.offset    = 0;
 
-        /* Set message identifiers from incomming message */
-        rndv_req->msg_id = rreq->msg_id;
+        /* Set message identifiers from incoming message */
+        //NOTE: on receive side, msg_id is set to hdr->msg_id which correspond
+        //      to the sender's rndv_req address.
+        rndv_req->msg_id = hdr->msg_id;
 
         /* Buffer must be allocated and data packed to make it contiguous
          * and use zcopy and memory registration. */
@@ -529,6 +534,7 @@ static int lcp_rndv_fin_handler(void *arg, void *data,
 
         lcp_request_complete(rndv_req);
 
+        //FIXME: cannot find the mathcing LCP_CONTEXT_LOCK, should be removed?
 	LCP_CONTEXT_UNLOCK(ctx);
 
         return rc;
