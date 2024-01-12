@@ -525,6 +525,7 @@ int lcp_mem_unpack(lcp_context_h ctx, lcp_mem_h *mem_p,
                 }
         }
 
+        mpc_common_debug_log("LCP: Memory unpacking, size=%lu, unpacked_size=%lu", size, unpacked_size);
         assert(size == unpacked_size);
 
         *mem_p = mem;
