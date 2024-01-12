@@ -866,8 +866,10 @@ static inline void _mpc_lowcomm_net_config_default(void)
 {
 #ifdef MPC_USE_PORTALS
 	snprintf(__net_config.cli_default_network, MPC_CONF_STRING_SIZE, "portals4");
-#else
+#elif MPC_USE_OFI
 	snprintf(__net_config.cli_default_network, MPC_CONF_STRING_SIZE, "tcpshm");
+#else
+	snprintf(__net_config.cli_default_network, MPC_CONF_STRING_SIZE, "tcp");
 #endif
 }
 
