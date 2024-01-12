@@ -326,7 +326,7 @@ int lcp_send_rndv_start(lcp_request_t *req)
         };
 
         /* Set pointer to rndv request to be used when packing */
-        //NOTE: on sender side, msg_id correspond to local rndv_req and will be
+        //NOTE: on sender side, msg_id corresponds to local rndv_req and will be
         //      sent to receiver through hdr. This will be retransmitted by
         //      receiver in FIN message so that rndv_req can be found and
         //      completed.
@@ -533,9 +533,6 @@ static int lcp_rndv_fin_handler(void *arg, void *data,
         req->state.comp.comp_cb(&(req->state.comp));
 
         lcp_request_complete(rndv_req);
-
-        //FIXME: cannot find the mathcing LCP_CONTEXT_LOCK, should be removed?
-	LCP_CONTEXT_UNLOCK(ctx);
 
         return rc;
 }
