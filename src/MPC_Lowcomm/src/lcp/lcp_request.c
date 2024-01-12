@@ -111,6 +111,7 @@ int lcp_request_create(lcp_request_t **req_p)
 /**
  * @brief Store data from unexpected message.
  * 
+ * @param task the task
  * @param ctnr_p message data (out)
  * @param data message data (in)
  * @param length length of message
@@ -132,8 +133,7 @@ int lcp_request_init_unexp_ctnr(lcp_task_h task, lcp_unexp_ctnr_t **ctnr_p, void
         assert(sizeof(lcp_unexp_ctnr_t) + length < elem_size);
 
 	ctnr->length = length;
-	ctnr->flags  = 0;
-	ctnr->flags |= flags;
+	ctnr->flags = flags;
 
         mpc_common_debug_log("LCP: received unexpected message of length=%lu", length);
         //NOTE: check the standard but data could be NULL and length equal to 0.

@@ -511,7 +511,9 @@ int lcp_mem_unpack(lcp_context_h ctx, lcp_mem_h *mem_p,
         }
         memset(mem->mems, 0, ctx->num_resources * sizeof(lcr_memp_t));
 
-        mem->bm = *(bmap_t *)p; unpacked_size += sizeof(bmap_t);
+        mem->bm = *(bmap_t *)p;
+        unpacked_size += sizeof(bmap_t);
+
         for (i=0; i<ctx->num_resources; i++) {
                 if (MPC_BITMAP_GET(mem->bm, i)) {
                         iface = ctx->resources[i].iface;
