@@ -1693,7 +1693,7 @@ if test "x${DEP_FOUND}" = "xno" && test "x$MPCALLOC_PREFIX" != "xdisabled"; then
 fi
 
 
-find_in_prefix_or_use_spack "libfabric" "$(package_version "libfabric")" "$OFI_PREFIX"
+find_in_prefix_or_use_spack "libfabric" "$(package_version "libfabric")" "$OFI_PREFIX" "fabrics=sockets,tcp,verbs"
 
 if test "x${DEP_FOUND}" = "xno" && test "x$OFI_PREFIX" != "xdisabled"; then
 	# Could not use spack now installing manually
