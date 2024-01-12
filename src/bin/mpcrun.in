@@ -70,7 +70,6 @@ mpc_print_config_works(){
 MPC_INSTALL_PREFIX=@prefix@
 MPC_BIN_DIR="${MPC_INSTALL_PREFIX}/bin"
 MPC_LIB_DIR="${MPC_INSTALL_PREFIX}/lib"
-MPC_INCLUDE_DIR="${MPC_INSTALL_PREFIX}/include"
 MPC_SHARE_DIR="@PKG_DATADIR@"
 USING_ASAN="@USING_ASAN@"
 
@@ -96,12 +95,17 @@ export PATH="${MPC_BIN_DIR}:${PATH}"
 MPC_IN_PROCESS_MODE="@MPC_IN_PROCESS_MODE@"
 
 # What MPC is using to start (PMIx, PMI1 or HYDRA client)
+# Used in the launcher scripts
+# shellcheck disable=SC2034
 MPC_LAUNCHER="@MPC_LAUNCHER@"
 # What is detected as launcher program (HYDRA / PRRTE)
 MPC_LAUNCHER_PROGRAM="@MPC_LAUNCHER_PROGRAM@"
 
-
+# Used in the launcher scripts
+# shellcheck disable=SC2034
 LAUNCHER_CONFIG_MPIEXEC_HYDRA_PATH="@MPIEXEC_HYDRA@"
+# Used in the launcher scripts
+# shellcheck disable=SC2034
 LAUNCHER_CONFIG_PRTERUN_PATH="@PRTERUN@"
 
 # Default Launcher and launch mode
@@ -135,7 +139,6 @@ CONFIG_ENABLE_SMT="0"
 CONFIG_USER_LAUNCHERS=""
 CONFIG_AUTOKILL="0"
 CONFIG_DISABLE_ASLR="false"
-CONFIG_THREAD_MODEL="ethread_mxn"
 CONFIG_PROFILING="stdout"
 CONFIG_ACCELERATOR_SUPPORT="0"
 CONFIG_TOPOLOGY_DUMP_GRAPHIC="0"
@@ -156,8 +159,10 @@ MPC_ARG_FORCE_CPU_NB=""
 # Make sure MPC allocator is always used   #
 ############################################
 
-#if test "x${MPC_ALLOCATOR}" = "xmpcalloc"; then
-#    export LD_PRELOAD="@MPC_ALLOCATOR_PRELOAD@:$LD_PRELOAD"
+# FIXME: Commenting out this export breaks
+# sed, uname and basically the whole script 
+#if test "${MPC_ALLOCATOR}" = "mpcalloc"; then
+    #export LD_PRELOAD="@MPC_ALLOCATOR_PRELOAD@:$LD_PRELOAD"
 #fi
 
 ###########################################
@@ -182,7 +187,6 @@ fi
 ###################
 
 # Configuration of MPC Networks
-MODES_NETWORKING="@MPC_NETWORK_LIST@"
 
 check_net(){
 	if test "$1" != "none" ; then
@@ -221,7 +225,7 @@ check_process_nb()
 assert_have_dmtcp()
 {
 	if test "x$MPC_HAVE_DMTCP" = "xno"; then
-		mpcrun_error "Option $1 is not availble without DMTCP support"
+		mpcrun_error "Option $1 is not available without DMTCP support"
 	fi
 }
 
@@ -380,7 +384,7 @@ Launch Configuration:
 	-c=n, --cpu-nb=n                Number of cpus per UNIX process
 	--cpu-nb-mpc=n                  Number of cpus per process for the MPC process
 	--enable-smt                    Enable SMT capabilities (disabled by default)
-	--mpmd							Use mpmd mode (replaces binary)
+	--mpmd                          Use mpmd mode (replaces binary)
 
 Multithreading:
 	-m=n, --multithreading=n        Define multithreading mode
@@ -460,25 +464,17 @@ fi
 list_available_mpc_launchers()
 {
 	echo "Available launch methods (default is ${LAUNCHER_PLUGIN}):"
-	for i in ${MPC_SHARE_DIR}/mpcrun_opt/*
+	for i in "${MPC_SHARE_DIR}"/mpcrun_opt/*
 	do
-		echo "\t   - $(basename "$i")" | sed s/mpcrun_//g  | grep -v default_param | grep -v propagate_env | grep -v "~"
+		printf "\t   - %s" "$(basename "$i")" | sed s/mpcrun_//g  | grep -v default_param | grep -v propagate_env | grep -v "~"
 	done
 	if test -n "${CONFIG_USER_LAUNCHERS}" -a -e "${CONFIG_USER_LAUNCHERS}"; then
 		for i in "${CONFIG_USER_LAUNCHERS}"/mpcrun_* ;
 		do
-			echo "\t   - $(basename "$i") # from ~/.mpc/" | sed s/mpcrun_//g  | grep -v default_param | grep -v propagate_env | grep -v "~"
+			printf "\t   - %s # from ~/.mpc/" "$(basename "$i")" | sed s/mpcrun_//g  | grep -v default_param | grep -v propagate_env | grep -v "~"
 		done
 	fi
 	exit 0
-}
-
-remove_first(){
-	shift
-	echo $@
-}
-get_first(){
-	echo $1
 }
 
 print_version()
@@ -522,13 +518,13 @@ for arg in "$@" ; do
 					CONFIG_MPC_VERBOSE="3"
 					;;
 				--verbose=*)
-					CONFIG_MPC_VERBOSE="`echo A$arg | sed -e 's/A--verbose=//g'`"
+					CONFIG_MPC_VERBOSE="$(echo A"$arg" | sed -e 's/A--verbose=//g')"
 					;;
 				--profiling=*)
-					CONFIG_PROFILING="`echo A$arg | sed -e 's/A--profiling=//g'`"
+					CONFIG_PROFILING="$(echo A"$arg" | sed -e 's/A--profiling=//g')"
 					;;
 				--show)
-					LAUNCHER_SHOW_CMD=echo
+					LAUNCHER_SHOW_CMD="echo"
 					;;
 				--version|-V)
 					print_version
@@ -552,72 +548,74 @@ for arg in "$@" ; do
 					CONFIG_ACCELERATOR_SUPPORT="1"
 					;;
 				--dbg=*)
-					DEBUG="`echo A$arg | sed -e 's/A--dbg=//g'`"
+					DEBUG="$(echo "A$arg" | sed -e 's/A--dbg=//g')"
 					;;
 				--dbg_opt=*)
-					MPC_GDB_DEBUG_ARGS="`echo A$arg | sed -e 's/A--dbg_opt=//g'`"
+					# Used in the gdb launcher scripts
+					# shellcheck disable=SC2034
+					MPC_GDB_DEBUG_ARGS="$(echo "A$arg" | sed -e 's/A--dbg_opt=//g')"
 					;;
 				--autokill=*)
-					CONFIG_AUTOKILL="`echo A$arg | sed -e 's/A--autokill=//g'`"
-					export MPCFRAMEWORK_LAUNCH_AUTOKILL=$CONFIG_AUTOKILL
+					CONFIG_AUTOKILL="$(echo "A$arg" | sed -e 's/A--autokill=//g')"
+					export MPCFRAMEWORK_LAUNCH_AUTOKILL="$CONFIG_AUTOKILL"
 					;;
 				--opt=*)
-					LAUNCH_OPTIONS="$LAUNCH_OPTIONS `echo A$arg | sed -e 's/A--opt=//g'`"
+					LAUNCH_OPTIONS="$LAUNCH_OPTIONS $(echo "A$arg" | sed -e 's/A--opt=//g')"
 					;;
 
 				--task-nb=*)
-					MPC_ARG_TASK_NB="`echo A$arg | sed -e 's/A--task-nb=//g'`"
+					MPC_ARG_TASK_NB="$(echo "A$arg" | sed -e 's/A--task-nb=//g')"
 					;;
 				-n=*)
-					MPC_ARG_TASK_NB="`echo A$arg | sed -e 's/A-n=//g'`"
+					MPC_ARG_TASK_NB="$(echo "A$arg" | sed -e 's/A-n=//g')"
 					;;
 				--process-nb=*)
-					check_process_nb "`echo A$arg | sed -e 's/A--process-nb=//g'`"
+					check_process_nb "$(echo "A$arg" | sed -e 's/A--process-nb=//g')"
 					;;
 				-p=*)
-					check_process_nb "`echo A$arg | sed -e 's/A-p=//g'`"
+					check_process_nb "$(echo "A$arg" | sed -e 's/A-p=//g')"
 					;;
 				--cpu-nb=*)
-					LAUNCHER_OPTION_CPU_NB="`echo A$arg | sed -e 's/A--cpu-nb=//g'`"
+					LAUNCHER_OPTION_CPU_NB="$(echo "A$arg" | sed -e 's/A--cpu-nb=//g')"
 					LAUNCHER_CPU_NB_WAS_SET="1"
 					;;
 				--cpu-nb-mpc=*)
-					MPC_ARG_FORCE_CPU_NB="`echo A$arg | sed -e 's/A--cpu-nb-mpc=//g'`"
+					MPC_ARG_FORCE_CPU_NB="$(echo "A$arg" | sed -e 's/A--cpu-nb-mpc=//g')"
 					;;
 				-c=*)
-					LAUNCHER_OPTION_CPU_NB="`echo A$arg | sed -e 's/A-c=//g'`"
+					LAUNCHER_OPTION_CPU_NB="$(echo "A$arg" | sed -e 's/A-c=//g')"
 					LAUNCHER_CPU_NB_WAS_SET="1"
 					;;
 				--node-nb=*)
-					LAUNCHER_OPTION_NODE_NB="`echo A$arg | sed -e 's/A--node-nb=//g'`"
+					LAUNCHER_OPTION_NODE_NB="$(echo "A$arg" | sed -e 's/A--node-nb=//g')"
 					;;
 				-N=*)
-					LAUNCHER_OPTION_NODE_NB="`echo A$arg | sed -e 's/A-N=//g'`"
+					LAUNCHER_OPTION_NODE_NB="$(echo "A$arg" | sed -e 's/A-N=//g')"
 					;;
 				--multithreading=*)
-					check_thread "`echo A$arg | sed -e 's/A--multithreading=//g'`"
+					check_thread "$(echo "A$arg" | sed -e 's/A--multithreading=//g')"
 					;;
 				-m=*)
-					check_thread "`echo A$arg | sed -e 's/A-m=//g'`"
+					check_thread "$(echo "A$arg" | sed -e 's/A-m=//g')"
 					;;
 				--network=*)
-					check_net "`echo A$arg | sed -e 's/A--network=//g'`"
+					check_net "$(echo "A$arg" | sed -e 's/A--network=//g')"
 					;;
 				-net=*)
-					check_net "`echo A$arg | sed -e 's/A-net=//g'`"
+					check_net "$(echo "A$arg" | sed -e 's/A-net=//g')"
 					;;
 				--net=*)
-					check_net "`echo A$arg | sed -e 's/A--net=//g'`"
+					check_net "$(echo "A$arg" | sed -e 's/A--net=//g')"
 					;;
 				-l=*)
-					LAUNCHER_PLUGIN="`echo A$arg | sed -e 's/A-l=//g'`"
+					LAUNCHER_PLUGIN="$(echo "A$arg" | sed -e 's/A-l=//g')"
 					;;
 				--launcher=*)
-					LAUNCHER_PLUGIN="`echo A$arg | sed -e 's/A--launcher=//g'`"
+					LAUNCHER_PLUGIN="$(echo "A$arg" | sed -e 's/A--launcher=//g')"
 					;;
 				--mpmd=*)
 					MPMD="true"
-					MPMD_PROC_NUM="`echo A$arg | sed -e 's/A--mpmd=//g'`"
+					MPMD_PROC_NUM="$(echo "A$arg" | sed -e 's/A--mpmd=//g')"
           echo "WARNING: The option --mpmd is set, --task-nb / -n is ignored" >&2
 					;;
 				--config=* | --profiles=*)
@@ -625,7 +623,7 @@ for arg in "$@" ; do
 					#it will be propagated as exe options.
 					;;
 				--arch-library-path=*)
-					SCTK_ARCH_LIBRARY_PATH="`echo A$arg | sed -e 's/A--arch-library-path=//g'`"
+					SCTK_ARCH_LIBRARY_PATH="$(echo "A$arg" | sed -e 's/A--arch-library-path=//g')"
 					export SCTK_ARCH_LIBRARY_PATH
 					echo "Arch library path updated : $SCTK_ARCH_LIBRARY_PATH" >&2
 					;;
@@ -633,15 +631,15 @@ for arg in "$@" ; do
 					export MPC_MOVE_TO_TEMP="1"
 					;;
 				--checkpoint|--ckpt)
-					assert_have_dmtcp $arg
+					assert_have_dmtcp "$arg"
 					MPC_ARG_FAULT_TOLERANCE="--checkpoint"
 					;;
 				--restart*|--rstr*)
-					assert_have_dmtcp $arg
+					assert_have_dmtcp "$arg"
 					MPC_ARG_FAULT_TOLERANCE="--restart"
-					MPC_ARG_FT_SCRIPT_PATH="`echo "A$arg" | sed -re 's/A--re?sta?rt?=?//g'`"
-					#if the optioanl argument is a relative path -> expand it
-					test -n "$MPC_ARG_FT_SCRIPT_PATH" && test -z "`echo "$MPC_ARG_FT_SCRIPT_PATH" | egrep "^/"`" && MPC_ARG_FT_SCRIPT_PATH="$PWD/$MPC_ARG_FT_SCRIPT_PATH"
+					MPC_ARG_FT_SCRIPT_PATH="$(echo "A$arg" | sed -re 's/A--re?sta?rt?=?//g')"
+					#if the optional argument is a relative path -> expand it
+					test -n "$MPC_ARG_FT_SCRIPT_PATH" && test -z "$(echo "$MPC_ARG_FT_SCRIPT_PATH" | grep -E "^/")" && MPC_ARG_FT_SCRIPT_PATH="$PWD/$MPC_ARG_FT_SCRIPT_PATH"
 					;;
 				--ft-host=*)
 					assert_have_dmtcp "$arg"
@@ -665,7 +663,7 @@ for arg in "$@" ; do
 				--disable-share-node|\
 				--share-node|\
 				-mpi-only)
-					echo "INFO: $arg option is deprectated"
+					echo "INFO: $arg option is deprecated"
 				;;
 				--)
 					ARG_PARSING_ENABLED="false"
@@ -678,14 +676,14 @@ for arg in "$@" ; do
 		else
 			case $arg in
 				--mpmd=*)
-						MPMD_PROC_NUM="$MPMD_PROC_NUM `echo A$arg | sed -e 's/A--mpmd=//g'`"
+						MPMD_PROC_NUM="$MPMD_PROC_NUM $(echo "A$arg" | sed -e 's/A--mpmd=//g')"
 						if test "$MPMD_COMMAND" = "" ; then
 							MPMD_COMMAND="$tmp"
 						else
 							MPMD_COMMAND="$MPMD_COMMAND : $tmp"
 						fi;
 						tmp=""
-						MPMD_LEN=$(($MPMD_LEN + 1))
+						MPMD_LEN=$((MPMD_LEN + 1))
 					;;
 				*)
 						tmp="$tmp $arg"
@@ -696,18 +694,18 @@ for arg in "$@" ; do
 		if test "$LAUNCHER_OPTION_BINARY" = "" ; then
 			LAUNCHER_OPTION_BINARY="$arg"
 		else
-			arg="`echo A$arg | sed s#\"A$arg\"#\"$arg\"#g | sed s#' '#@MPC_LINK_ARGS@#g`"
+			arg="$(echo "A$arg" | sed s"#A$arg#$arg#g" |  sed s#' '#@MPC_LINK_ARGS@#g)"
 			LAUNCHER_OPTION_BINARY_ARGS="$LAUNCHER_OPTION_BINARY_ARGS $arg"
 		fi
 	fi
 done
 
 if test "$tmp" != ""; then
-	MPMD_LEN=$(($MPMD_LEN + 1))
+	MPMD_LEN=$((MPMD_LEN + 1))
 	MPMD_COMMAND="$MPMD_COMMAND : $tmp"
 	tot=0
 	for i in $MPMD_PROC_NUM; do
-		tot=$((tot + $i))
+		tot=$((tot + i))
 	done
 	if test $P_SET = "false" ; then
 		echo "WARNING : -p automatically completed to $tot"
@@ -720,7 +718,7 @@ if test "$tmp" != ""; then
 fi
 
 ############################
-# Fault Tollerance Support #
+# Fault Tolerance Support #
 ############################
 
 DMTCP_ARG_FT_PORT=""
@@ -761,13 +759,15 @@ dmtcp_fault_tolerance_deploy()
 		test -z "$DMTCP_ARG_FT_HOST" && DMTCP_ARG_FT_HOST="localhost"
 	fi
 
-	if test "x$MPC_ARG_FAULT_TOLERANCE" = "x--checkpoint"; then
+	if test "$MPC_ARG_FAULT_TOLERANCE" = "--checkpoint"; then
 		#this disallows the 'option forwarding capability'
 		LAUNCHER_OPTION_BINARY="dmtcp_launch -h $DMTCP_ARG_FT_HOST -p $DMTCP_ARG_FT_PORT --rm --ckpt-signal 30 ${LAUNCHER_OPTION_BINARY}"
 
-	elif test "x$MPC_ARG_FAULT_TOLERANCE" = "x--restart"; then
+	elif test "$MPC_ARG_FAULT_TOLERANCE" = "--restart"; then
 		test -z "$MPC_ARG_FT_SCRIPT_PATH" && MPC_ARG_FT_SCRIPT_PATH="$PWD/dmtcp_restart_script.sh"
 		LAUNCHER_OPTION_BINARY="$MPC_ARG_FT_SCRIPT_PATH -h $DMTCP_ARG_FT_HOST -p $DMTCP_ARG_FT_PORT"
+		# Used in the hydra launcher scripts
+		# shellcheck disable=SC2034
 		LAUNCHER_CONFIG_LAUNCH_MODE="alloc"
 		echo "Application Restarting. Please wait..."
 	fi
@@ -902,8 +902,10 @@ fi
 ###########################################
 
 if test -n "${CONFIG_USER_LAUNCHERS}" -a -f "${CONFIG_USER_LAUNCHERS}/mpcrun_${LAUNCHER_PLUGIN}"; then
+# shellcheck disable=SC1090
 	. "${CONFIG_USER_LAUNCHERS}/mpcrun_${LAUNCHER_PLUGIN}"
 elif test -f "${LAUNCHER_CONFIG_BINS_HOME}_${LAUNCHER_PLUGIN}"; then
+# shellcheck disable=SC1090
 	. "${LAUNCHER_CONFIG_BINS_HOME}_${LAUNCHER_PLUGIN}"
 else
 	echo "Invalid launcher : ${LAUNCHER_PLUGIN}" 1>&2
@@ -937,6 +939,8 @@ trap "kill -s 2 0" INT
 #################################################
 # Run the actual command as generated by Plugin #
 #################################################
+# We want expansion here
+# shellcheck disable=SC2086
 $LAUNCHER_SHOW_CMD $LAUNCH_COMMAND
 
 exit $?
