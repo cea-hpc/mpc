@@ -59,8 +59,7 @@ install-exec-hook:
 	$(MKDIR_P) $(prefix)/bin
 	rm -fr  $(prefix)/bin/mpirun; $(LN_S) @PRTERUN@ $(prefix)/bin/mpirun
 else
-bin_PROGRAMS+=mpirun
-mpirun_SOURCES=./mpirun.c
+bin_SCRIPTS += mpirun
 endif
 
 #

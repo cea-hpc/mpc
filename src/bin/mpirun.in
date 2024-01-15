@@ -1,0 +1,452 @@
+#!/bin/env python3
+# -*- coding: utf-8 -*-
+
+import subprocess
+import re
+import json
+import argparse
+import copy
+import sys
+import shlex
+
+
+#
+# This is the python rewrite of MPCRUN
+#
+
+# str is ASCII in Python 2, this causes comparison
+# issues depending on the default encoding used
+if sys.version_info.major == 3:
+    unicode = str
+
+if (sys.version_info.major, sys.version_info.minor) >= (3,3):
+	from shlex import quote
+else:
+	from pipes import quote 
+
+#########################
+# General Configuration #
+#########################
+
+# Compute All Paths
+
+MPC_INSTALL_PREFIX="@prefix@"
+MPC_BIN_DIR=MPC_INSTALL_PREFIX + "/bin/"
+MPC_LIB_DIR=MPC_INSTALL_PREFIX + "/lib/"
+MPC_SHARE_DIR="@PKG_DATADIR@"
+USING_ASAN="@USING_ASAN@"
+
+# Optional modules
+
+MPC_HAVE_DMTCP="@MPC_HAVE_DMTCP@"
+MPC_HAVE_PROFILER="@MPC_HAVE_PROFILER@"
+MPC_ALLOCATOR="@MPC_ALLOCATOR@"
+
+##########################
+# Launcher Configuration #
+##########################
+
+MPC_IN_PROCESS_MODE="@MPC_IN_PROCESS_MODE@"
+
+# What MPC is using to start (PMIx, PMI1 or HYDRA client)
+# Used in the launcher scripts
+# shellcheck disable=SC2034
+MPC_LAUNCHER="@MPC_LAUNCHER@"
+# What is detected as launcher program (HYDRA / PRRTE)
+MPC_LAUNCHER_PROGRAM="@MPC_LAUNCHER_PROGRAM@"
+
+
+
+LAUNCHER_TO_EXE = {
+	"HYDRA" : u"hydra",
+	"hydra" : u"hydra",
+	"PRRTE" : u"prrte",
+	"prrte" : u"prrte",
+	"none" : u"srun"
+}
+
+LAUNCHER_CONFIG_MPIEXEC_HYDRA_PATH="@MPIEXEC_HYDRA@"
+LAUNCHER_CONFIG_PRTERUN_PATH="@PRTERUN@"
+
+
+#
+# Helper to split MPMD commands from ARGV
+#
+
+
+
+def split_mpmd(input_array):
+	result = []
+	current_subarray = []
+
+	for element in input_array:
+		if element == ":":
+			if current_subarray:
+					result.append(current_subarray)
+					current_subarray = []
+		else:
+			current_subarray.append(element)
+
+	# Append the last subarray if not empty
+	if current_subarray:
+		result.append(current_subarray)
+
+	return result
+
+
+
+
+##############################################################
+# This is the Configuration Parser used on each MPMD Command #
+##############################################################
+
+class MpcConfig:
+	def _populate_default_config(self):
+		self._conf["MPCFRAMEWORK_LAUNCH_VERBOSITY"] = 0
+		self._conf["MPCFRAMEWORK_LAUNCH_AUTOKILL"] = 0
+		self._conf["MPCFRAMEWORK_LAUNCH_MPCRUN_ASLR"] = True
+		self._conf["MPCFRAMEWORK_LAUNCH_MPCRUN_PROCESS"] = 1
+		self._conf["MPCFRAMEWORK_LAUNCH_MPCRUN_NODE"] = 0
+		self._conf["MPCFRAMEWORK_LAUNCH_MPCRUN_TASK"] = 1
+		self._conf["MPCFRAMEWORK_LAUNCH_MPCRUN_CORE"] = 0
+		self._conf["MPCFRAMEWORK_LAUNCH_MPCRUN_PLUGIN"] = "none"
+		self._conf["MPCFRAMEWORK_LAUNCH_MPCRUN_SMT"] = False
+		self._conf["MPCFRAMEWORK_LAUNCH_MPCRUN_THREAD"] = "ethread_mxn"
+		self._conf["MPCFRAMEWORK_LOWCOMM_NETWORKING_CLI_DEFAULT"] = "tcp"
+
+	def _load_from_mpc(self):
+		cmd = [MPC_BIN_DIR + "/mpc_print_config", "--conf", "conf", "mpcframework.launch", "mpcframework.lowcomm.networking.cli.default"]
+
+		process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+		result, _ = process.communicate()
+
+		if process.returncode != 0:
+			sys.stderr.write("Failed to retrieve config")
+			return
+
+		lines = result.decode("utf8").strip().split('\n')
+
+		config_entry_regex = re.compile(r'^\s*([^#\s]+)\s*=\s*([^#\s]+)\s*$')
+		for line in lines:
+			match = re.match(config_entry_regex, line)
+			if match:
+					key, value = match.groups()
+					try:
+						v = json.loads(value)
+					# In Python 2.7, the exception is named ValueError, not JSONDecodeError
+					except:
+						v = value
+					self._conf[key] = v
+
+	def _check_config(self):
+		if self._conf["MPCFRAMEWORK_LAUNCH_MPCRUN_PLUGIN"] == "none":
+			if MPC_LAUNCHER_PROGRAM in LAUNCHER_TO_EXE:
+				self._conf["MPCFRAMEWORK_LAUNCH_MPCRUN_PLUGIN"] = LAUNCHER_TO_EXE[MPC_LAUNCHER_PROGRAM]
+			else:
+				raise Exception("No launcher for {} in LAUNCHER_TO_EXE".format(MPC_LAUNCHER_PROGRAM))
+		
+		pass
+
+	def __init__(self):
+		self._conf = {}
+		self._populate_default_config()
+		self._load_from_mpc()
+		self._check_config()
+
+	def __parse_args(self,args):
+		parser = argparse.ArgumentParser(description="MPC Launch Configuration",
+			usage="mpirun [OPTIONS(0)... [binary(0) [args(0)...]]] [ : [OPTIONS(N)... [binary(N) [args(N)...]]] ]")
+
+		#
+		# If you have an argument here do not forget to map in config if needed in ARG_MAP_TO_CONFIG
+		#
+
+		# Launch Configuration
+		parser.add_argument('-N', '--node-nb', type=int, help="Total number of nodes")
+		parser.add_argument('-p', '--process-nb', type=int, help="Total number of UNIX processes")
+		parser.add_argument('-n', '--task-nb', type=int, help="Total number of tasks")
+		parser.add_argument('-np', '--mpi-processes', type=int, help="Total number of MPI Processes n=p")
+		parser.add_argument('-c', '--cpu-nb', type=int, help="Number of CPUs per UNIX process")
+
+		parser.add_argument('-v', '--verbose', action='count', default=0, help="Increase verbosity level (up to 3)")
+		parser.add_argument('--show', action='store_true', help="Show final command instead of running")
+
+
+		parser.add_argument('--enable-smt', action='store_true', help="Enable Execution on Hyperthreads")
+
+		# Multithreading
+		parser.add_argument('-m', '--multithreading', type=unicode, help="Define multithreading mode (modes: $MODES_MULTITHREAD)")
+
+		# Network
+		parser.add_argument('-net', '--net', '--network', type=unicode, help="Define Network mode")
+
+		# Launcher
+		parser.add_argument('-l', '--launcher', type=unicode, help="Define launcher")
+		parser.add_argument('--opt', type=unicode, help="Launcher specific options")
+		parser.add_argument('-k', '--autokill', type=int, help="Timeout in second before killing the job")
+		parser.add_argument('binary', type=unicode, help="The program to be executed and its options", nargs='+')
+		
+
+		delimiter = '--'
+		if delimiter not in args:
+			# Parse the arguments a first time to extract the binary name.
+			# This parsing is incorrect when a known argparse option is 
+			# specified *after* the binary name.
+			# For instance,
+			# mpirun -N 2 -n 2 -c 4 -p 2 ./a -m cats -n 1000 -r
+			# will be incorrectly treated as
+			# mpirun -N 2 -n 1000 -c 4 -p 2 -m cats ./a -r
+			parsed_args, _ = parser.parse_known_args(args)
+
+			# Retrieve the binary name in the original list
+			binary_index = args.index(parsed_args.binary[0])
+			
+			# Then, insert manually an escaping "--" delimiter before the
+			# binary name to escape any following argument & option
+			args = args[:binary_index] + [delimiter] + args[binary_index:]
+
+		# Now parse again with fully-escaped binary arguments
+		args = parser.parse_args(args)
+		return args, args.binary
+
+	def config_for_args(self, arguments):
+		args, command = self.__parse_args(arguments)
+		new_conf = copy.deepcopy(self._conf)
+
+
+		ARG_MAP_TO_CONFIG = {
+			"node_nb" : "MPCFRAMEWORK_LAUNCH_MPCRUN_NODE",
+			"process_nb" : "MPCFRAMEWORK_LAUNCH_MPCRUN_PROCESS",
+			"task_nb" : "MPCFRAMEWORK_LAUNCH_MPCRUN_TASK",
+			"mpi_processes" : "MPCFRAMEWORK_LAUNCH_MPCRUN_TASK",
+			"cpu_nb" : "MPCFRAMEWORK_LAUNCH_MPCRUN_CORE",
+			"enable_smt" : "MPCFRAMEWORK_LAUNCH_MPCRUN_SMT",
+			"multithreading" : "MPCFRAMEWORK_LAUNCH_MPCRUN_THREAD",
+			"net" : "MPCFRAMEWORK_LOWCOMM_NETWORKING_CLI_DEFAULT",
+			"launcher" : "MPCFRAMEWORK_LAUNCH_MPCRUN_PLUGIN",
+			"verbose" : "MPCFRAMEWORK_LAUNCH_DEBUG_VERBOSITY",
+			"autokill" : "MPCFRAMEWORK_LAUNCH_AUTOKILL"
+		}
+
+		dct = vars(args)
+
+		for k,v in ARG_MAP_TO_CONFIG.items():
+			if k in dct:
+				if dct[k] is not None:
+					if v in new_conf:
+						cur = new_conf[v]
+						if type(cur) != type(dct[k]):
+							sys.stderr.write("Mismatching types for key \"{}\", default value: {}{}, provided value: {}{}".format(k, cur, type(cur), dct[k], type(dct[k])))
+						#print(f"Setting {v} from {k}")
+						new_conf[v] = dct[k]
+
+		for k in dct.keys():
+			if k not in ARG_MAP_TO_CONFIG:
+				if dct[k] != None:
+					new_conf[k] = dct[k]
+
+		self.check_config(new_conf)
+
+		#print(json.dumps(new_conf,indent=4))
+
+		return new_conf, command
+
+	def initial_config(self):
+		return self._conf
+
+
+	def check_config(self, target_config):
+		# Check at least one node and process and core
+		if target_config["MPCFRAMEWORK_LAUNCH_MPCRUN_PROCESS"] == 0:
+			target_config["MPCFRAMEWORK_LAUNCH_MPCRUN_PROCESS"] = 1
+		
+		if target_config["MPCFRAMEWORK_LAUNCH_MPCRUN_NODE"] == 0:
+			target_config["MPCFRAMEWORK_LAUNCH_MPCRUN_NODE"] = 1
+		
+		if target_config["MPCFRAMEWORK_LAUNCH_MPCRUN_CORE"] == 0:
+			target_config["MPCFRAMEWORK_LAUNCH_MPCRUN_CORE"] = 1
+
+		# In process mode the number of processes is the number of tasks
+		if MPC_IN_PROCESS_MODE == "yes":
+			target_config["MPCFRAMEWORK_LAUNCH_MPCRUN_PROCESS"] = target_config["MPCFRAMEWORK_LAUNCH_MPCRUN_TASK"]
+
+		if target_config["MPCFRAMEWORK_LAUNCH_MPCRUN_NODE"] > target_config["MPCFRAMEWORK_LAUNCH_MPCRUN_PROCESS"]:
+			sys.stderr.write("Cannot run {} processes on {} nodes".format(target_config['MPCFRAMEWORK_LAUNCH_MPCRUN_PROCESS'], target_config['MPCFRAMEWORK_LAUNCH_MPCRUN_NODE']))
+			sys.exit(1)
+
+
+	def unfold_to_mpcargs(self, target_config):
+		CONVERT_TO_MPC={
+			"MPCFRAMEWORK_LAUNCH_MPCRUN_CORE" : "--processor-number=XX",
+			"MPCFRAMEWORK_LAUNCH_MPCRUN_PROCESS" : "--process-number=XX",
+			"MPCFRAMEWORK_LAUNCH_MPCRUN_NODE" : "--node-number=XX",
+			"MPCFRAMEWORK_LAUNCH_MPCRUN_TASK" : "--task-number=XX",
+			"MPCFRAMEWORK_LAUNCH_MPCRUN_SMT" : "--enable-smt",
+			"MPCFRAMEWORK_LAUNCH_MPCRUN_PLUGIN" : "--launcher=XX",
+			"MPCFRAMEWORK_LAUNCH_DEBUG_VERBOSITY" : "--mpc-verbose=XX",
+			"MPCFRAMEWORK_LAUNCH_MPCRUN_THREAD" : "--thread=XX",
+			"MPCFRAMEWORK_LOWCOMM_NETWORKING_CLI_DEFAULT" : "--sctk_use_network=XX"
+		}
+
+		ret = ""
+
+		for k,v in target_config.items():
+			if k in CONVERT_TO_MPC:
+				conv = CONVERT_TO_MPC[k]
+				if "XX" in conv:
+					conv = conv.replace("XX", unicode(v))
+					ret="{} {}".format(ret, conv)
+				else:
+					# This is a bool flag
+					if v:
+						ret="{} {}".format(ret,conv)
+
+
+		return ret.strip()
+
+###################################################
+# This is the runner for generating final command #
+###################################################
+
+class MpcRunner:
+
+	def __init__(self, launcher):
+		SUPPORTED_LAUNCHER=["srun", "hydra"]
+		if launcher not in SUPPORTED_LAUNCHER:
+			sys.stderr.write("{} is not in supported launchers {}".format(launcher, SUPPORTED_LAUNCHER))
+		self._launcher = launcher
+		self._subcmd = []
+
+	def push(self, jargs, mpc_args, cmd):
+		self._subcmd.append((jargs, mpc_args, cmd))
+
+	def _run_srun(self):
+		ret = []
+		is_show = self.show()
+		srun_delimiter = "--"
+
+		for scmd in self._subcmd:
+			cc = []
+			(jargs, mpc_args, cmd) = scmd
+			# Autokill
+			if jargs["MPCFRAMEWORK_LAUNCH_AUTOKILL"] != 0:
+				cc += ["-t", "0:{}".format(jargs['MPCFRAMEWORK_LAUNCH_AUTOKILL'])]
+			# Nodes
+			cc += ["-N", jargs['MPCFRAMEWORK_LAUNCH_MPCRUN_NODE'] ]
+			cc += ["-n", jargs['MPCFRAMEWORK_LAUNCH_MPCRUN_PROCESS'] ]
+			cc += ["-c", jargs['MPCFRAMEWORK_LAUNCH_MPCRUN_CORE'] ]
+			if "opt" in jargs:
+				opt = shlex.split(jargs["opt"])
+				cc += opt
+			cc += ["--export=ALL,MPC_STARTUP_ARGS={}".format(mpc_args if not is_show else '"{}"'.format(mpc_args))]
+			cc += [srun_delimiter] # To delimit the Slurm args from the executable and its args
+			cc += cmd
+			ret.append(cc)
+		return "srun", ret
+
+	def _run_hydra(self):
+		ret = []
+		is_show = self.show()
+		for scmd in self._subcmd:
+			cc = []
+			(jargs, mpc_args, cmd) = scmd
+			# Autokill
+			if jargs["MPCFRAMEWORK_LAUNCH_AUTOKILL"] != 0:
+				cc += ["-t", "0:{}".format(jargs['MPCFRAMEWORK_LAUNCH_AUTOKILL'])]
+			# Nodes
+			cc += ["-n", jargs['MPCFRAMEWORK_LAUNCH_MPCRUN_PROCESS'] ]
+			# Not sure how to proceed ?
+			#if jargs['MPCFRAMEWORK_LAUNCH_MPCRUN_CORE'] != 0:
+			#	cc += [f"-map-by :PE={jargs['MPCFRAMEWORK_LAUNCH_MPCRUN_CORE']}"]
+			if "opt" in jargs:
+				opt = shlex.split(jargs["opt"])
+				cc += opt
+			cc += ["-envall"]
+			cc += ["-env", "MPC_STARTUP_ARGS", "{}".format(mpc_args) if not is_show else quote(mpc_args)]
+			
+			# Quote all binary arguments that contain a white space
+			# when running mpirun --show ...
+			cc += [quote(x) if is_show and " " in x else x for x in cmd]
+
+			ret.append(cc)
+		return LAUNCHER_CONFIG_MPIEXEC_HYDRA_PATH, ret
+
+	def show(self):
+		for scmd in self._subcmd:
+			(jargs, _, _) = scmd
+			if "show" in jargs:
+				if jargs["show"]:
+					return True
+		return False
+
+
+	def run(self):
+		if self._launcher == "srun":
+			(launcher, cmds) = self._run_srun()
+		elif self._launcher == "hydra":
+			(launcher, cmds) = self._run_hydra()
+		else:
+			sys.stderr.write("No such launcher {}".format(self._launcher))
+			sys.exit(1)
+		final_cmd = [launcher]
+		l = len(cmds)
+		for i in range(0, l):
+			final_cmd += cmds[i]
+			if i != (l-1):
+				final_cmd += [":"]
+
+		final_cmd = [unicode(x) for x in final_cmd]
+
+		if self.show():
+			print(" ".join(final_cmd))
+		else:
+			subprocess.call(final_cmd)
+
+
+#
+# This is the MAIN MPC Script
+#
+
+
+if __name__ == "__main__":
+	 
+	commands = split_mpmd(sys.argv[1:])
+
+	conf = MpcConfig()
+
+	cmds = []
+
+	for c in commands:
+		(jconf, cmd) = conf.config_for_args(c)
+		cmds.append((jconf, cmd))
+
+
+	launchers = {}
+
+	# Now we want to gather them by launch plugin
+	#
+	for (jconf, cmd) in cmds:
+		if "MPCFRAMEWORK_LAUNCH_MPCRUN_PLUGIN" not in jconf:
+			sys.stderr.write("No launcher in command {}".format(cmd))
+			continue
+
+		launch = jconf["MPCFRAMEWORK_LAUNCH_MPCRUN_PLUGIN"]
+		if launch not in launchers:
+			launchers[launch] = []
+		
+		launchers[launch].append((jconf, cmd))
+
+	if len(launchers.keys()) > 1:
+		sys.stderr.write("We currently do not support launching jobs with various launchers found {}".format([ k for k in launchers.keys()]))
+		sys.exit(1)
+
+	# It is now time to create a runner for each launcher
+	#
+	for k, v in launchers.items():
+
+		run = MpcRunner(k)
+		for (jargs, cmd) in v:
+			mpc_args = conf.unfold_to_mpcargs(jargs)
+			run.push(jargs, mpc_args, cmd)
+		
+		run.run()

@@ -764,8 +764,6 @@ int mpc_launch_pmi_init()
 	mpc_common_set_process_rank( pmi_context.process_rank );
 	mpc_common_set_process_count( pmi_context.process_count );
 
-	if( 0U < mpc_common_get_flags()->process_number)
-		assume(mpc_common_get_flags()->process_number == (unsigned int)pmi_context.process_count);
 	/* Get process number from PMI */
 	mpc_common_get_flags()->process_number = pmi_context.process_count;
 
