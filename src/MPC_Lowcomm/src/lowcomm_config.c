@@ -216,7 +216,7 @@ static inline mpc_conf_config_type_t *__init_driver_ofi(struct _mpc_lowcomm_conf
 	driver->value.ofi.enable_multi_recv = 1;
 	(void)snprintf(driver->value.ofi.endpoint_type, MPC_CONF_STRING_SIZE, "FI_EP_RDM");
 	/* We set some verbs specific configurations*/
-	if(!strcmp(driver, "verbs"))
+	if(!strcmp(driver->value.ofi.provider, "verbs"))
 	{
 		(void)snprintf(driver->value.ofi.endpoint_type, MPC_CONF_STRING_SIZE, "FI_EP_MSG");
 		driver->value.ofi.bcopy_size = 8192;
