@@ -20,7 +20,8 @@
 /* #                                                                      # */
 /* ######################################################################## */
 #include <assert.h>
-#include "sctk_microtask.h"
+#include "mpc_arch.h"
+
 
 int __kmp_invoke_microtask(
     void (*pkfn) (int * global_tid, int * bound_tid, ...), 
