@@ -67,7 +67,7 @@
  */
 struct mpc_launch_config{
 	int bt_sig_enabled; /** Produce backtraces on error */
-	int banner_enabled; /** Should MPC's banner be dispayed */
+	int banner_enabled; /** Should MPC's banner be displayed */
 	int autokill_timer; /** What is the kill timer in seconds (0 means none) */
 	char mpcrun_launcher[MPC_CONF_STRING_SIZE]; /** What is the default launcher for MPCRUN */
 	char mpcrun_user_launcher[MPC_CONF_STRING_SIZE]; /** Where to look for user launchers in mpcrun */
