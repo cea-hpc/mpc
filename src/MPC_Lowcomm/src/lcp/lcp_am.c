@@ -45,6 +45,33 @@
 /* ============================================== */
 /* Packing                                        */
 /* ============================================== */
+
+/* Memory layout for AM API after packing and just before sending message.
+ * Unexpected messages are encapsulated with lcp_unexp_ctnr_t to shaddow buffers.
+ * 
+ * Eager:
+ *  ----------------------------------------------------------- -- - - 
+ *  | transport   |  lcp_am_hdr_t |             |                     
+ *  |  hdr        |               |  user hdr   |  user data
+ *  |             |               |             |                    
+ *  |             |               |             |                    
+ *  ----------------------------------------------------------- -- - -
+ *                ^               <------------->
+ *                |                user hdr size
+ *               dest
+ *                        
+ * Rendez-vous:
+ *  --------------------------------------------------------------------- -- - -
+ *  | transport   |                  |                |            | 
+ *  |  hdr        |  lcp_rndv_hdr_t  |  remote key    | user hdr   | user data
+ *  |             |                  |  (bmap + pin)  |            |
+ *  |             |                  |                |            |
+ *  --------------------------------------------------------------------- -- - -
+ *                ^
+ *                |
+ *               dest
+*/
+
 static size_t lcp_send_am_eager_pack(void *dest, void *data)
 {
         //TODO: add safeguard to check for max bcopy size

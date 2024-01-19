@@ -122,17 +122,6 @@ int lcp_tag_send_start(lcp_ep_h ep, lcp_request_t *req,
 //FIXME: It is not clear whether count is the number of elements or the length in
 //       bytes. For now, the actual length in bytes is given taking into account
 //       the datatypes and stuff...
-/**
- * @brief Send a message.
- * 
- * @param ep endpoint to send the message
- * @param task task
- * @param buffer message
- * @param count length of the message
- * @param request request to send the message
- * @param param request parameter used for offload flag
- * @return int MPI_SUCCESS in case of success
- */
 int lcp_tag_send_nb(lcp_ep_h ep, lcp_task_h task, const void *buffer, 
                     size_t count, mpc_lowcomm_request_t *request,
                     const lcp_request_param_t *param)

@@ -481,25 +481,11 @@ int lcp_mem_pack(lcp_context_h ctx, lcp_mem_h mem,
         return LCP_SUCCESS;
 }
 
-/**
- * @brief Release an rkey buffer.
- * 
- * @param rkey_buffer buffer to release
- */
 void lcp_mem_release_rkey_buf(void *rkey_buffer)
 {
         sctk_free(rkey_buffer);
 }
 
-/**
- * @brief Unpack an rkey buffer
- * 
- * @param ctx lcp context
- * @param mem_p unpacked memory output buffer
- * @param src data to unpack
- * @param size output size of unpacked data
- * @return int LCP_SUCCESS in case of success
- */
 int lcp_mem_unpack(lcp_context_h ctx, lcp_mem_h *mem_p, 
                    void *src, size_t size)
 {
@@ -546,13 +532,6 @@ err:
         return rc;
 }
 
-/**
- * @brief Allocate memory domain and pins.
- * 
- * @param ctx context
- * @param mem_p memory to alloc
- * @return int LCP_SUCCESS in case of success
- */
 int lcp_mem_create(lcp_context_h ctx, lcp_mem_h *mem_p)
 {
         int rc = LCP_SUCCESS;
@@ -580,11 +559,6 @@ err:
         return rc;
 }
 
-/**
- * @brief Free memory.
- * 
- * @param mem memory to be freed
- */
 void lcp_mem_delete(lcp_mem_h mem)
 {
         sctk_free(mem->mems);
@@ -648,16 +622,6 @@ err:
 //FIXME: what append if a memory could not get registered ? Miss error handling:
 //       if a subset could not be registered, perform the communication on the
 //       successful memory pins ?
-/**
- * @brief Register memory.
- *
- * @param ctx context
- * @param mem_p memory object to register (out)
- * @param buffer data to store
- * @param length length of the data
- * @param memp_map
- * @return int LCP_SUCCESS in case of success
- */
 int lcp_mem_register(lcp_context_h ctx,
                      lcp_mem_h *mem_p,
                      void *buffer,
@@ -774,13 +738,6 @@ err:
         return rc;
 }
 
-/**
- * @brief deregister memory from the register (unpin and free)
- * 
- * @param ctx lcp context
- * @param mem memory to unpin
- * @return int LCP_SUCCESS in case of success
- */
 //FIXME: this is not used anymore since deregistration is performed by the mmu.
 //       What happen a deregistration is explicitely needed? 
 int lcp_mem_deregister(lcp_context_h ctx, lcp_mem_h mem)

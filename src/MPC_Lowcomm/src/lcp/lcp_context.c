@@ -377,6 +377,8 @@ TODO(understand why it crashes running without networking);
                 }
         }
 
+        //FIXME: handle process mode case?
+
         /* Tag offload special case */
         if (ctx->config.offload) {
                 for (i=0; i < *rail_count; i++)
@@ -795,14 +797,6 @@ static int __check_configuration(lcp_context_h ctx)
         return __generate_configuration_summary(ctx);
 }
 
-
-/**
- * @brief This is the main entry point to configure LCP
- * 
- * @param ctx_p pointer to the context
- * @param param configuration params for pack, unpack and getuid
- * @return int LCP_SUCCESS on success
- */
 int lcp_context_create(lcp_context_h *ctx_p, lcp_context_param_t *param)
 {
 	int rc = LCP_SUCCESS;
@@ -917,12 +911,6 @@ err:
 	return rc;
 }
 
-/**
- * @brief Release a context.
- *
- * @param ctx context to free
- * @return int MPI_SUCCESS in case of success
- */
 int lcp_context_fini(lcp_context_h ctx)
 {
 	int i;

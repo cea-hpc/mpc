@@ -38,12 +38,6 @@
 #include "lcp_request.h"
 #include "list.h"
 
-/**
- * @brief progress in the pending request list
- * 
- * @param ctx 
- * @return int 
- */
 int lcp_progress(lcp_context_h ctx)
 {
         sctk_rail_info_t *iface;

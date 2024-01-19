@@ -51,6 +51,32 @@
 /* Packing                                        */
 /* ============================================== */
 
+/* Memory layout for TAG API after packing and just before sending message.
+ * Unexpected messages are encapsulated with lcp_unexp_ctnr_t to shaddow buffers.
+ * 
+ * Eager:
+ *  ----------------------------------------------------------- -- - - 
+ *  | transport   |  lcp_tag_hdr |                                  
+ *  |  hdr        |  (tag, rndv, |  user data                      
+ *  |             |   sync)      |                                 
+ *  |             |              |                                 
+ *  ----------------------------------------------------------- -- - -
+ *                ^
+ *                |
+ *               dest
+ *                        
+ * Rendez-vous:
+ *  ----------------------------------------------------------- -- - -
+ *  | transport   |                  |                |             
+ *  |  hdr        |  lcp_rndv_hdr_t  |  remote key    | user data  
+ *  |             |                  |  (bmap + pin)  |            
+ *  |             |                  |                |            
+ *  ----------------------------------------------------------- -- - -
+ *                ^
+ *                |
+ *               dest
+*/
+
 /**
  * @brief Pack a message into a header. Used also for sync since msg identifier
  *        is built on sequence number (seqn) and destination task identifier

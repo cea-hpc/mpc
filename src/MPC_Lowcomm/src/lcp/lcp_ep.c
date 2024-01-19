@@ -425,15 +425,6 @@ err:
 	return rc;
 }
 
-/**
- * @brief Allocate an endpoint (with `lcp_context_ep_create`) and add it to the context table
- *
- * @param ctx context used to initialize the endpoint
- * @param ep_p address of the endpoint to be created
- * @param uid id of the endpoint
- * @param flags flag passed to lcp_context_ep_create
- * @return int
- */
 int lcp_ep_create(lcp_context_h ctx, lcp_ep_h *ep_p,
                   mpc_lowcomm_peer_uid_t uid, unsigned flags)
 {
@@ -503,16 +494,6 @@ lcp_ep_h lcp_ep_get(lcp_context_h ctx, mpc_lowcomm_peer_uid_t uid)
         return elem->ep;
 }
 
-/**
- * @brief Get an endpoint. Create it if it does not exist.
- *
- * @param arg context
- * @param comm_id id of the target communicator (32 bits written on weak bits of int64)
- * @param length destination process id
- * @param ep_p target output endpoint
- * @param flags unused
- * @return __UNUSED__ static int
- */
 int lcp_ep_get_or_create(lcp_context_h ctx, mpc_lowcomm_peer_uid_t uid, lcp_ep_h *ep_p, unsigned flags)
 {
 	if(!(*ep_p = lcp_ep_get(ctx, uid)))
