@@ -155,7 +155,7 @@ mpc_conf_config_type_t * mpc_conf_config_type_elem_update(mpc_conf_config_type_t
 			if(!default_elem)
 			{
 				mpc_conf_config_type_print(updater, MPC_CONF_FORMAT_XML);
-				_utils_verbose_output(0,"Default definitions does not contain '%s' elements", current_elem->name);
+				_utils_verbose_output(0,"Default definitions do not contain '%s' elements", current_elem->name);
 				abort();
 			}
 		}
@@ -339,12 +339,12 @@ int mpc_config_type_match_order(mpc_conf_config_type_t *type, mpc_conf_config_ty
 {
 	if( type->elem_count < ref->elem_count  )
 	{
-		_utils_verbose_output(1, "REORDER: redordered type must be at least as large as ref type (type %d & ref %d)\n", type->elem_count, ref->elem_count);
+		_utils_verbose_output(1, "REORDER: reordered type must be at least as large as ref type (type %d & ref %d)\n", type->elem_count, ref->elem_count);
 		return -1;
 	}
 
 
-	/* Move all kown types to match the order of ref */
+	/* Move all known types to match the order of ref */
 	unsigned int i, j;
 
 	for( i = 0 ; i < ref->elem_count; i++)
@@ -376,7 +376,7 @@ int mpc_conf_config_type_elem_set_from_string(mpc_conf_config_type_elem_t *elem,
 
 	if(elem->is_locked)
 	{
-		_utils_verbose_output(0, "cannnot write to %s which is LOCKED\n", elem->name);
+		_utils_verbose_output(0, "cannot write to %s which is LOCKED\n", elem->name);
 		return 1;
 	}
 

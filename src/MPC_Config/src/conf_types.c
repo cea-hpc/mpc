@@ -348,7 +348,7 @@ int mpc_conf_type_set_value_from_string(mpc_conf_type_t type, void **dest, char 
 	/* String can only be assigned to actual values */
 	if(type == MPC_CONF_TYPE)
 	{
-		_utils_verbose_output(0,"cannot assign string value '%s' toMPC_CONF_TYPE\n", from);
+		_utils_verbose_output(0,"cannot assign string value '%s' to MPC_CONF_TYPE\n", from);
 		return 1;
 	}
 
