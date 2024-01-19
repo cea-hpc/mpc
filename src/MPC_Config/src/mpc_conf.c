@@ -389,7 +389,7 @@ int mpc_conf_config_type_elem_set_from_string(mpc_conf_config_type_elem_t *elem,
 		}
 		else
 		{
-			_utils_verbose_output(3, "ELEM: mismatching types %s != %s  when setting '%s' to %s\n", mpc_conf_type_name(type) , mpc_conf_type_name(elem->type),  elem->name);
+			_utils_verbose_output(3, "ELEM: mismatching types %s != %s  when setting '%s' to %s\n", mpc_conf_type_name(type) , mpc_conf_type_name(elem->type), elem->name, string);
 			return -1;
 		}
 		
