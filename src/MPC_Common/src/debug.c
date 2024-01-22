@@ -47,8 +47,6 @@
 #define SMALL_BUFFER_SIZE ( 4 * 1024 )
 #define DEBUG_INFO_SIZE ( 64 )
 
-int __is_stderr_tty;
-
 static inline int mpc_common_debug_is_stderr_tty(){
 	return mpc_common_get_flags()->isatty;
 }
