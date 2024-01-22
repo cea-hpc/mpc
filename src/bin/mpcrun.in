@@ -913,7 +913,7 @@ else
 fi
 
 if test -t 2; then
-	IS_STDERR_TTY=1;
+	add_flag "--isatty" "1"
 fi
 
 #####################

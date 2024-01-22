@@ -8,7 +8,7 @@ import argparse
 import copy
 import sys
 import shlex
-
+import os
 
 #
 # This is the python rewrite of MPCRUN
@@ -113,6 +113,10 @@ class MpcConfig:
 		self._conf["MPCFRAMEWORK_LAUNCH_MPCRUN_SMT"] = False
 		self._conf["MPCFRAMEWORK_LAUNCH_MPCRUN_THREAD"] = "ethread_mxn"
 		self._conf["MPCFRAMEWORK_LOWCOMM_NETWORKING_CLI_DEFAULT"] = "tcp"
+
+		if os.isatty(sys.stderr.fileno()):
+			self._conf["MPIRUN_IS_RUNNING_IN_A_TTY"] = True
+
 
 	def _load_from_mpc(self):
 		cmd = [MPC_BIN_DIR + "/mpc_print_config", "--conf", "conf", "mpcframework.launch", "mpcframework.lowcomm.networking.cli.default"]
@@ -285,7 +289,8 @@ class MpcConfig:
 			"MPCFRAMEWORK_LAUNCH_MPCRUN_PLUGIN" : "--launcher=XX",
 			"MPCFRAMEWORK_LAUNCH_DEBUG_VERBOSITY" : "--mpc-verbose=XX",
 			"MPCFRAMEWORK_LAUNCH_MPCRUN_THREAD" : "--thread=XX",
-			"MPCFRAMEWORK_LOWCOMM_NETWORKING_CLI_DEFAULT" : "--sctk_use_network=XX"
+			"MPCFRAMEWORK_LOWCOMM_NETWORKING_CLI_DEFAULT" : "--sctk_use_network=XX",
+			"MPIRUN_IS_RUNNING_IN_A_TTY" : "--isatty"
 		}
 
 		ret = ""

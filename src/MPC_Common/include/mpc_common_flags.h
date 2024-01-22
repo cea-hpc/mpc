@@ -37,6 +37,9 @@ struct mpc_common_flags
 	short checkpoint_enabled;
 	char *checkpoint_model;
 
+        /* Are we running in a TTY ?*/
+        short isatty;
+
         /* Topology Display */
         short enable_topology_graphic_placement;/*< Should current pinning be dumped graphically */
         short enable_topology_text_placement;   /*< Should current pinning be dumped in text */

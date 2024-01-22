@@ -50,13 +50,11 @@
 int __is_stderr_tty;
 
 static inline int mpc_common_debug_is_stderr_tty(){
-	return __is_stderr_tty;
+	return mpc_common_get_flags()->isatty;
 }
-void mpc_common_debug_init(){
-	if(getenv("IS_STDERR_TTY"))
-		__is_stderr_tty = 1;
-	else 
-		__is_stderr_tty = 0;
+void mpc_common_debug_init()
+{
+
 }
 
 /**********************************************************************/

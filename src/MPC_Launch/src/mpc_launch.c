@@ -238,7 +238,7 @@ static inline int __parse_arg_eq(char *arg,
 #define SET_FLAG_BOOLEAN(key, flag)                     \
 	__SET_FLAG_BOOLEAN( ("--"key), flag, 1);        \
 	__SET_FLAG_BOOLEAN( ("--enable-"key), flag, 1); \
-	__SET_FLAG_BOOLEAN( ("--disable-"key), flag, 1);
+	__SET_FLAG_BOOLEAN( ("--disable-"key), flag, 0);
 
 /* Strings / Integers */
 
@@ -297,6 +297,8 @@ static inline void __parse_argument(char *passed_arg)
 	/* Old syntax could be removed */
 	__SET_FLAG_BOOLEAN("--use-accl", enable_accelerators, 1);
 	SET_FLAG_BOOLEAN("accl", enable_accelerators);
+	SET_FLAG_BOOLEAN("isatty", isatty);
+
 
 	/* String flags */
 	SET_FLAG_STRING("--sctk_use_network", network_driver_name);
