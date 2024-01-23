@@ -373,7 +373,6 @@ int _mpc_ofi_domain_init(struct _mpc_ofi_domain_t * domain, struct _mpc_ofi_cont
    mpc_common_spinlock_init(&domain->lock, 0);
    mpc_common_spinlock_init(&domain->buffer_lock, 0);
 
-   domain->being_polled = 0;
    domain->ctx = ctx;
    domain->config = config;
 
@@ -545,7 +544,7 @@ static inline int _ofi_domain_cq_process_event(struct _mpc_ofi_domain_t * domain
    {
       struct _mpc_ofi_domain_buffer_t * buff = (struct _mpc_ofi_domain_buffer_t *)evt->op_context;
 
-      /* The buffer is about to be exausted it is then not posted anymore */
+      /* The buffer is about to be exhausted it is then not posted anymore */
       _mpc_ofi_domain_buffer_set_unposted(buff);
    }
 
@@ -618,11 +617,6 @@ static inline int _ofi_domain_cq_poll(struct _mpc_ofi_domain_t * domain, struct 
    ssize_t rd = 0;
 	struct fi_cq_data_entry comp[MPC_OFI_DOMAIN_NUM_CQ_REQ_TO_POLL];
 
-   if( mpc_common_spinlock_trylock(&domain->lock))
-   {
-      return 0;
-   }
-
    rd = fi_cq_read(cq, &comp, MPC_OFI_DOMAIN_NUM_CQ_REQ_TO_POLL);
 
    if (rd == -FI_EAGAIN)
@@ -663,7 +657,6 @@ static inline int _ofi_domain_cq_poll(struct _mpc_ofi_domain_t * domain, struct 
    {
       /* We process events unlocked */
       mpc_common_spinlock_unlock(&domain->lock);
-
 
       for( i = 0 ; i < rd; i++)
       {
@@ -742,11 +735,6 @@ static inline int __mpc_ofi_domain_eq_poll(struct _mpc_ofi_domain_t * domain)
 	uint32_t event = 0;
 	ssize_t rd = 0;
 
-   if( mpc_common_spinlock_trylock(&domain->lock) )
-   {
-      return 0;
-   }
-
    rd = fi_eq_read(domain->eq, &event, data_buff, OFI_DATA_BUFF_SIZE, 0);
 
 	if(rd == -FI_EAVAIL)
@@ -814,22 +802,17 @@ unlock_eq_poll:
 
 int _mpc_ofi_domain_poll(struct _mpc_ofi_domain_t * domain, int type)
 {
-   if(domain->being_polled)
+   if(mpc_common_spinlock_trylock(&domain->lock))
    {
       return 0;
    }
 
    int did_poll = 0;
 
-   domain->being_polled = 1;
-
-
    if( (!type) | (type & FI_RECV) )
    {
-
       if( _ofi_domain_cq_poll(domain, domain->rx_cq, &did_poll))
       {
-         domain->being_polled = 0;
          mpc_common_errorpoint("RECV cq reported an error");
          return 1;
       }
@@ -837,10 +820,8 @@ int _mpc_ofi_domain_poll(struct _mpc_ofi_domain_t * domain, int type)
 
    if( (!type) | (type & FI_SEND) )
    {
-
       if( _ofi_domain_cq_poll(domain, domain->tx_cq, &did_poll))
       {
-         domain->being_polled = 0;
          mpc_common_errorpoint("TX cq reported an error");
          return 1;
       }
@@ -850,12 +831,10 @@ int _mpc_ofi_domain_poll(struct _mpc_ofi_domain_t * domain, int type)
    {
       if( __mpc_ofi_domain_eq_poll(domain) )
       {
-         domain->being_polled = 0;
          mpc_common_errorpoint("CQ reported an error");
          return 1;
       }
    }
-   domain->being_polled = 0;
 
    return 0;
 }

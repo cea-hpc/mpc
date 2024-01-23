@@ -184,7 +184,6 @@ struct _mpc_ofi_domain_conn *_mpc_ofi_domain_conntrack_get_by_remote(struct _mpc
 struct _mpc_ofi_domain_t
 {
 	mpc_common_spinlock_t                             lock;
-	volatile int                                      being_polled;
 	/* Pointer to config and fabric */
 	struct _mpc_ofi_context_t *                        ctx;
 	/* The OFI domain */
