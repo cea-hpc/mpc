@@ -248,7 +248,7 @@ int _mpc_ofi_domain_buffer_manager_release(struct _mpc_ofi_domain_buffer_manager
 }
 
 /********************
- * ENPOINT CREATION *
+ * ENDPOINT CREATION *
  ********************/
 
 
@@ -638,8 +638,16 @@ static inline int _ofi_domain_cq_poll(struct _mpc_ofi_domain_t * domain, struct 
       char data_buff[OFI_DATA_BUFF_SIZE];
 		data_buff[0] = '\0';
 		fi_cq_strerror(cq, err.prov_errno, err.err_data, data_buff, OFI_DATA_BUFF_SIZE);
-		mpc_common_debug_fatal("%d : Got cq error on %s message of len %d over buffer %p == %s", err.err,
-				fi_strerror(err.err), err.len, err.buf, data_buff);
+
+		/* Ignore canceled-operation errors that occur when a process shuts down */
+		if (err.err == FI_ECANCELED)
+		{
+			return_code = 0;
+			goto unlock_cq_poll;
+		}
+
+		mpc_common_debug_warning("%d : Got cq error on %s message of len %d over buffer %p == %s",
+				err.err, fi_strerror(err.err), err.len, err.buf, data_buff);
       return_code = -1;
 		goto unlock_cq_poll;
 	}
@@ -734,12 +742,12 @@ static inline int __mpc_ofi_domain_eq_poll(struct _mpc_ofi_domain_t * domain)
 
 	uint32_t event = 0;
 	ssize_t rd = 0;
+	struct fi_eq_err_entry err;
 
    rd = fi_eq_read(domain->eq, &event, data_buff, OFI_DATA_BUFF_SIZE, 0);
 
 	if(rd == -FI_EAVAIL)
 	{
-		struct fi_eq_err_entry err;
       long ret = fi_eq_readerr(domain->eq, &err, 0);
       if(ret < 0)
       {
@@ -764,7 +772,7 @@ static inline int __mpc_ofi_domain_eq_poll(struct _mpc_ofi_domain_t * domain)
 
 	mpc_common_tracepoint_fmt("EQ event %s", fi_tostr(&event, FI_TYPE_EQ_EVENT));
 
-   if(event & FI_CONNREQ)
+   if(event == FI_CONNREQ)
    {
       struct fi_eq_cm_entry *cm_data = (struct fi_eq_cm_entry*)data_buff;
       assume((ssize_t)sizeof(struct fi_eq_cm_entry) <= rd);
@@ -775,7 +783,7 @@ static inline int __mpc_ofi_domain_eq_poll(struct _mpc_ofi_domain_t * domain)
          mpc_common_debug_fatal("Failed to accept connection");
       }
    }
-   else if(event & FI_CONNECTED)
+   else if(event == FI_CONNECTED)
    {
       struct fi_eq_cm_entry *cm_data = (struct fi_eq_cm_entry*)data_buff;
       assume((ssize_t)sizeof(struct fi_eq_cm_entry) <= rd);
@@ -784,6 +792,20 @@ static inline int __mpc_ofi_domain_eq_poll(struct _mpc_ofi_domain_t * domain)
       {
          mpc_common_debug_fatal("Failed to accept connection");
       }
+   }
+   else if (event == FI_SHUTDOWN)
+   {
+      struct fi_eq_cm_entry *cm_data = (struct fi_eq_cm_entry*)data_buff;
+      assume((ssize_t)sizeof(struct fi_eq_cm_entry) <= rd);
+
+	   mpc_common_tracepoint_fmt("Got FI_SHUTDOWN, closing endpoint of FID %p", cm_data->fid);
+
+	   // FIXME: resources should be freed properly in LCP
+	   int ret = fi_close(cm_data->fid);
+	   if (ret)
+	   {
+         mpc_common_debug_fatal("Failed to close endpoint on shutdown with error %d", ret);
+	   }
    }
    else
    {
@@ -808,35 +830,36 @@ int _mpc_ofi_domain_poll(struct _mpc_ofi_domain_t * domain, int type)
    }
 
    int did_poll = 0;
+   int err = 0;
 
    if( (!type) | (type & FI_RECV) )
    {
-      if( _ofi_domain_cq_poll(domain, domain->rx_cq, &did_poll))
-      {
-         mpc_common_errorpoint("RECV cq reported an error");
-         return 1;
-      }
+	   err |= _ofi_domain_cq_poll(domain, domain->rx_cq, &did_poll);
+	   if(err)
+	   {
+		   mpc_common_errorpoint("RECV cq reported an error");
+	   }
    }
 
-   if( (!type) | (type & FI_SEND) )
+   if( !err && ((!type) | (type & FI_SEND)) )
    {
-      if( _ofi_domain_cq_poll(domain, domain->tx_cq, &did_poll))
-      {
-         mpc_common_errorpoint("TX cq reported an error");
-         return 1;
-      }
+	   err |= _ofi_domain_cq_poll(domain, domain->tx_cq, &did_poll);
+	   if(err)
+	   {
+		   mpc_common_errorpoint("TX cq reported an error");
+	   }
    }
 
-   if(!did_poll)
+   if(err || !did_poll)
    {
-      if( __mpc_ofi_domain_eq_poll(domain) )
-      {
-         mpc_common_errorpoint("CQ reported an error");
-         return 1;
-      }
+	   err |= __mpc_ofi_domain_eq_poll(domain);
+	   if(err)
+	   {
+		   mpc_common_errorpoint("CQ reported an error");
+	   }
    }
 
-   return 0;
+   return !!err;
 }
 
 #define MPC_OFI_DOMAIN_MR_INTERNAL_KEY 1337
