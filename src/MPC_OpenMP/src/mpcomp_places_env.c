@@ -419,10 +419,10 @@ mpc_omp_places_build_sockets_places( const int places_number, int *error )
 	assert( places_string );
 	socket_found = 0;
 	tnwrites = 0;
-	const int number_sockets = hwloc_get_nbobjs_by_type( topology, HWLOC_OBJ_SOCKET );
+	const int number_sockets = hwloc_get_nbobjs_by_type( topology, HWLOC_OBJ_PACKAGE );
 	const int __places_number = ( places_number == -1 ) ? number_sockets : places_number;
 
-	while ( ( next_socket = hwloc_get_next_obj_by_type( topology, HWLOC_OBJ_SOCKET, prev_socket ) ) )
+	while ( ( next_socket = hwloc_get_next_obj_by_type( topology, HWLOC_OBJ_PACKAGE, prev_socket ) ) )
 	{
 		/* Level with no PU ... skip */
 		if ( hwloc_get_nbobjs_inside_cpuset_by_type( topology, next_socket->cpuset, HWLOC_OBJ_PU ) <= 0 )

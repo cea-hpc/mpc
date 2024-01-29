@@ -204,7 +204,7 @@ TEST_F(TopologyTest, mpc_common_topo_get_pu_cpuset) {
 
 TEST_F(TopologyTest, mpc_common_topo_get_first_pu_for_level) {
 
-   hwloc_obj_type_t levels[4] = {HWLOC_OBJ_MACHINE, HWLOC_OBJ_SOCKET, HWLOC_OBJ_NUMANODE, HWLOC_OBJ_PU};
+   hwloc_obj_type_t levels[4] = {HWLOC_OBJ_MACHINE, HWLOC_OBJ_PACKAGE, HWLOC_OBJ_NUMANODE, HWLOC_OBJ_PU};
    int counts[4] = {1, 2, 2, 48};
 
    int i;

@@ -189,7 +189,7 @@ static inline void __topology_device_load_topology_limits( hwloc_topology_t topo
 	/* Allocate a current core ID for each numa */
 	___current_core_id = sctk_calloc( ___numa_count, sizeof( int ) );
 	assume( ___current_core_id != NULL );
-	hwloc_obj_t numa_node = hwloc_get_next_obj_by_type( topology, HWLOC_OBJ_NODE, NULL );
+	hwloc_obj_t numa_node = hwloc_get_next_obj_by_type( topology, HWLOC_OBJ_NUMANODE, NULL );
 	/* Assume 1 to begin with */
 	___core_count = 1;
 	/* Prepare to walk numa nodes */
@@ -215,7 +215,7 @@ static inline void __topology_device_load_topology_limits( hwloc_topology_t topo
 			}
 		}
 
-		numa_node = hwloc_get_next_obj_by_type( topology, HWLOC_OBJ_NODE, numa_node );
+		numa_node = hwloc_get_next_obj_by_type( topology, HWLOC_OBJ_NUMANODE, numa_node );
 	}
 
 	/* No numa found */
@@ -247,12 +247,12 @@ static inline int __topology_device_get_ith_logical_on_numa( hwloc_topology_t to
 {
 	int ret = -1;
 	hwloc_cpuset_t local_cpuset;
-	hwloc_obj_t numa = hwloc_get_obj_by_type( topology, HWLOC_OBJ_NODE, numa_id );
+	hwloc_obj_t numa = hwloc_get_obj_by_type( topology, HWLOC_OBJ_NUMANODE, numa_id );
 
 	if ( !numa )
 	{
 		/* This machine has no numa with this id (can also be non-numa)
-		* then work on the autorized CPUSET */
+		* then work on the authorized CPUSET */
 		local_cpuset = (hwloc_cpuset_t) hwloc_topology_get_allowed_cpuset( topology );
 	}
 	else

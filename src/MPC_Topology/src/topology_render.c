@@ -669,10 +669,10 @@ static void print_children(hwloc_topology_t hwtopology, hwloc_obj_t obj,
         && obj->type != HWLOC_OBJ_MACHINE && obj->type != HWLOC_OBJ_NODE && obj->type != HWLOC_OBJ_SOCKET && obj->type != HWLOC_OBJ_SYSTEM)
 #else
         if(hwloc_get_ancestor_obj_by_type(hwtopology, obj->type, lower_index_obj_pu)->logical_index == obj->logical_index
-        && obj->type != HWLOC_OBJ_MACHINE && obj->type != HWLOC_OBJ_PACKAGE && obj->type != HWLOC_OBJ_SOCKET && obj->type != HWLOC_OBJ_SYSTEM)
+        && obj->type != HWLOC_OBJ_MACHINE && obj->type != HWLOC_OBJ_PACKAGE)
 #endif
         {
-            fprintf(f,"\n\n|------------------------------BEGINING RESERVATION HOST %s-------------------------|\n", HostName); 
+            fprintf(f,"\n\n|------------------------------BEGINNING RESERVATION HOST %s-------------------------|\n", HostName); 
             already_begining_done = 0;
         }
     }

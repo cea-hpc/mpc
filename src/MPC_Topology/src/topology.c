@@ -53,9 +53,6 @@
 /******************************
  * MPC TOPOLOGY CONFIGURATION *
  ******************************/
-#if (HWLOC_API_VERSION >= 0x00020000)
-  #define HWLOC_OBJ_SOCKET HWLOC_OBJ_PACKAGE
-#endif
 
 struct mpc_topology_config
 {
@@ -405,7 +402,7 @@ void _mpc_topology_print( hwloc_topology_t target_topology, FILE *fd )
 		// It it not possible to retrieve numa node id from pu ancestor
 		tmp[0] = hwloc_get_ancestor_obj_by_type( target_topology, HWLOC_OBJ_NUMANODE, pu );
 #endif
-		tmp[1] = hwloc_get_ancestor_obj_by_type( target_topology, HWLOC_OBJ_SOCKET, pu );
+		tmp[1] = hwloc_get_ancestor_obj_by_type( target_topology, HWLOC_OBJ_PACKAGE, pu );
 		tmp[2] = hwloc_get_ancestor_obj_by_type( target_topology, HWLOC_OBJ_CORE, pu );
 
 #if ( HWLOC_API_VERSION < 0x00020000 )
@@ -565,7 +562,7 @@ hwloc_cpuset_t _mpc_topology_get_pu_cpuset(hwloc_topology_t target_topo,  int cp
 
 int _mpc_topology_get_socket_count( hwloc_topology_t target_topo)
 {
-	return hwloc_get_nbobjs_by_type( target_topo, HWLOC_OBJ_SOCKET );
+	return hwloc_get_nbobjs_by_type( target_topo, HWLOC_OBJ_PACKAGE );
 }
 
 int _mpc_topology_get_socket_id( hwloc_topology_t target_topo, int os_level )
@@ -582,7 +579,7 @@ int _mpc_topology_get_socket_id( hwloc_topology_t target_topo, int os_level )
 
 	hwloc_obj_t parent = target_pu->parent;
 
-	while ( parent->type != HWLOC_OBJ_SOCKET )
+	while ( parent->type != HWLOC_OBJ_PACKAGE )
 	{
 		if ( !parent )
 			break;
@@ -982,7 +979,7 @@ void _topo_print_cpu_neighborhood(hwloc_topology_t target_topo, int cpuid, int n
 	hwloc_obj_type_t type = ( mpc_topology_has_numa_nodes() ) ? HWLOC_OBJ_NUMANODE : HWLOC_OBJ_MACHINE;
 	int currentCPU_node_id = _mpc_topology_get_numa_node_from_cpu(target_topo, cpuid);
 #endif
-	int currentCPU_socket_id = hwloc_get_ancestor_obj_by_type( target_topo, HWLOC_OBJ_SOCKET, currentCPU )->logical_index;
+	int currentCPU_socket_id = hwloc_get_ancestor_obj_by_type( target_topo, HWLOC_OBJ_PACKAGE, currentCPU )->logical_index;
 	int currentCPU_core_id = hwloc_get_ancestor_obj_by_type( target_topo, HWLOC_OBJ_CORE, currentCPU )->logical_index;
 
 	fprintf( stderr, "Neighborhood result starting with CPU %d: (Node:%d, Socket: %d, Core: %d)\n",
@@ -1006,7 +1003,7 @@ void _topo_print_cpu_neighborhood(hwloc_topology_t target_topo, int cpuid, int n
 		fprintf( stderr, "\tNeighbor[%d] -> CPU %d: (Node:%d, Socket: %d, Core: %d)\n",
 				 i, neighborhood[i],
 				 cur_node->logical_index,
-				 hwloc_get_ancestor_obj_by_type( target_topo, HWLOC_OBJ_SOCKET, current )->logical_index,
+				 hwloc_get_ancestor_obj_by_type( target_topo, HWLOC_OBJ_PACKAGE, current )->logical_index,
 				 hwloc_get_ancestor_obj_by_type( target_topo, HWLOC_OBJ_CORE, current )->logical_index );
 	}
 }
