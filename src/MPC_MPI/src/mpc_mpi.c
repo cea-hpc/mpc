@@ -16493,9 +16493,9 @@ int PMPI_Get_library_version(char *version, __UNUSED__ int *resultlen)
 * NAME RESOLUTION *
 *******************/
 
-int PMPI_Lookup_name(__UNUSED__ const char *service_name,
+int PMPI_Lookup_name(const char *service_name,
                      __UNUSED__ MPI_Info info,
-                     __UNUSED__ char *port_name)
+                     char *port_name)
 {
 	int ret = mpc_lowcomm_lookup_name(service_name,
 	                                  port_name,
