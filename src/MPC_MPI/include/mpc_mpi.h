@@ -488,9 +488,9 @@ typedef int                              MPI_Halo_exchange;
 typedef mpc_lowcomm_checkpoint_state_t   MPIX_Checkpoint_state;
 
 /* NOT IMPLEMENTED >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> */
-typedef mpc_lowcomm_rdma_window_t        MPI_Win;
+//typedef mpc_lowcomm_rdma_window_t        MPI_Win;
 
-
+typedef struct MPI_ABI_Win *             MPI_Win;
 typedef MPC_Message                      MPI_Message;
 
 /* added in MPI-2.2 */
