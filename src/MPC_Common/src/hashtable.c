@@ -279,7 +279,7 @@ void *mpc_common_hashtable_get( struct mpc_common_hashtable *ht, uint64_t key )
 		return ret;
 	}
 
-	/* Now walk sibblings */
+	/* Now walk siblings */
 	struct _mpc_ht_cell *cell = _mpc_ht_cell_get( head->next, key );
 	void *ret = NULL;
 
