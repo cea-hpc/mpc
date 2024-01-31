@@ -258,7 +258,7 @@ typedef struct MPI_internal_request_s
 	volatile struct MPI_internal_request_s *next;
 	int                                     rank; /**< Offset in the tab array from  struct \ref MPI_request_struct_s */
 
-	/* Persitant */
+	/* Persistent */
 	MPI_Persistant_t                        persistant;
 	mpi_partitioned_t                       partitioned;
 	int                                     freeable;
@@ -281,12 +281,12 @@ typedef struct MPI_internal_request_s
 	NBC_Handle                              nbc_handle;
 } MPI_internal_request_t;
 
-/** \brief MPI_Request managment structure
+/** \brief MPI_Request management structure
  *
  * 	In order to simplify the fortran interface it is preferable
  *  to store requests as integers. However we need to be able
  *  retrieve data associated with it (the \ref MPC_Request)
- *  by preserving a mapping between the interger id (MPI_Request)
+ *  by preserving a mapping between the integer id (MPI_Request)
  *  and the actual request (MPC_Request). Moreover,
  *  this structure tries to recycle requests in order to avoid
  *  reallocating them each time.
@@ -298,11 +298,11 @@ typedef struct MPI_internal_request_s
 typedef struct MPI_request_struct_s
 {
 	mpc_common_spinlock_t            lock;           /**< Lock protecting the data-structure */
-	/* Number of resquests */
+	/* Number of requests */
 	int                              max_size;       /**< Current size of the tab array (starts at 0 and is increased 10 by 10) */
 	MPI_internal_request_t **        tab;            /**< This array stores the \ref MPI_internal_request_t which are the containers for MPC_Requests */
 	volatile MPI_internal_request_t *free_list;      /**< In this array requests are ready to be used, when created requests go to this array */
-	volatile MPI_internal_request_t *auto_free_list; /**< This list contains request which are automatically freed */
+	volatile MPI_internal_request_t *auto_free_list; /**< This list contains requests which are automatically freed */
 	sctk_alloc_buffer_t              buf;            /**< This is a buffer allocator used to allocate requests */
 }MPI_request_struct_t;
 

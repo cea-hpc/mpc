@@ -201,9 +201,9 @@ enum
 
 	MPC_ERR_BAD_FILE,                                /* Invalid file name (e.g., path name too long) */
 	MPC_ERR_BASE,                                    /* Invalid base passed to MPI_FREE_MEM */
-	MPC_ERR_CONVERSION,                              /* An error occured in a user supplied data conversion function */
+	MPC_ERR_CONVERSION,                              /* An error occurred in a user supplied data conversion function */
 	MPC_ERR_DISP,                                    /* Invalid disp argument */
-	MPC_ERR_DUP_DATAREP,                             /* Conversion functions could not be regiestered because a \
+	MPC_ERR_DUP_DATAREP,                             /* Conversion functions could not be registered because a \
 	                                                  * data representation identifier that was already defined \
 	                                                  * was passed to MPI_REGISTER_DATAREP */
 
@@ -214,7 +214,7 @@ enum
 	                                * currently open by some process */
 	MPC_ERR_FILE,                  /* Invalid file handle */
 
-	MPC_ERR_INFO_KEY,              /* Key onger than MPI_MAX_INFO_KEY */
+	MPC_ERR_INFO_KEY,              /* Key longer than MPI_MAX_INFO_KEY */
 	MPC_ERR_INFO_NOKEY,            /* Invalid key passed to MPI_INFO_DELETE */
 	MPC_ERR_INFO_VALUE,            /* Value longer than MPI_MAX_INFO_VAL */
 	MPC_ERR_INFO,                  /* Invalid info argument */
@@ -224,7 +224,7 @@ enum
 
 	MPC_ERR_NAME,                  /* Invalid service name passed to MPI_LOOKUP_NAME */
 	MPC_ERR_NO_MEM,                /* MPI_ALLOC_MEM failed because memory is exhausted */
-	MPC_ERR_NOT_SAME,              /* Collective argument not identical on all processess, \
+	MPC_ERR_NOT_SAME,              /* Collective argument not identical on all processes, \
 	                                *                              or collective routines called in a different order   \
 	                                * by different processes */
 	MPC_ERR_NO_SPACE,              /* Not enough space */
@@ -257,7 +257,7 @@ enum
 	                              * be initialized */
 	MPC_T_ERR_NOT_ACCESSIBLE,    /* User may not access this function at this time */
 	MPC_T_ERR_NOT_INITIALIZED,   /* Interface not initialized */
-	MPC_T_ERR_NOT_SUPPORTED,     /* Requested functionnality is not supported */
+	MPC_T_ERR_NOT_SUPPORTED,     /* Requested functionality is not supported */
 	MPC_T_ERR_MEMORY,            /* Out of memory */
 	MPC_T_ERR_INVALID,           /* Item is invalid */
 	MPC_T_ERR_INVALID_INDEX,     /* The index is invalid or \

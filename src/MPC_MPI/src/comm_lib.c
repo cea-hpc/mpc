@@ -2594,7 +2594,7 @@ int _mpc_cl_waitallp(mpc_lowcomm_msg_count_t count, mpc_lowcomm_request_t *parra
 			mpc_lowcomm_test(request, &tmp_flag, status);
 
 			/* We set this flag in order to prevent the status
-			 * from being updated repetitivelly in mpc_lowcomm_test */
+			 * from being updated repetitively in mpc_lowcomm_test */
 			if(tmp_flag)
 			{
 				mpc_lowcomm_request_set_null(request, 1);

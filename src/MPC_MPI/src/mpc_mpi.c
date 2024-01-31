@@ -731,7 +731,7 @@ mpc_lowcomm_request_t *__sctk_new_mpc_request(MPI_Request *req, MPI_request_stru
 {
 	MPI_internal_request_t *tmp;
 
-	/* Acquire a free MPI_Iternal request */
+	/* Acquire a free MPI_Internal request */
 	tmp = __sctk_new_mpc_request_internal(req, requests);
 
 	/* Return its inner mpc_lowcomm_request_t */
@@ -8371,7 +8371,7 @@ int PMPI_Send_internal(const void *buf, int count, MPI_Datatype datatype, int de
 		MPI_HANDLE_ERROR(res, comm, "Could not create contiguous datatype");
 
 		res = PMPI_Type_commit(&new_datatype);
-		MPI_HANDLE_ERROR(res, comm, "Failled comitting datatype");
+		MPI_HANDLE_ERROR(res, comm, "Failed committing datatype");
 
 		res = PMPI_Send_internal(buf, 1, new_datatype, dest, tag, comm);
 		MPI_HANDLE_ERROR(res, comm, "Failed sending with contiguous datatype");
@@ -8393,13 +8393,13 @@ int PMPI_Send_internal(const void *buf, int count, MPI_Datatype datatype, int de
 	MPI_HANDLE_ERROR(res, comm, "Failed opening MPI pack");
 
 	res = mpc_mpi_cl_add_pack_absolute(buf, derived_datatype.count, derived_datatype.begins, derived_datatype.ends, MPC_LOWCOMM_CHAR, &request);
-	MPI_HANDLE_ERROR(res, comm, "Failled adding to pack");
+	MPI_HANDLE_ERROR(res, comm, "Failed adding to pack");
 
 	res = mpc_mpi_cl_isend_pack(dest, tag, comm, &request);
 	MPI_HANDLE_ERROR(res, comm, "Failed sending packed data");
 
 	res = mpc_lowcomm_wait(&request, &status);
-	MPI_HANDLE_ERROR(res, comm, "Failled waiting for requests");
+	MPI_HANDLE_ERROR(res, comm, "Failed waiting for requests");
 
 
 	SCTK_PROFIL_END(MPI_Send);
@@ -8474,7 +8474,7 @@ int PMPI_Recv_internal(void *buf, int count, MPI_Datatype datatype, int source, 
 		MPI_HANDLE_ERROR(res, comm, "Failed creating contiguous datatype");
 
 		res = PMPI_Type_commit(&new_datatype);
-		MPI_HANDLE_ERROR(res, comm, "Failed comitting contiguous datatype");
+		MPI_HANDLE_ERROR(res, comm, "Failed committing contiguous datatype");
 
 		res = PMPI_Recv_internal(buf, 1, new_datatype, source, tag, comm, status);
 		MPI_HANDLE_ERROR(res, comm, "Failed recv with contiguous datatype");
@@ -8503,10 +8503,10 @@ int PMPI_Recv_internal(void *buf, int count, MPI_Datatype datatype, int source, 
 		buf, derived_datatype.count,
 		derived_datatype.begins, derived_datatype.ends,
 		MPC_LOWCOMM_CHAR, &request);
-	MPI_HANDLE_ERROR(res, comm, "Failled adding to pack");
+	MPI_HANDLE_ERROR(res, comm, "Failed adding to pack");
 
 	res = mpc_mpi_cl_irecv_pack(source, tag, comm, &request);
-	MPI_HANDLE_ERROR(res, comm, "Failled during irecv pack");
+	MPI_HANDLE_ERROR(res, comm, "Failed during irecv pack");
 
 	res = mpc_lowcomm_wait(&request, status);
 	MPI_HANDLE_ERROR(res, comm, "Failed waiting for requests");
@@ -9230,7 +9230,7 @@ int PMPI_Testany(int count,
 	MPI_HANDLE_RETURN_VAL(res, comm);
 }
 
-/* Slighty different from PMPI_Testall to wait NBC requests
+/* Slightly different from PMPI_Testall to wait NBC requests
  * completion inside PMPI_Waitall */
 
 static int __testall_for_NBC(int count, MPI_Request array_of_requests[], int *flag,
@@ -9356,10 +9356,10 @@ int PMPI_Waitall(int count, MPI_Request array_of_requests[],
 		return res;
 	}
 
-	/* Convert MPI resquests to MPC ones */
+	/* Convert MPI requests to MPC ones */
 
 	/* Prepare arrays for MPC requests */
-	int *array_is_persistent; /*avoid retrieving request at freeing (costly) when it is a persitent*/
+	int *array_is_persistent; /*avoid retrieving request at freeing (costly) when it is a persistent*/
 	int  static_is_persistent[PMPI_WAIT_ALL_STATIC_TRSH];
 
 	mpc_lowcomm_request_t **mpc_array_of_requests;
@@ -9445,7 +9445,7 @@ int PMPI_Waitall(int count, MPI_Request array_of_requests[],
 	int ret = _mpc_cl_waitallp(count, mpc_array_of_requests,
 	                           (mpc_lowcomm_status_t *)array_of_statuses);
 
-	/* Something bad hapenned ? */
+	/* Something bad happened? */
 	MPI_HANDLE_ERROR(ret, comm, "Error in waitall");
 
 	/* Delete the MPI requests */
@@ -16935,7 +16935,7 @@ int PMPI_Bcast(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Com
 
 
 
-	/* Bast is not synchronous, the collective can end directly if nothing
+	/* Bcast is not synchronous, the collective can end directly if nothing
 	 * has to be sent/received
 	 */
 	if(count <= 0)
