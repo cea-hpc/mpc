@@ -472,7 +472,7 @@ size_t lcp_mem_rkey_pack(lcp_manager_h mngr, lcp_mem_h mem, void *dest)
  * @return int MPC_LOWCOMM_SUCCESS in case of success
  */
 int lcp_mem_pack(lcp_manager_h mngr, lcp_mem_h mem, 
-                 void **rkey_buf_p, size_t *rkey_len)
+                 void **rkey_buf_p, int *rkey_len)
 {
         int i;
         size_t packed_size = 0;
@@ -595,7 +595,7 @@ void lcp_mem_delete(lcp_mem_h mem)
 
 int lcp_mem_reg_from_map(lcp_manager_h mngr,
                          lcp_mem_h mem,
-                         bmap_t mem_map,
+                         bmap_t bm,
                          const void *buffer,
                          size_t length,
                          unsigned flags)
@@ -605,7 +605,7 @@ int lcp_mem_reg_from_map(lcp_manager_h mngr,
 
         /* Pin the memory and create memory handles */
         for (i=0; i<mngr->num_ifaces; i++) {
-                if (MPC_BITMAP_GET(mem_map, i)) {
+                if (MPC_BITMAP_GET(bm, i)) {
                         iface = mngr->ifaces[i];
 
                         if (!(iface->cap & LCR_IFACE_CAP_RMA)) {
@@ -666,15 +666,37 @@ err:
 //       successful memory pins ?
 int lcp_mem_register(lcp_manager_h mngr,
                      lcp_mem_h *mem_p,
-                     const void *buffer,
-                     size_t length,
-                     unsigned flags)
+                     lcp_mem_param_t *param)
 {
         int rc = MPC_LOWCOMM_SUCCESS;
         int i;
         lcp_mem_h mem;
         bmap_t bm = MPC_BITMAP_INIT;
         lcr_rail_attr_t attr;
+
+        if (param == NULL) {
+                mpc_common_debug_error("LCP MEM: param field must be set.");
+                return LCP_ERROR; 
+        }
+
+        if (!(param->field_mask & LCP_MEM_SIZE_FIELD) ) {
+                mpc_common_debug_error("LCP MEM: must specify size field.");
+                return LCP_ERROR;
+        }
+        
+        if (!(param->field_mask & LCP_MEM_ADDR_FIELD) ) {
+                mpc_common_debug_error("LCP MEM: must specify address field.");
+                return LCP_ERROR;
+        }
+
+        if (param->address == NULL && !(param->flags & LCP_MEM_REGISTER_ALLOCATE)) {
+                mpc_common_debug_error("LCP MEM: must specify address field.");
+                not_implemented();
+        }
+
+        if (param->flags & LCP_MEM_REGISTER_ALLOCATE) {
+                not_implemented();
+        }
 
         /* Compute bitmap registration. Strategy is to register on all
          * interfaces that have the capability. */
@@ -686,7 +708,8 @@ int lcp_mem_register(lcp_manager_h mngr,
                 }
         }
 
-        mem = lcp_pinning_mmu_pin(mngr, buffer, length, bm, flags);
+        mem = lcp_pinning_mmu_pin(mngr, param->address, param->size, 
+                                  bm, param->flags);
         if (rc != MPC_LOWCOMM_SUCCESS) {
                 goto err;
         }
@@ -695,6 +718,19 @@ int lcp_mem_register(lcp_manager_h mngr,
 
 err:
         return rc;
+}
+
+int lcp_mem_query(lcp_mem_h mem, lcp_mem_attr_t *attr)
+{
+       if (attr->field_mask & LCP_MEM_ADDR_FIELD) {
+               attr->address = (void *)mem->base_addr;
+       }
+
+       if (attr->field_mask & LCP_MEM_SIZE_FIELD) {
+               attr->size = mem->length;
+       }
+
+       return LCP_SUCCESS;
 }
 
 /**

@@ -34,6 +34,7 @@
 
 #include <stdint.h>
 #include <stddef.h>
+#include <mpc_common_bit.h>
 
 /* Handles */
 typedef uint64_t                     lcp_datatype_t;
@@ -63,6 +64,33 @@ typedef int (*lcp_am_recv_callback_func_t)(size_t sent, void *user_data);
 typedef int (*lcp_am_callback_t)(void *arg, const void *user_hdr, const size_t hdr_size,
                                  void *data, size_t length,
 				 lcp_am_recv_param_t *param);
+
+/**
+ * @ingroup LCP_MEM
+ * @brief LCP memory attributes. 
+ *
+ * Memory attributes.
+ *
+ */
+
+enum {
+        LCP_MEM_SIZE_FIELD = MPC_BIT(0),
+        LCP_MEM_ADDR_FIELD = MPC_BIT(1),
+};
+
+/**
+ * @ingroup LCP_MEM
+ * @brief LCP memory attributes. 
+ *
+ * Specifies a set of attributes associated to a memory region. They can be
+ * retrieved by a call to \ref lcp_mem_query.
+ * 
+ */
+typedef struct lcp_mem_attr {
+        uint32_t field_mask; 
+        void    *address;
+        size_t   size;
+} lcp_mem_attr_t;
 
 
 #endif

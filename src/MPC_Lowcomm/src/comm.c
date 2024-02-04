@@ -3018,7 +3018,7 @@ void mpc_lowcomm_message_probe_any_source_class_comm(int destination, int tag,
 void mpc_lowcomm_request_init_struct(mpc_lowcomm_request_t *request,
                                      mpc_lowcomm_communicator_t comm,
                                      int request_type, int src, int dest,
-                                     int tag, lcp_complete_callback_func_t cb)
+                                     int tag, lcp_send_callback_func_t cb)
 {
 	__mpc_comm_request_init(request, comm, request_type);
 

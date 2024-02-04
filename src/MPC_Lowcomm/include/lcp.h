@@ -2,7 +2,6 @@
 #define LCP_H
 
 #include <stdlib.h>
-#include <mpc_common_bit.h>
 
 #include "lcp_def.h"
 
@@ -165,7 +164,7 @@ typedef struct lcp_manager_param {
         unsigned field_mask;
         int      estimated_eps; /**< Estimated number of endpoints. */
         int      num_tasks;     /**< num of tasks (MPI processes) */
-        unsigned flags;    /**< communication model. */
+        unsigned flags;         /**< communication model. */
 } lcp_manager_param_t;
 
 /**
@@ -432,9 +431,16 @@ int lcp_tag_probe_nb(lcp_task_h task, const int src,
                      const int tag, const uint64_t comm,
                      lcp_tag_recv_info_t *recv_info);
 
+/**
+ * @ingroup LCP_COMM
+ * @brief LCP Active Message flags. 
+ *
+ * Flags identifying the type of message returned by the callback \ref
+ * lcp_am_callback_t. 
+ */
 enum {
-        LCP_AM_EAGER = MPC_BIT(0),
-        LCP_AM_RNDV  = MPC_BIT(1),
+        LCP_AM_EAGER = MPC_BIT(0), /**< Message received is of type eager. */
+        LCP_AM_RNDV  = MPC_BIT(1), /**< Message received is of type rendez-vous. */
 };
 
 /**
@@ -595,6 +601,35 @@ int lcp_atomic_op_nb(lcp_ep_h ep, lcp_task_h task, const void *buffer,
                      lcp_atomic_op_t op_type, const lcp_request_param_t *param);
 
 /**
+ * @ingroup lcp_mem
+ * @brief lcp memory flags. 
+ *
+ * Specifies wether the memory should be allocated or not by lcp_mem_register.
+ *
+ */
+
+enum {
+        LCP_MEM_REGISTER_ALLOCATE = MPC_BIT(0),
+};
+
+/**
+ * @ingroup lcp_mem
+ * @brief lcp memory parameters. 
+ *
+ * Specifies a set of fields used to characterize how a memory should be
+ * registered. for example, memory could be already allocated or, on the
+ * contrary it should be allocated by lcp.
+ *
+ */
+
+typedef struct lcp_mem_param {
+        uint32_t    field_mask; 
+        unsigned    flags;
+        const void *address;
+        size_t      size;
+} lcp_mem_param_t;
+
+/**
  * @ingroup LCP_MEM
  * @brief LCP register memory.
  *
@@ -608,7 +643,7 @@ int lcp_atomic_op_nb(lcp_ep_h ep, lcp_task_h task, const void *buffer,
  * @return Error code returned.
  */
 int lcp_mem_register(lcp_manager_h mngr, lcp_mem_h *mem_p, 
-                     const void *buffer, size_t length, unsigned flags);
+                     lcp_mem_param_t *params);
 
 /**
  * @ingroup LCP_MEM
@@ -624,7 +659,19 @@ int lcp_mem_deregister(lcp_manager_h mngr, lcp_mem_h mem);
 
 /**
  * @ingroup LCP_MEM
- * @brief LCP pack memory key.
+ * @brief LCP query registered memory. 
+ *
+ * Query attributes of memory that has been registered.
+ *
+ * @param [in] ctx  Context handle.
+ * @param [in] mem  Memory handle to be deregistered.
+ * @return Error code returned.
+ */
+int lcp_mem_query(lcp_mem_h mem, lcp_mem_attr_t *mem_attr);
+
+/**
+ * @ingroup LCP_MEM
+ * @brief LCP pack memory key. 
  *
  * Pack a memory key so it can be sent to a remote peer.
  *
@@ -639,7 +686,7 @@ int lcp_mem_deregister(lcp_manager_h mngr, lcp_mem_h mem);
  * @return Error code returned.
  */
 int lcp_mem_pack(lcp_manager_h mngr, lcp_mem_h mem, 
-                    void **rkey_buf_p, size_t *rkey_len);
+                    void **rkey_buf_p, int *rkey_len);
 
 /**
  * @ingroup LCP_MEM

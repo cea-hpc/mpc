@@ -114,7 +114,7 @@ void mpc_lowcomm_request_init(mpc_lowcomm_request_t *request, mpc_lowcomm_commun
 void mpc_lowcomm_request_init_struct(mpc_lowcomm_request_t *request,
                                      mpc_lowcomm_communicator_t comm,
                                      int request_type, int src, int dest,
-                                     int tag, lcp_complete_callback_func_t cb);
+                                     int tag, lcp_send_callback_func_t cb);
 
 
 /*********************

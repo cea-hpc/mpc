@@ -23,18 +23,38 @@
 #ifndef MPI_WIN_H 
 #define MPI_WIN_H 
 
-#include <mpc_mpi_internal.h> //FIXME: for MPI_Info
+#include <mpc_mpi.h>
 #include <mpc_lowcomm_communicator.h> //NOTE: for lowcomm_communicator_t
+#include <lcp.h>
 
 #define MAX_WIN_NAME 64
 
 typedef struct MPI_ABI_Win {
         mpc_lowcomm_communicator_t comm;
+        mpc_lowcomm_group_t *group;
         MPI_Info info;
 
         char win_name[MAX_WIN_NAME];
 
+        lcp_manager_h mngr;
+        lcp_context_h ctx;
+
         int flavor; 
+        int model;
+        size_t size;
+        int disp_unit;
+        int *disp_units;
+
+        lcp_mem_h  lkey;
+        lcp_mem_h *rkeys;
 } mpc_win_t;
+
+
+int mpc_win_create(void *base, size_t size, 
+                   int disp_unit, MPI_Info info,
+                   mpc_lowcomm_communicator_t comm, 
+                   mpc_win_t **win_p);
+
+int mpc_win_free(mpc_win_t *win);
 
 #endif

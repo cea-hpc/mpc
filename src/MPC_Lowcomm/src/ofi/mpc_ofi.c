@@ -683,6 +683,8 @@ int _mpc_ofi_get_attr(sctk_rail_info_t *rail,
 	attr->iface.cap.rndv.max_put_zcopy = INT_MAX;
 	attr->iface.cap.rndv.max_get_zcopy = INT_MAX;
 
+        attr->mem.size_packed_mkey = sizeof(struct _mpc_ofi_shared_pinning_context);
+
 	return MPC_LOWCOMM_SUCCESS;
 }
 

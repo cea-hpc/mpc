@@ -15732,6 +15732,7 @@ int PMPI_Win_call_errhandler(MPI_Win win, int errorcode)
 *************************/
 
 #include "mpi_rma.h"
+#include "win/win.h"
 
 /* MPI Info storage in WIN                                              */
 
@@ -15809,6 +15810,9 @@ int PMPI_Win_get_name(MPI_Win win, char *name, int *len)
 int PMPI_Win_create(void *base, MPI_Aint size, int disp_unit, MPI_Info info,
                     MPI_Comm comm, MPI_Win *win)
 {
+
+        return mpc_win_create(base, size, disp_unit, info, comm, win);
+
 	/* MPI Windows need more progress
 	 * we must give up on agressive collectives */
 	__do_yield |= 1;
@@ -15846,6 +15850,8 @@ int PMPI_Win_detach(MPI_Win, const void *);
 
 int PMPI_Win_free(MPI_Win *win)
 {
+        return mpc_win_free(*win);
+
 	return mpc_MPI_Win_free(win);
 }
 
