@@ -57,7 +57,6 @@ libmpcthread_la_SOURCES += pthread_engine.c
 libmpcthread_la_SOURCES += ng_engine.c ng_engine_scheduler.c
 libmpcthread_la_SOURCES += ethread_engine.c ethread_mxn_engine.c ethread_posix.c
 libmpcthread_la_SOURCES += accelerator.c
-libmpcthread_la_SOURCES += mpi_omp_interop.c
 
 if MPC_CUDA_ENABLED
 

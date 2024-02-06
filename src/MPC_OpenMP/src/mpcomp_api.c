@@ -41,6 +41,7 @@
 #include "mpcomp_task.h"
 #include "mpcomp_openmp_tls.h"
 #include <stdbool.h>
+#include <limits.h>
 #include "mpcompt_control_tool.h"
 #include "mpcompt_frame.h"
 void omp_set_num_threads(int num_threads) {
@@ -224,7 +225,7 @@ int omp_in_parallel(void) {
 }
 
 /*
- * OpenMP 3.0. Returns the nesting level for the parallel block, 
+ * OpenMP 3.0. Returns the nesting level for the parallel block,
  * which enclose the calling call.
  */
 int omp_get_level(void) {
@@ -239,7 +240,7 @@ int omp_get_level(void) {
 }
 
 /*
- * OpenMP 3.0. Returns the nesting level for the active parallel block, 
+ * OpenMP 3.0. Returns the nesting level for the active parallel block,
  * which enclose the calling call.
  */
 int omp_get_active_level(void) {
@@ -255,9 +256,9 @@ int omp_get_active_level(void) {
 }
 
 /*
- * OpenMP 3.0. This function returns the thread identification number 
+ * OpenMP 3.0. This function returns the thread identification number
  * for the given nesting level of the current thread.
- * For values of level outside zero to omp_get_level -1 is returned. 
+ * For values of level outside zero to omp_get_level -1 is returned.
  * if level is omp_get_level the result is identical to omp_get_thread_num
  */
 int omp_get_ancestor_thread_num(int level) {
@@ -266,16 +267,16 @@ int omp_get_ancestor_thread_num(int level) {
 #endif /* OMPT_SUPPORT */
 
   mpc_omp_init();
-  if( !level ) return 0; 
+  if( !level ) return 0;
   mpc_omp_thread_t *t = mpc_omp_tree_array_ancestor_get_thread_tls(level);
   return (t == NULL) ? -1 : t->rank;
 }
 
 /*
- * OpenMP 3.0. This function returns the number of threads in a 
+ * OpenMP 3.0. This function returns the number of threads in a
  * thread team to which either the current thread or its ancestor belongs.
  * For values of level outside zero to omp_get_level, -1 is returned.
- * if level is zero, 1 is returned, and for omp_get_level, the result is 
+ * if level is zero, 1 is returned, and for omp_get_level, the result is
  * identical to omp_get_num_threads.
  */
 int omp_get_team_size(int level) {
@@ -312,13 +313,13 @@ double omp_get_wtime(void) {
   struct timeval tp;
 
   gettimeofday (&tp, NULL);
-  res = tp.tv_sec + tp.tv_usec * 0.000001;
+  res = tp.tv_sec + tp.tv_usec * 1e-6;
 
   mpc_common_nodebug("%s Wtime = %f", __func__, res);
   return res;
 }
 
-double omp_get_wtick(void) { return (double)10e-6; }
+double omp_get_wtick(void) { return (double)1e-6; }
 
 /**
  * The omp_get_thread_limit routine returns the maximum number of OpenMP
@@ -334,7 +335,7 @@ int omp_get_thread_limit() {
 }
 
 /*
- * The omp_set_max_active_levels routine limits the number of nested 
+ * The omp_set_max_active_levels routine limits the number of nested
  * active parallel regions, by setting the max-active-levels-var ICV.
  */
 void omp_set_max_active_levels(__UNUSED__ int max_levels) {
@@ -346,8 +347,8 @@ void omp_set_max_active_levels(__UNUSED__ int max_levels) {
 }
 
 /*
- * The omp_get_max_active_levels routine returns the value of the 
- * max-active-levels-var ICV, which determines the maximum number of 
+ * The omp_get_max_active_levels routine returns the value of the
+ * max-active-levels-var ICV, which determines the maximum number of
  * nested active parallel regions.
  */
 int omp_get_max_active_levels() {
@@ -365,7 +366,7 @@ int omp_get_max_active_levels() {
 }
 
 /*
- * The omp_in_final routine returns true if the routine is executed 
+ * The omp_in_final routine returns true if the routine is executed
  * in a final task region; otherwise, it returns false.
  */
 int omp_in_final(void) {
@@ -373,6 +374,15 @@ int omp_in_final(void) {
   mpc_omp_task_t *task = MPC_OMP_TASK_THREAD_GET_CURRENT_TASK(thread);
   return (task &&
           mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_FINAL));
+}
+
+/*
+ * Return a unique identifier for task, constant over execution, based on its order of creation
+ */
+int omp_get_task_uid(void) {
+    mpc_omp_thread_t * thread = mpc_omp_get_thread_tls();
+    mpc_omp_task_t * task = MPC_OMP_TASK_THREAD_GET_CURRENT_TASK(thread);
+    return task->uid;
 }
 
 /*
@@ -429,7 +439,22 @@ mpc_omp_in_explicit_task(void)
     return 1;
 }
 
-TODO("Support for OpenMP standard event handle : add an hashtable of `key=omp_event_handle_t` and `value=mpc_omp_event_handle_t *`");
+#if MPC_OMP_TASK_COMPILE_TASKWAIT_DETACH
+omp_event_handle_t
+omp_task_continuation_event(void)
+{
+    mpc_omp_thread_t *thread = (mpc_omp_thread_t *) mpc_omp_tls;
+    assert(thread);
+
+    mpc_omp_task_t * task = MPC_OMP_TASK_THREAD_GET_CURRENT_TASK(thread);
+    assert(task);
+
+    omp_event_handle_t hdl = (omp_event_handle_t) &(task->taskwait_detach_event);
+    mpc_omp_event_handle_init((mpc_omp_event_handle_t **) &hdl, MPC_OMP_EVENT_TASK_CONTINUE);
+
+    return hdl;
+}
+#endif /* MPC_OMP_TASK_COMPILE_TASKWAIT_DETACH */
 
 /**
  * Fulfill the MPC event handle
@@ -439,34 +464,101 @@ TODO("Support for OpenMP standard event handle : add an hashtable of `key=omp_ev
 void
 mpc_omp_fulfill_event(mpc_omp_event_handle_t * handle)
 {
-    if (handle->type & MPC_OMP_EVENT_TASK_BLOCK) mpc_omp_task_unblock(handle);
-    else not_implemented();
+    switch (handle->type)
+    {
+        case (MPC_OMP_EVENT_TASK_BLOCK):
+        {
+            _mpc_omp_task_unblock((mpc_omp_event_handle_block_t *)handle);
+            break ;
+        }
+
+        case (MPC_OMP_EVENT_TASK_DETACH):
+        {
+            _mpc_omp_task_detach_fulfill((mpc_omp_event_handle_detach_t *) handle);
+            break ;
+        }
+
+        case (MPC_OMP_EVENT_TASK_CONTINUE):
+        {
+            OPA_store_int(&(((mpc_omp_event_handle_detach_t *) handle)->counter), 0);
+            break;
+        }
+
+        default:
+        {
+            not_implemented();
+            break ;
+        }
+    }
+}
+
+void
+omp_fulfill_event(omp_event_handle_t event)
+{
+    mpc_omp_fulfill_event((mpc_omp_event_handle_t *) event);
 }
 
 /**
  * Initialize an MPC event handle
- * @param handle - the event handle
  * @param type - event type
+ * @return handle_ptr - the event handle
  */
 void
-mpc_omp_event_handle_init(mpc_omp_event_handle_t * handle, mpc_omp_event_t type)
+mpc_omp_event_handle_init(mpc_omp_event_handle_t ** handle_ptr, mpc_omp_event_t type)
 {
-    OPA_store_int(&(handle->status), MPC_OMP_EVENT_HANDLE_STATUS_INIT);
-    mpc_common_spinlock_init(&(handle->lock), 0);
-    handle->type = type;
-
     switch (type)
     {
         case (MPC_OMP_EVENT_TASK_BLOCK):
         {
-            mpc_omp_thread_t * thread = (mpc_omp_thread_t *) mpc_omp_tls;
-            assert(thread);
-
-            mpc_omp_task_t * task = MPC_OMP_TASK_THREAD_GET_CURRENT_TASK(thread);
-            assert(task);
-
-            handle->attr = (void *) task;
+            _mpc_omp_event_handle_init_task_block((mpc_omp_event_handle_block_t **) handle_ptr);
             break ;
+        }
+
+        case (MPC_OMP_EVENT_TASK_DETACH):
+        {
+            _mpc_omp_event_handle_init_detach((mpc_omp_event_handle_detach_t **) handle_ptr);
+            break ;
+        }
+
+        case (MPC_OMP_EVENT_TASK_CONTINUE):
+        {
+            _mpc_omp_event_handle_init_continue((mpc_omp_event_handle_detach_t **) handle_ptr);
+            break;
+        }
+
+        default:
+        {
+            not_implemented();
+            break ;
+        }
+    }
+}
+
+/**
+ * Deinitialize an MPC event handle
+ * @return handle - the event handle
+ */
+void
+mpc_omp_event_handle_deinit(mpc_omp_event_handle_t * handle)
+{
+    switch (handle->type)
+    {
+        case (MPC_OMP_EVENT_TASK_BLOCK):
+        {
+            _mpc_omp_event_handle_deinit_task_block((mpc_omp_event_handle_block_t *) handle);
+            break ;
+        }
+
+        case (MPC_OMP_EVENT_TASK_DETACH):
+        {
+            _mpc_omp_event_handle_deinit_detach((mpc_omp_event_handle_detach_t *) handle);
+            break ;
+        }
+
+        case (MPC_OMP_EVENT_TASK_CONTINUE):
+        {
+            _mpc_omp_event_handle_deinit_continue((mpc_omp_event_handle_detach_t *) handle);
+            break;
         }
 
         default:
@@ -481,18 +573,37 @@ mpc_omp_event_handle_init(mpc_omp_event_handle_t * handle, mpc_omp_event_t type)
 void
 mpc_omp_task_label(char * label)
 {
-    mpc_omp_thread_t * thread = (mpc_omp_thread_t *)mpc_omp_tls;
 # if MPC_OMP_TASK_COMPILE_TRACE
+    mpc_omp_thread_t * thread = (mpc_omp_thread_t *)mpc_omp_tls;
     thread->task_infos.incoming.label = label;
 # endif /* MPC_OMP_TASK_COMPILE_TRACE */
 }
 
-/** # pragma omp task fiber */
+/** # pragma omp task color(c) */
 void
-mpc_omp_task_fiber(void)
+mpc_omp_task_color(int c)
+{
+# if MPC_OMP_TASK_COMPILE_TRACE
+    mpc_omp_thread_t * thread = (mpc_omp_thread_t *)mpc_omp_tls;
+    thread->task_infos.incoming.color = c;
+# endif /* MPC_OMP_TASK_COMPILE_TRACE */
+}
+
+/** # pragma omp task ucontext */
+void
+mpc_omp_task_ucontext(size_t stack_size)
 {
     mpc_omp_thread_t * thread = (mpc_omp_thread_t *)mpc_omp_tls;
-    thread->task_infos.incoming.extra_clauses |= MPC_OMP_CLAUSE_USE_FIBER;
+    thread->task_infos.incoming.extra_clauses |= MPC_OMP_CLAUSE_UCONTEXT;
+    assert(stack_size == 0); // variable stack size not implemented yet
+}
+
+/** # pragma omp task untied */
+void
+mpc_omp_task_untied(void)
+{
+    mpc_omp_thread_t * thread = (mpc_omp_thread_t *)mpc_omp_tls;
+    thread->task_infos.incoming.extra_clauses |= MPC_OMP_CLAUSE_UNTIED;
 }
 
 /** explicit dependency constructor */
@@ -500,6 +611,143 @@ void
 mpc_omp_task_dependencies(mpc_omp_task_dependency_t * dependencies, unsigned int n)
 {
     mpc_omp_thread_t * thread = (mpc_omp_thread_t *)mpc_omp_tls;
+    assert(thread);
     thread->task_infos.incoming.dependencies = dependencies;
     thread->task_infos.incoming.ndependencies_type = n;
+}
+
+/** Reset the 'in' and the 'inoutset' list of a given data dependency,
+ * as if an empty task with an 'out' dependency on 'addr' was inserted */
+void
+mpc_omp_task_dependency_reset(void * addr)
+{
+    mpc_omp_thread_t * thread = mpc_omp_get_thread_tls();
+    assert(thread);
+
+    mpc_omp_task_t * task = MPC_OMP_TASK_THREAD_GET_CURRENT_TASK(thread);
+    assert(task);
+
+    unsigned hashv;
+    HASH_VALUE(&addr, sizeof(void *), hashv);
+
+    mpc_omp_task_dep_htable_entry_t * entry;
+    HASH_FIND_BYHASHVALUE(hh, task->dep_node.hmap, &addr, sizeof(void *), hashv, entry);
+
+    if (entry)
+    {
+        entry->ins = NULL;
+        entry->inoutset = NULL;
+    }
+}
+
+/* mark a task as a send-task */
+void
+mpc_omp_task_is_send(void)
+{
+    _mpc_omp_task_profile_register_current(INT_MAX);
+}
+
+/** HASHING FUNCTIONS */
+uintptr_t
+mpc_omp_task_dependency_hash_gomp(void * addr)
+{
+    uintptr_t v = (uintptr_t) addr;
+    v ^= v >> (sizeof (uintptr_t) / 2 * CHAR_BIT);
+    return v;
+}
+
+uintptr_t
+mpc_omp_task_dependency_hash_jenkins(void * addr)
+{
+    uintptr_t hashv;
+    HASH_JEN(&addr, sizeof(void *), hashv);
+    return hashv;
+}
+
+uintptr_t
+mpc_omp_task_dependency_hash_kmp(void * addr)
+{
+    uintptr_t v = (uintptr_t) addr;
+    return (v >> 6) ^ (v >> 2);
+}
+
+uintptr_t
+mpc_omp_task_dependency_hash_nanos6(void * addr)
+{
+    return ((uintptr_t)addr) >> 3;
+}
+
+void
+mpc_omp_task_dependencies_hash_func(uintptr_t (*hash_deps)(void *))
+{
+    if (!hash_deps)
+    {
+        switch (mpc_omp_conf_get()->task_dependency_default_hash)
+        {
+            case (0):   hash_deps = mpc_omp_task_dependency_hash_jenkins;   break;
+            case (1):   hash_deps = mpc_omp_task_dependency_hash_gomp;      break;
+            case (2):   hash_deps = mpc_omp_task_dependency_hash_kmp;       break;
+            case (3):   hash_deps = mpc_omp_task_dependency_hash_nanos6;    break;
+            default:    hash_deps = mpc_omp_task_dependency_hash_jenkins;   break;
+        }
+    }
+    mpc_omp_thread_t * thread = (mpc_omp_thread_t *)mpc_omp_tls;
+    assert(thread);
+    thread->task_infos.hash_deps = hash_deps;
+}
+
+double
+mpc_omp_task_dependencies_hash_time(void)
+{
+    mpc_omp_thread_t * thread = (mpc_omp_thread_t *)mpc_omp_tls;
+    assert(thread);
+    return thread->t_hash;
+}
+
+double
+mpc_omp_task_dependencies_buckets_occupation(void)
+{
+    mpc_omp_thread_t * thread = mpc_omp_get_thread_tls();
+    assert(thread);
+
+    mpc_omp_task_t * task = MPC_OMP_TASK_THREAD_GET_CURRENT_TASK(thread);
+    assert(task);
+
+    double avg;
+    HASH_BKT_OCCUPATIONS(hh, task->dep_node.hmap, avg);
+
+    return avg;
+}
+
+void
+mpc_omp_task_dry_run(int value)
+{
+    mpc_omp_conf_get()->task_dry_run = value;
+}
+
+void
+omp_display_env(int verbose)
+{
+    mpc_omp_display_env(verbose);
+}
+
+//////////////TARGET/////////////////
+
+kmp_target_offload_kind_t __kmp_target_offload = tgt_default;
+
+int __kmpc_get_target_offload(void) {
+  //if (!__kmp_init_serial) {
+  //  __kmp_serial_initialize();
+  //}
+  __omp_conf_init();
+
+  return __kmp_target_offload;
+}
+
+int omp_get_default_device() {
+  return 0;
+}
+
+int omp_is_initial_device() {
+  return 1;
 }

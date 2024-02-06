@@ -3047,6 +3047,9 @@ if test "x${mpc_enable_workshare}" = "xyes"; then
         AC_DEFINE([MPC_ENABLE_WORKSHARE], [1], [MPI Workshare was enabled])
 fi
 
+AM_CONDITIONAL([ENABLE_WORKSHARE], [test "x$mpc_enable_workshare" = "xyes"])
+
+
 AC_ARG_ENABLE([debug-mem],
 [AS_HELP_STRING([--enable-debug-mem],
                 [Compile MPC with ASAN checks])],
@@ -3081,7 +3084,7 @@ if test "x${mpc_debug_mem}" = "xyes"; then
         esac
 fi
 
-AM_CONDITIONAL([USING_ASAN], [test "x$USING_ASAN" != "xyes"])
+AM_CONDITIONAL([USING_ASAN], [test "x$USING_ASAN" = "xyes"])
 AC_SUBST([USING_ASAN])
 
 MPC_PORTABLE_DEBUG_FLAGS=" -g"

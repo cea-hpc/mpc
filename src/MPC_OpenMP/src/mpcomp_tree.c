@@ -1274,7 +1274,7 @@ mpc_omp_init_seq_region() {
 	memset( seq_instance->team, 0, sizeof( mpc_omp_team_t ) );
 
 	seq_instance->team->critical_lock = ( omp_lock_t * ) mpc_omp_alloc( sizeof( omp_lock_t ) );
-	
+
 	seq_instance->team->depth = 0;
 	seq_instance->root = NULL;
 	seq_instance->nb_mvps = 1;
@@ -1378,7 +1378,9 @@ void _mpc_omp_tree_alloc( int *shape, int top_level, const int *cpus_order, cons
 #ifdef MPC_Lowcomm
   root->worker_ws = mpc_omp_alloc(sizeof(worker_workshare_t));
   root->worker_ws->mpi_rank = mpc_common_get_local_task_rank();
+#ifdef MPC_ENABLE_WORKSHARE
   root->worker_ws->workshare = mpc_thread_data_get()->workshare;
+#endif
 #endif
 	const int leaf_n_num = root->tree_nb_nodes_per_depth[top_level];
 	const int non_leaf_n_num = n_num - leaf_n_num;

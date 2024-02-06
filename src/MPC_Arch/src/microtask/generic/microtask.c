@@ -20,15 +20,89 @@
 /* #                                                                      # */
 /* ######################################################################## */
 #include <assert.h>
-#include "mpc_arch.h"
+//#include "sctk_microtask.h"
+//#include "mpc_arch.h"
+
+#include <stddef.h>
+#include <stdio.h>
+
+typedef size_t  kmp_size_t;
+typedef float   kmp_real32;
+typedef double  kmp_real64;
+typedef char              kmp_int8;
+typedef unsigned char     kmp_uint8;
+typedef short             kmp_int16;
+typedef unsigned short    kmp_uint16;
+typedef int               kmp_int32;
+typedef unsigned int      kmp_uint32;
+typedef long long          kmp_int64;
+typedef unsigned long long kmp_uint64;
+
+typedef void (*microtask_t)(int *gtid, int *npr, ...);
+
+#if !(KMP_ARCH_X86 || KMP_ARCH_X86_64 || KMP_MIC ||                            \
+      ((KMP_OS_LINUX || KMP_OS_DARWIN) && KMP_ARCH_AARCH64) ||                 \
+      KMP_ARCH_PPC64 || KMP_ARCH_RISCV64 || KMP_ARCH_LOONGARCH64 ||            \
+      KMP_ARCH_ARM)
+
+int
+__kmp_invoke_microtask(microtask_t pkfn, int gtid, int tid, int argc, void *p_argv[]
+#if OMPT_SUPPORT
+                           ,
+                           void **exit_frame_ptr
+#endif
+) {
+#if OMPT_SUPPORT
+  *exit_frame_ptr = OMPT_GET_FRAME_ADDRESS(0);
+#endif
+
+  switch (argc) {
+  default:
+    printf("Too many args (%d)\n", argc);
+    assert(0);
+  case 0:
+    (*pkfn)(&gtid, &tid);
+    break;
+  case 1:
+    (*pkfn)(&gtid, &tid, p_argv[0]);
+    break;
+  case 2:
+    (*pkfn)(&gtid, &tid, p_argv[0], p_argv[1]);
+    break;
+  case 3:
+    (*pkfn)(&gtid, &tid, p_argv[0], p_argv[1], p_argv[2]);
+    break;
+  case 4:
+    (*pkfn)(&gtid, &tid, p_argv[0], p_argv[1], p_argv[2], p_argv[3]);
+    break;
+  case 5:
+    (*pkfn)(&gtid, &tid, p_argv[0], p_argv[1], p_argv[2], p_argv[3], p_argv[4]);
+    break;
+  case 6:
+    (*pkfn)(&gtid, &tid, p_argv[0], p_argv[1], p_argv[2], p_argv[3], p_argv[4], p_argv[5]);
+    break;
+  case 7:
+    (*pkfn)(&gtid, &tid, p_argv[0], p_argv[1], p_argv[2], p_argv[3], p_argv[4], p_argv[5], p_argv[6]);
+    break;
+  case 8:
+    (*pkfn)(&gtid, &tid, p_argv[0], p_argv[1], p_argv[2], p_argv[3], p_argv[4], p_argv[5], p_argv[6], p_argv[7]);
+    break;
 
 
-int __kmp_invoke_microtask(
-    void (*pkfn) (int * global_tid, int * bound_tid, ...), 
-    int gtid, int npr, int argc, void *argv[] ){
-  assert(0);
+
+
+
+  }
+  return 1;
 }
 
+#endif
+
+// int __kmp_invoke_microtask(
+//     void (*pkfn) (int * global_tid, int * bound_tid, ...), 
+//     int gtid, int npr, int argc, void *argv[] ){
+//   assert(0);
+// }
 
 kmp_int32  __kmp_test_then_add32( volatile kmp_int32 *a, kmp_int32  b) {assert(0);}
 kmp_int64  __kmp_test_then_add64( volatile kmp_int64 *a, kmp_int64 b) {assert(0);}

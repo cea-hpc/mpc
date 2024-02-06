@@ -63,7 +63,6 @@
 
 #include "mpc_lowcomm_workshare.h"
 #include "mpc_launch_pmi.h"
-#include "mpc_thread_mpi_omp_interop.h"
 
 #include "mpi_partitioned.h"
 
@@ -9053,7 +9052,7 @@ static void __sctk_init_mpi_topo()
   mpc_lowcomm_allgather(MPI_IN_PLACE, tab_cpuid, 2*sizeof(int), MPC_COMM_WORLD);
 
   mpc_topology_init_sleep_factors(tab_cpuid, size);
-  
+
   sctk_free(tab_cpuid);
 }
 
@@ -10047,10 +10046,6 @@ int PMPI_Buffer_detach(void *buffer, int *size)
 int PMPI_Isend_internal(const void *buf, int count, MPI_Datatype datatype, int dest, int tag,
                         MPI_Comm comm, MPI_Request *request)
 {
-# if MPC_ENABLE_INTEROP_MPI_OMP
-	MPC_OMP_TASK_TRACE_SEND(count, PMPI_Type_c2f(datatype), dest, tag, mpc_lowcomm_communicator_id(comm) );
-# endif /* MPC_ENABLE_INTEROP_MPI_OMP */
-
 	int res = MPI_ERR_INTERN;
 
 	SCTK__MPI_INIT_REQUEST(request);
@@ -10136,9 +10131,6 @@ int PMPI_Irsend(const void *buf, int count, MPI_Datatype datatype, int dest, int
 int PMPI_Irecv_internal(void *buf, int count, MPI_Datatype datatype, int source,
                         int tag, MPI_Comm comm, MPI_Request *request)
 {
-# if MPC_ENABLE_INTEROP_MPI_OMP
-	MPC_OMP_TASK_TRACE_RECV(count, PMPI_Type_c2f(datatype), source, tag, mpc_lowcomm_communicator_id(comm) );
-# endif /* MPC_ENABLE_INTEROP_MPI_OMP */
 	int res = MPI_ERR_INTERN;
 
 	SCTK__MPI_INIT_REQUEST(request);
@@ -10181,10 +10173,7 @@ int PMPI_Irecv(void *buf, int count, MPI_Datatype datatype, int source,
 int PMPI_Wait(MPI_Request *request, MPI_Status *status)
 {
 # if MPC_ENABLE_INTEROP_MPI_OMP
-	if(mpc_thread_mpi_omp_wait(1, request, NULL, status) )
-	{
-		return 0;
-	}
+    if (mpc_thread_mpi_omp_wait(1, request, NULL, status, MPIX_PARTITION_NONE)) return 0;
 # endif /* MPC_ENABLE_INTEROP_MPI_OMP */
 
 	mpc_common_nodebug("entering MPI_Wait request = %d", *request);
@@ -10403,10 +10392,7 @@ int PMPI_Waitany(int count,
 	mpc_common_nodebug("entering PMPI_Waitany");
 
 # if MPC_ENABLE_INTEROP_MPI_OMP
-	if(mpc_thread_mpi_omp_wait(count, array_of_requests, index, status) )
-	{
-		return 0;
-	}
+    if (mpc_thread_mpi_omp_wait(count, array_of_requests, index, status, MPIX_PARTITION_NONE)) return 0;
 # endif /* MPC_ENABLE_INTEROP_MPI_OMP */
 
 	MPI_Comm comm = MPI_COMM_WORLD;
@@ -10640,10 +10626,7 @@ int PMPI_Waitall(int count, MPI_Request array_of_requests[],
 	mpc_common_nodebug("entering PMPI_Waitall");
 
 # if MPC_ENABLE_INTEROP_MPI_OMP
-	if(mpc_thread_mpi_omp_wait(count, array_of_requests, NULL, array_of_statuses) )
-	{
-		return 0;
-	}
+    if (mpc_thread_mpi_omp_wait(count, array_of_requests, NULL, array_of_statuses, MPIX_PARTITION_NONE)) return 0;
 # endif /* MPC_ENABLE_INTEROP_MPI_OMP */
 
 	MPI_Comm comm = MPI_COMM_WORLD;
@@ -18208,7 +18191,7 @@ int PMPI_Comm_accept(const char *port_name,
 	{
 		MPI_ERROR_REPORT(comm, MPI_ERR_COMM, "Comm_accept was provided with a NULL newcomm");
 	}
-	
+
   int ret = mpc_lowcomm_communicator_accept(port_name,
 	                                          root,
 	                                          comm,
@@ -19250,6 +19233,7 @@ int PMPI_Alltoallw(const void *sendbuf, const int *sendcnts, const int *sdispls,
 	{
 		return res;
 	}
+
 	//res = PMPI_Comm_remote_size(comm, &rsize);
 	//if(res != MPI_SUCCESS)
 	//{

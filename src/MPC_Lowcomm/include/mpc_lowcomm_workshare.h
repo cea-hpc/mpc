@@ -23,6 +23,8 @@
 #ifndef MPC_LOWCOMM_WORKSHARE_H_
 #define MPC_LOWCOMM_WORKSHARE_H_
 
+#include <mpc_config.h>
+
 #include <mpc_lowcomm_types.h>
 #include <mpc_lowcomm.h>
 #include "mpc_common_spinlock.h"
@@ -30,6 +32,9 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#ifdef MPC_ENABLE_WORKSHARE
+
 
 typedef struct mpc_workshare{
   OPA_int_t is_last_iter;
@@ -80,6 +85,8 @@ void mpc_lowcomm_workshare_critical_end();
 void mpc_lowcomm_workshare_steal();
 void mpc_lowcomm_workshare_steal_wait_for_value(volatile int*, int, void(*) (void*), void*);
 void mpc_lowcomm_workshare_init_func_pointers();
+
+#endif
 
 #ifdef MPC_ENABLE_WORKSHARE
 #define MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL() \

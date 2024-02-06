@@ -50,7 +50,12 @@ lib_LTLIBRARIES = libmpclowcomm.la
 # low-level communication #
 libmpclowcomm_la_SOURCES = coll.c comm.c checksum.c ft.c group.c communicator.c shm_coll.c lowcomm_config.c alloc_mem.c
 libmpclowcomm_la_SOURCES += lowcomm.c msg_cpy.c lowcomm_thread.c mqd.c datatypes_common.c
-libmpclowcomm_la_SOURCES += rail.c reorder.c endpoint.c sctk_window.c workshare.c pset.c handle_ctx.c
+libmpclowcomm_la_SOURCES += rail.c reorder.c endpoint.c sctk_window.c pset.c handle_ctx.c
+
+if ENABLE_WORKSHARE
+libmpclowcomm_la_SOURCES += workshare.c
+endif
+
 
 libmpclowcomm_la_SOURCES += ./cplane/auth.c ./cplane/peer.c  ./cplane/proto.c ./cplane/port.c
 libmpclowcomm_la_SOURCES += ./cplane/monitor.c  ./cplane/set.c ./cplane/uid.c ./cplane/name.c

@@ -36,8 +36,10 @@
 #include <mpc_common_flags.h>
 #include <mpc_launch_shm.h>
 #include <stdint.h>
-#include "mpc_lowcomm_workshare.h"
 
+#ifdef MPC_ENABLE_WORKSHARE
+#include "mpc_lowcomm_workshare.h"
+#endif
 
 #ifdef MPC_Threads
 #include "mpc_thread.h"
@@ -123,6 +125,7 @@ static inline int __bcast(void *buff, size_t len, void *pcomm)
 	return 0;
 }
 
+#ifdef MPC_ENABLE_WORKSHARE
 void alloc_workshare(mpc_lowcomm_communicator_t comm)
 {
 	int            nb_tasks = mpc_common_get_local_task_count();
@@ -164,6 +167,8 @@ void alloc_workshare(mpc_lowcomm_communicator_t comm)
 	}
 	mpc_lowcomm_barrier(comm);
 }
+#endif
+
 
 /* This is the accumulate pool protection */
 
@@ -356,7 +361,9 @@ int mpc_lowcomm_allocmem_pool_init()
 	int split_ws = mpc_common_get_process_rank();
 	mpc_lowcomm_communicator_t per_process_comm = mpc_lowcomm_communicator_split(per_node_comm, split_ws, cw_rank);
 
+#ifdef MPC_ENABLE_WORKSHARE
 	alloc_workshare(per_process_comm);
+#endif
 	mpc_lowcomm_communicator_free(&per_process_comm);
 
 

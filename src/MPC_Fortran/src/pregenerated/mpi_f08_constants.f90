@@ -44,9 +44,9 @@ use :: mpi_f08_types
 	integer, parameter :: MPI_MODE_SEQUENTIAL = 128
 	integer, parameter :: MPI_FILE_NULL = 0
 	integer, parameter :: MPI_MAX_DATAREP_STRING = 128
-	integer, parameter :: MPI_SEEK_SET = 600
-	integer, parameter :: MPI_SEEK_CUR = 602
-	integer, parameter :: MPI_SEEK_END = 604
+	integer, parameter :: MPI_SEEK_SET = 604
+	integer, parameter :: MPI_SEEK_CUR = 600
+	integer, parameter :: MPI_SEEK_END = 602
 	integer, parameter :: MPIO_REQUEST_NULL = 0
 	integer*8, parameter :: MPI_DISPLACEMENT_CURRENT = -2
 	integer, parameter :: MPI_SOURCE = 1
@@ -96,7 +96,7 @@ use :: mpi_f08_types
 	type(MPI_Op) :: MPI_OP_NULL = MPI_Op(-1)
 	type(MPI_Win) :: MPI_WIN_NULL = MPI_Win(-1)
 	type(MPI_Info) :: MPI_INFO_NULL = MPI_Info(-1)
-	type(MPI_Errhandler) :: MPI_ERRHANDLER_NULL = MPI_Errhandler(-1)
+	type(MPI_Errhandler) :: MPI_ERRHANDLER_NULL = MPI_Errhandler(0)
 	type(MPI_Message) :: MPI_MESSAGE_NULL = MPI_Message(-1)
 	integer, parameter :: MPI_PROC_NULL = -2
 	integer, parameter :: MPI_ARGV_NULL = 0
@@ -173,8 +173,9 @@ use :: mpi_f08_types
 	integer, parameter :: MPI_ERR_IO = 35
 	integer, parameter :: MPI_ERR_LASTCODE = 79
 	integer, parameter :: MPI_NOT_IMPLEMENTED = -1
-	type(MPI_Errhandler) :: MPI_ERRORS_RETURN = MPI_Errhandler(-6)
-	type(MPI_Errhandler) :: MPI_ERRORS_ARE_FATAL = MPI_Errhandler(-7)
+	type(MPI_Errhandler) :: MPI_ERRORS_RETURN = MPI_Errhandler(2)
+	type(MPI_Errhandler) :: MPI_ERRORS_ARE_FATAL = MPI_Errhandler(1)
+	type(MPI_Errhandler) :: MPI_ERRORS_ABORT = MPI_Errhandler(3)
 	type(MPI_Datatype) :: MPI_UB = MPI_Datatype(-2)
 	type(MPI_Datatype) :: MPI_LB = MPI_Datatype(-3)
 	type(MPI_Datatype) :: MPI_CHAR = MPI_Datatype(1)
@@ -254,7 +255,7 @@ use :: mpi_f08_types
 	type(MPI_Op) :: MPI_REPLACE = MPI_Op(13)
 	type(MPI_Op) :: MPI_NO_OP = MPI_Op(14)
 	integer, parameter :: MPI_BOTTOM = 0
-	integer, parameter :: MPI_GROUP_EMPTY = -1
+	integer, parameter :: MPI_GROUP_EMPTY = 1
 	integer, parameter :: MPI_GROUP_NULL = 0
 	integer, parameter :: MPI_KEYVAL_INVALID = -7
 	integer, parameter :: MPI_THREAD_SINGLE = 0

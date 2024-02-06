@@ -35,7 +35,7 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#ifndef __MPC_OMP_TASK_H__ 
+#ifndef __MPC_OMP_TASK_H__
 # define __MPC_OMP_TASK_H__
 
 # include "mpcomp_types.h"
@@ -71,6 +71,9 @@
     {                                                      \
         thread->task_infos.current_task = ptr;             \
     } while ( 0 )
+
+# define MPC_OMP_TASK_THREAD_GET_CURRENT_TASKGROUP( thread ) \
+    thread->task_infos.current_task->taskgroup
 
 /*** INSTANCE ACCESSORS MACROS ***/
 
@@ -287,6 +290,10 @@ _mpc_omp_task_align_single_malloc( long size, long arg_align )
     return size;
 }
 
+# define TASK_STATE_TRANSITION(TASK, TO) OPA_store_int(&(TASK->state), TO)
+# define TASK_STATE_TRANSITION_ATOMIC(TASK, FROM, TO) (OPA_cas_int(&(TASK->state), FROM, TO) == FROM)
+# define TASK_STATE(task) OPA_load_int(&(task->state))
+
 int _mpc_omp_task_process(mpc_omp_task_t * task);
 
 void _mpc_omp_task_initgroup_start( void );
@@ -304,7 +311,7 @@ void _mpc_omp_task_root_info_init( struct mpc_omp_node_s *root );
 
 int _mpc_omp_task_schedule(void);
 
-void _mpc_omp_task_wait( void );
+void _mpc_omp_task_wait(void ** depend, int nowait);
 
 /*******************
  * TREE ARRAY TASK *
@@ -358,39 +365,16 @@ void _mpc_omp_task_deps(mpc_omp_task_t * task, void ** depend, int priority_hint
  *************/
 
 /* Functions prototypes */
-void _mpc_omp_task_taskgroup_start( void );
-void _mpc_omp_task_taskgroup_end( void );
+void _mpc_omp_task_taskgroup_start(void);
+void _mpc_omp_task_taskgroup_end(void);
+void _mpc_omp_task_taskgroup_cancel(void);
 
-/* Inline functions */
-static inline void
-_mpc_omp_taskgroup_add_task( mpc_omp_task_t *new_task )
-{
-    mpc_omp_task_t *current_task;
-    mpc_omp_thread_t *omp_thread_tls;
-    mpc_omp_task_taskgroup_t *taskgroup;
-    assert( mpc_omp_tls );
-    omp_thread_tls = ( mpc_omp_thread_t * ) mpc_omp_tls;
-    current_task = MPC_OMP_TASK_THREAD_GET_CURRENT_TASK( omp_thread_tls );
-    taskgroup = current_task->taskgroup;
-
-    if ( taskgroup )
-    {
-        new_task->taskgroup = taskgroup;
-        OPA_incr_int( &( taskgroup->children_num ) );
-    }
-}
-
-static inline void
-mpc_omp_taskgroup_del_task( mpc_omp_task_t *task )
-{
-    if ( task->taskgroup )
-    {
-        OPA_decr_int( &( task->taskgroup->children_num ) );
-    }
-}
+void _mpc_omp_taskgroup_add_task(mpc_omp_task_t * new_task);
+void mpc_omp_taskgroup_del_task(mpc_omp_task_t * task);
 
 /* tasks */
 void mpc_omp_task_process(mpc_omp_task_t * task);
+void _mpc_omp_task_finalize(mpc_omp_task_t * task);
 
 mpc_omp_task_t * __mpc_omp_task_init(
     mpc_omp_task_t * task,
@@ -424,13 +408,41 @@ _mpc_task_loop_compute_loop_value(
 unsigned long
 _mpc_omp_task_loop_compute_num_iters(long start, long end, long step);
 
-/* Task callbacks */
-void _mpc_omp_callback_run(mpc_omp_callback_when_t when);
+/* TODO : refractor this prototype, move them to another more appropriate file */
+# define MPC_OMP_CLAUSE_UCONTEXT    (1 << 0)
+# define MPC_OMP_CLAUSE_UNTIED      (1 << 1)
 
-/* extra clauses for mpc-omp tasks */
-# define MPC_OMP_NO_CLAUSE          (0 << 0)
-# define MPC_OMP_CLAUSE_USE_FIBER   (1 << 0)
+void _mpc_omp_callback_run(mpc_omp_callback_scope_t scope, mpc_omp_callback_when_t when);
+void _mpc_omp_task_unblock(mpc_omp_event_handle_block_t * handle);
+void _mpc_omp_event_handle_ref(mpc_omp_event_handle_t * handle);
+void _mpc_omp_event_handle_unref(mpc_omp_event_handle_t * handle);
+void _mpc_omp_task_profile_register_current(int priority);
 
-void mpc_omp_task_unblock(mpc_omp_event_handle_t * event);
+#if MPC_OMP_TASK_COMPILE_PERSISTENT
+/** Persistent tasks functions
+ *
+ * Multiple points to modify :
+ *  - on task creation
+ *      - only recopy private variables and reset task flags
+ *      - keep 1 more reference
+ *  - on task completion
+ *      - don
+ *  - on persistent region exit
+ *      - taskwait and delete every tasks
+*/
+mpc_omp_persistent_region_t * mpc_omp_get_persistent_region(void);
+mpc_omp_task_t * mpc_omp_get_persistent_task(void);
+void _mpc_omp_task_reinit_persistent(mpc_omp_task_t * task);
+void mpc_omp_persistent_region_push(mpc_omp_task_t * task);
+#endif /* MPC_OMP_TASK_COMPILE_PERSISTENT */
+
+void _mpc_omp_event_handle_init_task_block(mpc_omp_event_handle_block_t ** handle_ptr);
+void _mpc_omp_event_handle_deinit_task_block(mpc_omp_event_handle_block_t * handle);
+
+void _mpc_omp_event_handle_init_detach(mpc_omp_event_handle_detach_t ** handle_ptr);
+void _mpc_omp_event_handle_deinit_detach(mpc_omp_event_handle_detach_t * handle);
+
+void _mpc_omp_event_handle_init_continue(mpc_omp_event_handle_detach_t ** handle_ptr);
+void _mpc_omp_event_handle_deinit_continue(mpc_omp_event_handle_detach_t * handle);
 
 #endif /* __MPC_OMP_TASK_H__ */

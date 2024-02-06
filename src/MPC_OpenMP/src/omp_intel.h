@@ -289,11 +289,18 @@ typedef struct kmp_depend_info
 {
 	kmp_intptr_t base_addr;
 	size_t len;
-	struct
-	{
-		bool in : 1;
-		bool out : 1;
-	} flags;
+    union {
+        unsigned char flag;
+	    struct
+        {
+            unsigned in : 1;
+            unsigned out : 1;
+            unsigned mtx : 1;
+            unsigned set : 1;
+            unsigned unused : 3;
+            unsigned all : 1;
+        } flags;
+    };
 } kmp_depend_info_t;
 
 /* Following commented structs here for info on intel tasking internals. */
@@ -331,41 +338,15 @@ typedef struct kmp_tasking_flags { /* Total struct must be exactly 32 bits */
 
 struct kmp_taskdata   /* aligned during dynamic allocation       */
 {
-#if 0
-	kmp_int32               td_task_id;               /* id, assigned by debugger                */
-	kmp_tasking_flags_t     td_flags;                 /* task flags                              */
-	kmp_team_t             *td_team;                  /* team for this task                      */
-	kmp_info_p             *td_alloc_thread;          /* thread that allocated data structures   */
-	/* Currently not used except for perhaps IDB */
-	kmp_taskdata_t         *td_parent;                /* parent task                             */
-	kmp_int32               td_level;                 /* task nesting level                      */
-	ident_t                *td_ident;                 /* task identifier                         */
-	// Taskwait data.
-	ident_t                *td_taskwait_ident;
-	kmp_uint32              td_taskwait_counter;
-	kmp_int32               td_taskwait_thread;       /* gtid + 1 of thread encountered taskwait */
-	kmp_internal_control_t  td_icvs;                  /* Internal control variables for the task */
-	volatile kmp_uint32     td_allocated_child_tasks;  /* Child tasks (+ current task) not yet deallocated */
-	volatile kmp_uint32     td_incomplete_child_tasks; /* Child tasks not yet complete */
-#if OMP_40_ENABLED
-	kmp_taskgroup_t        *td_taskgroup;         // Each task keeps pointer to its current taskgroup
-	kmp_dephash_t          *td_dephash;           // Dependencies for children tasks are tracked from here
-	kmp_depnode_t          *td_depnode;           // Pointer to graph node if this task has dependencies
-#endif
-#if KMP_HAVE_QUAD
-	_Quad                   td_dummy;             // Align structure 16-byte size since allocated just before kmp_task_t
-#else
-	kmp_uint32              td_dummy[2];
-#endif
-#endif
 };
 
 typedef struct kmp_taskdata kmp_taskdata_t;
 
 kmp_int32 __kmpc_omp_task( ident_t *, kmp_int32, kmp_task_t * );
-void __kmp_omp_task_wrapper( void * );
 kmp_task_t *__kmpc_omp_task_alloc( ident_t *, kmp_int32, kmp_int32, size_t,
                                    size_t, kmp_routine_entry_t );
+kmp_task_t *__kmpc_omp_target_task_alloc(ident_t *, kmp_int32, kmp_int32, size_t,
+                                        size_t, kmp_routine_entry_t, kmp_int64);
 void __kmpc_omp_task_begin_if0( ident_t *, kmp_int32, kmp_task_t * );
 void __kmpc_omp_task_complete_if0( ident_t *, kmp_int32, kmp_task_t * );
 kmp_int32 __kmpc_omp_task_parts( ident_t *, kmp_int32, kmp_task_t * );
@@ -399,5 +380,12 @@ typedef struct mpc_omp_intel_wrapper_s
 } mpc_omp_intel_wrapper_t;
 
 void mpc_omp_intel_wrapper_func( void * );
+
+/******************
+ * TARGET INTEROP *
+ ******************/
+
+void **__kmpc_omp_get_target_async_handle_ptr(kmp_int32 gtid);
+bool __kmpc_omp_has_task_team(kmp_int32 gtid);
 
 #endif /*OMP_INTEL_H_*/

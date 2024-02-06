@@ -124,8 +124,9 @@ static inline void __thread_module_config_defaults(void)
 {
 	/* Here we set default values for thread config */
 	snprintf(__thread_module_config.thread_layout, MPC_CONF_STRING_SIZE, "default");
-	__thread_module_config.thread_timer_interval = 1;
-	__thread_module_config.kthread_stack_size = (10 * 1024 * 1024);
+	__thread_module_config.thread_timer_interval = 10;
+	__thread_module_config.thread_timer_enabled = 1;
+    __thread_module_config.kthread_stack_size = (10 * 1024 * 1024);
 	__thread_module_config.ethread_spin_delay = 10;
 
 	/* NG engine */
@@ -158,10 +159,11 @@ static inline void __init_thread_module_config(void)
 
 	mpc_conf_config_type_t *common = mpc_conf_config_type_init("common",
 														       PARAM("layout", __thread_module_config.thread_layout ,MPC_CONF_STRING, "Layout to be used (default, numa or numa_packed)"),
+														       PARAM("timerenabled", &__thread_module_config.thread_timer_enabled, MPC_CONF_BOOL, "Enable/Disable the timer thread in milliseconds"),
 														       PARAM("interval", &__thread_module_config.thread_timer_interval, MPC_CONF_INT, "Wakeup interval of the timer thread in milliseconds"),
 															   NULL);
 
-	mpc_conf_config_type_t *kthread = mpc_conf_config_type_init("kthread",
+    mpc_conf_config_type_t *kthread = mpc_conf_config_type_init("kthread",
 														        PARAM("stack", &__thread_module_config.kthread_stack_size ,MPC_CONF_LONG_INT, "Stack size for kernel threads"),
 															    NULL);
 
@@ -708,6 +710,7 @@ volatile int          ___timer_thread_running = 1;
 
 static void *___timer_thread_main(void *arg)
 {
+    assert(__thread_module_config.thread_timer_enabled);
 	_mpc_thread_ethread_mxn_engine_init_kethread();
 	assume(arg == NULL);
 
@@ -851,7 +854,8 @@ void mpc_thread_spawn_mpi_tasks(void *(*mpi_task_start_func)(void *), void *arg)
 	__set_thread_cleanup_callback_key();
 	__prepare_free_pages();
 	__init_brk_for_task();
-	__timer_thread_start();
+	if (__thread_module_config.thread_timer_enabled)
+        __timer_thread_start();
 #ifndef SCTK_DO_NOT_HAVE_WEAK_SYMBOLS
 	MPC_Process_hook();
 #endif
@@ -3103,6 +3107,7 @@ typedef struct _mpc_thread_core_sleep_pool_s
 
 static void __sleep_pool_poll(_mpc_thread_core_sleep_pool_t *wake_time)
 {
+	assert(__thread_module_config.thread_timer_enabled);
 	if(wake_time->wake_time < ___timer_thread_ticks)
 	{
 		wake_time->done = 0;
@@ -3112,6 +3117,7 @@ static void __sleep_pool_poll(_mpc_thread_core_sleep_pool_t *wake_time)
 unsigned int mpc_thread_sleep(unsigned int seconds)
 {
 	__check_mpc_initialized();
+	assert(__thread_module_config.thread_timer_enabled);
 	assert(_funcptr_mpc_thread_testcancel != NULL);
 	_funcptr_mpc_thread_testcancel();
 	_mpc_thread_core_sleep_pool_t wake_time;
@@ -3134,6 +3140,7 @@ unsigned int mpc_thread_sleep(unsigned int seconds)
 int mpc_thread_usleep(unsigned int useconds)
 {
 	__check_mpc_initialized();
+	assert(__thread_module_config.thread_timer_enabled);
 	assert(_funcptr_mpc_thread_testcancel != NULL);
 	_funcptr_mpc_thread_testcancel();
 	_mpc_thread_core_sleep_pool_t wake_time;
@@ -3270,6 +3277,7 @@ void mpc_thread_wait_for_value_and_poll(volatile int *data, int value,
 int mpc_thread_timed_wait_for_value(volatile int *data, int value, unsigned int max_time_in_usec)
 {
 	__check_mpc_initialized();
+	assert(__thread_module_config.thread_timer_enabled);
 	unsigned int end_time = ( ( ( sctk_timer_t )max_time_in_usec / ( sctk_timer_t )1000) /
 	                          ( sctk_timer_t )__thread_module_config.thread_timer_interval) + ___timer_thread_ticks + 1;
 	unsigned int trials = 0;

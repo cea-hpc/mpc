@@ -56,7 +56,11 @@ struct mpc_thread_config
 {
 	/* Common */
 	char thread_layout[MPC_CONF_STRING_SIZE];
-	int thread_timer_interval;
+    
+    /* enable/disable timer kernel thread, that counts tick */
+    int thread_timer_enabled;
+	
+    int thread_timer_interval;
 
 	/* Kthread */
 	long int kthread_stack_size;
@@ -139,7 +143,9 @@ typedef struct sctk_thread_data_s
   /* The thread disguisement if present */
   mpc_thread_mpi_disguise_t disguise;
 #ifdef MPC_Lowcomm
+#ifdef MPC_ENABLE_WORKSHARE
   mpc_workshare *                          workshare; 
+#endif
   int                                      is_in_collective;
 #endif
 

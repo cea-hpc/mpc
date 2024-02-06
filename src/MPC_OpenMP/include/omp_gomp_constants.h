@@ -40,6 +40,9 @@
 # define GOMP_TASK_FLAG_GRAINSIZE   (1 << 9)
 # define GOMP_TASK_FLAG_IF          (1 << 10)
 # define GOMP_TASK_FLAG_NOGROUP     (1 << 11)
+# define GOMP_TASK_FLAG_REDUCTION	(1 << 12)
+# define GOMP_TASK_FLAG_DETACH		(1 << 13)
+# define GOMP_TASK_FLAG_STRICT		(1 << 14)
 
 /* tasks dependencies flags */
 typedef enum    gomp_task_dep_type_e
@@ -52,6 +55,16 @@ typedef enum    gomp_task_dep_type_e
   GOMP_OMP_TASK_DEP_INOUTSET        = 5,
   GOMP_OMP_TASK_DEP_COUNT           = 6
 }               gomp_task_dep_type_t;
+
+typedef enum    gomp_cancel_kind_e
+{
+    GOMP_CANCEL_PARALLEL    = 1,
+    GOMP_CANCEL_LOOP        = 2,
+    GOMP_CANCEL_FOR         = GOMP_CANCEL_LOOP,
+    GOMP_CANCEL_DO          = GOMP_CANCEL_LOOP,
+    GOMP_CANCEL_SECTIONS    = 4,
+    GOMP_CANCEL_TASKGROUP   = 8
+}               gomp_cancel_kind_t;
 
 /** depobj */
 typedef struct  gomp_omp_depend_t

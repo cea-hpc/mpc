@@ -383,11 +383,26 @@ bool mpc_omp_GOMP_cancellation_point( __UNUSED__ int which )
 	return false;
 }
 
-bool mpc_omp_GOMP_cancel( __UNUSED__ int which, __UNUSED__ bool do_cancel )
+bool mpc_omp_GOMP_cancel(int which, __UNUSED__ bool do_cancel )
 {
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
-	not_implemented();
-	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+    if (!do_cancel) return mpc_omp_GOMP_cancellation_point(which);
+
+	switch (which)
+    {
+        case (GOMP_CANCEL_TASKGROUP):
+            {
+                _mpc_omp_task_taskgroup_cancel();
+                break ;
+            }
+
+        default:
+            {
+                not_implemented();
+                break ;
+            }
+    }
+    mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 	return false;
 }
 
@@ -2019,6 +2034,7 @@ ___gomp_convert_flags(bool if_clause, int flags)
     __CONVERT_ONE_BIT(GOMP_TASK_FLAG_GRAINSIZE, MPC_OMP_TASK_PROP_GRAINSIZE);
     __CONVERT_ONE_BIT(GOMP_TASK_FLAG_IF,        MPC_OMP_TASK_PROP_IF);
     __CONVERT_ONE_BIT(GOMP_TASK_FLAG_NOGROUP,   MPC_OMP_TASK_PROP_NOGROUP);
+    __CONVERT_ONE_BIT(GOMP_TASK_FLAG_DETACH,    MPC_OMP_TASK_PROP_DETACH);
 # undef  __CONVERT_ONE_BIT
 
     /* MPC_OMP_TASK_PROP_FINAL and MPC_OMP_TASK_PROP_INCLUDED */
@@ -2040,15 +2056,21 @@ ___gomp_convert_flags(bool if_clause, int flags)
         mpc_omp_task_set_property(&properties, MPC_OMP_TASK_PROP_DEPEND);
     }
 
+#if MPC_OMP_TASK_COMPILE_PERSISTENT
+    mpc_omp_persistent_region_t * region = mpc_omp_get_persistent_region();
+    if (region->active)
+        mpc_omp_task_set_property(&properties, MPC_OMP_TASK_PROP_PERSISTENT);
+#endif /* MPC_OMP_TASK_COMPILE_PERSISTENT */
+
     return properties;
 }
 
 static inline void
-__task_data_copy(void (*cpyfn)(void *, void *), void * data_storage, void * data, size_t arg_size)
+__task_data_copy(void (*cpyfn)(void *, void *), void * data_storage, void * data, size_t data_size)
 {
     assert(data_storage);
-    assert(arg_size == 0 || data);
-    if (arg_size > 0)
+    assert(data_size == 0 || data);
+    if (data_size > 0)
     {
         if (cpyfn)
         {
@@ -2056,7 +2078,7 @@ __task_data_copy(void (*cpyfn)(void *, void *), void * data_storage, void * data
         }
         else
         {
-            memcpy(data_storage, data, arg_size);
+            memcpy(data_storage, data, data_size);
         }
     }
 }
@@ -2066,7 +2088,7 @@ __task_data_copy(void (*cpyfn)(void *, void *), void * data_storage, void * data
  *
  * void
  * GOMP_task (void (*fn) (void *), void *data, void (*cpyfn) (void *, void *),
- *              long arg_size, long arg_align, bool if_clause, unsigned flags,
+ *              long data_size, long align, bool if_clause, unsigned flags,
  *              void **depend, int priority_hint, void *detach)
  *
  * >= 6 -> priority
@@ -2074,9 +2096,9 @@ __task_data_copy(void (*cpyfn)(void *, void *), void * data_storage, void * data
  */
 void
 mpc_omp_GOMP_task( void ( *fn )( void * ), void *data,
-                       void ( *cpyfn )( void *, void * ), long arg_size,
-                       long arg_align, bool if_clause, unsigned flags,
-                       void **depend, int priority)
+                       void ( *cpyfn )( void *, void * ), long data_size,
+                       long align, bool if_clause, unsigned flags,
+                       void **depend, int priority, void * detach)
 {
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
     _mpc_omp_ompt_frame_get_wrapper_infos( MPC_OMP_GOMP );
@@ -2084,28 +2106,71 @@ mpc_omp_GOMP_task( void ( *fn )( void * ), void *data,
 
 	mpc_common_nodebug( "[Redirect mpc_omp_GOMP]%s:\tBegin", __func__ );
 
-    /* convert GOMP flags to MPC-OpenMP task properties */
-    mpc_omp_task_property_t properties = ___gomp_convert_flags(if_clause, flags);
+    mpc_omp_thread_t * thread = (mpc_omp_thread_t *) mpc_omp_tls;
+    assert(thread);
 
-    /* compute task size, data alignement, and allocate the task */
-    if (arg_align == 0) arg_align = sizeof(void *);
-    const size_t size = _mpc_omp_task_align_single_malloc(sizeof(mpc_omp_task_t) + arg_size, arg_align);
-    mpc_omp_task_t * task = _mpc_omp_task_allocate(size);
+    /* if we are skipping the task body, no function shall be called on task schedule */
+    if (mpc_omp_conf_get()->task_dry_run) fn = NULL;
 
-    /* retrieve task data storage (for shared variables) */
-    void * data_storage = (void *) (task + 1);
-    __task_data_copy(cpyfn, data_storage, data, arg_size);
+    /* if current taskgroup has been cancelled, no need to create the task */
+    mpc_omp_task_t * current = MPC_OMP_TASK_THREAD_GET_CURRENT_TASK(thread);
+    assert(current);
+    if (current->taskgroup && OPA_load_int(&(current->taskgroup->cancelled))) return ;
 
-    /* set task fields */
-    _mpc_omp_task_init(task, fn, data_storage, size, properties);
+    if (align == 0) align = sizeof(void *);
 
-    /* set dependencies (and compute priorities) */
-    _mpc_omp_task_deps(task, depend, priority);
+    mpc_omp_task_t * task;
+
+#if MPC_OMP_TASK_COMPILE_PERSISTENT
+    mpc_omp_persistent_region_t * region = mpc_omp_get_persistent_region();
+    if (region->active && (task = mpc_omp_get_persistent_task()))
+    {
+        // TODO : 'data' of size 'data_size' contains both shared and private variables
+        // we want to recopy only private variables, but compiler gives no infos on it
+        void * data_storage = (void *) (task + 1);
+        __task_data_copy(cpyfn, data_storage, data, data_size);
+        _mpc_omp_task_reinit_persistent(task);
+    }
+    else
+#endif /* MPC_OMP_TASK_COMPILE_PERSISTENT */
+    {
+        /* compute task size, data alignement, and allocate the task */
+        const size_t size = _mpc_omp_task_align_single_malloc(sizeof(mpc_omp_task_t) + data_size, align);
+        task = _mpc_omp_task_allocate(size);
+
+        /* convert GOMP flags to MPC-OpenMP task properties */
+        mpc_omp_task_property_t properties = ___gomp_convert_flags(if_clause, flags);
+
+        /* retrieve task data storage (for shared variables) */
+        void * data_storage = (void *) (task + 1);
+
+        /* set task fields */
+        _mpc_omp_task_init(task, fn, data_storage, size, properties);
+
+        /* save task to event handler */
+        if (mpc_omp_task_property_isset(properties, MPC_OMP_TASK_PROP_DETACH))
+        {
+            /* Constraints: A program that calls this routine on an event that was already fulfilled is non-conforming. */
+            *((void **) detach) = (void *) &(task->detach_event);
+            mpc_omp_event_handle_init((mpc_omp_event_handle_t **) detach, MPC_OMP_EVENT_TASK_DETACH);
+            task->detach_event.task = task;
+            if (data)
+                *((void **) data) = (void *) &(task->detach_event);
+        }
+
+        __task_data_copy(cpyfn, data_storage, data, data_size);
+
+        /* set dependencies (and compute priorities) */
+        _mpc_omp_task_deps(task, depend, priority);
+    }
 
     /* process the task (differ or run it) */
     _mpc_omp_task_process(task);
 
-    _mpc_omp_task_deinit(task);
+    if (!mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_PERSISTENT))
+    {
+        _mpc_omp_task_deinit(task);
+    }
 
     mpc_common_nodebug( "[Redirect mpc_omp_GOMP]%s:\tEnd", __func__ );
 }
@@ -2117,8 +2182,13 @@ void mpc_omp_GOMP_taskwait( void )
 #endif /* OMPT_SUPPORT */
 
 	mpc_common_nodebug( "[Redirect mpc_omp_GOMP]%s:\tBegin", __func__ );
-	_mpc_omp_task_wait();
+	_mpc_omp_task_wait(NULL, 0);
 	mpc_common_nodebug( "[Redirect mpc_omp_GOMP]%s:\tEnd", __func__ );
+}
+
+void mpc_omp_GOMP_taskwait_depend(void ** depend)
+{
+    _mpc_omp_task_wait(depend, 0);
 }
 
 void mpc_omp_GOMP_taskyield( void )
@@ -2163,14 +2233,13 @@ void mpc_omp_GOMP_taskgroup_end( void )
 
 TODO("taskloop is broken");
 void mpc_omp_GOMP_taskloop( void (*fn)(void *), void *data,
-                           void (*cpyfn)(void *, void *), long arg_size, long arg_align,
+                           void (*cpyfn)(void *, void *), long data_size, long align,
                            unsigned flags, unsigned long num_tasks, int priority,
                            long start, long end, long step )
 {
     mpc_omp_init();
 
     (void)cpyfn;
-
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
     _mpc_omp_ompt_frame_get_wrapper_infos( MPC_OMP_GOMP );
     _mpc_omp_ompt_frame_set_no_reentrant();
@@ -2209,9 +2278,16 @@ void mpc_omp_GOMP_taskloop( void (*fn)(void *), void *data,
         }
 
         /* tasks size and properties */
-        if (arg_align == 0) arg_align = sizeof(void *);
-        const size_t size = _mpc_omp_task_align_single_malloc(sizeof(mpc_omp_task_t) + 2 * sizeof(long) + arg_size, arg_align);
+        if (align == 0) align = sizeof(void *);
+        const size_t size = _mpc_omp_task_align_single_malloc(sizeof(mpc_omp_task_t) + 2 * sizeof(long) + data_size, align);
         mpc_omp_task_property_t properties = ___gomp_convert_flags(1, flags);
+
+        /* extra parameters given to the mpc thread for this task */
+        mpc_omp_thread_t * thread = (mpc_omp_thread_t *)mpc_omp_tls;
+# if MPC_OMP_TASK_COMPILE_TRACE
+        char * label = thread->task_infos.incoming.label;
+# endif /* MPC_OMP_TASK_COMPILE_TRACE */
+        int extra_clauses = thread->task_infos.incoming.extra_clauses;
 
         /* task instantiations */
         for (i = 0; i < num_tasks; i++)
@@ -2224,11 +2300,15 @@ void mpc_omp_GOMP_taskloop( void (*fn)(void *), void *data,
             }
             else
             {
-                memcpy(data_storage, data, arg_size);
+                memcpy(data_storage, data, data_size);
             }
             data_storage[0] = start;
             data_storage[1] = start + taskstep;
-            _mpc_omp_task_init(task, fn, data, size, properties);
+# if MPC_OMP_TASK_COMPILE_TRACE
+            thread->task_infos.incoming.label = label;
+# endif /* MPC_OMP_TASK_COMPILE_TRACE */
+            thread->task_infos.incoming.extra_clauses = extra_clauses;
+            _mpc_omp_task_init(task, fn, data_storage, size, properties);
             _mpc_omp_task_deps(task, NULL, priority);
             _mpc_omp_task_process(task);
             _mpc_omp_task_deinit(task);
@@ -2236,6 +2316,8 @@ void mpc_omp_GOMP_taskloop( void (*fn)(void *), void *data,
             start += taskstep;
             taskstep -= (i == extra_chunk) ? step : 0;
         }
+        thread->task_infos.incoming.label = NULL;
+        thread->task_infos.incoming.extra_clauses = 0;
 
         if (!(flags & GOMP_TASK_FLAG_NOGROUP))
         {
@@ -2254,7 +2336,7 @@ void mpc_omp_GOMP_taskloop( void (*fn)(void *), void *data,
 }
 
 void mpc_omp_GOMP_taskloop_ull( void (*fn)(void *), void *data,
-                               void (*cpyfn)(void *, void *), long arg_size, long arg_align,
+                               void (*cpyfn)(void *, void *), long data_size, long align,
                                unsigned flags, unsigned long num_tasks, int priority,
                                unsigned long long start, unsigned long long end,
                                unsigned long long step )

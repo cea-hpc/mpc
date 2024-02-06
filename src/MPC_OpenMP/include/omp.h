@@ -86,6 +86,13 @@ extern "C" {
         uint64_t ompt_wait_id;
     } omp_nest_lock_t;
 
+    typedef enum omp_event_handle_t
+    {
+        __omp_event_handle_t_max__ = UINTPTR_MAX
+    } omp_event_handle_t;
+    void omp_fulfill_event(omp_event_handle_t event);
+    omp_event_handle_t omp_task_continuation_event(void);
+
     /* Lock Functions */
     void omp_init_lock( omp_lock_t *lock );
     void omp_init_lock_with_hint( omp_lock_t *lock, omp_lock_hint_t hint );
@@ -124,6 +131,8 @@ extern "C" {
     int omp_get_team_size( int level );
     int omp_get_active_level( void );
     int omp_in_final();
+
+    void omp_display_env(int verbose);
 
     /* OpenMP 5.0 API */
     typedef enum omp_control_tool_result_e {
