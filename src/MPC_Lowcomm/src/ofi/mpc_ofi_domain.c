@@ -990,7 +990,7 @@ int _mpc_ofi_domain_send(struct _mpc_ofi_domain_t * domain,
                        void *buff,
                        size_t size,
                        struct _mpc_ofi_request_t **preq,
-                       int (*comptetion_cb_ext)(struct _mpc_ofi_request_t *, void *),
+                       int (*completion_cb_ext)(struct _mpc_ofi_request_t *, void *),
                        void *arg_ext)
 {
    struct _mpc_ofi_request_t ** req = preq;
@@ -1004,7 +1004,7 @@ int _mpc_ofi_domain_send(struct _mpc_ofi_domain_t * domain,
 
    mpc_common_spinlock_lock(&domain->lock);
 
-   *req = __acquire_request(domain, __mpc_ofi_domain_request_complete, NULL, comptetion_cb_ext, arg_ext);
+   *req = __acquire_request(domain, __mpc_ofi_domain_request_complete, NULL, completion_cb_ext, arg_ext);
 
    if( _mpc_ofi_domain_memory_register_no_lock(domain, buff, size, FI_SEND, &(*req)->mr[0]) )
    {
