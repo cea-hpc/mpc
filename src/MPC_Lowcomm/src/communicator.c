@@ -2007,14 +2007,11 @@ mpc_lowcomm_communicator_t mpc_lowcomm_intercommunicator_merge(mpc_lowcomm_commu
 		int remote_high = 0;
 		mpc_lowcomm_sendrecv(&high, sizeof(int), 0, 0, &remote_high, 0, intercomm);
 
-		int local_root_rank  = mpc_lowcomm_communicator_world_rank_of(intercomm, 0);
-		int remote_root_rank = mpc_lowcomm_communicator_remote_world_rank(intercomm, 0);
-
 		mpc_lowcomm_group_t *first  = NULL;
 		mpc_lowcomm_group_t *second = NULL;
 
-		/* By default we order according to lead ranks */
-		if(local_root_rank < remote_root_rank)
+		/* By default we order according to comm ids */
+		if(local_comm->id < remote_comm->id)
 		{
 			first  = local_comm->group;
 			second = remote_comm->group;
