@@ -158,6 +158,7 @@ int lcp_rndv_rma_progress(lcp_request_t *rndv_req)
         while (remaining > 0) {
 
                 if (!MPC_BITMAP_GET(rkey->bm, cc)) {
+                        cc = lcp_ep_get_next_cc(ep);
                         continue;
                 }
 
