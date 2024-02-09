@@ -121,11 +121,13 @@ static inline void __omp_conf_set_default(void)
     __omp_conf.task_depth_threshold             = 4;
     __omp_conf.task_dry_run                     = 0;
     __omp_conf.task_use_ucontext                   = 1;
+#if MPC_OMP_TASK_COMPILE_TRACE
     __omp_conf.task_trace                       = 0;
     __omp_conf.task_trace_auto                  = 0;
     __omp_conf.task_trace_mask                  = ~((int)0);
     __omp_conf.task_trace_dir[0]                = '\0';
     __omp_conf.task_trace_recycler_capacity     = 131072;
+#endif
     __omp_conf.task_cond_wait_enabled           = 0;
     __omp_conf.task_cond_wait_nhyperactive      = 4;
     __omp_conf.task_yield_mode                  = MPC_OMP_TASK_YIELD_MODE_NOOP;
@@ -183,6 +185,7 @@ void __omp_conf_init(void)
             PARAM("ucontextrecyclercapacity",              &__omp_conf.task_ucontext_recycler_capacity,               MPC_CONF_INT,   "Task ucontext recycler capacity"),
             PARAM("depththreshold",                     &__omp_conf.task_depth_threshold,                       MPC_CONF_INT,   "Maximum task depth before it is run undeferedly on parent's ucontext"),
             PARAM("ucontext",                              &__omp_conf.task_use_ucontext,                             MPC_CONF_BOOL,  "Enable task ucontext"),
+#if MPC_OMP_TASK_COMPILE_TRACE
             PARAM("trace",                              &__omp_conf.task_trace,                                 MPC_CONF_BOOL,  "Enable task tracing"),
             PARAM("traceauto",                          &__omp_conf.task_trace_auto,                            MPC_CONF_BOOL,  "Enable automatic task tracing"),
             PARAM("tracemask",                          &__omp_conf.task_trace_mask,                            MPC_CONF_INT,   "Define events to be traced"),
@@ -192,6 +195,7 @@ void __omp_conf_init(void)
             PARAM("traceusepapi",                       &__omp_conf.task_trace_use_papi,                        MPC_CONF_INT,   "Enable PAPI hw events tracing per tasks"),
             PARAM("tracepapievents",                    &__omp_conf.task_trace_papi_events,                     MPC_CONF_STRING, "List of PAPI events to trace comma-delimited"),
 # endif /* MPC_OMP_TASK_TRACE_USE_PAPI */
+#endif /* MPC_OMP_TASK_COMPILE_TRACE */
             PARAM("condwaitenabled",                    &__omp_conf.task_cond_wait_enabled,                     MPC_CONF_BOOL,  "Enable the thread conditional sleeping while there is no ready tasks"),
             PARAM("condwaitnhyperactive",               &__omp_conf.task_cond_wait_nhyperactive,                MPC_CONF_INT,   "Number of hyperactive threads (= threads that won't sleep even if there is no ready tasks)"),
             PARAM("directsuccessor",                    &__omp_conf.task_direct_successor_enabled,              MPC_CONF_INT,   "Enable thread direct successor list"),
@@ -564,120 +568,120 @@ __init_task_tree( const int num_mvps, int *shape, const int *cpus_order )
 void
 mpc_omp_display_env(int verbosity)
 {
-    printf("---------------------------------------------------------------\n");
-    printf("MPC OpenMP runtime version %d.%d (with GCC and LLVM ABI support)\n", MPC_OMP_VERSION_MAJOR, MPC_OMP_VERSION_MINOR );
+    (void) verbosity; // ignored for now, compliant with 'omp_display_env' standard spec
 
-    if (verbosity == 0)
-        goto mpc_omp_display_env_exit;
+    mpc_common_debug_log("---------------------------------------------------------------");
+    mpc_common_debug_log("MPC OpenMP runtime version %d.%d (with GCC and LLVM ABI support)", MPC_OMP_VERSION_MAJOR, MPC_OMP_VERSION_MINOR );
+    mpc_common_debug_log("---------------------------------------------------------------");
 
-    printf("\t\tmaximum tasks=%d\n",            __omp_conf.maximum_tasks);
-    printf("\t\tnew tasks depth=%d\n",          __omp_conf.pqueue_new_depth);
-    printf("\t\tuntied tasks depth=%d\n",       __omp_conf.pqueue_untied_depth);
-    printf("\t\tlarceny mode=%d\n",             __omp_conf.task_larceny_mode);
-    printf("\t\tsteal last stolen=%d\n",        __omp_conf.task_steal_last_stolen);
-    printf("\t\tsteal last thief=%d\n",         __omp_conf.task_steal_last_thief);
-    printf("\t\tdirect succesor=%d\n",          __omp_conf.task_direct_successor_enabled);
-    printf("\t\tyield mode=%d\n",               __omp_conf.task_yield_mode);
-    printf("\t\tyield fair min time (s.)=%lf\n",__omp_conf.task_yield_fair_min_time);
-    printf("\t\tpriority policy=%d\n",          __omp_conf.task_priority_policy);
-    printf("\t\tpropagation policy=%d\n",       __omp_conf.task_priority_propagation_policy);
-    printf("\t\tpropagation synchronousity=%d\n", __omp_conf.task_priority_propagation_synchronousity);
+    mpc_common_debug_log("\tmaximum tasks=%d",            __omp_conf.maximum_tasks);
+    mpc_common_debug_log("\tnew tasks depth=%d",          __omp_conf.pqueue_new_depth);
+    mpc_common_debug_log("\tuntied tasks depth=%d",       __omp_conf.pqueue_untied_depth);
+    mpc_common_debug_log("\tlarceny mode=%d",             __omp_conf.task_larceny_mode);
+    mpc_common_debug_log("\tsteal last stolen=%d",        __omp_conf.task_steal_last_stolen);
+    mpc_common_debug_log("\tsteal last thief=%d",         __omp_conf.task_steal_last_thief);
+    mpc_common_debug_log("\tdirect succesor=%d",          __omp_conf.task_direct_successor_enabled);
+    mpc_common_debug_log("\tyield mode=%d",               __omp_conf.task_yield_mode);
+    mpc_common_debug_log("\tyield fair min time (s.)=%lf",__omp_conf.task_yield_fair_min_time);
+    mpc_common_debug_log("\tpriority policy=%d",          __omp_conf.task_priority_policy);
+    mpc_common_debug_log("\tpropagation policy=%d",       __omp_conf.task_priority_propagation_policy);
+    mpc_common_debug_log("\tpropagation synchronousity=%d", __omp_conf.task_priority_propagation_synchronousity);
 #if MPC_OMP_TASK_COMPILE_LIST_TYPE
-    printf("\t\ttask list policy=%s\n",     __omp_conf.task_list_policy == MPC_OMP_TASK_LIST_POLICY_LIFO ? "lifo" : "fifo");
+    mpc_common_debug_log("\ttask list policy=%s",     __omp_conf.task_list_policy == MPC_OMP_TASK_LIST_POLICY_LIFO ? "lifo" : "fifo");
 #endif /* MPC_OMP_TASK_COMPILE_LIST_TYPE */
-    printf("\t\ttrace=%d (%s)\n",                       __omp_conf.task_trace, __omp_conf.task_trace_auto ? "auto" : "manual");
-    printf("\t\ttrace mask=%d\n",                       __omp_conf.task_trace_mask);
-    printf("\t\ttrace record recycler capacity=%d\n",   __omp_conf.task_trace_recycler_capacity);
-    printf("\t\tthread tasks cond. wait = %s (nhyperactive=%d)\n", \
+    mpc_common_debug_log("\ttrace=%d (%s)",                       __omp_conf.task_trace, __omp_conf.task_trace_auto ? "auto" : "manual");
+    mpc_common_debug_log("\ttrace mask=%d",                       __omp_conf.task_trace_mask);
+    mpc_common_debug_log("\ttrace record recycler capacity=%d",   __omp_conf.task_trace_recycler_capacity);
+    mpc_common_debug_log("\tthread tasks cond. wait = %s (nhyperactive=%d)", \
             __omp_conf.task_cond_wait_enabled ? "enabled" : "disabled", __omp_conf.task_cond_wait_nhyperactive);
-    printf("\n");
+    mpc_common_debug_log("");
 
 
-    printf("\tTasks ucontext\n");
+    mpc_common_debug_log("\tTasks ucontext");
 # if MPC_OMP_TASK_COMPILE_UCONTEXT
-    printf("\t\tCompiled=yes\n");
-    printf("\t\tEnabled=%s\n", MPC_OMP_TASK_UCONTEXT_ENABLED ? "yes" : "no");
+    mpc_common_debug_log("\t\tCompiled=yes");
+    mpc_common_debug_log("\t\tEnabled=%s", MPC_OMP_TASK_UCONTEXT_ENABLED ? "yes" : "no");
 # else /* MPC_OMP_TASK_COMPILE_UCONTEXT */
-    printf("\t\tCompiled=no\n");
+    mpc_common_debug_log("\t\tCompiled=no");
 # endif /* MPC_OMP_TASK_COMPILE_UCONTEXT */
-    printf("\n");
-    printf("\tOMP_SCHEDULE %d\n", OMP_SCHEDULE );
+    mpc_common_debug_log("");
+    mpc_common_debug_log("\tOMP_SCHEDULE %d", OMP_SCHEDULE );
 
     if ( __omp_conf.OMP_NUM_THREADS == 0 )
     {
-        printf("\tDefault #threads (OMP_NUM_THREADS)\n" );
+        mpc_common_debug_log("\tDefault #threads (OMP_NUM_THREADS)" );
     }
     else
     {
-        printf("\tOMP_NUM_THREADS %d\n", __omp_conf.OMP_NUM_THREADS );
+        mpc_common_debug_log("\tOMP_NUM_THREADS %d", __omp_conf.OMP_NUM_THREADS );
     }
 
-    printf("\tOMP_DYNAMIC %d\n", __omp_conf.OMP_DYNAMIC );
-    printf("\tOMP_NESTED %d\n", __omp_conf.OMP_NESTED );
+    mpc_common_debug_log("\tOMP_DYNAMIC %d", __omp_conf.OMP_DYNAMIC );
+    mpc_common_debug_log("\tOMP_NESTED %d", __omp_conf.OMP_NESTED );
 
     if ( __omp_conf.OMP_MICROVP_NUMBER == 0 )
     {
-        printf("\tDefault #microVPs (OMP_MICROVP_NUMBER)\n" );
+        mpc_common_debug_log("\tDefault #microVPs (OMP_MICROVP_NUMBER)" );
     }
     else
     {
-        printf("\t%d microVPs (OMP_MICROVP_NUMBER)\n",
+        mpc_common_debug_log("\t%d microVPs (OMP_MICROVP_NUMBER)",
                 __omp_conf.OMP_MICROVP_NUMBER );
     }
 
     switch ( OMP_AFFINITY )
     {
         case MPC_OMP_AFFINITY_COMPACT:
-            printf("\tAffinity COMPACT (fill logical cores first)\n" );
+            mpc_common_debug_log("\tAffinity COMPACT (fill logical cores first)" );
             break;
 
         case MPC_OMP_AFFINITY_SCATTER:
-            printf("\tAffinity SCATTER (spread over NUMA nodes)\n" );
+            mpc_common_debug_log("\tAffinity SCATTER (spread over NUMA nodes)" );
             break;
 
         case MPC_OMP_AFFINITY_BALANCED:
-            printf("\tAffinity BALANCED (fill physical cores first)\n" );
+            mpc_common_debug_log("\tAffinity BALANCED (fill physical cores first)" );
             break;
 
         default:
-            printf("\tAffinity Unknown\n" );
+            mpc_common_debug_log("\tAffinity Unknown" );
             break;
     }
 
     if ( OMP_TREE != NULL )
     {
         int i;
-        printf("\tOMP_TREE w/ depth:%d leaves:%d, arity:[%d\n",
+        mpc_common_debug_log("\tOMP_TREE w/ depth:%d leaves:%d, arity:[%d",
                 OMP_TREE_DEPTH, OMP_TREE_NB_LEAVES, OMP_TREE[0] );
 
         for ( i = 1; i < OMP_TREE_DEPTH; i++ )
         {
-            printf(", %d", OMP_TREE[i] );
+            mpc_common_debug_log(", %d", OMP_TREE[i] );
         }
 
-        printf("]" );
+        mpc_common_debug_log("]" );
     }
     else
     {
-        printf("\tOMP_TREE default\n" );
+        mpc_common_debug_log("\tOMP_TREE default" );
     }
 
     switch ( OMP_MODE )
     {
         case MPC_OMP_MODE_SIMPLE_MIXED:
-            printf("\tMode for hybrid MPI+OpenMP parallelism SIMPLE_MIXED\n" );
+            mpc_common_debug_log("\tMode for hybrid MPI+OpenMP parallelism SIMPLE_MIXED" );
             break;
 
         case MPC_OMP_MODE_OVERSUBSCRIBED_MIXED:
-            printf("\tMode for hybrid MPI+OpenMP parallelism OVERSUBSCRIBED_MIXED\n" );
+            mpc_common_debug_log("\tMode for hybrid MPI+OpenMP parallelism OVERSUBSCRIBED_MIXED" );
             break;
 
         case MPC_OMP_MODE_ALTERNATING:
-            printf("\tMode for hybrid MPI+OpenMP parallelism ALTERNATING\n" );
+            mpc_common_debug_log("\tMode for hybrid MPI+OpenMP parallelism ALTERNATING" );
             break;
 
         case MPC_OMP_MODE_FULLY_MIXED:
-            printf("\tMode for hybrid MPI+OpenMP parallelism FULLY_MIXED\n" );
+            mpc_common_debug_log("\tMode for hybrid MPI+OpenMP parallelism FULLY_MIXED" );
             break;
 
         default:
@@ -686,42 +690,39 @@ mpc_omp_display_env(int verbosity)
     }
 
 #if MPC_OMP_MALLOC_ON_NODE
-    printf("\tNUMA allocation for tree nodes\n" );
+    mpc_common_debug_log("\tNUMA allocation for tree nodes" );
 #endif
 #if MPC_OMP_COHERENCY_CHECKING
-    printf("\tCoherency check enabled\n" );
+    mpc_common_debug_log("\tCoherency check enabled" );
 #endif
 #if MPC_OMP_ALIGN
-    printf("\tStructure field alignement\n" );
+    mpc_common_debug_log("\tStructure field alignement" );
 #endif
 
     if ( __omp_conf.OMP_WARN_NESTED )
     {
-        printf("\tOMP_WARN_NESTED %d (breakpoint mpcomp_warn_nested)\n",
+        mpc_common_debug_log("\tOMP_WARN_NESTED %d (breakpoint mpcomp_warn_nested)",
                 __omp_conf.OMP_WARN_NESTED );
     }
     else
     {
-        printf("\tNo warning for nested parallelism\n" );
+        mpc_common_debug_log("\tNo warning for nested parallelism" );
     }
 
 #if MPC_OMP_MIC
-    printf("\tMIC optimizations on\n" );
+    mpc_common_debug_log("\tMIC optimizations on" );
 #endif
 #if OMPT_SUPPORT
-    printf("\tTool support %s\n", OMP_TOOL ? "enabled" : "disabled" );
+    mpc_common_debug_log("\tTool support %s", OMP_TOOL ? "enabled" : "disabled" );
 
     if ( OMP_TOOL_LIBRARIES )
     {
-        printf("\tTool paths: %s\n", OMP_TOOL_LIBRARIES );
+        mpc_common_debug_log("\tTool paths: %s", OMP_TOOL_LIBRARIES );
     }
 #else
-    printf("\tTool Support disabled\n" );
+    mpc_common_debug_log("\tTool Support disabled" );
 #endif
     TODO( "Add every env variables and make output more understandable" )
-
-mpc_omp_display_env_exit:
-    printf("---------------------------------------------------------------\n");
 }
 
 /*
