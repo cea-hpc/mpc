@@ -57,6 +57,7 @@ struct lcp_task {
 
         mpc_common_spinlock_t task_lock;
 
+        int num_queues;
         mpc_queue_head_t *umqs;
         mpc_queue_head_t *prqs;
 

@@ -195,19 +195,20 @@ int lcp_task_create(lcp_context_h ctx, int tid, lcp_task_h *task_p)
         task->tid = tid;
         task->ctx = ctx;
 
-        task->umqs = sctk_malloc(NUM_QUEUES * sizeof(mpc_queue_head_t));
+        task->num_queues = UINT16_MAX + 1;
+        task->umqs = sctk_malloc(task->num_queues * sizeof(mpc_queue_head_t));
         if (task->umqs == NULL) {
                 rc = LCP_ERROR;
                 goto err;
         }
 
-        task->prqs = sctk_malloc(NUM_QUEUES * sizeof(mpc_queue_head_t));
+        task->prqs = sctk_malloc(task->num_queues * sizeof(mpc_queue_head_t));
         if (task->prqs == NULL) {
                 rc = LCP_ERROR;
                 goto err;
         }
 
-        for (i = 0; i < NUM_QUEUES; i++) {
+        for (i = 0; i < task->num_queues; i++) {
                 mpc_queue_init_head(&task->umqs[i]);
                 mpc_queue_init_head(&task->prqs[i]);
         }
