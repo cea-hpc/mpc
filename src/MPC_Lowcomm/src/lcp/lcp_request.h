@@ -32,8 +32,6 @@
 #ifndef LCP_REQUEST_H
 #define LCP_REQUEST_H
 
-#include "lcp_def.h"
-
 #include "lcp.h"
 //FIXME: try to remove lcp_ep.h. Currently needed to make progress on
 //       endpoint connection.
@@ -41,12 +39,11 @@
 //FIXME: rail.h is needed here for lcr_tag_context_t struct in request.
 //       See if we could use a pointer instead to avoid including rail.
 #include "rail.h"
-#include "lcp_context.h"
-#include "lcp_task.h"
+#include "lcp_manager.h"
 #include "lcp_header.h"
-
 #include <mpc_common_bit.h>
 #include <sctk_alloc.h>
+#include "lcp_task.h"
 
 //TODO: LCP_REQUEST prefix confusing with those defined in lcp.h
 enum {
@@ -100,8 +97,8 @@ typedef int (*lcp_send_func_t)(lcp_request_t *req);
 
 struct lcp_request {
         uint64_t       flags;
-        lcp_context_h  ctx;
-        lcp_task_h     task;
+        lcp_manager_h  mngr;
+        lcp_task_h     task; 
         lcp_datatype_t datatype;
         int is_sync;
         union {
@@ -110,6 +107,7 @@ struct lcp_request {
                         size_t length; /* Total length, in bytes */
 			void *buffer;
 			lcr_tag_context_t t_ctx;
+                        lcp_complete_callback_func_t cb;
 			union {
 				struct {
 					uint16_t comm;
@@ -126,7 +124,7 @@ struct lcp_request {
                                         size_t   hdr_size;
                                         uint64_t src_uid;
                                         int32_t  dest_tid;
-                                        lcp_am_completion_func_t on_completion;
+                                        lcp_am_recv_callback_func_t cb;
                                         void    *request;
                                 } am;
 
@@ -142,13 +140,6 @@ struct lcp_request {
                                 struct {
                                         uint64_t remote_addr;
                                         lcp_mem_h rkey;
-                                        /*
-                                         * TODO: merge RMA callback with the AM callback
-                                         * into a top-level struct field.
-                                         * Requires code refactoring to have compatible
-                                         * function prototypes.
-                                         */
-                                        lcp_rma_completion_func_t on_completion;
                                 } rma;
 			};
 
@@ -178,7 +169,7 @@ struct lcp_request {
                                         uint8_t  am_id;
                                         uint64_t src_uid;
                                         lcp_unexp_ctnr_t *ctnr;
-                                        lcp_am_completion_func_t cb;
+                                        lcp_am_recv_callback_func_t cb;
                                         void    *request;
                                 } am;
                         };
@@ -187,7 +178,7 @@ struct lcp_request {
 
 	//NOTE: break LCP modularity
 	mpc_lowcomm_request_t *request;   /* Upper layer request */
-        lcp_tag_info_t   *info;
+        lcp_tag_recv_info_t   *info;
         void                  *user_data;
 	uint16_t                seqn;      /* Sequence number */
 	uint64_t               msg_id;    /* Unique message identifier */
@@ -213,7 +204,7 @@ struct lcp_request {
 	} state;
 };
 
-#define LCP_REQUEST_INIT_TAG_SEND(_req, _ctx, _task, _mpi_req, _info, _length, \
+#define LCP_REQUEST_INIT_TAG_SEND(_req, _mngr, _task, _mpi_req, _info, _length, \
                                   _ep, _buf, _seqn, _dt, _is_sync) \
 { \
 	(_req)->request           = _mpi_req;                                \
@@ -225,7 +216,7 @@ struct lcp_request {
         (_req)->send.tag.comm     = (_mpi_req)->header.communicator_id;      \
 	(_req)->info              = _info;                                   \
 	(_req)->seqn              = _seqn;                                   \
-	(_req)->ctx               = _ctx;                                    \
+	(_req)->mngr               = _mngr;                                    \
 	(_req)->task              = _task;                                   \
 	(_req)->msg_id            = (uint64_t)(_req);                        \
 	(_req)->datatype          = _dt;                                     \
@@ -239,10 +230,10 @@ struct lcp_request {
 	(_req)->state.offset      = 0;                                       \
 }
 
-#define LCP_REQUEST_INIT_TAG_RECV(_req, _ctx, _task, _mpi_req, _info, _length, \
+#define LCP_REQUEST_INIT_TAG_RECV(_req, _mngr, _task, _mpi_req, _info, _length, \
                                   _buf, _dt) \
 { \
-	(_req)->ctx               = _ctx;                                    \
+	(_req)->mngr               = _mngr;                                    \
 	(_req)->task              = _task;                                   \
 	(_req)->datatype          = _dt;                                     \
 	\
@@ -264,7 +255,7 @@ struct lcp_request {
 	(_req)->state.offset      = 0;                                       \
 }
 
-#define LCP_REQUEST_INIT_AM_SEND(_req, _ctx, _task, _am_id,                  \
+#define LCP_REQUEST_INIT_AM_SEND(_req, _mngr, _task, _am_id,                  \
                                  _src_uid, _dest_tid, _info, _length, _ep,   \
                                  _buf, _seqn, _msg_id, _dt, _is_sync)                  \
 { \
@@ -272,7 +263,7 @@ struct lcp_request {
 	(_req)->info              = _info;                                   \
 	(_req)->msg_id            = _msg_id;                                 \
 	(_req)->seqn              = _seqn;                                   \
-	(_req)->ctx               = _ctx;                                    \
+	(_req)->mngr               = _mngr;                                    \
 	(_req)->task              = _task;                                   \
 	(_req)->datatype          = _dt;                                     \
 	(_req)->is_sync           = _is_sync;                                \
@@ -289,10 +280,10 @@ struct lcp_request {
 	(_req)->state.offset      = 0;                                       \
 }
 
-#define LCP_REQUEST_INIT_AM_RECV(_req, _ctx, _task, _info, _length, _buf, _dt) \
+#define LCP_REQUEST_INIT_AM_RECV(_req, _mngr, _task, _info, _length, _buf, _dt) \
 { \
 	(_req)->info              = _info;                                   \
-	(_req)->ctx               = _ctx;                                    \
+	(_req)->mngr               = _mngr;                                    \
 	(_req)->task              = _task;                                   \
 	(_req)->datatype          = _dt;                                     \
 	\
@@ -303,14 +294,14 @@ struct lcp_request {
 	(_req)->state.offset      = 0;                                       \
 }
 
-#define LCP_REQUEST_INIT_RMA_SEND(_req, _ctx, _task, _mpi_req, _info, _length, \
+#define LCP_REQUEST_INIT_RMA_SEND(_req, _mngr, _task, _mpi_req, _info, _length, \
                                   _ep, _buf, _seqn, _msg_id, _dt) \
 { \
 	(_req)->request           = _mpi_req;                                \
 	(_req)->info              = _info;                                   \
 	(_req)->msg_id            = _msg_id;                                 \
 	(_req)->seqn              = _seqn;                                   \
-	(_req)->ctx               = _ctx;                                    \
+	(_req)->mngr               = _mngr;                                    \
 	(_req)->task              = _task;                                   \
 	(_req)->datatype          = _dt;                                     \
 	\
@@ -371,6 +362,7 @@ static inline void lcp_request_init_rma_put(lcp_request_t *req,
 {
         req->send.rma.remote_addr = remote_addr;
         req->send.rma.rkey        = rkey;
+        req->send.cb              = param->cb;
         req->request              = param->request;
 };
 
@@ -380,9 +372,9 @@ static inline int lcp_request_send(lcp_request_t *req)
 
         /* First, check endpoint availability */
         if (req->send.ep->state == LCP_EP_FLAG_CONNECTING) {
-                lcp_ep_progress_conn(req->ctx, req->send.ep);
+                lcp_ep_progress_conn(req->mngr, req->send.ep);
                 if (req->send.ep->state == LCP_EP_FLAG_CONNECTING) {
-                        mpc_queue_push(&req->ctx->pending_queue, &req->queue);
+                        mpc_queue_push(&req->mngr->pending_queue, &req->queue);
                         return LCP_SUCCESS;
                 }
         }
@@ -392,7 +384,7 @@ static inline int lcp_request_send(lcp_request_t *req)
                 break;
         case MPC_LOWCOMM_NO_RESOURCE:
                 //TODO: implement thread-safe pending queue
-                mpc_queue_push(&req->ctx->pending_queue, &req->queue);
+                mpc_queue_push(&req->mngr->pending_queue, &req->queue);
                 break;
         case LCP_ERROR:
                 mpc_common_debug_error("LCP: could not send request.");

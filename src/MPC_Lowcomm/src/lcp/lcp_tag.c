@@ -100,8 +100,8 @@ static size_t lcp_send_tag_eager_pack(void *dest, void *data)
         hdr->dest_tid = req->send.tag.dest_tid;
 	hdr->seqn     = req->seqn;
 
-        packed_length = lcp_datatype_pack(req->ctx, req, req->datatype,
-                                          (void *)(hdr + 1), src,
+        packed_length = lcp_datatype_pack(req->mngr->ctx, req, req->datatype,
+                                          (void *)(hdr + 1), src, 
                                           req->send.length);
 
 	return sizeof(*hdr) + packed_length;
@@ -123,8 +123,8 @@ static size_t lcp_send_tag_eager_sync_pack(void *dest, void *data)
         hdr->msg_id        = req->msg_id;
         hdr->src_uid       = req->send.tag.src_uid;
 
-        packed_length = lcp_datatype_pack(req->ctx, req, req->datatype,
-                                          (void *)(hdr + 1), src,
+        packed_length = lcp_datatype_pack(req->mngr->ctx, req, req->datatype,
+                                          (void *)(hdr + 1), src, 
                                           req->send.length);
 
 	return sizeof(*hdr) + packed_length;
@@ -481,7 +481,7 @@ int lcp_send_eager_sync_ack(lcp_request_t *super, void *data)
         lcp_tag_sync_hdr_t *hdr = (lcp_tag_sync_hdr_t *)data;
 
         /* Get endpoint */
-        rc = lcp_ep_get_or_create(super->ctx, hdr->src_uid, &ep, 0);
+        rc = lcp_ep_get_or_create(super->mngr, hdr->src_uid, &ep, 0);
         if (rc != LCP_SUCCESS) {
                 goto err;
         }
@@ -554,11 +554,6 @@ int lcp_send_rndv_tag_start(lcp_request_t *req)
         }
 
         req->send.func = lcp_send_rndv_tag_rts_progress;
-        /* Register memory if GET protocol */
-        //FIXME: should be inside rndv. Tag layer should not be responsible for
-        //       registering memory
-        rc = lcp_rndv_reg_send_buffer(req);
-
 err:
         return rc;
 }
@@ -580,7 +575,7 @@ int lcp_recv_eager_tag_data(lcp_request_t *req, void *data)
                               req->recv.send_length, req->seqn);
 
         /* copy data to receiver buffer and complete request */
-        unpacked_len = lcp_datatype_unpack(req->ctx, req, req->datatype,
+        unpacked_len = lcp_datatype_unpack(req->mngr->ctx, req, req->datatype, 
                                            req->recv.buffer, data,
                                            req->recv.send_length);
         if (unpacked_len < 0) {
@@ -630,13 +625,13 @@ static int lcp_eager_tag_sync_handler(void *arg, void *data,
                                       __UNUSED__ unsigned flags)
 {
 	int rc = LCP_SUCCESS;
-	lcp_context_h ctx = arg;
+	lcp_manager_h mngr = arg;
 	lcp_unexp_ctnr_t *ctnr;
 	lcp_request_t *req;
 	lcp_tag_sync_hdr_t *hdr = data;
         lcp_task_h task = NULL;
 
-        task = lcp_context_task_get(ctx, hdr->base.dest_tid);
+        task = lcp_manager_task_get(mngr, hdr->base.dest_tid);  
         if (task == NULL) {
                 mpc_common_errorpoint_fmt("LCP: could not find task with tid=%d", hdr->base.dest_tid);
                 rc = LCP_ERROR;
@@ -690,13 +685,13 @@ static int lcp_eager_tag_handler(void *arg, void *data,
                                  __UNUSED__ unsigned flags)
 {
         int rc = LCP_SUCCESS;
-        lcp_context_h ctx = arg;
+        lcp_manager_h mngr = arg;
         lcp_unexp_ctnr_t *ctnr;
         lcp_request_t *req;
         lcp_tag_hdr_t *hdr = data;
         lcp_task_h task = NULL;
 
-        task = lcp_context_task_get(ctx, hdr->dest_tid);
+        task = lcp_manager_task_get(mngr, hdr->dest_tid);  
         if (task == NULL) {
                 mpc_common_errorpoint_fmt("LCP: could not find task with tid=%d", hdr->dest_tid);
 
@@ -780,13 +775,13 @@ static int lcp_rndv_tag_handler(void *arg, void *data,
 {
         UNUSED(flags);
 	int rc = LCP_SUCCESS;
-	lcp_context_h ctx = arg;
+	lcp_manager_h mngr = arg;
 	lcp_request_t *req;
 	lcp_unexp_ctnr_t *ctnr;
 	lcp_rndv_hdr_t *hdr = data;
         lcp_task_h task = NULL;
 
-        task = lcp_context_task_get(ctx, hdr->tag.dest_tid);
+        task = lcp_manager_task_get(mngr, hdr->tag.dest_tid);
         if (task == NULL) {
                 mpc_common_errorpoint_fmt("LCP: could not find task with tid=%d", hdr->tag.dest_tid);
                 rc = LCP_ERROR;

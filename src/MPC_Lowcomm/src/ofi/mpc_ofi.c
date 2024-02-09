@@ -569,10 +569,12 @@ uint64_t __convert_rma_offset(struct _mpc_ofi_domain_t *domain, void * buff_base
 int _mpc_ofi_get_zcopy(_mpc_lowcomm_endpoint_t *ep,
                            uint64_t local_addr,
                            uint64_t remote_offset,
+                           lcr_memp_t *local_key,
                            lcr_memp_t *remote_key,
                            size_t size,
                            lcr_completion_t *comp)
 {
+        UNUSED(local_key);
 	struct _mpc_ofi_deffered_completion_s *completion =  mpc_mempool_alloc(&ep->data.ofi.deffered);
    assume(completion != NULL);
 
@@ -606,10 +608,12 @@ int _mpc_ofi_get_zcopy(_mpc_lowcomm_endpoint_t *ep,
 int _mpc_ofi_send_put_zcopy(_mpc_lowcomm_endpoint_t *ep,
                            uint64_t local_addr,
                            uint64_t remote_offset,
+                           lcr_memp_t *local_key,
                            lcr_memp_t *remote_key,
                            size_t size,
                            lcr_completion_t *comp)
 {
+        UNUSED(local_key);
 	struct _mpc_ofi_deffered_completion_s *completion =  mpc_mempool_alloc(&ep->data.ofi.deffered);
    assume(completion != NULL);
 
@@ -799,8 +803,10 @@ void _mpc_ofi_release(sctk_rail_info_t *rail)
 int _mpc_ofi_iface_open(__UNUSED__ const char *device_name, int id,
                        lcr_rail_config_t *rail_config,
                        lcr_driver_config_t *driver_config,
-                       sctk_rail_info_t **iface_p)
+                       sctk_rail_info_t **iface_p,
+                       unsigned features)
 {
+        UNUSED(features);
 	int rc = MPC_LOWCOMM_SUCCESS;
 	sctk_rail_info_t *rail = NULL;
 
@@ -861,10 +867,9 @@ err:
 	return rc;
 }
 
-lcr_component_t ofi_component =
+lcr_component_t tcpofi_component =
 {
-	.name          = { "ofi"    },
-	.rail_name     = { "ofimpi" },
+	.name          = { "tcpofirail"    },
 	.query_devices = _mpc_ofi_query_devices,
 	.iface_open    = _mpc_ofi_iface_open,
 	.devices       = NULL,
@@ -872,4 +877,28 @@ lcr_component_t ofi_component =
 	.flags         = 0,
 	.next          = NULL
 };
-LCR_COMPONENT_REGISTER(&ofi_component)
+LCR_COMPONENT_REGISTER(&tcpofi_component)
+
+lcr_component_t shmofi_component =
+{
+	.name          = { "shmofirail"    },
+	.query_devices = _mpc_ofi_query_devices,
+	.iface_open    = _mpc_ofi_iface_open,
+	.devices       = NULL,
+	.num_devices   = 0,
+	.flags         = 0,
+	.next          = NULL 
+};
+LCR_COMPONENT_REGISTER(&shmofi_component)
+
+lcr_component_t verbsofi_component =
+{
+	.name          = { "verbsofirail"  },
+	.query_devices = _mpc_ofi_query_devices,
+	.iface_open    = _mpc_ofi_iface_open,
+	.devices       = NULL,
+	.num_devices   = 0,
+	.flags         = 0,
+	.next          = NULL 
+};
+LCR_COMPONENT_REGISTER(&verbsofi_component)

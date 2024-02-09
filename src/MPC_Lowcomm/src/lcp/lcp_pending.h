@@ -48,12 +48,12 @@ typedef struct
 	UT_hash_handle         hh;
 } lcp_pending_entry_t;
 
-typedef struct
+struct lcp_pending_table
 {
 	mpc_common_spinlock_t  table_lock;
 	mpc_mempool_t pending_pool;
 	lcp_pending_entry_t   *table;
-} lcp_pending_table_t;
+};
 
 
 /*******************************************************

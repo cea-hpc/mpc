@@ -553,8 +553,10 @@ err:
 int lcr_tcp_iface_open(__UNUSED__ const char *device_name, int id,
                        lcr_rail_config_t *rail_config,
                        lcr_driver_config_t *driver_config,
-                       sctk_rail_info_t **iface_p)
+                       sctk_rail_info_t **iface_p,
+                       unsigned features)
 {
+        UNUSED(features);
 	int rc = MPC_LOWCOMM_SUCCESS;
 	sctk_rail_info_t *iface = NULL;
 
@@ -579,8 +581,7 @@ err:
 
 lcr_component_t tcp_component =
 {
-	.name          = { "tcp"    },
-	.rail_name     = { 0 },
+	.name          = { "tcpmpi"    },
 	.query_devices = lcr_tcp_query_devices,
 	.iface_open    = lcr_tcp_iface_open,
 	.devices       = NULL,

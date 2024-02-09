@@ -28,7 +28,7 @@
 #include <tcp.h>
 
 #ifdef MPC_USE_PORTALS
-#include <sctk_portals.h>
+#include <ptl/ptl.h>
 #endif
 
 #include <tbsm/tbsm.h>

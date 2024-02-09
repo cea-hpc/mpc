@@ -8,9 +8,24 @@ LIBS+=-lmpcconfig
 %.o: %.c
 	$(CC) -c -o $@ $< $(CFLAGS)
 
-all: ep_init context_init ep_earlysend ep_earlyrecv ep_sendfrag ep_double
+all: context_init \
+	manager_init \
+	multi_manager_init \
+	ep_init \
+	ep_double \
+	ep_earlysend \
+	ep_earlyrecv \
+	ep_sendfrag \
+	ep_multi_manager_send \
+	ep_am 
 
 context_init: context_init.o
+	$(CC) -o $@ $< $(LIBS)
+
+manager_init: manager_init.o
+	$(CC) -o $@ $< $(LIBS)
+
+multi_manager_init: multi_manager_init.o
 	$(CC) -o $@ $< $(LIBS)
 
 ep_init: ep_init.o
@@ -26,4 +41,10 @@ ep_earlyrecv: ep_earlyrecv.o
 	$(CC) -o $@ $< $(LIBS)
 
 ep_sendfrag: ep_sendfrag.o
+	$(CC) -o $@ $< $(LIBS)
+
+ep_multi_manager_send: ep_multi_manager_send.o
+	$(CC) -o $@ $< $(LIBS)
+
+ep_am: ep_am.o
 	$(CC) -o $@ $< $(LIBS)

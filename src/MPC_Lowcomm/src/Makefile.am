@@ -68,15 +68,12 @@ libmpclowcomm_la_LIBADD =  $(ALLOC_LIBS) ../../MPC_Launch/src/libmpclaunch.la -l
 #
 
 # LCP #
-if LCP_ENABLED
 AM_CPPFLAGS += -I$(abs_srcdir)/tbsm/
-AM_CPPFLAGS += -I$(abs_srcdir)/lcp/
-AM_CPPFLAGS += -I$(abs_srcdir)/lcr/
+AM_CPPFLAGS += -I$(abs_srcdir)/lcp/ -I$(abs_srcdir)/lcr/
 libmpclowcomm_la_SOURCES += ./tbsm/tbsm.c
 libmpclowcomm_la_SOURCES += ./lcp/lcp_context.c ./lcp/lcp_ep.c ./lcp/lcp_pending.c ./lcp/lcp_progress.c ./lcp/lcp_recv.c ./lcp/lcp_send.c ./lcp/lcp_tag_lists.c ./lcp/lcp_datatype.c ./lcp/lcp_probe.c ./lcp/lcp_eager.c ./lcp/lcp_am.c
-libmpclowcomm_la_SOURCES += ./lcp/lcp_tag_matching.c ./lcp/lcp_tag.c ./lcp/lcp_request.c ./lcp/lcp_rndv.c ./lcp/lcp_tag_offload.c ./lcp/lcp_mem.c ./lcp/lcp_rma.c ./lcp/lcp_task.c ./lcp/lcp_tag_match.c
+libmpclowcomm_la_SOURCES += ./lcp/lcp_tag_matching.c ./lcp/lcp_tag.c ./lcp/lcp_request.c ./lcp/lcp_rndv.c ./lcp/lcp_tag_offload.c ./lcp/lcp_mem.c ./lcp/lcp_rma.c ./lcp/lcp_task.c ./lcp/lcp_tag_match.c ./lcp/lcp_manager.c
 libmpclowcomm_la_SOURCES += ./lcr/lcr_component.c ./shm/mpc_shm.c
-endif
 
 #AM Extensions #
 if MPC_HAVE_AM
@@ -90,16 +87,8 @@ libmpclowcomm_la_SOURCES += ./tcp/tcp.c ./tcp/tcp_toolkit.c
 
 # PTL driver #
 if PORTALS4_DRIVER_ENABLED
-AM_CPPFLAGS += -I$(abs_srcdir)/portals/
-libmpclowcomm_la_SOURCES += ./portals/sctk_portals.c ./portals/sctk_ptl_cm.c ./portals/sctk_ptl_eager.c
-libmpclowcomm_la_SOURCES += ./portals/sctk_ptl_iface.c ./portals/sctk_ptl_offcoll.c ./portals/sctk_ptl_rdma.c
-libmpclowcomm_la_SOURCES += ./portals/sctk_ptl_rdv.c ./portals/sctk_ptl_toolkit.c
-if LCP_ENABLED
-libmpclowcomm_la_SOURCES += ./portals/lcr_ptl.c ./portals/lcr_ptl_recv.c ./portals/lcr_ptl_iface.c
-endif
-
-# PTL-AM driver #
-libmpclowcomm_la_SOURCES += ./portals_am/sctk_ptl_am_iface.c  ./portals_am/sctk_ptl_am_toolkit.c ./portals_am/sctk_ptl_am_arpc_api.c ./portals_am/arpc_weak.c
+AM_CPPFLAGS += -I$(abs_srcdir)/ptl/
+libmpclowcomm_la_SOURCES += ./ptl/ptl_ep.c ./ptl/ptl_iface.c ./ptl/ptl_recv.c ./ptl/ptl_rd.c
 endif
 
 # OFI Driver #

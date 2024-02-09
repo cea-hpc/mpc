@@ -83,11 +83,13 @@ typedef int (*lcr_put_bcopy_func_t)(_mpc_lowcomm_endpoint_t *ep,
                                     lcr_pack_callback_t pack,
                                     void *arg,
                                     uint64_t remote_addr,
+                                    lcr_memp_t *local_key,
                                     lcr_memp_t *remote_key);
 
 typedef int (*lcr_put_zcopy_func_t)(_mpc_lowcomm_endpoint_t *ep,
                                     uint64_t local_addr,
                                     uint64_t remote_addr,
+                                    lcr_memp_t *local_key,
                                     lcr_memp_t *remote_key,
                                     size_t size,
                                     lcr_completion_t *ctx);
@@ -96,12 +98,14 @@ typedef int (*lcr_get_bcopy_func_t)(_mpc_lowcomm_endpoint_t *ep,
                                     lcr_unpack_callback_t unpack,
                                     void *arg, size_t size,
                                     uint64_t remote_addr,
+                                    lcr_memp_t *local_key,
                                     lcr_memp_t *remote_key,
                                     lcr_completion_t *ctx);
 
 typedef int (*lcr_get_zcopy_func_t)(_mpc_lowcomm_endpoint_t *ep,
                                     uint64_t local_addr,
                                     uint64_t remote_addr,
+                                    lcr_memp_t *local_key,
                                     lcr_memp_t *remote_key,
                                     size_t size,
                                     lcr_completion_t *ctx);

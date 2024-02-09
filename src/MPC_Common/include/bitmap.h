@@ -8,6 +8,7 @@
 
 #include "mpc_common_bit.h"
 
+//FIXME: remove and use the one from mpc_common_helper
 typedef uint64_t word_t;
 
 enum {

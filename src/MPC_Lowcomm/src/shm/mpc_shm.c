@@ -726,11 +726,12 @@ int __put_zcopy_over_cma(_mpc_lowcomm_endpoint_t *ep,
 int mpc_shm_get_zcopy(_mpc_lowcomm_endpoint_t *ep,
                            uint64_t local_addr,
                            uint64_t remote_offset,
+                           lcr_memp_t *local_key,
                            lcr_memp_t *remote_key,
                            size_t size,
                            lcr_completion_t *comp)
 {
-
+        UNUSED(local_key);
  #if MPC_USE_CMA
 
    int cma = mpc_shm_has_cma_support(&ep->rail->network.shm.storage);
@@ -748,13 +749,15 @@ int mpc_shm_get_zcopy(_mpc_lowcomm_endpoint_t *ep,
 
 
 
-int mpc_shm_put_zcopy(__UNUSED__ _mpc_lowcomm_endpoint_t *ep,
-                        __UNUSED__ uint64_t local_addr,
-                        __UNUSED__ uint64_t remote_offset,
-                        __UNUSED__ lcr_memp_t *remote_key,
-                        __UNUSED__ size_t size,
-                        __UNUSED__ lcr_completion_t *comp)
+int mpc_shm_put_zcopy(_mpc_lowcomm_endpoint_t *ep,
+                        uint64_t local_addr,
+                        uint64_t remote_offset,
+                        lcr_memp_t *local_key,
+                        lcr_memp_t *remote_key,
+                        size_t size,
+                        lcr_completion_t *comp)
 {
+        UNUSED(local_key);
  #if MPC_USE_CMA
 
    int cma = mpc_shm_has_cma_support(&ep->rail->network.shm.storage);
@@ -1240,8 +1243,7 @@ err:
 
 lcr_component_t shm_component =
 {
-	.name          = { "shm"    },
-	.rail_name     = { "shmmpi" },
+	.name          = { "shmmpi"    },
 	.query_devices = mpc_shm_query_devices,
 	.iface_open    = mpc_shm_iface_open,
 	.devices       = NULL,

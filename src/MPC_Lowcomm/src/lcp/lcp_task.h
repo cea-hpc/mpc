@@ -45,7 +45,7 @@
 	mpc_common_spinlock_unlock(&((_task)->task_lock))
 
 typedef struct lcp_am_user_handler {
-        lcp_am_user_func_t cb; /* User defined callback */
+        lcp_am_callback_t cb; /* User defined callback */
         void *user_arg; /* User data */
         uint64_t flags;
 } lcp_am_user_handler_t;
@@ -53,7 +53,7 @@ typedef struct lcp_am_user_handler {
 struct lcp_task {
         int tid; /* task identifier */
 
-        lcp_context_h ctx;
+        lcp_manager_h mngr;
 
         mpc_common_spinlock_t task_lock;
 

@@ -289,7 +289,7 @@ void sctk_ptl_rdv_send_message(mpc_lowcomm_ptp_message_t* msg, _mpc_lowcomm_endp
 
 	md_request      = me_request = NULL;
 	md_flags        = me_flags   = 0;
-	remote          = infos->dest;
+	remote          = infos->dest.id;
 	start           = NULL;
 	match.data.tag  = SCTK_MSG_TAG(msg)            % SCTK_PTL_MAX_TAGS;
 	match.data.rank = SCTK_MSG_SRC_TASK(msg)    % SCTK_PTL_MAX_RANKS;

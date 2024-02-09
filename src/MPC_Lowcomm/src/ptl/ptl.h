@@ -1,5 +1,5 @@
 /* ############################# MPC License ############################## */
-/* # Thu May  6 10:26:16 CEST 2021                                        # */
+/* # Wed Nov 19 15:19:19 CET 2008                                         # */
 /* # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          # */
 /* #                                                                      # */
 /* # IDDN.FR.001.230040.000.S.P.2007.000.10000                            # */
@@ -15,33 +15,48 @@
 /* # had knowledge of the CeCILL-C license and that you accept its        # */
 /* # terms.                                                               # */
 /* #                                                                      # */
-/* # Maintainers:                                                         # */
-/* # - CARRIBAULT Patrick patrick.carribault@cea.fr                       # */
-/* # - JAEGER Julien julien.jaeger@cea.fr                                 # */
-/* # - PERACHE Marc marc.perache@cea.fr                                   # */
-/* # - ROUSSEL Adrien adrien.roussel@cea.fr                               # */
-/* # - TABOADA Hugo hugo.taboada@cea.fr                                   # */
-/* #                                                                      # */
 /* # Authors:                                                             # */
-/* # - CANAT Paul pcanat@paratools.fr                                     # */
-/* # - BESNARD Jean-Baptiste jbbesnard@paratools.com                      # */
-/* # - MOREAU Gilles gilles.moreau@cea.fr                                 # */
+/* #   - PERACHE Marc marc.perache@cea.fr                                 # */
+/* #   - ADAM Julien julien.adam@paratools.com                            # */
+/* #   - BESNARD Jean-Baptiste jean-baptiste.besnard@paratools.com        # */
 /* #                                                                      # */
 /* ######################################################################## */
 
-#ifndef LCP_TAG_OFFLOAD_H
-#define LCP_TAG_OFFLOAD_H
+#ifndef LCR_PTL_H
+#define LCR_PTL_H
+#ifdef __cplusplus
+extern "C"
+{
+#endif
 
-#include "lcp_def.h"
-#include "lcr/lcr_def.h"
+#include "ptl_types.h"
 
-int lcp_send_tag_offload_eager_bcopy(lcp_request_t *req);
-int lcp_send_tag_offload_eager_zcopy(lcp_request_t *req);
+//FIXME: hack for previous public ptl function.
+static inline int ptl_offcoll_barrier(int comm_idx, int rank, int size) {
+        UNUSED(comm_idx);
+        UNUSED(rank);
+        UNUSED(size);
+        not_implemented();
+        return 0;
+}
 
-int lcp_send_rndv_offload_start(lcp_request_t *req);
+static inline int ptl_offcoll_bcast(int comm_idx, int rank, int size, 
+                                    void* buf, size_t bytes, int root) {
+        UNUSED(comm_idx);
+        UNUSED(rank);
+        UNUSED(size);
+        UNUSED(buf);
+        UNUSED(bytes);
+        UNUSED(root);
+        not_implemented();
+        return 0;
+}
 
-int lcp_recv_tag_zcopy(lcp_request_t *req, sctk_rail_info_t *iface);
-int lcp_recv_tag_probe(lcp_task_h task, sctk_rail_info_t *rail, const int src, const int tag, 
-                       const uint64_t comm, lcp_tag_recv_info_t *recv_info);
+static inline int ptl_offcoll_enabled() {
+        return 0;
+}
 
+#ifdef __cplusplus
+}
+#endif
 #endif

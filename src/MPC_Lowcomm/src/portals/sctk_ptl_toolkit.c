@@ -771,15 +771,8 @@ void sctk_ptl_init_interface(sctk_rail_info_t* rail)
 	rail->network.ptl.min_frag_size   = min_frag_size;
 
 	rail->network.ptl.offload_support = offloading;
-
-#ifdef MPC_LOWCOMM_PROTOCOL
-        rc = lcr_ptl_software_init(&rail->network.ptl, min_comms);
-        if (rc != MPC_LOWCOMM_SUCCESS) {
-                mpc_common_debug_fatal("LCR PTL: could not init software iface.");
-        }
-#else
 	sctk_ptl_software_init( &rail->network.ptl, min_comms);
-#endif
+
 	assert(eager_limit == rail->network.ptl.eager_limit);
 
 	mpc_common_hashtable_init(&rail->network.ptl.ranks_ids_map, mpc_common_get_process_count());
@@ -812,11 +805,11 @@ void sctk_ptl_init_interface(sctk_rail_info_t* rail)
  */
 void sctk_ptl_fini_interface(sctk_rail_info_t* rail)
 {
+        int rc = MPC_LOWCOMM_SUCCESS;
 	sctk_ptl_rail_info_t* srail    = &rail->network.ptl;
 	mpc_common_debug_info("PORTALS: FINI");
-#ifdef MPC_LOWCOMM_PROTOCOL
-        lcr_ptl_software_fini(srail);
-#else
+        rc = lcr_ptl_iface_fini(rail);
+#if 0
 	sctk_ptl_software_fini(srail);
 #endif
 	sctk_ptl_hardware_fini(srail);

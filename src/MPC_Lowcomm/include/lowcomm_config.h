@@ -102,6 +102,8 @@ struct _mpc_lowcomm_config_struct_net_driver_portals
 	size_t                                          max_msg_size;
 	/**Set min fragment size when using multirail(default: INT_MAX)**/
 	size_t                                          min_frag_size;
+	/**Should the driver be used with matching offload.**/
+	int                                             offload;
 	/**List of available optimizations taking advantage of triggered Ops**/
 	struct _mpc_lowcomm_config_struct_offload_ops_t offloading;
 };
@@ -230,17 +232,12 @@ struct _mpc_lowcomm_config_struct_net_rail
         int                                                   max_ifaces;
 	/** Define if rail has tag offloading capabilities. **/
         int                                                   offload;
+	/** Define if rail is composable, only intranode comm. **/
+        int                                                   composable;
 };
 
 /******************************** STRUCTURE *********************************/
 /**Base structure to contain the protocol configuration**/
-#define MPC_CONF_MAX_LCR 5
-struct _mpc_lowcomm_config_struct_net_lcr
-{
-	char name[MPC_CONF_STRING_SIZE]; /* CLI name needed to get its config */
-	int count; /* Number of rails for this CLI */
-};
-
 struct _mpc_lowcomm_config_struct_protocol
 {
 	/**Is multirail enabled (default: true)**/
@@ -312,6 +309,12 @@ struct _mpc_lowcomm_workshare_config
 struct _mpc_lowcomm_config_struct_protocol *_mpc_lowcomm_config_proto_get(void);
 
 struct _mpc_lowcomm_config_struct_networks *_mpc_lowcomm_config_net_get(void);
+
+/** @brief Helper to get a table of rail config from CLI 
+*   @return The configuration or NULL
+*/
+int _mpc_lowcomm_conf_load_rail_from_cli(struct _mpc_lowcomm_config_struct_net_rail ***cli_rail_configs_p,
+                                         int *num_configs);
 
 /** @brief Get a pointer to a given CLI configuration
 *   @param name Name of the requested configuration

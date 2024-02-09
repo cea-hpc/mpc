@@ -91,6 +91,7 @@ int lcp_rma_put_bcopy(lcp_request_t *req)
         payload_size = lcp_send_do_put_bcopy(ep->lct_eps[cc],
                                              lcp_rma_put_pack, req,
                                              req->send.rma.remote_addr,
+                                             &req->state.lmem->mems[cc],
                                              &req->send.rma.rkey->mems[cc]);
 
 	if (payload_size < 0) {
@@ -146,6 +147,7 @@ int lcp_rma_put_zcopy(lcp_request_t *req)
                 rc = lcp_send_do_put_zcopy(lcr_ep,
                                            (uint64_t)req->send.buffer + offset,
                                            offset,
+                                           &(req->state.lmem->mems[cc]),
                                            &(req->send.rma.rkey->mems[cc]),
                                            length,
                                            &(req->state.comp));
@@ -202,7 +204,7 @@ int lcp_put_nb(lcp_ep_h ep, lcp_task_h task, const void *buffer, size_t length,
                 goto err;
         }
         req->flags |= LCP_REQUEST_RMA_COMPLETE;
-        LCP_REQUEST_INIT_RMA_SEND(req, ep->ctx, task, NULL, NULL, length, ep, (void *)buffer,
+        LCP_REQUEST_INIT_RMA_SEND(req, ep->mngr, task, NULL, NULL, length, ep, (void *)buffer, 
                                   0 /* no ordering for rma */, 0, param->datatype);
         lcp_request_init_rma_put(req, remote_addr, rkey, param);
 

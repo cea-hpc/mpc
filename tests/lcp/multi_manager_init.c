@@ -1,27 +1,21 @@
-#include "lowcomm_config.h"
-#include "mpc_conf.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
 
 #include <lcp.h>
+#include <mpc_conf.h>
 #include <mpc_lowcomm.h>
 #include <mpc_launch_pmi.h>
 #include <mpc_lowcomm_monitor.h>
-#include <mpc_lowcomm_communicator.h>
 
-int main() {
+int main(int argc, char** argv) {
 	int rc;
 	lcp_context_h ctx;
         lcp_context_param_t ctx_params;
-        lcp_manager_h mngr;
+        lcp_manager_h mngr1;
+        lcp_manager_h mngr2;
         lcp_manager_param_t mngr_params;
-	lcp_ep_h ep;
-	mpc_lowcomm_set_uid_t suid;
-        int my_tid;
-	mpc_lowcomm_peer_uid_t dest_uid;
 
-	/* load default config */
 	mpc_conf_root_config_init("mpcframework");
 	_mpc_lowcomm_config_register();
 	_mpc_lowcomm_config_validate();
@@ -34,22 +28,23 @@ int main() {
 		goto err;
 	}
 
+	/* setup monitor: necessary to exchange set uid */
 	rc = _mpc_lowcomm_monitor_setup();
 	if (rc != 0) {
 		printf("ERROR: monitor setup\n");
-		goto pmi_fini;
+		goto err;
 	}
-	suid = mpc_lowcomm_monitor_get_gid();
-        my_tid = mpc_lowcomm_get_rank();
 
+
+	/* create communication context */
         ctx_params = (lcp_context_param_t) {
                 .flags = LCP_CONTEXT_PROCESS_UID,
-                .process_uid = mpc_lowcomm_monitor_get_uid()
+                .process_uid = 0 
         };
 	rc = lcp_context_create(&ctx, &ctx_params);
 	if (rc != 0) {
 		printf("ERROR: create context\n");
-		goto monitor_fini;
+		goto err;
 	}
 
         mngr_params = (lcp_manager_param_t) {
@@ -58,48 +53,50 @@ int main() {
                 .estimated_eps = 2,
                 .num_tasks = 1,
         };
-        rc = lcp_manager_create(ctx, &mngr, &mngr_params);
+        rc = lcp_manager_create(ctx, &mngr1, &mngr_params);
         if (rc != 0) {
                 printf("ERROR: create manager\n");
-                goto monitor_fini;
+                goto err;
         }
 
-	//NOTE: pmi barrier needed to commit pmi registration
-	//      of rails.
-	mpc_launch_pmi_barrier();
+        rc = lcp_manager_create(ctx, &mngr2, &mngr_params);
+        if (rc != 0) {
+                printf("ERROR: create manager\n");
+                goto err;
+        }
 
-	if (my_tid == 0) {
-		dest_uid = mpc_lowcomm_monitor_uid_of(suid, 1);
-		rc = lcp_ep_create(mngr, &ep, dest_uid, 0);
-		if (rc != 0) {
-			printf("ERROR: create ep\n");
-		}
-	}
-
-	mpc_launch_pmi_barrier();
-
-        rc = lcp_manager_fini(mngr);
+        rc = lcp_manager_fini(mngr1);
         if (rc != 0) {
                 printf("ERROR: fini manager\n");
+                goto err;
+        }
+
+        rc = lcp_manager_fini(mngr2);
+        if (rc != 0) {
+                printf("ERROR: fini manager\n");
+                goto err;
         }
 
 	rc = lcp_context_fini(ctx);
 	if (rc != 0) {
 		printf("ERROR: fini context\n");
+                goto err;
 	}
 
-monitor_fini:
 	rc = _mpc_lowcomm_monitor_teardown();
 	if (rc != 0) {
 		printf("ERROR: fini monitor\n");
+                goto err;
 	}
-pmi_fini:
+
 	rc = mpc_launch_pmi_finalize();
 	if (rc != 0) {
 		printf("ERROR: fini pmi\n");
+                goto err;
 	}
 
-        printf("SUCCESS\n");
+
+        printf("SUCCESS");
 err:
 	return rc;
 }

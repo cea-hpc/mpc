@@ -32,18 +32,18 @@
 #include "lcp.h"
 
 #include "mpc_common_spinlock.h"
-#include "rail.h"
 
-#include "lcp_context.h"
-#include "lcp_request.h"
+#include "lcp_manager.h"
+#include "lcp_prototypes.h"
+
 #include "list.h"
 
-int lcp_progress(lcp_context_h ctx)
+int lcp_progress(lcp_manager_h mngr)
 {
         sctk_rail_info_t *iface;
 
-        mpc_list_for_each(iface, &ctx->progress_head, sctk_rail_info_t, progress) {
-                iface->iface_progress(iface);
+        mpc_list_for_each(iface, &mngr->progress_head, sctk_rail_info_t, progress) {
+                lcp_iface_do_progress(iface);
         }
 
         ///* Loop to try sending requests within the pending queue only once. */

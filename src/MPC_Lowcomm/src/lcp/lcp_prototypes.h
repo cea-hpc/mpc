@@ -95,13 +95,14 @@ static inline int lcp_post_do_tag_zcopy(sctk_rail_info_t *iface,
 static inline int lcp_send_do_get_zcopy(_mpc_lowcomm_endpoint_t *lcr_ep,
                                         uint64_t local_addr,
                                         uint64_t remote_addr,
+                                        lcr_memp_t *local_key,
                                         lcr_memp_t *remote_key,
                                         size_t size,
                                         lcr_completion_t *comp)
 {
         return lcr_ep->rail->get_zcopy(lcr_ep, local_addr,
-                                       remote_addr, remote_key,
-                                       size, comp);
+                                       remote_addr, local_key,
+                                       remote_key, size, comp);
 }
 
 static inline int lcp_send_do_get_tag_zcopy(_mpc_lowcomm_endpoint_t *lcr_ep,
@@ -119,22 +120,24 @@ static inline int lcp_send_do_put_bcopy(_mpc_lowcomm_endpoint_t *lcr_ep,
                                         lcr_pack_callback_t pack,
                                         void *arg,
                                         uint64_t remote_addr,
+                                        lcr_memp_t *local_key,
                                         lcr_memp_t *remote_key)
 {
-        return lcr_ep->rail->put_bcopy(lcr_ep, pack, arg,
-                                       remote_addr, remote_key);
+        return lcr_ep->rail->put_bcopy(lcr_ep, pack, arg, 
+                                       remote_addr, local_key, remote_key);
 }
 
 static inline int lcp_send_do_put_zcopy(_mpc_lowcomm_endpoint_t *lcr_ep,
                                         uint64_t local_addr,
                                         uint64_t remote_addr,
+                                        lcr_memp_t *local_key,
                                         lcr_memp_t *remote_key,
                                         size_t size,
                                         lcr_completion_t *comp)
 {
         return lcr_ep->rail->put_zcopy(lcr_ep, local_addr,
-                                       remote_addr, remote_key,
-                                       size, comp);
+                                       remote_addr, local_key,
+                                       remote_key, size, comp);
 }
 
 static inline int lcp_iface_do_progress(sctk_rail_info_t *rail)

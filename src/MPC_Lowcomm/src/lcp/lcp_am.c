@@ -42,6 +42,9 @@
 #include "lcp_rndv.h"
 #include "mpc_common_debug.h"
 
+#define LCP_SEND_AM_IS_TASK(_req) \
+        ((_req)->send.ep->uid == (_req)->mngr->ctx->process_uid) 
+
 /* ============================================== */
 /* Packing                                        */
 /* ============================================== */
@@ -92,7 +95,7 @@ static size_t lcp_send_am_eager_pack(void *dest, void *data)
         memcpy(hdr + 1, req->send.am.hdr, req->send.am.hdr_size);
 
         /* Pack actual data */
-        packed_length = lcp_datatype_pack(req->ctx, req, req->datatype,
+        packed_length = lcp_datatype_pack(req->mngr->ctx, req, req->datatype,
                                           ptr, src, req->send.length);
 
 	return sizeof(*hdr) + req->send.am.hdr_size + packed_length;
@@ -142,7 +145,7 @@ static void lcp_am_send_complete(lcr_completion_t *comp) {
                         mpc_common_debug("LCP AM: comp user_request=%p",
                                          req->send.am.request);
                         /* Call user complete callback */
-                        req->send.am.on_completion(req->send.length,
+                        req->send.am.cb(req->send.length, 
                                         req->send.am.request);
                 }
 
@@ -213,8 +216,6 @@ int lcp_send_rndv_am_start(lcp_request_t *req)
         }
 
         req->send.func = lcp_send_rndv_am_rts_progress;
-        /* Register memory if GET protocol */
-        rc = lcp_rndv_reg_send_buffer(req);
 
 err:
         return rc;
@@ -329,7 +330,12 @@ int lcp_am_send_start(lcp_ep_h ep, lcp_request_t *req,
         req->state.offloaded = 0;
         //FIXME: remove usage of header structure
         size = req->send.length + req->send.am.hdr_size + sizeof(lcp_am_hdr_t);
-        if (size <= ep->ep_config.am.max_bcopy ||
+        if (LCP_SEND_AM_IS_TASK(req)) {
+                //FIXME: implement am send for task-based communication.
+                mpc_common_debug_warning("LCP AM: task-based communication "
+                                         "not implemented.");
+                not_implemented();
+        } else if (size <= ep->ep_config.am.max_bcopy || 
             ((req->send.length <= ep->ep_config.am.max_zcopy) &&
              (param->datatype & LCP_DATATYPE_DERIVED))) {
                 req->send.func = lcp_send_eager_am_bcopy;
@@ -364,9 +370,9 @@ int lcp_am_send_nb(lcp_ep_h ep, lcp_task_h task, int32_t dest_tid,
         //       Reorder is to be reimplemented.
         //FIXME: what length should be set here, length of data or length of
         //       data + header size ?
-        LCP_REQUEST_INIT_AM_SEND(req, ep->ctx, task, am_id,
-                                 ep->ctx->process_uid, dest_tid,
-                                 param->tag_info, data_size,
+        LCP_REQUEST_INIT_AM_SEND(req, ep->mngr, task, am_id,
+                                 ep->mngr->ctx->process_uid, dest_tid,
+                                 param->recv_info, data_size,
                                  ep, (void *)buffer, 0 /* no seqn for am */,
                                  (uint64_t)req, param->datatype,
                                  param->flags & LCP_REQUEST_AM_SYNC ? 1 : 0);
@@ -385,7 +391,7 @@ int lcp_am_send_nb(lcp_ep_h ep, lcp_task_h task, int32_t dest_tid,
         if (param->flags & LCP_REQUEST_AM_CALLBACK) {
                 req->flags          |= LCP_REQUEST_USER_COMPLETE;
                 req->send.am.request = param->user_request;
-                req->send.am.on_completion      = param->on_am_completion;
+                req->send.am.cb      = param->am_cb;
                 mpc_common_debug("LCP AM: user_request=%p",
                                  req->send.am.request);
         }
@@ -423,7 +429,6 @@ int lcp_am_recv_nb(lcp_task_h task, void *data_ctnr, void *buffer,
         lcp_request_t *req;
         lcp_rndv_hdr_t *hdr;
         lcp_unexp_ctnr_t *ctnr = (lcp_unexp_ctnr_t *)data_ctnr - 1;
-        lcp_context_h ctx = task->ctx;
 
         /* Get back receive container */
         assert(ctnr->flags & LCP_RECV_CONTAINER_UNEXP_RNDV_AM);
@@ -436,13 +441,13 @@ int lcp_am_recv_nb(lcp_task_h task, void *data_ctnr, void *buffer,
         }
 
         // initialize request
-        LCP_REQUEST_INIT_AM_RECV(req, ctx, task, param->tag_info,
+        LCP_REQUEST_INIT_AM_RECV(req, task->mngr, task, param->recv_info, 
                                  count, buffer, param->datatype);
 
         if (param->flags & LCP_REQUEST_AM_CALLBACK) {
                 req->flags          |= LCP_REQUEST_USER_COMPLETE;
                 req->recv.am.request = param->user_request;
-                req->recv.am.cb      = param->on_am_completion;
+                req->recv.am.cb      = param->am_cb;
                 mpc_common_debug("LCP AM: user_request=%p",
                                  req->recv.am.request);
         }
@@ -472,13 +477,13 @@ static int lcp_eager_am_handler(void *arg, void *data,
         lcp_am_recv_param_t param = {};
         int rc             = LCP_SUCCESS;
         lcp_task_h task    = NULL;
-        lcp_context_h ctx  = arg;
+        lcp_manager_h mngr  = arg;
         lcp_am_hdr_t *hdr  = data;
         lcp_am_user_handler_t handler;
         void *data_ptr     = (char *)(hdr + 1) + hdr->hdr_size;
         size_t data_size   = length - sizeof(*hdr) - hdr->hdr_size;
 
-        task = lcp_context_task_get(ctx, hdr->dest_tid);
+        task = lcp_manager_task_get(mngr, hdr->dest_tid);  
         if (task == NULL) {
                 mpc_common_errorpoint_fmt("LCP: could not find task with tid=%d length=%ld", hdr->dest_tid, hdr->hdr_size);
                 rc = LCP_ERROR;
@@ -488,7 +493,7 @@ static int lcp_eager_am_handler(void *arg, void *data,
         handler = task->am[hdr->am_id];
 
         //FIXME: what happen when ep is in CONNECTING state ?
-        rc = lcp_ep_get_or_create(ctx, hdr->src_uid, &ep, 0);
+        rc = lcp_ep_get_or_create(mngr, hdr->src_uid, &ep, 0);
         if (rc != LCP_SUCCESS) {
                 goto err;
         }
@@ -543,11 +548,11 @@ static int lcp_rndv_am_handler(void *arg, void *data,
         lcp_am_recv_param_t param;
         lcp_task_h task ;
         int rc              = LCP_SUCCESS;
-        lcp_context_h ctx   = arg;
+        lcp_manager_h mngr  = arg;
         lcp_rndv_hdr_t *hdr = data;
         lcp_am_user_handler_t handler;
 
-        task = lcp_context_task_get(ctx, hdr->am.dest_tid);
+        task = lcp_manager_task_get(mngr, hdr->am.dest_tid);  
         if (task == NULL) {
                 mpc_common_errorpoint_fmt("LCP: could not find task with tid=%d length=%ld", hdr->am.dest_tid, hdr->am.hdr_size);
 
@@ -556,8 +561,8 @@ static int lcp_rndv_am_handler(void *arg, void *data,
         }
         handler = task->am[hdr->am.am_id];
 
-        //FIXME: what happens when ep is in CONNECTING state ?
-        rc = lcp_ep_get_or_create(ctx, hdr->am.src_uid, &ep, 0);
+        //FIXME: what happen when ep is in CONNECTING state ?
+        rc = lcp_ep_get_or_create(mngr, hdr->am.src_uid, &ep, 0);
         if (rc != LCP_SUCCESS) {
                 goto err;
         }

@@ -2214,7 +2214,6 @@ int _mpc_cl_issend(const void *buf, mpc_lowcomm_msg_count_t count,
 	size_t msg_size = count * d_size;
 
 	mpc_lowcomm_isend(dest, buf, msg_size, tag, comm, request);
-
 	MPC_ERROR_SUCCESS();
 }
 
@@ -2244,7 +2243,6 @@ int _mpc_cl_irecv(void *buf, mpc_lowcomm_msg_count_t count,
 	size_t d_size = __mpc_cl_datatype_get_size(datatype);
 
 	mpc_lowcomm_irecv(source, buf, count * d_size, tag, comm, request);
-
 	MPC_ERROR_SUCCESS();
 }
 
@@ -3295,7 +3293,6 @@ int mpc_mpi_cl_open_pack(mpc_lowcomm_request_t *request)
 
 	memset(&request->header, 0, sizeof(mpc_lowcomm_request_header_t) );
 	memset(&request->dt, 0, sizeof(mpc_lowcomm_request_content_t) );
-
 	SCTK_PROFIL_END(MPC_Open_pack);
 	MPC_ERROR_SUCCESS();
 }
@@ -3329,7 +3326,6 @@ int mpc_mpi_cl_add_pack(void *buf, mpc_lowcomm_msg_count_t count,
 	size_t data_size = __mpc_cl_datatype_get_size(datatype);
 
 	mpc_lowcomm_request_add_pack(request, buf, count, data_size, begins, ends);
-
 	size_t total = 0;
 
 	int i = 0;
@@ -3342,7 +3338,6 @@ int mpc_mpi_cl_add_pack(void *buf, mpc_lowcomm_msg_count_t count,
 
 	//FIXME: use library function instead of acceding field
 	request->header.msg_size += total * data_size;
-
 
 	MPC_ERROR_SUCCESS();
 }
@@ -3371,7 +3366,6 @@ int mpc_mpi_cl_add_pack_absolute(const void *buf, mpc_lowcomm_msg_count_t count,
 	}
 
 	mpc_lowcomm_request_add_pack_absolute(request, buf, count, data_size, begins, ends);
-
 	size_t total = 0;
 	int    i = 0;
 
@@ -3383,7 +3377,6 @@ int mpc_mpi_cl_add_pack_absolute(const void *buf, mpc_lowcomm_msg_count_t count,
 
 	//FIXME: use library function instead of acceding field
 	request->header.msg_size += total * data_size;
-
 	MPC_ERROR_SUCCESS();
 }
 
@@ -3403,7 +3396,6 @@ int mpc_mpi_cl_isend_pack(int dest, int tag, mpc_lowcomm_communicator_t comm, mp
 	}
 
 	mpc_lowcomm_isend(dest, NULL, request->header.msg_size, tag, comm, request);
-
 	SCTK_PROFIL_END(MPC_Isend_pack);
 	MPC_ERROR_SUCCESS();
 }
@@ -3424,7 +3416,6 @@ int mpc_mpi_cl_irecv_pack(int source, int tag, mpc_lowcomm_communicator_t comm, 
 	}
 
 	mpc_lowcomm_irecv(source, NULL, request->header.msg_size, tag, comm, request);
-
 	SCTK_PROFIL_END(MPC_Irecv_pack);
 	MPC_ERROR_SUCCESS();
 }

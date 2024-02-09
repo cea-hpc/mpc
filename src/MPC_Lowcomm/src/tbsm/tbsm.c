@@ -128,7 +128,8 @@ err:
 int lcr_tbsm_iface_open(__UNUSED__ const char *device_name, int id,
                         lcr_rail_config_t *rail_config,
                         lcr_driver_config_t *driver_config,
-                        sctk_rail_info_t **iface_p)
+                        sctk_rail_info_t **iface_p,
+                        unsigned flags)
 {
         int rc = MPC_LOWCOMM_SUCCESS;
         sctk_rail_info_t *iface = NULL;
@@ -157,8 +158,7 @@ err:
 //      capabilities and thresholds (eager, bcopy, zcopy).
 
 lcr_component_t tbsm_component = {
-        .name = { "tbsm" },
-        .rail_name = { "tbsmmpi" },
+        .name = { "tbsmmpi" },
         .query_devices = lcr_tbsm_query_devices,
         .iface_open = lcr_tbsm_iface_open,
         .devices = NULL,

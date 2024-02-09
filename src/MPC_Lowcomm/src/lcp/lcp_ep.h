@@ -37,8 +37,6 @@
 #include "lcr/lcr_def.h"
 #include "bitmap.h"
 
-#include "opa_primitives.h"
-
 typedef uint16_t lcp_ep_flags_t;
 
 enum {
@@ -98,7 +96,7 @@ struct lcp_ep {
         lcp_ep_flags_t flags;
         int state;
 
-        lcp_context_h ctx; /* Back reference to context */
+        lcp_manager_h mngr; /* Back reference to manager */
 
         uint64_t  uid; /* Remote peer uid */
 
@@ -109,9 +107,9 @@ struct lcp_ep {
 };
 
 
-int lcp_context_ep_create(lcp_context_h ctx, lcp_ep_h *ep_p,
+int lcp_context_ep_create(lcp_manager_h ctx, lcp_ep_h *ep_p, 
 			  uint64_t uid, unsigned flags);
-int lcp_ep_progress_conn(lcp_context_h ctx, lcp_ep_h ep);
+int lcp_ep_progress_conn(lcp_manager_h ctx, lcp_ep_h ep);
 void lcp_ep_delete(lcp_ep_h ep);
 int lcp_ep_get_next_cc(lcp_ep_h ep);
 

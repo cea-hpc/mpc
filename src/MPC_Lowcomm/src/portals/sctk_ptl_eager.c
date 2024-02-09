@@ -197,7 +197,7 @@ void sctk_ptl_eager_send_message(mpc_lowcomm_ptp_message_t* msg, _mpc_lowcomm_en
 	match.data.uid         = SCTK_MSG_NUMBER(msg)         % SCTK_PTL_MAX_UIDS;
 	match.data.type        = SCTK_MSG_SPECIFIC_CLASS(msg) % SCTK_PTL_MAX_TYPES;
 	pte                    = SCTK_PTL_PTE_ENTRY(srail->pt_table, SCTK_MSG_COMMUNICATOR_ID(msg));
-	remote                 = infos->dest;
+	remote                 = infos->dest.id;
 	request                = sctk_ptl_md_create(srail, start, size, flags);
 
 	assert(request);

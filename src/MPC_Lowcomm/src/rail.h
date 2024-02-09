@@ -51,7 +51,7 @@ typedef union
 	_mpc_lowcomm_tcp_rail_info_t tcp; /**< TCP Rail Info */
 	_mpc_lowcomm_tbsm_rail_info_t tbsm;
 #ifdef MPC_USE_PORTALS
-	sctk_ptl_rail_info_t         ptl; /**< Portals Info */
+	_mpc_lowcomm_ptl_rail_info_t  ptl; /**< Portals Info */
 #endif
 #ifdef MPC_USE_OFI
 	_mpc_lowcomm_ofi_rail_info_t ofi;
@@ -63,10 +63,6 @@ typedef union
 /* Rail Pin CTX                                                         */
 /************************************************************************/
 
-#ifdef MPC_USE_PORTALS
-#include "sctk_ptl_types.h"
-#endif
-
 #ifdef MPC_USE_OFI
 #include <rdma/fi_domain.h>
 #endif
@@ -75,7 +71,7 @@ typedef union
 typedef union
 {
 #ifdef MPC_USE_PORTALS
-	struct sctk_ptl_rdma_ctx       ptl;
+	lcr_ptl_rma_handle_t       ptl;
 #endif /* MPC_USE_PORTALS */
 #ifdef MPC_USE_OFI
 struct _mpc_ofi_pinning_context ofipin;
@@ -112,22 +108,30 @@ void sctk_rail_pin_ctx_release(sctk_rail_pin_ctx_t *ctx);
 /************************************************************************/
 /* Protocol                                                             */
 /************************************************************************/
-#define LCR_BIT(i)    (1ul << (i) )
 
 enum {
-	LCR_IFACE_TM_OVERFLOW       = LCR_BIT(0),
-	LCR_IFACE_TM_NOVERFLOW      = LCR_BIT(1),
-	LCR_IFACE_TM_PERSISTANT_MEM = LCR_BIT(2),
-	LCR_IFACE_TM_SEARCH         = LCR_BIT(3),
-	LCR_IFACE_TM_ERROR          = LCR_BIT(4),
-	LCR_IFACE_SM_REQUEST        = LCR_BIT(5),
+	LCR_IFACE_TM_OVERFLOW       = MPC_BIT(0),
+	LCR_IFACE_TM_NOVERFLOW      = MPC_BIT(1),
+	LCR_IFACE_TM_PERSISTANT_MEM = MPC_BIT(2),
+	LCR_IFACE_TM_SEARCH         = MPC_BIT(3),
+	LCR_IFACE_TM_ERROR          = MPC_BIT(4),
+};
+
+//TODO: doc to doxygen.
+/* Interface feature requested during initialization. If feature not supported
+ * by interface capabitities, then error is returned. */ 
+//FIXME: see how to factorize with LCP_MANAGER_FEATURE_{AM,TAG,RMA}. Also,
+//       should they be called LCP_HINTS_{...} instead?
+enum {
+        LCR_FEATURE_TS       = MPC_BIT(0),
+        LCR_FEATURE_OS       = MPC_BIT(1),
 };
 
 enum {
-        LCR_IFACE_CAP_RMA     = LCR_BIT(0),
-        LCR_IFACE_CAP_SELF    = LCR_BIT(1),
-        LCR_IFACE_CAP_REMOTE  = LCR_BIT(2),
-        LCR_IFACE_CAP_OFFLOAD = LCR_BIT(3),
+        LCR_IFACE_CAP_RMA         = MPC_BIT(0),
+        LCR_IFACE_CAP_LOOPBACK    = MPC_BIT(1),
+        LCR_IFACE_CAP_REMOTE      = MPC_BIT(2),
+        LCR_IFACE_CAP_TAG_OFFLOAD = MPC_BIT(3),
 };
 
 /* Active message handler table entry */
@@ -194,7 +198,7 @@ struct lcr_rail_attr {
                                 size_t min_frag_size;
                         } rma;
 
-                        uint64_t flags;
+                        unsigned flags; /* Interface capabilities. */
                 } cap;
         } iface;
 

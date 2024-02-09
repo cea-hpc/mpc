@@ -299,7 +299,6 @@ void sctk_ptl_software_init(sctk_ptl_rail_info_t* srail, size_t comm_dims)
 		&srail->mds_eq        /* out: the EQ handler */
 	));
 
-	OPA_store_int(&srail->rdma_cpt, 0);
 	if(srail->max_mr > srail->max_limits.max_msg_size)
 		srail->max_mr = srail->max_limits.max_msg_size;
 
@@ -359,16 +358,6 @@ sctk_ptl_pte_t *lcr_ptl_pte_idx_to_pte(sctk_ptl_rail_info_t *srail,
 void sctk_ptl_pte_create(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte, ptl_pt_index_t requested_index, size_t key)
 {
 	size_t eager_size = srail->eager_limit;
-#ifdef MPC_LOWCOMM_PROTOCOL
-	/* register the PT */
-	sctk_ptl_chk(PtlPTAlloc(
-		srail->iface,       /* the NI handler */
-		SCTK_PTL_PTE_FLAGS, /* PT entry specific flags */
-		srail->ptl_info.eqh,        /* the EQ for this entry */
-		requested_index,  /* the desired index value */
-		&pte->idx       /* the effective index value */
-	));
-#else
 	/* create the EQ for this PT */
 	sctk_ptl_chk(PtlEQAlloc(
 		srail->iface,         /* the NI handler */
@@ -384,7 +373,6 @@ void sctk_ptl_pte_create(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte, ptl_p
 		requested_index,  /* the desired index value */
 		&pte->idx       /* the effective index value */
 	));
-#endif
 
 	if(sctk_ptl_offcoll_enabled(srail))
 	{

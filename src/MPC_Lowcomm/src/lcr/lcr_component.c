@@ -74,7 +74,7 @@ int lcr_query_components(lcr_component_h **components_p,
         }
 
         *num_components_p = num_components;
-        *components_p = components;
+        *components_p     = components;
 
         LL_FOREACH(lcr_component_list, component) {
                 *(components++) = component;

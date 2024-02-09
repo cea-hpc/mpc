@@ -30,12 +30,16 @@
 /* ######################################################################## */
 
 #ifdef MPC_USE_PORTALS
+#include "ptl_recv.h"
+
+#include "ptl_iface.h"
+
+#include <mpc_common_debug.h>
+#include <mpc_lowcomm_types.h>
 
 #include <utlist.h>
-#include "sctk_ptl_iface.h"
-#include "lcr_ptl_recv.h"
 
-int lcr_ptl_recv_block_init(sctk_ptl_rail_info_t *srail, lcr_ptl_recv_block_t **block_p)
+int lcr_ptl_recv_block_init(lcr_ptl_rail_info_t *srail, lcr_ptl_recv_block_t **block_p)
 {
         int rc = MPC_LOWCOMM_SUCCESS;
         lcr_ptl_recv_block_t *block;
@@ -47,10 +51,10 @@ int lcr_ptl_recv_block_init(sctk_ptl_rail_info_t *srail, lcr_ptl_recv_block_t **
                 goto err;
         }
 
-        block->size      = 4 * srail->ptl_info.eager_block_size;
+        block->size      = 4 * srail->config.eager_block_size;
         block->rail      = srail;
         block->start     = sctk_malloc(block->size);
-        block->comp.type = LCR_PTL_COMP_BLOCK;
+        block->op.type   = LCR_PTL_OP_BLOCK;
 
         if (block->start == NULL) {
                 mpc_common_debug_error("LCR PTL: could not allocate eager block");
@@ -65,12 +69,14 @@ err:
         return rc;
 }
 
-int lcr_ptl_recv_block_activate(lcr_ptl_recv_block_t *block, sctk_ptl_pte_id_t pte, sctk_ptl_list_t list)
+int lcr_ptl_recv_block_activate(lcr_ptl_recv_block_t *block, 
+                                ptl_pt_index_t pte, 
+                                ptl_list_t list)
 {
         ptl_me_t me;
-        sctk_ptl_rail_info_t *srail = block->rail;
-        sctk_ptl_matchbits_t match = SCTK_PTL_MATCH_INIT;
-        sctk_ptl_matchbits_t ign = SCTK_PTL_IGN_ALL;
+        lcr_ptl_rail_info_t *srail = block->rail;
+        ptl_match_bits_t match = 0;
+        ptl_match_bits_t ign   = ~0;
 
         if (block->start == NULL) {
                 return MPC_LOWCOMM_ERROR;
@@ -78,38 +84,41 @@ int lcr_ptl_recv_block_activate(lcr_ptl_recv_block_t *block, sctk_ptl_pte_id_t p
 
         me = (ptl_me_t) {
                 .ct_handle = PTL_CT_NONE,
-                .ignore_bits = ign.raw,
-                .match_id    = SCTK_PTL_ANY_PROCESS,
-                .match_bits  = match.raw,
-                .min_free    = block->rail->ptl_info.eager_block_size,
-                .options     = PTL_ME_OP_PUT |
-                        PTL_ME_MANAGE_LOCAL |
-                        PTL_ME_MAY_ALIGN |
+                .match_bits  = match,
+                .ignore_bits = ign,
+                .match_id    = {
+                        .phys.nid = PTL_NID_ANY,
+                        .phys.pid = PTL_PID_ANY,
+                },
+                .min_free    = block->rail->config.eager_block_size,
+                .options     = PTL_ME_OP_PUT       | 
+                        PTL_ME_MANAGE_LOCAL        | 
+                        PTL_ME_MAY_ALIGN           |
                         PTL_ME_EVENT_LINK_DISABLE,
                 .uid         = PTL_UID_ANY,
                 .start       = block->start,
                 .length      = block->size
         };
 
-        sctk_ptl_chk(PtlMEAppend(srail->iface,
+        lcr_ptl_chk(PtlMEAppend(srail->nih,
                                  pte,
                                  &me,
                                  list,
-                                 &block->comp,
+                                 &block->op,
                                  &block->meh
                                 ));
-
-        mpc_common_debug("LCR_PTL: activate block. start=%p, ptl_comp=%p, block=%p",
-                         block->start, &block->comp, block);
 
         return MPC_LOWCOMM_SUCCESS;
 }
 
-int lcr_ptl_recv_block_enable(sctk_ptl_rail_info_t *srail, sctk_ptl_pte_id_t pte, sctk_ptl_list_t list)
+//FIXME: switch to memory pools
+int lcr_ptl_recv_block_enable(lcr_ptl_rail_info_t *srail, 
+                              ptl_pt_index_t pte, 
+                              ptl_list_t list)
 {
         int rc = MPC_LOWCOMM_SUCCESS, i;
 
-        for (i=0; i< srail->ptl_info.num_eager_blocks; i++) {
+        for (i=0; i< srail->config.num_eager_blocks; i++) {
                 lcr_ptl_recv_block_t *block = NULL;
                 rc = lcr_ptl_recv_block_init(srail, &block);
                 if (rc != MPC_LOWCOMM_SUCCESS) {
@@ -125,11 +134,11 @@ int lcr_ptl_recv_block_enable(sctk_ptl_rail_info_t *srail, sctk_ptl_pte_id_t pte
                 }
                 el->block = block;
                 switch(list) {
-                case SCTK_PTL_PRIORITY_LIST:
-                        DL_APPEND(srail->ptl_info.am_block_list, el);
+                case PTL_PRIORITY_LIST:
+                        DL_APPEND(srail->am_ctx.blist, el);
                         break;
-                case SCTK_PTL_OVERFLOW_LIST:
-                        DL_APPEND(srail->ptl_info.tag_block_list, el);
+                case PTL_OVERFLOW_LIST:
+                        DL_APPEND(srail->tag_ctx.blist, el);
                         break;
                 default:
                         mpc_common_debug_error("LCR PTL: unknown list");

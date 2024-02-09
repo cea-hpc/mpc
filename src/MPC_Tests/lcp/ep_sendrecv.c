@@ -23,7 +23,9 @@ int lowcomm_request_complete(mpc_lowcomm_request_t *req){
 int main() {
 	int rc;
 	lcp_context_h ctx;
-        lcp_context_param_t param;
+        lcp_context_param_t ctx_params;
+        lcp_manager_h mngr;
+        lcp_manager_param_t mngr_params;
         lcp_task_h task;
 	lcp_ep_h ep;
 	mpc_lowcomm_set_uid_t suid;
@@ -54,15 +56,27 @@ int main() {
 	}
 
 	/* create communication context */
-        param = (lcp_context_param_t) {
+        ctx_params = (lcp_context_param_t) {
                 .flags = LCP_CONTEXT_PROCESS_UID,
                 .process_uid = mpc_lowcomm_monitor_get_uid()
         };
-	rc = lcp_context_create(&ctx, &param);
+	rc = lcp_context_create(&ctx, &ctx_params);
 	if (rc != 0) {
 		printf("ERROR: create context\n");
 		goto monitor_fini;
 	}
+
+        mngr_params = (lcp_manager_param_t) {
+                .field_mask = LCP_MANAGER_ESTIMATED_EPS |
+                        LCP_MANAGER_NUM_TASKS,
+                .estimated_eps = 2,
+                .num_tasks = 1,
+        };
+        rc = lcp_manager_create(ctx, &mngr, &mngr_params);
+        if (rc != 0) {
+                printf("ERROR: create manager\n");
+                goto monitor_fini;
+        }
 
 	/* pmi barrier needed to commit pmi rail registration */
 	mpc_launch_pmi_barrier();
@@ -82,7 +96,7 @@ int main() {
                 dest_uid = mpc_lowcomm_monitor_get_uid();
         }
 
-        rc = lcp_task_create(ctx, my_tid, &task);
+        rc = lcp_task_create(mngr, my_tid, &task);
         if (rc != MPC_LOWCOMM_SUCCESS) {
                 printf("ERROR: create task");
                 goto monitor_fini;
@@ -90,7 +104,7 @@ int main() {
 
 	/* sender creates endpoint */
 	if (my_tid == 0) {
-		rc = lcp_ep_create(ctx, &ep, dest_uid, 0);
+		rc = lcp_ep_create(mngr, &ep, dest_uid, 0);
 		if (rc != 0) {
 			printf("ERROR: create ep\n");
 		}
@@ -136,7 +150,7 @@ int main() {
 	/* progress communication */
 	while (req.completion_flag == 0) {
 		usleep(10);
-		lcp_progress(ctx);
+		lcp_progress(mngr);
 	}
 
         if (my_tid == 1) {
@@ -147,6 +161,11 @@ int main() {
                 printf("ERROR: data check\n");
 
 	_mpc_lowcomm_communicator_release();
+
+        rc = lcp_manager_fini(mngr);
+        if (rc != 0) {
+                printf("ERROR: fini manager\n");
+        }
 
 	rc = lcp_context_fini(ctx);
 	if (rc != 0) {

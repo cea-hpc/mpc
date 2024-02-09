@@ -24,7 +24,9 @@ int main(int argc, char** argv) {
 	int rc;
 	size_t i;
 	lcp_context_h ctx;
-        lcp_context_param_t param;
+        lcp_context_param_t ctx_params;
+        lcp_manager_h mngr;
+        lcp_manager_param_t mngr_params;
         lcp_task_h task;
 	lcp_ep_h ep;
 	mpc_lowcomm_set_uid_t suid;
@@ -67,16 +69,27 @@ int main(int argc, char** argv) {
 		goto pmi_fini;
 	}
 
-        param = (lcp_context_param_t) {
+        ctx_params = (lcp_context_param_t) {
                 .flags = LCP_CONTEXT_PROCESS_UID,
                 .process_uid = mpc_lowcomm_monitor_get_uid()
         };
-	/* create communication context */
-	rc = lcp_context_create(&ctx, &param);
+	rc = lcp_context_create(&ctx, &ctx_params);
 	if (rc != 0) {
 		printf("ERROR: create context\n");
 		goto monitor_fini;
 	}
+
+        mngr_params = (lcp_manager_param_t) {
+                .field_mask = LCP_MANAGER_ESTIMATED_EPS |
+                        LCP_MANAGER_NUM_TASKS,
+                .estimated_eps = 2,
+                .num_tasks = 1,
+        };
+        rc = lcp_manager_create(ctx, &mngr, &mngr_params);
+        if (rc != 0) {
+                printf("ERROR: create manager\n");
+                goto monitor_fini;
+        }
 
 	/* pmi barrier needed to commit pmi rail registration */
 	mpc_launch_pmi_barrier();
@@ -100,7 +113,7 @@ int main(int argc, char** argv) {
                 dest_tid  = mpc_lowcomm_get_rank();
         }
 
-        rc = lcp_task_create(ctx, my_tid, &task);
+        rc = lcp_task_create(mngr, my_tid, &task);
         if (rc != MPC_LOWCOMM_SUCCESS) {
                 printf("ERROR: create task");
                 goto monitor_fini;
@@ -108,7 +121,7 @@ int main(int argc, char** argv) {
 
 	/* init data */
 	srand(0);
-	for (i=0; i<size; i++) {
+	for (i=0; i < (int)size; i++) {
 		int rnd = rand();
 		if (my_tid == 0)
 			data[i] = rnd;
@@ -118,7 +131,7 @@ int main(int argc, char** argv) {
 
 	/* sender creates endpoint */
 	if (my_tid == 0) {
-		rc = lcp_ep_create(ctx, &ep, dest_uid, 0);
+		rc = lcp_ep_create(mngr, &ep, dest_uid, 0);
 		if (rc != 0) {
 			printf("ERROR: create ep\n");
 		}
@@ -163,7 +176,7 @@ int main(int argc, char** argv) {
 	/* progress communication */
 	while (req.completion_flag == 0) {
 		usleep(10);
-		lcp_progress(ctx);
+		lcp_progress(mngr);
 	}
 
         if (req.truncated) {
@@ -188,6 +201,11 @@ no_check:
 	mpc_launch_pmi_barrier();
 
 	_mpc_lowcomm_communicator_release();
+
+        rc = lcp_manager_fini(mngr);
+        if (rc != 0) {
+                printf("ERROR: fini manager\n");
+        }
 
 	rc = lcp_context_fini(ctx);
 	if (rc != 0) {

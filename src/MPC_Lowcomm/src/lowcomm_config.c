@@ -344,6 +344,7 @@ static inline mpc_conf_config_type_t *__init_driver_portals(struct _mpc_lowcomm_
         portals->eager_block_size = 8*8192;
 	portals->max_msg_size = 2147483648;
         portals->min_frag_size = 524288; // octets
+        portals->offload = 0;
 
 	/*
 	 * Create the config object
@@ -357,6 +358,53 @@ static inline mpc_conf_config_type_t *__init_driver_portals(struct _mpc_lowcomm_
 
 	mpc_conf_config_type_t *ret =
 		mpc_conf_config_type_init("portals",
+		                          PARAM("eagerlimit", &portals->eager_limit, MPC_CONF_LONG_INT, "Max size of messages allowed to use the eager protocol."),
+		                          PARAM("maxmsgsize", &portals->max_msg_size, MPC_CONF_INT, "Max size of messages allowed to be sent."),
+		                          PARAM("minfragsize", &portals->min_frag_size, MPC_CONF_LONG_INT, "Min size of fragments sent with multirail."),
+		                          PARAM("eagerblocksize", &portals->eager_block_size, MPC_CONF_INT, "Size of eager block."),
+		                          PARAM("numeagerblocks", &portals->num_eager_blocks, MPC_CONF_INT, "Number of eager blocks."),
+		                          PARAM("mincomm", &portals->min_comms, MPC_CONF_INT, "Min number of communicators (help to avoid dynamic PT entry allocation)"),
+		                          PARAM("blockcut", &portals->block_cut, MPC_CONF_LONG_INT, "Above this value, RDV messages will be split in multiple GET requests"),
+		                          PARAM("offload", offload, MPC_CONF_TYPE, "List of available optimizations taking advantage of triggered Ops"),
+		                          NULL);
+
+	return ret;
+}
+
+static inline mpc_conf_config_type_t *__init_driver_matching_portals(struct _mpc_lowcomm_config_struct_net_driver *driver)
+{
+	driver->type = MPC_LOWCOMM_CONFIG_DRIVER_PORTALS;
+
+	/* 
+	 * Set defaults
+	 */
+	
+	struct _mpc_lowcomm_config_struct_net_driver_portals *portals = &driver->value.portals;
+
+	portals->eager_limit = 8192;
+	portals->min_comms = 1;
+	portals->block_cut = 2147483648;
+	portals->offloading.collectives = 0;
+	portals->offloading.ondemand = 0;
+        portals->max_iovecs = 8;
+        portals->num_eager_blocks = 32;
+        portals->eager_block_size = 8*8192;
+	portals->max_msg_size = 2147483648;
+        portals->min_frag_size = 524288; // octets
+        portals->offload = 1;
+
+	/*
+	 * Create the config object
+	 */
+
+	mpc_conf_config_type_t *offload = mpc_conf_config_type_init("offload",
+	                                                            PARAM("collective", &portals->offloading.collectives, MPC_CONF_BOOL, "Enable collective optimization for Portals."),
+	                                                            PARAM("ondemand", &portals->offloading.ondemand, MPC_CONF_BOOL, "Enable on-demand optimization through ID hardware propagation."),
+	                                                            NULL);
+
+
+	mpc_conf_config_type_t *ret =
+		mpc_conf_config_type_init("mportals",
 		                          PARAM("eagerlimit", &portals->eager_limit, MPC_CONF_LONG_INT, "Max size of messages allowed to use the eager protocol."),
 		                          PARAM("maxmsgsize", &portals->max_msg_size, MPC_CONF_INT, "Max size of messages allowed to be sent."),
 		                          PARAM("minfragsize", &portals->min_frag_size, MPC_CONF_LONG_INT, "Min size of fragments sent with multirail."),
@@ -415,6 +463,10 @@ static inline mpc_conf_config_type_t *__mpc_lowcomm_driver_conf_default_driver(c
 	else if(!strcmp(driver_type, "portals") )
 	{
 		driver = __init_driver_portals(&new_conf->driver);
+	}
+	else if(!strcmp(driver_type, "mportals") )
+	{
+		driver = __init_driver_matching_portals(&new_conf->driver);
 	}
 #endif
 #if defined MPC_USE_OFI
@@ -531,6 +583,7 @@ static inline mpc_conf_config_type_t *__mpc_lowcomm_driver_conf_init()
 
 #if defined(MPC_USE_PORTALS)
 	mpc_conf_config_type_t *portals = __mpc_lowcomm_driver_conf_default_driver("portalsconfigmpi", "portals");
+	mpc_conf_config_type_t *mportals = __mpc_lowcomm_driver_conf_default_driver("mportalsconfigmpi", "mportals");
 #endif
 
 
@@ -541,6 +594,7 @@ static inline mpc_conf_config_type_t *__mpc_lowcomm_driver_conf_init()
 	                                                        PARAM("tbsmconfigmpi", tbsm, MPC_CONF_TYPE, "Default configuration for the TBSM driver"),
 #if defined(MPC_USE_PORTALS)
 	                                                        PARAM("portalsconfigmpi", portals, MPC_CONF_TYPE, "Default configuration for the Portals4 Driver"),
+	                                                        PARAM("mportalsconfigmpi", mportals, MPC_CONF_TYPE, "Default configuration for the Matching Portals4 Driver"),
 #endif
 #if defined(MPC_USE_OFI)
 	                                                        PARAM("tcpofi", tcp_ofi, MPC_CONF_TYPE, "Default configuration for the OFI Driver in TCP"),
@@ -616,8 +670,9 @@ mpc_conf_config_type_t *__new_rail_conf_instance(
 	char *device,
 	int ondemand,
 	int rdma,
-	int offload,
 	int max_ifaces,
+        int composable,
+        int offload,
 	char *config)
 {
 	struct _mpc_lowcomm_config_struct_net_rail *ret = sctk_malloc(sizeof(struct _mpc_lowcomm_config_struct_net_rail) );
@@ -639,19 +694,20 @@ mpc_conf_config_type_t *__new_rail_conf_instance(
 	snprintf(ret->device, MPC_CONF_STRING_SIZE, "%s", device);
 	ret->ondemand   = ondemand;
 	ret->rdma       = rdma;
-	ret->offload    = offload;
 	ret->max_ifaces = max_ifaces;
-	snprintf(ret->config, MPC_CONF_STRING_SIZE, "%s", config);
+        ret->composable = composable;
+        ret->offload    = offload;
+	snprintf(ret->config, MPC_CONF_STRING_SIZE, config);
 
 	/* This fills in a rail definition */
 	mpc_conf_config_type_t *rail = mpc_conf_config_type_init(name,
 	                                                         PARAM("priority", &ret->priority, MPC_CONF_INT, "How rails should be sorted (taken in decreasing order)"),
 	                                                         PARAM("device", ret->device, MPC_CONF_STRING, "Name of the device to use can be a regular expression if starting with '!'"),
-	                                                         PARAM("ondemand", &ret->ondemand, MPC_CONF_BOOL, "Are on-demmand connections allowed on this network"),
+	                                                         PARAM("ondemand", &ret->ondemand, MPC_CONF_BOOL, "Are on-demand connections allowed on this network"),
 	                                                         PARAM("rdma", &ret->rdma, MPC_CONF_BOOL, "Can this rail provide RDMA capabilities"),
 	                                                         PARAM("sm", &ret->self, MPC_CONF_BOOL, "Can this rail provide SHM capabilities"),
-	                                                         PARAM("offload", &ret->offload, MPC_CONF_BOOL, "Can this rail provide tag offload capabilities"),
 	                                                         PARAM("maxifaces", &ret->max_ifaces, MPC_CONF_INT, "Maximum number of rails instances that can be used for multirail"),
+	                                                         PARAM("offload", &ret->offload, MPC_CONF_INT, "Can this rail provide tag offloading capabilities."),
 	                                                         PARAM("config", ret->config, MPC_CONF_STRING, "Name of the rail configuration to be used for this rail"),
 	                                                         NULL);
 
@@ -666,18 +722,19 @@ static inline mpc_conf_config_type_t *__mpc_lowcomm_rail_conf_init()
 	__mpc_lowcomm_rail_conf_default();
 
 	/* Here we instanciate default rails */
-	mpc_conf_config_type_t *shm_mpi = __new_rail_conf_instance("shmmpi", 99, "any", 0, 1, 0, 1, "shmconfigmpi");
-	mpc_conf_config_type_t *tcp_mpi = __new_rail_conf_instance("tcpmpi", 1, "any", 1, 0, 0, 1, "tcpconfigmpi");
-   mpc_conf_config_type_t *tbsm_mpi = __new_rail_conf_instance("tbsmmpi", 100, "any", 1, 0, 0, 1, "tbsmconfigmpi");
+	mpc_conf_config_type_t *shm_mpi = __new_rail_conf_instance("shmmpi", 99, "any", 1, 0, 0, 1, 0, "shmconfigmpi");
+	mpc_conf_config_type_t *tcp_mpi = __new_rail_conf_instance("tcpmpi", 1, "any", 1, 0, 1, 0, 0, "tcpconfigmpi");
+        mpc_conf_config_type_t *tbsm_mpi = __new_rail_conf_instance("tbsmmpi", 100, "any", 1, 1, 1, 1, 0, "tbsmconfigmpi");
 
 #ifdef MPC_USE_PORTALS
-	mpc_conf_config_type_t *portals_mpi = __new_rail_conf_instance("portalsmpi", 21, "any", 1, 1, 1, 1, "portalsconfigmpi");
+	mpc_conf_config_type_t *portals_mpi = __new_rail_conf_instance("portalsmpi", 21, "any", 1, 0, 1, 1, 0, "portalsconfigmpi");
+	mpc_conf_config_type_t *mportals_mpi = __new_rail_conf_instance("mportalsmpi", 21, "any", 1, 0, 1, 1, 1, "mportalsconfigmpi");
 #endif
 
 #ifdef MPC_USE_OFI
-	mpc_conf_config_type_t *shm_ofi = __new_rail_conf_instance("shmofirail", 98, "any", 1, 1, 0, 1, "shmofi");
-	mpc_conf_config_type_t *verbs_ofi = __new_rail_conf_instance("verbsofirail", 21, "any", 1, 1, 0, 1, "verbsofi");
-	mpc_conf_config_type_t *tcp_ofi = __new_rail_conf_instance("tcpofirail", 20, "any", 1, 1, 0, 1, "tcpofi");
+	mpc_conf_config_type_t *shm_ofi = __new_rail_conf_instance("shmofirail", 98, "any", 1, 0, 1, 1, 0, "shmofi");
+	mpc_conf_config_type_t *verbs_ofi = __new_rail_conf_instance("verbsofirail", 21, "any", 1, 0, 1, 1, 0, "verbsofi");
+	mpc_conf_config_type_t *tcp_ofi = __new_rail_conf_instance("tcpofirail", 20, "any", 1, 0, 1, 1, 0, "tcpofi");
 #endif
 
 	mpc_conf_config_type_t *rails = mpc_conf_config_type_init("rails",
@@ -686,6 +743,7 @@ static inline mpc_conf_config_type_t *__mpc_lowcomm_rail_conf_init()
                                                              PARAM("tbsmmpi", tbsm_mpi, MPC_CONF_TYPE, "A rail with Thread Based SHM"),
 #ifdef MPC_USE_PORTALS
 	                                                          PARAM("portalsmpi", portals_mpi, MPC_CONF_TYPE, "A rail with Portals 4"),
+	                                                          PARAM("mportalsmpi", mportals_mpi, MPC_CONF_TYPE, "A rail with Portals 4 with matching"),
 #endif
 #ifdef MPC_USE_OFI
 	                                                          PARAM("tcpofirail", tcp_ofi, MPC_CONF_TYPE, "A rail with OFI TCP"),
@@ -705,8 +763,9 @@ mpc_conf_config_type_t *___new_default_rail(char *name)
 	                                "any",
 	                                1,
 	                                0,
-	                                0,
 	                                1,
+                                        0,
+                                        0,
 	                                "tcpconfigmpi");
 }
 
@@ -768,6 +827,57 @@ static inline void ___mpc_lowcomm_rail_conf_validate(void)
 			bad_parameter("There is no driver configuration %s in mpcframework.lowcomm.networing.configs", conf_val);
 		}
 	}
+}
+
+int _mpc_lowcomm_conf_load_rail_from_cli(struct _mpc_lowcomm_config_struct_net_rail ***cli_rail_configs_p,
+                                         int *num_configs_p)
+{
+	unsigned int k = 0;
+        unsigned int num_configs;
+        struct _mpc_lowcomm_config_struct_net_rail   **cli_rail_configs;
+
+	char *option_name = _mpc_lowcomm_config_net_get()->cli_default_network;
+
+	/* If we have a network name from the command line (through sctk_launch.c)  */
+	if(mpc_common_get_flags()->network_driver_name != NULL)
+	{
+		option_name = mpc_common_get_flags()->network_driver_name;
+	}
+	/* Here we retrieve the network configuration from the network list
+	 * according to its name */
+
+	mpc_conf_config_type_t *cli = _mpc_lowcomm_conf_cli_get(option_name);
+        if (cli == NULL) {
+                mpc_common_debug_error("CONF: CLI with name %s not found.", 
+                                       option_name);
+                return MPC_LOWCOMM_ERROR;
+        }
+
+        num_configs = mpc_conf_config_type_count(cli);
+        cli_rail_configs   = sctk_malloc(num_configs * sizeof(struct _mpc_lowcomm_config_struct_net_rail));
+        if (cli_rail_configs == NULL) {
+                mpc_common_debug_error("CONF: could not allocate rail or driver configs.");
+                return MPC_LOWCOMM_ERROR;
+        }
+
+        /* Check that all selected rails do exist */
+	for(k = 0; k < num_configs; ++k)
+	{
+		mpc_conf_config_type_elem_t *erail = mpc_conf_config_type_nth(cli, k);
+
+		/* Get the rail */
+		cli_rail_configs[k] = _mpc_lowcomm_conf_rail_unfolded_get(mpc_conf_type_elem_get_as_string(erail) );
+		if(cli_rail_configs[k] == NULL) {
+			mpc_common_debug_error("CONF: Could not find a rail "
+                                               "config named %s", mpc_conf_type_elem_get_as_string(erail));
+                        return MPC_LOWCOMM_ERROR;
+		}
+        }
+
+        *cli_rail_configs_p = cli_rail_configs;
+        *num_configs_p  = num_configs;
+
+        return MPC_LOWCOMM_SUCCESS;
 }
 
 /*_
@@ -848,7 +958,8 @@ static mpc_conf_config_type_t *__mpc_lowcomm_cli_conf_init(void)
 	                                                           PARAM("tcp", ___mpc_lowcomm_cli_conf_option_init("tcp", "tbsmmpi", "tcpmpi", NULL), MPC_CONF_TYPE, "TCP Alone"),
 #endif
 #ifdef MPC_USE_PORTALS
-	                                                           PARAM("portals4", ___mpc_lowcomm_cli_conf_option_init("portals4", "tbsmmpi", "portalsmpi", NULL), MPC_CONF_TYPE, "Combination of Portals and SHM"),
+	                                                           PARAM("ptl", ___mpc_lowcomm_cli_conf_option_init("ptl", "tbsmmpi", "portalsmpi", NULL), MPC_CONF_TYPE, "Combination of Portals and SHM"),
+	                                                           PARAM("mptl", ___mpc_lowcomm_cli_conf_option_init("mptl", "mportalsmpi", NULL, NULL), MPC_CONF_TYPE, "Matching Portals."),
 #endif
 	                                                           NULL);
 
@@ -863,7 +974,7 @@ static mpc_conf_config_type_t *__mpc_lowcomm_cli_conf_init(void)
 static inline void _mpc_lowcomm_net_config_default(void)
 {
 #ifdef MPC_USE_PORTALS
-	snprintf(__net_config.cli_default_network, MPC_CONF_STRING_SIZE, "portals4");
+	snprintf(__net_config.cli_default_network, MPC_CONF_STRING_SIZE, "ptl");
 #elif MPC_USE_OFI
 	snprintf(__net_config.cli_default_network, MPC_CONF_STRING_SIZE, "tcpshm");
 #else

@@ -281,33 +281,13 @@ typedef struct
 static void _mpc_coll_message_send( const mpc_lowcomm_communicator_t communicator, __UNUSED__ int myself, int dest, int tag, void *buffer, size_t size,
                                     __UNUSED__ mpc_lowcomm_ptp_message_class_t message_class, _mpc_coll_messages_t *msg_req, __UNUSED__ int check_msg )
 {
-#ifdef MPC_LOWCOMM_PROTOCOL
         mpc_lowcomm_isend(dest, buffer, size, tag, communicator, &(msg_req->request));
-#else
-	mpc_lowcomm_ptp_message_header_clear( &( msg_req->msg ), MPC_LOWCOMM_MESSAGE_CONTIGUOUS,
-	                                      _mpc_coll_free_message, mpc_lowcomm_ptp_message_copy );
-	mpc_lowcomm_ptp_message_set_contiguous_addr( &( msg_req->msg ), buffer, size );
-	mpc_lowcomm_ptp_message_header_init( &( msg_req->msg ), tag, communicator, myself, dest,
-	                                     &( msg_req->request ), size, message_class,
-	                                     MPC_DATATYPE_IGNORE, REQUEST_SEND );
-	_mpc_comm_ptp_message_send_check( &( msg_req->msg ), check_msg );
-#endif
 }
 
 static void _mpc_coll_message_recv( const mpc_lowcomm_communicator_t communicator, int src, __UNUSED__ int myself, int tag, void *buffer, size_t size,
                                     __UNUSED__ mpc_lowcomm_ptp_message_class_t message_class, _mpc_coll_messages_t *msg_req, __UNUSED__ int check_msg )
 {
-#ifdef MPC_LOWCOMM_PROTOCOL
         mpc_lowcomm_irecv(src, buffer, size, tag, communicator, &(msg_req->request));
-#else
-	mpc_lowcomm_ptp_message_header_clear( &( msg_req->msg ), MPC_LOWCOMM_MESSAGE_CONTIGUOUS,
-	                                      _mpc_coll_free_message, mpc_lowcomm_ptp_message_copy );
-	mpc_lowcomm_ptp_message_set_contiguous_addr( &( msg_req->msg ), buffer, size );
-	mpc_lowcomm_ptp_message_header_init( &( msg_req->msg ), tag, communicator, src, myself,
-	                                     &( msg_req->request ), size, message_class,
-	                                     MPC_DATATYPE_IGNORE, REQUEST_RECV );
-	_mpc_comm_ptp_message_recv_check( &( msg_req->msg ), check_msg );
-#endif
 }
 
 static void _mpc_coll_messages_table_wait( _mpc_coll_messages_table_t *tab )

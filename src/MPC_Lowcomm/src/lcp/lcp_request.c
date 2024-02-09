@@ -35,7 +35,6 @@
 
 #include "lcp_def.h"
 #include "lcp_pending.h"
-#include "lcp_context.h"
 #include "mpc_common_debug.h"
 #include "mpc_mempool.h"
 
@@ -165,11 +164,11 @@ int lcp_request_complete(lcp_request_t *req)
         }
 
         if (req->flags & LCP_REQUEST_RMA_COMPLETE) {
-                req->send.rma.on_completion(req->request);
+                req->send.cb(req->request);
         }
 
         if (req->flags & LCP_REQUEST_OFFLOADED_RNDV) {
-                lcp_pending_delete(req->ctx->match_ht, req->msg_id);
+                lcp_pending_delete(req->mngr->match_ht, req->msg_id);
         }
 
         lcp_request_put(req);

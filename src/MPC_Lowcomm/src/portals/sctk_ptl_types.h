@@ -35,7 +35,11 @@
 
 #include "lcr/lcr_def.h"
 
+#include "mpc_mempool.h"
+
 #include <utlist.h>
+#include <list.h>
+#include <queue.h>
 #include <uthash.h>
 
 /** Helper to find the struct base address, based on the address on a given member */
@@ -142,11 +146,6 @@ typedef enum {
 	SCTK_PTL_PTE_HIDDEN_NB = SCTK_PTL_PTE_HIDDEN
 } sctk_ptl_pte_id_t;
 
-typedef enum {
-        LCR_PTL_PTE_IDX_TAG_EAGER,
-        LCR_PTL_PTE_IDX_AM_EAGER,
-        LCR_PTL_PTE_IDX_RMA
-} lcr_ptl_pte_id_t;
 
 /** Translate the communicator ID to the PT entry object */
 #define SCTK_PTL_PTE_ENTRY(table, comm) (mpc_common_hashtable_get(&table, (comm)+SCTK_PTL_PTE_HIDDEN))
@@ -193,6 +192,7 @@ typedef enum {
 #define SCTK_PTL_OFFLOAD_COLL_FLAG (0x2)
 #define SCTK_PTL_IS_OFFLOAD_OD(u) ((u & SCTK_PTL_OFFLOAD_OD_FLAG) >> 0)
 #define SCTK_PTL_IS_OFFLOAD_COLL(u) ((u & SCTK_PTL_OFFLOAD_COLL_FLAG) >> 1)
+
 
 /*********************************/
 /**** OTHER USEFUL CONSTANTS  ****/
@@ -323,6 +323,7 @@ typedef struct sctk_ptl_local_data_s
 
 } sctk_ptl_local_data_t;
 
+
 /**
  * RDMA structure, mapping a Portals window.
  * Please remind that this struct is exchanged with remote through CM.
@@ -417,54 +418,6 @@ typedef struct sctk_ptl_pte_s
 	struct sctk_ptl_offcoll_tree_node_s node[SCTK_PTL_OFFCOLL_NB]; /**< what is necessary to optimise collectives for this entry */
 } sctk_ptl_pte_t;
 
-typedef enum {
-        LCR_PTL_COMP_BLOCK,
-        LCR_PTL_COMP_AM_BCOPY,
-        LCR_PTL_COMP_AM_ZCOPY,
-        LCR_PTL_COMP_TAG_BCOPY,
-        LCR_PTL_COMP_TAG_ZCOPY,
-        LCR_PTL_COMP_TAG_SEARCH,
-        LCR_PTL_COMP_RMA_PUT
-} lcr_ptl_comp_type_t;
-
-typedef struct lcr_ptl_send_comp {
-        lcr_ptl_comp_type_t type;
-        sctk_ptl_mdh_t iov_mdh;
-        ptl_iovec_t *iov;
-        lcr_completion_t *comp;
-        lcr_tag_context_t *tag_ctx;
-        void *bcopy_buf;
-} lcr_ptl_send_comp_t;
-
-typedef struct lcr_ptl_recv_block lcr_ptl_recv_block_t;
-
-typedef struct lcr_ptl_block_list {
-        lcr_ptl_recv_block_t *block;
-        struct lcr_ptl_block_list *prev, *next;
-} lcr_ptl_block_list_t;
-
-typedef struct lcr_ptl_persistant_post {
-        UT_hash_handle hh;
-
-        uint64_t tag_key;
-        ptl_handle_me_t meh;
-} lcr_ptl_persistant_post_t;
-
-typedef struct lcr_ptl_info_s {
-        ptl_handle_md_t mdh;
-        int max_iovecs;
-	sctk_ptl_eq_t eqh;                   /**< EQ for all MEs received on this NI */
-        sctk_ptl_pte_id_t tag_pte;
-        sctk_ptl_pte_id_t am_pte;
-        sctk_ptl_pte_id_t rma_pte;
-        ptl_handle_me_t rma_meh;
-        int num_eager_blocks;                   /**< number of eager block */
-        size_t eager_block_size;                /**< size of recv block for eager */
-        lcr_ptl_block_list_t *tag_block_list;
-        lcr_ptl_block_list_t *am_block_list;
-        lcr_ptl_persistant_post_t *persistant_ht;
-        mpc_common_spinlock_t poll_lock;
-} lcr_ptl_info_t;
 
 /**
  * Portals-specific information specializing a rail.
@@ -479,7 +432,6 @@ typedef struct sctk_ptl_rail_info_s
 	struct mpc_common_hashtable pt_table;         /**< The COMM => PT hash table */
 	struct mpc_common_hashtable reverse_pt_table; /**< The PT => COMM hash table */
 	size_t cutoff;                          /**< cutoff for large RDV messages */
-        lcr_ptl_info_t ptl_info;
 	size_t max_mr;                          /**< Max size of a memory region (MD | ME ) */
 	size_t max_put;                          /**< Max size of a put */
 	size_t max_get;                          /**< Max size of a get */

@@ -16,6 +16,30 @@ context_init:
       n_proc:
         values: [2]
   tag: ["run"]
+manager_init:
+  run:
+    depends_on: ["compile_units"]
+    program: @BUILDPATH@/lcp_compute_env.sh @BUILDPATH@/manager_init
+    iterate: 
+      n_core:
+        values: [2]
+      n_node:
+        values: [2]
+      n_proc:
+        values: [2]
+  tag: ["run"]
+multi_manager_init:
+  run:
+    depends_on: ["compile_units"]
+    program: @BUILDPATH@/lcp_compute_env.sh @BUILDPATH@/multi_manager_init
+    iterate: 
+      n_core:
+        values: [2]
+      n_node:
+        values: [2]
+      n_proc:
+        values: [2]
+  tag: ["run"]
 ep_init:
   run:
     depends_on: ["compile_units"]
@@ -64,6 +88,7 @@ ep_earlyrecv:
       n_proc:
         values: [2]
   tag: ["run"]
+<<<<<<< HEAD:src/MPC_Tests/lcp/pcvs.yml.common
 ep_sendrecv:
   run:
     program: @BUILDPATH@/lcp_compute_env.sh @BUILDPATH@/ep_sendrecv
@@ -76,6 +101,8 @@ ep_sendrecv:
       n_proc:
         values: [2]
   tag: ["run"]
+=======
+>>>>>>> e285140f5 (WIP. LCP: communication manager for software communication context.):tests/lcp/pcvs.yml.common
 ep_sendfrag:
   run:
     depends_on: ["compile_units"]
@@ -92,6 +119,18 @@ ep_sendfrag:
           numeric: true
           type: "argument"
           values: ["8192"]
+  tag: ["run"]
+ep_multi_manager_send:
+  run:
+    program: @BUILDPATH@/lcp_compute_env.sh @BUILDPATH@/ep_multi_manager_send
+    depends_on: ["compile_units"]
+    iterate: 
+      n_core:
+        values: [2]
+      n_node:
+        values: [2]
+      n_proc:
+        values: [2]
   tag: ["run"]
 ep_am:
   run:

@@ -36,11 +36,25 @@
 #include "lcp_def.h"
 
 #include <bitmap.h>
+#include <mpc_common_spinlock.h>
 
-/**
- * @brief memory object
- *
- */
+struct lcp_pinning_entry_list
+{
+        struct lcp_pinning_entry *entry;
+        uint64_t total_size;
+        uint64_t entries_count;
+
+        uint64_t max_entries_count;
+        uint64_t max_total_size;
+
+        mpc_common_rwlock_t lock;
+};
+
+struct lcp_pinning_mmu
+{
+        struct lcp_pinning_entry_list list;
+        /* In case we want to improve in the future */
+};
 
 struct lcp_mem {
         uint64_t base_addr;
@@ -53,33 +67,33 @@ struct lcp_mem {
         void * pointer_to_mmu_ctx;
 };
 
-int lcp_mem_create(lcp_context_h ctx, lcp_mem_h *mem_p);
+int lcp_mem_create(lcp_manager_h mngr, lcp_mem_h *mem_p);
 void lcp_mem_delete(lcp_mem_h mem);
-size_t lcp_mem_rkey_pack(lcp_context_h ctx, lcp_mem_h mem, void *dest);
-int lcp_mem_post_from_map(lcp_context_h ctx,
-                          lcp_mem_h mem,
+size_t lcp_mem_rkey_pack(lcp_manager_h mngr, lcp_mem_h mem, void *dest);
+int lcp_mem_post_from_map(lcp_manager_h mngr, 
+                          lcp_mem_h mem, 
                           bmap_t bm,
                           void *buffer,
                           size_t length,
                           lcr_tag_t tag,
                           unsigned flags,
                           lcr_tag_context_t *tag_ctx);
-int lcp_mem_reg_from_map(lcp_context_h ctx,
+int lcp_mem_reg_from_map(lcp_manager_h mngr,
                          lcp_mem_h mem,
                          bmap_t mem_map,
                          void *buffer,
                          size_t length);
-int lcp_mem_unpost(lcp_context_h ctx, lcp_mem_h mem, lcr_tag_t tag);
+int lcp_mem_unpost(lcp_manager_h mngr, lcp_mem_h mem, lcr_tag_t tag);
 
 /************************
  * INTERFACE TO THE MMU *
  ************************/
 
-int lcp_pinning_mmu_init();
-int lcp_pinning_mmu_release();
+int lcp_pinning_mmu_init(struct lcp_pinning_mmu **mmu_p, unsigned flags);
+int lcp_pinning_mmu_release(struct lcp_pinning_mmu *mmu);
 
-lcp_mem_h lcp_pinning_mmu_pin(lcp_context_h  ctx, void *addr, size_t size, bmap_t bitmap);
-int lcp_pinning_mmu_unpin(lcp_context_h  ctx, lcp_mem_h mem);
+lcp_mem_h lcp_pinning_mmu_pin(lcp_manager_h mngr, void *addr, size_t size, bmap_t bitmap);
+int lcp_pinning_mmu_unpin(lcp_manager_h mngr, lcp_mem_h mem);
 
 
 #endif

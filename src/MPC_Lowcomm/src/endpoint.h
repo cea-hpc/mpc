@@ -59,7 +59,7 @@ typedef union
 {
 	_mpc_lowcomm_endpoint_info_tcp_t     tcp;    /**< TCP route info */
 #ifdef MPC_USE_PORTALS
-	_mpc_lowcomm_endpoint_info_portals_t ptl;    /*< Portals route info */
+	_mpc_lowcomm_endpoint_info_ptl_t ptl;    /*< Portals route info */
 #endif
 #ifdef MPC_USE_OFI
 	_mpc_lowcomm_ofi_endpoint_info_t ofi;

@@ -31,10 +31,8 @@
 #include "sctk_ptl_rdma.h"
 #include "endpoint.h"
 
-#include "lcr_ptl.h"
-#ifdef MPC_LOWCOMM_PROTOCOL
-#include <lcr/lcr_component.h>
-#endif
+#include "mpc_launch_pmi.h"
+
 #include <dirent.h>
 
 #include <mpc_common_types.h>
@@ -215,7 +213,7 @@ void sctk_network_initialize_task_ptl(sctk_rail_info_t* rail, int taskid, int vp
  */
 static void sctk_network_connect_on_demand_ptl ( struct sctk_rail_info_s * rail , mpc_lowcomm_peer_uid_t dest )
 {
-	sctk_ptl_id_t id = sctk_ptl_map_id(rail, dest);
+	lcr_ptl_addr_t id = sctk_ptl_map_id(rail, dest);
 	sctk_ptl_add_route(dest, id, rail, _MPC_LOWCOMM_ENDPOINT_DYNAMIC, _MPC_LOWCOMM_ENDPOINT_CONNECTED);
 }
 
@@ -269,185 +267,5 @@ void sctk_network_init_ptl (sctk_rail_info_t *rail)
 	rail_is_ready = 1;
 	mpc_common_debug("rank %d mapped to Portals ID (nid/pid): %llu/%llu", mpc_common_get_process_rank(), rail->network.ptl.id.phys.nid, rail->network.ptl.id.phys.pid);
 }
-
-int lcr_ptl_iface_is_reachable(sctk_rail_info_t *rail, uint64_t uid) {
-        //FIXME: check whether getting connection info should be done here. For
-        //       now just return true.
-        UNUSED(rail); UNUSED(uid);
-        return 1;
-}
-
-int lcr_ptl_get_attr(sctk_rail_info_t *rail,
-                     lcr_rail_attr_t *attr)
-{
-        attr->iface.cap.am.max_bcopy  = rail->network.ptl.eager_limit;
-        attr->iface.cap.am.max_zcopy  = 0;
-        attr->iface.cap.am.max_iovecs = rail->network.ptl.ptl_info.max_iovecs;
-
-        attr->iface.cap.tag.max_bcopy  = 0;
-        attr->iface.cap.tag.max_zcopy  = rail->network.ptl.eager_limit;
-        attr->iface.cap.tag.max_iovecs = rail->network.ptl.ptl_info.max_iovecs;
-
-        attr->iface.cap.rndv.max_send_zcopy = rail->network.ptl.max_mr;
-        attr->iface.cap.rndv.max_put_zcopy  = rail->network.ptl.max_put;
-        attr->iface.cap.rndv.max_get_zcopy  = 512*1024;
-        attr->iface.cap.rndv.min_frag_size  = rail->network.ptl.min_frag_size;
-
-        attr->iface.cap.rma.max_put_bcopy   = rail->network.ptl.eager_limit;
-        attr->iface.cap.rma.max_put_zcopy   = rail->network.ptl.max_put;
-        attr->iface.cap.rma.min_frag_size   = rail->network.ptl.min_frag_size;
-
-        attr->mem.cap.max_reg      = PTL_SIZE_MAX;
-        attr->mem.size_packed_mkey = sizeof(uint64_t); //FIXME: to be generalized
-
-        return MPC_LOWCOMM_SUCCESS;
-}
-
-int lcr_ptl_query_devices(__UNUSED__ lcr_component_t *component,
-                          lcr_device_t **devices_p,
-                          unsigned int *num_devices_p)
-{
-        int rc = MPC_LOWCOMM_SUCCESS;
-        static const char *bxi_dir = "/sys/class/bxi";
-        lcr_device_t *devices;
-        int is_up;
-        int num_devices;
-        struct dirent *entry;
-        DIR *dir;
-
-        devices = NULL;
-        num_devices = 0;
-
-        /* First, try simulator */
-        const char *ptl_iface_name;
-        if ((ptl_iface_name = getenv("PTL_IFACE_NAME")) != NULL) {
-                devices = sctk_malloc(sizeof(lcr_device_t));
-                strcpy(devices[0].name, ptl_iface_name);
-                num_devices = 1;
-                goto out;
-        }
-
-        /* Then, check if bxi are available in with sysfs */
-        dir = opendir(bxi_dir);
-        if (dir == NULL) {
-                mpc_common_debug_warning("PTL: could not find any ptl device.");
-                goto out;
-        }
-
-        for (;;) {
-                errno = 0;
-                entry = readdir(dir);
-                if (entry == NULL) {
-                        if (errno != 0) {
-                                mpc_common_debug_error("PTL: bxi directory exists "
-                                                       "but no entry found.");
-                                rc = MPC_LOWCOMM_ERROR;
-                                goto close_dir;
-                        }
-                        break;
-                }
-
-                /* avoid reading entry like . and .. */
-                if (entry->d_type != DT_LNK) {
-                        continue;
-                }
-
-                is_up = 1;
-                //TODO: check if interface is up with bixnic -i <iface> info
-                //      LINK_STATUS
-                if (!is_up) {
-                        continue;
-                }
-
-                devices = sctk_realloc(devices, sizeof(*devices) * (num_devices + 1));
-                if (devices == NULL) {
-                        mpc_common_debug_error("PTL: could not allocate devices");
-                        rc = MPC_LOWCOMM_ERROR;
-                        goto close_dir;
-                }
-
-                //FIXME: interface name should always be of the form:
-                //       bxi<id> with id, 0 < id < 9
-                strcpy(devices[num_devices].name, entry->d_name);
-                ++num_devices;
-        }
-
-        //FIXME: hack to be sure the ptl device have correct id in iface_open
-        max_num_devices = num_devices;
-close_dir:
-        closedir(dir);
-
-out:
-        *devices_p = devices;
-        *num_devices_p = num_devices;
-
-        return rc;
-}
-
-int lcr_ptl_iface_open(__UNUSED__ const char *device_name, int id,
-		       lcr_rail_config_t *rail_config,
-		       lcr_driver_config_t *driver_config,
-		       sctk_rail_info_t **iface_p)
-{
-        int rc = MPC_LOWCOMM_SUCCESS;
-        sctk_rail_info_t *iface = NULL;
-
-        lcr_rail_init(rail_config, driver_config, &iface);
-        if (iface == NULL) {
-                mpc_common_debug_error("LCR: could not allocate tcp rail");
-                rc = MPC_LOWCOMM_ERROR;
-                goto err;
-        }
-
-        //FIXME: modulo on max_num_devices so that they are correctly setup
-	iface->rail_number = id % max_num_devices; /* used as tag for pmi registration */
-
-        sctk_network_init_ptl(iface);
-
-        /* Add new API call */
-	iface->iface_get_attr = lcr_ptl_get_attr;
-
-        /* Init capabilities */
-        iface->cap = LCR_IFACE_CAP_RMA |
-                LCR_IFACE_CAP_SELF     |
-                LCR_IFACE_CAP_REMOTE;
-
-        /* Active message calls */
-        iface->send_am_bcopy       = lcr_ptl_send_am_bcopy;
-        iface->send_am_zcopy       = lcr_ptl_send_am_zcopy;
-        /* Tag calls */
-        iface->send_tag_bcopy      = lcr_ptl_send_tag_bcopy;
-        iface->send_tag_zcopy      = lcr_ptl_send_tag_zcopy;
-        iface->post_tag_zcopy      = lcr_ptl_post_tag_zcopy;
-        iface->unpost_tag_zcopy    = lcr_ptl_unpost_tag_zcopy;
-        /* RMA calls */
-        iface->put_bcopy           = lcr_ptl_send_put_bcopy;
-        iface->put_zcopy           = lcr_ptl_send_put_zcopy;
-        iface->get_zcopy           = lcr_ptl_send_get_zcopy;
-        iface->get_tag_zcopy       = lcr_ptl_get_tag_zcopy;
-        iface->iface_pack_memp     = lcr_ptl_pack_rkey;
-        iface->iface_unpack_memp   = lcr_ptl_unpack_rkey;
-        iface->rail_pin_region     = lcr_ptl_mem_register;
-        iface->rail_unpin_region   = lcr_ptl_mem_unregister;
-        /* Interface progess */
-        iface->iface_progress      = lcr_ptl_iface_progress;
-        iface->iface_is_reachable  = lcr_ptl_iface_is_reachable;
-
-        *iface_p = iface;
-err:
-        return rc;
-}
-
-lcr_component_t ptl_component = {
-        .name = { "ptl" },
-        .rail_name = { 0 },
-        .query_devices = lcr_ptl_query_devices,
-        .iface_open = lcr_ptl_iface_open,
-        .devices = NULL,
-        .num_devices = 0,
-        .flags = 0,
-        .next = NULL
-};
-LCR_COMPONENT_REGISTER(&ptl_component)
 
 #endif /* MPC_USE_PORTALS */

@@ -40,7 +40,7 @@
 #include "mpc_common_debug.h"
 
 #define LCP_SEND_TAG_IS_TASK(_req) \
-        ((_req)->send.tag.dest_uid == (_req)->ctx->process_uid)
+        ((_req)->send.tag.dest_uid == (_req)->mngr->ctx->process_uid) 
 
 /**
  * @brief Switch between protocols. Available protocols are :
@@ -60,8 +60,7 @@ int lcp_tag_send_start(lcp_ep_h ep, lcp_request_t *req,
         size_t size;
 
         /* First check offload */
-        if (ep->ep_config.offload && (ep->ctx->config.offload ||
-            (param->flags & LCP_REQUEST_TRY_OFFLOAD))) {
+        if (ep->ep_config.offload) {
                 size = req->send.length;
                 req->state.offloaded = 1;
 
@@ -122,8 +121,9 @@ int lcp_tag_send_start(lcp_ep_h ep, lcp_request_t *req,
 //FIXME: It is not clear whether count is the number of elements or the length in
 //       bytes. For now, the actual length in bytes is given taking into account
 //       the datatypes and stuff...
-int lcp_tag_send_nb(lcp_ep_h ep, lcp_task_h task, const void *buffer,
-                    size_t size, mpc_lowcomm_request_t *request,
+//FIXME: Handle loopback, ie, sending to myself.
+int lcp_tag_send_nb(lcp_ep_h ep, lcp_task_h task, const void *buffer, 
+                    size_t count, mpc_lowcomm_request_t *request,
                     const lcp_request_param_t *param)
 {
         int rc;
@@ -139,8 +139,8 @@ int lcp_tag_send_nb(lcp_ep_h ep, lcp_task_h task, const void *buffer,
         req->flags |= LCP_REQUEST_MPI_COMPLETE;
 
         // initialize request
-        LCP_REQUEST_INIT_TAG_SEND(req, ep->ctx, task, request, param->tag_info,
-                                  size, ep, (void *)buffer, 0, param->datatype,
+        LCP_REQUEST_INIT_TAG_SEND(req, ep->mngr, task, request, param->recv_info, 
+                                  count, ep, (void *)buffer, 0, param->datatype,
                                   param->flags & LCP_REQUEST_TAG_SYNC ? 1 : 0);
 
         /* prepare request depending on its type */

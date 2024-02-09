@@ -32,7 +32,7 @@
 #ifndef LCR_COMPONENT_H
 #define LCR_COMPONENT_H
 
-#include <lcr/lcr_def.h>
+#include <lcr_def.h>
 #include <lowcomm_config.h>
 
 #include <utlist.h>
@@ -58,8 +58,8 @@ typedef struct lcr_device {
 
 typedef struct lcr_component {
         char                  name[LCR_COMPONENT_NAME_MAX];
-        char                  rail_name[LCR_COMPONENT_NAME_MAX];
-        lcr_driver_config_t   *driver_config;
+        lcr_rail_config_t    *rail_config;
+        lcr_driver_config_t  *driver_config;
         lcr_device_t         *devices;
         unsigned              num_devices;
         int                   count; /* Number of current instance */
@@ -71,7 +71,8 @@ typedef struct lcr_component {
         int (*iface_open)(const char *device_name, int id,
 			  lcr_rail_config_t *rail_config,
                           lcr_driver_config_t *driver_config,
-                          sctk_rail_info_t **iface_p);
+                          sctk_rail_info_t **iface_p, 
+                          unsigned fflags /* feature flags */);
 } lcr_component_t;
 
 

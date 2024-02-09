@@ -38,6 +38,7 @@
 #include "sctk_ptl_iface.h"
 #include "sctk_ptl_offcoll.h"
 #include "lcr_ptl_recv.h"
+#include "queue.h"
 
 #include <sctk_alloc.h>
 
@@ -61,13 +62,49 @@ static inline int lcr_ptl_invoke_am(sctk_rail_info_t *rail,
 	return rc;
 }
 
+static int _lcr_ptl_progress_rma(sctk_ptl_rail_info_t *srail)
+{
+        size_t op_it, count = 0;
+        lcr_ptl_rma_handle_t *rmah = NULL;
+        ptl_ct_event_t ev;
+        lcr_ptl_op_t *op;
+
+        mpc_common_spinlock_lock(&srail->ptl_info.rmah_lock);
+        mpc_list_for_each(rmah, &srail->ptl_info.rmah_head, lcr_ptl_rma_handle_t, elem) {
+                sctk_ptl_chk(PtlCTGet(rmah->cth, &ev));
+
+                if (ev.failure > 0) {
+                        mpc_common_debug_error("LCR PTL: error on RMA "
+                                               "operation %p", rmah);
+                        goto unlock;
+                }
+
+                /* Complete all ongoing operations. */
+                op_it = rmah->completed_ops;
+                while ((ptl_size_t)op_it < ev.success) {
+                        mpc_common_spinlock_lock(&rmah->ops_lock);
+                        op = mpc_queue_pull_elem(&rmah->ops, lcr_ptl_op_t, elem);
+                        mpc_common_spinlock_unlock(&rmah->ops_lock);
+
+                        mpc_common_debug("LCR PTL: progress rma op. op=%p", op);
+                        op->comp->sent = op->size;
+                        op->comp->comp_cb(op->comp);
+                        op_it++; count++; rmah->completed_ops++;
+                }
+        }
+
+unlock:
+        mpc_common_spinlock_unlock(&srail->ptl_info.rmah_lock);
+        return count;
+}
+
 int lcr_ptl_iface_progress(sctk_rail_info_t *rail)
 {
 	int did_poll = 0;
 	int ret;
 	sctk_ptl_event_t ev;
 	sctk_ptl_rail_info_t* srail = &rail->network.ptl;
-        lcr_ptl_send_comp_t *ptl_comp;
+        lcr_ptl_op_t *op;
         lcr_tag_context_t *tag_ctx;
         lcr_ptl_recv_block_t *block;
         uint8_t am_id;
@@ -76,6 +113,8 @@ int lcr_ptl_iface_progress(sctk_rail_info_t *rail)
         while (1) {
 
                 mpc_common_spinlock_lock(&srail->ptl_info.poll_lock);
+
+                _lcr_ptl_progress_rma(srail);
 
                 ret = PtlEQGet(srail->ptl_info.eqh, &ev);
                 sctk_ptl_chk(ret);
@@ -89,62 +128,56 @@ int lcr_ptl_iface_progress(sctk_rail_info_t *rail)
                                               ev.remote_offset, srail->iface);
                         did_poll = 1;
 
+                        op = (lcr_ptl_op_t *)ev.user_ptr;
+                        assert(op);
+
                         switch (ev.type) {
                         case PTL_EVENT_SEARCH:
                                 if (ev.ni_fail_type == PTL_NI_NO_MATCH) {
                                         goto poll_unlock;
                                 }
-                                ptl_comp = (lcr_ptl_send_comp_t *)ev.user_ptr;
-                                assert(ptl_comp);
-                                tag_ctx            = ptl_comp->tag_ctx;
+                                tag_ctx            = op->tag.tag_ctx;
                                 tag_ctx->tag       = (lcr_tag_t)ev.match_bits;
                                 tag_ctx->imm       = ev.hdr_data;
                                 tag_ctx->start     = NULL;
-                                tag_ctx->comp.sent = ev.mlength;
                                 tag_ctx->flags    |= flags;
 
                                 /* call completion callback */
-                                tag_ctx->comp.comp_cb(&tag_ctx->comp);
-                                sctk_free(ptl_comp);
-                                goto poll_unlock;
+                                op->comp->sent = ev.mlength;
+                                op->comp->comp_cb(op->comp);
                                 break;
 
                         case PTL_EVENT_SEND:
                                 not_reachable();
                                 break;
                         case PTL_EVENT_REPLY:
-                                ptl_comp = (lcr_ptl_send_comp_t *)ev.user_ptr;
-                                assert(ptl_comp);
-                                ptl_comp->comp->sent = ev.mlength;
-                                ptl_comp->comp->comp_cb(ptl_comp->comp);
-                                sctk_free(ptl_comp);
-                                goto poll_unlock;
+                                assert(op->size == ev.mlength);
+                                op->comp->sent = ev.mlength;
+                                op->comp->comp_cb(op->comp);
                                 break;
                         case PTL_EVENT_ACK:
-                                ptl_comp = (lcr_ptl_send_comp_t *)ev.user_ptr;
-                                assert(ptl_comp);
-                                switch (ptl_comp->type) {
-                                case LCR_PTL_COMP_TAG_BCOPY:
-                                case LCR_PTL_COMP_AM_BCOPY:
-                                        sctk_free(ptl_comp->bcopy_buf);
+                                switch (op->type) {
+                                case LCR_PTL_OP_TAG_BCOPY:
+                                case LCR_PTL_OP_AM_BCOPY:
+                                        sctk_free(op->am.bcopy_buf);
                                         break;
-                                case LCR_PTL_COMP_AM_ZCOPY:
-                                        ptl_comp->comp->sent = ev.mlength;
-                                        ptl_comp->comp->comp_cb(ptl_comp->comp);
-                                        sctk_ptl_chk(PtlMDRelease(ptl_comp->iov_mdh));
-                                        sctk_free(ptl_comp->iov);
+                                case LCR_PTL_OP_AM_ZCOPY:
+                                        op->comp->sent = ev.mlength;
+                                        op->comp->comp_cb(op->comp);
+                                        sctk_ptl_chk(PtlMDRelease(op->iov.iovh));
+                                        sctk_free(op->iov.iov);
                                         break;
-                                case LCR_PTL_COMP_TAG_ZCOPY:
-                                case LCR_PTL_COMP_RMA_PUT:
-                                        ptl_comp->comp->sent = ev.mlength;
-                                        ptl_comp->comp->comp_cb(ptl_comp->comp);
+                                case LCR_PTL_OP_TAG_ZCOPY:
+                                case LCR_PTL_OP_RMA_PUT:
+                                        op->comp->sent = ev.mlength;
+                                        op->comp->comp_cb(op->comp);
                                         break;
                                 default:
                                         mpc_common_debug_error("LCR PTL: unknown "
                                                                "completion type");
                                         break;
                                 }
-                                sctk_free(ptl_comp);
+                                mpc_mpool_push(op);
                                 goto poll_unlock;
                                 break;
                         case PTL_EVENT_PUT_OVERFLOW:
@@ -153,12 +186,11 @@ int lcr_ptl_iface_progress(sctk_rail_info_t *rail)
                         case PTL_EVENT_PUT:
                                 switch (ev.pt_index) {
                                 case LCR_PTL_PTE_IDX_TAG_EAGER:
-                                        ptl_comp  = (lcr_ptl_send_comp_t *)ev.user_ptr;
-                                        switch (ptl_comp->type) {
-                                        case LCR_PTL_COMP_BLOCK:
+                                        switch (op->type) {
+                                        case LCR_PTL_OP_BLOCK:
                                                 break;
-                                        case LCR_PTL_COMP_TAG_ZCOPY:
-                                                tag_ctx            = ptl_comp->tag_ctx;
+                                        case LCR_PTL_OP_TAG_ZCOPY:
+                                                tag_ctx            = op->tag.tag_ctx;
                                                 tag_ctx->tag       = (lcr_tag_t)ev.match_bits;
                                                 tag_ctx->imm       = ev.hdr_data;
                                                 tag_ctx->start     = ev.start;
@@ -191,15 +223,12 @@ int lcr_ptl_iface_progress(sctk_rail_info_t *rail)
                                 goto poll_unlock;
                                 break;
                         case PTL_EVENT_GET:
-                                ptl_comp = (lcr_ptl_send_comp_t *)ev.user_ptr;
-                                assert(ptl_comp);
-                                ptl_comp->tag_ctx->comp.sent = ev.mlength;
-                                ptl_comp->tag_ctx->comp.comp_cb(&ptl_comp->tag_ctx->comp);
+                                op->comp->sent = ev.mlength;
+                                op->comp->comp_cb(op->comp);
                                 break;
                         case PTL_EVENT_AUTO_UNLINK:
-                                ptl_comp = (lcr_ptl_send_comp_t *)ev.user_ptr;
-                                block = mpc_container_of(ptl_comp, lcr_ptl_recv_block_t, comp);
-                                sctk_ptl_list_t list = ev.pt_index == LCR_PTL_PTE_IDX_TAG_EAGER ?
+                                block = mpc_container_of(op, lcr_ptl_recv_block_t, op);
+                                sctk_ptl_list_t list = ev.pt_index == LCR_PTL_PTE_IDX_TAG_EAGER ? 
                                         SCTK_PTL_OVERFLOW_LIST : SCTK_PTL_PRIORITY_LIST;
                                 lcr_ptl_recv_block_activate(block, ev.pt_index, list);
                                 goto poll_unlock;
@@ -227,6 +256,7 @@ int lcr_ptl_iface_progress(sctk_rail_info_t *rail)
                         mpc_common_debug_error("LCR PTL: error returned from PtlEQPoll");
                         break;
                 }
+                mpc_mpool_push(op);
 poll_unlock:
                 mpc_common_spinlock_unlock(&srail->ptl_info.poll_lock);
                 break;
@@ -275,6 +305,7 @@ int lcr_ptl_software_init(sctk_ptl_rail_info_t *srail, size_t comm_dims)
         /* Init poll lock used to ensure in-order message reception */
         mpc_common_spinlock_init(&srail->ptl_info.poll_lock, 0);
 
+        //FIXME: only allocate if offload is enabled
         /* register the TAG EAGER PTE */
         sctk_ptl_chk(PtlPTAlloc(srail->iface,
                                 SCTK_PTL_PTE_FLAGS,
@@ -347,6 +378,32 @@ int lcr_ptl_software_init(sctk_ptl_rail_info_t *srail, size_t comm_dims)
                                  &srail->ptl_info.rma_meh
                                 ));
 
+        /* Initialize list of active RMA handles. */
+        mpc_list_init_head(&srail->ptl_info.rmah_head);
+
+        /* Init pool of operations. */
+        srail->ptl_info.ops_pool = sctk_malloc(sizeof(mpc_mempool_t));
+        if (srail->ptl_info.ops_pool == NULL) {
+                mpc_common_debug_error("LCR PTL: could not allocate operation"
+                                       " memory pool.");
+                rc = MPC_LOWCOMM_ERROR;
+                goto err;
+        }
+        mpc_mempool_param_t mp_op_params = {
+                .alignment = MPC_COMMON_SYS_CACHE_LINE_SIZE,
+                .elem_per_chunk = 512,
+                .elem_size = sizeof(lcr_ptl_op_t),
+                .max_elems = 2048,
+                .malloc_func = sctk_malloc,
+                .free_func = sctk_free
+        };
+
+        rc = mpc_mpool_init(srail->ptl_info.ops_pool, &mp_op_params);
+        if (rc != MPC_LOWCOMM_SUCCESS) {
+                goto err;
+        }
+
+err:
         return rc;
 }
 

@@ -47,7 +47,8 @@ int lcp_tag_recv_nb(lcp_task_h task, void *buffer, size_t count,
 	int rc = LCP_SUCCESS;
 	lcp_unexp_ctnr_t *match;
 	lcp_request_t *req;
-	lcp_context_h ctx = task->ctx;
+	lcp_manager_h mngr = task->mngr;
+        lcp_context_h ctx  = mngr->ctx;
 
 	// create a request to be matched with the received message
         req = lcp_request_get(task);
@@ -57,13 +58,13 @@ int lcp_tag_recv_nb(lcp_task_h task, void *buffer, size_t count,
                 return LCP_ERROR;
         }
 	req->flags |= LCP_REQUEST_MPI_COMPLETE;
-	LCP_REQUEST_INIT_TAG_RECV(req, ctx, task, request, param->tag_info,
+	LCP_REQUEST_INIT_TAG_RECV(req, mngr, task, request, param->recv_info,
 										count, buffer, param->datatype);
 
 	// get interface for the request to go through
 	// if we have to try offload
 	if (ctx->config.offload || param->flags & LCP_REQUEST_TRY_OFFLOAD) {
-	        sctk_rail_info_t *iface = ctx->resources[ctx->priority_rail].iface;
+	        sctk_rail_info_t *iface = mngr->ifaces[mngr->priority_iface];
 		req->state.offloaded = 1;
 		// try to receive using zero copy
 		rc = lcp_recv_tag_zcopy(req, iface);

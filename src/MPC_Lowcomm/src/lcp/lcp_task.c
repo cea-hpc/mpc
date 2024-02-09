@@ -34,6 +34,8 @@
 #include "mpc_common_debug.h"
 
 #include "lcp_def.h"
+#include "lcp_manager.h"
+#include "lcp_manager.h"
 #include "lcp_context.h"
 #include "lcp_header.h"
 #include "lcp_request.h"
@@ -45,12 +47,12 @@ int lcp_send_task_bcopy(lcp_request_t *sreq, lcr_pack_callback_t pack_cb, unsign
                         lcp_task_completion_t *comp)
 {
         int rc = LCP_SUCCESS;
-        lcp_context_h ctx = sreq->ctx;
+        lcp_manager_h mngr = sreq->mngr;
         lcp_unexp_ctnr_t *ctnr = NULL;
         lcp_request_t *rreq = NULL;
         lcp_task_h recv_task = NULL;
 
-        recv_task = lcp_context_task_get(ctx, sreq->send.tag.dest_tid);
+        recv_task = lcp_manager_task_get(mngr, sreq->send.tag.dest_tid);  
         if (recv_task == NULL) {
                 mpc_common_errorpoint_fmt("LCP: could not find task with tid=%d",
                                           sreq->send.tag.dest_tid);
@@ -111,11 +113,11 @@ err:
 int lcp_send_task_zcopy(lcp_request_t *sreq, lcp_task_completion_t *comp)
 {
         int rc = LCP_SUCCESS;
-        lcp_context_h ctx = sreq->ctx;
+        lcp_manager_h mngr = sreq->mngr;
         lcp_request_t *rreq;
         lcp_task_h recv_task = NULL;
 
-        recv_task = lcp_context_task_get(ctx, sreq->send.tag.dest_tid);
+        recv_task = lcp_manager_task_get(mngr, sreq->send.tag.dest_tid);
         if (recv_task == NULL) {
                 mpc_common_errorpoint_fmt("LCP: could not find task with tid=%d",
                                           sreq->send.tag.dest_tid);
@@ -158,7 +160,7 @@ err:
 }
 
 int lcp_am_set_handler_callback(lcp_task_h task, uint8_t am_id,
-                                void *user_arg, lcp_am_user_func_t cb,
+                                void *user_arg, lcp_am_callback_t cb,
                                 unsigned flags)
 {
         lcp_am_user_handler_t *user_handler = &task->am[am_id];
@@ -172,13 +174,13 @@ int lcp_am_set_handler_callback(lcp_task_h task, uint8_t am_id,
 
 
 
-int lcp_task_create(lcp_context_h ctx, int tid, lcp_task_h *task_p)
+int lcp_task_create(lcp_manager_h mngr, int tid, lcp_task_h *task_p)
 {
         int i;
         int rc = LCP_SUCCESS;
         lcp_task_h task;
 
-        assert(ctx); assert(tid >= 0);
+        assert(mngr); assert(tid >= 0);
 
         //NOTE: In current MPC configuration, a task cannot be already
         //      created since done by init task func in comm.c
@@ -192,7 +194,7 @@ int lcp_task_create(lcp_context_h ctx, int tid, lcp_task_h *task_p)
 
         /* Set task unique identifier */
         task->tid = tid;
-        task->ctx = ctx;
+        task->mngr = mngr;
 
         task->num_queues = UINT16_MAX + 1;
         task->umqs = sctk_malloc(task->num_queues * sizeof(mpc_queue_head_t));
@@ -260,7 +262,7 @@ int lcp_task_create(lcp_context_h ctx, int tid, lcp_task_h *task_p)
         memset(task->am, 0, LCP_AM_ID_USER_MAX * sizeof(lcp_am_user_handler_t));
 
         /* Compute task index used in */
-        ctx->tasks[tid] = task;
+        mngr->tasks[tid] = task;
 
         *task_p = task;
         mpc_common_debug_info("LCP: created task tid=%d", tid);
@@ -271,7 +273,9 @@ err:
 int lcp_task_fini(lcp_task_h task) {
 
         mpc_mpool_fini(task->req_mp);
+        sctk_free(task->req_mp);
         mpc_mpool_fini(task->unexp_mp);
+        sctk_free(task->unexp_mp);
 
         sctk_free(task->umqs);
         sctk_free(task->prqs);

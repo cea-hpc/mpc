@@ -36,7 +36,6 @@
 #include "lcp_def.h"
 #include "lcr/lcr_def.h"
 #include "lcp_types.h"
-#include "lcp_pending.h"
 #include <mpc_common_datastructure.h>
 #include <queue.h>
 #include <list.h>
@@ -45,34 +44,6 @@
 	mpc_common_spinlock_lock_yield(&( (_ctx)->ctx_lock) )
 #define LCP_CONTEXT_UNLOCK(_ctx) \
 	mpc_common_spinlock_unlock(&( (_ctx)->ctx_lock) )
-
-/**
- * @brief handler holding a callback and a flag
- *
- */
-typedef struct lcp_am_handler
-{
-	lcr_am_callback_t cb;
-	uint64_t          flags;
-} lcp_am_handler_t;
-
-#define LCP_DEFINE_AM(_id, _cb, _flags)              \
-	MPC_STATIC_INIT {                            \
-		lcp_am_handlers[_id].cb    = _cb;    \
-		lcp_am_handlers[_id].flags = _flags; \
-	}
-
-extern lcp_am_handler_t lcp_am_handlers[];
-
-/**
- * @brief endpoint
- *
- */
-typedef struct lcp_ep_ctx
-{
-	uint64_t       ep_key;
-	lcp_ep_h       ep;
-} lcp_ep_ctx_t;
 
 typedef struct lcp_match_ctx
 {
@@ -84,7 +55,6 @@ typedef struct lcp_rsc_desc
 {
 	int                  priority;
 	char                *name;
-	sctk_rail_info_t *   iface; /* Rail interface */
 	lcr_rail_config_t *  iface_config;
 	lcr_driver_config_t *driver_config;
 	lcr_component_h      component;
@@ -115,9 +85,7 @@ struct lcp_context
 
 	unsigned              flags;
 
-	OPA_int_t             muid;          /* matching unique identifier */
-	lcp_pending_table_t * match_ht;      /* ht of matching request */
-
+        lcr_component_h      *components;
 	struct lcr_component *cmpts;         /* available component handles */
 	unsigned              num_cmpts;     /* number of components */
 
@@ -131,20 +99,10 @@ struct lcp_context
 
 	mpc_common_spinlock_t ctx_lock;      /* Context lock */
 
-	int                   num_eps;       /* number of endpoints created */
-	struct mpc_common_hashtable eps; /* Hash table of endpoints for other sets */
-
 	uint64_t              process_uid;   /* process uid used for endpoint creation */
         int                   num_processes; /* number of processes in the run */
 
-	mpc_queue_head_t      pending_queue; /* Queue of pending requests to be sent */
-
-	lcp_task_h *          tasks;         /* LCP tasks (per thread data) */
-        int                   num_tasks;     /* Number of tasks */
-
 	lcp_dt_ops_t          dt_ops;        /* pack/unpack functions */
-
-        mpc_list_elem_t       progress_head; /* List of interface registered for progress */
 };
 
 #endif
