@@ -21,8 +21,9 @@ static inline void mpc_queue_init_head(mpc_queue_head_t *queue) {
 
 static inline size_t mpc_queue_length(mpc_queue_head_t *queue) {
         size_t length = 0;
-        mpc_queue_elem_t *elem;
-        for (elem = queue->head; &elem == queue->tail; elem = elem->next) {
+        mpc_queue_elem_t **pelem;
+
+        for (pelem = &queue->head; pelem != queue->tail; pelem = &(*pelem)->next) {
                 length++;
         }
         return length;
