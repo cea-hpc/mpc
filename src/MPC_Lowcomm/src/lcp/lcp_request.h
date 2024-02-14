@@ -257,9 +257,9 @@ struct lcp_request {
 	(_req)->state.offset      = 0;                                       \
 }
 
-#define LCP_REQUEST_INIT_AM_SEND(_req, _ctx, _task, _am_id, _hdr, _hdr_size, \
-                                 _src_uid, _dest_tid, _info, _length, _ep,    \
-                                 _buf, _seqn, _msg_id, _dt)                  \
+#define LCP_REQUEST_INIT_AM_SEND(_req, _ctx, _task, _am_id,                  \
+                                 _src_uid, _dest_tid, _info, _length, _ep,   \
+                                 _buf, _seqn, _msg_id, _dt, _is_sync)                  \
 { \
         (_req)->send.am.am_id     = _am_id;                                  \
 	(_req)->info              = _info;                                   \
@@ -268,12 +268,13 @@ struct lcp_request {
 	(_req)->ctx               = _ctx;                                    \
 	(_req)->task              = _task;                                   \
 	(_req)->datatype          = _dt;                                     \
+	(_req)->is_sync           = _is_sync;                                \
 	\
 	(_req)->send.buffer       = _buf;                                    \
 	(_req)->send.ep           = _ep;                                     \
 	(_req)->send.length       = _length;                                 \
-	(_req)->send.am.hdr       = _hdr;                                    \
-	(_req)->send.am.hdr_size  = _hdr_size;                               \
+	(_req)->send.am.hdr       = NULL;                                    \
+	(_req)->send.am.hdr_size  = 0;                                       \
 	(_req)->send.am.src_uid   = _src_uid;                                \
 	(_req)->send.am.dest_tid  = _dest_tid;                               \
 	\

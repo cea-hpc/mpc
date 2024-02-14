@@ -364,11 +364,23 @@ int lcp_am_send_nb(lcp_ep_h ep, lcp_task_h task, int32_t dest_tid,
         //       Reorder is to be reimplemented.
         //FIXME: what length should be set here, length of data or length of
         //       data + header size ?
-        LCP_REQUEST_INIT_AM_SEND(req, ep->ctx, task, am_id, hdr, hdr_size, 
-                                 ep->ctx->process_uid, dest_tid, param->recv_info, 
-                                 count, 
+        LCP_REQUEST_INIT_AM_SEND(req, ep->ctx, task, am_id, 
+                                 ep->ctx->process_uid, dest_tid, 
+                                 param->recv_info, count, 
                                  ep, (void *)buffer, 0 /* no seqn for am */, 
-                                 (uint64_t)req, param->datatype);
+                                 (uint64_t)req, param->datatype,
+                                 param->flags & LCP_REQUEST_AM_SYNC ? 1 : 0);
+
+        /* Copy user header send can be delayed and since it can be allocated on
+         * the stack. */
+        req->send.am.hdr_size = hdr_size;
+        req->send.am.hdr = sctk_malloc(hdr_size);
+        if (req->send.am.hdr == NULL) {
+                mpc_common_debug_error("LCP AM: could not allocated user header "
+                                       "for copy");
+                return LCP_ERROR;
+        }
+        memcpy(req->send.am.hdr, hdr, hdr_size);
 
         if (param->flags & LCP_REQUEST_AM_CALLBACK) {
                 req->flags          |= LCP_REQUEST_USER_COMPLETE;

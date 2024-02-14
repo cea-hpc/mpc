@@ -639,7 +639,7 @@ static inline int _ofi_domain_cq_poll(struct _mpc_ofi_domain_t * domain, struct 
 		data_buff[0] = '\0';
 		fi_cq_strerror(cq, err.prov_errno, err.err_data, data_buff, OFI_DATA_BUFF_SIZE);
 		mpc_common_debug_fatal("%d : Got cq error on %s message of len %d over buffer %p == %s", err.err,
-				fi_strerror(err.err), err.buf, err.len, data_buff);
+				fi_strerror(err.err), err.len, err.buf, data_buff);
       return_code = -1;
 		goto unlock_cq_poll;
 	}
