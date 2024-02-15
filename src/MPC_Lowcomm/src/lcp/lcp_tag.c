@@ -261,14 +261,14 @@ int lcp_send_task_tag_zcopy(lcp_request_t *req)
 {
         int rc = LCP_SUCCESS;
 
-        mpc_common_debug_info("LCP: send am task tag zcopy comm=%d, src=%d, "
+        mpc_common_debug_info("LCP: send task tag zcopy comm=%d, src=%d, "
                               "dest=%d, tag=%d, length=%d, seqn=%d, req=%p", 
                               req->send.tag.comm, req->send.tag.src_tid, 
                               req->send.tag.dest_tid, req->send.tag.tag, 
                               req->send.length, req->seqn, req);
 
         //NOTE: setting a header structure within task_completion_t is necessary
-        //      for the matching mecanism is case of eager send (message
+        //      for the matching mechanism is case of eager send (message
         //      inserted in unexpected message queue.
         req->state.tcomp = (lcp_task_completion_t) {
                 .hdr     = {
@@ -298,7 +298,7 @@ err:
 
 int lcp_send_task_tag_bcopy(lcp_request_t *req) 
 {
-        mpc_common_debug_info("LCP: send am task tag bcopy comm=%d, src=%d, "
+        mpc_common_debug_info("LCP: send task tag bcopy comm=%d, src=%d, "
                               "dest=%d, tag=%d, length=%d, seqn=%d, req=%p", 
                               req->send.tag.comm, req->send.tag.src_tid, 
                               req->send.tag.dest_tid, req->send.tag.tag, 
@@ -410,7 +410,7 @@ int lcp_send_eager_tag_zcopy(lcp_request_t *req)
                 .comp_cb = lcp_tag_send_complete
         };
 
-        mpc_common_debug_info("LCP: send am eager tag zcopy comm=%d, src=%d, "
+        mpc_common_debug_info("LCP: send eager tag zcopy comm=%d, src=%d, "
                               "dest=%d, tag=%d, length=%d", req->send.tag.comm, 
                               req->send.tag.src_tid, req->send.tag.dest_tid, 
                               req->send.tag.tag, req->send.length);
@@ -520,7 +520,7 @@ static int lcp_send_rndv_tag_rts_progress(lcp_request_t *req)
         int rc = LCP_SUCCESS;
         ssize_t payload_size;
 
-        mpc_common_debug("LCP TAG: send am rndv tag bcopy. comm=%d, src=%d, "
+        mpc_common_debug("LCP TAG: send rndv ready-to-send bcopy (uses am). comm=%d, src=%d, "
                          "dest=%d, tag=%d, length=%d, seqn=%d, buf=%p, req=%p", 
                          req->send.tag.comm, req->send.tag.src_tid, 
                          req->send.tag.dest_tid, req->send.tag.tag,
