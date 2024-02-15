@@ -430,7 +430,7 @@ static inline int _pmi_initialize(struct mpc_pmi_context *ctx, int * unreachable
 					   0);
 		if( (rc == PMIX_ERR_UNREACH) || (rc == PMIX_ERR_INVALID_NAMESPACE) )
 		{
-			mpc_common_debug("PMIx was unreachable");
+			mpc_common_debug_error("PMIx was unreachable, falling back to serial execution");
 			goto PMI_INIT_SERIAL;
 		}
 		else
