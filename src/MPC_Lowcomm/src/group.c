@@ -301,10 +301,12 @@ int mpc_lowcomm_group_get_local_leader(mpc_lowcomm_group_t *g)
 	/* We need to compute the leader */
 	unsigned int i;
 	int          my_proc_rank = mpc_common_get_process_rank();
+  mpc_lowcomm_peer_uid_t my_uid = mpc_lowcomm_monitor_get_uid();
+  mpc_lowcomm_set_uid_t my_set =  mpc_lowcomm_peer_get_set(my_uid);
 
 	for(i = 0; i < g->size; i++)
 	{
-		if(my_proc_rank == mpc_lowcomm_group_process_rank_from_world(g->ranks[i].comm_world_rank) )
+		if((my_set == mpc_lowcomm_peer_get_set(g->ranks[i].host_process_uid)) && (my_proc_rank == mpc_lowcomm_group_process_rank_from_world(g->ranks[i].comm_world_rank)))
 		{
 			g->local_leader = i;
 			break;
