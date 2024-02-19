@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file. The format is based on [Keep a Changelog][Keep a Changelog].
 
+## [4.3.0] - 2024-02-19
+
+### Added
+
+- **Low Comm** / RED-SEA Project
+  - Refactoring LCP module to better support suit protocols evolutions
+  - Support for implementing protocols on top of rails (active message)
+  - Support for multirail and fragmentation
+  - Extension of rail API to support stream-like data transfers (tcp and ptl only)
+  - Component-based transport with static loading
+
+### Changed 
+#
+- **OMP**
+  - Enhancing support of OpenMP task and interactions with MPI
+
 ## [4.2.0] - 2023-06-13
 
 ### Added
