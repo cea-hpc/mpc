@@ -4031,44 +4031,45 @@ int mpc_lowcomm_lookup_name(const char *service_name,
 	mpc_lowcomm_peer_uid_t *set_roots = _mpc_lowcomm_get_set_roots(&roots_count);
 
 	int i;
+	mpc_lowcomm_monitor_retcode_t mret = MPC_LOWCOMM_MONITOR_RET_ERROR;
 
-	for(i = 0 ; i < roots_count ; i++)
+
+	for(i = 0 ; i < roots_count && mret != MPC_LOWCOMM_MONITOR_RET_SUCCESS; i++)
 	{
 		/* Now try to resolve starting from ourselves */
-		mpc_lowcomm_monitor_retcode_t mret;
-
 		mpc_lowcomm_monitor_response_t resp = mpc_lowcomm_monitor_naming(set_roots[i],
 		                                                                 MPC_LOWCOMM_MONITOR_NAMING_GET,
 		                                                                 mpc_lowcomm_monitor_get_uid(),
 		                                                                 service_name,
 		                                                                 "",
 		                                                                 &mret);
+	
+		if (mret != MPC_LOWCOMM_MONITOR_RET_SUCCESS) 
+		{
+			continue;
+		}
 
 		mpc_lowcomm_monitor_args_t *content = mpc_lowcomm_monitor_response_get_content(resp);
 
-		int err = 0;
-
-
-		if( (content->naming.retcode != MPC_LOWCOMM_MONITOR_RET_SUCCESS) ||
-		    (mret != MPC_LOWCOMM_MONITOR_RET_SUCCESS) )
+		if (content->naming.retcode != MPC_LOWCOMM_MONITOR_RET_SUCCESS) 
 		{
-			err = 1;
+			mret = content->naming.retcode;
+			continue;
 		}
 
-		if(!err)
-		{
-			snprintf(port_name, port_name_len, "%s", content->naming.port_name);
-		}
-
+		snprintf(port_name, port_name_len, "%s", content->naming.port_name);
 		mpc_lowcomm_monitor_response_free(resp);
-
-		if(!err)
-		{
-			break;
-		}
 	}
 
 	_mpc_lowcomm_free_set_roots(set_roots);
+
+	if (mret != MPC_LOWCOMM_MONITOR_RET_SUCCESS)
+	{
+		mpc_common_debug_warning("%s could not find any matching peer for service %s",
+				__func__, service_name);
+
+		return MPC_LOWCOMM_ERROR;
+	}
 
 	return MPC_LOWCOMM_SUCCESS;
 }
