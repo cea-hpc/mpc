@@ -16503,7 +16503,7 @@ int PMPI_Lookup_name(const char *service_name,
 
 	if(ret != MPC_LOWCOMM_SUCCESS)
 	{
-		ret = MPI_ERR_INTERN;
+		ret = MPI_ERR_NAME;
 	}
 	else
 	{
