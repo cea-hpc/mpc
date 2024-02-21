@@ -3020,6 +3020,9 @@ int mpc_mpi_cl_error_string(int code, char *str, int *len)
 	err_case_sprintf(MPC_ERR_INFO_KEY, "Provided info key is too large");
 	err_case_sprintf(MPC_ERR_INFO_VALUE, "Provided info value is too large");
 	err_case_sprintf(MPC_ERR_INFO_NOKEY, "Could not locate a value with this key");
+	err_case_sprintf(MPC_ERR_NAME, "Invalid service name passed to MPI_Lookup_name");
+	err_case_sprintf(MPC_ERR_PORT, "Invalid port name passed to MPI_Comm_connect");
+
 
 		default:
 			mpc_common_debug_warning("%d error code unknown", code);
@@ -3088,8 +3091,12 @@ void _mpc_cl_abort_error(mpc_lowcomm_communicator_t *comm, const int *error, cha
 	{
 		mpc_common_debug_error("Error: %s on comm %d : %s", str, mpc_lowcomm_communicator_id(*comm), message);
 	}
+	else
+	{
+		mpc_common_debug_error("Error: unknown error code %d on comm %d : %s", *error, message);
+	}
 
-	mpc_common_debug_error("This occured in %s at %s:%d", function, file, line);
+	mpc_common_debug_error("This occurred in %s at %s:%d", function, file, line);
 	mpc_common_debug_error("MPC Encountered an Error will now abort");
 	mpc_common_debug_error("===================================================");
 	mpc_common_debug_abort();
