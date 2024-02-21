@@ -16594,9 +16594,26 @@ int PMPI_Comm_accept(const char *port_name,
 
 	mpi_check_comm(comm);
 
+	if(mpc_lowcomm_communicator_is_intercomm(comm))
+	{
+		MPI_ERROR_REPORT(comm, MPI_ERR_COMM, "Comm_accept was provided an intercommunicator input comm");
+	}
+
 	if(newcomm == NULL)
 	{
-		MPI_ERROR_REPORT(comm, MPI_ERR_COMM, "Comm_accept was provided with a NULL newcomm");
+		// Returning MPI_ERR_ARG rather than MPI_ERR_COMM since newcomm is not an input param:
+		// a newcomm == NULL is not a communicator error, just a wrong argument 
+		MPI_ERROR_REPORT(comm, MPI_ERR_ARG, "Comm_accept was provided a NULL newcomm");
+	}
+
+	if(port_name == NULL)
+	{
+		MPI_ERROR_REPORT(comm, MPI_ERR_ARG, "Comm_accept was provided a NULL port_name");
+	}
+
+	if(newcomm == NULL)
+	{
+		MPI_ERROR_REPORT(comm, MPI_ERR_ARG, "Comm_accept was provided a NULL newcomm");
 	}
 
   int ret = mpc_lowcomm_communicator_accept(port_name,
@@ -16632,9 +16649,21 @@ int PMPI_Comm_connect(const char *port_name,
 
 	mpi_check_comm(comm);
 
+	if(mpc_lowcomm_communicator_is_intercomm(comm))
+	{
+		MPI_ERROR_REPORT(comm, MPI_ERR_COMM, "Comm_connect was provided an intercommunicator input comm");
+	}
+
 	if(newcomm == NULL)
 	{
-		MPI_ERROR_REPORT(comm, MPI_ERR_COMM, "Comm_connect was provided with a NULL newcomm");
+		// Returning MPI_ERR_ARG rather than MPI_ERR_COMM since newcomm is not an input param:
+		// a newcomm == NULL is not a communicator error, just a wrong argument 
+		MPI_ERROR_REPORT(comm, MPI_ERR_ARG, "Comm_connect was provided a NULL newcomm");
+	}
+
+	if(port_name == NULL)
+	{
+		MPI_ERROR_REPORT(comm, MPI_ERR_ARG, "Comm_connect was provided a NULL port_name");
 	}
 
   int ret = mpc_lowcomm_communicator_connect(port_name,
