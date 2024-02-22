@@ -445,4 +445,8 @@ void _mpc_omp_event_handle_deinit_detach(mpc_omp_event_handle_detach_t * handle)
 void _mpc_omp_event_handle_init_continue(mpc_omp_event_handle_detach_t ** handle_ptr);
 void _mpc_omp_event_handle_deinit_continue(mpc_omp_event_handle_detach_t * handle);
 
+void _mpc_omp_task_pre_run_as_function(mpc_omp_task_t * task);
+void _mpc_omp_task_post_run_as_function(mpc_omp_task_t * task, mpc_omp_task_t * next);
+
+
 #endif /* __MPC_OMP_TASK_H__ */

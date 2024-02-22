@@ -106,7 +106,7 @@
 #define MPC_OMP_TASK_RELEASE_DEPS_ON_DELETE 1
 
 /* compile the taskwait detach(event) extension */
-#define MPC_OMP_TASK_COMPILE_TASKWAIT_DETACH 1
+#define MPC_OMP_TASK_COMPILE_TASKWAIT_DETACH 0
 
 /* compile LIFO/FIFO lists, else always assume LIFO */
 #define MPC_OMP_TASK_COMPILE_LIST_TYPE 1

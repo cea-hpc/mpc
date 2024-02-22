@@ -247,6 +247,7 @@ __task_list_pop(mpc_omp_task_list_t * list)
  * PRIORITY QUEUE (rb-tree)
  *************************/
 
+#if MPC_OMP_TASK_COMPILE_PRIORITY
 #ifndef NDEBUG
 static inline void
 __task_pqueue_coherency_check_colors(
@@ -319,7 +320,6 @@ __task_pqueue_coherency_check(mpc_omp_task_pqueue_t * tree)
 
 #endif /* NDEBUG */
 
-#if MPC_OMP_TASK_COMPILE_PRIORITY
 static mpc_omp_task_pqueue_node_t *
 __task_pqueue_node_new(
     mpc_omp_task_pqueue_node_t * parent,
@@ -1055,6 +1055,7 @@ _mpc_omp_task_array_push(mpc_omp_task_array_t * array, mpc_omp_task_t * task)
     __task_ref(task);   /* _mpc_omp_task_array_deinit */
 }
 
+#if MPC_OMP_TASK_COMPILE_PERSISTENT
 static void
 _mpc_omp_task_array_merge(mpc_omp_task_array_t * dst, mpc_omp_task_array_t * src)
 {
@@ -1070,6 +1071,7 @@ _mpc_omp_task_array_merge(mpc_omp_task_array_t * dst, mpc_omp_task_array_t * src
     src->n = 0;
     src->capacity = 0;
 }
+#endif /* MPC_OMP_TASK_COMPILE_PERSISTENT */
 
 static inline mpc_omp_task_t *
 _mpc_omp_task_array_last(mpc_omp_task_array_t * array)
@@ -3200,7 +3202,7 @@ __task_run_next(mpc_omp_thread_t * thread)
 }
 
 static inline void
-___thread_bind_task(
+___task_bind_to_thread(
     mpc_omp_thread_t * thread,
     mpc_omp_task_t * task,
     mpc_omp_local_icv_t * icv)
@@ -3253,6 +3255,16 @@ __task_pre_run(mpc_omp_task_t * task)
     assert(__task_pre_run_coherency(task));
 }
 
+inline void
+_mpc_omp_task_pre_run_as_function(mpc_omp_task_t * task)
+{
+    __task_pre_run(task);
+
+    mpc_omp_thread_t * thread = mpc_omp_get_thread_tls();
+    ___task_bind_to_thread(thread, task, &(task->icvs));
+    MPC_OMP_TASK_TRACE_SCHEDULE(task);
+}
+
 static inline void
 __task_post_run(mpc_omp_task_t * task)
 {
@@ -3262,6 +3274,19 @@ __task_post_run(mpc_omp_task_t * task)
         TASK_STATE_TRANSITION(task, MPC_OMP_TASK_STATE_EXECUTED);
     }
     mpc_common_spinlock_unlock(&(task->state_lock));
+}
+
+inline void
+_mpc_omp_task_post_run_as_function(mpc_omp_task_t * task, mpc_omp_task_t * next)
+{
+    __task_post_run(task);
+    MPC_OMP_TASK_TRACE_SCHEDULE(task);
+
+    mpc_omp_thread_t * thread = mpc_omp_get_thread_tls();
+    ___task_bind_to_thread(thread, next, &(next->icvs));
+
+    /* delete the task */
+    _mpc_omp_task_finalize(task);
 }
 
 /**
@@ -3274,17 +3299,10 @@ __task_run_as_function(mpc_omp_task_t * task)
     mpc_omp_thread_t * thread = mpc_omp_get_thread_tls();
     mpc_omp_task_t * curr = MPC_OMP_TASK_THREAD_GET_CURRENT_TASK(thread);
 
-    ___thread_bind_task(thread, task, &(task->icvs));
-
-    __task_pre_run(task);
-    MPC_OMP_TASK_TRACE_SCHEDULE(task);
+    _mpc_omp_task_pre_run_as_function(task);
     if (task->func) task->func(task->data);
-    __task_post_run(task);
-    MPC_OMP_TASK_TRACE_SCHEDULE(task);
-    ___thread_bind_task(thread, curr, &(curr->icvs));
+    _mpc_omp_task_post_run_as_function(task, curr);
 
-    /* delete the task */
-    _mpc_omp_task_finalize(task);
 }
 
 # if MPC_OMP_TASK_COMPILE_UCONTEXT
@@ -3370,7 +3388,7 @@ __task_run_with_ucontext(mpc_omp_task_t * task)
         task->ucontext = __thread_generate_new_task_ucontext(thread);
     }
 
-    ___thread_bind_task(thread, task, &(task->icvs));
+    ___task_bind_to_thread(thread, task, &(task->icvs));
     task->ucontext->exit = &(thread->task_infos.mctx);
 
     sctk_mctx_t * mctx = task->ucontext->swap_count ? &(task->ucontext->current) : &(task->ucontext->initial);
@@ -3380,7 +3398,7 @@ __task_run_with_ucontext(mpc_omp_task_t * task)
     sctk_swapcontext_no_tls(task->ucontext->exit, mctx);
     MPC_OMP_TASK_TRACE_SCHEDULE(task);
 
-    ___thread_bind_task(thread, curr, &(curr->icvs));
+    ___task_bind_to_thread(thread, curr, &(curr->icvs));
 
     // if task completed
     if (TASK_STATE(task) == MPC_OMP_TASK_STATE_EXECUTED)
@@ -3969,6 +3987,8 @@ _mpc_omp_task_deps(mpc_omp_task_t * task, void ** depend, int priority_hint)
 #if MPC_OMP_TASK_COMPILE_PRIORITY
     task->omp_priority_hint = priority_hint;
     __task_priority_compute(task);
+#else
+    (void) priority_hint;
 #endif /* MPC_OMP_TASK_COMPILE_PRIORITY */
 }
 
