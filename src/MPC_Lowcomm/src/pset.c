@@ -317,7 +317,7 @@ static inline int __register_base_comms(void)
 	return 0;
 }
 
-static inline int __split_for(mpc_lowcomm_communicator_t src_comm, const char *desc, int color)
+static inline int __split_for(mpc_lowcomm_communicator_t src_comm, const char *desc, int color, int *rank)
 {
 	mpc_lowcomm_communicator_t comm = mpc_lowcomm_communicator_split(src_comm,
 	                                                                 color,
@@ -344,6 +344,8 @@ static inline int __split_for(mpc_lowcomm_communicator_t src_comm, const char *d
 		_mpc_lowcomm_pset_push(sappid, grp, 0);
 	}
 
+	*rank = mpc_lowcomm_communicator_rank(comm);
+
 	mpc_lowcomm_group_free(&grp);
 
 	mpc_lowcomm_communicator_free(&comm);
@@ -359,20 +361,21 @@ int _mpc_lowcomm_pset_bootstrap(void)
 
 	__register_base_comms();
 
-	return MPC_LOWCOMM_SUCCESS;
+	// return MPC_LOWCOMM_SUCCESS;
 
 	/* Application PSETS */
 	int my_app_id;
+	int rank;
 
-	mpc_launch_pmi_get_app_rank(&my_app_id);
+	mpc_launch_pmi_get_app_num(&my_app_id);
 
-	__split_for(MPC_COMM_WORLD, "app://", my_app_id);
-
+	__split_for(MPC_COMM_WORLD, "app://", my_app_id, &rank );
+	mpc_common_set_app_rank(rank);
 	/* Node PSETS */
-	__split_for(MPC_COMM_WORLD, "node://", mpc_common_get_node_rank() );
+	__split_for(MPC_COMM_WORLD, "node://", mpc_common_get_node_rank(), &rank );
 
 	/* Process PSETS */
-	__split_for(MPC_COMM_WORLD, "unix://", mpc_common_get_process_rank() );
+	__split_for(MPC_COMM_WORLD, "unix://", mpc_common_get_process_rank(), &rank );
 
 
 	/* Topological PSETS */
@@ -406,7 +409,7 @@ int _mpc_lowcomm_pset_bootstrap(void)
 		/* If we are here all ranks have a color */
 		char name[64];
 		snprintf(name, 64, "hwloc://%s/", mpc_topology_split_hardware_type_name[i]);
-		__split_for(node_comm, name, color);
+		__split_for(node_comm, name, color, &rank);
 	}
 
 	mpc_lowcomm_communicator_free(&node_comm);

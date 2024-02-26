@@ -112,6 +112,8 @@ class MpcConfig:
 		self._conf["MPCFRAMEWORK_LAUNCH_MPCRUN_PLUGIN"] = "none"
 		self._conf["MPCFRAMEWORK_LAUNCH_MPCRUN_SMT"] = False
 		self._conf["MPCFRAMEWORK_LAUNCH_MPCRUN_THREAD"] = "ethread_mxn"
+		self._conf["MPCFRAMEWORK_LAUNCH_APPNUM"] = 0
+		self._conf["MPCFRAMEWORK_LAUNCH_APPCOUNT"] = 0
 		self._conf["MPCFRAMEWORK_LOWCOMM_NETWORKING_CLI_DEFAULT"] = "tcp"
 
 		if os.isatty(sys.stderr.fileno()):
@@ -289,6 +291,8 @@ class MpcConfig:
 			"MPCFRAMEWORK_LAUNCH_MPCRUN_PLUGIN" : "--launcher=XX",
 			"MPCFRAMEWORK_LAUNCH_DEBUG_VERBOSITY" : "--mpc-verbose=XX",
 			"MPCFRAMEWORK_LAUNCH_MPCRUN_THREAD" : "--thread=XX",
+			"MPCFRAMEWORK_LAUNCH_APPNUM" : "--appnum=XX",
+			"MPCFRAMEWORK_LAUNCH_APPCOUNT" : "--appcount=XX",
 			"MPCFRAMEWORK_LOWCOMM_NETWORKING_CLI_DEFAULT" : "--sctk_use_network=XX",
 			"MPIRUN_IS_RUNNING_IN_A_TTY" : "--isatty"
 		}
@@ -421,8 +425,10 @@ if __name__ == "__main__":
 
 	cmds = []
 
-	for c in commands:
+	for appnum, c in enumerate(commands):
 		(jconf, cmd) = conf.config_for_args(c)
+		jconf["MPCFRAMEWORK_LAUNCH_APPNUM"] = appnum
+		jconf["MPCFRAMEWORK_LAUNCH_APPCOUNT"] = len(commands)
 		cmds.append((jconf, cmd))
 
 

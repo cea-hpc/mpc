@@ -41,6 +41,7 @@ typedef struct mpc_thread_rank_info_s
 {
 	int rank;
 	int local_rank;
+	int app_rank;
 }mpc_thread_rank_info_t;
 
 static inline int ___get_task_rank()
@@ -98,6 +99,26 @@ static inline int mpc_common_get_task_rank(void)
 	}
 
 	return ret;
+}
+
+static inline int mpc_common_get_app_rank(){
+	return mpc_thread_rank_info_get()->app_rank;
+}
+
+static inline void mpc_common_set_app_rank(int app_rank){
+	mpc_thread_rank_info_get()->app_rank = app_rank;
+}
+
+static inline int mpc_common_get_app_size(){
+	return mpc_common_get_flags()->appsize;
+}
+
+static inline int mpc_common_get_app_num(){
+	return mpc_common_get_flags()->appnum;
+}
+
+static inline int mpc_common_get_app_count(){
+	return mpc_common_get_flags()->appcount;
 }
 
 static inline unsigned int mpc_common_get_task_count(void)

@@ -301,6 +301,9 @@ static inline void __parse_argument(char *passed_arg)
 	SET_FLAG_INT("--process-number", process_number);
 	SET_FLAG_INT("--task-number", task_number);
 	SET_FLAG_INT("--processor-number", processor_number);
+	SET_FLAG_INT("--appnum", appnum);
+	SET_FLAG_INT("--task_number", appsize);
+	SET_FLAG_INT("--appcount", appcount);
 
 	PARSE_ARG_WITH_EQ("--mpc-verbose", __arg_set_verbosity);
 

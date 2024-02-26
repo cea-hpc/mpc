@@ -4139,6 +4139,7 @@ static void __lowcomm_init_per_task()
 		_mpc_lowcomm_pset_bootstrap();
 
 		mpc_lowcomm_allocmem_pool_init();
+
 	}
 }
 

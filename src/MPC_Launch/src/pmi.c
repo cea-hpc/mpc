@@ -1051,6 +1051,8 @@ int mpc_launch_pmi_get_univ_size(int* univsize){
 
 int mpc_launch_pmi_get_app_rank(int* appname)
 {
+	// CF mpc_common_get_app_rank() MPC_Common
+	not_implemented();
 	#if defined(MPC_USE_PMIX)
 		pmix_status_t ret;
 		pmix_value_t* val;
@@ -1091,6 +1093,8 @@ int mpc_launch_pmi_get_app_rank(int* appname)
 }
 
 int mpc_launch_pmi_get_app_size(int* appsize){
+	*appsize = mpc_common_get_flags()->appsize;
+	return MPC_LAUNCH_PMI_SUCCESS;
 	#if defined(MPC_USE_PMIX)
 		pmix_proc_t proc;
 		pmix_status_t ret;
@@ -1098,7 +1102,7 @@ int mpc_launch_pmi_get_app_size(int* appsize){
 		PMIX_PROC_LOAD(&proc, pmi_context.pmix_proc.nspace, PMIX_RANK_WILDCARD);
 		ret = PMIx_Get(&proc, PMIX_APP_SIZE, NULL, 0 , &val);
 		if(PMIX_SUCCESS == ret) *appsize = val->data.uint32;
-		// else printf("get app_size returned %d", ret);
+		else mpc_common_debug_error("PMI: get app_size returned %d", ret);
 		return ret == PMIX_SUCCESS;
 	#else
 		mpc_common_debug_warning("mpc_launch_pmi_get_app_size unsuported");
@@ -1110,6 +1114,10 @@ int mpc_launch_pmi_get_app_size(int* appsize){
 // does not work
 
 int mpc_launch_pmi_get_app_num(int* appnum){
+	
+	*appnum = mpc_common_get_flags()->appnum;
+	return MPC_LAUNCH_PMI_SUCCESS;
+
 	#if defined(MPC_USE_PMIX)
 		pmix_proc_t proc;
 		pmix_status_t ret;
@@ -1117,7 +1125,7 @@ int mpc_launch_pmi_get_app_num(int* appnum){
 		PMIX_PROC_LOAD(&proc, pmi_context.pmix_proc.nspace, PMIX_RANK_WILDCARD);
 		ret = PMIx_Get(&proc, PMIX_JOB_NUM_APPS, NULL, 0 , &val);
 		if(PMIX_SUCCESS == ret) *appnum = val->data.uint32;
-		// else printf("get job_num_apps returned %d", ret);
+		else mpc_common_debug_error("PMI: get job_num_apps returned %d", ret);
 		return ret == PMIX_SUCCESS;
 	#else
 		mpc_common_debug_warning("mpc_launch_pmi_get_app_num unsuported");
