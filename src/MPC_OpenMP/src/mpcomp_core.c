@@ -153,7 +153,7 @@ static inline void __omp_conf_set_default(void)
 }
 
 
-void __omp_conf_init(void)
+void _mpc_omp_conf_init(void)
 {
 	__omp_conf_set_default();
 
@@ -236,7 +236,7 @@ void mpc_openmp_registration()
 {
 	MPC_INIT_CALL_ONLY_ONCE
 
-	mpc_common_init_callback_register("Config Sources", "MPC_OMP Init", __omp_conf_init, 32);
+	mpc_common_init_callback_register("Config Sources", "MPC_OMP Init", _mpc_omp_conf_init, 32);
 }
 
 /*****************

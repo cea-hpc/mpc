@@ -185,6 +185,7 @@ struct mpc_omp_conf_s * mpc_omp_conf_get(void);
 
 void mpc_omp_init(void);
 void mpc_omp_exit(void);
+void _mpc_omp_conf_init(void);
 void _mpc_omp_instance_init(mpc_omp_instance_t *, int, mpc_omp_team_t *);
 void _mpc_omp_in_order_scheduler(mpc_omp_thread_t *);
 void _mpc_omp_flush(void);

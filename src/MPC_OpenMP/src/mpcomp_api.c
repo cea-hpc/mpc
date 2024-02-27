@@ -569,25 +569,24 @@ mpc_omp_event_handle_deinit(mpc_omp_event_handle_t * handle)
     }
 }
 
+# if MPC_OMP_TASK_COMPILE_TRACE
+
 /** # pragma omp task label("potrf") */
 void
 mpc_omp_task_label(char * label)
 {
-# if MPC_OMP_TASK_COMPILE_TRACE
     mpc_omp_thread_t * thread = (mpc_omp_thread_t *)mpc_omp_tls;
     thread->task_infos.incoming.label = label;
-# endif /* MPC_OMP_TASK_COMPILE_TRACE */
 }
 
 /** # pragma omp task color(c) */
 void
 mpc_omp_task_color(int c)
 {
-# if MPC_OMP_TASK_COMPILE_TRACE
     mpc_omp_thread_t * thread = (mpc_omp_thread_t *)mpc_omp_tls;
     thread->task_infos.incoming.color = c;
-# endif /* MPC_OMP_TASK_COMPILE_TRACE */
 }
+# endif /* MPC_OMP_TASK_COMPILE_TRACE */
 
 /** # pragma omp task ucontext */
 void
@@ -739,7 +738,7 @@ int __kmpc_get_target_offload(void) {
   //if (!__kmp_init_serial) {
   //  __kmp_serial_initialize();
   //}
-  __omp_conf_init();
+  _mpc_omp_conf_init();
 
   return __kmp_target_offload;
 }

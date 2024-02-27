@@ -160,13 +160,12 @@ void mpc_omp_GOMP_single_copy_end( void *data )
  * unpack mpcomp_gomp_wrapper_t.
  * \param arg opaque type
  */
-static inline void * mpc_omp_GOMP_wrapper_fn( void *args )
+static inline void mpc_omp_GOMP_wrapper_fn( void *args )
 {
 	mpc_omp_GOMP_wrapper_t *w = ( mpc_omp_GOMP_wrapper_t * ) args;
 	assert( w );
 	assert( w->fn );
 	w->fn( w->data );
-    return NULL;
 }
 
 /*******************
@@ -244,7 +243,7 @@ static inline void __gomp_start_parallel_region( void ( *fn )( void * ), void *d
 	assert( info );
 	_mpc_omp_parallel_region_infos_init( info );
 
-	info->func = (void *( * )( void * )) fn;
+	info->func = fn;
 	info->shared = data;
     info->icvs = t->info.icvs;
 	info->combined_pragma = MPC_OMP_COMBINED_NONE;
@@ -429,7 +428,7 @@ static inline void __gomp_parallel_loop_generic_start(
 	assert( info );
 
 	_mpc_omp_parallel_region_infos_init( info );
-	_mpc_omp_parallel_set_specific_infos( info, ( void *( * ) ( void * ) ) fn, data,
+	_mpc_omp_parallel_set_specific_infos( info, fn, data,
 	                                      t->info.icvs, combined_pragma );
 
 	_mpc_omp_loop_gen_infos_init( &( t->info.loop_infos ), start, end, incr,
