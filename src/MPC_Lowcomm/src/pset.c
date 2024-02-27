@@ -371,6 +371,9 @@ int _mpc_lowcomm_pset_bootstrap(void)
 
 	__split_for(MPC_COMM_WORLD, "app://", my_app_id, &rank );
 	mpc_common_set_app_rank(rank);
+
+	return MPC_LOWCOMM_SUCCESS;
+
 	/* Node PSETS */
 	__split_for(MPC_COMM_WORLD, "node://", mpc_common_get_node_rank(), &rank );
 
