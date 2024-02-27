@@ -7,6 +7,7 @@ __thread int __mpc_task_rank = -2;
 
 int __process_count = 1;
 int __process_rank = 0;
+int __process_app_rank;
 
 void mpc_common_set_process_count(int process_count)
 {

@@ -5,6 +5,7 @@
 
 #include <sys/types.h>
 #include <unistd.h>
+#include <mpc_common_flags.h>
 
 /**
  * @addtogroup MPC_Common
@@ -60,6 +61,9 @@ extern int __process_count;
 
 /** Global variable storing process rank */
 extern int __process_rank;
+
+/** Global variable storing app rank*/
+extern int __process_app_rank;
 
 /**
  * @brief Get the number of UNIX processes
@@ -146,6 +150,27 @@ static inline int mpc_common_get_node_rank( void )
  */
 
 /* Tasks */
+
+
+static inline int mpc_common_get_app_rank(){
+	return __process_app_rank;
+}
+
+static inline void mpc_common_set_app_rank(int app_rank){
+	__process_app_rank = app_rank;
+}
+
+static inline int mpc_common_get_app_size(){
+	return mpc_common_get_flags()->appsize;
+}
+
+static inline int mpc_common_get_app_num(){
+	return mpc_common_get_flags()->appnum;
+}
+
+static inline int mpc_common_get_app_count(){
+	return mpc_common_get_flags()->appcount;
+}
 
 /**
  * @brief Get task count in current UNIX process
