@@ -1928,8 +1928,9 @@ mpc_lowcomm_communicator_t mpc_lowcomm_communicator_split(mpc_lowcomm_communicat
 			mpc_common_nodebug("GROUP is %d", group_size);
 
 
-			int *comm_world_ranks = ( int * )sctk_malloc(group_size * sizeof(int) );
-			assume(comm_world_ranks != NULL);
+      _mpc_lowcomm_group_rank_descriptor_t * group_descriptor = 
+        (_mpc_lowcomm_group_rank_descriptor_t * )sctk_malloc(group_size * sizeof(_mpc_lowcomm_group_rank_descriptor_t));
+			assume(group_descriptor != NULL);
 
 			j = 0;
 
@@ -1937,14 +1938,14 @@ mpc_lowcomm_communicator_t mpc_lowcomm_communicator_split(mpc_lowcomm_communicat
 			{
 				if(tab[i].color == tmp_color)
 				{
-					comm_world_ranks[j] = mpc_lowcomm_communicator_world_rank_of(comm, tab[i].rank);
+          group_descriptor[j] = comm->group->ranks[tab[i].rank];
 					//mpc_common_debug_error("Thread %d color (%d) size %d on %d rank %d", tmp_color,
 					//                   k, j, group_size, tab[i].rank);
 					j++;
 				}
 			}
 
-			mpc_lowcomm_group_t *comm_group = mpc_lowcomm_group_create(group_size, comm_world_ranks);
+			mpc_lowcomm_group_t *comm_group = _mpc_lowcomm_group_create(group_size, group_descriptor, 1);
 
 			mpc_lowcomm_communicator_t new_comm = mpc_lowcomm_communicator_from_group(comm, comm_group);
 
@@ -1955,7 +1956,6 @@ mpc_lowcomm_communicator_t mpc_lowcomm_communicator_split(mpc_lowcomm_communicat
 
 			/* We free here as the comm now holds a ref */
 			mpc_lowcomm_group_free(&comm_group);
-			sctk_free(comm_world_ranks);
 			//mpc_common_debug_error("Split color %d done", tmp_color);
 		}
 	}
