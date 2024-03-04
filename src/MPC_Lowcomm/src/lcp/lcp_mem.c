@@ -283,7 +283,7 @@ int lcp_pinning_entry_list_decimate_no_lock(struct lcp_pinning_entry_list * list
                 if(lcp_pinning_entry_refcount(last) == 0)
                 {
                         size_to_decimate -= (long int)last->size;
-                        mpc_common_debug_error("PINNING removing a buffer of %lld", last->size);
+                        mpc_common_tracepoint_fmt("PINNING removing a buffer of %lld", last->size);
                         lcp_pinning_entry_list_remove_no_lock(list, last);
                 }
 
