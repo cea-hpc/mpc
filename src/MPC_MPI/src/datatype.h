@@ -483,17 +483,12 @@ static inline mpc_lowcomm_datatype_t _mpc_dt_get_datatype(mpc_lowcomm_datatype_t
  * \return true if data_in is contiguous in memory
  *         false otherwise
  */
-static inline bool _mpc_dt_is_contig_mem(mpc_lowcomm_datatype_t data_in)
+static inline int _mpc_dt_is_contig_mem(mpc_lowcomm_datatype_t data_in)
 {
-	/* Note that the general asumption can be optimized
+	/* Note that the general assumption can be optimized
 	 * for single segment general with no LB/UB */
-	if(mpc_dt_is_valid(data_in) &&
-	   _mpc_dt_get_datatype(data_in)->opt_count == 1)
-	{
-		return true;
-	}
-
-	return false;
+	return mpc_dt_is_valid(data_in) &&
+	   _mpc_dt_get_datatype(data_in)->opt_count == 1;
 }
 
 /************************************************************************/
@@ -503,7 +498,7 @@ static inline bool _mpc_dt_is_contig_mem(mpc_lowcomm_datatype_t data_in)
 /** \brief This structure gathers user defined datatypes in the same lockable structure
  *
  *  This structure is the entry point for user defined datatypes
- *  it is inintialized in \ref mpc_mpi_cl_per_mpi_process_ctx_t
+ *  it is initialized in \ref mpc_mpi_cl_per_mpi_process_ctx_t
  */
 struct _mpc_dt_storage
 {
