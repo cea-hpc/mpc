@@ -566,7 +566,7 @@ static int lcp_rndv_am_handler(void *arg, void *data,
 
         //FIXME: no support for non contiguous data
         //FIXME: how to handle return code ?
-        param.flags   |= LCP_AM_RNDV;
+        param.flags    = LCP_AM_RNDV;
         param.reply_ep = ep;
         data_ptr       = (char *)(ctnr + 1);
         data_length    = length - hdr->am.hdr_size - sizeof(*hdr);
