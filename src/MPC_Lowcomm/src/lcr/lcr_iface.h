@@ -37,7 +37,7 @@
 
 #include "lcr_def.h"
 
-// Endpoint functions
+// Endpoint AM functions
 typedef ssize_t (*lcr_send_am_bcopy_func_t)(_mpc_lowcomm_endpoint_t *ep,
                                             uint8_t id,
                                             lcr_pack_callback_t pack,
@@ -68,6 +68,7 @@ typedef int (*lcr_send_tag_zcopy_func_t)(_mpc_lowcomm_endpoint_t *ep,
                                          unsigned flags,
                                          lcr_completion_t *ctx);
 
+// Endpoint TAG functions
 typedef int (*lcr_post_tag_zcopy_func_t)(sctk_rail_info_t *rail,
                                          lcr_tag_t tag,
                                          lcr_tag_t ign_tag,
@@ -79,6 +80,14 @@ typedef int (*lcr_post_tag_zcopy_func_t)(sctk_rail_info_t *rail,
 typedef int (*lcr_unpost_tag_zcopy_func_t)(sctk_rail_info_t *rail,
                                            lcr_tag_t tag);
 
+typedef int (*lcr_get_tag_zcopy_func_t)(_mpc_lowcomm_endpoint_t *ep,
+                                        lcr_tag_t tag,
+                                        uint64_t local_offset,
+                                        uint64_t remote_offset,
+                                        size_t size,
+                                        lcr_completion_t *ctx);
+
+// Endpoint RMA functions
 typedef int (*lcr_put_bcopy_func_t)(_mpc_lowcomm_endpoint_t *ep,
                                     lcr_pack_callback_t pack,
                                     void *arg,
@@ -110,13 +119,9 @@ typedef int (*lcr_get_zcopy_func_t)(_mpc_lowcomm_endpoint_t *ep,
                                     size_t size,
                                     lcr_completion_t *ctx);
 
-typedef int (*lcr_get_tag_zcopy_func_t)(_mpc_lowcomm_endpoint_t *ep,
-                                        lcr_tag_t tag,
-                                        uint64_t local_offset,
-                                        uint64_t remote_offset,
-                                        size_t size,
-                                        lcr_completion_t *ctx);
-
+// Endpoint Sync functions
+typedef int (*lcr_ep_flush_func_t)(_mpc_lowcomm_endpoint_t *ep,
+                                   unsigned flags);
 // Interface functions
 typedef int (*lcr_iface_get_attr_func_t)(sctk_rail_info_t *rail,
                                          lcr_rail_attr_t *attr);
@@ -132,4 +137,8 @@ typedef int (*lcr_iface_unpack_memp_func_t)(sctk_rail_info_t *rail,
 
 typedef int (*lcr_iface_is_reachable_func_t)(sctk_rail_info_t *rail,
                                              uint64_t uid);
+
+// Interface Sync functions
+typedef int (*lcr_iface_fence_func_t)(sctk_rail_info_t *rail,
+                                      unsigned flags);
 #endif

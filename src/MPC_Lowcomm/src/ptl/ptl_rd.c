@@ -37,42 +37,6 @@
 
 static int max_num_devices = 0;
 
-int lcr_ptl_iface_is_reachable(sctk_rail_info_t *rail, uint64_t uid) {
-        //FIXME: check whether getting connection info should be done here. For
-        //       now just return true.
-        UNUSED(rail); UNUSED(uid);
-        return 1;
-}
-
-int lcr_ptl_get_attr(sctk_rail_info_t *rail,
-                     lcr_rail_attr_t *attr)
-{
-        lcr_ptl_iface_config_t *config = &rail->network.ptl.config;
-
-        attr->iface.cap.am.max_bcopy  = config->eager_limit;
-        attr->iface.cap.am.max_zcopy  = 0;
-        attr->iface.cap.am.max_iovecs = config->max_iovecs;
-
-        attr->iface.cap.tag.max_bcopy  = 0;
-        attr->iface.cap.tag.max_zcopy  = config->eager_limit;
-        attr->iface.cap.tag.max_iovecs = config->max_iovecs;
-
-        attr->iface.cap.rndv.max_send_zcopy = config->max_mr;
-        attr->iface.cap.rndv.max_put_zcopy  = config->max_put;
-        attr->iface.cap.rndv.max_get_zcopy  = 512*1024;
-        attr->iface.cap.rndv.min_frag_size  = config->min_frag_size;
-
-        attr->iface.cap.rma.max_put_bcopy   = config->eager_limit;
-        attr->iface.cap.rma.max_put_zcopy   = config->max_put;
-        attr->iface.cap.rma.min_frag_size   = config->min_frag_size;
-
-        attr->iface.cap.flags               = rail->cap;
-
-        attr->mem.cap.max_reg               = PTL_SIZE_MAX;
-        attr->mem.size_packed_mkey          = sizeof(uint64_t); //FIXME: to be generalized 
-
-        return MPC_LOWCOMM_SUCCESS;
-}
 
 int lcr_ptl_query_devices(__UNUSED__ lcr_component_t *component,
                           lcr_device_t **devices_p,
@@ -230,7 +194,6 @@ int lcr_ptl_iface_open(__UNUSED__ const char *device_name, int id,
         iface->send_tag_bcopy      = lcr_ptl_send_tag_bcopy;
         iface->send_tag_zcopy      = lcr_ptl_send_tag_zcopy;
         iface->post_tag_zcopy      = lcr_ptl_post_tag_zcopy;
-        iface->unpost_tag_zcopy    = lcr_ptl_unpost_tag_zcopy;
         iface->connect_on_demand   = lcr_ptl_connect_on_demand;
         /* RMA calls */
         iface->put_bcopy           = lcr_ptl_send_put_bcopy;
@@ -241,7 +204,9 @@ int lcr_ptl_iface_open(__UNUSED__ const char *device_name, int id,
         iface->iface_unpack_memp   = lcr_ptl_unpack_rkey;
         iface->rail_pin_region     = lcr_ptl_mem_register;
         iface->rail_unpin_region   = lcr_ptl_mem_unregister;
-        /* Interface progess */
+        /* Endpoint Sync calls */
+        iface->ep_flush            = lcr_ptl_ep_flush;
+        /* Interface progress */
         iface->iface_progress      = lcr_ptl_iface_progress;
         iface->iface_is_reachable  = lcr_ptl_iface_is_reachable;
         

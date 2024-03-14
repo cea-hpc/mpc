@@ -71,7 +71,7 @@ typedef union
 typedef union
 {
 #ifdef MPC_USE_PORTALS
-	lcr_ptl_rma_handle_t       ptl;
+	lcr_ptl_mem_t       ptl;
 #endif /* MPC_USE_PORTALS */
 #ifdef MPC_USE_OFI
 struct _mpc_ofi_pinning_context ofipin;
@@ -108,6 +108,13 @@ void sctk_rail_pin_ctx_release(sctk_rail_pin_ctx_t *ctx);
 /************************************************************************/
 /* Protocol                                                             */
 /************************************************************************/
+
+//FIXME: not used as a flags right now
+enum {
+        LCR_IFACE_FLUSH_EP          = LCP_BIT(0),
+        LCR_IFACE_FLUSH_MEM         = LCP_BIT(1),
+        LCR_IFACE_FLUSH_EP_MEM      = LCP_BIT(2),
+};
 
 enum {
 	LCR_IFACE_TM_OVERFLOW       = MPC_BIT(0),
@@ -242,18 +249,26 @@ struct sctk_rail_info_s
 	/* rail capabilities */
 	unsigned cap;
 
-	/* Endpoint API */
+	/* Endpoint AM API */
 	lcr_send_am_bcopy_func_t                             send_am_bcopy;
 	lcr_send_am_zcopy_func_t                             send_am_zcopy;
+
+	/* Endpoint TAG API */
 	lcr_send_tag_bcopy_func_t                            send_tag_bcopy;
 	lcr_send_tag_zcopy_func_t                            send_tag_zcopy;
+	lcr_get_tag_zcopy_func_t                             get_tag_zcopy;
+	lcr_post_tag_zcopy_func_t                            post_tag_zcopy;
+	lcr_unpost_tag_zcopy_func_t                          unpost_tag_zcopy;
+
+	/* Endpoint RMA API */
 	lcr_put_bcopy_func_t                                 put_bcopy;
 	lcr_put_zcopy_func_t                                 put_zcopy;
 	lcr_get_bcopy_func_t                                 get_bcopy;
 	lcr_get_zcopy_func_t                                 get_zcopy;
-	lcr_get_tag_zcopy_func_t                             get_tag_zcopy;
-	lcr_post_tag_zcopy_func_t                            post_tag_zcopy;
-	lcr_unpost_tag_zcopy_func_t                          unpost_tag_zcopy;
+
+	/* Endpoint Sync API */
+        lcr_ep_flush_func_t                                  ep_flush;
+
 	/* Interface API */
 	lcr_iface_get_attr_func_t                            iface_get_attr;
 	lcr_iface_progress_func_t                            iface_progress;
@@ -261,6 +276,8 @@ struct sctk_rail_info_s
 	lcr_iface_unpack_memp_func_t                         iface_unpack_memp;
         lcr_iface_is_reachable_func_t                        iface_is_reachable;
 
+	/* Interface Sync API */
+        lcr_iface_fence_func_t                               iface_fence;
         mpc_list_elem_t progress;
 
 	/* Task Init and release */

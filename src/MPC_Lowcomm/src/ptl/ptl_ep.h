@@ -106,6 +106,9 @@ int lcr_ptl_get_tag_zcopy(_mpc_lowcomm_endpoint_t *ep,
                           size_t size,
                           lcr_completion_t *ctx);
 
+int lcr_ptl_ep_flush(_mpc_lowcomm_endpoint_t *ep,
+                     unsigned flags);
+
 void lcr_ptl_connect_on_demand(struct sctk_rail_info_s *rail, 
                                uint64_t dest);
 

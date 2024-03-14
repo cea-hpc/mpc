@@ -35,6 +35,7 @@
 #include "lcr_def.h"
 #include "ptl_types.h"
 #include <endpoint.h> //FIXME: try to use remove this include
+#include <rail.h>
 #include "mpc_lowcomm_monitor.h"
 
 #if !defined(NDEBUG)
@@ -204,11 +205,74 @@ static inline char * __ptl_get_rail_callback_name(int rail_number, char * buff, 
 	return buff;
 }
 
+/* Queue lock must be taken. */
+static inline void _lcr_ptl_complete_op(lcr_ptl_op_t *op) 
+{
+        if (op->comp != NULL) {
+                op->comp->comp_cb(op->comp);
+        }
+
+        /* Remove from TX queue if needed. */
+        mpc_queue_remove(op->head, &op->elem); 
+
+        /* Push operation back to memory pool. */
+        mpc_mpool_push(op);
+}
+
+static inline int _lcr_ptl_do_op(lcr_ptl_op_t *op) {
+
+        int rc = MPC_LOWCOMM_SUCCESS;
+        mpc_common_debug("LCR PTL: op.         size=%llu, addr=%p, offset=%llu, id=%d.",
+                         op->size, op->rma.local_offset, op->rma.remote_offset, op->id);
+        mpc_common_debug("LCR PTL: local key.  size=%llu, addr=%p, cth=%llu, mdh=%llu.",
+                         op->rma.lkey->size, op->rma.lkey->start, op->rma.lkey->cth, op->rma.lkey->mdh);
+        mpc_common_debug("LCR PTL: remote key. addr=%p",   op->rma.rkey->start);
+
+        switch(op->type) {
+        case LCR_PTL_OP_RMA_PUT: 
+                lcr_ptl_chk(PtlPut(op->rma.lkey->mdh, 
+                                   op->rma.local_offset, 
+                                   op->size, 
+                                   PTL_ACK_REQ,
+                                   op->addr.id,
+                                   op->addr.pte.rma, 
+                                   (uint64_t)op->rma.rkey->muid | LCR_PTL_RMA_MB,
+                                   op->rma.remote_offset,
+                                   op,
+                                   0
+                                  ));
+                break;
+        case LCR_PTL_OP_RMA_GET: 
+                lcr_ptl_chk(PtlGet(op->rma.lkey->mdh,
+                                   op->rma.local_offset,
+                                   op->size,
+                                   op->addr.id,
+                                   op->addr.pte.rma,
+                                   op->rma.rkey->muid | LCR_PTL_RMA_MB,
+                                   op->rma.remote_offset,
+                                   op	
+                                  ));
+                break;
+        case LCR_PTL_OP_RMA_FLUSH:
+                if (op->flush.lkey->op_done < op->flush.op_count) {
+                        rc = MPC_LOWCOMM_IN_PROGRESS;
+                        break;
+                }
+                break;
+        default:
+                mpc_common_debug_error("LCR PTL: invalid operation.");
+                break;
+        }
+
+        return rc;
+}
+
+ptl_size_t lcr_ptl_poll_mem(lcr_ptl_mem_t *mem);
+int lcr_ptl_get_attr(sctk_rail_info_t *rail,
+                     lcr_rail_attr_t *attr);
+int lcr_ptl_iface_is_reachable(sctk_rail_info_t *rail, uint64_t uid);
 
 int lcr_ptl_iface_init(sctk_rail_info_t *rail, unsigned flags);
 int lcr_ptl_iface_fini(sctk_rail_info_t* rail);
-void lcr_ptl_add_route(mpc_lowcomm_peer_uid_t dest, lcr_ptl_addr_t id, 
-                       sctk_rail_info_t* rail, _mpc_lowcomm_endpoint_type_t origin, 
-                       _mpc_lowcomm_endpoint_state_t state);
 
 #endif

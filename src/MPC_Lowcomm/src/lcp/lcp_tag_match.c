@@ -34,10 +34,7 @@
 
 #include "lcp_tag_match.h"
 #include "queue.h"
-#include "lcp_tag_matching.h"
 #include "lcp_request.h"
-#include "mpc_common_datastructure.h"
-#include "mpc_common_debug.h"
 
 void *lcp_search_umqueue(mpc_queue_head_t *umqs,
                          uint16_t comm_id, int32_t tag, int32_t tmask,

@@ -49,9 +49,14 @@ typedef struct lcr_ptl_block_list {
         struct lcr_ptl_block_list *prev, *next;
 } lcr_ptl_block_list_t;
 
-int lcr_ptl_recv_block_init(lcr_ptl_rail_info_t *srail, lcr_ptl_recv_block_t **block_p);
-int lcr_ptl_recv_block_activate(lcr_ptl_recv_block_t *block, ptl_pt_index_t pte, ptl_list_t list);
-int lcr_ptl_recv_block_enable(lcr_ptl_rail_info_t *srail, ptl_pt_index_t pte, ptl_list_t list);
+int lcr_ptl_recv_block_init(lcr_ptl_rail_info_t *srail, 
+                            lcr_ptl_recv_block_t **block_p);
+int lcr_ptl_recv_block_activate(lcr_ptl_recv_block_t *block, 
+                                ptl_pt_index_t pte, 
+                                ptl_list_t list);
+int lcr_ptl_recv_block_enable(lcr_ptl_rail_info_t *srail, 
+                              ptl_pt_index_t pte, 
+                              ptl_list_t list);
 int lcr_ptl_recv_block_disable(lcr_ptl_block_list_t *list);
 
 #endif

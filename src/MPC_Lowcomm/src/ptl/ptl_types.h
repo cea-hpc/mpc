@@ -43,21 +43,31 @@
 #include "lcr_def.h"
 #include "mpc_common_bit.h"
 
+#include <stdatomic.h>
 #include <mpc_common_helper.h>
 
 #include <portals4.h>
 
 //Forward addressing
 typedef struct lcr_ptl_block_list lcr_ptl_block_list_t;
+typedef struct lcr_ptl_mem lcr_ptl_mem_t;
 
 /*********************************/
 /********** PTL TYPES   **********/
 /*********************************/
 #define LCR_PTL_PT_NULL (ptl_pt_index_t)-1
+#define LCR_PTL_RMA_MB   0x1000000000000000ULL
+#define LCR_PTL_EAGER_MB 0x1100000000000000ULL
+#define LCR_PTL_MB_MASK  0x0011111111111111ULL
+#define LCR_PTL_MAX_TXQUEUES 1024
 
-#define SCTK_PTL_MATCH_INIT (sctk_ptl_matchbits_t) {.data.rank = SCTK_PTL_MATCH_RANK, .data.tag = SCTK_PTL_MATCH_TAG, .data.uid = SCTK_PTL_MATCH_UID, .data.type = SCTK_PTL_MATCH_TYPE}
+#define LCR_PTL_WRAP_AROUND_THRESHOLD PTL_SIZE_MAX / 2
+
+#define LCR_PTL_SN_CMP_INF(_a, _b) \
+        ( (_a) < (_b) && ( (_a) - (_b) < LCR_PTL_WRAP_AROUND_THRESHOLD ) )
 
 #define PTL_EQ_PTE_SIZE 10240
+
 /*********************************/
 /********** PTL ADDRESS **********/
 /*********************************/
@@ -67,19 +77,27 @@ typedef struct lcr_ptl_addr {
                 ptl_pt_index_t am;  /* PT index for AM operations.  */
                 ptl_pt_index_t tag; /* PT index for TAG operations. */
                 ptl_pt_index_t rma; /* PT index for RMA operations. */
-        } pts;
+        } pte;
 } lcr_ptl_addr_t;
 #define LCR_PTL_ADDR_ANY \
         (lcr_ptl_addr_t) { \
                 .id = SCTK_PTL_ANY_PROCESS, \
-                .pts.am  = LCR_PTL_PT_NULL,  \
-                .pts.tag = LCR_PTL_PT_NULL,  \
-                .pts.rma = LCR_PTL_PT_NULL,  \
+                .pte.am  = LCR_PTL_PT_NULL,  \
+                .pte.tag = LCR_PTL_PT_NULL,  \
+                .pte.rma = LCR_PTL_PT_NULL,  \
         } 
 #define LCR_PTL_IS_ANY_PROCESS(a) ((a).id.phys.nid == PTL_NID_ANY && (a).id.phys.pid == PTL_PID_ANY)
 
+typedef struct lcr_ptl_txq {
+        mpc_queue_head_t     *head;
+        mpc_list_elem_t       mem_head;
+        mpc_common_spinlock_t lock;
+        int                   tx_id;
+} lcr_ptl_txq_t;
+
 typedef struct lcr_ptl_ep_info {
-        lcr_ptl_addr_t addr;
+        lcr_ptl_addr_t        addr;
+        lcr_ptl_txq_t        *txq;
 } lcr_ptl_ep_info_t;
 typedef struct lcr_ptl_ep_info _mpc_lowcomm_endpoint_info_ptl_t;
 
@@ -87,24 +105,19 @@ typedef struct lcr_ptl_ep_info _mpc_lowcomm_endpoint_info_ptl_t;
 /********** PTL RMA  *************/
 /*********************************/
 
-typedef struct lcr_ptl_rma_handle {
-        void             *start;         /* Start address of the memory. */
-        mpc_list_elem_t   elem;          /* Element in list.             */
-        ptl_handle_ct_t   cth;           /* Counter handle.              */
-        ptl_handle_md_t   mdh;           /* Memory Descriptor handle.    */
-        size_t            size;          /* Size of the memory.          */
-        int               completed_ops; /* Number of already completed OP. */
-        mpc_queue_head_t  ops;           /* Active operations on handle. */
-        mpc_common_spinlock_t ops_lock;  /* Memory lock.                 */
-} lcr_ptl_rma_handle_t;
-
-typedef struct lcr_ptl_persistant_post {
-        UT_hash_handle hh;
-
-        uint64_t tag_key;
-        ptl_handle_me_t meh;
-} lcr_ptl_persistant_post_t;
-
+typedef struct lcr_ptl_mem {
+        void                 *start;          /* Start address of the memory.           */
+        uint32_t              muid;           /* Memory Unique Idendifier.              */
+        mpc_list_elem_t       elem;           /* Element in list.                       */
+        ptl_handle_ct_t       cth;            /* Counter handle.                        */
+        ptl_handle_md_t       mdh;            /* Memory Descriptor handle.              */
+        ptl_handle_me_t       meh;
+        mpc_queue_head_t      pendings;
+        size_t                size;           /* Size of the memory.                    */
+        atomic_uint_least64_t op_count;       /* Sequence number of the last pushed op. */
+        ptl_size_t            op_done;
+        mpc_common_spinlock_t lock;
+} lcr_ptl_mem_t;
 
 /*********************************/
 /********** PTL OP   *************/
@@ -120,12 +133,16 @@ typedef enum {
         LCR_PTL_OP_TAG_SEARCH,
         LCR_PTL_OP_RMA_PUT,
         LCR_PTL_OP_RMA_GET,
+        LCR_PTL_OP_RMA_FLUSH,
 } lcr_ptl_op_type_t;
 
 typedef struct lcr_ptl_op {
+        ptl_size_t        id;   /* Operation identifier. */
+        lcr_ptl_addr_t    addr;
         lcr_ptl_op_type_t type; /* Type of operation */
         size_t            size; /* Data size of the operation */
         lcr_completion_t *comp; /* Completion callback */
+        lcr_ptl_txq_t    *txq;  /* TX Queue where the operation was pushed. */
 
         union {
                 struct {
@@ -140,11 +157,20 @@ typedef struct lcr_ptl_op {
                         void *bcopy_buf;
                 } am;
                 struct {
-                        int sz;
+                        uint64_t              local_offset;
+                        uint64_t              remote_offset;
+                        lcr_ptl_mem_t *lkey;
+                        lcr_ptl_mem_t *rkey;
                 } rma;
+                struct {
+                        ptl_size_t op_count;
+                        ptl_size_t op_done;
+                        lcr_ptl_mem_t *lkey;
+                } flush;
         };
 
-        mpc_queue_elem_t elem;
+        mpc_queue_head_t *head;
+        mpc_queue_elem_t  elem;  /* Element in TX queue. */
 } lcr_ptl_op_t;
 
 /*********************************/
@@ -153,20 +179,21 @@ typedef struct lcr_ptl_op {
 
 /* Context for two-sided operations. */
 typedef struct lcr_ptl_ts_ctx {
-        ptl_handle_eq_t       eqh; /**< EQ for all MEs received on this NI */
+        ptl_handle_eq_t       eqh; /**< Event Queue. */
+        mpc_common_spinlock_t eq_lock;
         ptl_handle_md_t       mdh;
         ptl_pt_index_t        pti;
-        mpc_common_spinlock_t eq_lock;
         lcr_ptl_block_list_t *blist;
 } lcr_ptl_ts_ctx_t;
 
 /* Context for one-sided operations. */
 typedef struct lcr_ptl_os_ctx {
-        ptl_handle_md_t       mdh;
+        ptl_handle_eq_t       eqh; /**< Event Queue for control flow. */
         ptl_pt_index_t        pti;
-        ptl_handle_me_t       rma_meh;
-        mpc_list_elem_t       rmah_head;
-        mpc_common_spinlock_t rmah_lock;
+        atomic_uint_least32_t mem_uid; /* Unique identifier for RMA registration. */
+        atomic_uint_least64_t op_sn;
+        mpc_list_elem_t       mem_head;
+        mpc_common_spinlock_t lock;
 } lcr_ptl_os_ctx_t;
 
 /*********************************/
@@ -198,11 +225,12 @@ typedef struct lcr_ptl_rail_info {
 	char                        connection_infos[MPC_COMMON_MAX_STRING_SIZE];
 	struct mpc_common_hashtable ranks_ids_map; /**< each cell maps to the portals process object */
 	size_t                      connection_infos_size;
+        lcr_ptl_txq_t              *txqt; /* TX Queue Table. */
+        OPA_int_t                   num_txqs;
         lcr_ptl_ts_ctx_t            am_ctx;
         lcr_ptl_ts_ctx_t            tag_ctx;
         lcr_ptl_os_ctx_t            os_ctx;
         unsigned                    features; /* Instanciated features. */
-        lcr_ptl_persistant_post_t  *persistant_ht;
         mpc_mempool_t              *ops_pool;
 } lcr_ptl_rail_info_t;
 typedef struct lcr_ptl_rail_info _mpc_lowcomm_ptl_rail_info_t;

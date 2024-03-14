@@ -74,9 +74,9 @@ int lcr_ptl_recv_block_activate(lcr_ptl_recv_block_t *block,
                                 ptl_list_t list)
 {
         ptl_me_t me;
-        lcr_ptl_rail_info_t *srail = block->rail;
         ptl_match_bits_t match = 0;
         ptl_match_bits_t ign   = ~0;
+        lcr_ptl_rail_info_t *srail = block->rail;
 
         if (block->start == NULL) {
                 return MPC_LOWCOMM_ERROR;

@@ -57,7 +57,7 @@ ssize_t lcr_ptl_send_am_bcopy(_mpc_lowcomm_endpoint_t *ep,
         lcr_ptl_addr_t remote      = infos->addr;
         lcr_ptl_op_t *op;
 
-        assert(remote.pts.am != LCR_PTL_PT_NULL);
+        assert(remote.pte.am != LCR_PTL_PT_NULL);
 
         //FIXME: use a memory pool.
         start = sctk_malloc(srail->config.eager_limit);
@@ -81,14 +81,14 @@ ssize_t lcr_ptl_send_am_bcopy(_mpc_lowcomm_endpoint_t *ep,
 
         mpc_common_debug_info("LCR PTL: send am bcopy to %d, id=%d (iface=%llu, "
                               "remote=%llu, idx=%llu, sz=%llu, user_ptr=%p)", 
-                              (int)ep->dest, id, srail->nih, remote.id, remote.pts.am, 
+                              (int)ep->dest, id, srail->nih, remote.id, remote.pte.am, 
                               size, op);
         lcr_ptl_chk(PtlPut(srail->am_ctx.mdh,
                             (ptl_size_t) start, /* local offset */
                             size,
                             PTL_ACK_REQ,
                             remote.id,
-                            remote.pts.am,
+                            remote.pte.am,
                             match,
                             0, /* remote offset */
                             op, 
@@ -150,7 +150,7 @@ int lcr_ptl_send_am_zcopy(_mpc_lowcomm_endpoint_t *ep,
         op->size = size;
 
         assert(iovcnt + 1 <= (size_t)srail->config.max_iovecs);
-        assert(remote.pts.am != LCR_PTL_PT_NULL);
+        assert(remote.pte.am != LCR_PTL_PT_NULL);
 
         iov_md = (ptl_md_t){
                 .start = op->iov.iov,
@@ -171,7 +171,7 @@ int lcr_ptl_send_am_zcopy(_mpc_lowcomm_endpoint_t *ep,
                             size,
                             PTL_ACK_REQ,
                             remote.id,
-                            remote.pts.am,
+                            remote.pte.am,
                             match,
                             0,
                             op,
@@ -199,7 +199,7 @@ ssize_t lcr_ptl_send_tag_bcopy(_mpc_lowcomm_endpoint_t *ep,
         size = pack(start, arg);
 
         assert(size <= srail->config.eager_limit);
-        assert(remote.pts.tag != LCR_PTL_PT_NULL);
+        assert(remote.pte.tag != LCR_PTL_PT_NULL);
 
         lcr_ptl_op_t *op = mpc_mpool_pop(srail->ops_pool);
         if (op == NULL) {
@@ -216,14 +216,14 @@ ssize_t lcr_ptl_send_tag_bcopy(_mpc_lowcomm_endpoint_t *ep,
         mpc_common_debug_info("LCR PTL: send tag bcopy to %d (iface=%llu, "
                               "match=[%d,%d,%d], remote=%llu, idx=%llu, sz=%llu, "
                               "user_ptr=%p)", (int)ep->dest, srail->nih, tag.t_tag.tag, 
-                              tag.t_tag.src, tag.t_tag.comm, remote.id, remote.pts.tag, 
+                              tag.t_tag.src, tag.t_tag.comm, remote.id, remote.pte.tag, 
                               size, op);
         lcr_ptl_chk(PtlPut(srail->tag_ctx.mdh,
                             (ptl_size_t) start, /* local offset */
                             size,
                             PTL_ACK_REQ,
                             remote.id,
-                            remote.pts.tag,
+                            remote.pte.tag,
                             tag.t,
                             0, /* remote offset */
                             op,
@@ -250,7 +250,7 @@ int lcr_ptl_send_tag_zcopy(_mpc_lowcomm_endpoint_t *ep,
 
         //FIXME: support for only one iovec
         assert(iovcnt == 1);
-        assert(remote.pts.tag != LCR_PTL_PT_NULL);
+        assert(remote.pte.tag != LCR_PTL_PT_NULL);
 
         lcr_ptl_op_t *op = mpc_mpool_pop(srail->ops_pool);
         if (op == NULL) {
@@ -267,14 +267,14 @@ int lcr_ptl_send_tag_zcopy(_mpc_lowcomm_endpoint_t *ep,
         mpc_common_debug_info("LCR PTL: send tag zcopy to %d (iface=%llu, "
                               "match=[%d,%d,%d], remote=%llu, idx=%llu, sz=%llu, "
                               "user_ptr=%p)", (int)ep->dest, srail->nih, tag.t_tag.tag, 
-                              tag.t_tag.src, tag.t_tag.comm, remote.id, remote.pts.tag, 
+                              tag.t_tag.src, tag.t_tag.comm, remote.id, remote.pte.tag, 
                               size, op);
         lcr_ptl_chk(PtlPut(srail->tag_ctx.mdh,
                             (ptl_size_t) iov[0].iov_base, /* local offset */
                             iov[0].iov_len,
                             PTL_ACK_REQ,
                             remote.id,
-                            remote.pts.tag,
+                            remote.pte.tag,
                             tag.t,
                             0, /* remote offset */
                             op,
@@ -295,10 +295,7 @@ int lcr_ptl_post_tag_zcopy(sctk_rail_info_t *rail,
         int rc = MPC_LOWCOMM_SUCCESS;
         ptl_me_t me;
         ptl_handle_me_t meh;
-        unsigned int persistant = flags & LCR_IFACE_TM_PERSISTANT_MEM ? 
-                0 : SCTK_PTL_ONCE;
         unsigned int search = flags & LCR_IFACE_TM_SEARCH;
-        lcr_ptl_persistant_post_t *persistant_post;
         lcr_ptl_rail_info_t* srail     = &rail->network.ptl;
 
         assert(iov && iovcnt == 1);
@@ -308,14 +305,17 @@ int lcr_ptl_post_tag_zcopy(sctk_rail_info_t *rail,
                 .ct_handle = PTL_CT_NONE,
                         .ignore_bits = ign_tag.t,
                         .match_bits  = tag.t,
-                        .match_id = SCTK_PTL_ANY_PROCESS,
+                        .match_id = { 
+                                .phys.nid = PTL_NID_ANY,
+                                .phys.pid = PTL_PID_ANY
+                        },
                         .min_free = 0,
                         .length = iov[iovcnt-1].iov_len,
                         .start = iov[iovcnt-1].iov_base,
                         .uid = PTL_UID_ANY,
                         .options = SCTK_PTL_ME_PUT_FLAGS | 
                                 SCTK_PTL_ME_GET_FLAGS    |
-                                persistant,
+                                PTL_ME_USE_ONCE,
         };
 
         mpc_common_debug_info("LCR PTL: post recv zcopy to %p (idx=%d, tag=%llu, "
@@ -352,41 +352,7 @@ int lcr_ptl_post_tag_zcopy(sctk_rail_info_t *rail,
                                        ));
         }
 
-        if (flags & LCR_IFACE_TM_PERSISTANT_MEM) {
-                persistant_post = sctk_malloc(sizeof(lcr_ptl_persistant_post_t));
-                if (persistant_post == NULL) {
-                        mpc_common_debug_error("LCR PTL: could not allocate "
-                                               "persistant post");
-                        rc = MPC_LOWCOMM_ERROR;
-                        goto err;
-                }
-                persistant_post->tag_key = tag.t;
-                persistant_post->meh = meh;
-                HASH_ADD(hh, srail->persistant_ht, tag_key, sizeof(uint64_t),
-                         persistant_post);
-        }
-
 err:
-        return rc;
-}
-
-int lcr_ptl_unpost_tag_zcopy(sctk_rail_info_t *rail, lcr_tag_t tag)
-{
-        int rc = MPC_LOWCOMM_SUCCESS;
-        lcr_ptl_persistant_post_t *persistant_post;
-        lcr_ptl_rail_info_t* srail     = &rail->network.ptl;
-
-        HASH_FIND(hh, srail->persistant_ht, &tag.t, sizeof(uint64_t),
-                  persistant_post);
-        if (persistant_post == NULL) {
-                mpc_common_debug_error("LCR PTL: could not find posted "
-                                       "element with tag: %llu", tag.t);
-                rc = MPC_LOWCOMM_ERROR;
-                return rc;
-        }
-
-        lcr_ptl_chk(PtlMEUnlink(persistant_post->meh));
-
         return rc;
 }
 
@@ -400,10 +366,10 @@ int lcr_ptl_send_put_bcopy(_mpc_lowcomm_endpoint_t *ep,
         lcr_ptl_rail_info_t* srail = &ep->rail->network.ptl;
         void* start                = NULL;
         size_t size                = 0;
-        ptl_match_bits_t match     = 0;
-        lcr_ptl_rma_handle_t *lkey = &local_key->pin.ptl;
         lcr_ptl_ep_info_t* infos   = &ep->data.ptl;
         lcr_ptl_addr_t remote      = infos->addr;
+        lcr_ptl_mem_t *lkey = &local_key->pin.ptl;
+        lcr_ptl_mem_t *rkey = &remote_key->pin.ptl;
 
         //TODO: create a pool of pre-registered MD.
         not_implemented();
@@ -424,35 +390,29 @@ int lcr_ptl_send_put_bcopy(_mpc_lowcomm_endpoint_t *ep,
                 size = MPC_LOWCOMM_NO_RESOURCE;
                 goto err;
         }
-        op->type         = LCR_PTL_OP_AM_BCOPY; 
-        op->size         = size;
-        op->comp         = NULL;
-        op->am.bcopy_buf = start;
+        op->type              = LCR_PTL_OP_RMA_PUT; 
+        op->size              = size;
+        op->comp              = NULL;
+        op->addr              = infos->addr;
+        op->rma.lkey          = lkey;
+        op->rma.rkey          = rkey;
+        op->rma.local_offset  = 0;
+        op->rma.remote_offset = remote_offset;
 
         mpc_common_debug_info("lcr ptl: send put bcopy to %d ("
                               "remote=%llu, sz=%llu, pte=%d)", ep->dest, 
                               remote, size, srail->os_ctx.pti);
 
-        //FIXME: there are questions around the completion of bcopy requests.
-        //       With Portals, how should a request be completed?
-        lcr_ptl_chk(PtlPut(lkey->mdh,
-                            (ptl_size_t) start, /* local offset */
-                            size,
-                            PTL_ACK_REQ,
-                            remote.id,
-                            remote.pts.rma,
-                            match,
-                            (uint64_t)remote_key->pin.ptl.start + remote_offset,
-                            op, 
-                            0
-                           ));
+        _lcr_ptl_do_op(op);
 
+        /* Increment operation counts. */
+        atomic_fetch_add(&op->rma.lkey->op_count, 1);
 err:
         return size;
 }
 
 int lcr_ptl_send_put_zcopy(_mpc_lowcomm_endpoint_t *ep,
-                           uint64_t local_addr,
+                           uint64_t local_offset,
                            uint64_t remote_offset,
                            lcr_memp_t *local_key,
                            lcr_memp_t *remote_key,
@@ -460,41 +420,42 @@ int lcr_ptl_send_put_zcopy(_mpc_lowcomm_endpoint_t *ep,
                            lcr_completion_t *comp) 
 {
         int rc = MPC_LOWCOMM_SUCCESS;
-        lcr_ptl_ep_info_t* infos = &ep->data.ptl;
-        lcr_ptl_addr_t remote          = infos->addr;
-        lcr_ptl_rail_info_t* srail    = &ep->rail->network.ptl;
-        ptl_match_bits_t rdv_match = 0;
-        lcr_ptl_rma_handle_t *lkey = &local_key->pin.ptl;
-        lcr_ptl_rma_handle_t *rkey = &remote_key->pin.ptl;
+        lcr_ptl_ep_info_t* infos   = &ep->data.ptl;
+        lcr_ptl_rail_info_t* srail = &ep->rail->network.ptl;
+        lcr_ptl_mem_t *lkey = &local_key->pin.ptl;
+        lcr_ptl_mem_t *rkey = &remote_key->pin.ptl;
+        lcr_ptl_op_t *op           = NULL;         
 
-        mpc_common_debug_info("PTL: remote key. remote start=%p remote=%llu, "
-                              "remote off=%llu, pte idx=%d, local addr=%p, "
-                              "remote addr=%p", rkey->start,
-                              remote.id, remote_offset, srail->os_ctx.pti, 
-                              local_addr, remote_key->pin.ptl.start);
-
-        lcr_ptl_op_t *op = mpc_mpool_pop(srail->ops_pool);
+        //NOTE: Operation identifier and Put must be done atomically to make
+        //      sure the operation is pushed to the NIC with the correct
+        //      sequence number.
+        op = mpc_mpool_pop(srail->ops_pool);
         if (op == NULL) {
                 mpc_common_debug_warning("LCR PTL: maximum outstanding "
-                                         "operations.");
-                size = MPC_LOWCOMM_NO_RESOURCE;
+                                         "ptl operations.");
+                rc = MPC_LOWCOMM_NO_RESOURCE;
                 goto err;
         }
-        op->type         = LCR_PTL_OP_AM_BCOPY; 
-        op->size         = size;
-        op->comp         = comp;
+        op->type              = LCR_PTL_OP_RMA_PUT; 
+        op->size              = size;
+        op->comp              = comp;
+        op->addr              = infos->addr;
+        op->rma.lkey          = lkey;
+        op->rma.rkey          = rkey;
+        op->rma.local_offset  = local_offset;
+        op->rma.remote_offset = remote_offset;
 
-        /* Push operation to targeted rma handle list. */
-        mpc_common_spinlock_lock(&lkey->ops_lock);
-        mpc_queue_push(&lkey->ops, &op->elem);
-        mpc_common_spinlock_unlock(&lkey->ops_lock);
+        /* Only if completion was requested, push operation to the TX queue. */
+        if (comp != NULL) {
+                mpc_common_spinlock_lock(&infos->txq->lock);
+                mpc_queue_push(infos->txq->head, &op->elem);
+                mpc_common_spinlock_unlock(&infos->txq->lock);
+        }
 
-        lcr_ptl_chk(PtlPut(lkey->mdh, local_addr, 
-                            size, PTL_ACK_REQ, remote.id,
-                            remote.pts.rma, rdv_match,
-                            (uint64_t)remote_key->pin.ptl.start + remote_offset,
-                            op, 0
-                           ));
+        _lcr_ptl_do_op(op);
+
+        /* Increment operation counts. */
+        atomic_fetch_add(&lkey->op_count, 1);
 err:
         return rc;
 }
@@ -508,44 +469,42 @@ int lcr_ptl_send_get_zcopy(_mpc_lowcomm_endpoint_t *ep,
                            lcr_completion_t *comp) 
 {
         int rc = MPC_LOWCOMM_SUCCESS;
-        lcr_ptl_ep_info_t* infos = &ep->data.ptl;
-        lcr_ptl_rail_info_t* srail    = &ep->rail->network.ptl;
-        lcr_ptl_addr_t remote          = infos->addr;
-        ptl_match_bits_t rdv_match = 0;
-        lcr_ptl_rma_handle_t *lkey = &local_key->pin.ptl;
-        lcr_ptl_rma_handle_t *rkey = &remote_key->pin.ptl;
+        lcr_ptl_ep_info_t* infos   = &ep->data.ptl;
+        lcr_ptl_rail_info_t* srail = &ep->rail->network.ptl;
+        lcr_ptl_mem_t *lkey = &local_key->pin.ptl;
+        lcr_ptl_mem_t *rkey = &remote_key->pin.ptl;
+        lcr_ptl_op_t *op           = NULL; 
 
-        lcr_ptl_op_t *op = mpc_mpool_pop(srail->ops_pool);
+        //NOTE: Operation identifier and Put must be done atomically to make
+        //      sure the operation is pushed to the NIC with the correct
+        //      sequence number.
+        /* Increment global operation sequence number and store to resources. */
+        op = mpc_mpool_pop(srail->ops_pool);
         if (op == NULL) {
                 mpc_common_debug_warning("LCR PTL: maximum outstanding "
-                                         "operations.");
-                size = MPC_LOWCOMM_NO_RESOURCE;
+                                         "ptl operations.");
+                rc = MPC_LOWCOMM_NO_RESOURCE;
                 goto err;
         }
-        op->type         = LCR_PTL_OP_AM_BCOPY; 
-        op->size         = size;
-        op->comp         = comp;
+        op->type              = LCR_PTL_OP_RMA_GET;
+        op->size              = size;
+        op->comp              = comp;
+        op->addr              = infos->addr;
+        op->rma.lkey          = lkey;
+        op->rma.rkey          = rkey;
+        op->rma.local_offset  = local_offset;
+        op->rma.remote_offset = remote_offset;
 
-        mpc_common_spinlock_lock(&lkey->ops_lock);
-        mpc_queue_push(&lkey->ops, &op->elem);
-        mpc_common_spinlock_unlock(&lkey->ops_lock);
+        /* Only if completion was requested, push operation to the TX queue. */
+        if (comp != NULL) {
+                mpc_common_spinlock_lock(&infos->txq->lock);
+                mpc_queue_push(infos->txq->head, &op->elem);
+                mpc_common_spinlock_unlock(&infos->txq->lock);
+        }
 
-        mpc_common_debug("LCR PTL: op.         size=%llu, addr=%p, offset=%llu.",
-                         op->size, local_offset, remote_offset);
-        mpc_common_debug("LCR PTL: local key.  size=%llu, addr=%p, cth=%llu, mdh=%llu.",
-                         lkey->size, lkey->start, lkey->cth, lkey->mdh);
-        mpc_common_debug("LCR PTL: remote key. addr=%p",   rkey->start);
-
-        lcr_ptl_chk(PtlGet(lkey->mdh,
-                            local_offset,
-                            size,
-                            remote.id,
-                            remote.pts.rma,
-                            rdv_match,
-                            (uint64_t)rkey->start + remote_offset,
-                            NULL	
-                           ));
-
+        _lcr_ptl_do_op(op);
+        /* Increment operation counts. */
+        atomic_fetch_add(&op->rma.lkey->op_count, 1);
 err:
         return rc;
 }
@@ -582,7 +541,7 @@ int lcr_ptl_get_tag_zcopy(_mpc_lowcomm_endpoint_t *ep,
                             local_offset,
                             size,
                             remote.id,
-                            remote.pts.tag,
+                            remote.pte.tag,
                             tag.t,
                             remote_offset,
                             op	
@@ -593,63 +552,142 @@ err:
 
 }
 
+int lcr_ptl_ep_flush(_mpc_lowcomm_endpoint_t *ep,
+                     unsigned flags)
+{
+        int rc = MPC_LOWCOMM_SUCCESS;
+        ptl_size_t op_done, op_count;
+        lcr_ptl_op_t *op;
+        lcr_ptl_rail_info_t *srail = &ep->rail->network.ptl;
+        lcr_ptl_ep_info_t *infos   = &ep->data.ptl;
+
+
+
+}
+
+int lcr_ptl_mem_flush(sctk_rail_info_t *rail,
+                      struct sctk_rail_pin_ctx_list *list,
+                      lcr_completion_t *comp,
+                      unsigned flags) 
+{
+        UNUSED(flags);
+        int rc = MPC_LOWCOMM_SUCCESS;
+        ptl_size_t op_done, op_count;
+        lcr_ptl_op_t *op;
+        lcr_ptl_mem_t *lkey = &list->pin.ptl;
+        lcr_ptl_rail_info_t *srail = &rail->network.ptl;
+
+        op_count = lkey->op_count;
+        assert(op_count < UINT64_MAX);
+        op_done = lcr_ptl_poll_mem(lkey);
+
+        if (op_done >= op_count) {
+                rc = MPC_LOWCOMM_SUCCESS;
+        } else {
+                op = mpc_mpool_pop(srail->ops_pool);
+                if (op == NULL) {
+                        mpc_common_debug_warning("LCR PTL: maximum outstanding "
+                                                 "ptl operations.");
+                        rc = MPC_LOWCOMM_NO_RESOURCE;
+                        goto err;
+                }
+                op->comp = comp;
+                op->type = LCR_PTL_OP_RMA_FLUSH;
+                op->flush.op_count = op_count;
+                op->flush.lkey     = lkey;
+
+                mpc_common_spinlock_lock(&lkey->lock);
+                mpc_queue_push(&lkey->pendings, &op->elem);
+                mpc_common_spinlock_unlock(&lkey->lock);
+
+                rc = MPC_LOWCOMM_IN_PROGRESS;
+        }
+err:
+        return rc;
+}
+
 void lcr_ptl_mem_register(struct sctk_rail_info_s *rail, 
                           struct sctk_rail_pin_ctx_list *list, 
                           void * addr, size_t size)
 {
         ptl_md_t md;
-
+        ptl_me_t me;
         lcr_ptl_rail_info_t* srail   = &rail->network.ptl;
-        lcr_ptl_rma_handle_t *mem = &list->pin.ptl;
+        lcr_ptl_mem_t *mem = &list->pin.ptl;
+
+        mem->size  = size;
+        mem->start = addr; 
 
         /* Initialize RMA counter. */
         lcr_ptl_chk(PtlCTAlloc(srail->nih, &mem->cth));
 
-        /* Initialize queue of operations on RMA handle. */ 
-        mpc_queue_init_head(&mem->ops);
-        mpc_common_spinlock_init(&mem->ops_lock, 0);
-
         /* Prepare PTL memory descriptor. */
         md = (ptl_md_t) {
                 .ct_handle = mem->cth,
-                .eq_handle = PTL_EQ_NONE,
-                .length = size,
-                .start  = addr,
-                .options = PTL_MD_EVENT_SEND_DISABLE |
-                        PTL_MD_EVENT_CT_ACK          | 
+                .eq_handle = srail->os_ctx.eqh,
+                .length = PTL_SIZE_MAX,
+                .start  = 0,
+                .options = PTL_MD_EVENT_SUCCESS_DISABLE |
+                        PTL_MD_EVENT_SEND_DISABLE       |
+                        PTL_MD_EVENT_CT_ACK             | 
                         PTL_MD_EVENT_CT_REPLY,
         };
         lcr_ptl_chk(PtlMDBind(srail->nih, &md, &mem->mdh));
 
-        mem->size  = size;
-        mem->start = addr; 
-        mem->completed_ops = 0;
+        mem->muid = atomic_fetch_add(&srail->os_ctx.mem_uid, 1);
+        me = (ptl_me_t) {
+                .ct_handle = PTL_CT_NONE,
+                .ignore_bits = 0,
+                .match_bits  = mem->muid | LCR_PTL_RMA_MB,
+                .match_id    = {
+                        .phys.nid = PTL_NID_ANY, 
+                        .phys.pid = PTL_PID_ANY
+                },
+                .uid         = PTL_UID_ANY,
+                .min_free    = 0,
+                .options     = PTL_ME_OP_PUT        | 
+                        PTL_ME_OP_GET               |
+                        PTL_ME_EVENT_LINK_DISABLE   | 
+                        PTL_ME_EVENT_UNLINK_DISABLE |
+                        PTL_ME_EVENT_SUCCESS_DISABLE,
+                .start       = 0,
+                .length      = PTL_SIZE_MAX
+        };
 
-        /* Push RMA handle to list of active handles. */
-        mpc_common_spinlock_lock(&srail->os_ctx.rmah_lock);
-        mpc_list_push_tail(&srail->os_ctx.rmah_head, &mem->elem);
-        mpc_common_spinlock_unlock(&srail->os_ctx.rmah_lock);
+        lcr_ptl_chk(PtlMEAppend(srail->nih,
+                                srail->os_ctx.pti,
+                                &me,
+                                PTL_PRIORITY_LIST,
+                                rail,
+                                &mem->meh
+                               ));
+
+        mpc_common_spinlock_lock(&srail->os_ctx.lock);
+        mpc_list_push_head(&srail->os_ctx.mem_head, &mem->elem);
+        mpc_common_spinlock_unlock(&srail->os_ctx.lock);
 
         mpc_common_debug("LCR PTL: memory registration. cth=%llu, mdh=%llu, "
-                         "addr=%p, size=%llu", mem->cth, mem->mdh, 
+                         "addr=%p, size=%llu, ct value=%llu", mem->cth, mem->mdh, 
                          addr, size);
 }
 
 void lcr_ptl_mem_unregister(struct sctk_rail_info_s *rail, 
                             struct sctk_rail_pin_ctx_list *list)
 {
-        lcr_ptl_rail_info_t* srail = &rail->network.ptl;
-        lcr_ptl_rma_handle_t *mem  = &list->pin.ptl;
+        lcr_ptl_rail_info_t* srail   = &rail->network.ptl;
+        lcr_ptl_mem_t *mem = &list->pin.ptl;
+        
+        mpc_common_spinlock_lock(&srail->os_ctx.lock);
+        mpc_list_del(&mem->elem);
+        mpc_common_spinlock_unlock(&srail->os_ctx.lock);
 
         lcr_ptl_chk(PtlCTFree(mem->cth));
 
         lcr_ptl_chk(PtlMDRelease(mem->mdh));
 
-        /* Remove RMA handle from active list. */
-        mpc_common_spinlock_lock(&srail->os_ctx.rmah_lock);
-        mpc_list_del(&mem->elem);
-        mpc_common_spinlock_unlock(&srail->os_ctx.rmah_lock);
-        
+        lcr_ptl_chk(PtlMEUnlink(mem->meh));
+
+
         return;
 }
 
@@ -798,20 +836,38 @@ lcr_ptl_addr_t lcr_ptl_map_id(sctk_rail_info_t* rail, mpc_lowcomm_peer_uid_t des
 	return ret;
 }
 
-void lcr_ptl_add_route(mpc_lowcomm_peer_uid_t dest, lcr_ptl_addr_t id, 
-                       sctk_rail_info_t* rail, _mpc_lowcomm_endpoint_type_t origin, 
-                       _mpc_lowcomm_endpoint_state_t state)
+static int lcr_ptl_add_route(mpc_lowcomm_peer_uid_t dest, lcr_ptl_addr_t id, 
+                             sctk_rail_info_t* rail, _mpc_lowcomm_endpoint_type_t origin, 
+                             _mpc_lowcomm_endpoint_state_t state)
 {
+        int rc = MPC_LOWCOMM_SUCCESS;
 	_mpc_lowcomm_endpoint_t * route;
 	lcr_ptl_rail_info_t* srail = &rail->network.ptl;
 
 	route = sctk_malloc(sizeof(_mpc_lowcomm_endpoint_t));
-	assert(route);
+        if (route == NULL) {
+                mpc_common_debug_error("LCR PTL: could not allocate endpoint.");
+                rc = MPC_LOWCOMM_ERROR;
+                goto err;
+        }
 
 	_mpc_lowcomm_endpoint_init(route, dest, rail, origin);
 	_mpc_lowcomm_endpoint_set_state(route, state);
 
+        /* Set endpoint data. */
 	route->data.ptl.addr = id;
+        route->data.ptl.tx_id = OPA_fetch_and_incr_int(&srail->num_txqs);
+        if (route->data.ptl.tx_id == LCR_PTL_MAX_TXQUEUES) {
+                mpc_common_debug_error("LCR PTL: reached max endpoint (TX queue) "
+                                       "%d.", LCR_PTL_MAX_TXQUEUES);
+                rc = MPC_LOWCOMM_ERROR;
+                goto err_free_ep;
+        }
+
+        /* Assign TX queue. */
+        route->data.ptl.tx    = &srail->txqt[route->data.ptl.tx_id];
+
+        /* Register endpoint to interface map. */
 	__ranks_ids_map_set(&srail->ranks_ids_map, dest, id);
 
 	if(origin == _MPC_LOWCOMM_ENDPOINT_STATIC)
@@ -822,6 +878,12 @@ void lcr_ptl_add_route(mpc_lowcomm_peer_uid_t dest, lcr_ptl_addr_t id,
 	{
 		sctk_rail_add_dynamic_route(  rail, route );
 	}
+
+        return rc;
+err_free_ep:
+        sctk_free(route);
+err:
+        return rc;
 }
 
 void lcr_ptl_connect_on_demand(struct sctk_rail_info_s *rail, 

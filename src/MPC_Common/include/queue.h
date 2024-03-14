@@ -93,4 +93,19 @@ static inline void mpc_queue_del_iter(mpc_queue_head_t *queue,
 #define mpc_queue_pull_elem(queue, type, member) \
         mpc_container_of(mpc_queue_pull(queue), type, member)
 
+
+static inline void mpc_queue_remove(mpc_queue_head_t *queue, 
+                                    mpc_queue_elem_t *elem)
+{
+        mpc_queue_iter_t iter = &queue->head;
+
+        while (iter != queue->tail) {
+                if (*iter == elem) {
+                        mpc_queue_del_iter(queue, iter);
+                        return;
+                }
+                iter = &(*iter)->next;
+        }
+}
+        
 #endif
