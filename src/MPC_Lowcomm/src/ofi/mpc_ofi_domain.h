@@ -47,6 +47,7 @@
 *********************/
 
 #define MPC_OFI_DOMAIN_NUM_CQ_REQ_TO_POLL    4
+#define MPC_OFI_DOMAIN_ERR_BUF_SIZE          256
 
 
 struct _mpc_ofi_domain_t;

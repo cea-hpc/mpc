@@ -628,6 +628,9 @@ static inline int _ofi_domain_cq_poll(struct _mpc_ofi_domain_t * domain, struct 
 	if(rd == -FI_EAVAIL)
 	{
 		struct fi_cq_err_entry err;
+		char err_data[MPC_OFI_DOMAIN_ERR_BUF_SIZE];
+		err.err_data = err_data;
+		err.err_data_size = MPC_OFI_DOMAIN_ERR_BUF_SIZE;
       long ret = fi_cq_readerr(cq, &err, 0);
       if(ret < 0)
       {
