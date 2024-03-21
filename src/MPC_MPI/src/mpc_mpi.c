@@ -37,6 +37,7 @@
 
 
 #include "mpc_keywords.h"
+#include "mpc_lowcomm_monitor.h"
 #include "mpi_conf.h"
 
 #include "mpc_mpi_halo.h"
@@ -13020,6 +13021,7 @@ static int __split_unguided(MPI_Comm comm, int split_type __UNUSED__, int key __
 	}
 	int *tab_cpuid, *tab_color;
 	int  cpu_this = mpc_topology_get_global_current_cpu();
+	mpc_lowcomm_set_uid_t my_gid = mpc_lowcomm_monitor_get_gid();
 
 	/* send to root cpu id and node rank */
 	int root = 0;
@@ -13048,7 +13050,8 @@ static int __split_unguided(MPI_Comm comm, int split_type __UNUSED__, int key __
 		/* if callers on several nodes, split with node number */
 		for(k = 0; k < size; k++)
 		{
-			if(tab_cpuid[1] != tab_cpuid[2 * k + 1]) /* one rank is not on the same node */
+			/* one rank is not on the same node / group */
+			if(tab_cpuid[1] != tab_cpuid[2 * k + 1] || my_gid != mpc_lowcomm_peer_get_set(mpc_lowcomm_communicator_uid(comm, k)))
 			{
 				is_multinode = 1;
 				break;
