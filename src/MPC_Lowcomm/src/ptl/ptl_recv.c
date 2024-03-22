@@ -32,28 +32,26 @@
 #ifdef MPC_USE_PORTALS
 #include "ptl_recv.h"
 
-#include "ptl_iface.h"
-
 #include <mpc_common_debug.h>
 #include <mpc_lowcomm_types.h>
 
-#include <utlist.h>
-
-int lcr_ptl_recv_block_init(lcr_ptl_rail_info_t *srail, lcr_ptl_recv_block_t **block_p)
+int lcr_ptl_recv_block_init(lcr_ptl_rail_info_t *srail, 
+                            mpc_mempool_t *mp,
+                            lcr_ptl_recv_block_t **block_p)
 {
         int rc = MPC_LOWCOMM_SUCCESS;
         lcr_ptl_recv_block_t *block;
 
-        block = sctk_malloc(sizeof(lcr_ptl_recv_block_t));
+        block = mpc_mpool_pop(mp);
         if (block == NULL) {
                 mpc_common_debug_error("LCR PTL: could not allocate eager block structure");
                 rc = MPC_LOWCOMM_ERROR;
                 goto err;
         }
 
-        block->size      = 4 * srail->config.eager_block_size;
+        block->size      = mpc_mpool_get_elem_size(mp) - sizeof(lcr_ptl_recv_block_t);
         block->rail      = srail;
-        block->start     = sctk_malloc(block->size);
+        block->start     = block + 1;
         block->op.type   = LCR_PTL_OP_BLOCK;
 
         if (block->start == NULL) {
@@ -90,11 +88,11 @@ int lcr_ptl_recv_block_activate(lcr_ptl_recv_block_t *block,
                         .phys.nid = PTL_NID_ANY,
                         .phys.pid = PTL_PID_ANY,
                 },
-                .min_free    = block->rail->config.eager_block_size,
+                .min_free    = block->rail->config.eager_limit,
                 .options     = PTL_ME_OP_PUT       | 
                         PTL_ME_MANAGE_LOCAL        | 
-                        PTL_ME_MAY_ALIGN           |
-                        PTL_ME_EVENT_LINK_DISABLE,
+                        PTL_ME_EVENT_LINK_DISABLE  | 
+                        PTL_ME_MAY_ALIGN,
                 .uid         = PTL_UID_ANY,
                 .start       = block->start,
                 .length      = block->size
@@ -111,8 +109,9 @@ int lcr_ptl_recv_block_activate(lcr_ptl_recv_block_t *block,
         return MPC_LOWCOMM_SUCCESS;
 }
 
-//FIXME: switch to memory pools
 int lcr_ptl_recv_block_enable(lcr_ptl_rail_info_t *srail, 
+                              mpc_mempool_t *block_mp,
+                              mpc_list_elem_t *block_head,
                               ptl_pt_index_t pte, 
                               ptl_list_t list)
 {
@@ -120,34 +119,20 @@ int lcr_ptl_recv_block_enable(lcr_ptl_rail_info_t *srail,
 
         for (i=0; i< srail->config.num_eager_blocks; i++) {
                 lcr_ptl_recv_block_t *block = NULL;
-                rc = lcr_ptl_recv_block_init(srail, &block);
+                rc = lcr_ptl_recv_block_init(srail, block_mp, &block);
                 if (rc != MPC_LOWCOMM_SUCCESS) {
                         mpc_common_debug_error("LCR PTL: could not allocate block");
                         return rc;
                 }
-
-                lcr_ptl_block_list_t *el = sctk_malloc(sizeof(lcr_ptl_block_list_t));
-                if (el == NULL) {
-                        mpc_common_debug_error("LCR PTL: could not allocate list elem");
-                        rc = MPC_LOWCOMM_ERROR;
-                        goto err;
-                }
-                el->block = block;
-                switch(list) {
-                case PTL_PRIORITY_LIST:
-                        DL_APPEND(srail->am_ctx.blist, el);
-                        break;
-                case PTL_OVERFLOW_LIST:
-                        DL_APPEND(srail->tag_ctx.blist, el);
-                        break;
-                default:
-                        mpc_common_debug_error("LCR PTL: unknown list");
-                        rc = MPC_LOWCOMM_ERROR;
-                        goto err;
-                        break;
-                }
-
+                
+                /* Append block to list. */
+                mpc_list_push_head(block_head, &block->elem);
+               
+                /* Create the ME on the card. */
                 rc = lcr_ptl_recv_block_activate(block, pte, list);
+                if (rc != MPC_LOWCOMM_SUCCESS) {
+                        goto err;
+                }
         }
 
 err:
@@ -156,21 +141,17 @@ err:
 
 void lcr_ptl_recv_block_free(lcr_ptl_recv_block_t *block)
 {
-        if (block->start != NULL) {
-                sctk_free(block->start);
-        }
         PtlMEUnlink(block->meh);
-        sctk_free(block);
+
+        mpc_mpool_push(block);
 }
 
-int lcr_ptl_recv_block_disable(lcr_ptl_block_list_t *list)
+int lcr_ptl_recv_block_disable(mpc_list_elem_t *head)
 {
-        lcr_ptl_block_list_t *elem = NULL, *tmp = NULL;
+        lcr_ptl_recv_block_t *block = NULL, *tmp = NULL;
 
-        DL_FOREACH_SAFE(list, elem, tmp) {
-               lcr_ptl_recv_block_free(elem->block);
-               DL_DELETE(list, elem);
-               sctk_free(elem);
+        mpc_list_for_each_safe(block, tmp, head, lcr_ptl_recv_block_t, elem) {
+               lcr_ptl_recv_block_free(block);
         }
 
         return MPC_LOWCOMM_SUCCESS;

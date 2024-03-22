@@ -1141,6 +1141,17 @@ fi
 
 AM_CONDITIONAL([PORTALS4_DRIVER_ENABLED], [test "x$portals4_enabled" = "xyes"])
 
+AC_ARG_ENABLE([ptl-control-flow],
+              [AS_HELP_STRING([--enable-ptl-control-flow],
+                              [Enable control flow with portals4])],
+              [enable_portal4_control_flow=$enableval],
+              [enable_portal4_control_flow=maybe])
+
+AM_CONDITIONAL([PORTALS4_CONTROL_FLOW_ENABLED], [test "x$enable_portal4_control_flow" = "xyes"])
+if test "x$enable_portal4_control_flow" = "xyes"; then
+    AC_DEFINE([MPC_USE_PORTALS_CONTROL_FLOW], [1], [Portals control flow support is enabled])
+fi
+
 AC_SUBST([MPC_NETWORK_LIST])
 
 #

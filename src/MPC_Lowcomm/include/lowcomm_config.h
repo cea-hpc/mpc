@@ -82,6 +82,20 @@ struct _mpc_lowcomm_config_struct_offload_ops_t
 	int collectives;
 };
 
+struct _mpc_lowcomm_config_struct_control_flow_t
+{
+	/**Maximum number of token per chunk, eg maximum number of that can be
+         * granted to one remote process.**/
+	int max_chunk;
+	/**Minimum number of token per chunk, eg maximum number of that can be
+         * granted to one remote process.**/
+	int min_chunk;
+	/**Maximum number of token.**/
+	int max_tokens;
+	/**Enable collective optimization for Portals**/
+	int collectives;
+};
+
 /******************************** STRUCTURE *********************************/
 /**Portals-based driver**/
 struct _mpc_lowcomm_config_struct_net_driver_portals
@@ -106,6 +120,8 @@ struct _mpc_lowcomm_config_struct_net_driver_portals
 	int                                             offload;
 	/**List of available optimizations taking advantage of triggered Ops**/
 	struct _mpc_lowcomm_config_struct_offload_ops_t offloading;
+	/**Configuration for control flow**/
+	struct _mpc_lowcomm_config_struct_control_flow_t control_flow;
 };
 
 

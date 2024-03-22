@@ -31,8 +31,6 @@
 
 #include "lcp.h"
 
-#include "mpc_common_spinlock.h"
-
 #include "lcp_manager.h"
 #include "lcp_prototypes.h"
 

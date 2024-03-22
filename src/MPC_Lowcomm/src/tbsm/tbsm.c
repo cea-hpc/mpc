@@ -131,6 +131,7 @@ int lcr_tbsm_iface_open(__UNUSED__ const char *device_name, int id,
                         sctk_rail_info_t **iface_p,
                         unsigned flags)
 {
+        UNUSED(flags);
         int rc = MPC_LOWCOMM_SUCCESS;
         sctk_rail_info_t *iface = NULL;
         UNUSED(device_name);

@@ -84,7 +84,7 @@ struct sctk_rail_pin_ctx_list
 	sctk_rail_pin_ctx_internal_t pin;
 	int                          rail_id;
 };
-typedef struct sctk_rail_pin_ctx_list lcr_memp_t;
+typedef struct sctk_rail_pin_ctx_list lcr_memp_t; //TODO: change name
 
 #define SCTK_PIN_LIST_SIZE    4
 
@@ -114,6 +114,7 @@ enum {
         LCR_IFACE_FLUSH_EP          = LCP_BIT(0),
         LCR_IFACE_FLUSH_MEM         = LCP_BIT(1),
         LCR_IFACE_FLUSH_EP_MEM      = LCP_BIT(2),
+        LCR_IFACE_REGISTER_MEM_DYN  = LCP_BIT(3),
 };
 
 enum {
@@ -275,6 +276,10 @@ struct sctk_rail_info_s
 	lcr_iface_pack_memp_func_t                           iface_pack_memp;
 	lcr_iface_unpack_memp_func_t                         iface_unpack_memp;
         lcr_iface_is_reachable_func_t                        iface_is_reachable;
+
+        /* Interface memory API */
+        lcr_iface_register_mem_func_t                        iface_register_mem;
+        lcr_iface_unregister_mem_func_t                      iface_unregister_mem;
 
 	/* Interface Sync API */
         lcr_iface_fence_func_t                               iface_fence;

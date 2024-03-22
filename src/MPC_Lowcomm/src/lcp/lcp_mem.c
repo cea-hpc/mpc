@@ -255,7 +255,8 @@ int lcp_mem_register_with_bitmap(lcp_manager_h mngr,
                                 lcp_mem_h *mem_p,
                                 bmap_t bitmap,
                                 void *buffer,
-                                size_t length);
+                                size_t length,
+                                unsigned flags);
 
 int lcp_pinning_entry_list_decimate_no_lock(struct lcp_pinning_entry_list * list, ssize_t size_to_decimate)
 {
@@ -289,7 +290,7 @@ int lcp_pinning_entry_list_decimate_no_lock(struct lcp_pinning_entry_list * list
 
 struct lcp_pinning_entry * lcp_pinning_entry_list_push(struct lcp_pinning_entry_list * list, 
                                                        void * buffer, size_t len, lcp_manager_h mngr, 
-                                                       bmap_t bitmap)
+                                                       bmap_t bitmap, unsigned flags)
 {
         struct lcp_pinning_entry * ret = NULL;
 
@@ -319,7 +320,7 @@ struct lcp_pinning_entry * lcp_pinning_entry_list_push(struct lcp_pinning_entry_
                         &mem_p,
                         bitmap,
                         buffer,
-                        len);
+                        len, flags);
                 ret = lcp_pinning_entry_new(buffer, len, mngr, mem_p);
                 lcp_pinning_entry_acquire(ret);
 
@@ -383,7 +384,8 @@ int lcp_pinning_mmu_release(struct lcp_pinning_mmu *mmu)
 
 
 //NOTE: implements a FIFO like caching algorithm.
-lcp_mem_h lcp_pinning_mmu_pin(lcp_manager_h mngr, void *addr, size_t size, bmap_t bitmap)
+lcp_mem_h lcp_pinning_mmu_pin(lcp_manager_h mngr, void *addr, 
+                              size_t size, bmap_t bitmap, unsigned flags)
 {
         struct lcp_pinning_entry * exists = lcp_pinning_entry_list_find(&mngr->mmu->list, addr, size, bitmap);
 
@@ -395,7 +397,8 @@ lcp_mem_h lcp_pinning_mmu_pin(lcp_manager_h mngr, void *addr, size_t size, bmap_
                 return exists->mem_entry;
         }
 
-        exists = lcp_pinning_entry_list_push(&mngr->mmu->list, addr, size, mngr, bitmap);
+        exists = lcp_pinning_entry_list_push(&mngr->mmu->list, addr, 
+                                             size, mngr, bitmap, flags);
         assume(exists);
 
         return exists->mem_entry;
@@ -499,7 +502,7 @@ int lcp_mem_unpack(lcp_manager_h mngr, lcp_mem_h *mem_p,
 
         mem = sctk_malloc(sizeof(struct lcp_mem));
         if (mem == NULL) {
-                mpc_common_debug_error("LCP: could not allocate memory domain");
+                mpc_common_debug_error("LCP: could not allocate memory domain.");
                 rc = LCP_ERROR;
                 goto err;
         }
@@ -507,7 +510,7 @@ int lcp_mem_unpack(lcp_manager_h mngr, lcp_mem_h *mem_p,
         mem->mems       = sctk_malloc(mngr->num_ifaces * sizeof(lcr_memp_t));
         mem->num_ifaces = 0;
         if (mem->mems == NULL) {
-                mpc_common_debug_error("LCP: could not allocate memory pins");
+                mpc_common_debug_error("LCP: could not allocate memory pins.");
                 rc = LCP_ERROR;
                 goto err;
         }
@@ -573,7 +576,8 @@ int lcp_mem_reg_from_map(lcp_manager_h mngr,
                          lcp_mem_h mem,
                          bmap_t mem_map,
                          void *buffer,
-                         size_t length)
+                         size_t length,
+                         unsigned flags)
 {
         int i, rc = LCP_SUCCESS;
         sctk_rail_info_t *iface = NULL;
@@ -591,7 +595,9 @@ int lcp_mem_reg_from_map(lcp_manager_h mngr,
                                 goto err;
                         }
 
-                        iface->rail_pin_region(iface, &mem->mems[i], buffer, length);
+                        iface->iface_register_mem(iface, &mem->mems[i], 
+                                                  buffer, length,
+                                                  flags);
                         mem->num_ifaces++;
                 }
         }
@@ -604,7 +610,8 @@ int lcp_mem_register_with_bitmap(lcp_manager_h mngr,
                                  lcp_mem_h *mem_p,
                                  bmap_t bitmap,
                                  void *buffer,
-                                 size_t length)
+                                 size_t length,
+                                 unsigned flags)
 {
         int rc = lcp_mem_create(mngr, mem_p);
 
@@ -616,7 +623,8 @@ int lcp_mem_register_with_bitmap(lcp_manager_h mngr,
         (*mem_p)->base_addr = (uint64_t)buffer;
         (*mem_p)->bm = bitmap;
 
-        rc = lcp_mem_reg_from_map(mngr, *mem_p, bitmap, buffer, length); 
+        rc = lcp_mem_reg_from_map(mngr, *mem_p, bitmap, 
+                                  buffer, length, flags); 
 err:
         return rc;
 }

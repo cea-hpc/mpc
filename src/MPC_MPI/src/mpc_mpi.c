@@ -14692,11 +14692,31 @@ int PMPI_Init(int *argc __UNUSED__, char ***argv __UNUSED__)
 	MPI_HANDLE_RETURN_VAL(res, MPI_COMM_WORLD);
 }
 
+#if defined (MPC_USE_PORTALS_CONTROL_FLOW)
+extern lcp_manager_h lcp_mngr_loc;
+#endif
 int PMPI_Finalize(void)
 {
 	int res = MPI_ERR_INTERN;
 
 	PMPI_Barrier(MPI_COMM_WORLD);
+
+#if defined (MPC_USE_PORTALS_CONTROL_FLOW)
+        //NOTE: Because Portals uses control flow, it may "lie" to the upper
+        //      layer by saying that the message was sent while it actually
+        //      needs a token before sending the message. To progress the
+        //      communication, it is such needed to call LCP progression
+        //      function.
+        //      This is a known probleme, see ompi_mpi_finalize from OpenMPI, to
+        //      overcome this, they use asynchronous PMIx call when possible.
+        //      Otherwise, they do not solve the problem.
+        int i = 0;
+        while (i < 15) {
+                lcp_progress(lcp_mngr_loc);
+                usleep(100);
+                i++;
+        }
+#endif
 
 #ifdef MPC_Profiler
 	mpc_common_init_callback_register("MPC Profile reduce",

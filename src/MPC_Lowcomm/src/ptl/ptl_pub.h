@@ -16,28 +16,50 @@
 /* # terms.                                                               # */
 /* #                                                                      # */
 /* # Authors:                                                             # */
-/* #   - BESNARD Jean-Baptiste jbbesnard@paratools.fr                     # */
+/* #   - PERACHE Marc marc.perache@cea.fr                                 # */
+/* #   - ADAM Julien julien.adam@paratools.com                            # */
+/* #   - BESNARD Jean-Baptiste jean-baptiste.besnard@paratools.com        # */
 /* #                                                                      # */
 /* ######################################################################## */
-#ifndef SCTK_DRIVER_LIST_H
-#define SCTK_DRIVER_LIST_H
 
-#include <mpc_config.h>
-
-/* Networks */
-#include <tcp.h>
-
-#ifdef MPC_USE_PORTALS
-#include <ptl/ptl_pub.h>
+#ifndef LCR_PTL_PUB_H
+#define LCR_PTL_PUB_H
+#ifdef __cplusplus
+extern "C"
+{
 #endif
+        
+#include "ptl.h"
+#include "mpc_common_debug.h"
+#include "mpc_keywords.h"
 
-#include <tbsm/tbsm.h>
+//FIXME: hack for previous public ptl function.
+static inline int ptl_offcoll_barrier(int comm_idx, int rank, int size) {
+        UNUSED(comm_idx);
+        UNUSED(rank);
+        UNUSED(size);
+        not_implemented();
+        return 0;
+}
 
-#include <shm/mpc_shm.h>
+static inline int ptl_offcoll_bcast(int comm_idx, int rank, int size, 
+                                    void* buf, size_t bytes, int root) {
+        UNUSED(comm_idx);
+        UNUSED(rank);
+        UNUSED(size);
+        UNUSED(buf);
+        UNUSED(bytes);
+        UNUSED(root);
+        not_implemented();
+        return 0;
+}
 
-#ifdef MPC_USE_OFI
-#include <mpc_ofi.h>
+static inline int ptl_offcoll_enabled() {
+        return 0;
+}
+
+
+#ifdef __cplusplus
+}
 #endif
-
-
 #endif

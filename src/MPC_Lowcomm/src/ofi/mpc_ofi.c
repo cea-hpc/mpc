@@ -506,8 +506,10 @@ int _mpc_ofi_send_am_zcopy(_mpc_lowcomm_endpoint_t *ep,
    return MPC_LOWCOMM_SUCCESS;
 }
 
-void  _mpc_ofi_pin(struct sctk_rail_info_s *rail, struct sctk_rail_pin_ctx_list *list, void *addr, size_t size)
+int  _mpc_ofi_pin(struct sctk_rail_info_s *rail, struct sctk_rail_pin_ctx_list *list, void *addr, size_t size,
+                   unsigned flags)
 {
+        UNUSED(flags);
    if(_mpc_ofi_domain_memory_register(rail->network.ofi.ctx.domain,
                                      addr,
                                      size,
@@ -524,7 +526,7 @@ void  _mpc_ofi_pin(struct sctk_rail_info_s *rail, struct sctk_rail_pin_ctx_list 
    list->pin.ofipin.shared.size = size;
 }
 
-void _mpc_ofi_unpin(struct sctk_rail_info_s *rail, struct sctk_rail_pin_ctx_list *list)
+int _mpc_ofi_unpin(struct sctk_rail_info_s *rail, struct sctk_rail_pin_ctx_list *list)
 {
 
    if(_mpc_ofi_domain_memory_unregister(rail->network.ofi.ctx.domain, list->pin.ofipin.ofi))
@@ -832,11 +834,11 @@ int _mpc_ofi_iface_open(__UNUSED__ const char *device_name, int id,
 
    rail->get_zcopy = _mpc_ofi_get_zcopy;
    rail->put_zcopy = _mpc_ofi_send_put_zcopy;
-   rail->rail_pin_region = _mpc_ofi_pin;
-   rail->rail_unpin_region = _mpc_ofi_unpin;
    rail->iface_pack_memp = _mpc_ofi_pack_rkey;
    rail->iface_unpack_memp = _mpc_ofi_unpack_rkey;
    rail->iface_is_reachable = _mpc_ofi_iface_is_reachable;
+   rail->iface_register_mem = _mpc_ofi_pin;
+   rail->iface_unregister_mem = _mpc_ofi_unpin;
 
 
    /* Init capabilities */

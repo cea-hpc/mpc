@@ -82,7 +82,8 @@ int lcp_mem_reg_from_map(lcp_manager_h mngr,
                          lcp_mem_h mem,
                          bmap_t mem_map,
                          void *buffer,
-                         size_t length);
+                         size_t length,
+                         unsigned flags);
 int lcp_mem_unpost(lcp_manager_h mngr, lcp_mem_h mem, lcr_tag_t tag);
 
 /************************
@@ -92,7 +93,8 @@ int lcp_mem_unpost(lcp_manager_h mngr, lcp_mem_h mem, lcr_tag_t tag);
 int lcp_pinning_mmu_init(struct lcp_pinning_mmu **mmu_p, unsigned flags);
 int lcp_pinning_mmu_release(struct lcp_pinning_mmu *mmu);
 
-lcp_mem_h lcp_pinning_mmu_pin(lcp_manager_h mngr, void *addr, size_t size, bmap_t bitmap);
+lcp_mem_h lcp_pinning_mmu_pin(lcp_manager_h mngr, void *addr, 
+                              size_t size, bmap_t bitmap, unsigned flags);
 int lcp_pinning_mmu_unpin(lcp_manager_h mngr, lcp_mem_h mem);
 
 

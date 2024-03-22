@@ -33,30 +33,29 @@
 #ifndef LCR_PTL_RECV_H
 #define LCR_PTL_RECV_H
 
-#include "ptl_types.h"
+#include "ptl.h"
 
 typedef struct lcr_ptl_recv_block {
-        void *start;
-        size_t size;
+        void                *start;
+        size_t               size;
         
         lcr_ptl_rail_info_t *rail;
-        ptl_handle_me_t meh;
-        lcr_ptl_op_t op;
+        ptl_handle_me_t      meh;
+        lcr_ptl_op_t         op;
+        mpc_list_elem_t      elem;
 } lcr_ptl_recv_block_t;
 
-typedef struct lcr_ptl_block_list {
-        lcr_ptl_recv_block_t *block;
-        struct lcr_ptl_block_list *prev, *next;
-} lcr_ptl_block_list_t;
-
 int lcr_ptl_recv_block_init(lcr_ptl_rail_info_t *srail, 
+                            mpc_mempool_t *mp,
                             lcr_ptl_recv_block_t **block_p);
 int lcr_ptl_recv_block_activate(lcr_ptl_recv_block_t *block, 
                                 ptl_pt_index_t pte, 
                                 ptl_list_t list);
 int lcr_ptl_recv_block_enable(lcr_ptl_rail_info_t *srail, 
+                              mpc_mempool_t *block_mp,
+                              mpc_list_elem_t *block_head,
                               ptl_pt_index_t pte, 
                               ptl_list_t list);
-int lcr_ptl_recv_block_disable(lcr_ptl_block_list_t *list);
+int lcr_ptl_recv_block_disable(mpc_list_elem_t *head);
 
 #endif

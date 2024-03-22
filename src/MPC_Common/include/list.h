@@ -8,6 +8,8 @@ typedef struct mpc_list_elem {
         struct mpc_list_elem *prev;
 } mpc_list_elem_t;
 
+typedef struct mpc_list_elem **mpc_list_iter_t;
+
 /* NOLINTBEGIN(clang-diagnostic-unused-function): False positives */
 static inline void mpc_list_init_head(mpc_list_elem_t *head) {
         head->prev = head->next = head;
@@ -60,5 +62,12 @@ static inline void mpc_list_insert_before(mpc_list_elem_t *elem,
         for (_elem = mpc_container_of((_head)->next, _type, _member); \
              &(_elem)->_member != (_head); \
              _elem = mpc_container_of((_elem)->_member.next, _type, _member))
+
+#define mpc_list_for_each_safe(_elem, _nelem, _head, _type, _member) \
+        for (_elem  = mpc_container_of((_head)->next, _type, _member), \
+             _nelem = mpc_container_of((_elem)->_member.next, _type, _member) ; \
+             &(_elem)->_member != (_head); \
+             _elem = _nelem, \
+             _nelem = mpc_container_of((_elem)->_member.next, _type, _member))
 
 #endif

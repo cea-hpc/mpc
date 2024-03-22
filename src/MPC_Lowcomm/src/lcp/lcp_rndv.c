@@ -137,13 +137,11 @@ int lcp_rndv_rma_progress(lcp_request_t *rndv_req)
         lcp_mem_h rkey;
         lcp_ep_h ep;
         lcr_rail_attr_t attr;
-        uint64_t start;
 
         rkey      = rndv_req->send.rndv.rkey;
         ep        = rndv_req->send.ep;
         remaining = rndv_req->state.remaining;
         offset    = rndv_req->state.offset;
-        start     = (uint64_t)rndv_req->send.buffer;
 
         cc = lcp_ep_get_next_cc(ep);
 
@@ -209,7 +207,8 @@ int lcp_rndv_reg_send_buffer(lcp_request_t *req)
 
         req->state.lmem = lcp_pinning_mmu_pin(req->mngr, req->send.buffer, 
                                               req->send.length,
-                                              req->send.ep->conn_map);
+                                              req->send.ep->conn_map,
+                                              LCR_IFACE_REGISTER_MEM_DYN);
         req->state.offset = (size_t)(req->send.buffer - req->state.lmem->base_addr);
         assume(req->state.offset == 0);
 
@@ -225,7 +224,8 @@ int lcp_rndv_reg_recv_buffer(lcp_request_t *rndv_req)
         /* Register and pack memory pin context that will be sent to remote */
         rndv_req->state.lmem = lcp_pinning_mmu_pin(rndv_req->mngr, rndv_req->send.buffer, 
                                                    rndv_req->send.length,
-                                                   rndv_req->send.ep->conn_map);
+                                                   rndv_req->send.ep->conn_map,
+                                                   LCR_IFACE_REGISTER_MEM_DYN);
         req->state.offset = (size_t)(rndv_req->send.buffer - 
                                      rndv_req->state.lmem->base_addr);
         assume(req->state.offset == 0);

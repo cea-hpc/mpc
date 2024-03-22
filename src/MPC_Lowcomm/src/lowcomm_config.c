@@ -340,12 +340,15 @@ static inline mpc_conf_config_type_t *__init_driver_portals(struct _mpc_lowcomm_
 	portals->offloading.collectives = 0;
 	portals->offloading.ondemand = 0;
         portals->max_iovecs = 8;
-        portals->num_eager_blocks = 32;
+        portals->num_eager_blocks = 2;
         portals->eager_block_size = 8*8192;
 	portals->max_msg_size = 2147483648;
         portals->min_frag_size = 524288; // octets
         portals->offload = 0;
 
+        portals->control_flow.max_chunk  = 8;
+        portals->control_flow.min_chunk  = 1;
+        portals->control_flow.max_tokens = 8;
 	/*
 	 * Create the config object
 	 */
@@ -387,11 +390,15 @@ static inline mpc_conf_config_type_t *__init_driver_matching_portals(struct _mpc
 	portals->offloading.collectives = 0;
 	portals->offloading.ondemand = 0;
         portals->max_iovecs = 8;
-        portals->num_eager_blocks = 32;
+        portals->num_eager_blocks = 2;
         portals->eager_block_size = 8*8192;
 	portals->max_msg_size = 2147483648;
         portals->min_frag_size = 524288; // octets
         portals->offload = 1;
+
+        portals->control_flow.max_chunk  = 8;
+        portals->control_flow.min_chunk  = 1;
+        portals->control_flow.max_tokens = 8;
 
 	/*
 	 * Create the config object

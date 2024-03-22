@@ -131,6 +131,14 @@ typedef int (*lcr_iface_pack_memp_func_t)(sctk_rail_info_t *rail,
                                           lcr_memp_t *memp,
                                           void *dest);
 
+typedef	int (*lcr_iface_register_mem_func_t)(struct sctk_rail_info_s *rail, 
+                                             lcr_memp_t *mem, 
+                                             void *addr, 
+                                             size_t size,
+                                             unsigned flags);
+typedef int (*lcr_iface_unregister_mem_func_t)(struct sctk_rail_info_s *rail, 
+                                               lcr_memp_t *mem);
+
 typedef int (*lcr_iface_unpack_memp_func_t)(sctk_rail_info_t *rail,
                                             lcr_memp_t *memp,
                                             void *dest);

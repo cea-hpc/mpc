@@ -23,15 +23,11 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#include <mpc_common_debug.h>
+#include "ptl.h"
 #include "mpc_launch_pmi.h"
 #include "rail.h"
 
 #include <lcr_component.h>
-
-#include "ptl_types.h"
-#include "ptl_iface.h"
-#include "ptl_ep.h"
 
 #include <dirent.h>
 
@@ -188,22 +184,22 @@ int lcr_ptl_iface_open(__UNUSED__ const char *device_name, int id,
 	iface->iface_get_attr      = lcr_ptl_get_attr;
 
         /* Active message calls */
-        iface->send_am_bcopy       = lcr_ptl_send_am_bcopy;
-        iface->send_am_zcopy       = lcr_ptl_send_am_zcopy;
+        iface->send_am_bcopy        = lcr_ptl_send_am_bcopy;
+        iface->send_am_zcopy        = lcr_ptl_send_am_zcopy;
         /* Tag calls */
-        iface->send_tag_bcopy      = lcr_ptl_send_tag_bcopy;
-        iface->send_tag_zcopy      = lcr_ptl_send_tag_zcopy;
-        iface->post_tag_zcopy      = lcr_ptl_post_tag_zcopy;
-        iface->connect_on_demand   = lcr_ptl_connect_on_demand;
+        iface->send_tag_bcopy       = lcr_ptl_send_tag_bcopy;
+        iface->send_tag_zcopy       = lcr_ptl_send_tag_zcopy;
+        iface->post_tag_zcopy       = lcr_ptl_post_tag_zcopy;
+        iface->connect_on_demand    = lcr_ptl_connect_on_demand;
         /* RMA calls */
-        iface->put_bcopy           = lcr_ptl_send_put_bcopy;
-        iface->put_zcopy           = lcr_ptl_send_put_zcopy;
-        iface->get_zcopy           = lcr_ptl_send_get_zcopy;
-        iface->get_tag_zcopy       = lcr_ptl_get_tag_zcopy;
-        iface->iface_pack_memp     = lcr_ptl_pack_rkey;
-        iface->iface_unpack_memp   = lcr_ptl_unpack_rkey;
-        iface->rail_pin_region     = lcr_ptl_mem_register;
-        iface->rail_unpin_region   = lcr_ptl_mem_unregister;
+        iface->put_bcopy            = lcr_ptl_send_put_bcopy;
+        iface->put_zcopy            = lcr_ptl_send_put_zcopy;
+        iface->get_zcopy            = lcr_ptl_send_get_zcopy;
+        iface->get_tag_zcopy        = lcr_ptl_get_tag_zcopy;
+        iface->iface_pack_memp      = lcr_ptl_pack_rkey;
+        iface->iface_unpack_memp    = lcr_ptl_unpack_rkey;
+        iface->iface_register_mem   = lcr_ptl_mem_register;
+        iface->iface_unregister_mem = lcr_ptl_mem_unregister;
         /* Endpoint Sync calls */
         iface->ep_flush            = lcr_ptl_ep_flush;
         /* Interface progress */
