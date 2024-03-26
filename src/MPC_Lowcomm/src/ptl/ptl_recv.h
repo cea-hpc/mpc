@@ -45,9 +45,6 @@ typedef struct lcr_ptl_recv_block {
         mpc_list_elem_t      elem;
 } lcr_ptl_recv_block_t;
 
-int lcr_ptl_recv_block_init(lcr_ptl_rail_info_t *srail, 
-                            mpc_mempool_t *mp,
-                            lcr_ptl_recv_block_t **block_p);
 int lcr_ptl_recv_block_activate(lcr_ptl_recv_block_t *block, 
                                 ptl_pt_index_t pte, 
                                 ptl_list_t list);

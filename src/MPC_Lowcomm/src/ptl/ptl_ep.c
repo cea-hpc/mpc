@@ -29,6 +29,10 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
+#include <mpc_config.h>
+
+#ifdef MPC_USE_PORTALS
+
 #include "ptl.h"
 
 #include <sctk_alloc.h>
@@ -83,6 +87,7 @@ ssize_t lcr_ptl_send_am_bcopy(_mpc_lowcomm_endpoint_t *ep,
 
 #if defined (MPC_USE_PORTALS_CONTROL_FLOW)
         int token_num = 1;
+        op->id = atomic_fetch_add(&srail->am.am_count, 1);
         LCR_PTL_AM_HDR_SET(op->hdr, op->am.am_id, 
                            op->txq->idx, 
                            op->txq->num_ops);
@@ -102,7 +107,6 @@ ssize_t lcr_ptl_send_am_bcopy(_mpc_lowcomm_endpoint_t *ep,
         op->hdr = (uint64_t)op->am.am_id;
         rc = lcr_ptl_do_op(op);
 #endif
-
 
         if (rc != MPC_LOWCOMM_SUCCESS) {
                 size = -1;
@@ -136,7 +140,7 @@ int lcr_ptl_send_am_zcopy(_mpc_lowcomm_endpoint_t *ep,
                 goto err;
         }
         /* Memory Descriptor handle and size are set later. */
-        _lcr_ptl_init_op_common(op, 0, 0, 
+        _lcr_ptl_init_op_common(op, 0, srail->am.mdh, 
                                 txq->addr.id, 
                                 txq->addr.pte.am, 
                                 LCR_PTL_OP_AM_ZCOPY, 
@@ -344,8 +348,8 @@ int lcr_ptl_post_tag_zcopy(sctk_rail_info_t *rail,
                         .length = iov[iovcnt-1].iov_len,
                         .start = iov[iovcnt-1].iov_base,
                         .uid = PTL_UID_ANY,
-                        .options = SCTK_PTL_ME_PUT_FLAGS | 
-                                SCTK_PTL_ME_GET_FLAGS    |
+                        .options = PTL_ME_OP_PUT | 
+                                PTL_ME_OP_GET    |
                                 PTL_ME_USE_ONCE,
         };
 
@@ -360,7 +364,7 @@ int lcr_ptl_post_tag_zcopy(sctk_rail_info_t *rail,
                 rc = MPC_LOWCOMM_NO_RESOURCE;
                 goto err;
         }
-        _lcr_ptl_init_op_common(op, 0, 0, 
+        _lcr_ptl_init_op_common(op, 0, srail->tag.mdh, 
                                 LCR_PTL_PROCESS_ANY, 
                                 srail->tag.pti, 
                                 search ? LCR_PTL_OP_TAG_SEARCH : 
@@ -441,7 +445,7 @@ int lcr_ptl_send_put_bcopy(_mpc_lowcomm_endpoint_t *ep,
         lcr_ptl_do_op(op);
 
         /* Increment operation counts. */
-        atomic_fetch_add(&op->rma.lkey->op_count, 1);
+        atomic_fetch_add(op->rma.lkey->op_count, 1);
 err:
         return size;
 }
@@ -455,10 +459,10 @@ int lcr_ptl_send_put_zcopy(_mpc_lowcomm_endpoint_t *ep,
                            lcr_completion_t *comp) 
 {
         int rc = MPC_LOWCOMM_SUCCESS;
-        lcr_ptl_txq_t* txq         = ep->data.ptl.txq;
+        lcr_ptl_txq_t* txq  = ep->data.ptl.txq;
         lcr_ptl_mem_t *lkey = &local_key->pin.ptl;
         lcr_ptl_mem_t *rkey = &remote_key->pin.ptl;
-        lcr_ptl_op_t *op           = NULL;         
+        lcr_ptl_op_t *op    = NULL;         
 
         //NOTE: Operation identifier and Put must be done atomically to make
         //      sure the operation is pushed to the NIC with the correct
@@ -481,19 +485,24 @@ int lcr_ptl_send_put_zcopy(_mpc_lowcomm_endpoint_t *ep,
         op->rma.rkey          = rkey;
         op->rma.match         = rkey->match;
         op->rma.local_offset  = local_offset;
+        if (lkey->flags & LCR_IFACE_REGISTER_MEM_DYN) {
+                op->rma.local_offset += (uint64_t)lkey->start;
+        } 
         op->rma.remote_offset = remote_offset;
-
-        /* Only if completion was requested, push operation to the TX queue. */
-        if (comp != NULL) {
-                mpc_common_spinlock_lock(&txq->lock);
-                mpc_queue_push(&txq->completion_queue, &op->elem);
-                mpc_common_spinlock_unlock(&txq->lock);
+        if (rkey->flags & LCR_IFACE_REGISTER_MEM_DYN) {
+                op->rma.remote_offset += (uint64_t)rkey->start;
         }
 
-        lcr_ptl_do_op(op);
+        mpc_common_spinlock_lock(&lkey->lock);
+        mpc_queue_push(&lkey->pendings, &op->elem);
+        mpc_common_spinlock_unlock(&lkey->lock);
 
         /* Increment operation counts. */
-        atomic_fetch_add(&lkey->op_count, 1);
+        op->id = atomic_fetch_add(lkey->op_count, 1);
+        assert(op->id < UINT64_MAX);
+
+        rc = lcr_ptl_do_op(op);
+
 err:
         return rc;
 }
@@ -507,10 +516,10 @@ int lcr_ptl_send_get_zcopy(_mpc_lowcomm_endpoint_t *ep,
                            lcr_completion_t *comp) 
 {
         int rc = MPC_LOWCOMM_SUCCESS;
-        lcr_ptl_txq_t* txq         = ep->data.ptl.txq;
+        lcr_ptl_txq_t *txq  = ep->data.ptl.txq;
         lcr_ptl_mem_t *lkey = &local_key->pin.ptl;
         lcr_ptl_mem_t *rkey = &remote_key->pin.ptl;
-        lcr_ptl_op_t *op           = NULL; 
+        lcr_ptl_op_t  *op   = NULL; 
 
         //NOTE: Operation identifier and Put must be done atomically to make
         //      sure the operation is pushed to the NIC with the correct
@@ -534,18 +543,23 @@ int lcr_ptl_send_get_zcopy(_mpc_lowcomm_endpoint_t *ep,
         op->rma.rkey          = rkey;
         op->rma.match         = rkey->match;
         op->rma.local_offset  = local_offset;
+        if (lkey->flags & LCR_IFACE_REGISTER_MEM_DYN) {
+                op->rma.local_offset += (uint64_t)lkey->start;
+        } 
         op->rma.remote_offset = remote_offset;
-
-        /* Only if completion was requested, push operation to the TX queue. */
-        if (comp != NULL) {
-                mpc_common_spinlock_lock(&txq->lock);
-                mpc_queue_push(&txq->completion_queue, &op->elem);
-                mpc_common_spinlock_unlock(&txq->lock);
+        if (rkey->flags & LCR_IFACE_REGISTER_MEM_DYN) {
+                op->rma.remote_offset += (uint64_t)rkey->start;
         }
 
-        lcr_ptl_do_op(op);
+        mpc_common_spinlock_lock(&lkey->lock);
+        mpc_queue_push(&lkey->pendings, &op->elem);
+
         /* Increment operation counts. */
-        atomic_fetch_add(&op->rma.lkey->op_count, 1);
+        op->id = atomic_fetch_add(lkey->op_count, 1);
+        assert(op->id < UINT64_MAX);
+
+        rc = lcr_ptl_do_op(op);
+        mpc_common_spinlock_unlock(&lkey->lock);
 err:
         return rc;
 }
@@ -613,7 +627,7 @@ int lcr_ptl_mem_flush(sctk_rail_info_t *rail,
         lcr_ptl_mem_t *lkey = &list->pin.ptl;
         lcr_ptl_rail_info_t *srail = &rail->network.ptl;
 
-        op_count = lkey->op_count;
+        op_count = *lkey->op_count;
         assert(op_count < UINT64_MAX);
         op_done = lcr_ptl_poll_mem(lkey);
 
@@ -653,13 +667,15 @@ int lcr_ptl_mem_register(struct sctk_rail_info_s *rail,
 
         mem->size  = size;
         mem->start = addr; 
+        mem->flags = flags;
         mpc_queue_init_head(&mem->pendings);
 
         if (flags & LCR_IFACE_REGISTER_MEM_DYN) {
-                mem->cth   = srail->am.rndv_cth;
-                mem->mdh   = srail->am.rndv_mdh;
-                mem->meh   = srail->am.rndv_meh;
-                mem->match = LCR_PTL_RMA_MB;
+                mem->cth      = srail->am.rndv_cth;
+                mem->mdh      = srail->am.rndv_mdh;
+                mem->meh      = srail->am.rndv_meh;
+                mem->match    = srail->am.rma_match;
+                mem->op_count = &srail->am.rma_count;
         } else {
                 /* Initialize RMA counter. */
                 lcr_ptl_chk(PtlCTAlloc(srail->nih, &mem->cth));
@@ -667,13 +683,13 @@ int lcr_ptl_mem_register(struct sctk_rail_info_s *rail,
                 /* Prepare PTL memory descriptor. */
                 md = (ptl_md_t) {
                         .ct_handle = mem->cth,
-                                .eq_handle = srail->eqh,
-                                .length = PTL_SIZE_MAX,
-                                .start  = 0,
-                                .options = PTL_MD_EVENT_SUCCESS_DISABLE |
-                                        PTL_MD_EVENT_SEND_DISABLE       |
-                                        PTL_MD_EVENT_CT_ACK             | 
-                                        PTL_MD_EVENT_CT_REPLY,
+                        .eq_handle = srail->eqh,
+                        .length = PTL_SIZE_MAX,
+                        .start  = 0,
+                        .options = PTL_MD_EVENT_SUCCESS_DISABLE |
+                                PTL_MD_EVENT_SEND_DISABLE       |
+                                PTL_MD_EVENT_CT_ACK             | 
+                                PTL_MD_EVENT_CT_REPLY,
                 };
                 lcr_ptl_chk(PtlMDBind(srail->nih, &md, &mem->mdh));
 
@@ -713,8 +729,8 @@ int lcr_ptl_mem_register(struct sctk_rail_info_s *rail,
         mpc_common_spinlock_unlock(&srail->rma.lock);
 
         mpc_common_debug("LCR PTL: memory registration. cth=%llu, mdh=%llu, "
-                         "addr=%p, size=%llu, ct value=%llu", mem->cth, mem->mdh, 
-                         addr, size);
+                         "addr=%p, size=%llu, match=%llu", *(uint64_t *)&mem->cth, 
+                         *(uint64_t *)&mem->mdh, addr, size, mem->match);
 
         return MPC_LOWCOMM_SUCCESS;
 }
@@ -728,14 +744,17 @@ int lcr_ptl_mem_unregister(struct sctk_rail_info_s *rail,
         
         mpc_common_spinlock_lock(&srail->rma.lock);
         mpc_list_del(&mem->elem);
+        //assert(mpc_queue_is_empty(&mem->pendings));
         mpc_common_spinlock_unlock(&srail->rma.lock);
 
-        lcr_ptl_chk(PtlCTFree(mem->cth));
 
-        lcr_ptl_chk(PtlMDRelease(mem->mdh));
+        if (!(mem->flags & LCR_IFACE_REGISTER_MEM_DYN)) {
+                lcr_ptl_chk(PtlCTFree(mem->cth));
 
-        lcr_ptl_chk(PtlMEUnlink(mem->meh));
+                lcr_ptl_chk(PtlMDRelease(mem->mdh));
 
+                lcr_ptl_chk(PtlMEUnlink(mem->meh));
+        }
 
         return rc;
 }
@@ -750,8 +769,10 @@ int lcr_ptl_pack_rkey(sctk_rail_info_t *rail,
         *(uint64_t *)p = (uint64_t)memp->pin.ptl.start;
         p += sizeof(uint64_t);
         *(ptl_match_bits_t *)p = memp->pin.ptl.match;
+        p += sizeof(ptl_match_bits_t);
+        *(unsigned *)p = memp->pin.ptl.flags;
 
-        return sizeof(uint64_t) + sizeof(ptl_match_bits_t);
+        return sizeof(uint64_t) + sizeof(ptl_match_bits_t) + sizeof(unsigned); 
 }
 
 int lcr_ptl_unpack_rkey(sctk_rail_info_t *rail,
@@ -764,8 +785,10 @@ int lcr_ptl_unpack_rkey(sctk_rail_info_t *rail,
         memp->pin.ptl.start = (void *)(*(uint64_t *)p);
         p += sizeof(uint64_t);
         memp->pin.ptl.match = *(ptl_match_bits_t *)p;
+        p += sizeof(ptl_match_bits_t);
+        memp->pin.ptl.flags = *(unsigned *)p;
 
-        return sizeof(uint64_t) + sizeof(ptl_match_bits_t);
+        return sizeof(uint64_t) + sizeof(ptl_match_bits_t) + sizeof(unsigned);
 }
 
 
@@ -931,7 +954,6 @@ void lcr_ptl_connect_on_demand(struct sctk_rail_info_s *rail,
         /* Initialize lock, list and queues. */
         mpc_common_spinlock_init(&txq->lock, 0);
         mpc_queue_init_head(&txq->queue);
-        mpc_queue_init_head(&txq->completion_queue);
         mpc_list_init_head(&txq->mem_head);
 
 #if defined (MPC_USE_PORTALS_CONTROL_FLOW)
@@ -993,3 +1015,5 @@ err_free_ep:
         sctk_free(ep);
         return;
 }
+
+#endif

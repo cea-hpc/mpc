@@ -760,7 +760,7 @@ int lcp_mem_deregister(lcp_manager_h mngr, lcp_mem_h mem)
         for (i=0; i<mngr->num_ifaces; i++) {
                 if (MPC_BITMAP_GET(mem->bm, i)) {
                         iface = mngr->ifaces[i];
-                        iface->rail_unpin_region(iface, &mem->mems[i]);
+                        iface->iface_unregister_mem(iface, &mem->mems[i]);
                 }
         }
 

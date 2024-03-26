@@ -7,7 +7,7 @@
 int main(int argc, char** argv) {
         int i;
         int process_Rank, size_Of_Cluster;
-        int num_send_requests = 1024;
+        int num_send_requests = 128;
 
         MPI_Request *req_array;
         MPI_Init(&argc, &argv);

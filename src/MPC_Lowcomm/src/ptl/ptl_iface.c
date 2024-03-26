@@ -29,13 +29,12 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#ifdef MPC_USE_PORTALS
-
 #include "ptl.h"
+
+#ifdef MPC_USE_PORTALS
 
 #include <limits.h>
 
-#include "ptl_types.h"
 #include "ptl_recv.h"
 
 #include <sctk_alloc.h>
@@ -109,10 +108,10 @@ static int _lcr_ptl_iface_process_event_am(sctk_rail_info_t *rail,
                         break;
                 default:
                         mpc_common_debug_error("LCR PTL: unknown "
-                                               "completion type");
+                                               "completion type.");
                         break;
                 }
-                mpc_mpool_push(op);
+                lcr_ptl_complete_op(op);
                 break;
         case PTL_EVENT_PUT_OVERFLOW:
         case PTL_EVENT_PUT:
@@ -133,6 +132,7 @@ static int _lcr_ptl_iface_process_event_am(sctk_rail_info_t *rail,
 
                 break;
         case PTL_EVENT_GET_OVERFLOW:
+        case PTL_EVENT_GET:
                 mpc_common_debug_info("LCR PTL: got get overflow, not "
                                       "possible!");
                 break;
@@ -152,7 +152,6 @@ static int _lcr_ptl_iface_process_event_am(sctk_rail_info_t *rail,
                 break;
         case PTL_EVENT_SEARCH:
         case PTL_EVENT_SEND:
-        case PTL_EVENT_GET:
         case PTL_EVENT_REPLY:
         case PTL_EVENT_FETCH_ATOMIC_OVERFLOW: /* received FETCH-ATOMIC matched a just appended one */
         case PTL_EVENT_ATOMIC_OVERFLOW:       /* received ATOMIC matched a just appended one */
@@ -194,7 +193,7 @@ static int _lcr_ptl_iface_process_event_tag(sctk_rail_info_t *rail,
                 /* call completion callback */
                 op->comp->sent = ev->mlength;
                 op->comp->comp_cb(op->comp);
-                mpc_mpool_push(op);
+                lcr_ptl_complete_op(op);
                 break;
 
         case PTL_EVENT_SEND:
@@ -219,7 +218,7 @@ static int _lcr_ptl_iface_process_event_tag(sctk_rail_info_t *rail,
                                                "completion type");
                         break;
                 }
-                mpc_mpool_push(op);
+                lcr_ptl_complete_op(op);
                 break;
         case PTL_EVENT_PUT_OVERFLOW:
                 flags = LCR_IFACE_TM_OVERFLOW;
@@ -240,7 +239,7 @@ static int _lcr_ptl_iface_process_event_tag(sctk_rail_info_t *rail,
 
                 /* call completion callback */
                 tag_ctx->comp.comp_cb(&tag_ctx->comp);
-                mpc_mpool_push(op);
+                lcr_ptl_complete_op(op);
                 break;
         case PTL_EVENT_GET_OVERFLOW:
                 mpc_common_debug_info("LCR PTL: got get overflow, not "
@@ -249,7 +248,7 @@ static int _lcr_ptl_iface_process_event_tag(sctk_rail_info_t *rail,
         case PTL_EVENT_GET:
                 op->comp->sent = ev->mlength;
                 op->comp->comp_cb(op->comp);
-                mpc_mpool_push(op);
+                lcr_ptl_complete_op(op);
                 break;
         case PTL_EVENT_AUTO_UNLINK:
                 block = mpc_container_of(op, lcr_ptl_recv_block_t, op);
@@ -284,12 +283,12 @@ static int _lcr_ptl_iface_process_event_rma(sctk_rail_info_t *rail,
         op = ev->user_ptr;
 
         if (ev->ni_fail_type != PTL_NI_OK) {
-                mpc_common_debug_info("PORTALS: EQS EVENT '%s' idx=%d, "
+                mpc_common_debug_info("PORTALS: EQS NI EVENT '%s' idx=%d, "
                                       "sz=%llu, user=%p, start=%p, "
                                       "remote_offset=%p, iface=%d", 
-                                      lcr_ptl_event_decode(*ev), ev->pt_index, 
+                                      lcr_ptl_event_ni_fail_type_decode(*ev), ev->pt_index,
                                       ev->mlength, ev->user_ptr, ev->start,
-                                      ev->remote_offset, srail->nih);
+                                      ev->remote_offset, *(uint64_t *)&srail->nih);
 
                 /* Target PTE has been disabled, retry operation. */
                 if (ev->ni_fail_type == PTL_NI_PT_DISABLED) {
@@ -300,9 +299,12 @@ static int _lcr_ptl_iface_process_event_rma(sctk_rail_info_t *rail,
                                 mpc_common_debug_error("LCR PTL: op error.");
                                 goto err;
                         }
+                } else {
+                        //mpc_common_debug_fatal("LCR PTL: RMA error not handled.");
                 }
+
                 /* Event failure. */
-                lcr_ptl_complete_op(op);                        
+                lcr_ptl_complete_op(op);
         }
 
 err:
@@ -323,8 +325,7 @@ ptl_size_t lcr_ptl_poll_mem(lcr_ptl_mem_t *mem)
                 mpc_common_debug_warning("LCR PTL: %llu event failures.", 
                                          ct_ev.failure);
         }
-        PtlAtomicSync();
-        op_done = mem->op_done += ct_ev.success;
+        op_done = mem->op_done = ct_ev.success;
         mpc_common_spinlock_unlock(&mem->lock);
 
         return op_done;
@@ -347,19 +348,22 @@ int lcr_ptl_iface_progress(sctk_rail_info_t *rail)
                 ret = PtlEQGet(srail->eqh, &ev);
                 lcr_ptl_chk(ret);
 
+                op = (lcr_ptl_op_t *)ev.user_ptr;
                 if (ret == PTL_OK) {
                         mpc_common_debug_info("PORTALS: EQS EVENT '%s' eqh=%llu, idx=%d, "
                                               "sz=%llu, user=%p, start=%p, "
-                                              "remote_offset=%p, iface=%d",
-                                              lcr_ptl_event_decode(ev), srail->eqh, ev.pt_index, 
-                                              ev.mlength, ev.user_ptr, ev.start,
-                                              ev.remote_offset, srail->nih);
+                                              "remote_offset=%llu, iface=%llu",
+                                              lcr_ptl_event_decode(ev),
+                                              *(uint64_t *)&srail->eqh,
+                                              ev.pt_index, ev.mlength,
+                                              ev.user_ptr, ev.start,
+                                              ev.remote_offset, *(uint64_t *)&srail->nih);
 
-                        if (ev.pt_index == srail->am.pti) {
+                        if (op->pti == srail->am.pti) {
                                 _lcr_ptl_iface_process_event_am(rail, &ev);
-                        } else if (ev.pt_index == srail->tag.pti) {
+                        } else if (op->pti == srail->tag.pti) {
                                 _lcr_ptl_iface_process_event_tag(rail, &ev);
-                        } else if (ev.pt_index == srail->rma.pti) {
+                        } else if (op->pti == srail->rma.pti) {
                                 _lcr_ptl_iface_process_event_rma(rail, &ev);
                         } else {
                                 mpc_common_debug_fatal("LCR PTL: unkown PTE index.");
@@ -368,45 +372,54 @@ int lcr_ptl_iface_progress(sctk_rail_info_t *rail)
                 } else if (ret == PTL_EQ_EMPTY) {
                         break;
                 } else {
-                        mpc_common_debug_error("LCR PTL: error returned from PtlEQPoll");
+                        mpc_common_debug_error("LCR PTL: error returned from PtlEQPoll.");
                         break;
                 }
         }
-        mpc_common_spinlock_unlock(&srail->lock);
 
         /* Poll all attached memory. */
+        //TODO: this part, I think is only need for AM since any one-sided MPI
+        //      call would use appropriate progress function (flush, etc...)
+        uint64_t op_count = 0;
         mpc_list_for_each(mem, &srail->rma.mem_head, lcr_ptl_mem_t, elem) {
-                lcr_ptl_poll_mem(mem);
+                op_count = lcr_ptl_poll_mem(mem);
 
-                /* Progress flush operations. */
                 mpc_queue_for_each_safe(op, iter, lcr_ptl_op_t, &mem->pendings, elem) {
-                        rc = lcr_ptl_do_op(op);
-                        if (rc == MPC_LOWCOMM_SUCCESS) {
+                        if (op->id < op_count) {
+                                mpc_common_debug("LCR PTL: completed RMA operation. id=%llu, "
+                                                 "mem op count=%llu, type=%s.", 
+                                                 op->id, op_count, lcr_ptl_op_decode(op));
+                                if (op->comp != NULL) {
+                                        op->comp->sent = op->size;
+                                        op->comp->comp_cb(op->comp);
+                                }
+
+                                mpc_queue_del_iter(&mem->pendings, iter);
                                 lcr_ptl_complete_op(op);
                         }
                 }
         }
 
-
 #if defined (MPC_USE_PORTALS_CONTROL_FLOW)
-       rc = lcr_ptl_iface_progress_tk(srail);
-       if (rc != MPC_LOWCOMM_SUCCESS) {
-               mpc_common_debug("LCR PTL: progress tk.");
-       }
+        rc = lcr_ptl_iface_progress_tk(srail);
+        if (rc != MPC_LOWCOMM_SUCCESS) {
+                mpc_common_debug_error("LCR PTL: progress tk.");
+        }
 
-       rc = lcr_ptl_tk_distribute_tokens(srail);
-       if (rc != MPC_LOWCOMM_SUCCESS) {
-               mpc_common_debug("LCR PTL: distribute.");
-       }
+        rc = lcr_ptl_tk_distribute_tokens(srail);
+        if (rc != MPC_LOWCOMM_SUCCESS) {
+                mpc_common_debug_error("LCR PTL: distribute.");
+        }
 
-       int i, count = 0;
-       for (i = 0; i < srail->num_txqs; i++) {
-               rc = lcr_ptl_tk_progress_pending_ops(srail,
-                                                    &srail->txqt[i], 
-                                                    &count);
-               if (rc != MPC_LOWCOMM_SUCCESS) break;
-       }
+        int i, count = 0;
+        for (i = 0; i < srail->num_txqs; i++) {
+                rc = lcr_ptl_tk_progress_pending_ops(srail,
+                                                     &srail->txqt[i], 
+                                                     &count);
+                if (rc != MPC_LOWCOMM_SUCCESS) break;
+        }
 #endif
+        mpc_common_spinlock_unlock(&srail->lock);
 
         return rc;
 }
@@ -575,6 +588,7 @@ static int _lcr_ptl_iface_init_am(lcr_ptl_rail_info_t *srail)
                                        srail->am.pti,
                                        PTL_PRIORITY_LIST);
 
+        atomic_store(&srail->am.am_count, 0);
 
 err:
         return rc;
@@ -697,33 +711,33 @@ static int _lcr_ptl_iface_init_rma(lcr_ptl_rail_info_t *srail)
                 /* Prepare PTL memory descriptor. */
                 md = (ptl_md_t) {
                         .ct_handle = srail->am.rndv_cth,
-                                .eq_handle = srail->eqh,
-                                .length = PTL_SIZE_MAX,
-                                .start  = 0,
-                                .options = PTL_MD_EVENT_SUCCESS_DISABLE |
-                                        PTL_MD_EVENT_SEND_DISABLE       |
-                                        PTL_MD_EVENT_CT_ACK             | 
-                                        PTL_MD_EVENT_CT_REPLY,
+                        .eq_handle = srail->eqh,
+                        .length = PTL_SIZE_MAX,
+                        .start  = 0,
+                        .options = PTL_MD_EVENT_SUCCESS_DISABLE |
+                                PTL_MD_EVENT_SEND_DISABLE       |
+                                PTL_MD_EVENT_CT_REPLY,
                 };
                 lcr_ptl_chk(PtlMDBind(srail->nih, &md, &srail->am.rndv_mdh));
 
+                srail->am.rma_match = LCR_PTL_RNDV_MB;
                 me = (ptl_me_t) {
                         .ct_handle = PTL_CT_NONE,
-                                .ignore_bits = 0,
-                                .match_bits  = LCR_PTL_RNDV_MB,
-                                .match_id    = {
-                                        .phys.nid = PTL_NID_ANY, 
-                                        .phys.pid = PTL_PID_ANY
-                                },
-                                .uid         = PTL_UID_ANY,
-                                .min_free    = 0,
-                                .options     = PTL_ME_OP_PUT          | 
-                                        PTL_ME_OP_GET                 |
-                                        PTL_ME_EVENT_LINK_DISABLE     | 
-                                        PTL_ME_EVENT_UNLINK_DISABLE   |
-                                        PTL_ME_EVENT_SUCCESS_DISABLE,
-                                .start       = 0,
-                                .length      = PTL_SIZE_MAX
+                        .ignore_bits = 0,
+                        .match_bits  = srail->am.rma_match,
+                        .match_id    = {
+                                .phys.nid = PTL_NID_ANY, 
+                                .phys.pid = PTL_PID_ANY
+                        },
+                        .uid         = PTL_UID_ANY,
+                        .min_free    = 0,
+                        .options     = PTL_ME_OP_PUT          | 
+                                PTL_ME_OP_GET                 |
+                                PTL_ME_EVENT_LINK_DISABLE     | 
+                                PTL_ME_EVENT_UNLINK_DISABLE   |
+                                PTL_ME_EVENT_SUCCESS_DISABLE,
+                        .start       = 0,
+                        .length      = PTL_SIZE_MAX
                 };
 
                 lcr_ptl_chk(PtlMEAppend(srail->nih,
@@ -801,6 +815,7 @@ int lcr_ptl_get_attr(sctk_rail_info_t *rail,
         attr->iface.cap.rndv.max_put_zcopy  = config->max_put;
         attr->iface.cap.rndv.max_get_zcopy  = config->max_get;
         attr->iface.cap.rndv.min_frag_size  = config->min_frag_size;
+
 
         attr->iface.cap.rma.max_put_bcopy   = config->eager_limit;
         attr->iface.cap.rma.max_put_zcopy   = config->max_put;
@@ -937,7 +952,7 @@ err:
         return rc;
 }
 
-int lcr_ptl_iface_fini(sctk_rail_info_t* rail)
+void lcr_ptl_iface_fini(sctk_rail_info_t* rail)
 {
         int rc = MPC_LOWCOMM_SUCCESS;
         int i;
@@ -945,14 +960,29 @@ int lcr_ptl_iface_fini(sctk_rail_info_t* rail)
 
 	lcr_ptl_chk(PtlEQFree(srail->eqh));
 
-        if (srail->features & LCR_PTL_FEATURE_AM) 
+        if (srail->features & LCR_PTL_FEATURE_AM) {
                 rc = _lcr_ptl_iface_fini_am(srail);
+                if (rc != MPC_LOWCOMM_SUCCESS) {
+                        mpc_common_debug_error("LCR PTL: error finalizing "
+                                               "AM interface.");
+                }
+        }
 
-        if (srail->features & LCR_PTL_FEATURE_TAG) 
+        if (srail->features & LCR_PTL_FEATURE_TAG) {
                 rc = _lcr_ptl_iface_fini_tag(srail);
+                if (rc != MPC_LOWCOMM_SUCCESS) {
+                        mpc_common_debug_error("LCR PTL: error finalizing "
+                                               "TAG interface.");
+                }
+        }
 
-        if (srail->features & LCR_PTL_FEATURE_RMA) 
+        if (srail->features & LCR_PTL_FEATURE_RMA) {
                 rc = _lcr_ptl_iface_fini_rma(srail);
+                if (rc != MPC_LOWCOMM_SUCCESS) {
+                        mpc_common_debug_error("LCR PTL: error finalizing "
+                                               "RMA interface.");
+                }
+        }
 
 #if defined (MPC_USE_PORTALS_CONTROL_FLOW)
         lcr_ptl_tk_fini(srail->nih, &srail->tk);
@@ -962,16 +992,19 @@ int lcr_ptl_iface_fini(sctk_rail_info_t* rail)
         mpc_mpool_fini(srail->iface_ops);
 
         /* Finalize TX Queues. */
+        //FIXME: need to check that all memory has been removed from the list.
         for (i = 0; i < srail->num_txqs; i++) {
-                assert(!mpc_queue_is_empty(&srail->txqt[i].queue));
-                assert(!mpc_queue_is_empty(&srail->txqt[i].completion_queue));
-                assert(!mpc_list_is_empty(&srail->txqt[i].mem_head));
-
+                assert(mpc_queue_is_empty(&srail->txqt[i].queue));
                 mpc_mpool_fini(srail->txqt[i].ops_pool);
         }
         sctk_free(srail->txqt);
 
-        return rc;
+	/* tear down the interface */
+	lcr_ptl_chk(PtlNIFini(srail->nih));
+
+	/* tear down the driver */
+	PtlFini();
+
 }
 
 #endif

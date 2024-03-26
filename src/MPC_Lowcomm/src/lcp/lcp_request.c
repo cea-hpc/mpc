@@ -150,6 +150,7 @@ int lcp_request_init_unexp_ctnr(lcp_task_h task, lcp_unexp_ctnr_t **ctnr_p, void
  */
 int lcp_request_complete(lcp_request_t *req)
 {
+        //FIXME: log below not suited for AM API.
 	mpc_common_debug("LCP: complete req=%p, comm_id=%llu, msg_id=%llu, "
 			 "seqn=%d, lcreq=%p", req, req->send.tag.comm, req->msg_id,
 			 req->seqn, req->request);

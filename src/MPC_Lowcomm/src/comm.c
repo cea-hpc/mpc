@@ -3462,6 +3462,7 @@ int mpc_lowcomm_isend(int dest, const void *data, size_t size, int tag,
 int mpc_lowcomm_irecv(int src, void *data, size_t size, int tag,
                       mpc_lowcomm_communicator_t comm, mpc_lowcomm_request_t *req)
 {
+        int rc;
 	int        dest, tid = mpc_common_get_task_rank();
 	lcp_task_h task = NULL;
 
@@ -3484,7 +3485,13 @@ int mpc_lowcomm_irecv(int src, void *data, size_t size, int tag,
 		.datatype  = req->dt_magic == (int)0xDDDDDDDD ?
 		             LCP_DATATYPE_DERIVED : LCP_DATATYPE_CONTIGUOUS,
 	};
-	return lcp_tag_recv_nb(task, data, size, req, &param);
+	
+        rc = lcp_tag_recv_nb(task, data, size, req, &param);
+        if (rc != MPC_LOWCOMM_SUCCESS) {
+                mpc_common_debug_fatal("LCP: Lowcomm irecv failed.");
+        }
+
+        return rc;
 }
 
 int mpc_lowcomm_sendrecv(const void *sendbuf, size_t size, int dest, int tag, void *recvbuf,

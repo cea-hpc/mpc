@@ -111,10 +111,10 @@ void sctk_rail_pin_ctx_release(sctk_rail_pin_ctx_t *ctx);
 
 //FIXME: not used as a flags right now
 enum {
-        LCR_IFACE_FLUSH_EP          = LCP_BIT(0),
-        LCR_IFACE_FLUSH_MEM         = LCP_BIT(1),
-        LCR_IFACE_FLUSH_EP_MEM      = LCP_BIT(2),
-        LCR_IFACE_REGISTER_MEM_DYN  = LCP_BIT(3),
+        LCR_IFACE_FLUSH_EP          = MPC_BIT(0),
+        LCR_IFACE_FLUSH_MEM         = MPC_BIT(1),
+        LCR_IFACE_FLUSH_EP_MEM      = MPC_BIT(2),
+        LCR_IFACE_REGISTER_MEM_DYN  = MPC_BIT(3),
 };
 
 enum {

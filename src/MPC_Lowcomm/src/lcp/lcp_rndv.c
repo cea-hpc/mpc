@@ -146,6 +146,7 @@ int lcp_rndv_rma_progress(lcp_request_t *rndv_req)
         cc = lcp_ep_get_next_cc(ep);
 
         ep->lct_eps[cc]->rail->iface_get_attr(ep->lct_eps[cc]->rail, &attr);
+        //FIXME: to much indirection to get rndv config.
         frag_length = rndv_req->mngr->ctx->config.rndv_mode == LCP_RNDV_GET ?
                 attr.iface.cap.rndv.max_get_zcopy :
                 attr.iface.cap.rndv.max_put_zcopy;
@@ -202,7 +203,7 @@ int lcp_rndv_reg_send_buffer(lcp_request_t *req)
 {
         int rc = LCP_SUCCESS;
 
-        mpc_common_debug("LCP: register send buffer. Conn map=%x", 
+        mpc_common_debug("LCP RNDV: register send buffer. Conn map=%x", 
                          req->send.ep->conn_map);
 
         req->state.lmem = lcp_pinning_mmu_pin(req->mngr, req->send.buffer, 
@@ -219,7 +220,7 @@ int lcp_rndv_reg_recv_buffer(lcp_request_t *rndv_req)
 {
         lcp_request_t *req = rndv_req->super;
 
-        mpc_common_debug("LCP: register recv buffer. Conn map=%x", 
+        mpc_common_debug("LCP RNDV: register recv buffer. Conn map=%x", 
                          rndv_req->send.ep->conn_map);
         /* Register and pack memory pin context that will be sent to remote */
         rndv_req->state.lmem = lcp_pinning_mmu_pin(rndv_req->mngr, rndv_req->send.buffer, 
@@ -254,7 +255,7 @@ void lcp_rndv_complete(lcr_completion_t *comp)
                                                lcp_rndv_fin_pack,
                                                rndv_req);
                 if (payload < 0) {
-                        mpc_common_debug_error("LCP: error sending fin message");
+                        mpc_common_debug_error("LCP RNDV: error sending fin message.");
                         return;
                 }
 
@@ -297,7 +298,7 @@ int lcp_send_rndv_start(lcp_request_t *req)
         if (req->datatype & LCP_DATATYPE_DERIVED) {
                 req->state.pack_buf = sctk_malloc(req->send.length);
                 if (req->state.pack_buf == NULL) {
-                        mpc_common_debug_error("LCP: could not allocate pack "
+                        mpc_common_debug_error("LCP RNDV: could not allocate pack "
                                                "buffer");
                         rc = LCP_ERROR;
                         goto err;
@@ -311,7 +312,7 @@ int lcp_send_rndv_start(lcp_request_t *req)
         /* Create rendez-vous request */
         rndv_req = lcp_request_get(req->task);
         if (rndv_req == NULL) {
-                mpc_common_debug_error("LCP: could not create request.");
+                mpc_common_debug_error("LCP RNDV: could not create request.");
                 return LCP_ERROR;
         }
         rndv_req->super = req;
@@ -359,7 +360,7 @@ static int lcp_rndv_progress_rtr(lcp_request_t *rndv_req)
                                        lcp_rndv_rtr_pack,
                                        rndv_req);
         if (payload < 0) {
-                mpc_common_debug_error("LCP: error sending ack rdv message");
+                mpc_common_debug_error("LCP RNDV: error sending ack rdv message");
                 rc = LCP_ERROR;
                 goto err;
         }
@@ -384,7 +385,7 @@ int lcp_rndv_process_rts(lcp_request_t *rreq,
         if (rreq->datatype & LCP_DATATYPE_DERIVED) {
                 rreq->state.pack_buf = sctk_malloc(rreq->recv.send_length);
                 if (rreq->state.pack_buf == NULL) {
-                        mpc_common_debug_error("LCP: could not allocate pack "
+                        mpc_common_debug_error("LCP RNDV: could not allocate pack "
                                                "buffer");
                         return LCP_ERROR;
                 }
@@ -393,7 +394,7 @@ int lcp_rndv_process_rts(lcp_request_t *rreq,
         /* Rendez-vous request used for RTR (PUT) or RMA (GET) */
         rndv_req = lcp_request_get(rreq->task);
         if (rndv_req == NULL) {
-                mpc_common_debug_error("LCP: could not create request.");
+                mpc_common_debug_error("LCP RNDV: could not create request.");
                 return LCP_ERROR;
         }
         rndv_req->super = rreq;
@@ -417,7 +418,7 @@ int lcp_rndv_process_rts(lcp_request_t *rreq,
                 rc = lcp_ep_create(rndv_req->mngr, &(rndv_req->send.ep), 
                                    hdr->src_uid, 0);
                 if (rc != LCP_SUCCESS) {
-                        mpc_common_debug_error("LCP: could not create ep "
+                        mpc_common_debug_error("LCP RNDV: could not create ep "
                                                "after match.");
                         goto err;
                 }
@@ -526,7 +527,7 @@ static int lcp_rndv_fin_handler(void *arg, void *data,
         rndv_req = (lcp_request_t *)hdr->msg_id;
         req = rndv_req->super;
 
-        mpc_common_debug_info("LCP: recv rfin header msg_id=%llu, req=%p",
+        mpc_common_debug_info("LCP RNDV: recv rfin header msg_id=%llu, req=%p",
                               hdr->msg_id, rndv_req);
 
         if (req->datatype & LCP_DATATYPE_DERIVED) {

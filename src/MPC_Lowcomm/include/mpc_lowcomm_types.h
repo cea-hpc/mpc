@@ -145,7 +145,7 @@ typedef struct
 #define MPC_LOWCOMM_STATUS_NULL    NULL
 #define MPC_LOWCOMM_STATUS_INIT\
 	/* NOLINTNEXTLINE(clang-diagnostic-missing-field-initializers) */\
-	{ MPC_ANY_SOURCE, MPC_ANY_TAG, MPC_LOWCOMM_SUCCESS, 0, 0 }
+	{ MPC_ANY_SOURCE, MPC_ANY_TAG, MPC_LOWCOMM_SUCCESS, 0, 0, {0} }
 
 
 /************

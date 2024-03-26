@@ -63,6 +63,8 @@ int lcr_tbsm_get_attr(sctk_rail_info_t *rail,
         attr->iface.cap.rndv.max_get_zcopy = 0; /* No rendez-vous for tbsm comm */
         attr->iface.cap.rndv.min_frag_size = 0; /* No rendez-vous for tbsm comm */
 
+        attr->iface.cap.flags = rail->cap;
+
         return MPC_LOWCOMM_SUCCESS;
 }
 
@@ -90,7 +92,7 @@ int lcr_tbsm_iface_init(sctk_rail_info_t *iface)
         tbsm_iface->eager_limit    = tbsm_info.eager_limit;
         tbsm_iface->max_msg_size   = tbsm_info.max_msg_size;
 
-        //FIXME: set progress function to null since all communication are down
+        //FIXME: set progress function to null since all communication are done
         //       within LCP, see lcp_self.c
         iface->iface_progress     = NULL;
         iface->connect_on_demand  = lcr_tbsm_connect_on_demand;

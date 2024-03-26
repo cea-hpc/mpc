@@ -274,6 +274,13 @@ int lcp_manager_fini(lcp_manager_h mngr)
         }
         sctk_free(mngr->tasks);
 
+        for (i = 0; i < mngr->num_ifaces; i++) {
+                if (mngr->ifaces[i]->driver_finalize != NULL) {
+                        mngr->ifaces[i]->driver_finalize(mngr->ifaces[i]);
+                }
+        }
+        sctk_free(mngr->ifaces);
+
         sctk_free(mngr);
 
         return rc;

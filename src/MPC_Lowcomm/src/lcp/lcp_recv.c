@@ -54,7 +54,8 @@ int lcp_tag_recv_nb(lcp_task_h task, void *buffer, size_t count,
         req = lcp_request_get(task);
         //lcp_request_create(&req);
         if (req == NULL) {
-                mpc_common_debug_error("LCP: could not create request.");
+                mpc_common_debug_error("LCP TAG: could not create receive "
+                                       "tag request.");
                 return LCP_ERROR;
         }
 	req->flags |= LCP_REQUEST_MPI_COMPLETE;

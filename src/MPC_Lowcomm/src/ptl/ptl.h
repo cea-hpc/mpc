@@ -25,8 +25,8 @@
 #ifndef LCR_PTL_H
 #define LCR_PTL_H
 
+#include <mpc_config.h>
 #include <mpc_mempool.h>
-#include <lcp_common.h>
 #include <lcr_def.h>
 #include <sys/types.h>
 #include <sys/uio.h>
@@ -151,7 +151,6 @@ typedef struct lcr_ptl_addr {
 
 typedef struct lcr_ptl_txq {
         int                   idx;
-        mpc_queue_head_t      completion_queue; /* RMA only. */
         mpc_list_elem_t       mem_head;
         mpc_common_spinlock_t lock;
         mpc_queue_head_t      queue;
@@ -174,18 +173,19 @@ typedef struct lcr_ptl_ep_info _mpc_lowcomm_endpoint_info_ptl_t;
 /*********************************/
 
 typedef struct lcr_ptl_mem {
-        void                 *start;          /* Start address of the memory.           */
-        uint32_t              muid;           /* Memory Unique Idendifier.              */
-        mpc_list_elem_t       elem;           /* Element in list.                       */
-        ptl_handle_ct_t       cth;            /* Counter handle.                        */
-        ptl_handle_md_t       mdh;            /* Memory Descriptor handle.              */
-        ptl_handle_me_t       meh;
-        ptl_match_bits_t      match;
-        mpc_queue_head_t      pendings;
-        size_t                size;           /* Size of the memory.                    */
-        atomic_uint_least64_t op_count;       /* Sequence number of the last pushed op. */
-        ptl_size_t            op_done;
-        mpc_common_spinlock_t lock;
+        void                  *start;          /* Start address of the memory.           */
+        uint32_t               muid;           /* Memory Unique Idendifier.              */
+        mpc_list_elem_t        elem;           /* Element in list.                       */
+        ptl_handle_ct_t        cth;            /* Counter handle.                        */
+        ptl_handle_md_t        mdh;            /* Memory Descriptor handle.              */
+        ptl_handle_me_t        meh;
+        ptl_match_bits_t       match;
+        mpc_queue_head_t       pendings;
+        size_t                 size;           /* Size of the memory.                    */
+        atomic_uint_least64_t *op_count;       /* Sequence number of the last pushed op. */
+        ptl_size_t             op_done;
+        mpc_common_spinlock_t  lock;
+        unsigned               flags;
 } lcr_ptl_mem_t;
 
 /*********************************/
@@ -252,7 +252,6 @@ typedef struct lcr_ptl_op {
                 } flush;
         };
 
-        mpc_queue_head_t *head;
         mpc_queue_elem_t  elem;  /* Element in TX queue. */
 } lcr_ptl_op_t;
 
@@ -268,6 +267,9 @@ typedef struct lcr_ptl_ts_ctx {
         ptl_handle_md_t       rndv_mdh;
         ptl_handle_me_t       rndv_meh;
         ptl_handle_ct_t       rndv_cth;
+        atomic_uint_least64_t am_count;
+        atomic_uint_least64_t rma_count;
+        ptl_match_bits_t      rma_match;
 } lcr_ptl_ts_ctx_t;
 
 /* Context for one-sided operations. */
@@ -285,11 +287,10 @@ typedef struct lcr_ptl_tk_rsc {
         lcr_ptl_addr_t        remote;    /* Full address of remote process. */
         uint16_t              tx_idx;    /* ID of the remote TXQ it is connected to. */
         mpc_queue_elem_t      elem;      /* Element in exhausted queue. */
-        int32_t               tokens;    /* Number of outstanding tokens. */
         int32_t               tk_chunk;  /* Chunck of tokens to grant each time. */
         struct {
                 int32_t       requested; /* Number of requested tokens from remote. */
-                int32_t       given;     /* Number of token distributed to remote.  */
+                int32_t       granted;   /* Number of token distributed to remote.  */
                 int           scheduled; /* Has grant request been scheduled already? */
         } req;
 } lcr_ptl_tk_rsc_t;
@@ -318,9 +319,9 @@ typedef struct lcr_ptl_tk_module {
 /********** FEATURES *************/
 /*********************************/
 enum {
-        LCR_PTL_FEATURE_AM  = LCP_BIT(0),
-        LCR_PTL_FEATURE_TAG = LCP_BIT(1),
-        LCR_PTL_FEATURE_RMA = LCP_BIT(2),
+        LCR_PTL_FEATURE_AM  = MPC_BIT(0),
+        LCR_PTL_FEATURE_TAG = MPC_BIT(1),
+        LCR_PTL_FEATURE_RMA = MPC_BIT(2),
 };
 
 typedef struct lcr_ptl_iface_config {
@@ -374,6 +375,23 @@ typedef struct lcr_ptl_rail_info _mpc_lowcomm_ptl_rail_info_t;
 #else
 #define lcr_ptl_chk(x) x
 #endif
+
+static inline const char * lcr_ptl_event_ni_fail_type_decode(ptl_event_t ev)
+{
+	switch(ev.ni_fail_type)
+	{
+        case PTL_NI_OK: return "PTL_NI_OK"; break;
+        case PTL_NI_DROPPED: return "PTL_NI_DROPPED"; break;
+        case PTL_NI_PERM_VIOLATION: return "PTL_NI_PERM_VIOLATION"; break;
+        case PTL_NI_SEGV: return "PTL_NI_SEGV"; break;
+        case PTL_NI_UNDELIVERABLE: return "PTL_NI_UNDELIVERABLE"; break;
+        case PTL_NI_NO_MATCH: return "PTL_NI_NO_MATCH"; break;
+        case PTL_NI_TARGET_INVALID: return "PTL_NI_TARGET_INVALID"; break;
+        case PTL_NI_OP_VIOLATION: return "PTL_NI_OP_VIOLATION"; break;
+        default:
+		return "Portals Event Ni Failed Type not known"; break;
+        }
+}
 
 static inline const char * lcr_ptl_event_decode(ptl_event_t ev)
 {
@@ -549,24 +567,14 @@ static inline char * __ptl_get_rail_callback_name(int rail_number, char * buff, 
 	return buff;
 }
 
-/* Queue lock must be taken. */
-static inline void lcr_ptl_complete_op(lcr_ptl_op_t *op) 
-{
-        /* Remove from TX queue if needed. */
-        mpc_queue_remove(op->head, &op->elem); 
-
-        /* Push operation back to memory pool. */
-        mpc_mpool_push(op);
-}
-
 static inline int lcr_ptl_do_op(lcr_ptl_op_t *op) {
 
         int rc = MPC_LOWCOMM_SUCCESS;
         mpc_common_debug("LCR PTL: op type=%s, nid=%llu, pid=%llu, pti=%d, "
-                         "id=%d, mdh=%llu, txq=%d, size=%d, hdr=0x%08x.", 
+                         "id=%d, mdh=%llu, txq=%p, size=%llu, hdr=0x%08x.", 
                          lcr_ptl_op_decode(op), op->addr.phys.nid,
-                         op->addr.phys.pid, op->pti, op->id, op->mdh, op->txq,
-                         op->size, op->hdr);
+                         op->addr.phys.pid, op->pti, op->id,
+                         *(uint64_t*)&op->mdh, op->txq, op->size, op->hdr);
 
         switch(op->type) {
         case LCR_PTL_OP_AM_BCOPY:
@@ -596,12 +604,17 @@ static inline int lcr_ptl_do_op(lcr_ptl_op_t *op) {
                                   ));
                 break;
         case LCR_PTL_OP_RMA_PUT: 
-                mpc_common_debug("LCR PTL: local key.  size=%llu, addr=%p, cth=%llu, mdh=%llu.",
-                                 op->rma.lkey->size, op->rma.lkey->start, op->rma.lkey->cth, 
-                                 op->rma.lkey->mdh);
-                mpc_common_debug("LCR PTL: remote key. addr=%p",   op->rma.rkey->start);
+                mpc_common_debug("LCR PTL: local key.  size=%llu, addr=%p, "
+                                 "local offset=%llu, remote offset=%llu, "
+                                 "cth=%llu, mdh=%llu.", op->rma.lkey->size, 
+                                 op->rma.lkey->start, op->rma.local_offset,
+                                 op->rma.remote_offset,
+                                 *(uint64_t*)&op->rma.lkey->cth,
+                                 *(uint64_t*)&op->rma.lkey->mdh);
+                mpc_common_debug("LCR PTL: remote key. addr=%p, match=%llu", op->rma.rkey->start,
+                                 (uint64_t)op->rma.match);
                 lcr_ptl_chk(PtlPut(op->rma.lkey->mdh, 
-                                   (uint64_t)op->rma.lkey->start + op->rma.local_offset, 
+                                   op->rma.local_offset, 
                                    op->size, 
                                    PTL_ACK_REQ,
                                    op->addr,
@@ -613,10 +626,15 @@ static inline int lcr_ptl_do_op(lcr_ptl_op_t *op) {
                                   ));
                 break;
         case LCR_PTL_OP_RMA_GET: 
-                mpc_common_debug("LCR PTL: local key.  size=%llu, addr=%p, cth=%llu, mdh=%llu.",
-                                 op->rma.lkey->size, op->rma.lkey->start, op->rma.lkey->cth, 
-                                 op->rma.lkey->mdh);
-                mpc_common_debug("LCR PTL: remote key. addr=%p",   op->rma.rkey->start);
+                mpc_common_debug("LCR PTL: local key.  size=%llu, addr=%p, "
+                                 "local offset=%llu, remote offset=%llu, "
+                                 "cth=%llu, mdh=%llu.", op->rma.lkey->size, 
+                                 op->rma.lkey->start, op->rma.local_offset,
+                                 op->rma.remote_offset,
+                                 *(uint64_t*)&op->rma.lkey->cth,
+                                 *(uint64_t*)&op->rma.lkey->mdh);
+                mpc_common_debug("LCR PTL: remote key. addr=%p, match=%llu", op->rma.rkey->start,
+                                 (uint64_t)op->rma.match);
                 lcr_ptl_chk(PtlGet(op->rma.lkey->mdh,
                                    op->rma.local_offset,
                                    op->size,
@@ -694,13 +712,44 @@ static inline int lcr_ptl_create_token_request(lcr_ptl_rail_info_t *srail,
 err:
         return rc;
 }
+
+static inline int lcr_ptl_create_token_grant(lcr_ptl_rail_info_t *srail,
+                                             lcr_ptl_tk_rsc_t *rsc, 
+                                             lcr_ptl_op_t **op_p) 
+{
+        int rc = MPC_LOWCOMM_SUCCESS;
+        lcr_ptl_op_t *op;
+
+        op = mpc_mpool_pop(srail->tk.ops);
+        if (op == NULL) {
+                mpc_common_debug("LCR PTL: could not allocate "
+                                 "token operation.");
+                rc = MPC_LOWCOMM_NO_RESOURCE;
+                goto err;
+        }
+
+        _lcr_ptl_init_op_common(op, 0, srail->tk.mdh, 
+                                rsc->remote.id, 
+                                rsc->remote.pte.tk, 
+                                LCR_PTL_OP_TK_GRANT, 
+                                0, NULL, NULL);
+
+        LCR_PTL_CTRL_HDR_SET(op->hdr, op->type, 
+                             rsc->tx_idx, 
+                             rsc->req.granted);
+
+        *op_p = op;
+err:
+        return rc;
+}
+
 static inline int lcr_ptl_post(lcr_ptl_txq_t *txq, 
                                lcr_ptl_op_t *op, 
                                int *token_num)
 {
         int rc = MPC_LOWCOMM_SUCCESS;
-        mpc_common_spinlock_lock(&txq->lock);
 
+        mpc_common_spinlock_lock(&txq->lock);
         if (txq->tokens <= 0 || !mpc_queue_is_empty(&txq->queue)) {
                 *token_num = txq->tokens;
                 txq->num_ops++;
@@ -719,6 +768,16 @@ txq_unlock:
 }
 #endif
 
+static inline void lcr_ptl_complete_op(lcr_ptl_op_t *op) {
+        mpc_common_debug("LCR PTL: complete op. id=%llu, size=%llu, "
+                         "nid=%lu, pid=%lu, pti=%d, type=%s, hdr=0x%08x.",
+                         op->id, op->size, op->addr.phys.nid,
+                         op->addr.phys.pid, op->pti, lcr_ptl_op_decode(op),
+                         op->hdr);
+
+        mpc_mpool_push(op);
+}
+
 ptl_size_t lcr_ptl_poll_mem(lcr_ptl_mem_t *mem);
 
 int lcr_ptl_get_attr(sctk_rail_info_t *rail,
@@ -728,7 +787,7 @@ int lcr_ptl_iface_is_reachable(sctk_rail_info_t *rail, uint64_t uid);
 
 int lcr_ptl_iface_init(sctk_rail_info_t *rail, unsigned flags);
 
-int lcr_ptl_iface_fini(sctk_rail_info_t* rail);
+void lcr_ptl_iface_fini(sctk_rail_info_t* rail);
 
 ssize_t lcr_ptl_send_am_bcopy(_mpc_lowcomm_endpoint_t *ep, 
                               uint8_t id,

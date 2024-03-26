@@ -23,6 +23,10 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
+#include <mpc_config.h>
+
+#ifdef MPC_USE_PORTALS
+
 #include "ptl.h"
 #include "mpc_launch_pmi.h"
 #include "rail.h"
@@ -181,7 +185,7 @@ int lcr_ptl_iface_open(__UNUSED__ const char *device_name, int id,
 		assert(tmp_ret == 0);
 	}
         /* Add new API call */
-	iface->iface_get_attr      = lcr_ptl_get_attr;
+	//iface->iface_get_attr      = lcr_ptl_get_attr;
 
         /* Active message calls */
         iface->send_am_bcopy        = lcr_ptl_send_am_bcopy;
@@ -206,6 +210,7 @@ int lcr_ptl_iface_open(__UNUSED__ const char *device_name, int id,
         iface->iface_progress      = lcr_ptl_iface_progress;
         iface->iface_is_reachable  = lcr_ptl_iface_is_reachable;
         
+        iface->driver_finalize     = lcr_ptl_iface_fini;
 
         *iface_p = iface;
 err:
@@ -233,3 +238,5 @@ lcr_component_t mptl_component = {
         .next = NULL
 };
 LCR_COMPONENT_REGISTER(&mptl_component)
+
+#endif

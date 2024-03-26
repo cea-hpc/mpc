@@ -29,7 +29,10 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
+#include <mpc_config.h>
+
 #ifdef MPC_USE_PORTALS
+
 #include "ptl_recv.h"
 
 #include <mpc_common_debug.h>
@@ -37,6 +40,7 @@
 
 int lcr_ptl_recv_block_init(lcr_ptl_rail_info_t *srail, 
                             mpc_mempool_t *mp,
+                            ptl_pt_index_t pti,
                             lcr_ptl_recv_block_t **block_p)
 {
         int rc = MPC_LOWCOMM_SUCCESS;
@@ -53,6 +57,7 @@ int lcr_ptl_recv_block_init(lcr_ptl_rail_info_t *srail,
         block->rail      = srail;
         block->start     = block + 1;
         block->op.type   = LCR_PTL_OP_BLOCK;
+        block->op.pti    = pti;
 
         if (block->start == NULL) {
                 mpc_common_debug_error("LCR PTL: could not allocate eager block");
@@ -119,7 +124,7 @@ int lcr_ptl_recv_block_enable(lcr_ptl_rail_info_t *srail,
 
         for (i=0; i< srail->config.num_eager_blocks; i++) {
                 lcr_ptl_recv_block_t *block = NULL;
-                rc = lcr_ptl_recv_block_init(srail, block_mp, &block);
+                rc = lcr_ptl_recv_block_init(srail, block_mp, pte, &block);
                 if (rc != MPC_LOWCOMM_SUCCESS) {
                         mpc_common_debug_error("LCR PTL: could not allocate block");
                         return rc;

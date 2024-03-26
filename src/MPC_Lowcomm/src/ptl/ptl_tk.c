@@ -29,6 +29,10 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
+#include <mpc_config.h>
+
+#ifdef MPC_USE_PORTALS
+
 #include "ptl.h"
 
 #include <mpc_lowcomm_types.h>
@@ -45,14 +49,14 @@ int lcr_ptl_tk_progress_pending_ops(lcr_ptl_rail_info_t *srail,
 
         mpc_common_spinlock_lock(&txq->lock);
         mpc_queue_for_each_safe(op, iter, lcr_ptl_op_t, &txq->queue, elem) {
-                if ((token_num = txq->tokens--) <= 0) {
-                        txq->tokens++;
+                if ((token_num = txq->tokens) <= 0) {
                         break;
-                } 
-                txq->num_ops--;
+                }
+                txq->tokens--; txq->num_ops--;
                 rc = lcr_ptl_do_op(op);
                 if (rc != MPC_LOWCOMM_SUCCESS) {
-                        goto err;
+                        mpc_common_spinlock_unlock(&txq->lock);
+                        return rc;
                 }
 
                 mpc_queue_del_iter(&txq->queue, iter);
@@ -72,11 +76,7 @@ int lcr_ptl_tk_progress_pending_ops(lcr_ptl_rail_info_t *srail,
         }
 
         *count = tmp;
-
-        return rc;
 err:
-        mpc_common_spinlock_unlock(&txq->lock);
-                
         return rc;
 }
 
@@ -99,7 +99,6 @@ static inline int _lcr_ptl_create_token_resource(lcr_ptl_tk_module_t *tk,
         rsc->remote.id = remote;
         rsc->tx_idx    = remote_tx_id;
         rsc->tk_chunk  = tk->config.min_chunk;
-        rsc->tokens    = 0;
 
         *rsc_p = rsc;
 
@@ -163,22 +162,13 @@ int lcr_ptl_tk_release_rsc_token(lcr_ptl_tk_module_t *tk,
         _lcr_ptl_tk_update_rx_chunk(tk, rsc, num_pendings);
 
 
-        /* Decrement RX Queue outstanding token number. */
-        rsc->tokens--; //NOTE: on receiver, because event processing is
-                       //      sequential, no concurrency problem.
         /* Put the token back to the pool. */
         tk->pool++;
-
-        mpc_common_debug("LCR PTL: token release. nid=%llu, pid=%llu, rsc tokens=%d, "
-                         "pool tokens=%d.", remote.phys.nid, remote.phys.pid, 
-                         rsc->tokens, tk->pool);
-        ///* If no more outstanding tokens available, as a consequence sender is
-        // * starving. Push the RX Queue to the list of exhausted RX Queue so that
-        // * it can be refilled. */
-        //if (rsc->tokens <= 0) {
-        //        mpc_queue_push(&tk->exhausted, &rsc->elem);
-        //}
         mpc_common_spinlock_unlock(&tk->lock);
+
+        mpc_common_debug("LCR PTL: token release. nid=%llu, pid=%llu, "
+                         "pool tokens=%d.", remote.phys.nid, remote.phys.pid, 
+                         tk->pool);
 
 err:
         return rc;
@@ -198,70 +188,62 @@ err:
  *   list of exhausted RX Queue so it can receive more. */
 int lcr_ptl_tk_distribute_tokens(lcr_ptl_rail_info_t *srail) 
 {
+        int rc = MPC_LOWCOMM_SUCCESS;
+        int distributed;
         lcr_ptl_op_t     *op;
         lcr_ptl_tk_rsc_t *rsc;
-        mpc_queue_head_t  send;
+        mpc_queue_iter_t  iter;
 
         mpc_common_spinlock_lock(&srail->tk.lock);
 
-        mpc_queue_init_head(&send);
-        /* First, distribute token in round robin between the list of exhausted
-         * resources. */
-        while (srail->tk.pool > 0 && !mpc_queue_is_empty(&srail->tk.exhausted)) {
-
-                rsc = mpc_queue_pull_elem(&srail->tk.exhausted, lcr_ptl_tk_rsc_t, elem);
-
-                /* If resources has received at least one token, then push it to
-                 * the send queue. */
-                if (!rsc->req.scheduled) {
-                        mpc_queue_push(&send, &rsc->elem);
-                        rsc->req.scheduled = 1;
-                }
-
-                /* Remove one token from the pool and assign it to RX Queue. */
-                //NOTE: RX Queue token number may be safely incremented since
-                //      remote TX Queue has to be stalled since it does not have
-                //      tokens anymore.
-                rsc->tokens += 1; rsc->req.given++; srail->tk.pool--;
-
-                if ( (rsc->req.requested == rsc->req.given) ||
-                     (rsc->req.given >= rsc->tk_chunk) ) {
-                        continue;
-                }
-
-                mpc_queue_push(&srail->tk.exhausted, &rsc->elem);
+        /* Fast path. */
+        if (srail->tk.pool <= 0 || mpc_queue_is_empty(&srail->tk.exhausted)) {
+                goto unlock;
         }
 
-        /* Then flush the send queue. */
-        while (!mpc_queue_is_empty(&send)) {
-                rsc = mpc_queue_pull_elem(&send, lcr_ptl_tk_rsc_t, elem);
+        /* First, distribute between exhausted token resources in a round robin
+         * fashion. */
+        while (srail->tk.pool > 0) {
+                distributed = srail->tk.pool;
+                mpc_queue_for_each_safe(rsc, iter, lcr_ptl_tk_rsc_t, 
+                                        &srail->tk.exhausted, elem) {
 
-                op = mpc_mpool_pop(srail->tk.ops);
-                if (op == NULL) {
-                        mpc_common_debug("LCR PTL: could not allocate "
-                                         "token operation.");
-                        goto unlock;
+                        if ( (rsc->req.requested == rsc->req.granted) ||
+                             (rsc->req.granted >= rsc->tk_chunk) ) {
+                                continue;
+                        }
+
+                        rsc->req.granted++; srail->tk.pool--;
                 }
-                //FIXME: maybe we should enforce associating any operation to
-                //       a TX queue...
-                _lcr_ptl_init_op_common(op, 0, srail->tk.mdh, 
-                                        rsc->remote.id, 
-                                        srail->tk.pti, 
-                                        LCR_PTL_OP_TK_GRANT, 
-                                        0, NULL, 
-                                        NULL);
+                if (distributed == srail->tk.pool) {
+                        /* No token distributed on this round, exit. */
+                        break;
+                }
+        }
 
-                LCR_PTL_CTRL_HDR_SET(op->hdr, op->type, 
-                                     rsc->tx_idx, 
-                                     rsc->req.given);
+        /* Then, send granted tokens. */
+        mpc_queue_for_each_safe(rsc, iter, lcr_ptl_tk_rsc_t, 
+                                &srail->tk.exhausted, elem) {
+                if (rsc->req.granted > 0) {
+                        /* Create token operation. */
+                        rc = lcr_ptl_create_token_grant(srail, rsc, &op);
+                        if (rc != MPC_LOWCOMM_SUCCESS) {
+                                goto unlock;
+                        }
+                        rc = lcr_ptl_do_op(op);
+                        if (rc != MPC_LOWCOMM_SUCCESS) {
+                                goto unlock;
+                        }
 
-                lcr_ptl_do_op(op);
+                        /* Then remote from exhausted queue. */
+                        mpc_queue_del_iter(&srail->tk.exhausted, iter);
+                }
         }
 
 unlock:
         mpc_common_spinlock_unlock(&srail->tk.lock);
 
-        return MPC_LOWCOMM_SUCCESS;
+        return rc;
 }
 
 static int lcr_ptl_tk_process_event(lcr_ptl_rail_info_t *srail, 
@@ -289,14 +271,15 @@ static int lcr_ptl_tk_process_event(lcr_ptl_rail_info_t *srail,
                         break;
                 case LCR_PTL_OP_TK_REQUEST:
                         txq = &srail->txqt[LCR_PTL_CTRL_HDR_GET_TX_ID(ev->hdr_data)];
-                        
 
                         rc = _lcr_ptl_get_token_resource(&srail->tk, ev->initiator, &rsc);
                         if (rc != MPC_LOWCOMM_SUCCESS) {
                                 goto err;
                         }
+
+                        mpc_common_spinlock_lock(&srail->tk.lock);
                         rsc->req.requested = LCR_PTL_CTRL_HDR_GET_TOKEN_NUM(ev->hdr_data);
-                        rsc->req.given     = 0;
+                        rsc->req.granted   = 0;
                         rsc->req.scheduled = 0;
 
                         mpc_common_debug("LCR PTL: Received TOKEN REQUEST. nid=%llu, pid=%llu, "
@@ -305,6 +288,7 @@ static int lcr_ptl_tk_process_event(lcr_ptl_rail_info_t *srail,
 
                         /* Push to exhausted list to be granted tokens during distribution. */
                         mpc_queue_push(&srail->tk.exhausted, &rsc->elem);
+                        mpc_common_spinlock_unlock(&srail->tk.lock);
                         break;
                 case LCR_PTL_OP_TK_GRANT:
                         /* Get token info from header. */
@@ -317,6 +301,7 @@ static int lcr_ptl_tk_process_event(lcr_ptl_rail_info_t *srail,
 
                         /* Add tokens to sender's TX Queue. */
                         mpc_common_spinlock_lock(&txq->lock);
+                        assert(token_num > 0 && txq->tokens == 0);
                         txq->tokens += token_num;
                         atomic_store(&txq->is_waiting, 0);
                         mpc_common_spinlock_unlock(&txq->lock);
@@ -335,7 +320,7 @@ static int lcr_ptl_tk_process_event(lcr_ptl_rail_info_t *srail,
                 break;
         case PTL_EVENT_ACK:
                 /* Return operation to the pool. */
-                mpc_mpool_push(ev->user_ptr);
+                lcr_ptl_complete_op((lcr_ptl_op_t *)ev->user_ptr);
                 break;
         case PTL_EVENT_PUT_OVERFLOW:
         case PTL_EVENT_GET_OVERFLOW:
@@ -370,8 +355,6 @@ int lcr_ptl_iface_progress_tk(lcr_ptl_rail_info_t *srail)
 
         while (1) {
 
-                mpc_common_spinlock_lock(&srail->tk.lock);
-
                 ret = PtlEQGet(srail->tk.eqh, &ev);
                 lcr_ptl_chk(ret);
 
@@ -379,15 +362,17 @@ int lcr_ptl_iface_progress_tk(lcr_ptl_rail_info_t *srail)
                         mpc_common_debug_info("PORTALS: EQS EVENT '%s' eqh=%llu, idx=%d, "
                                               "sz=%llu, user=%p, start=%p, "
                                               "remote_offset=%p, iface=%d", 
-                                              lcr_ptl_event_decode(ev), srail->tk.eqh, ev.pt_index, 
+                                              lcr_ptl_event_decode(ev),
+                                              *(uint64_t *)&srail->tk.eqh, ev.pt_index,
                                               ev.mlength, ev.user_ptr, ev.start,
-                                              ev.remote_offset, srail->nih);
+                                              ev.remote_offset, *(uint64_t *)&srail->nih);
 
                         rc = lcr_ptl_tk_process_event(srail, &ev);
                         if (rc != MPC_LOWCOMM_SUCCESS) {
                                 goto poll_unlock;
                         }
                         
+                        continue;
                 } else if (ret == PTL_EQ_EMPTY) {
                         goto poll_unlock;
                         break;
@@ -396,7 +381,6 @@ int lcr_ptl_iface_progress_tk(lcr_ptl_rail_info_t *srail)
                         break;
                 }
 poll_unlock:
-                mpc_common_spinlock_unlock(&srail->tk.lock);
                 break;
         }
 
@@ -533,11 +517,15 @@ int lcr_ptl_tk_fini(ptl_handle_ni_t nih, lcr_ptl_tk_module_t *tk)
 
         mpc_common_hashtable_release(&tk->rsct);
 
+        lcr_ptl_chk(PtlEQFree(tk->eqh));
+
 	lcr_ptl_chk(PtlMDRelease(tk->mdh));
 
-	lcr_ptl_chk(PtlMEUnlink(tk->mdh));
+	lcr_ptl_chk(PtlMEUnlink(tk->meh));
 
         lcr_ptl_chk(PtlPTFree(nih, tk->pti));
 
         return MPC_LOWCOMM_SUCCESS;
 }
+
+#endif
