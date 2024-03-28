@@ -165,7 +165,7 @@ int lcp_request_complete(lcp_request_t *req)
         }
 
         if (req->flags & LCP_REQUEST_RMA_COMPLETE) {
-                req->send.cb(req->request);
+                req->send.send_cb(req->state.offset, req->user_data);
         }
 
         if (req->flags & LCP_REQUEST_OFFLOADED_RNDV) {

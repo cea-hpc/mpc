@@ -588,7 +588,7 @@ static int _lcr_ptl_iface_init_am(lcr_ptl_rail_info_t *srail)
                                        srail->am.pti,
                                        PTL_PRIORITY_LIST);
 
-        atomic_store(&srail->am.am_count, 0);
+        atomic_store(&srail->am.op_sn, 0);
 
 err:
         return rc;
@@ -686,8 +686,7 @@ static int _lcr_ptl_iface_fini_tag(lcr_ptl_rail_info_t *srail)
 /* Initialize ptl resources needed for RMA interface. */
 static int _lcr_ptl_iface_init_rma(lcr_ptl_rail_info_t *srail) 
 {
-        ptl_md_t md;
-        ptl_me_t me;
+        int rc = MPC_LOWCOMM_SUCCESS;
 
         /* Initialize one-sided required resources:
          * - one Memory Entries (ME) spanning all address space with
@@ -705,53 +704,22 @@ static int _lcr_ptl_iface_init_rma(lcr_ptl_rail_info_t *srail)
                                ));
 
         if (srail->features & LCR_PTL_FEATURE_AM) {
-                /* Initialize RMA counter. */
-                lcr_ptl_chk(PtlCTAlloc(srail->nih, &srail->am.rndv_cth));
-
-                /* Prepare PTL memory descriptor. */
-                md = (ptl_md_t) {
-                        .ct_handle = srail->am.rndv_cth,
-                        .eq_handle = srail->eqh,
-                        .length = PTL_SIZE_MAX,
-                        .start  = 0,
-                        .options = PTL_MD_EVENT_SUCCESS_DISABLE |
-                                PTL_MD_EVENT_SEND_DISABLE       |
-                                PTL_MD_EVENT_CT_REPLY,
-                };
-                lcr_ptl_chk(PtlMDBind(srail->nih, &md, &srail->am.rndv_mdh));
-
-                srail->am.rma_match = LCR_PTL_RNDV_MB;
-                me = (ptl_me_t) {
-                        .ct_handle = PTL_CT_NONE,
-                        .ignore_bits = 0,
-                        .match_bits  = srail->am.rma_match,
-                        .match_id    = {
-                                .phys.nid = PTL_NID_ANY, 
-                                .phys.pid = PTL_PID_ANY
-                        },
-                        .uid         = PTL_UID_ANY,
-                        .min_free    = 0,
-                        .options     = PTL_ME_OP_PUT          | 
-                                PTL_ME_OP_GET                 |
-                                PTL_ME_EVENT_LINK_DISABLE     | 
-                                PTL_ME_EVENT_UNLINK_DISABLE   |
-                                PTL_ME_EVENT_SUCCESS_DISABLE,
-                        .start       = 0,
-                        .length      = PTL_SIZE_MAX
-                };
-
-                lcr_ptl_chk(PtlMEAppend(srail->nih,
-                                        srail->rma.pti,
-                                        &me,
-                                        PTL_PRIORITY_LIST,
-                                        srail,
-                                        &srail->am.rndv_meh
-                                       ));
+                rc = lcr_ptl_post_rma_resources(srail, 
+                                                LCR_PTL_RNDV_MB, 
+                                                0, 
+                                                PTL_SIZE_MAX, 
+                                                &srail->rma.rndv_cth, 
+                                                &srail->rma.rndv_mdh, 
+                                                &srail->rma.rndv_meh);
+                if (rc != MPC_LOWCOMM_SUCCESS) {
+                        goto err;
+                }
         }
 
         mpc_list_init_head(&srail->rma.mem_head);
 
-        return MPC_LOWCOMM_SUCCESS;
+err:
+        return rc;
 }
 
 static int _lcr_ptl_iface_fini_rma(lcr_ptl_rail_info_t *srail) 
@@ -824,7 +792,8 @@ int lcr_ptl_get_attr(sctk_rail_info_t *rail,
         attr->iface.cap.flags               = rail->cap;
 
         attr->mem.cap.max_reg               = PTL_SIZE_MAX;
-        attr->mem.size_packed_mkey          = sizeof(uint64_t); //FIXME: to be generalized 
+        attr->mem.size_packed_mkey          = sizeof(uint64_t) + 
+                sizeof(ptl_match_bits_t) + sizeof(unsigned); //FIXME: to be generalized 
 
         return MPC_LOWCOMM_SUCCESS;
 }
@@ -849,14 +818,12 @@ int lcr_ptl_iface_init(sctk_rail_info_t *rail, unsigned fflags)
         _lcr_ptl_iface_init_driver_config(srail, ptl_driver_config);
 
         /* First initialize PT. */
-#if defined (MPC_USE_PORTALS_CONTROL_FLOW)
-        srail->tk.pti   = LCR_PTL_PT_NULL;
-#endif
         srail->am.pti   = LCR_PTL_PT_NULL;
         srail->tag.pti  = LCR_PTL_PT_NULL;
         srail->rma.pti  = LCR_PTL_PT_NULL;
 
 #if defined (MPC_USE_PORTALS_CONTROL_FLOW)
+        srail->tk.pti   = LCR_PTL_PT_NULL;
         lcr_ptl_tk_init(srail->nih, &srail->tk, ptl_driver_config);
 #endif
 

@@ -265,7 +265,7 @@ int lcp_send_eager_am_zcopy(lcp_request_t *req)
         uint8_t am_id;
         size_t iovcnt     = 0;
 	lcp_ep_h ep       = req->send.ep;
-        size_t max_iovec  = ep->ep_config.am.max_iovecs;
+        size_t max_iovec  = ep->config.am.max_iovecs;
 	struct iovec *iov = alloca(max_iovec*sizeof(struct iovec));
 
         //FIXME: hdr never freed, how should it be initialized?
@@ -335,11 +335,11 @@ int lcp_am_send_start(lcp_ep_h ep, lcp_request_t *req,
                 mpc_common_debug_warning("LCP AM: task-based communication "
                                          "not implemented.");
                 not_implemented();
-        } else if (size <= ep->ep_config.am.max_bcopy || 
-            ((req->send.length <= ep->ep_config.am.max_zcopy) &&
+        } else if (size <= ep->config.am.max_bcopy || 
+            ((req->send.length <= ep->config.am.max_zcopy) &&
              (param->datatype & LCP_DATATYPE_DERIVED))) {
                 req->send.func = lcp_send_eager_am_bcopy;
-        } else if ((size <= ep->ep_config.am.max_zcopy) &&
+        } else if ((size <= ep->config.am.max_zcopy) &&
                    (param->datatype & LCP_DATATYPE_CONTIGUOUS)) {
                 req->send.func = lcp_send_eager_am_zcopy;
         } else {

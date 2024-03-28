@@ -60,7 +60,7 @@ int lcp_tag_send_start(lcp_ep_h ep, lcp_request_t *req,
         size_t size;
 
         /* First check offload */
-        if (ep->ep_config.offload) {
+        if (ep->config.offload) {
                 size = req->send.length;
                 req->state.offloaded = 1;
 
@@ -68,11 +68,11 @@ int lcp_tag_send_start(lcp_ep_h ep, lcp_request_t *req,
                         not_implemented();
                 }
 
-                if (size <= ep->ep_config.tag.max_bcopy ||
-                    ((req->send.length <= ep->ep_config.tag.max_zcopy) &&
+                if (size <= ep->config.tag.max_bcopy ||
+                    ((req->send.length <= ep->config.tag.max_zcopy) &&
                      (param->datatype & LCP_DATATYPE_DERIVED))) {
                         req->send.func = lcp_send_tag_offload_eager_bcopy;
-                } else if ((size <= ep->ep_config.tag.max_zcopy) &&
+                } else if ((size <= ep->config.tag.max_zcopy) &&
                            (param->datatype & LCP_DATATYPE_CONTIGUOUS)) {
                         req->send.func = lcp_send_tag_offload_eager_zcopy;
                 } else {
@@ -86,11 +86,11 @@ int lcp_tag_send_start(lcp_ep_h ep, lcp_request_t *req,
                 size = lcp_send_get_total_tag_payload(req->send.length);
 
                 //NOTE: there are no rendez-vous for thread-based send.
-                if ((size <= ep->ep_config.am.max_bcopy) ||
+                if ((size <= ep->config.am.max_bcopy) ||
                     (param->datatype & LCP_DATATYPE_DERIVED)) {
                         req->send.func = lcp_send_task_tag_bcopy;
                 } else {
-                       assume(size <= ep->ep_config.am.max_zcopy);
+                       assume(size <= ep->config.am.max_zcopy);
                        req->send.func = lcp_send_task_tag_zcopy;
                 }
         } else { /* Process-based send */
@@ -102,11 +102,11 @@ int lcp_tag_send_start(lcp_ep_h ep, lcp_request_t *req,
                 /* Get the total payload size */
                 size = lcp_send_get_total_tag_payload(req->send.length);
 
-                if (size <= ep->ep_config.am.max_bcopy ||
-                    ((req->send.length <= ep->ep_config.tag.max_zcopy) &&
+                if (size <= ep->config.am.max_bcopy ||
+                    ((req->send.length <= ep->config.tag.max_zcopy) &&
                      (param->datatype & LCP_DATATYPE_DERIVED))) {
                         req->send.func = lcp_send_eager_tag_bcopy;
-                } else if ((size <= ep->ep_config.am.max_zcopy) &&
+                } else if ((size <= ep->config.am.max_zcopy) &&
                            (param->datatype & LCP_DATATYPE_CONTIGUOUS)) {
                         req->send.func = lcp_send_eager_tag_zcopy;
                 } else {

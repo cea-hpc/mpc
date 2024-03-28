@@ -128,18 +128,21 @@ int lcp_ep_init_config(lcp_manager_h mngr, lcp_ep_h ep)
         lcp_context_h ctx = mngr->ctx;
 	int max_prio = 0, prio_idx = 0;
 
-	ep->ep_config.am.max_bcopy       = SIZE_MAX;
-	ep->ep_config.am.max_zcopy       = SIZE_MAX;
-	ep->ep_config.am.max_iovecs      = SIZE_MAX;
-	ep->ep_config.tag.max_bcopy      = SIZE_MAX;
-	ep->ep_config.tag.max_zcopy      = SIZE_MAX;
-	ep->ep_config.tag.max_iovecs     = SIZE_MAX;
-	ep->ep_config.rndv.max_put_zcopy = SIZE_MAX;
-	ep->ep_config.rndv.max_get_zcopy = SIZE_MAX;
-	ep->ep_config.rma.max_put_bcopy  = SIZE_MAX;
-	ep->ep_config.rma.max_put_zcopy  = SIZE_MAX;
-	ep->ep_config.offload            = 0;
+	ep->config.am.max_bcopy       = SIZE_MAX;
+	ep->config.am.max_zcopy       = SIZE_MAX;
+	ep->config.am.max_iovecs      = SIZE_MAX;
+	ep->config.tag.max_bcopy      = SIZE_MAX;
+	ep->config.tag.max_zcopy      = SIZE_MAX;
+	ep->config.tag.max_iovecs     = SIZE_MAX;
+	ep->config.rndv.max_put_zcopy = SIZE_MAX;
+	ep->config.rndv.max_get_zcopy = SIZE_MAX;
+	ep->config.rma.max_put_bcopy  = SIZE_MAX;
+	ep->config.rma.max_put_zcopy  = SIZE_MAX;
+	ep->config.offload            = 0;
+        ep->cap                       = 0;
 
+        //FIXME: endpoint configuration would need some refacto. It currently
+        //       does not handle well heterogenous interfaces.
 	for(i = 0; i < ctx->num_resources; i++)
 	{
 		/* Only append config of used endpoint interfaces */
@@ -163,45 +166,60 @@ int lcp_ep_init_config(lcp_manager_h mngr, lcp_ep_h ep)
 		iface->iface_get_attr(iface, &attr);
 		if(attr.iface.cap.flags & LCR_IFACE_CAP_TAG_OFFLOAD)
 		{
-			ep->ep_config.offload       = 1;
-			ep->ep_config.tag.max_bcopy = mpc_common_min(ep->ep_config.tag.max_bcopy,
+			ep->cap |= LCR_IFACE_CAP_TAG_OFFLOAD;
+			ep->config.tag.max_bcopy = mpc_common_min(ep->config.tag.max_bcopy,
 			                                      attr.iface.cap.tag.max_bcopy);
-			ep->ep_config.tag.max_zcopy = mpc_common_min(ep->ep_config.tag.max_zcopy,
+			ep->config.tag.max_zcopy = mpc_common_min(ep->config.tag.max_zcopy,
 			                                      attr.iface.cap.tag.max_zcopy);
-			ep->ep_config.tag.max_iovecs = mpc_common_min(ep->ep_config.tag.max_iovecs,
+			ep->config.tag.max_iovecs = mpc_common_min(ep->config.tag.max_iovecs,
 			                                       attr.iface.cap.tag.max_iovecs);
 		}
+
+                if (attr.iface.cap.flags & LCR_IFACE_CAP_ATOMICS) {
+			ep->cap |= LCR_IFACE_CAP_ATOMICS;
+                        ep->config.ato.max_fetch_size = mpc_common_min(ep->config.ato.max_fetch_size,
+                                                                       attr.iface.cap.ato.max_fetch_size);
+                        ep->config.ato.max_fetch_size = mpc_common_min(ep->config.ato.max_post_size,
+                                                                       attr.iface.cap.ato.max_post_size);
+                }
+
 		//NOTE: if tbsm + portals for example, eager and rndv frag
 		//       will be limited by portals capabilities. Is this the
 		//       correct behavior ?
-		ep->ep_config.am.max_bcopy = mpc_common_min(ep->ep_config.am.max_bcopy,
+		ep->config.am.max_bcopy = mpc_common_min(ep->config.am.max_bcopy,
 		                                     attr.iface.cap.am.max_bcopy);
-		ep->ep_config.am.max_zcopy = mpc_common_min(ep->ep_config.am.max_zcopy,
+		ep->config.am.max_zcopy = mpc_common_min(ep->config.am.max_zcopy,
 		                                     attr.iface.cap.am.max_zcopy);
-		ep->ep_config.am.max_iovecs = mpc_common_min(ep->ep_config.am.max_iovecs,
+		ep->config.am.max_iovecs = mpc_common_min(ep->config.am.max_iovecs,
 		                                      attr.iface.cap.am.max_iovecs);
-		ep->ep_config.rndv.max_get_zcopy = mpc_common_min(ep->ep_config.rndv.max_get_zcopy,
+		ep->config.rndv.max_get_zcopy = mpc_common_min(ep->config.rndv.max_get_zcopy,
 		                                           attr.iface.cap.rndv.max_get_zcopy);
-		ep->ep_config.rndv.max_put_zcopy = mpc_common_min(ep->ep_config.rndv.max_put_zcopy,
+		ep->config.rndv.max_put_zcopy = mpc_common_min(ep->config.rndv.max_put_zcopy,
 		                                           attr.iface.cap.rndv.max_put_zcopy);
 
-		if(iface->runtime_config_rail->rdma)
+		if(attr.iface.cap.flags & LCR_IFACE_CAP_RMA)
 		{
-			ep->ep_config.rma.max_put_bcopy = mpc_common_min(ep->ep_config.rma.max_put_bcopy,
+			ep->cap |= LCR_IFACE_CAP_RMA;
+			ep->config.rma.max_put_bcopy = mpc_common_min(ep->config.rma.max_put_bcopy,
 			                                          attr.iface.cap.rma.max_put_bcopy);
-			ep->ep_config.rma.max_put_bcopy = mpc_common_min(ep->ep_config.rma.max_put_zcopy,
+			ep->config.rma.max_put_bcopy = mpc_common_min(ep->config.rma.max_put_zcopy,
 			                                          attr.iface.cap.rma.max_put_zcopy);
 		}
 	}
 
 	//FIXME: should it be two distinct threshold? One for tag, one for am?
-	ep->ep_config.rndv_threshold = ep->ep_config.am.max_zcopy;
+	ep->config.rndv_threshold = ep->config.am.max_zcopy;
 
 	ep->cc = ep->next_cc = prio_idx;
 
-	if(ep->ep_config.offload)
+        //NOTE: performing this kind of operations is either not supported
+        //      (offload) or does not make sense (atomics), thus only the priority
+        //      interface will be used.
+	if(ep->cap & (LCR_IFACE_CAP_TAG_OFFLOAD |
+                      LCR_IFACE_CAP_ATOMICS))
 	{
 		ep->tag_chnl = prio_idx;
+                ep->ato_chnl = prio_idx;
 	}
 
 	return LCP_SUCCESS;

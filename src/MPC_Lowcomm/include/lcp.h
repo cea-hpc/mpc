@@ -221,6 +221,7 @@ lcp_task_h lcp_manager_task_get(lcp_manager_h mngr, int tid);
  * @param [in] ctx  Context handle.
  * @return Error code returned.
  */
+//FIXME: change to lcp_manager_progress
 int lcp_progress(lcp_manager_h mngr);
 
 /**
@@ -300,12 +301,17 @@ enum {
 //       just a functionality (eg LCP_REQUEST_TRY_OFFLOAD or
 //       LCP_REQUEST_TAG_SYNC). Maybe this should be divided in two enum for
 //       clarity.
+//FIXME: Add LCP_REQUEST_USER_MEMKEY to specify if user has provided a local
+//       memory key to be used.
         LCP_REQUEST_TRY_OFFLOAD   = MPC_BIT(0), /**< Try offload send mask */
         LCP_REQUEST_USER_DATA     = MPC_BIT(1), /**< User data mask */
         LCP_REQUEST_USER_REQUEST  = MPC_BIT(2), /**< User request mask */
         LCP_REQUEST_TAG_SYNC      = MPC_BIT(3), /**< Sync request mask */
         LCP_REQUEST_AM_SYNC       = MPC_BIT(4), /**< AM sync request mask */
-        LCP_REQUEST_AM_CALLBACK   = MPC_BIT(5), /**< AM callback mask */
+        LCP_REQUEST_AM_CALLBACK   = MPC_BIT(5), /**< AM callback mask */ 
+        LCP_REQUEST_RMA_CALLBACK  = MPC_BIT(6), /**< Atomic callback mask */ 
+        LCP_REQUEST_REPLY_BUFFER  = MPC_BIT(7), /**< Result buffer for Atomics */
+        LCP_REQUEST_USER_MEMH     = MPC_BIT(8), /**< User-provided local Memory handle */
 };
 
 /**
@@ -347,10 +353,11 @@ enum lcp_dt_type {
 typedef struct lcp_request_param {
         uint32_t                     flags; /**< Flags to indicate which parameter is used */
         lcp_tag_recv_info_t         *recv_info; /**< Receive info field upon matching completion */
-        lcp_complete_callback_func_t cb; /**< Completion callback for send RMA requests */
+        lcp_send_callback_func_t     send_cb; /**< Completion callback for send RMA requests */
         lcp_am_recv_callback_func_t  am_cb; /**< Completion callback for recv AM requests */
         void                        *user_request; /**< User data attached with the AM callback 
                                                      \ref lcp_am_recv_callback_func_t */
+        void                        *reply_buffer; /**< Location for returned value with atomic operations */
         lcp_datatype_t               datatype; /**< Contiguous or non-contiguous data */
         mpc_lowcomm_request_t       *request; /**< Pointer to lowcomm request for completion */
         lcp_mem_h                    memh; /**< Memory handle for RMA requests */
@@ -530,6 +537,58 @@ int lcp_am_recv_nb(lcp_task_h task, void *data_ctnr, void *buffer,
 int lcp_put_nb(lcp_ep_h ep, lcp_task_h task, const void *buffer,
                size_t length, uint64_t remote_addr, lcp_mem_h rkey,
                const lcp_request_param_t *param);
+
+/**
+ * @ingroup LCP_COMM
+ * @brief LCP Get RMA communication. 
+ *
+ * This routine exposes RMA get capabilities with the same semantics.
+ *
+ * User may provide a callback through \ref lcp_request_param_t so that it can
+ * be notified when the request has completed.
+ *
+ * @param [in] ep  Endpoint to destination.
+ * @param [in] task  Task handle of the source task.
+ * @param [in] buffer  Buffer from which data will be sent.
+ * @param [in] length  Length of data in buffer.
+ * @param [in] remote_addr  Remote address where data is written.
+ * @param [in] rkey  Remote memory key handle.
+ * @param [in] param  Request parameters \ref lcp_request_param_t.
+ * @return Error code returned.
+ */
+int lcp_get_nb(lcp_ep_h ep, lcp_task_h task, void *buffer, 
+               size_t length, uint64_t remote_addr, lcp_mem_h rkey,
+               const lcp_request_param_t *param); 
+
+/**
+ * @ingroup LCP_COMM
+ * @brief LCP Flush RMA communication. 
+ *
+ * This routine flushes all outstanding RMA operations. Once the operation is
+ * complete, all RMA operations issued before this call are locally and remotely
+ * completed.
+ *
+ * User may provide a callback through \ref lcp_request_param_t so that it can
+ * be notified when the request has completed.
+ *
+ * @param [in] mngr  Communication manager.
+ * @param [in] param  Request parameters \ref lcp_request_param_t.
+ * @return Error code returned.
+ */
+int lcp_manager_flush_nb(lcp_manager_h mngr, const lcp_request_param_t *param);
+
+typedef enum {
+        LCP_ATOMIC_OP_ADD,
+        LCP_ATOMIC_OP_AND,
+        LCP_ATOMIC_OP_OR,
+        LCP_ATOMIC_OP_XOR,
+        LCP_ATOMIC_OP_SWAP,
+        LCP_ATOMIC_OP_CSWAP,
+} lcp_atomic_op_t;
+
+int lcp_atomic_op_nb(lcp_ep_h ep, lcp_task_h task, const void *buffer,
+                     size_t length, uint64_t remote_addr, lcp_mem_h rkey,
+                     lcp_atomic_op_t op_type, const lcp_request_param_t *param);
 
 /**
  * @ingroup LCP_MEM

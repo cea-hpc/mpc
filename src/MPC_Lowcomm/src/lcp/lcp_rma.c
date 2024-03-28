@@ -48,7 +48,7 @@
  * @param arg input request buffer
  * @return size_t size of copy
  */
-size_t lcp_rma_put_pack(void *dest, void *arg) {
+size_t lcp_rma_pack(void *dest, void *arg) {
         lcp_request_t *req = (lcp_request_t *)arg;
 
         memcpy(dest, req->send.buffer, req->send.length);
@@ -61,7 +61,7 @@ size_t lcp_rma_put_pack(void *dest, void *arg) {
  *
  * @param comp completion
  */
-void lcp_rma_request_complete_put(lcr_completion_t *comp)
+void lcp_rma_request_complete(lcr_completion_t *comp)
 {
         lcp_request_t *req = mpc_container_of(comp, lcp_request_t,
                                               send.t_ctx.comp);
@@ -78,7 +78,7 @@ void lcp_rma_request_complete_put(lcr_completion_t *comp)
  * @param req request to put
  * @return int LCP_SUCCESS in case of success
  */
-int lcp_rma_put_bcopy(lcp_request_t *req)
+int lcp_rma_progress_bcopy(lcp_request_t *req)
 {
         int rc = LCP_SUCCESS;
         int payload_size;
@@ -88,11 +88,21 @@ int lcp_rma_put_bcopy(lcp_request_t *req)
 
 	mpc_common_debug_info("LCP: send put bcopy remote addr=%p, dest=%d",
 			      req->send.rma.remote_addr, ep->uid);
-        payload_size = lcp_send_do_put_bcopy(ep->lct_eps[cc],
-                                             lcp_rma_put_pack, req,
-                                             req->send.rma.remote_addr,
-                                             &req->state.lmem->mems[cc],
-                                             &req->send.rma.rkey->mems[cc]);
+        if (req->send.rma.is_get) {
+                //FIXME: not implemented
+                payload_size = lcp_send_do_get_bcopy(ep->lct_eps[cc], 
+                                                     lcp_rma_pack, req, 
+                                                     req->send.rma.remote_addr,
+                                                     &req->state.lmem->mems[cc],
+                                                     &req->send.rma.rkey->mems[cc]);
+
+        } else {
+                payload_size = lcp_send_do_put_bcopy(ep->lct_eps[cc], 
+                                                     lcp_rma_pack, req, 
+                                                     req->send.rma.remote_addr,
+                                                     &req->state.lmem->mems[cc],
+                                                     &req->send.rma.rkey->mems[cc]);
+        }
 
 	if (payload_size < 0) {
 		mpc_common_debug_error("LCP: error packing bcopy.");
@@ -113,7 +123,7 @@ err:
  * @param req request to put
  * @return int LCP_SUCCESS in case of succes
  */
-int lcp_rma_put_zcopy(lcp_request_t *req)
+int lcp_rma_progress_zcopy(lcp_request_t *req)
 {
         int rc = LCP_SUCCESS;
         size_t remaining, offset;
@@ -133,7 +143,7 @@ int lcp_rma_put_zcopy(lcp_request_t *req)
         //NOTE: max_{put,get}_zcopy might not be optimal.
         ep->lct_eps[cc]->rail->iface_get_attr(ep->lct_eps[cc]->rail, &attr);
 
-        req->state.comp.comp_cb = lcp_rma_request_complete_put;
+        req->state.comp.comp_cb = lcp_rma_request_complete;
 
         while (remaining > 0) {
                 //NOTE: must send on rail on which memory has been pinned.
@@ -144,13 +154,23 @@ int lcp_rma_put_zcopy(lcp_request_t *req)
                 frag_length = attr.iface.cap.rma.max_put_zcopy;
                 length =  (remaining < frag_length) ? remaining : frag_length;
 
-                rc = lcp_send_do_put_zcopy(lcr_ep,
-                                           (uint64_t)req->send.buffer + offset,
-                                           offset,
-                                           &(req->state.lmem->mems[cc]),
-                                           &(req->send.rma.rkey->mems[cc]),
-                                           length,
-                                           &(req->state.comp));
+                if (req->send.rma.is_get) {
+                        rc = lcp_send_do_get_zcopy(lcr_ep,
+                                                   offset,
+                                                   offset,
+                                                   &(req->state.lmem->mems[cc]),
+                                                   &(req->send.rma.rkey->mems[cc]),
+                                                   length,
+                                                   &(req->state.comp));
+                } else {
+                        rc = lcp_send_do_put_zcopy(lcr_ep,
+                                                   offset,
+                                                   offset,
+                                                   &(req->state.lmem->mems[cc]),
+                                                   &(req->send.rma.rkey->mems[cc]),
+                                                   length,
+                                                   &(req->state.comp));
+                }
 
                 if (rc == MPC_LOWCOMM_NO_RESOURCE) {
                         /* Save state */
@@ -174,16 +194,22 @@ int lcp_rma_put_zcopy(lcp_request_t *req)
  * @param req request
  * @return int LCP_SUCCESS in case of success
  */
-static inline int lcp_rma_put_start(lcp_ep_h ep, lcp_request_t *req)
+static inline int lcp_rma_start(lcp_ep_h ep, lcp_request_t *req) 
 {
-        if (req->send.length <= ep->ep_config.rma.max_put_bcopy) {
-                req->send.func = lcp_rma_put_bcopy;
-        } else if (req->send.length <= ep->ep_config.rma.max_put_zcopy) {
+        size_t max_bcopy = req->send.rma.is_get ? ep->config.rma.max_get_bcopy :
+                ep->config.rma.max_put_bcopy;
+        size_t max_zcopy = req->send.rma.is_get ? ep->config.rma.max_get_zcopy :
+                ep->config.rma.max_put_zcopy;
+
+        if (req->send.length <= max_bcopy) {
+                req->send.func = lcp_rma_progress_bcopy;
+        } else if (req->send.length <= max_zcopy) {
                 //NOTE: Non contiguous datatype not supported for zcopy put
                 assert(req->datatype == LCP_DATATYPE_CONTIGUOUS);
-                req->send.func = lcp_rma_put_zcopy;
+                req->send.func = lcp_rma_progress_zcopy;
         }
 
+        //FIXME: register local memory if it's not already provided by user.
         //FIXME: no need for return code anymore since no registration on sender
         //       side.
         return LCP_SUCCESS;
@@ -196,24 +222,93 @@ int lcp_put_nb(lcp_ep_h ep, lcp_task_h task, const void *buffer, size_t length,
         int rc = LCP_SUCCESS;
         lcp_request_t *req;
 
-        assert(param->flags & LCP_REQUEST_USER_REQUEST);
+        if (!(param->flags & LCP_REQUEST_USER_MEMH)) {
+                mpc_common_debug_error("LCP RMA: rma put without "
+                                       "user-provided memory handle not "
+                                       "supported yet.");
+                rc = MPC_LOWCOMM_NOT_SUPPORTED;
+                goto err;
+        }
 
         req = lcp_request_get(task);
         if (req == NULL) {
                 rc = LCP_ERROR;
                 goto err;
         }
-        req->flags |= LCP_REQUEST_RMA_COMPLETE;
-        LCP_REQUEST_INIT_RMA_SEND(req, ep->mngr, task, NULL, NULL, length, ep, (void *)buffer, 
-                                  0 /* no ordering for rma */, 0, param->datatype);
-        lcp_request_init_rma_put(req, remote_addr, rkey, param);
+        LCP_REQUEST_INIT_RMA_PUT(req, ep->mngr, task, length, ep, (void *)buffer, 
+                                  0 /* no ordering for rma */, 0, param->datatype, 
+                                  rkey, remote_addr);
 
-        rc = lcp_rma_put_start(ep, req);
+        if (param->flags & LCP_REQUEST_RMA_CALLBACK) {
+                assert(param->flags & LCP_REQUEST_USER_REQUEST);
+                req->send.send_cb = param->send_cb;
+                req->user_data    = param->user_request;
+        }
+
+        if (param->flags & LCP_REQUEST_USER_MEMH) {
+                req->flags |= LCP_REQUEST_USER_PROVIDED_MEMH;
+                req->state.lmem = param->memh;
+        }
+
+        rc = lcp_rma_start(ep, req);
         if (rc != LCP_SUCCESS) {
                 goto err;
         }
 
         rc = lcp_request_send(req);
 err:
+        return rc;
+}
+
+int lcp_get_nb(lcp_ep_h ep, lcp_task_h task, void *buffer, 
+               size_t length, uint64_t remote_addr, lcp_mem_h rkey,
+               const lcp_request_param_t *param) 
+{
+        int rc = LCP_SUCCESS;
+        lcp_request_t *req;
+
+        if (!(param->flags & LCP_REQUEST_USER_MEMH)) {
+                mpc_common_debug_error("LCP RMA: rma get without "
+                                       "user-provided memory handle not "
+                                       "supported yet.");
+                rc = MPC_LOWCOMM_NOT_SUPPORTED;
+                goto err;
+        }
+
+        req = lcp_request_get(task);
+        if (req == NULL) {
+                rc = LCP_ERROR;
+                goto err;
+        }
+        LCP_REQUEST_INIT_RMA_GET(req, ep->mngr, task, length, ep, (void *)buffer, 
+                                  0 /* no ordering for rma */, 0, param->datatype, 
+                                  rkey, remote_addr);
+
+        if (param->flags & LCP_REQUEST_RMA_CALLBACK) {
+                assert(param->flags & LCP_REQUEST_USER_REQUEST);
+                req->send.send_cb = param->send_cb;
+                req->user_data    = param->user_request;
+        }
+
+        if (param->flags & LCP_REQUEST_USER_MEMH) {
+                req->flags |= LCP_REQUEST_USER_PROVIDED_MEMH;
+                req->state.lmem = param->memh;
+        }
+
+        rc = lcp_rma_start(ep, req);
+        if (rc != LCP_SUCCESS) {
+                goto err;  
+        }
+
+        rc = lcp_request_send(req);
+err:
+        return rc;
+}
+
+int lcp_manager_flush_nb(lcp_manager_h mngr, const lcp_request_param_t *param)
+{
+        int rc = MPC_LOWCOMM_SUCCESS;
+
+
         return rc;
 }

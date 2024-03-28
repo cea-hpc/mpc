@@ -55,6 +55,7 @@ enum {
         LCP_REQUEST_LOCAL_COMPLETED     = MPC_BIT(5),
         LCP_REQUEST_REMOTE_COMPLETED    = MPC_BIT(6),
         LCP_REQUEST_USER_COMPLETE       = MPC_BIT(7),
+        LCP_REQUEST_USER_PROVIDED_MEMH  = MPC_BIT(8),
 };
 
 //TODO: rename "unexpected container" to "receive descriptor". It was initially
@@ -105,9 +106,9 @@ struct lcp_request {
                 struct {
                         lcp_ep_h ep;
                         size_t length; /* Total length, in bytes */
-			void *buffer;
+			void *buffer; //FIXME: set to const
 			lcr_tag_context_t t_ctx;
-                        lcp_complete_callback_func_t cb;
+                        lcp_send_callback_func_t send_cb;
 			union {
 				struct {
 					uint16_t comm;
@@ -138,12 +139,20 @@ struct lcp_request {
                                 } ack;
 
                                 struct {
-                                        uint64_t remote_addr;
+                                        int       is_get;
+                                        uint64_t  remote_addr;
                                         lcp_mem_h rkey;
                                 } rma;
+
+                                struct {
+                                        uint64_t        remote_offset;
+                                        lcp_atomic_op_t op;
+                                        lcp_mem_h       rkey;
+                                        void           *reply_buffer;
+                                        uint64_t        value;
+                                } ato;
 			};
 
-                        int rndv_proto;
 			lcp_send_func_t func;
 		} send;
 
@@ -180,7 +189,7 @@ struct lcp_request {
 	mpc_lowcomm_request_t *request;   /* Upper layer request */
         lcp_tag_recv_info_t   *info;
         void                  *user_data;
-	uint16_t                seqn;      /* Sequence number */
+	uint16_t               seqn;      /* Sequence number */
 	uint64_t               msg_id;    /* Unique message identifier */
         struct lcp_request    *super;     /* master request */
         struct lcp_request    *rndv_req;  /* rndv request */ //FIXME: try avoid
@@ -294,23 +303,67 @@ struct lcp_request {
 	(_req)->state.offset      = 0;                                       \
 }
 
-#define LCP_REQUEST_INIT_RMA_SEND(_req, _mngr, _task, _mpi_req, _info, _length, \
-                                  _ep, _buf, _seqn, _msg_id, _dt) \
+#define LCP_REQUEST_INIT_RMA_PUT(_req, _mngr, _task, _length, \
+                                 _ep, _buf, _seqn, _msg_id, _dt, \
+                                 _rkey, _remote_addr) \
 { \
-	(_req)->request           = _mpi_req;                                \
-	(_req)->info              = _info;                                   \
-	(_req)->msg_id            = _msg_id;                                 \
-	(_req)->seqn              = _seqn;                                   \
-	(_req)->mngr               = _mngr;                                    \
-	(_req)->task              = _task;                                   \
-	(_req)->datatype          = _dt;                                     \
+	(_req)->msg_id               = _msg_id;                                 \
+	(_req)->seqn                 = _seqn;                                   \
+	(_req)->mngr                 = _mngr;                                    \
+	(_req)->task                 = _task;                                   \
+	(_req)->datatype             = _dt;                                     \
 	\
-	(_req)->send.buffer       = _buf;                                    \
-	(_req)->send.ep           = _ep;                                     \
-	(_req)->send.length       = _length;                                 \
+	(_req)->send.buffer          = _buf;                                    \
+	(_req)->send.ep              = _ep;                                     \
+	(_req)->send.length          = _length;                                 \
+	(_req)->send.rma.is_get      = 0;                                 \
+	(_req)->send.rma.rkey        = _rkey;                                 \
+	(_req)->send.rma.remote_addr = _remote_addr;                                 \
 	\
-	(_req)->state.remaining   = _length;                                 \
-	(_req)->state.offset      = 0;                                       \
+	(_req)->state.remaining      = _length;                                 \
+	(_req)->state.offset         = 0;                                       \
+}
+
+#define LCP_REQUEST_INIT_RMA_GET(_req, _mngr, _task, _length, \
+                                 _ep, _buf, _seqn, _msg_id, _dt, \
+                                 _rkey, _remote_addr) \
+{ \
+	(_req)->msg_id               = _msg_id;                                 \
+	(_req)->seqn                 = _seqn;                                   \
+	(_req)->mngr                 = _mngr;                                    \
+	(_req)->task                 = _task;                                   \
+	(_req)->datatype             = _dt;                                     \
+	\
+	(_req)->send.buffer          = _buf;                                    \
+	(_req)->send.ep              = _ep;                                     \
+	(_req)->send.length          = _length;                                 \
+	(_req)->send.rma.is_get      = 1;                                 \
+	(_req)->send.rma.rkey        = _rkey;                                 \
+	(_req)->send.rma.remote_addr = _remote_addr;                                 \
+	\
+	(_req)->state.remaining      = _length;                                 \
+	(_req)->state.offset         = 0;                                       \
+}
+
+#define LCP_REQUEST_INIT_ATO_SEND(_req, _mngr, _task, _length, \
+                                  _ep, _buf, _seqn, _msg_id, _dt, \
+                                  _rkey, _remote_offset, _op) \
+{ \
+	(_req)->msg_id                 = _msg_id;        \
+	(_req)->seqn                   = _seqn;          \
+	(_req)->mngr                   = _mngr;          \
+	(_req)->task                   = _task;          \
+	(_req)->datatype               = _dt;            \
+	\
+	(_req)->send.buffer            = _buf;           \
+	(_req)->send.ep                = _ep;            \
+	(_req)->send.length            = _length;        \
+	(_req)->send.ato.rkey          = _rkey;          \
+	(_req)->send.ato.remote_offset = _remote_offset; \
+	(_req)->send.ato.op            = _op;            \
+	\
+	(_req)->state.remaining        = _length;        \
+	(_req)->state.offset           = 0;              \
 }
 
 #define LCP_REQUEST_SET_MSGID(_msg_id, _tid, _seqn) \
@@ -354,17 +407,6 @@ static inline void lcp_container_reset(lcp_unexp_ctnr_t *ctnr)
 {
         ctnr->flags = 0;
 }
-
-static inline void lcp_request_init_rma_put(lcp_request_t *req,
-                                            uint64_t remote_addr,
-                                            lcp_mem_h rkey,
-                                            const lcp_request_param_t *param)
-{
-        req->send.rma.remote_addr = remote_addr;
-        req->send.rma.rkey        = rkey;
-        req->send.cb              = param->cb;
-        req->request              = param->request;
-};
 
 static inline int lcp_request_send(lcp_request_t *req)
 {

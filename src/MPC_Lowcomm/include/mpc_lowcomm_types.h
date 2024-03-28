@@ -317,6 +317,7 @@ typedef enum sctk_ft_state_e
 #define MPC_LOWCOMM_ERROR          1
 #define MPC_LOWCOMM_NO_RESOURCE    -1
 #define MPC_LOWCOMM_IN_PROGRESS    -2
+#define MPC_LOWCOMM_NOT_SUPPORTED  -3
 
 /** Wildcards **/
 #define MPC_ANY_TAG                -1

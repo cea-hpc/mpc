@@ -403,7 +403,7 @@ int lcp_send_eager_tag_zcopy(lcp_request_t *req)
         size_t hdr_size;
         size_t iovcnt     = 0;
 	lcp_ep_h ep       = req->send.ep;
-        size_t max_iovec  = ep->ep_config.am.max_iovecs;
+        size_t max_iovec  = ep->config.am.max_iovecs;
 	struct iovec *iov = alloca(max_iovec*sizeof(struct iovec));
 
 	req->state.comp = (lcr_completion_t) {

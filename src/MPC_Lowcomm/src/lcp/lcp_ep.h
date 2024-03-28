@@ -80,16 +80,25 @@ typedef struct lcp_ep_config {
         struct {
                 size_t max_put_bcopy;
                 size_t max_put_zcopy;
+                size_t max_get_bcopy;
+                size_t max_get_zcopy;
         } rma;
+
+        struct {
+                size_t max_fetch_size;
+                size_t max_post_size;
+        } ato;
 
         size_t rndv_threshold;
 
 } lcp_ep_config_t;
 
 struct lcp_ep {
-        lcp_ep_config_t ep_config;
+        lcp_ep_config_t config;
+        unsigned cap; /* Endpoint capabilities. */
 
         lcp_chnl_idx_t tag_chnl; /* Channel for tag offload */
+        lcp_chnl_idx_t ato_chnl; /* Channel for Atomic operations */
         lcp_chnl_idx_t cc; /* Round-Robin Communication Chanel */
         lcp_chnl_idx_t next_cc; /* Next cc to be used */
 

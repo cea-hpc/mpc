@@ -109,6 +109,7 @@ void sctk_rail_pin_ctx_release(sctk_rail_pin_ctx_t *ctx);
 /* Protocol                                                             */
 /************************************************************************/
 
+
 //FIXME: not used as a flags right now
 enum {
         LCR_IFACE_FLUSH_EP          = MPC_BIT(0),
@@ -140,6 +141,7 @@ enum {
         LCR_IFACE_CAP_LOOPBACK    = MPC_BIT(1),
         LCR_IFACE_CAP_REMOTE      = MPC_BIT(2),
         LCR_IFACE_CAP_TAG_OFFLOAD = MPC_BIT(3),
+        LCR_IFACE_CAP_ATOMICS     = MPC_BIT(4),
 };
 
 /* Active message handler table entry */
@@ -206,6 +208,11 @@ struct lcr_rail_attr {
                                 size_t min_frag_size;
                         } rma;
 
+                        struct {
+                                size_t max_fetch_size;
+                                size_t max_post_size;
+                        } ato;
+
                         unsigned flags; /* Interface capabilities. */
                 } cap;
         } iface;
@@ -266,6 +273,11 @@ struct sctk_rail_info_s
 	lcr_put_zcopy_func_t                                 put_zcopy;
 	lcr_get_bcopy_func_t                                 get_bcopy;
 	lcr_get_zcopy_func_t                                 get_zcopy;
+
+        /* Endpoint Atomic API */
+        lcr_atomic_post_func_t                               atomic_post;
+        lcr_atomic_fetch_func_t                              atomic_fetch;
+        lcr_atomic_cswap_func_t                              atomic_cswap;
 
 	/* Endpoint Sync API */
         lcr_ep_flush_func_t                                  ep_flush;

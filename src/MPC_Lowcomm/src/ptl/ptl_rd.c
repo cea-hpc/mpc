@@ -197,9 +197,15 @@ int lcr_ptl_iface_open(__UNUSED__ const char *device_name, int id,
         iface->connect_on_demand    = lcr_ptl_connect_on_demand;
         /* RMA calls */
         iface->put_bcopy            = lcr_ptl_send_put_bcopy;
+        iface->put_bcopy            = lcr_ptl_send_get_bcopy;
         iface->put_zcopy            = lcr_ptl_send_put_zcopy;
         iface->get_zcopy            = lcr_ptl_send_get_zcopy;
         iface->get_tag_zcopy        = lcr_ptl_get_tag_zcopy;
+        /* Atomic calls. */
+        iface->atomic_post          = lcr_ptl_atomic_post;
+        iface->atomic_fetch         = lcr_ptl_atomic_fetch;
+        iface->atomic_cswap         = lcr_ptl_atomic_cswap;
+
         iface->iface_pack_memp      = lcr_ptl_pack_rkey;
         iface->iface_unpack_memp    = lcr_ptl_unpack_rkey;
         iface->iface_register_mem   = lcr_ptl_mem_register;

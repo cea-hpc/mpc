@@ -60,6 +60,15 @@ typedef union {
 	uint64_t t;
 } lcr_tag_t;
 
+typedef enum {
+        LCR_ATOMIC_OP_ADD,
+        LCR_ATOMIC_OP_SWAP,
+        LCR_ATOMIC_OP_CSWAP,
+        LCR_ATOMIC_OP_AND,
+        LCR_ATOMIC_OP_OR,
+        LCR_ATOMIC_OP_XOR
+} lcr_atomic_op_t;
+
 typedef int (*lcr_am_callback_t)(void *arg, void *data, size_t length,
 				 unsigned flags);
 

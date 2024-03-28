@@ -25,7 +25,6 @@
 #ifndef LCR_PTL_H
 #define LCR_PTL_H
 
-#include <mpc_config.h>
 #include <mpc_mempool.h>
 #include <lcr_def.h>
 #include <sys/types.h>
@@ -174,7 +173,7 @@ typedef struct lcr_ptl_ep_info _mpc_lowcomm_endpoint_info_ptl_t;
 
 typedef struct lcr_ptl_mem {
         void                  *start;          /* Start address of the memory.           */
-        uint32_t               muid;           /* Memory Unique Idendifier.              */
+        uint32_t               muid;           /* Memory Unique Idendifier (for RMA matching). */
         mpc_list_elem_t        elem;           /* Element in list.                       */
         ptl_handle_ct_t        cth;            /* Counter handle.                        */
         ptl_handle_md_t        mdh;            /* Memory Descriptor handle.              */
@@ -192,6 +191,29 @@ typedef struct lcr_ptl_mem {
 /********** PTL OP   *************/
 /*********************************/
 
+static ptl_op_t lcr_ptl_atomic_op_table[] = {
+        [LCR_ATOMIC_OP_ADD]   = PTL_SUM,
+        [LCR_ATOMIC_OP_SWAP]  = PTL_SWAP,
+        [LCR_ATOMIC_OP_CSWAP] = PTL_CSWAP,
+        [LCR_ATOMIC_OP_AND]   = PTL_BAND,
+        [LCR_ATOMIC_OP_OR]    = PTL_BOR,
+        [LCR_ATOMIC_OP_XOR]   = PTL_BXOR
+};
+
+static inline const char *lcr_ptl_decode_atomic_op(ptl_op_t op_type) {
+        switch (op_type) {
+        case PTL_SUM: return "PTL_SUM"; break;
+        case PTL_SWAP: return "PTL_SWAP"; break;
+        case PTL_CSWAP: return "PTL_CSWAP"; break;
+        case PTL_BAND: return "PTL_BAND"; break;
+        case PTL_BOR: return "PTL_BOR"; break;
+        case PTL_BXOR: return "PTL_BXOR"; break;
+        default: return "Unknwon PTL op."; break;
+        }
+
+        return NULL;
+}
+
 /* Operation types. */
 typedef enum {
         /* Block operation. */
@@ -204,6 +226,9 @@ typedef enum {
         LCR_PTL_OP_TAG_SEARCH,
         LCR_PTL_OP_RMA_PUT,
         LCR_PTL_OP_RMA_GET,
+        LCR_PTL_OP_ATOMIC_POST,
+        LCR_PTL_OP_ATOMIC_FETCH,
+        LCR_PTL_OP_ATOMIC_CSWAP,
         LCR_PTL_OP_RMA_FLUSH,
 #if defined (MPC_USE_PORTALS_CONTROL_FLOW)
         /* Token operations. */
@@ -246,6 +271,27 @@ typedef struct lcr_ptl_op {
                         lcr_ptl_mem_t   *rkey;
                 } rma;
                 struct {
+                        uint64_t         remote_offset;
+                        ptl_match_bits_t match;
+                        lcr_ptl_mem_t   *lkey;
+                        lcr_ptl_mem_t   *rkey;
+                        ptl_op_t         op;
+                        ptl_datatype_t   dt;
+                        struct {
+                                uint64_t  local_offset;
+                        } post;
+                        struct {
+                                uint64_t        get_local_offset;
+                                uint64_t        put_local_offset;
+                        } fetch;
+                        struct {
+                                uint64_t        get_local_offset;
+                                uint64_t        put_local_offset;
+                                const void     *operand;
+                        } cswap;
+                } ato;
+
+                struct {
                         ptl_size_t     op_count;
                         ptl_size_t     op_done;
                         lcr_ptl_mem_t *lkey;
@@ -260,24 +306,23 @@ typedef struct lcr_ptl_op {
 /*********************************/
 /* Context for two-sided operations. */
 typedef struct lcr_ptl_ts_ctx {
-        ptl_handle_md_t       mdh;
-        ptl_pt_index_t        pti;
-        mpc_mempool_t        *block_mp;
+        ptl_handle_md_t       mdh; /* Eager Memory Descriptor handle. */
+        ptl_pt_index_t        pti; /* Portal Table Index. */
+        mpc_mempool_t        *block_mp; /* Pool of shaddow buffers. */
         mpc_list_elem_t       bhead; /* Head of block list. */
-        ptl_handle_md_t       rndv_mdh;
-        ptl_handle_me_t       rndv_meh;
-        ptl_handle_ct_t       rndv_cth;
-        atomic_uint_least64_t am_count;
+        atomic_uint_least64_t op_sn;
         atomic_uint_least64_t rma_count;
-        ptl_match_bits_t      rma_match;
 } lcr_ptl_ts_ctx_t;
 
 /* Context for one-sided operations. */
 typedef struct lcr_ptl_os_ctx {
-        ptl_pt_index_t        pti;
+        ptl_handle_md_t       rndv_mdh; /* Rendez-vous Memory Descriptor handle. */
+        ptl_handle_me_t       rndv_meh; /* Rendez-vous Memory Entry handle. */
+        ptl_handle_ct_t       rndv_cth; /* Rendez-vous Counter handle. */
+        ptl_pt_index_t        pti; /* Portals Table Index for RMA. */
         atomic_uint_least32_t mem_uid; /* Unique identifier for RMA registration. */
-        atomic_uint_least64_t op_sn;
-        mpc_list_elem_t       mem_head;
+        atomic_uint_least64_t op_sn; /* Atomic counter for identifying RMA operations. */
+        mpc_list_elem_t       mem_head; /* List head of posted Memory. */
         mpc_common_spinlock_t lock;
 } lcr_ptl_os_ctx_t;
 
@@ -296,20 +341,20 @@ typedef struct lcr_ptl_tk_rsc {
 } lcr_ptl_tk_rsc_t;
 
 typedef struct lcr_ptl_tk_config {
-        int max_tokens;
-        int max_chunk;
-        int min_chunk;
+        int max_tokens; /* Maximum number of tokens. */
+        int max_chunk;  /* Maximum number of tokens granted per request. */
+        int min_chunk;  /* Minimum number of tokens granted per request. */
 } lcr_ptl_tk_config_t;
 
 typedef struct lcr_ptl_tk_module {
         lcr_ptl_tk_config_t         config;
-        ptl_handle_eq_t             eqh; /**< Event Queue. */
-        ptl_handle_md_t             mdh;
-        ptl_pt_index_t              pti;
-        ptl_handle_me_t             meh;
+        ptl_handle_eq_t             eqh; /* Event Queue. */
+        ptl_handle_md_t             mdh; /* Memory Decriptor handle. */
+        ptl_pt_index_t              pti; /* Portal Table Index. */
+        ptl_handle_me_t             meh; /* Memory Entry handle. */
         mpc_common_spinlock_t       lock;
         struct mpc_common_hashtable rsct; /* Token Resource Hash Table. */
-        mpc_mempool_t              *ops;
+        mpc_mempool_t              *ops;  /* Pool of operations. */
         mpc_queue_head_t            exhausted; /* Queue of exhausted token resources. */
         int32_t                     pool; /* Token pool. */
 } lcr_ptl_tk_module_t;
@@ -328,31 +373,30 @@ typedef struct lcr_ptl_iface_config {
         size_t          eager_limit;
         int             num_eager_blocks;
         int             eager_block_size;
-        int             ctrl_block_size;
         int             max_iovecs;
 	size_t          max_mr;           /**< Max size of a memory region (MD | ME ) */
-	size_t          max_put;          /**< Max size of a put */
-	size_t          max_get;          /**< Max size of a get */
-        size_t          min_frag_size;
+	size_t          max_put;          /**< Max size of a put. */
+	size_t          max_get;          /**< Max size of a get. */
+        size_t          min_frag_size;    /* Minimum size of a fragment. */
 	ptl_ni_limits_t max_limits;       /**< container for Portals thresholds */
 } lcr_ptl_iface_config_t;
 
 typedef struct lcr_ptl_rail_info {
         ptl_handle_ni_t             nih;
-        lcr_ptl_addr_t              addr;
+        lcr_ptl_addr_t              addr; /* Full address of PTL interface. */
         lcr_ptl_iface_config_t      config;
 	char                        connection_infos[MPC_COMMON_MAX_STRING_SIZE];
 	size_t                      connection_infos_size;
         mpc_mempool_t              *iface_ops; //NOTE: only need for TAG interface.
         lcr_ptl_txq_t              *txqt; /* TX Queue Table. */
         atomic_int_least32_t        num_txqs;
-        ptl_handle_eq_t             eqh; /**< Event Queue for control flow. */
+        ptl_handle_eq_t             eqh; /**< Event Queue for Active Message/Tag/RMA errors. */
         mpc_common_spinlock_t       lock;
-        lcr_ptl_ts_ctx_t            am;
-        lcr_ptl_ts_ctx_t            tag;
-        lcr_ptl_os_ctx_t            rma;
+        lcr_ptl_ts_ctx_t            am;  /* Active Message context. */
+        lcr_ptl_ts_ctx_t            tag; /* Tag context. */
+        lcr_ptl_os_ctx_t            rma; /* RMA context. */
 #if defined(MPC_USE_PORTALS_CONTROL_FLOW)
-        lcr_ptl_tk_module_t         tk;
+        lcr_ptl_tk_module_t         tk; /* Token module. */
 #endif
         unsigned                    features; /* Instanciated features. */
 } lcr_ptl_rail_info_t;
@@ -604,7 +648,7 @@ static inline int lcr_ptl_do_op(lcr_ptl_op_t *op) {
                                   ));
                 break;
         case LCR_PTL_OP_RMA_PUT: 
-                mpc_common_debug("LCR PTL: local key.  size=%llu, addr=%p, "
+                mpc_common_debug("LCR PTL: local key. lkey size=%llu, addr=%p, "
                                  "local offset=%llu, remote offset=%llu, "
                                  "cth=%llu, mdh=%llu.", op->rma.lkey->size, 
                                  op->rma.lkey->start, op->rma.local_offset,
@@ -626,15 +670,15 @@ static inline int lcr_ptl_do_op(lcr_ptl_op_t *op) {
                                   ));
                 break;
         case LCR_PTL_OP_RMA_GET: 
-                mpc_common_debug("LCR PTL: local key.  size=%llu, addr=%p, "
+                mpc_common_debug("LCR PTL: local key.  lkey size=%llu, addr=%p, "
                                  "local offset=%llu, remote offset=%llu, "
                                  "cth=%llu, mdh=%llu.", op->rma.lkey->size, 
                                  op->rma.lkey->start, op->rma.local_offset,
                                  op->rma.remote_offset,
                                  *(uint64_t*)&op->rma.lkey->cth,
                                  *(uint64_t*)&op->rma.lkey->mdh);
-                mpc_common_debug("LCR PTL: remote key. addr=%p, match=%llu", op->rma.rkey->start,
-                                 (uint64_t)op->rma.match);
+                mpc_common_debug("LCR PTL: remote key. addr=%p, match=%llu", 
+                                 op->rma.rkey->start, (uint64_t)op->rma.match);
                 lcr_ptl_chk(PtlGet(op->rma.lkey->mdh,
                                    op->rma.local_offset,
                                    op->size,
@@ -650,6 +694,77 @@ static inline int lcr_ptl_do_op(lcr_ptl_op_t *op) {
                         rc = MPC_LOWCOMM_IN_PROGRESS;
                         break;
                 }
+                break;
+        case LCR_PTL_OP_ATOMIC_POST:
+                mpc_common_debug("LCR PTL: atomic post operation. type=%s, lkey "
+                                 "size=%llu, addr=%p, local offset=%llu, "
+                                 "remote offset=%llu, cth=%llu, mdh=%llu, "
+                                 "match=%llu.", 
+                                 lcr_ptl_decode_atomic_op(lcr_ptl_atomic_op_table[op->ato.op]),
+                                 op->ato.lkey->size, op->ato.lkey->start, op->ato.post.local_offset,
+                                 op->ato.remote_offset, *(uint64_t*)&op->ato.lkey->cth,
+                                 *(uint64_t*)&op->ato.lkey->mdh, (uint64_t)op->ato.match);
+                lcr_ptl_chk(PtlAtomic(op->mdh, 
+                                      op->ato.post.local_offset, 
+                                      op->size, 
+                                      PTL_ACK_REQ, 
+                                      op->addr, 
+                                      op->pti, 
+                                      op->ato.match, 
+                                      op->ato.remote_offset, 
+                                      op, 
+                                      0, 
+                                      op->ato.op, 
+                                      op->ato.dt));
+                break;
+        case LCR_PTL_OP_ATOMIC_FETCH:
+                mpc_common_debug("LCR PTL: atomic fetch operation. type=%s, lkey "
+                                 "size=%llu, addr=%p, get local offset=%llu, "
+                                 "put local offset=%llu, remote offset=%llu, cth=%llu, "
+                                 "mdh=%llu, match=%llu.", 
+                                 lcr_ptl_decode_atomic_op(lcr_ptl_atomic_op_table[op->ato.op]),
+                                 op->ato.lkey->size, op->ato.lkey->start, 
+                                 op->ato.fetch.get_local_offset, op->ato.fetch.put_local_offset,
+                                 op->ato.remote_offset, *(uint64_t*)&op->ato.lkey->cth,
+                                 *(uint64_t*)&op->ato.lkey->mdh, (uint64_t)op->ato.match);
+                lcr_ptl_chk(PtlFetchAtomic(op->mdh, 
+                                           op->ato.fetch.get_local_offset, 
+                                           op->mdh, 
+                                           op->ato.fetch.put_local_offset,
+                                           op->size, 
+                                           op->addr, 
+                                           op->pti, 
+                                           op->ato.match, 
+                                           op->ato.remote_offset, 
+                                           op, 
+                                           0, 
+                                           op->ato.op, 
+                                           op->ato.dt));
+                break;
+        case LCR_PTL_OP_ATOMIC_CSWAP:
+                mpc_common_debug("LCR PTL: atomic cswap operation. type=%s, lkey "
+                                 "size=%llu, addr=%p, get local offset=%llu, "
+                                 "put local offset=%llu, remote offset=%llu, cth=%llu, "
+                                 "mdh=%llu, match=%llu.", 
+                                 lcr_ptl_decode_atomic_op(lcr_ptl_atomic_op_table[op->ato.op]),
+                                 op->ato.lkey->size, op->ato.lkey->start, 
+                                 op->ato.cswap.get_local_offset, op->ato.cswap.put_local_offset,
+                                 op->ato.remote_offset, *(uint64_t*)&op->ato.lkey->cth,
+                                 *(uint64_t*)&op->ato.lkey->mdh, (uint64_t)op->ato.match);
+                lcr_ptl_chk(PtlSwap(op->mdh, 
+                                    op->ato.cswap.get_local_offset, 
+                                    op->mdh, 
+                                    op->ato.cswap.put_local_offset,
+                                    op->size, 
+                                    op->addr, 
+                                    op->pti, 
+                                    op->ato.match, 
+                                    op->ato.remote_offset, 
+                                    op, 
+                                    0, 
+                                    op->ato.cswap.operand,
+                                    op->ato.op, 
+                                    op->ato.dt));
                 break;
 #if defined (MPC_USE_PORTALS_CONTROL_FLOW) 
         case LCR_PTL_OP_TK_INIT: 
@@ -675,6 +790,61 @@ static inline int lcr_ptl_do_op(lcr_ptl_op_t *op) {
         }
 
         return rc;
+}
+
+static inline int lcr_ptl_post_rma_resources(lcr_ptl_rail_info_t *srail,
+                                             ptl_match_bits_t match,
+                                             ptl_addr_t start,
+                                             ptl_size_t length,
+                                             ptl_handle_ct_t *cth,
+                                             ptl_handle_md_t *mdh,
+                                             ptl_handle_me_t *meh)
+{
+        ptl_md_t md;
+        ptl_me_t me;
+
+        lcr_ptl_chk(PtlCTAlloc(srail->nih, cth));
+
+        md = (ptl_md_t) {
+                .ct_handle = *cth,
+                .eq_handle = srail->eqh,
+                .length = length,
+                .start  = start,
+                .options = PTL_MD_EVENT_SUCCESS_DISABLE |
+                        PTL_MD_EVENT_SEND_DISABLE       |
+                        PTL_MD_EVENT_CT_ACK             | 
+                        PTL_MD_EVENT_CT_REPLY,
+        };
+        lcr_ptl_chk(PtlMDBind(srail->nih, &md, mdh));
+
+        me = (ptl_me_t) {
+                .ct_handle = PTL_CT_NONE,
+                .ignore_bits = 0,
+                .match_bits  = match,
+                .match_id    = {
+                        .phys.nid = PTL_NID_ANY, 
+                        .phys.pid = PTL_PID_ANY
+                },
+                .uid         = PTL_UID_ANY,
+                .min_free    = 0,
+                .options     = PTL_ME_OP_PUT        | 
+                        PTL_ME_OP_GET               |
+                        PTL_ME_EVENT_LINK_DISABLE   | 
+                        PTL_ME_EVENT_UNLINK_DISABLE |
+                        PTL_ME_EVENT_SUCCESS_DISABLE,
+                .start       = start,
+                .length      = length 
+        };
+
+        lcr_ptl_chk(PtlMEAppend(srail->nih,
+                                srail->rma.pti,
+                                &me,
+                                PTL_PRIORITY_LIST,
+                                srail,
+                                meh
+                               ));
+
+        return MPC_LOWCOMM_SUCCESS;
 }
 
 
@@ -836,6 +1006,13 @@ int lcr_ptl_send_put_bcopy(_mpc_lowcomm_endpoint_t *ep,
                            lcr_memp_t *local_key,
                            lcr_memp_t *remote_key);
 
+int lcr_ptl_send_get_bcopy(_mpc_lowcomm_endpoint_t *ep,
+                           lcr_pack_callback_t pack,
+                           void *arg,
+                           uint64_t remote_offset,
+                           lcr_memp_t *local_key,
+                           lcr_memp_t *remote_key);
+
 int lcr_ptl_send_put_zcopy(_mpc_lowcomm_endpoint_t *ep,
                            uint64_t local_addr,
                            uint64_t remote_offset,
@@ -858,6 +1035,36 @@ int lcr_ptl_get_tag_zcopy(_mpc_lowcomm_endpoint_t *ep,
                           uint64_t remote_offset,
                           size_t size,
                           lcr_completion_t *ctx);
+
+int lcr_ptl_atomic_post(_mpc_lowcomm_endpoint_t *ep,
+                        uint64_t local_offset,
+                        uint64_t remote_offset,
+                        lcr_atomic_op_t op_type,
+                        lcr_memp_t *local_key,
+                        lcr_memp_t *remote_key,
+                        size_t size,
+                        lcr_completion_t *comp);
+
+int lcr_ptl_atomic_fetch(_mpc_lowcomm_endpoint_t *ep,
+                         uint64_t get_local_offset,
+                         uint64_t put_local_offset,
+                         uint64_t remote_offset,
+                         lcr_atomic_op_t op_type,
+                         lcr_memp_t *local_key,
+                         lcr_memp_t *remote_key,
+                         size_t size,
+                         lcr_completion_t *comp);
+
+int lcr_ptl_atomic_cswap(_mpc_lowcomm_endpoint_t *ep,
+                         uint64_t get_local_offset,
+                         uint64_t put_local_offset,
+                         uint64_t remote_offset,
+                         lcr_atomic_op_t op_type,
+                         lcr_memp_t *local_key,
+                         lcr_memp_t *remote_key,
+                         uint64_t compare,
+                         size_t size,
+                         lcr_completion_t *comp);
 
 int lcr_ptl_ep_flush(_mpc_lowcomm_endpoint_t *ep,
                      unsigned flags);

@@ -95,20 +95,20 @@ typedef int (*lcr_put_bcopy_func_t)(_mpc_lowcomm_endpoint_t *ep,
                                     lcr_memp_t *local_key,
                                     lcr_memp_t *remote_key);
 
+typedef int (*lcr_get_bcopy_func_t)(_mpc_lowcomm_endpoint_t *ep,
+                                    lcr_pack_callback_t pack,
+                                    void *arg,
+                                    uint64_t remote_addr,
+                                    lcr_memp_t *local_key,
+                                    lcr_memp_t *remote_key);
+
+
 typedef int (*lcr_put_zcopy_func_t)(_mpc_lowcomm_endpoint_t *ep,
                                     uint64_t local_addr,
                                     uint64_t remote_addr,
                                     lcr_memp_t *local_key,
                                     lcr_memp_t *remote_key,
                                     size_t size,
-                                    lcr_completion_t *ctx);
-
-typedef int (*lcr_get_bcopy_func_t)(_mpc_lowcomm_endpoint_t *ep,
-                                    lcr_unpack_callback_t unpack,
-                                    void *arg, size_t size,
-                                    uint64_t remote_addr,
-                                    lcr_memp_t *local_key,
-                                    lcr_memp_t *remote_key,
                                     lcr_completion_t *ctx);
 
 typedef int (*lcr_get_zcopy_func_t)(_mpc_lowcomm_endpoint_t *ep,
@@ -118,6 +118,37 @@ typedef int (*lcr_get_zcopy_func_t)(_mpc_lowcomm_endpoint_t *ep,
                                     lcr_memp_t *remote_key,
                                     size_t size,
                                     lcr_completion_t *ctx);
+
+typedef int (*lcr_atomic_post_func_t)(_mpc_lowcomm_endpoint_t *ep,
+                                      uint64_t local_offset,
+                                      uint64_t remote_offset,
+                                      lcr_atomic_op_t op_type,
+                                      lcr_memp_t *local_key,
+                                      lcr_memp_t *remote_key,
+                                      size_t size,
+                                      lcr_completion_t *ctx);
+
+
+typedef int (*lcr_atomic_fetch_func_t)(_mpc_lowcomm_endpoint_t *ep,
+                                       uint64_t get_local_offset,
+                                       uint64_t put_local_offset,
+                                       uint64_t remote_offset,
+                                       lcr_atomic_op_t op_type,
+                                       lcr_memp_t *local_key,
+                                       lcr_memp_t *remote_key,
+                                       size_t size,
+                                       lcr_completion_t *ctx);
+
+typedef int (*lcr_atomic_cswap_func_t)(_mpc_lowcomm_endpoint_t *ep,
+                                       uint64_t get_local_offset,
+                                       uint64_t put_local_offset,
+                                       uint64_t remote_offset,
+                                       lcr_atomic_op_t op_type,
+                                       lcr_memp_t *local_key,
+                                       lcr_memp_t *remote_key,
+                                       uint64_t compare,
+                                       size_t size,
+                                       lcr_completion_t *ctx);
 
 // Endpoint Sync functions
 typedef int (*lcr_ep_flush_func_t)(_mpc_lowcomm_endpoint_t *ep,
