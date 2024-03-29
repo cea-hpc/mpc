@@ -33,6 +33,12 @@ static inline void mpc_list_insert(mpc_list_elem_t *prev,
        next->prev     = new_elem;
 }
 
+static inline int mpc_list_length(mpc_list_elem_t *head) {
+        int length = 0;
+        while (head->next != head) length++;
+        return length;
+}
+
 static inline void mpc_list_insert_after(mpc_list_elem_t *elem,
                                          mpc_list_elem_t *new_elem) {
         mpc_list_insert(elem, elem->next, new_elem);

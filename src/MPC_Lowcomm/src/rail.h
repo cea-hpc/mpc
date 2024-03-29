@@ -115,7 +115,8 @@ enum {
         LCR_IFACE_FLUSH_EP          = MPC_BIT(0),
         LCR_IFACE_FLUSH_MEM         = MPC_BIT(1),
         LCR_IFACE_FLUSH_EP_MEM      = MPC_BIT(2),
-        LCR_IFACE_REGISTER_MEM_DYN  = MPC_BIT(3),
+        LCR_IFACE_FLUSH_IFACE       = MPC_BIT(3),
+        LCR_IFACE_REGISTER_MEM_DYN  = MPC_BIT(4),
 };
 
 enum {
