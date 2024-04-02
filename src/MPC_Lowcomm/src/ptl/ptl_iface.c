@@ -117,7 +117,8 @@ int lcr_ptl_complete_op(lcr_ptl_op_t *op)
                                 op->comp->sent += op->size;
                                 op->comp->comp_cb(op->comp);
                         }
-                }
+                        sctk_free(op->flush.op_count);
+                } else goto out;
                 break;
 #if defined (MPC_USE_PORTALS_CONTROL_FLOW)
         case LCR_PTL_OP_TK_INIT:
@@ -133,6 +134,7 @@ int lcr_ptl_complete_op(lcr_ptl_op_t *op)
         }
 
         mpc_mpool_push(op);
+out:
         return rc;
 }
 
@@ -382,80 +384,84 @@ ptl_size_t lcr_ptl_poll_mem(lcr_ptl_mem_t *mem)
         return op_done;
 }
 
-int lcr_ptl_flush_mem_ep(lcr_ptl_mem_t *mem, lcr_ptl_ep_info_t *ep)
+void lcr_ptl_flush_txq(lcr_ptl_txq_t *txq, uint64_t completed) 
 {
-        int flushed = 0;
-        uint64_t completed = 0;
-        lcr_ptl_op_t    *op;
+        lcr_ptl_op_t *op;
         mpc_queue_iter_t iter;
+
+        mpc_common_spinlock_lock(&txq->lock);
+
+        /* Loop over pending operations and complete if identifier is lower than
+         * number of completed operations. */ 
+        mpc_queue_for_each_safe(op, iter, lcr_ptl_op_t, &txq->ops, elem) {
+                if (op->id < completed) {
+                        mpc_queue_del_iter(&txq->ops, iter);
+                        lcr_ptl_complete_op(op);
+                }
+        }
+        
+        mpc_common_spinlock_unlock(&txq->lock);
+}
+
+int lcr_ptl_flush_mem_ep(lcr_ptl_mem_t *mem, lcr_ptl_ep_info_t *ep, 
+                         lcr_ptl_op_t *flush_op)
+{
+        int rc = MPC_LOWCOMM_SUCCESS;
+        uint64_t completed = 0, outstandings = 0;
 
         lcr_ptl_txq_t *txq = &mem->txqt[ep->idx];
 
-        mpc_common_spinlock_lock(&txq->lock);
-        completed = lcr_ptl_poll_mem(mem);
-        mpc_queue_for_each_safe(op, iter, lcr_ptl_op_t, &txq->ops, elem) {
-                if (op->id < completed) {
-                        mpc_common_debug("LCR PTL: completed RMA operation. id=%llu, "
-                                         "mem op count=%llu, type=%s.", 
-                                         op->id, completed, lcr_ptl_op_decode(op));
-                        if (op->comp != NULL) {
-                                op->comp->sent = op->size;
-                                op->comp->comp_cb(op->comp);
-                        }
+        completed    = lcr_ptl_poll_mem(mem);
+        outstandings = mpc_common_max(0, *flush_op->flush.op_count - completed);
 
-                        mpc_queue_del_iter(&txq->ops, iter);
-                        lcr_ptl_complete_op(op);
-                        flushed++;
-                }
-        }
-        mpc_common_spinlock_unlock(&txq->lock);
+        lcr_ptl_flush_txq(txq, completed);
 
-        return flushed;
-}
-
-int lcr_ptl_flush_mem(lcr_ptl_mem_t *mem, lcr_ptl_op_t *flush_op)
-{
-        int rc = MPC_LOWCOMM_SUCCESS;
-        int i, flushed = 0, num_txqs = 0;
-        uint64_t completed = 0, outstandings = 0;
-        lcr_ptl_op_t    *op;
-        lcr_ptl_txq_t   *txq;
-        mpc_queue_iter_t iter;
-
-        completed = lcr_ptl_poll_mem(mem);
-
-        num_txqs = atomic_load(&mem->num_txqs);
-        for (i = 0; i < num_txqs; i++) {
-                txq = &mem->txqt[i];
-
-                outstandings += flush_op->flush.op_count[i] - completed;
-
-                mpc_common_spinlock_lock(&txq->lock);
-                mpc_queue_for_each_safe(op, iter, lcr_ptl_op_t, &txq->ops, elem) {
-                        if (op->id < completed) {
-                                mpc_common_debug("LCR PTL: completed RMA operation. id=%llu, "
-                                                 "mem op count=%llu, type=%s.", 
-                                                 op->id, completed, lcr_ptl_op_decode(op));
-                                if (op->comp != NULL) {
-                                        op->comp->sent = op->size;
-                                        op->comp->comp_cb(op->comp);
-                                }
-
-                                mpc_queue_del_iter(&txq->ops, iter);
-                                lcr_ptl_complete_op(op);
-                                flushed++;
-                        }
-                }
-                mpc_common_spinlock_unlock(&txq->lock);
-        }
         if (outstandings > 0) {
+                mpc_queue_push(&mem->pending_flush, &flush_op->elem);
                 rc = MPC_LOWCOMM_IN_PROGRESS;
         }
 
         return rc;
 }
 
-int lcr_ptl_flush_ep(lcr_ptl_ep_info_t *ep, lcr_ptl_op_t *flush_op)
+int lcr_ptl_flush_mem(lcr_ptl_rail_info_t *srail,
+                      lcr_ptl_mem_t *mem, 
+                      lcr_ptl_op_t *flush_op)
+{
+        int rc = MPC_LOWCOMM_SUCCESS;
+        int i, num_txqs = 0;
+        uint64_t completed = 0, outstandings = 0;
+        lcr_ptl_op_t    *op;
+        lcr_ptl_txq_t   *txq;
+        mpc_queue_iter_t iter;
+
+        completed = lcr_ptl_poll_mem(mem);
+        outstandings = mpc_common_max(0, *flush_op->flush.op_count - completed);
+
+        num_txqs = atomic_load(&srail->num_eps);
+        for (i = 0; i < num_txqs; i++) {
+                txq = &mem->txqt[i];
+
+                mpc_common_spinlock_lock(&txq->lock);
+                mpc_queue_for_each_safe(op, iter, lcr_ptl_op_t, &txq->ops, elem) {
+                        if (op->id < completed) {
+                                mpc_queue_del_iter(&txq->ops, iter);
+                                lcr_ptl_complete_op(op);
+                        }
+                }
+                mpc_common_spinlock_unlock(&txq->lock);
+        }
+        if (outstandings > 0) {
+                mpc_queue_push(&mem->pending_flush, &flush_op->elem);
+                rc = MPC_LOWCOMM_IN_PROGRESS;
+        }
+
+        return rc;
+}
+
+int lcr_ptl_flush_ep(lcr_ptl_rail_info_t *srail, 
+                     lcr_ptl_ep_info_t *ep, 
+                     lcr_ptl_op_t *flush_op)
 {
         int rc = MPC_LOWCOMM_SUCCESS, i = 0;
         uint64_t completed = 0, outstandings = 0;
@@ -464,14 +470,16 @@ int lcr_ptl_flush_ep(lcr_ptl_ep_info_t *ep, lcr_ptl_op_t *flush_op)
         lcr_ptl_txq_t   *txq;
         mpc_queue_iter_t iter;
 
-        mpc_common_spinlock_lock(&ep->lock);
         /* First, load the number of oustanding operation. */
-        mpc_list_for_each(mem, &ep->linked_head, lcr_ptl_mem_t, elem) {
+        mpc_list_for_each(mem, &srail->net.rma.mem_head, lcr_ptl_mem_t, elem) {
+                if (mpc_queue_is_empty(&mem->txqt[ep->idx].ops))
+                        continue;
+
                 /* Poll memory. */
                 completed = lcr_ptl_poll_mem(mem);
 
                 /* Count the number of oustanding operations. */
-                outstandings += flush_op->flush.op_count[i] - completed;
+                outstandings = mpc_common_max(0, flush_op->flush.op_count[i] - completed);
 
                 txq = &mem->txqt[ep->idx];
                 mpc_queue_for_each_safe(op, iter, lcr_ptl_op_t, &txq->ops, elem) {
@@ -480,20 +488,21 @@ int lcr_ptl_flush_ep(lcr_ptl_ep_info_t *ep, lcr_ptl_op_t *flush_op)
                                 lcr_ptl_complete_op(op);
                         }
                 }
+
+                if (outstandings > 0) {
+                        mpc_queue_push(&mem->pending_flush, &flush_op->elem);
+                        rc = MPC_LOWCOMM_IN_PROGRESS;
+                }
                 i++; /* Iterate over op count in flush operation. */
         }
-        if (outstandings > 0) {
-                rc = MPC_LOWCOMM_IN_PROGRESS;
-        }
-        mpc_common_spinlock_unlock(&ep->lock);
 
         return rc;
 }
 
-int lcr_ptl_iface_progress_rma(lcr_ptl_rail_info_t *srail) 
+int lcr_ptl_flush_iface(lcr_ptl_rail_info_t *srail, lcr_ptl_op_t *flush_op) 
 { 
         int rc = MPC_LOWCOMM_SUCCESS;
-        int i, num_txqs = 0;
+        int i, it = 0, num_eps = 0;
         uint64_t completed = 0, outstandings = 0;
         lcr_ptl_mem_t   *mem;
         lcr_ptl_op_t    *op;
@@ -505,25 +514,80 @@ int lcr_ptl_iface_progress_rma(lcr_ptl_rail_info_t *srail)
         mpc_list_for_each(mem, &srail->net.rma.mem_head, lcr_ptl_mem_t, elem) {
                 completed = lcr_ptl_poll_mem(mem);
 
-                outstandings += atomic_load(mem->op_count) - completed;
+                outstandings = mpc_common_max(0, flush_op->flush.op_count[it] - completed);
 
-                num_txqs = atomic_load(&mem->num_txqs);
+                num_eps = atomic_load(&srail->num_eps);
                 /* Loop on all TX Queues that has been linked on this memory. */
-                for (i = 0; i < num_txqs; i++) {
+                for (i = 0; i < num_eps; i++) {
                         txq = &mem->txqt[i];
 
                         /* Loop on all operations of the linked TX Queue. */
+                        mpc_common_spinlock_lock(&txq->lock);
                         mpc_queue_for_each_safe(op, iter, lcr_ptl_op_t, &txq->ops, elem) {
                                 if (op->id < completed) {
                                         mpc_queue_del_iter(&txq->ops, iter);
                                         lcr_ptl_complete_op(op);
                                 }
                         } /* End look TX Queue ops */
+                        mpc_common_spinlock_lock(&txq->lock);
                 } /* End loop TX Queues */
+
+                if (outstandings > 0) {
+                        mpc_queue_push(&mem->pending_flush, &flush_op->elem);
+                        rc = MPC_LOWCOMM_IN_PROGRESS;
+                }
+                it++;
+
         } /* End loop registered memories */
         if (outstandings > 0) {
                 rc = MPC_LOWCOMM_IN_PROGRESS;
         }
+        mpc_common_spinlock_unlock(&srail->net.rma.lock);
+
+        return rc;
+}
+
+int lcr_ptl_iface_progress_rma(lcr_ptl_rail_info_t *srail) 
+{ 
+        int rc = MPC_LOWCOMM_SUCCESS;
+        int i, it = 0, num_eps = 0;
+        uint64_t completed = 0;
+        lcr_ptl_mem_t   *mem;
+        lcr_ptl_op_t    *op, *flush_op;
+        lcr_ptl_txq_t   *txq;
+        mpc_queue_iter_t iter;
+
+        mpc_common_spinlock_lock(&srail->net.rma.lock);
+        /* Loop on all registered memories. */
+        mpc_list_for_each(mem, &srail->net.rma.mem_head, lcr_ptl_mem_t, elem) {
+                completed = lcr_ptl_poll_mem(mem);
+
+                mpc_common_spinlock_lock(&mem->lock);
+                mpc_queue_for_each_safe(flush_op, iter, lcr_ptl_op_t, &mem->pending_flush, elem) {
+                        if (flush_op->flush.op_count[it] < completed) {
+                                mpc_queue_del_iter(&mem->pending_flush, iter);
+                                lcr_ptl_complete_op(flush_op);
+                        }
+                } 
+                mpc_common_spinlock_unlock(&mem->lock);
+                it++;
+
+                num_eps = atomic_load(&srail->num_eps);
+                /* Loop on all TX Queues that has been linked on this memory. */
+                for (i = 0; i < num_eps; i++) {
+                        txq = &mem->txqt[i];
+
+                        /* Loop on all operations of the linked TX Queue. */
+                        mpc_common_spinlock_lock(&txq->lock);
+                        mpc_queue_for_each_safe(op, iter, lcr_ptl_op_t, &txq->ops, elem) {
+                                if (op->id < completed) {
+                                        mpc_queue_del_iter(&txq->ops, iter);
+                                        lcr_ptl_complete_op(op);
+                                }
+                        } /* End look TX Queue ops */
+                        mpc_common_spinlock_lock(&txq->lock);
+                } /* End loop TX Queues */
+        } /* End loop registered memories */
         mpc_common_spinlock_unlock(&srail->net.rma.lock);
 
         return rc;
@@ -575,8 +639,7 @@ int lcr_ptl_iface_progress(sctk_rail_info_t *rail)
         mpc_common_spinlock_unlock(&srail->lock);
 
         /* Poll all attached memory. */
-        //NOTE: in progress function, no need to check return code.
-        lcr_ptl_flush_iface(srail);
+        lcr_ptl_iface_progress_rma(srail);
 
 #if defined (MPC_USE_PORTALS_CONTROL_FLOW)
         rc = lcr_ptl_iface_progress_tk(srail);
@@ -863,6 +926,7 @@ static int _lcr_ptl_iface_fini_tag(lcr_ptl_rail_info_t *srail)
 /* Initialize ptl resources needed for RMA interface. */
 static int _lcr_ptl_iface_init_rma(lcr_ptl_rail_info_t *srail) 
 {
+        int i;
         int rc = MPC_LOWCOMM_SUCCESS;
 
         /* Initialize one-sided required resources:
@@ -881,6 +945,19 @@ static int _lcr_ptl_iface_init_rma(lcr_ptl_rail_info_t *srail)
                                ));
 
         if (srail->config.features & LCR_PTL_FEATURE_AM) {
+                srail->net.rma.rndv_txqt = sctk_malloc(LCR_PTL_MAX_EPS * sizeof(lcr_ptl_txq_t));
+                if (srail->net.rma.rndv_txqt == NULL) {
+                        mpc_common_debug_error("LCR PTL: could not allocate "
+                                               "am memory txq table.");
+                        rc = MPC_LOWCOMM_ERROR;
+                        goto err;
+                }
+
+                for (i = 0; i < LCR_PTL_MAX_EPS; i++) {
+                        mpc_queue_init_head(&srail->net.rma.rndv_txqt[i].ops);
+                        mpc_common_spinlock_init(&srail->net.rma.rndv_txqt[i].lock, 0);
+                }
+                
                 rc = lcr_ptl_post_rma_resources(srail, 
                                                 LCR_PTL_RNDV_MB, 
                                                 0, 
@@ -1163,7 +1240,7 @@ void lcr_ptl_iface_fini(sctk_rail_info_t* rail)
         //FIXME: need to check that all memory has been removed from the list.
         for (i = 0; i < srail->num_eps; i++) {
                 assert(srail->ept[i].num_ops == 0);
-                assert(mpc_queue_is_empty(&srail->ept[i].am_txq->ops));
+                assert(mpc_queue_is_empty(&srail->ept[i].am_txq.ops));
                 mpc_mpool_fini(srail->ept[i].ops_pool);
         }
         sctk_free(srail->ept);

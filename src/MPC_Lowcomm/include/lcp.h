@@ -312,6 +312,7 @@ enum {
         LCP_REQUEST_RMA_CALLBACK  = MPC_BIT(6), /**< Atomic callback mask */ 
         LCP_REQUEST_REPLY_BUFFER  = MPC_BIT(7), /**< Result buffer for Atomics */
         LCP_REQUEST_USER_MEMH     = MPC_BIT(8), /**< User-provided local Memory handle */
+        LCP_REQUEST_USER_EPH      = MPC_BIT(9), /**< User-provided Endpoint handle */
 };
 
 /**
@@ -360,7 +361,8 @@ typedef struct lcp_request_param {
         void                        *reply_buffer; /**< Location for returned value with atomic operations */
         lcp_datatype_t               datatype; /**< Contiguous or non-contiguous data */
         mpc_lowcomm_request_t       *request; /**< Pointer to lowcomm request for completion */
-        lcp_mem_h                    memh; /**< Memory handle for RMA requests */
+        lcp_mem_h                    mem; /**< Memory handle for RMA requests */
+        lcp_ep_h                     ep; /**< Endpoint to be flushed. */
 } lcp_request_param_t;
 
 /**
@@ -572,10 +574,12 @@ int lcp_get_nb(lcp_ep_h ep, lcp_task_h task, void *buffer,
  * be notified when the request has completed.
  *
  * @param [in] mngr  Communication manager.
+ * @param [in] task  Task handle of the source task.
  * @param [in] param  Request parameters \ref lcp_request_param_t.
  * @return Error code returned.
  */
-int lcp_manager_flush_nb(lcp_manager_h mngr, const lcp_request_param_t *param);
+int lcp_flush_nb(lcp_manager_h mngr, lcp_task_h task, 
+                 const lcp_request_param_t *param);
 
 typedef enum {
         LCP_ATOMIC_OP_ADD,
@@ -600,10 +604,11 @@ int lcp_atomic_op_nb(lcp_ep_h ep, lcp_task_h task, const void *buffer,
  * @param [in] mem_p  Pointer handle to registered memory.
  * @param [in] buffer  Buffer from which data will be registered.
  * @param [in] length  Length of data in buffer.
+ * @param [in] flags  Flags to specify kind of registration.
  * @return Error code returned.
  */
-int lcp_mem_register(lcp_manager_h mngr, lcp_mem_h *mem_p, void *buffer, 
-                     size_t length);
+int lcp_mem_register(lcp_manager_h mngr, lcp_mem_h *mem_p, 
+                     const void *buffer, size_t length, unsigned flags);
 
 /**
  * @ingroup LCP_MEM

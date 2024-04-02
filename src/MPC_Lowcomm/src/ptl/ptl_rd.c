@@ -211,7 +211,7 @@ int lcr_ptl_iface_open(__UNUSED__ const char *device_name, int id,
         iface->iface_register_mem   = lcr_ptl_mem_register;
         iface->iface_unregister_mem = lcr_ptl_mem_unregister;
         /* Endpoint Sync calls */
-        iface->ep_flush            = lcr_ptl_ep_flush;
+        iface->flush                = lcr_ptl_flush;
         /* Interface progress */
         iface->iface_progress      = lcr_ptl_iface_progress;
         iface->iface_is_reachable  = lcr_ptl_iface_is_reachable;

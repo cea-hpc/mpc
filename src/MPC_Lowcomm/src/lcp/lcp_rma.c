@@ -41,6 +41,16 @@
 
 #include "mpc_common_debug.h"
 
+enum {
+        LCP_FLUSH_SCOPE_MANAGER = 0,
+        LCP_FLUSH_SCOPE_EP      = LCP_REQUEST_USER_PROVIDED_EPH,
+        LCP_FLUSH_SCOPE_MEM     = LCP_REQUEST_USER_PROVIDED_MEMH,
+        LCP_FLUSH_SCOPE_MEM_EP  = LCP_REQUEST_USER_PROVIDED_MEMH |
+                LCP_REQUEST_USER_PROVIDED_EPH,
+};
+
+#define LCP_RMA_FLUSH_MASK LCP_REQUEST_USER_PROVIDED_EPH | LCP_REQUEST_USER_EPH
+
 /**
  * @brief Copy buffer from argument request to destination
  *
@@ -56,6 +66,11 @@ size_t lcp_rma_pack(void *dest, void *arg) {
         return req->send.length;
 }
 
+size_t lcp_rma_unpack(void* req, const void *dest, size_t arg) {
+        not_implemented();
+        return 0;
+}
+
 /**
  * @brief Complete a request.
  *
@@ -63,11 +78,21 @@ size_t lcp_rma_pack(void *dest, void *arg) {
  */
 void lcp_rma_request_complete(lcr_completion_t *comp)
 {
-        lcp_request_t *req = mpc_container_of(comp, lcp_request_t,
-                                              send.t_ctx.comp);
+        lcp_request_t *req = mpc_container_of(comp, lcp_request_t, 
+                                              state.comp);
 
         req->state.remaining -= comp->sent;
         if (req->state.remaining == 0) {
+                lcp_request_complete(req);
+        }
+}
+
+void lcp_flush_request_complete(lcr_completion_t *comp)
+{
+        lcp_request_t *req = mpc_container_of(comp, lcp_request_t, 
+                                              state.comp);
+
+        if (--req->state.comp.count == 0) {
                 lcp_request_complete(req);
         }
 }
@@ -91,7 +116,7 @@ int lcp_rma_progress_bcopy(lcp_request_t *req)
         if (req->send.rma.is_get) {
                 //FIXME: not implemented
                 payload_size = lcp_send_do_get_bcopy(ep->lct_eps[cc], 
-                                                     lcp_rma_pack, req, 
+                                                     lcp_rma_unpack, req, 
                                                      req->send.rma.remote_addr,
                                                      &req->state.lmem->mems[cc],
                                                      &req->send.rma.rkey->mems[cc]);
@@ -247,7 +272,7 @@ int lcp_put_nb(lcp_ep_h ep, lcp_task_h task, const void *buffer, size_t length,
 
         if (param->flags & LCP_REQUEST_USER_MEMH) {
                 req->flags |= LCP_REQUEST_USER_PROVIDED_MEMH;
-                req->state.lmem = param->memh;
+                req->state.lmem = param->mem;
         }
 
         rc = lcp_rma_start(ep, req);
@@ -292,7 +317,7 @@ int lcp_get_nb(lcp_ep_h ep, lcp_task_h task, void *buffer,
 
         if (param->flags & LCP_REQUEST_USER_MEMH) {
                 req->flags |= LCP_REQUEST_USER_PROVIDED_MEMH;
-                req->state.lmem = param->memh;
+                req->state.lmem = param->mem;
         }
 
         rc = lcp_rma_start(ep, req);
@@ -305,10 +330,176 @@ err:
         return rc;
 }
 
-int lcp_manager_flush_nb(lcp_manager_h mngr, const lcp_request_param_t *param)
+int lcp_flush_manager_nb(lcp_request_t *req)
 {
         int rc = MPC_LOWCOMM_SUCCESS;
+        int i;
+        sctk_rail_info_t *iface;
+        lcr_rail_attr_t attr;
+        
+        for (i = 0; i < req->mngr->num_ifaces; i++) {
+                iface = req->mngr->ifaces[i];
 
+                iface->iface_get_attr(iface, &attr);
+                if (attr.iface.cap.flags & LCR_IFACE_CAP_RMA) {
+                        req->state.comp.count++;
+                        rc = lcp_do_flush(iface, NULL, NULL, &req->state.comp, 
+                                          LCR_IFACE_FLUSH_IFACE);
 
+                        if (rc != MPC_LOWCOMM_SUCCESS) {
+                                goto err;
+                        }
+                }
+        }
+
+err:
+        return rc;
+}
+
+int lcp_flush_ep_nb(lcp_request_t *req)
+{
+        int i, rc = MPC_LOWCOMM_SUCCESS;
+        lcp_ep_h ep = req->send.ep;
+        sctk_rail_info_t *iface;
+        lcr_rail_attr_t attr;
+
+        //NOTE: at least on channel must support RMA flush.
+        assert(req->send.ep->cap & LCR_IFACE_CAP_RMA);
+
+        for (i = 0; i < ep->num_chnls; i++) {
+                if (!MPC_BITMAP_GET(ep->conn_map, i)) {
+                        continue;
+                }
+
+                iface = ep->lct_eps[i]->rail;
+
+                iface->iface_get_attr(iface, &attr);
+                if (attr.iface.cap.flags & LCR_IFACE_CAP_RMA) {
+                        req->state.comp.count++;
+                        rc = lcp_do_flush(iface, ep->lct_eps[i], 
+                                          NULL, &req->state.comp, 
+                                          LCR_IFACE_FLUSH_EP);
+                        if (rc != MPC_LOWCOMM_SUCCESS) {
+                                goto err;
+                        }
+                }
+        }
+
+err:
+        return rc;
+}
+
+int lcp_flush_mem_nb(lcp_request_t *req)
+{
+        int i, rc = MPC_LOWCOMM_SUCCESS;
+        lcp_mem_h mem = req->state.lmem;
+        sctk_rail_info_t *iface;
+
+        for (i = 0; req->mngr->num_ifaces; i++) {
+                if (!MPC_BITMAP_GET(mem->bm, i)) {
+                        continue;
+                }
+
+                req->state.comp.count++;
+                rc = lcp_do_flush(iface, NULL, &mem->mems[i], 
+                                  &req->state.comp, 
+                                  LCR_IFACE_FLUSH_MEM);
+                if (rc != MPC_LOWCOMM_SUCCESS) {
+                        goto err;
+                }
+        }
+
+err:
+        return rc;
+}
+
+int lcp_flush_mem_ep_nb(lcp_request_t *req)
+{
+
+        int i, rc = MPC_LOWCOMM_SUCCESS;
+        lcp_ep_h ep = req->send.ep;
+        lcp_mem_h mem = req->state.lmem;
+        sctk_rail_info_t *iface;
+        lcr_rail_attr_t attr;
+
+        //NOTE: at least on channel must support RMA flush.
+        assert(req->send.ep->cap & LCR_IFACE_CAP_RMA);
+
+        for (i = 0; i < req->mngr->num_ifaces; i++) {
+                if (!MPC_BITMAP_GET(ep->conn_map, i) ||
+                    !MPC_BITMAP_GET(mem->bm, i) ) {
+                        continue;
+                }
+
+                iface = ep->lct_eps[i]->rail;
+
+                iface->iface_get_attr(iface, &attr);
+                if (attr.iface.cap.flags & LCR_IFACE_CAP_RMA) {
+                        req->state.comp.count++;
+                        rc = lcp_do_flush(iface, ep->lct_eps[i], 
+                                          &mem->mems[i], &req->state.comp, 
+                                          LCR_IFACE_FLUSH_EP);
+                        if (rc != MPC_LOWCOMM_SUCCESS) {
+                                goto err;
+                        }
+                }
+        }
+
+err:
+        return rc;
+}
+
+int lcp_flush_nb(lcp_manager_h mngr, lcp_task_h task,
+                 const lcp_request_param_t *param)
+{
+        int rc = MPC_LOWCOMM_SUCCESS;
+        lcp_request_t *req;
+
+        req = lcp_request_get(task);
+        if (req == NULL) {
+                rc = LCP_ERROR;
+                goto err;
+        }
+        LCP_REQUEST_INIT_RMA_FLUSH(req, mngr, task, 0, NULL, NULL, 
+                                  0 /* no ordering for rma */, 0, param->datatype);
+
+        req->state.comp.comp_cb = lcp_flush_request_complete;
+
+        if (param->flags & LCP_REQUEST_USER_MEMH) {
+                req->flags |= LCP_REQUEST_USER_PROVIDED_MEMH;
+                req->state.lmem = param->mem;
+        }
+
+        if (param->flags & LCP_REQUEST_USER_EPH) {
+                req->flags |= LCP_REQUEST_USER_PROVIDED_EPH;
+                req->send.ep = param->ep;
+        }
+
+        if (param->flags & LCP_REQUEST_RMA_CALLBACK) {
+                req->flags |= LCP_REQUEST_RMA_COMPLETE;
+                req->send.send_cb = param->send_cb;
+        }
+
+        switch (req->flags & LCP_RMA_FLUSH_MASK) {
+        case LCP_FLUSH_SCOPE_EP:
+                req->send.func = lcp_flush_ep_nb;
+                break;
+        case LCP_FLUSH_SCOPE_MEM:
+                req->send.func = lcp_flush_mem_nb;
+                break;
+        case LCP_FLUSH_SCOPE_MEM_EP:
+                req->send.func = lcp_flush_mem_ep_nb;
+                break;
+        case LCP_FLUSH_SCOPE_MANAGER:
+                req->send.func = lcp_flush_manager_nb;
+                break;
+        default:
+                mpc_common_debug_error("LCP RMA: unknown flush operation.");
+                rc = MPC_LOWCOMM_ERROR;
+                break;
+        }
+
+        rc = lcp_request_send(req);
+err:
         return rc;
 }

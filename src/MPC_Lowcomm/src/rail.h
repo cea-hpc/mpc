@@ -158,6 +158,7 @@ int lcr_iface_set_am_handler(sctk_rail_info_t *rail, uint8_t id,
 
 typedef struct lcr_completion
 {
+        int                       count;
 	size_t                    sent;
 	lcr_completion_callback_t comp_cb;
 } lcr_completion_t;
@@ -281,7 +282,7 @@ struct sctk_rail_info_s
         lcr_atomic_cswap_func_t                              atomic_cswap;
 
 	/* Endpoint Sync API */
-        lcr_ep_flush_func_t                                  ep_flush;
+        lcr_flush_func_t                                     flush;
 
 	/* Interface API */
 	lcr_iface_get_attr_func_t                            iface_get_attr;

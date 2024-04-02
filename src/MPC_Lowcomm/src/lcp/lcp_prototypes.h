@@ -115,13 +115,13 @@ static inline int lcp_send_do_put_bcopy(_mpc_lowcomm_endpoint_t *lcr_ep,
 }
 
 static inline int lcp_send_do_get_bcopy(_mpc_lowcomm_endpoint_t *lcr_ep,
-                                        lcr_pack_callback_t pack,
+                                        lcr_unpack_callback_t unpack,
                                         void *arg,
                                         uint64_t remote_addr,
                                         lcr_memp_t *local_key,
                                         lcr_memp_t *remote_key)
 {
-        return lcr_ep->rail->get_bcopy(lcr_ep, pack, arg, 
+        return lcr_ep->rail->get_bcopy(lcr_ep, unpack, arg, 
                                        remote_addr, local_key, remote_key);
 }
 
@@ -199,6 +199,29 @@ static inline int lcp_atomic_do_cswap(_mpc_lowcomm_endpoint_t *lcr_ep,
                                           remote_offset, op_type,
                                           local_key, remote_key,
                                           compare, size, comp);
+}
+
+static inline int lcp_do_flush(sctk_rail_info_t *rail,
+                               _mpc_lowcomm_endpoint_t *ep,
+                               lcr_memp_t *mem,
+                               lcr_completion_t *comp,
+                               unsigned flags)
+{
+        return rail->flush(rail, ep, mem, comp, flags);
+}
+
+static inline int lcp_iface_do_register_mem(sctk_rail_info_t *rail,
+                                            lcr_memp_t *mem,
+                                            const void *buffer, size_t length, 
+                                            unsigned flags)
+{
+        return rail->iface_register_mem(rail, mem, buffer, length, flags);
+}
+
+static inline int lcp_iface_do_unregister_mem(sctk_rail_info_t *rail,
+                                            lcr_memp_t *mem)
+{
+        return rail->iface_unregister_mem(rail, mem);
 }
 
 static inline int lcp_iface_do_progress(sctk_rail_info_t *rail)

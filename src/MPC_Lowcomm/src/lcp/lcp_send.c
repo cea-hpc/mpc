@@ -86,11 +86,11 @@ int lcp_tag_send_start(lcp_ep_h ep, lcp_request_t *req,
                 size = lcp_send_get_total_tag_payload(req->send.length);
 
                 //NOTE: there are no rendez-vous for thread-based send.
-                if ((size <= ep->config.am.max_bcopy) ||
+                if ((size <= ep->config.am.max_bcopy) || 
                     (param->datatype & LCP_DATATYPE_DERIVED)) {
                         req->send.func = lcp_send_task_tag_bcopy;
                 } else {
-                       assume(size <= ep->config.am.max_zcopy);
+                       assume(size <= ep->config.am.max_zcopy); 
                        req->send.func = lcp_send_task_tag_zcopy;
                 }
         } else { /* Process-based send */

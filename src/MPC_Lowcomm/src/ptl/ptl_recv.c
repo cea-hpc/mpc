@@ -103,7 +103,7 @@ int lcr_ptl_recv_block_activate(lcr_ptl_recv_block_t *block,
                 .length      = block->size
         };
 
-        lcr_ptl_chk(PtlMEAppend(srail->nih,
+        lcr_ptl_chk(PtlMEAppend(srail->net.nih,
                                  pte,
                                  &me,
                                  list,

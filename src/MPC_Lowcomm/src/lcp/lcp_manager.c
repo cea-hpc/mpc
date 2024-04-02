@@ -124,6 +124,11 @@ static int _lcp_manager_init_structures(lcp_manager_h mngr)
 
         /* Initialize memory management unit. */
         rc = lcp_pinning_mmu_init(&mngr->mmu, 0 /* unused */);
+        if (rc != MPC_LOWCOMM_SUCCESS) {
+                goto err;
+        }
+
+        mpc_list_init_head(&mngr->memory_list);
 
         /* Initialize interfaces. */
         mngr->ifaces = sctk_malloc(mngr->ctx->num_resources * sizeof(sctk_rail_info_t *));

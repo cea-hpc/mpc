@@ -32,12 +32,14 @@
 #include "lcp_mem.h"
 
 #include <mpc_common_datastructure.h>
+#include <mpc_common_debug.h>
+#include <mpc_common_spinlock.h>
 
 #include "lcp_context.h"
 #include "lcp_manager.h"
 #include "lcp_def.h"
-#include "mpc_common_debug.h"
-#include "mpc_common_spinlock.h"
+#include "lcp_prototypes.h"
+
 #include <sctk_alloc.h>
 #include <rail.h>
 #include <stdint.h>
@@ -61,7 +63,7 @@ struct lcp_pinning_entry
 {
         mpc_common_spinlock_t lock;
         uint64_t refcount;
-        void * start;
+        const void * start;
         size_t size;
         lcp_manager_h mngr;
         lcp_mem_h mem_entry;
@@ -70,7 +72,7 @@ struct lcp_pinning_entry
         struct lcp_pinning_entry *next;
 };
 
-struct lcp_pinning_entry * lcp_pinning_entry_new(void * start, size_t size, lcp_manager_h mngr, lcp_mem_h mem_entry)
+struct lcp_pinning_entry * lcp_pinning_entry_new(const void * start, size_t size, lcp_manager_h mngr, lcp_mem_h mem_entry)
 {
         struct lcp_pinning_entry * ret = sctk_malloc(sizeof(struct lcp_pinning_entry));
         assume(ret);
@@ -88,7 +90,8 @@ struct lcp_pinning_entry * lcp_pinning_entry_new(void * start, size_t size, lcp_
         return ret;
 }
 
-int lcp_pinning_entry_contains(struct lcp_pinning_entry *entry, void * start, size_t size, bmap_t bitmap)
+int lcp_pinning_entry_contains(struct lcp_pinning_entry *entry, 
+                               const void * start, size_t size, bmap_t bitmap)
 {
         if( (entry->start <= start) && ((start + size) <= (entry->start + entry->size))
             && (entry->size == size) && MPC_BITMAP_AND(entry->mem_entry->bm, bitmap))
@@ -139,7 +142,7 @@ int lcp_pinning_entry_list_init(struct lcp_pinning_entry_list *list)
 
 int lcp_pinning_entry_list_release(struct lcp_pinning_entry_list *list, int (*free_cb)(struct lcp_pinning_entry *entry))
 {
-        int rc = LCP_SUCCESS;
+        int rc = MPC_LOWCOMM_SUCCESS;
         struct lcp_pinning_entry * tmp = list->entry;
         struct lcp_pinning_entry * to_free = NULL;
 
@@ -151,7 +154,7 @@ int lcp_pinning_entry_list_release(struct lcp_pinning_entry_list *list, int (*fr
                 if(free_cb)
                 {
                         rc = (free_cb)(to_free);
-                        if (rc != LCP_SUCCESS) {
+                        if (rc != MPC_LOWCOMM_SUCCESS) {
                                 goto err;
                         }
                 }
@@ -164,8 +167,8 @@ err:
 }
 
 
-struct lcp_pinning_entry * lcp_pinning_entry_list_find_no_lock(struct lcp_pinning_entry_list * list,
-                                                               void * start, size_t size, bmap_t bitmap)
+struct lcp_pinning_entry * lcp_pinning_entry_list_find_no_lock(struct lcp_pinning_entry_list * list, 
+                                                               const void * start, size_t size, bmap_t bitmap)
 {
         struct lcp_pinning_entry * ret = NULL;
 
@@ -187,7 +190,8 @@ struct lcp_pinning_entry * lcp_pinning_entry_list_find_no_lock(struct lcp_pinnin
         return ret;
 }
 
-struct lcp_pinning_entry * lcp_pinning_entry_list_find(struct lcp_pinning_entry_list * list, void * start,
+struct lcp_pinning_entry * lcp_pinning_entry_list_find(struct lcp_pinning_entry_list * list, 
+                                                       const void * start, 
                                                        size_t size, bmap_t bitmap)
 {
         struct lcp_pinning_entry * ret = NULL;
@@ -254,7 +258,7 @@ int lcp_pinning_entry_list_remove(struct lcp_pinning_entry_list * list, struct l
 int lcp_mem_register_with_bitmap(lcp_manager_h mngr,
                                 lcp_mem_h *mem_p,
                                 bmap_t bitmap,
-                                void *buffer,
+                                const void *buffer,
                                 size_t length,
                                 unsigned flags);
 
@@ -289,7 +293,7 @@ int lcp_pinning_entry_list_decimate_no_lock(struct lcp_pinning_entry_list * list
 }
 
 struct lcp_pinning_entry * lcp_pinning_entry_list_push(struct lcp_pinning_entry_list * list, 
-                                                       void * buffer, size_t len, lcp_manager_h mngr, 
+                                                       const void * buffer, size_t len, lcp_manager_h mngr, 
                                                        bmap_t bitmap, unsigned flags)
 {
         struct lcp_pinning_entry * ret = NULL;
@@ -350,13 +354,13 @@ struct lcp_pinning_entry * lcp_pinning_entry_list_push(struct lcp_pinning_entry_
 int lcp_pinning_mmu_init(struct lcp_pinning_mmu **mmu_p, unsigned flags)
 {
         UNUSED(flags); //NOTE: for later optimization.
-        int rc = LCP_SUCCESS;
+        int rc = MPC_LOWCOMM_SUCCESS;
         struct lcp_pinning_mmu *mmu = NULL;
 
         mmu = sctk_malloc(sizeof(struct lcp_pinning_mmu));
         if (mmu == NULL) {
                 mpc_common_debug_error("LCP MEM: could not allocate MMU.");
-                rc = LCP_ERROR;
+                rc = MPC_LOWCOMM_ERROR;
                 goto err;
         }
 
@@ -379,12 +383,12 @@ int lcp_pinning_mmu_release(struct lcp_pinning_mmu *mmu)
         sctk_free(mmu);
         mmu = NULL;
 
-        return LCP_SUCCESS;
+        return MPC_LOWCOMM_SUCCESS;
 }
 
 
 //NOTE: implements a FIFO like caching algorithm.
-lcp_mem_h lcp_pinning_mmu_pin(lcp_manager_h mngr, void *addr, 
+lcp_mem_h lcp_pinning_mmu_pin(lcp_manager_h mngr, const void *addr, 
                               size_t size, bmap_t bitmap, unsigned flags)
 {
         struct lcp_pinning_entry * exists = lcp_pinning_entry_list_find(&mngr->mmu->list, addr, size, bitmap);
@@ -394,12 +398,17 @@ lcp_mem_h lcp_pinning_mmu_pin(lcp_manager_h mngr, void *addr,
                 /* Was acquired in the find */
                 mpc_common_debug("MEM: pinning entry exists: addr=%p, "
                                  "size=%llu, bitmap=%x", addr, size, bitmap);
-                return exists->mem_entry;
+                goto add_to_list;
         }
 
         exists = lcp_pinning_entry_list_push(&mngr->mmu->list, addr, 
                                              size, mngr, bitmap, flags);
         assume(exists);
+
+add_to_list:
+        mpc_common_spinlock_lock(&mngr->mngr_lock);
+        mpc_list_push_head(&mngr->memory_list, &exists->mem_entry->elem);
+        mpc_common_spinlock_unlock(&mngr->mngr_lock);
 
         return exists->mem_entry;
 }
@@ -410,6 +419,11 @@ int lcp_pinning_mmu_unpin(lcp_manager_h mngr, lcp_mem_h mem)
         struct lcp_pinning_entry * mmu_entry = (struct lcp_pinning_entry *)mem->pointer_to_mmu_ctx;
         assert(mmu_entry != NULL);
         lcp_pinning_entry_relax(mmu_entry);
+
+        /* Remove from list. */
+        mpc_common_spinlock_lock(&mngr->mngr_lock);
+        mpc_list_del(&mmu_entry->mem_entry->elem);
+        mpc_common_spinlock_unlock(&mngr->mngr_lock);
 
         return 0;
 }
@@ -455,7 +469,7 @@ size_t lcp_mem_rkey_pack(lcp_manager_h mngr, lcp_mem_h mem, void *dest)
  * @param mem memory to pack
  * @param rkey_buf_p output rkey buffer
  * @param rkey_len output rkey buffer length
- * @return int LCP_SUCCESS in case of success
+ * @return int MPC_LOWCOMM_SUCCESS in case of success
  */
 int lcp_mem_pack(lcp_manager_h mngr, lcp_mem_h mem, 
                  void **rkey_buf_p, size_t *rkey_len)
@@ -483,7 +497,7 @@ int lcp_mem_pack(lcp_manager_h mngr, lcp_mem_h mem,
         *rkey_buf_p = rkey_buf;
         *rkey_len   = packed_size;
 
-        return LCP_SUCCESS;
+        return MPC_LOWCOMM_SUCCESS;
 }
 
 void lcp_mem_release_rkey_buf(void *rkey_buffer)
@@ -494,7 +508,7 @@ void lcp_mem_release_rkey_buf(void *rkey_buffer)
 int lcp_mem_unpack(lcp_manager_h mngr, lcp_mem_h *mem_p, 
                    void *src, size_t size)
 {
-        int i, rc = LCP_SUCCESS;
+        int i, rc = MPC_LOWCOMM_SUCCESS;
         size_t unpacked_size = 0;
         sctk_rail_info_t *iface = NULL;
         void *p = src;
@@ -503,7 +517,7 @@ int lcp_mem_unpack(lcp_manager_h mngr, lcp_mem_h *mem_p,
         mem = sctk_malloc(sizeof(struct lcp_mem));
         if (mem == NULL) {
                 mpc_common_debug_error("LCP: could not allocate memory domain.");
-                rc = LCP_ERROR;
+                rc = MPC_LOWCOMM_ERROR;
                 goto err;
         }
 
@@ -511,7 +525,7 @@ int lcp_mem_unpack(lcp_manager_h mngr, lcp_mem_h *mem_p,
         mem->num_ifaces = 0;
         if (mem->mems == NULL) {
                 mpc_common_debug_error("LCP: could not allocate memory pins.");
-                rc = LCP_ERROR;
+                rc = MPC_LOWCOMM_ERROR;
                 goto err;
         }
         memset(mem->mems, 0, mngr->num_ifaces * sizeof(lcr_memp_t));
@@ -540,22 +554,24 @@ err:
 
 int lcp_mem_create(lcp_manager_h mngr, lcp_mem_h *mem_p)
 {
-        int rc = LCP_SUCCESS;
+        int rc = MPC_LOWCOMM_SUCCESS;
         lcp_mem_h mem;
 
         mem = sctk_malloc(sizeof(struct lcp_mem));
         if (mem == NULL) {
                 mpc_common_debug_error("LCP: could not allocate memory domain");
-                rc = LCP_ERROR;
+                rc = MPC_LOWCOMM_ERROR;
                 goto err;
         }
 
+        //NOTE: allocation on the number of interfaces even though the memories
+        //      depend on the bitmap. Fits better with the bitmap.
         mem->mems       = sctk_malloc(mngr->num_ifaces * sizeof(lcr_memp_t));
         mem->num_ifaces = 0; // num_iface is set later based on bitmap.
         mem->pointer_to_mmu_ctx = NULL;
         if (mem->mems == NULL) {
                 mpc_common_debug_error("LCP: could not allocate memory pins");
-                rc = LCP_ERROR;
+                rc = MPC_LOWCOMM_ERROR;
                 goto err;
         }
         memset(mem->mems, 0, mngr->num_ifaces * sizeof(lcr_memp_t));
@@ -567,6 +583,11 @@ err:
 
 void lcp_mem_delete(lcp_mem_h mem)
 {
+        /* First, remove memory from the active list. */
+        mpc_common_spinlock_lock(&mem->mngr->mngr_lock);
+        mpc_list_del(&mem->elem);
+        mpc_common_spinlock_lock(&mem->mngr->mngr_lock);
+
         sctk_free(mem->mems);
         sctk_free(mem);
         mem = NULL;
@@ -575,11 +596,11 @@ void lcp_mem_delete(lcp_mem_h mem)
 int lcp_mem_reg_from_map(lcp_manager_h mngr,
                          lcp_mem_h mem,
                          bmap_t mem_map,
-                         void *buffer,
+                         const void *buffer,
                          size_t length,
                          unsigned flags)
 {
-        int i, rc = LCP_SUCCESS;
+        int i, rc = MPC_LOWCOMM_SUCCESS;
         sctk_rail_info_t *iface = NULL;
 
         /* Pin the memory and create memory handles */
@@ -591,13 +612,16 @@ int lcp_mem_reg_from_map(lcp_manager_h mngr,
                                 mpc_common_debug_error("LCP MEM: iface %s does "
                                                        "not have RMA capabilities",
                                                        iface->network_name);
-                                rc = LCP_ERROR;
+                                rc = MPC_LOWCOMM_ERROR;
                                 goto err;
                         }
 
-                        iface->iface_register_mem(iface, &mem->mems[i], 
-                                                  buffer, length,
-                                                  flags);
+                        rc = lcp_iface_do_register_mem(iface, &mem->mems[i], 
+                                                       buffer, length,
+                                                       flags);
+                        if (rc != MPC_LOWCOMM_SUCCESS) {
+                                goto err;
+                        }
                         mem->num_ifaces++;
                 }
         }
@@ -609,22 +633,29 @@ err:
 int lcp_mem_register_with_bitmap(lcp_manager_h mngr,
                                  lcp_mem_h *mem_p,
                                  bmap_t bitmap,
-                                 void *buffer,
+                                 const void *buffer,
                                  size_t length,
                                  unsigned flags)
 {
-        int rc = lcp_mem_create(mngr, mem_p);
+        lcp_mem_h mem;
+        int rc = lcp_mem_create(mngr, &mem);
 
-        if (rc != LCP_SUCCESS) {
+        if (rc != MPC_LOWCOMM_SUCCESS) {
                 goto err;
         }
 
-        (*mem_p)->length = length;
-        (*mem_p)->base_addr = (uint64_t)buffer;
-        (*mem_p)->bm = bitmap;
+        mem->length = length;
+        mem->base_addr = (uint64_t)buffer;
+        mem->bm = bitmap;
 
-        rc = lcp_mem_reg_from_map(mngr, *mem_p, bitmap, 
+        rc = lcp_mem_reg_from_map(mngr, mem, bitmap, 
                                   buffer, length, flags); 
+        if (rc != MPC_LOWCOMM_SUCCESS) {
+                goto err;
+        }
+
+        *mem_p = mem;
+
 err:
         return rc;
 }
@@ -635,14 +666,35 @@ err:
 //       successful memory pins ?
 int lcp_mem_register(lcp_manager_h mngr,
                      lcp_mem_h *mem_p,
-                     void *buffer,
-                     size_t length)
+                     const void *buffer,
+                     size_t length,
+                     unsigned flags)
 {
-        UNUSED(mngr);
-        UNUSED(mem_p);
-        UNUSED(buffer);
-        UNUSED(length);
-        not_implemented();
+        int rc = MPC_LOWCOMM_SUCCESS;
+        int i;
+        lcp_mem_h mem;
+        bmap_t bm = MPC_BITMAP_INIT;
+        lcr_rail_attr_t attr;
+
+        /* Compute bitmap registration. Strategy is to register on all
+         * interfaces that have the capability. */
+        for (i = 0; mngr->num_ifaces; i++) {
+		mngr->ifaces[i]->iface_get_attr(mngr->ifaces[i], &attr);
+                
+                if (attr.iface.cap.flags & LCR_IFACE_CAP_RMA) {
+                        MPC_BITMAP_SET(bm, i);
+                }
+        }
+
+        mem = lcp_pinning_mmu_pin(mngr, buffer, length, bm, flags);
+        if (rc != MPC_LOWCOMM_SUCCESS) {
+                goto err;
+        }
+
+        *mem_p = mem;
+
+err:
+        return rc;
 }
 
 /**
@@ -655,7 +707,7 @@ int lcp_mem_register(lcp_manager_h mngr,
  * @param tag tag of post
  * @param flags flag of post
  * @param tag_ctx tag context
- * @return int LCP_SUCCESS in case of success
+ * @return int MPC_LOWCOMM_SUCCESS in case of success
  */
 int lcp_mem_post_from_map(lcp_manager_h mngr, 
                           lcp_mem_h mem, 
@@ -666,7 +718,7 @@ int lcp_mem_post_from_map(lcp_manager_h mngr,
                           unsigned flags,
                           lcr_tag_context_t *tag_ctx)
 {
-        int rc = LCP_SUCCESS;
+        int rc = MPC_LOWCOMM_SUCCESS;
         int i = 0, k, nb_posted = 0, nb_ifaces = 0;
         lcr_rail_attr_t attr;
         lcr_tag_t ign = { 0 };
@@ -703,7 +755,7 @@ int lcp_mem_post_from_map(lcp_manager_h mngr,
                 iface = mngr->ifaces[i];
                 rc = iface->post_tag_zcopy(iface, tag, ign, iov, 
                                            iovcnt, flags, tag_ctx);
-                if (rc != LCP_SUCCESS) {
+                if (rc != MPC_LOWCOMM_SUCCESS) {
                         mpc_common_debug_error("LCP MEM: could not post on "
                                                "interface");
                         goto err;
@@ -724,20 +776,20 @@ err:
 int lcp_mem_unpost(lcp_manager_h mngr, lcp_mem_h mem, lcr_tag_t tag) 
 {
         int i;
-        int rc = LCP_SUCCESS;
+        int rc = MPC_LOWCOMM_SUCCESS;
         sctk_rail_info_t *iface = NULL;
 
         /* Memory should be unposted only if it has been previously posted as
          * persistent */
         if (!(mem->flags & LCR_IFACE_TM_PERSISTANT_MEM)) {
-                return LCP_SUCCESS;
+                return MPC_LOWCOMM_SUCCESS;
         }
 
         for (i=0; i < mngr->num_ifaces; i++) {
                 if (MPC_BITMAP_GET(mem->bm, i)) {
                         iface = mngr->ifaces[i];
                         rc = iface->unpost_tag_zcopy(iface, tag);
-                        if (rc != LCP_SUCCESS) {
+                        if (rc != MPC_LOWCOMM_SUCCESS) {
                                goto err;
                         }
                 }
@@ -749,22 +801,23 @@ err:
         return rc;
 }
 
-//FIXME: this is not used anymore since deregistration is performed by the mmu.
-//       What happen a deregistration is explicitely needed? 
 int lcp_mem_deregister(lcp_manager_h mngr, lcp_mem_h mem)
 {
         int i;
-        int rc = LCP_SUCCESS;
-        sctk_rail_info_t *iface = NULL;
+        int rc = MPC_LOWCOMM_SUCCESS;
 
         for (i=0; i<mngr->num_ifaces; i++) {
                 if (MPC_BITMAP_GET(mem->bm, i)) {
-                        iface = mngr->ifaces[i];
-                        iface->iface_unregister_mem(iface, &mem->mems[i]);
+                        rc = lcp_iface_do_unregister_mem(mngr->ifaces[i],
+                                                         &mem->mems[i]);
+                        if (rc != MPC_LOWCOMM_SUCCESS) {
+                                goto err;
+                        }
                 }
         }
 
         lcp_mem_delete(mem);
 
+err:
         return rc;
 }

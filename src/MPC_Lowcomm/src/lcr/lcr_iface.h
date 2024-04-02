@@ -151,8 +151,11 @@ typedef int (*lcr_atomic_cswap_func_t)(_mpc_lowcomm_endpoint_t *ep,
                                        lcr_completion_t *ctx);
 
 // Endpoint Sync functions
-typedef int (*lcr_ep_flush_func_t)(_mpc_lowcomm_endpoint_t *ep,
-                                   unsigned flags);
+typedef int (*lcr_flush_func_t)(sctk_rail_info_t *rail,
+                                _mpc_lowcomm_endpoint_t *ep,
+                                lcr_memp_t *mem,
+                                lcr_completion_t *comp,
+                                unsigned flags);
 // Interface functions
 typedef int (*lcr_iface_get_attr_func_t)(sctk_rail_info_t *rail,
                                          lcr_rail_attr_t *attr);
@@ -164,7 +167,7 @@ typedef int (*lcr_iface_pack_memp_func_t)(sctk_rail_info_t *rail,
 
 typedef	int (*lcr_iface_register_mem_func_t)(struct sctk_rail_info_s *rail, 
                                              lcr_memp_t *mem, 
-                                             void *addr, 
+                                             const void *addr, 
                                              size_t size,
                                              unsigned flags);
 typedef int (*lcr_iface_unregister_mem_func_t)(struct sctk_rail_info_s *rail, 

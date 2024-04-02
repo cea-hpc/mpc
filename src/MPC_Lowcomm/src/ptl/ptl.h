@@ -42,6 +42,7 @@
 //Forward addressing
 typedef struct lcr_ptl_block_list lcr_ptl_block_list_t;
 typedef struct lcr_ptl_mem lcr_ptl_mem_t;
+typedef struct lcr_ptl_ep_info lcr_ptl_ep_info_t;
 
 //FIXME: some of these defines are only for control flow...
 #define LCR_PTL_AM_HDR_ID_MASK         0x00000000000000ffULL
@@ -149,8 +150,6 @@ typedef struct lcr_ptl_addr {
 
 
 typedef struct lcr_ptl_txq {
-        uint64_t              last_op_id;
-        atomic_int_least8_t   is_linked;
         mpc_queue_head_t      ops;
         mpc_common_spinlock_t lock;
 } lcr_ptl_txq_t;
@@ -159,10 +158,9 @@ typedef struct lcr_ptl_ep_info {
         int                    idx;
         mpc_mempool_t         *ops_pool;
         lcr_ptl_addr_t         addr;
-        lcr_ptl_txq_t         *am_txq;
+        lcr_ptl_txq_t          am_txq;
         mpc_common_spinlock_t  lock;
-        mpc_list_elem_t        linked_head;
-        atomic_uint_least64_t  op_count;       /* Sequence number of the last pushed op. */
+        atomic_uint_least32_t  mem_count;
 #if defined (MPC_USE_PORTALS_CONTROL_FLOW)
         atomic_int_least8_t    is_waiting;
         int32_t                tokens;
@@ -184,11 +182,11 @@ typedef struct lcr_ptl_mem {
         ptl_handle_md_t        mdh;            /* Memory Descriptor handle.              */
         ptl_handle_me_t        meh;
         ptl_match_bits_t       match;
-        atomic_int_least32_t   num_txqs;
         lcr_ptl_txq_t         *txqt;
         atomic_uint_least64_t *op_count;       /* Sequence number of the last pushed op. */
         mpc_common_spinlock_t  lock;
         unsigned               flags;
+        mpc_queue_head_t       pending_flush;
 } lcr_ptl_mem_t;
 
 /*********************************/
@@ -298,11 +296,10 @@ typedef struct lcr_ptl_op {
                 } ato;
 
                 struct {
-                        int            num_mem;
-                        int            outstandings;
-                        ptl_size_t    *op_count;
-                        ptl_size_t    *op_done;
-                        lcr_ptl_mem_t *lkey;
+                        int             outstandings;
+                        mpc_list_elem_t mem_head;
+                        ptl_size_t     *op_count;
+                        lcr_ptl_mem_t  *lkey;
                 } flush;
         };
 
@@ -324,6 +321,7 @@ typedef struct lcr_ptl_ts_ctx {
 
 /* Context for one-sided operations. */
 typedef struct lcr_ptl_os_ctx {
+        lcr_ptl_txq_t        *rndv_txqt;
         ptl_handle_md_t       rndv_mdh; /* Rendez-vous Memory Descriptor handle. */
         ptl_handle_me_t       rndv_meh; /* Rendez-vous Memory Entry handle. */
         ptl_handle_ct_t       rndv_cth; /* Rendez-vous Counter handle. */
@@ -702,10 +700,6 @@ static inline int lcr_ptl_do_op(lcr_ptl_op_t *op) {
                                   ));
                 break;
         case LCR_PTL_OP_RMA_FLUSH:
-                if (op->flush.lkey->op_done < op->flush.op_count) {
-                        rc = MPC_LOWCOMM_IN_PROGRESS;
-                        break;
-                }
                 break;
         case LCR_PTL_OP_ATOMIC_POST:
                 mpc_common_debug("LCR PTL: atomic post operation. type=%s, lkey "
@@ -859,11 +853,6 @@ static inline int lcr_ptl_post_rma_resources(lcr_ptl_rail_info_t *srail,
         return MPC_LOWCOMM_SUCCESS;
 }
 
-static inline int lcr_ptl_ep_is_linked(lcr_ptl_mem_t *mem, int ep_idx) {
-        int_least8_t zero = 0;
-        return atomic_compare_exchange_strong(&mem->txqt[ep_idx].is_linked, &zero, 1);
-}
-
 #if defined (MPC_USE_PORTALS_CONTROL_FLOW)
 static inline int lcr_ptl_ep_needs_tokens(lcr_ptl_ep_info_t *ep, int token_num) {
         int_least8_t zero = 0;
@@ -888,7 +877,7 @@ static inline int lcr_ptl_create_token_request(lcr_ptl_rail_info_t *srail,
         _lcr_ptl_init_op_common(op, 0, srail->net.tk.mdh, 
                                 ep->addr.id, ep->addr.pte.tk, 
                                 LCR_PTL_OP_TK_REQUEST, 0, NULL, 
-                                ep->am_txq);
+                                &ep->am_txq);
 
         LCR_PTL_CTRL_HDR_SET(op->hdr, op->type, 
                              ep->idx, 
@@ -921,7 +910,7 @@ static inline int lcr_ptl_create_token_grant(lcr_ptl_rail_info_t *srail,
                                 0, NULL, NULL);
 
         LCR_PTL_CTRL_HDR_SET(op->hdr, op->type, 
-                             rsc->tx_idx, 
+                             rsc->ep_idx, 
                              rsc->req.granted);
 
         *op_p = op;
@@ -936,10 +925,10 @@ static inline int lcr_ptl_post(lcr_ptl_ep_info_t *ep,
         int rc = MPC_LOWCOMM_SUCCESS;
 
         mpc_common_spinlock_lock(&ep->lock);
-        if (ep->tokens <= 0 || !mpc_queue_is_empty(&ep->am_txq->ops)) {
+        if (ep->tokens <= 0 || !mpc_queue_is_empty(&ep->am_txq.ops)) {
                 *token_num = ep->tokens;
                 ep->num_ops++;
-                mpc_queue_push(&ep->am_txq->ops, &op->elem);
+                mpc_queue_push(&ep->am_txq.ops, &op->elem);
 
                 goto txq_unlock;
         }
@@ -1074,12 +1063,26 @@ int lcr_ptl_atomic_cswap(_mpc_lowcomm_endpoint_t *ep,
                          size_t size,
                          lcr_completion_t *comp);
 
-int lcr_ptl_ep_flush(_mpc_lowcomm_endpoint_t *ep,
-                     unsigned flags);
+int lcr_ptl_flush(sctk_rail_info_t *rail,
+                  _mpc_lowcomm_endpoint_t *ep,
+                  lcr_memp_t *mem,
+                  lcr_completion_t *comp,
+                  unsigned flags);
 
-int lcr_ptl_flush_ep(lcr_ptl_ep_info_t *ep, lcr_ptl_op_t *flush_op);
-int lcr_ptl_flush_mem(lcr_ptl_mem_t *mem, lcr_ptl_op_t *flush_op);
+int lcr_ptl_flush_mem_ep(lcr_ptl_mem_t *mem, 
+                         lcr_ptl_ep_info_t *ep, 
+                         lcr_ptl_op_t *flush_op);
+
+int lcr_ptl_flush_ep(lcr_ptl_rail_info_t *srail, 
+                     lcr_ptl_ep_info_t *ep, 
+                     lcr_ptl_op_t *flush_op);
+
+int lcr_ptl_flush_mem(lcr_ptl_rail_info_t *srail,
+                      lcr_ptl_mem_t *mem, 
+                      lcr_ptl_op_t *flush_op);
+
 int lcr_ptl_flush_iface(lcr_ptl_rail_info_t *srail, lcr_ptl_op_t *flush_op);
+int lcr_ptl_iface_progress_rma(lcr_ptl_rail_info_t *srail);
 
 void lcr_ptl_connect_on_demand(struct sctk_rail_info_s *rail, 
                                uint64_t dest);

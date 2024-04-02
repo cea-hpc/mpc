@@ -36,6 +36,7 @@
 #include "lcp_def.h"
 
 #include <bitmap.h>
+#include <list.h>
 #include <mpc_common_spinlock.h>
 
 struct lcp_pinning_entry_list
@@ -57,14 +58,16 @@ struct lcp_pinning_mmu
 };
 
 struct lcp_mem {
+        lcp_manager_h mngr;
         uint64_t base_addr;
         size_t length;
         int num_ifaces;
         lcr_memp_t *mems; /* table of memp pointers */
         bmap_t bm;
         unsigned flags;
-        /* When handled by the MMU this points to the management slot */
-        void * pointer_to_mmu_ctx;
+        void * pointer_to_mmu_ctx; /* When handled by the MMU this 
+                                      points to the management slot */
+        mpc_list_elem_t elem; /* Element in list of active memories. */
 };
 
 int lcp_mem_create(lcp_manager_h mngr, lcp_mem_h *mem_p);
@@ -81,7 +84,7 @@ int lcp_mem_post_from_map(lcp_manager_h mngr,
 int lcp_mem_reg_from_map(lcp_manager_h mngr,
                          lcp_mem_h mem,
                          bmap_t mem_map,
-                         void *buffer,
+                         const void *buffer,
                          size_t length,
                          unsigned flags);
 int lcp_mem_unpost(lcp_manager_h mngr, lcp_mem_h mem, lcr_tag_t tag);
@@ -93,7 +96,7 @@ int lcp_mem_unpost(lcp_manager_h mngr, lcp_mem_h mem, lcr_tag_t tag);
 int lcp_pinning_mmu_init(struct lcp_pinning_mmu **mmu_p, unsigned flags);
 int lcp_pinning_mmu_release(struct lcp_pinning_mmu *mmu);
 
-lcp_mem_h lcp_pinning_mmu_pin(lcp_manager_h mngr, void *addr, 
+lcp_mem_h lcp_pinning_mmu_pin(lcp_manager_h mngr, const void *addr, 
                               size_t size, bmap_t bitmap, unsigned flags);
 int lcp_pinning_mmu_unpin(lcp_manager_h mngr, lcp_mem_h mem);
 

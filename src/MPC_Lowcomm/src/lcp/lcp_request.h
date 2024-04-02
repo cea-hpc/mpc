@@ -56,6 +56,7 @@ enum {
         LCP_REQUEST_REMOTE_COMPLETED    = MPC_BIT(6),
         LCP_REQUEST_USER_COMPLETE       = MPC_BIT(7),
         LCP_REQUEST_USER_PROVIDED_MEMH  = MPC_BIT(8),
+        LCP_REQUEST_USER_PROVIDED_EPH   = MPC_BIT(9),
 };
 
 //TODO: rename "unexpected container" to "receive descriptor". It was initially
@@ -151,6 +152,10 @@ struct lcp_request {
                                         void           *reply_buffer;
                                         uint64_t        value;
                                 } ato;
+
+                                struct {
+                                        int flush;
+                                } flush;
 			};
 
 			lcp_send_func_t func;
@@ -340,6 +345,23 @@ struct lcp_request {
 	(_req)->send.rma.is_get      = 1;                                 \
 	(_req)->send.rma.rkey        = _rkey;                                 \
 	(_req)->send.rma.remote_addr = _remote_addr;                                 \
+	\
+	(_req)->state.remaining      = _length;                                 \
+	(_req)->state.offset         = 0;                                       \
+}
+
+#define LCP_REQUEST_INIT_RMA_FLUSH(_req, _mngr, _task, _length, \
+                                   _ep, _buf, _seqn, _msg_id, _dt) \
+{ \
+	(_req)->msg_id               = _msg_id;                                 \
+	(_req)->seqn                 = _seqn;                                   \
+	(_req)->mngr                 = _mngr;                                    \
+	(_req)->task                 = _task;                                   \
+	(_req)->datatype             = _dt;                                     \
+	\
+	(_req)->send.buffer          = _buf;                                    \
+	(_req)->send.ep              = _ep;                                     \
+	(_req)->send.length          = _length;                                 \
 	\
 	(_req)->state.remaining      = _length;                                 \
 	(_req)->state.offset         = 0;                                       \

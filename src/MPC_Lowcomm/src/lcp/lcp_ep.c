@@ -166,6 +166,7 @@ int lcp_ep_init_config(lcp_manager_h mngr, lcp_ep_h ep)
 		iface->iface_get_attr(iface, &attr);
 		if(attr.iface.cap.flags & LCR_IFACE_CAP_TAG_OFFLOAD)
 		{
+                        ep->config.offload = 1;
 			ep->cap |= LCR_IFACE_CAP_TAG_OFFLOAD;
 			ep->config.tag.max_bcopy = mpc_common_min(ep->config.tag.max_bcopy,
 			                                      attr.iface.cap.tag.max_bcopy);

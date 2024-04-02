@@ -94,9 +94,10 @@ struct lcp_manager {
         mpc_list_elem_t       progress_head; /* List of interface registered for progress */
 
         struct lcp_pinning_mmu *mmu;
+        mpc_list_elem_t       memory_list;
 
         int                   num_ifaces;
-        sctk_rail_info_t **   ifaces;  /* Table of manager interfaces. */
+        sctk_rail_info_t    **ifaces;  /* Table of manager interfaces. */
         int                   priority_iface;
 };
 

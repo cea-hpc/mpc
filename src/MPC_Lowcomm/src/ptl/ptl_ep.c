@@ -55,7 +55,6 @@ ssize_t lcr_ptl_send_am_bcopy(_mpc_lowcomm_endpoint_t *ep,
         lcr_ptl_ep_info_t  *ptl_ep = &ep->data.ptl;
         void* start                = NULL;
         size_t size                = 0;
-        lcr_ptl_txq_t* txq         = ep->data.ptl.am_txq;
         lcr_ptl_op_t *op;
 
         assert(ptl_ep->addr.pte.am != LCR_PTL_PT_NULL);
@@ -81,14 +80,14 @@ ssize_t lcr_ptl_send_am_bcopy(_mpc_lowcomm_endpoint_t *ep,
                                 ptl_ep->addr.pte.am, 
                                 LCR_PTL_OP_AM_BCOPY, 
                                 size, NULL, 
-                                txq);
+                                &ptl_ep->am_txq);
 
         op->am.am_id     = id;
         op->am.bcopy_buf = start;
 
 #if defined (MPC_USE_PORTALS_CONTROL_FLOW)
         int token_num = 1;
-        op->id = txq->last_op_id = atomic_fetch_add(&srail->net.am.op_sn, 1);
+        op->id = atomic_fetch_add(&srail->net.am.op_sn, 1);
         LCR_PTL_AM_HDR_SET(op->hdr, op->am.am_id, 
                            ptl_ep->idx, 
                            ptl_ep->num_ops);
@@ -131,7 +130,6 @@ int lcr_ptl_send_am_zcopy(_mpc_lowcomm_endpoint_t *ep,
         lcr_ptl_rail_info_t* srail = &ep->rail->network.ptl;
         lcr_ptl_ep_info_t  *ptl_ep = &ep->data.ptl;
         size_t size                = 0;
-        lcr_ptl_txq_t* txq         = ep->data.ptl.am_txq;
 	ptl_md_t iov_md;
 
         lcr_ptl_op_t *op = mpc_mpool_pop(ptl_ep->ops_pool);
@@ -147,7 +145,7 @@ int lcr_ptl_send_am_zcopy(_mpc_lowcomm_endpoint_t *ep,
                                 ptl_ep->addr.pte.am, 
                                 LCR_PTL_OP_AM_ZCOPY, 
                                 0, comp, 
-                                txq);
+                                &ptl_ep->am_txq);
 
         op->iov.iov  = sctk_malloc((iovcnt + 1) * sizeof(ptl_iovec_t));
         if (op->iov.iov == NULL) {
@@ -193,7 +191,7 @@ int lcr_ptl_send_am_zcopy(_mpc_lowcomm_endpoint_t *ep,
 
 #if defined (MPC_USE_PORTALS_CONTROL_FLOW)
         int token_num = 1;
-        op->id = txq->last_op_id = atomic_fetch_add(&srail->net.am.op_sn, 1);
+        op->id = atomic_fetch_add(&srail->net.am.op_sn, 1);
         LCR_PTL_AM_HDR_SET(op->hdr, op->am.am_id, 
                            ptl_ep->idx, 
                            ptl_ep->num_ops);
@@ -229,7 +227,6 @@ ssize_t lcr_ptl_send_tag_bcopy(_mpc_lowcomm_endpoint_t *ep,
         size_t size                = 0;
         lcr_ptl_rail_info_t* srail = &ep->rail->network.ptl;
         lcr_ptl_ep_info_t  *ptl_ep = &ep->data.ptl;
-        lcr_ptl_txq_t* txq         = ep->data.ptl.am_txq;
 
 #if defined (MPC_USE_PORTALS_CONTROL_FLOW)
         not_implemented();
@@ -258,7 +255,7 @@ ssize_t lcr_ptl_send_tag_bcopy(_mpc_lowcomm_endpoint_t *ep,
                                 ptl_ep->addr.pte.tag, 
                                 LCR_PTL_OP_TAG_BCOPY, 
                                 size, NULL, 
-                                txq);
+                                &ptl_ep->am_txq);
 
         op->tag.bcopy_buf = start;
 
@@ -290,7 +287,6 @@ int lcr_ptl_send_tag_zcopy(_mpc_lowcomm_endpoint_t *ep,
         int rc = MPC_LOWCOMM_SUCCESS;
         lcr_ptl_rail_info_t *srail  = &ep->rail->network.ptl;
         lcr_ptl_ep_info_t   *ptl_ep = &ep->data.ptl;
-        lcr_ptl_txq_t       *txq    = ep->data.ptl.am_txq;
 
         //FIXME: support for only one iovec
         assert(iovcnt == 1);
@@ -308,7 +304,7 @@ int lcr_ptl_send_tag_zcopy(_mpc_lowcomm_endpoint_t *ep,
                                 ptl_ep->addr.pte.tag, 
                                 LCR_PTL_OP_TAG_ZCOPY, 
                                 iov[0].iov_len, comp, 
-                                txq);
+                                &ptl_ep->am_txq);
 
 #if defined (MPC_USE_PORTALS_CONTROL_FLOW)
         not_implemented();
@@ -430,12 +426,6 @@ int lcr_ptl_send_put_bcopy(_mpc_lowcomm_endpoint_t *ep,
         size = pack(start, arg);
 
         /* Link memory to endpoint if not already done. */
-        if (!lcr_ptl_ep_is_linked(lkey, ptl_ep->idx)) {
-                /* Someone may be flushing, so lock. */
-                mpc_common_spinlock_lock(&ptl_ep->lock);
-                mpc_list_push_head(&ptl_ep->linked_head, &lkey->elem);
-                mpc_common_spinlock_unlock(&ptl_ep->lock);
-        }
         txq = &lkey->txqt[ptl_ep->idx];
 
         lcr_ptl_op_t *op = mpc_mpool_pop(ptl_ep->ops_pool);
@@ -491,13 +481,6 @@ int lcr_ptl_send_get_bcopy(_mpc_lowcomm_endpoint_t *ep,
         }
         size = pack(start, arg);
 
-        /* Link memory to endpoint if not already done. */
-        if (!lcr_ptl_ep_is_linked(lkey, ptl_ep->idx)) {
-                /* Someone may be flushing, so lock. */
-                mpc_common_spinlock_lock(&ptl_ep->lock);
-                mpc_list_push_head(&ptl_ep->linked_head, &lkey->elem);
-                mpc_common_spinlock_unlock(&ptl_ep->lock);
-        }
         txq = &lkey->txqt[ptl_ep->idx];
 
         lcr_ptl_op_t *op = mpc_mpool_pop(ptl_ep->ops_pool);
@@ -543,12 +526,6 @@ int lcr_ptl_send_put_zcopy(_mpc_lowcomm_endpoint_t *ep,
         lcr_ptl_op_t      *op     = NULL;         
 
         /* Link memory to endpoint if not already done. */
-        if (!lcr_ptl_ep_is_linked(lkey, ptl_ep->idx)) {
-                /* Someone may be flushing, so lock. */
-                mpc_common_spinlock_lock(&ptl_ep->lock);
-                mpc_list_push_head(&ptl_ep->linked_head, &lkey->elem);
-                mpc_common_spinlock_unlock(&ptl_ep->lock);
-        }
         txq = &lkey->txqt[ptl_ep->idx];
 
         //NOTE: Operation identifier and Put must be done atomically to make
@@ -585,7 +562,7 @@ int lcr_ptl_send_put_zcopy(_mpc_lowcomm_endpoint_t *ep,
         mpc_common_spinlock_unlock(&txq->lock);
 
         /* Increment operation counts. */
-        op->id = txq->last_op_id = atomic_fetch_add(lkey->op_count, 1);
+        op->id = atomic_fetch_add(lkey->op_count, 1);
         assert(op->id < UINT64_MAX);
 
         rc = lcr_ptl_do_op(op);
@@ -609,13 +586,6 @@ int lcr_ptl_send_get_zcopy(_mpc_lowcomm_endpoint_t *ep,
         lcr_ptl_mem_t     *rkey   = &remote_key->pin.ptl;
         lcr_ptl_op_t      *op     = NULL;         
 
-        /* Link memory to endpoint if not already done. */
-        if (!lcr_ptl_ep_is_linked(lkey, ptl_ep->idx)) {
-                /* Someone may be flushing, so lock. */
-                mpc_common_spinlock_lock(&ptl_ep->lock);
-                mpc_list_push_head(&ptl_ep->linked_head, &lkey->elem);
-                mpc_common_spinlock_unlock(&ptl_ep->lock);
-        }
         txq = &lkey->txqt[ptl_ep->idx];
 
         op = mpc_mpool_pop(ptl_ep->ops_pool);
@@ -649,7 +619,7 @@ int lcr_ptl_send_get_zcopy(_mpc_lowcomm_endpoint_t *ep,
         mpc_common_spinlock_unlock(&txq->lock);
 
         /* Increment operation counts. */
-        op->id = txq->last_op_id = atomic_fetch_add(lkey->op_count, 1);
+        op->id = atomic_fetch_add(lkey->op_count, 1);
         assert(op->id < UINT64_MAX);
 
         rc = lcr_ptl_do_op(op);
@@ -719,12 +689,6 @@ int lcr_ptl_atomic_post(_mpc_lowcomm_endpoint_t *ep,
         assert(size == sizeof(uint64_t));
         
         /* Link memory to endpoint if not already done. */
-        if (!lcr_ptl_ep_is_linked(lkey, ptl_ep->idx)) {
-                /* Someone may be flushing, so lock. */
-                mpc_common_spinlock_lock(&ptl_ep->lock);
-                mpc_list_push_head(&ptl_ep->linked_head, &lkey->elem);
-                mpc_common_spinlock_unlock(&ptl_ep->lock);
-        }
         txq = &lkey->txqt[ptl_ep->idx];
 
         op = mpc_mpool_pop(ptl_ep->ops_pool);
@@ -749,7 +713,7 @@ int lcr_ptl_atomic_post(_mpc_lowcomm_endpoint_t *ep,
         op->ato.dt                 = PTL_UINT64_T;
         op->ato.post.local_offset  = local_offset;
 
-        op->id = txq->last_op_id = atomic_fetch_add(lkey->op_count, 1);
+        op->id = atomic_fetch_add(lkey->op_count, 1);
         rc = lcr_ptl_do_op(op);
         
 err:
@@ -776,12 +740,6 @@ int lcr_ptl_atomic_fetch(_mpc_lowcomm_endpoint_t *ep,
         assert(size == sizeof(uint64_t));
 
         /* Link memory to endpoint if not already done. */
-        if (!lcr_ptl_ep_is_linked(lkey, ptl_ep->idx)) {
-                /* Someone may be flushing, so lock. */
-                mpc_common_spinlock_lock(&ptl_ep->lock);
-                mpc_list_push_head(&ptl_ep->linked_head, &lkey->elem);
-                mpc_common_spinlock_unlock(&ptl_ep->lock);
-        }
         txq = &lkey->txqt[ptl_ep->idx];
 
         op = mpc_mpool_pop(ptl_ep->ops_pool);
@@ -807,7 +765,7 @@ int lcr_ptl_atomic_fetch(_mpc_lowcomm_endpoint_t *ep,
         op->ato.fetch.get_local_offset = get_local_offset;
         op->ato.fetch.put_local_offset = put_local_offset;
 
-        op->id = txq->last_op_id = atomic_fetch_add(lkey->op_count, 1);
+        op->id = atomic_fetch_add(lkey->op_count, 1);
         rc = lcr_ptl_do_op(op);
         
 err:
@@ -834,13 +792,6 @@ int lcr_ptl_atomic_cswap(_mpc_lowcomm_endpoint_t *ep,
 
         assert(size == sizeof(uint64_t));
 
-        /* Link memory to endpoint if not already done. */
-        if (!lcr_ptl_ep_is_linked(lkey, ptl_ep->idx)) {
-                /* Someone may be flushing, so lock. */
-                mpc_common_spinlock_lock(&ptl_ep->lock);
-                mpc_list_push_head(&ptl_ep->linked_head, &lkey->elem);
-                mpc_common_spinlock_unlock(&ptl_ep->lock);
-        }
         txq = &lkey->txqt[ptl_ep->idx];
 
         op = mpc_mpool_pop(ptl_ep->ops_pool);
@@ -868,20 +819,19 @@ int lcr_ptl_atomic_cswap(_mpc_lowcomm_endpoint_t *ep,
         op->ato.cswap.operand          = &compare;
 
         //FIXME: put this in a function.
-        op->id = txq->last_op_id = atomic_fetch_add(lkey->op_count, 1);
+        op->id = atomic_fetch_add(lkey->op_count, 1);
         rc = lcr_ptl_do_op(op);
 err:
         return rc;
 }
 
 int lcr_ptl_flush(sctk_rail_info_t *rail,
-                  struct sctk_rail_pin_ctx_list *list,
                   _mpc_lowcomm_endpoint_t *ep,
+                  lcr_memp_t *mem,
                   lcr_completion_t *comp,
                   unsigned flags) 
 {
         int rc = MPC_LOWCOMM_SUCCESS, i = 0;
-        ptl_size_t op_done, op_count;
         lcr_ptl_op_t *op;
         lcr_ptl_rail_info_t *srail  = &rail->network.ptl;
         lcr_ptl_ep_info_t   *ptl_ep = &ep->data.ptl;
@@ -902,48 +852,90 @@ int lcr_ptl_flush(sctk_rail_info_t *rail,
                                 0, comp, 
                                 NULL);
 
+        mpc_list_init_head(&op->flush.mem_head);
+
         if (flags & LCR_IFACE_FLUSH_EP) {
                 assert(ep != NULL);
 
-                op->flush.outstandings = op->flush.num_mem = mpc_list_length(&ptl_ep->linked_head);
-                op->flush.op_count     = sctk_malloc(op->flush.num_mem * sizeof(ptl_size_t));
+                mpc_common_spinlock_lock(&srail->net.rma.lock);
+                op->flush.outstandings = mpc_list_length(&srail->net.rma.mem_head);
+                op->flush.op_count     = sctk_malloc(op->flush.outstandings * sizeof(ptl_size_t));
                 if (op->flush.op_count == NULL) {
-                        mpc_common_debug_error("LCR PTL: could not allocate flush"
+                        mpc_common_debug_error("LCR PTL: could not allocate flush "
                                                "op count table.");
                         rc = MPC_LOWCOMM_ERROR;
                         goto err;
                 };
 
-                mpc_common_spinlock_lock(&ptl_ep->lock);
                 i = 0;
-                mpc_list_for_each(mem, &ptl_ep->linked_head, lcr_ptl_mem_t, elem) {
-                       op->flush.op_count[i] = mem->txqt[ptl_ep->idx].last_op_id; 
-                       mpc_queue_push(&mem->txqt[ptl_ep->idx].ops, &op->elem);
-                       i++;
+                mpc_list_for_each(mem, &srail->net.rma.mem_head, lcr_ptl_mem_t, elem) {
+                        op->flush.op_count[i++] = atomic_load(mem->op_count);
                 }
-                mpc_common_spinlock_unlock(&ptl_ep->lock);
 
-                rc = lcr_ptl_flush_ep(ptl_ep, op);
+                rc = lcr_ptl_flush_ep(srail, ptl_ep, op);
+
+                mpc_common_spinlock_unlock(&srail->net.rma.lock);
+
         } else if (flags & LCR_IFACE_FLUSH_MEM) {
                 assert(mem != NULL);
 
-                op->flush.outstandings = atomic_load(&mem->num_txqs);
-                op->flush.op_count     = sctk_malloc(mem->num_txqs * sizeof(ptl_size_t));
+                mpc_common_spinlock_lock(&mem->lock);
+                op->flush.outstandings = 1;
+                op->flush.op_count     = sctk_malloc(sizeof(ptl_size_t));
                 if (op->flush.op_count == NULL) {
-                        mpc_common_debug_error("LCR PTL: could not allocate flush"
+                        mpc_common_debug_error("LCR PTL: could not allocate flush "
                                                "op count table.");
                         rc = MPC_LOWCOMM_ERROR;
                         goto err;
                 };
 
+                *op->flush.op_count = atomic_load(mem->op_count);
+
+                rc = lcr_ptl_flush_mem(srail, mem, op);
+
+                mpc_common_spinlock_lock(&mem->lock);
+
+        } else if (flags & LCR_IFACE_FLUSH_EP_MEM) {
+                assert(mem != NULL && ep != NULL);
+
                 mpc_common_spinlock_lock(&ptl_ep->lock);
-                for (i = 0; i < op->flush.outstandings; i++) {
-                       op->flush.op_count[i] = mem->txqt[i].last_op_id; 
-                       mpc_queue_push(&mem->txqt[i].ops, &op->elem);
-                }
+                op->flush.outstandings = 1;
+                op->flush.op_count     = sctk_malloc(sizeof(ptl_size_t));
+                if (op->flush.op_count == NULL) {
+                        mpc_common_debug_error("LCR PTL: could not allocate flush "
+                                               "op count table.");
+                        rc = MPC_LOWCOMM_ERROR;
+                        goto err;
+                };
+
+                *op->flush.op_count = atomic_load(mem->op_count);
+
+                rc = lcr_ptl_flush_mem_ep(mem, ptl_ep, op);
+
                 mpc_common_spinlock_unlock(&ptl_ep->lock);
 
-                rc = lcr_ptl_flush_mem(mem, op);
+        } else if (flags & LCR_IFACE_FLUSH_IFACE) {
+
+                op->flush.outstandings = 0;
+
+                mpc_common_spinlock_lock(&srail->net.rma.lock);
+                op->flush.outstandings = mpc_list_length(&srail->net.rma.mem_head);
+                op->flush.op_count     = sctk_malloc(op->flush.outstandings * sizeof(ptl_size_t));
+                if (op->flush.op_count == NULL) {
+                        mpc_common_debug_error("LCR PTL: could not allocate flush "
+                                               "op count table.");
+                        rc = MPC_LOWCOMM_ERROR;
+                        goto err;
+                };
+
+                i = 0;
+                mpc_list_for_each(mem, &srail->net.rma.mem_head, lcr_ptl_mem_t, elem) {
+                       op->flush.op_count[i] = atomic_load(mem->op_count);
+                       i++;
+                }
+                mpc_common_spinlock_unlock(&srail->net.rma.lock);
+
+                rc = lcr_ptl_flush_iface(srail, op);
         }
 err:
         return rc;
@@ -954,22 +946,37 @@ int lcr_ptl_mem_register(struct sctk_rail_info_s *rail,
                          void * addr, size_t size, unsigned flags)
 {
         int rc = MPC_LOWCOMM_SUCCESS;
+        int i;
         lcr_ptl_rail_info_t *srail   = &rail->network.ptl;
         lcr_ptl_mem_t *mem           = &list->pin.ptl;
 
         mem->size  = size;
         mem->start = addr; 
         mem->flags = flags;
-        mpc_queue_init_head(&mem->pendings);
+        mpc_queue_init_head(&mem->pending_flush);
 
         if (flags & LCR_IFACE_REGISTER_MEM_DYN) {
-                mem->cth      = srail->rma.rndv_cth;
-                mem->mdh      = srail->rma.rndv_mdh;
-                mem->meh      = srail->rma.rndv_meh;
+                mem->cth      = srail->net.rma.rndv_cth;
+                mem->mdh      = srail->net.rma.rndv_mdh;
+                mem->meh      = srail->net.rma.rndv_meh;
+                mem->txqt     = srail->net.rma.rndv_txqt;
                 mem->match    = (ptl_match_bits_t)LCR_PTL_RNDV_MB;
-                mem->op_count = &srail->am.rma_count;
+                mem->op_count = &srail->net.am.rma_count;
         } else {
-                mem->match = atomic_fetch_add(&srail->rma.mem_uid, 1) | 
+                mem->txqt  = sctk_malloc(LCR_PTL_MAX_EPS * sizeof(lcr_ptl_txq_t));
+                if (mem->txqt == NULL) {
+                        mpc_common_debug_error("LCR PTL: could not allocate "
+                                               "memory txq table.");
+                        rc = MPC_LOWCOMM_ERROR;
+                        goto err;
+                }
+
+                for (i = 0; i < LCR_PTL_MAX_EPS; i++) {
+                        mpc_queue_init_head(&mem->txqt[i].ops);
+                        mpc_common_spinlock_init(&mem->txqt[i].lock, 0);
+                }
+
+                mem->match = atomic_fetch_add(&srail->net.rma.mem_uid, 1) | 
                         LCR_PTL_RMA_MB;
                 mem->op_count = sctk_malloc(sizeof(atomic_uint_least64_t));
                 if (mem->op_count == NULL) {
@@ -990,9 +997,9 @@ int lcr_ptl_mem_register(struct sctk_rail_info_s *rail,
                 }
         }
 
-        mpc_common_spinlock_lock(&srail->rma.lock);
-        mpc_list_push_head(&srail->rma.mem_head, &mem->elem);
-        mpc_common_spinlock_unlock(&srail->rma.lock);
+        mpc_common_spinlock_lock(&srail->net.rma.lock);
+        mpc_list_push_head(&srail->net.rma.mem_head, &mem->elem);
+        mpc_common_spinlock_unlock(&srail->net.rma.lock);
 
         mpc_common_debug("LCR PTL: memory registration. cth=%llu, mdh=%llu, "
                          "addr=%p, size=%llu, match=%llu", *(uint64_t *)&mem->cth, 
@@ -1009,11 +1016,10 @@ int lcr_ptl_mem_unregister(struct sctk_rail_info_s *rail,
         lcr_ptl_rail_info_t* srail   = &rail->network.ptl;
         lcr_ptl_mem_t *mem = &list->pin.ptl;
         
-        mpc_common_spinlock_lock(&srail->rma.lock);
+        mpc_common_spinlock_lock(&srail->net.rma.lock);
         mpc_list_del(&mem->elem);
-        //assert(mpc_queue_is_empty(&mem->pendings));
-        mpc_common_spinlock_unlock(&srail->rma.lock);
-
+        assert(mpc_queue_is_empty(&mem->pending_flush));
+        mpc_common_spinlock_unlock(&srail->net.rma.lock);
 
         if (!(mem->flags & LCR_IFACE_REGISTER_MEM_DYN)) {
                 sctk_free(mem->op_count);
@@ -1166,7 +1172,7 @@ err:
 void lcr_ptl_connect_on_demand(struct sctk_rail_info_s *rail, 
                                mpc_lowcomm_peer_uid_t dest)
 {
-        int rc, txq_idx;
+        int rc;
         int found = 0;
         lcr_ptl_addr_t out_id;
         lcr_ptl_rail_info_t *srail = &rail->network.ptl;
@@ -1208,36 +1214,33 @@ void lcr_ptl_connect_on_demand(struct sctk_rail_info_s *rail,
          *             pool of operations. */
 
         /* Fetch TQ Queue index atomically. */
-        txq_idx = atomic_fetch_add(&srail->num_txqs, 1);
-        if (txq_idx == LCR_PTL_MAX_TXQUEUES) {
+        lcr_ptl_ep_info_t *ptl_ep = &ep->data.ptl;
+        ptl_ep->idx = atomic_fetch_add(&srail->num_eps, 1);
+        if (ptl_ep->idx == LCR_PTL_MAX_EPS) {
                 mpc_common_debug_error("LCR PTL: reached max endpoint (TX queue) "
-                                       "%d.", LCR_PTL_MAX_TXQUEUES);
+                                       "%d.", LCR_PTL_MAX_EPS);
                 rc = MPC_LOWCOMM_ERROR;
                 goto err_free_ep;
         }
-        txq = &srail->txqt[txq_idx];
-
-	txq->addr = out_id;
-        txq->idx  = txq_idx;
+        ptl_ep->addr = out_id;
 
         /* Initialize lock, list and queues. */
-        mpc_common_spinlock_init(&txq->lock, 0);
-        mpc_queue_init_head(&txq->queue);
-        mpc_list_init_head(&txq->mem_head);
+        mpc_common_spinlock_init(&ptl_ep->lock, 0);
+        mpc_queue_init_head(&ptl_ep->am_txq.ops); 
 
 #if defined (MPC_USE_PORTALS_CONTROL_FLOW)
-        txq->tokens         = 0;
-        txq->num_ops        = 0;
-        txq->is_waiting     = 0;
+        ptl_ep->tokens         = 0;
+        ptl_ep->num_ops        = 0;
+        ptl_ep->is_waiting     = 0;
 #endif
 
         /* Init pool of operations. */
-        txq->ops_pool = sctk_malloc(sizeof(mpc_mempool_t));
-        if (txq->ops_pool == NULL) {
+        ptl_ep->ops_pool = sctk_malloc(sizeof(mpc_mempool_t));
+        if (ptl_ep->ops_pool == NULL) {
                 mpc_common_debug_error("LCR PTL: could not allocate operation"
                                        " memory pool.");
                 rc = MPC_LOWCOMM_ERROR;
-                goto err;
+                goto err_free_ep;
         }
         mpc_mempool_param_t mp_op_params = {
                 .alignment = MPC_COMMON_SYS_CACHE_LINE_SIZE,
@@ -1248,36 +1251,32 @@ void lcr_ptl_connect_on_demand(struct sctk_rail_info_s *rail,
                 .free_func = sctk_free
         };
 
-        rc = mpc_mpool_init(txq->ops_pool, &mp_op_params);
+        rc = mpc_mpool_init(ptl_ep->ops_pool, &mp_op_params);
         if (rc != MPC_LOWCOMM_SUCCESS) {
-                goto err;
+                goto err_free_ep;
         }
-
-        ep->data.ptl.txq = txq; 
 
 #if defined (MPC_USE_PORTALS_CONTROL_FLOW)
         /* Initialize token. */
-        op = mpc_mpool_pop(srail->tk.ops); 
+        op = mpc_mpool_pop(srail->net.tk.ops); 
         if (op == NULL) {
                 mpc_common_debug_warning("LCR PTL: maximum outstanding operations %d.");
-                goto err;
+                goto err_free_ep;
         }
-        assert(ep->data.ptl.txq->addr.pte.tk != LCR_PTL_PT_NULL);
-        _lcr_ptl_init_op_common(op, 0, srail->tk.mdh, 
-                                ep->data.ptl.txq->addr.id, 
-                                ep->data.ptl.txq->addr.pte.tk, 
+        assert(ptl_ep->addr.pte.tk != LCR_PTL_PT_NULL);
+        _lcr_ptl_init_op_common(op, 0, srail->net.tk.mdh, 
+                                ptl_ep->addr.id, 
+                                ptl_ep->addr.pte.tk, 
                                 LCR_PTL_OP_TK_INIT, 
                                 0, NULL, 
                                 txq);
 
         LCR_PTL_CTRL_HDR_SET(op->hdr, op->type, 
-                             txq->idx, 
+                             ptl_ep->idx, 
                              0);
 
         lcr_ptl_do_op(op);
 #endif
-
-err:
         return;
 
 err_free_ep:
