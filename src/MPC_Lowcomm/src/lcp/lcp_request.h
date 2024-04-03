@@ -465,12 +465,8 @@ static inline int lcp_request_send(lcp_request_t *req)
 void lcp_request_storage_init();
 void lcp_request_storage_release();
 
-//NOTE: we keep request creation call until we have more experience with it. It
-//      has been replaced by lcp_request_get which uses a memory pool.
-int lcp_request_create(lcp_request_t **req_p);
 int lcp_request_complete(lcp_request_t *req);
 int lcp_request_init_unexp_ctnr(lcp_task_h task, lcp_unexp_ctnr_t **ctnr_p, void *data,
 				size_t length, unsigned flags);
-void *lcp_request_get_unexp_ctnr_payload(lcp_unexp_ctnr_t *ctnr);
 
 #endif

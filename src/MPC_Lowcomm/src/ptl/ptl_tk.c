@@ -47,8 +47,8 @@ int lcr_ptl_tk_progress_pending_ops(lcr_ptl_rail_info_t *srail,
         mpc_queue_iter_t iter;
         lcr_ptl_op_t *op;
 
-        mpc_common_spinlock_lock(&ep->am_txq->lock);
-        mpc_queue_for_each_safe(op, iter, lcr_ptl_op_t, &ep->am_txq->ops, elem) {
+        mpc_common_spinlock_lock(&ep->am_txq.lock);
+        mpc_queue_for_each_safe(op, iter, lcr_ptl_op_t, &ep->am_txq.ops, elem) {
                 if ((token_num = ep->tokens) <= 0) {
                         break;
                 }
@@ -59,7 +59,7 @@ int lcr_ptl_tk_progress_pending_ops(lcr_ptl_rail_info_t *srail,
                         return rc;
                 }
 
-                mpc_queue_del_iter(&ep->am_txq->ops, iter);
+                mpc_queue_del_iter(&ep->am_txq.ops, iter);
                 tmp++;
         }
         mpc_common_spinlock_unlock(&ep->lock);

@@ -160,7 +160,6 @@ typedef struct lcr_ptl_ep_info {
         lcr_ptl_addr_t         addr;
         lcr_ptl_txq_t          am_txq;
         mpc_common_spinlock_t  lock;
-        atomic_uint_least32_t  mem_count;
 #if defined (MPC_USE_PORTALS_CONTROL_FLOW)
         atomic_int_least8_t    is_waiting;
         int32_t                tokens;
@@ -174,7 +173,7 @@ typedef struct lcr_ptl_ep_info _mpc_lowcomm_endpoint_info_ptl_t;
 /*********************************/
 
 typedef struct lcr_ptl_mem {
-        void                  *start;          /* Start address of the memory.           */
+        const void            *start;          /* Start address of the memory.           */
         size_t                 size;           /* Size of the memory.                    */
         uint32_t               uid;            /* Memory Unique Idendifier (for RMA matching). */
         mpc_list_elem_t        elem;           /* Element in list.                       */
@@ -183,7 +182,7 @@ typedef struct lcr_ptl_mem {
         ptl_handle_me_t        meh;
         ptl_match_bits_t       match;
         lcr_ptl_txq_t         *txqt;
-        atomic_uint_least64_t *op_count;       /* Sequence number of the last pushed op. */
+        atomic_int_least64_t  *op_count;       /* Sequence number of the last pushed op. */
         mpc_common_spinlock_t  lock;
         unsigned               flags;
         mpc_queue_head_t       pending_flush;
@@ -201,20 +200,6 @@ static ptl_op_t lcr_ptl_atomic_op_table[] = {
         [LCR_ATOMIC_OP_OR]    = PTL_BOR,
         [LCR_ATOMIC_OP_XOR]   = PTL_BXOR
 };
-
-static inline const char *lcr_ptl_decode_atomic_op(ptl_op_t op_type) {
-        switch (op_type) {
-        case PTL_SUM: return "PTL_SUM"; break;
-        case PTL_SWAP: return "PTL_SWAP"; break;
-        case PTL_CSWAP: return "PTL_CSWAP"; break;
-        case PTL_BAND: return "PTL_BAND"; break;
-        case PTL_BOR: return "PTL_BOR"; break;
-        case PTL_BXOR: return "PTL_BXOR"; break;
-        default: return "Unknwon PTL op."; break;
-        }
-
-        return NULL;
-}
 
 /* Operation types. */
 typedef enum {
@@ -242,7 +227,7 @@ typedef enum {
 } lcr_ptl_op_type_t;
 
 typedef struct lcr_ptl_op {
-        ptl_size_t        id;   /* Operation identifier. */
+        int64_t           id;   /* Operation identifier. */
         ptl_handle_md_t   mdh;  /* MD from which to perform the operation. */
         ptl_process_t     addr;
         ptl_hdr_data_t    hdr;
@@ -298,7 +283,7 @@ typedef struct lcr_ptl_op {
                 struct {
                         int             outstandings;
                         mpc_list_elem_t mem_head;
-                        ptl_size_t     *op_count;
+                        int64_t        *op_count;
                         lcr_ptl_mem_t  *lkey;
                 } flush;
         };
@@ -315,8 +300,8 @@ typedef struct lcr_ptl_ts_ctx {
         ptl_pt_index_t        pti; /* Portal Table Index. */
         mpc_mempool_t        *block_mp; /* Pool of shaddow buffers. */
         mpc_list_elem_t       bhead; /* Head of block list. */
-        atomic_uint_least64_t op_sn;
-        atomic_uint_least64_t rma_count;
+        atomic_int_least64_t  op_sn;
+        atomic_int_least64_t  rma_count;
 } lcr_ptl_ts_ctx_t;
 
 /* Context for one-sided operations. */
@@ -327,7 +312,6 @@ typedef struct lcr_ptl_os_ctx {
         ptl_handle_ct_t       rndv_cth; /* Rendez-vous Counter handle. */
         ptl_pt_index_t        pti; /* Portals Table Index for RMA. */
         atomic_uint_least32_t mem_uid; /* Unique identifier for RMA registration. */
-        atomic_uint_least64_t op_sn; /* Atomic counter for identifying RMA operations. */
         mpc_list_elem_t       mem_head; /* List head of posted Memory. */
         mpc_common_spinlock_t lock;
 } lcr_ptl_os_ctx_t;
@@ -537,6 +521,20 @@ static inline const char * lcr_ptl_rc_decode(int rc)
 	}
 	return NULL;
 };
+
+static inline const char *lcr_ptl_decode_atomic_op(ptl_op_t op_type) {
+        switch (op_type) {
+        case PTL_SUM: return "PTL_SUM"; break;
+        case PTL_SWAP: return "PTL_SWAP"; break;
+        case PTL_CSWAP: return "PTL_CSWAP"; break;
+        case PTL_BAND: return "PTL_BAND"; break;
+        case PTL_BOR: return "PTL_BOR"; break;
+        case PTL_BXOR: return "PTL_BXOR"; break;
+        default: return "Unknwon PTL op."; break;
+        }
+
+        return NULL;
+}
 
 /**
  * De-serialize an object an map it into its base struct.
@@ -1065,7 +1063,7 @@ int lcr_ptl_atomic_cswap(_mpc_lowcomm_endpoint_t *ep,
 
 int lcr_ptl_flush(sctk_rail_info_t *rail,
                   _mpc_lowcomm_endpoint_t *ep,
-                  lcr_memp_t *mem,
+                  struct sctk_rail_pin_ctx_list *list,
                   lcr_completion_t *comp,
                   unsigned flags);
 
@@ -1089,7 +1087,7 @@ void lcr_ptl_connect_on_demand(struct sctk_rail_info_s *rail,
 
 int lcr_ptl_mem_register(struct sctk_rail_info_s *rail, 
                           struct sctk_rail_pin_ctx_list *list, 
-                          void * addr, size_t size, unsigned flags);
+                          const void * addr, size_t size, unsigned flags);
 int lcr_ptl_mem_unregister(struct sctk_rail_info_s *rail, 
                             struct sctk_rail_pin_ctx_list *list);
 int lcr_ptl_pack_rkey(sctk_rail_info_t *rail,

@@ -49,7 +49,7 @@ enum {
                 LCP_REQUEST_USER_PROVIDED_EPH,
 };
 
-#define LCP_RMA_FLUSH_MASK LCP_REQUEST_USER_PROVIDED_EPH | LCP_REQUEST_USER_EPH
+#define LCP_RMA_FLUSH_MASK ( LCP_REQUEST_USER_PROVIDED_EPH | LCP_REQUEST_USER_EPH )
 
 /**
  * @brief Copy buffer from argument request to destination
@@ -67,6 +67,9 @@ size_t lcp_rma_pack(void *dest, void *arg) {
 }
 
 size_t lcp_rma_unpack(void* req, const void *dest, size_t arg) {
+        UNUSED(req);
+        UNUSED(dest);
+        UNUSED(arg);
         not_implemented();
         return 0;
 }
@@ -393,7 +396,6 @@ int lcp_flush_mem_nb(lcp_request_t *req)
 {
         int i, rc = MPC_LOWCOMM_SUCCESS;
         lcp_mem_h mem = req->state.lmem;
-        sctk_rail_info_t *iface;
 
         for (i = 0; req->mngr->num_ifaces; i++) {
                 if (!MPC_BITMAP_GET(mem->bm, i)) {
@@ -401,7 +403,7 @@ int lcp_flush_mem_nb(lcp_request_t *req)
                 }
 
                 req->state.comp.count++;
-                rc = lcp_do_flush(iface, NULL, &mem->mems[i], 
+                rc = lcp_do_flush(req->mngr->ifaces[i], NULL, &mem->mems[i], 
                                   &req->state.comp, 
                                   LCR_IFACE_FLUSH_MEM);
                 if (rc != MPC_LOWCOMM_SUCCESS) {

@@ -370,10 +370,10 @@ int lcp_am_send_nb(lcp_ep_h ep, lcp_task_h task, int32_t dest_tid,
         //       Reorder is to be reimplemented.
         //FIXME: what length should be set here, length of data or length of
         //       data + header size ?
-        LCP_REQUEST_INIT_AM_SEND(req, ep->mngr, task, am_id,
-                                 ep->mngr->ctx->process_uid, dest_tid,
-                                 param->recv_info, data_size,
-                                 ep, (void *)buffer, 0 /* no seqn for am */,
+        LCP_REQUEST_INIT_AM_SEND(req, ep->mngr, task, am_id, 
+                                 ep->mngr->ctx->process_uid, dest_tid, 
+                                 param->recv_info, data_size, 
+                                 ep, (void *)buffer, 0 /* no seqn for am */, 
                                  (uint64_t)req, param->datatype,
                                  param->flags & LCP_REQUEST_AM_SYNC ? 1 : 0);
 

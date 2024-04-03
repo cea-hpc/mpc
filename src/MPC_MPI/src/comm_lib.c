@@ -3339,6 +3339,7 @@ int mpc_mpi_cl_add_pack(void *buf, mpc_lowcomm_msg_count_t count,
 	//FIXME: use library function instead of acceding field
 	request->header.msg_size += total * data_size;
 
+
 	MPC_ERROR_SUCCESS();
 }
 
@@ -3366,6 +3367,7 @@ int mpc_mpi_cl_add_pack_absolute(const void *buf, mpc_lowcomm_msg_count_t count,
 	}
 
 	mpc_lowcomm_request_add_pack_absolute(request, buf, count, data_size, begins, ends);
+
 	size_t total = 0;
 	int    i = 0;
 
@@ -3377,6 +3379,7 @@ int mpc_mpi_cl_add_pack_absolute(const void *buf, mpc_lowcomm_msg_count_t count,
 
 	//FIXME: use library function instead of acceding field
 	request->header.msg_size += total * data_size;
+
 	MPC_ERROR_SUCCESS();
 }
 
@@ -3396,6 +3399,7 @@ int mpc_mpi_cl_isend_pack(int dest, int tag, mpc_lowcomm_communicator_t comm, mp
 	}
 
 	mpc_lowcomm_isend(dest, NULL, request->header.msg_size, tag, comm, request);
+
 	SCTK_PROFIL_END(MPC_Isend_pack);
 	MPC_ERROR_SUCCESS();
 }
@@ -3416,6 +3420,7 @@ int mpc_mpi_cl_irecv_pack(int source, int tag, mpc_lowcomm_communicator_t comm, 
 	}
 
 	mpc_lowcomm_irecv(source, NULL, request->header.msg_size, tag, comm, request);
+
 	SCTK_PROFIL_END(MPC_Irecv_pack);
 	MPC_ERROR_SUCCESS();
 }

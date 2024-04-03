@@ -77,37 +77,6 @@ void lcp_request_storage_release()
 }
 
 /**
- * @brief Create a request.
- *
- * @param req_p pointer to the request to be created
- * @return int LCP_SUCCESS in case of success
- */
-int lcp_request_create(lcp_request_t **req_p)
-{
-	lcp_request_t *req = NULL;
-	int local_rank = mpc_common_get_local_task_rank();
-
-	if(local_rank < 0)
-	{
-		/* If the request is allocated outside of a task context default to 0*/
-		local_rank = 0;
-	}
-
-	req = mpc_mempool_alloc(&__request_mempool[local_rank]);
-	if (req == NULL) {
-		mpc_common_debug_error("LCP: could not allocate recv request.");
-		return LCP_ERROR;
-	}
-
-	memset(req, 0, sizeof(struct lcp_request));
-	TODO("Find a way not to clear this request");
-
-	*req_p = req;
-
-	return LCP_SUCCESS;
-}
-
-/**
  * @brief Store data from unexpected message.
  *
  * @param task the task

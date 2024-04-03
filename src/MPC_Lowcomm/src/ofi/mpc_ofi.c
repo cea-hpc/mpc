@@ -506,12 +506,13 @@ int _mpc_ofi_send_am_zcopy(_mpc_lowcomm_endpoint_t *ep,
    return MPC_LOWCOMM_SUCCESS;
 }
 
-int  _mpc_ofi_pin(struct sctk_rail_info_s *rail, struct sctk_rail_pin_ctx_list *list, void *addr, size_t size,
+int  _mpc_ofi_pin(struct sctk_rail_info_s *rail, struct sctk_rail_pin_ctx_list *list, 
+                  const void *addr, size_t size,
                    unsigned flags)
 {
         UNUSED(flags);
    if(_mpc_ofi_domain_memory_register(rail->network.ofi.ctx.domain,
-                                     addr,
+                                     (void *)addr,
                                      size,
                                      FI_REMOTE_READ | FI_REMOTE_WRITE,
                                      &list->pin.ofipin.ofi))
@@ -522,8 +523,10 @@ int  _mpc_ofi_pin(struct sctk_rail_info_s *rail, struct sctk_rail_pin_ctx_list *
 
    /* And get the key */
    list->pin.ofipin.shared.ofi_remote_mr_key = fi_mr_key(list->pin.ofipin.ofi);
-   list->pin.ofipin.shared.addr = addr;
+   list->pin.ofipin.shared.addr = (void *)addr;
    list->pin.ofipin.shared.size = size;
+
+   return 0;
 }
 
 int _mpc_ofi_unpin(struct sctk_rail_info_s *rail, struct sctk_rail_pin_ctx_list *list)
@@ -534,6 +537,8 @@ int _mpc_ofi_unpin(struct sctk_rail_info_s *rail, struct sctk_rail_pin_ctx_list 
       mpc_common_errorpoint("Failed to register memory for RDMA");
       mpc_common_debug_abort();
    }
+
+   return 0;
 }
 
 

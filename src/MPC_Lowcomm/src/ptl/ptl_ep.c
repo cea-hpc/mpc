@@ -563,7 +563,7 @@ int lcr_ptl_send_put_zcopy(_mpc_lowcomm_endpoint_t *ep,
 
         /* Increment operation counts. */
         op->id = atomic_fetch_add(lkey->op_count, 1);
-        assert(op->id < UINT64_MAX);
+        assert(op->id < INT64_MAX);
 
         rc = lcr_ptl_do_op(op);
 
@@ -620,7 +620,7 @@ int lcr_ptl_send_get_zcopy(_mpc_lowcomm_endpoint_t *ep,
 
         /* Increment operation counts. */
         op->id = atomic_fetch_add(lkey->op_count, 1);
-        assert(op->id < UINT64_MAX);
+        assert(op->id < INT64_MAX);
 
         rc = lcr_ptl_do_op(op);
 err:
@@ -827,7 +827,7 @@ err:
 
 int lcr_ptl_flush(sctk_rail_info_t *rail,
                   _mpc_lowcomm_endpoint_t *ep,
-                  lcr_memp_t *mem,
+                  struct sctk_rail_pin_ctx_list *list,
                   lcr_completion_t *comp,
                   unsigned flags) 
 {
@@ -859,7 +859,7 @@ int lcr_ptl_flush(sctk_rail_info_t *rail,
 
                 mpc_common_spinlock_lock(&srail->net.rma.lock);
                 op->flush.outstandings = mpc_list_length(&srail->net.rma.mem_head);
-                op->flush.op_count     = sctk_malloc(op->flush.outstandings * sizeof(ptl_size_t));
+                op->flush.op_count     = sctk_malloc(op->flush.outstandings * sizeof(int64_t));
                 if (op->flush.op_count == NULL) {
                         mpc_common_debug_error("LCR PTL: could not allocate flush "
                                                "op count table.");
@@ -881,7 +881,7 @@ int lcr_ptl_flush(sctk_rail_info_t *rail,
 
                 mpc_common_spinlock_lock(&mem->lock);
                 op->flush.outstandings = 1;
-                op->flush.op_count     = sctk_malloc(sizeof(ptl_size_t));
+                op->flush.op_count     = sctk_malloc(sizeof(int64_t));
                 if (op->flush.op_count == NULL) {
                         mpc_common_debug_error("LCR PTL: could not allocate flush "
                                                "op count table.");
@@ -900,7 +900,7 @@ int lcr_ptl_flush(sctk_rail_info_t *rail,
 
                 mpc_common_spinlock_lock(&ptl_ep->lock);
                 op->flush.outstandings = 1;
-                op->flush.op_count     = sctk_malloc(sizeof(ptl_size_t));
+                op->flush.op_count     = sctk_malloc(sizeof(int64_t));
                 if (op->flush.op_count == NULL) {
                         mpc_common_debug_error("LCR PTL: could not allocate flush "
                                                "op count table.");
@@ -920,7 +920,7 @@ int lcr_ptl_flush(sctk_rail_info_t *rail,
 
                 mpc_common_spinlock_lock(&srail->net.rma.lock);
                 op->flush.outstandings = mpc_list_length(&srail->net.rma.mem_head);
-                op->flush.op_count     = sctk_malloc(op->flush.outstandings * sizeof(ptl_size_t));
+                op->flush.op_count     = sctk_malloc(op->flush.outstandings * sizeof(int64_t));
                 if (op->flush.op_count == NULL) {
                         mpc_common_debug_error("LCR PTL: could not allocate flush "
                                                "op count table.");
@@ -943,7 +943,7 @@ err:
 
 int lcr_ptl_mem_register(struct sctk_rail_info_s *rail, 
                          struct sctk_rail_pin_ctx_list *list, 
-                         void * addr, size_t size, unsigned flags)
+                         const void * addr, size_t size, unsigned flags)
 {
         int rc = MPC_LOWCOMM_SUCCESS;
         int i;
@@ -985,9 +985,10 @@ int lcr_ptl_mem_register(struct sctk_rail_info_s *rail,
                         rc = MPC_LOWCOMM_ERROR;
                         goto err;
                 }
+                //FIXME: check function signature without casting
                 rc = lcr_ptl_post_rma_resources(srail, 
                                                 mem->match, 
-                                                mem->start, 
+                                                (void * const)mem->start, 
                                                 mem->size, 
                                                 &mem->cth, 
                                                 &mem->mdh,
@@ -1176,7 +1177,6 @@ void lcr_ptl_connect_on_demand(struct sctk_rail_info_s *rail,
         int found = 0;
         lcr_ptl_addr_t out_id;
         lcr_ptl_rail_info_t *srail = &rail->network.ptl;
-        lcr_ptl_txq_t *txq;
 #if defined (MPC_USE_PORTALS_CONTROL_FLOW)
         lcr_ptl_op_t *op;
 #endif
@@ -1269,7 +1269,7 @@ void lcr_ptl_connect_on_demand(struct sctk_rail_info_s *rail,
                                 ptl_ep->addr.pte.tk, 
                                 LCR_PTL_OP_TK_INIT, 
                                 0, NULL, 
-                                txq);
+                                &ptl_ep->am_txq);
 
         LCR_PTL_CTRL_HDR_SET(op->hdr, op->type, 
                              ptl_ep->idx, 

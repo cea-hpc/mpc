@@ -281,7 +281,7 @@ struct sctk_rail_info_s
         lcr_atomic_fetch_func_t                              atomic_fetch;
         lcr_atomic_cswap_func_t                              atomic_cswap;
 
-	/* Endpoint Sync API */
+	/* RMA Sync API */
         lcr_flush_func_t                                     flush;
 
 	/* Interface API */
