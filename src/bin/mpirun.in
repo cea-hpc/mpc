@@ -67,6 +67,7 @@ LAUNCHER_TO_EXE = {
 
 LAUNCHER_CONFIG_MPIEXEC_HYDRA_PATH="@MPIEXEC_HYDRA@"
 LAUNCHER_CONFIG_PRTERUN_PATH="@PRTERUN@"
+MULTICONF=False
 
 
 #
@@ -333,24 +334,49 @@ class MpcRunner:
 		ret = []
 		is_show = self.show()
 		srun_delimiter = "--"
+		if(MULTICONF):
+			with open("./multi.conf", "w") as mc_file:
+				proc_count = 0
+				for i, scmd in enumerate(self._subcmd):
+					cc = []
+					(jargs, mpc_args, cmd) = scmd
+					# running on multiple nodes with --multiconf enabled is forbidden (CF https://slurm.schedmd.com/srun.html#lbAM)
+					if(jargs["MPCFRAMEWORK_LAUNCH_MPCRUN_NODE"] > 1):
+						print("ERROR : running on multiple nodes with --multiconf enabled is forbidden (CF https://slurm.schedmd.com/srun.html#lbAM)")
+						exit
+					# Autokill
+					if jargs["MPCFRAMEWORK_LAUNCH_AUTOKILL"] != 0:
+						cc += ["-t", "0:{}".format(jargs['MPCFRAMEWORK_LAUNCH_AUTOKILL'])]
+					if(jargs["MPCFRAMEWORK_LAUNCH_MPCRUN_PROCESS"] == 1):
+						proc_num = "{}".format(proc_count)
+					else:
+						proc_num = "{}-{}".format(proc_count, proc_count + jargs["MPCFRAMEWORK_LAUNCH_MPCRUN_PROCESS"])
+					mc_file.write("{iter} bash -c 'export=ALL,MPC_STARTUP_ARGS=\"{startup_args}\"; {exec}'\n".format(
+						iter = proc_num, 
+						# startup_args = mpc_args if not is_show else '"{}"'.format(mpc_args), 
+						startup_args = mpc_args,
+						exec = " ".join(jargs["binary"])))
+					proc_count += jargs["MPCFRAMEWORK_LAUNCH_MPCRUN_PROCESS"]
+				ret = [["--multi-prog", "./multi.conf"]]
+		else:
+			for scmd in self._subcmd:
+				cc = []
+				(jargs, mpc_args, cmd) = scmd
+				# Autokill
+				if jargs["MPCFRAMEWORK_LAUNCH_AUTOKILL"] != 0:
+					cc += ["-t", "0:{}".format(jargs['MPCFRAMEWORK_LAUNCH_AUTOKILL'])]
+				# Nodes
+				cc += ["-N", jargs['MPCFRAMEWORK_LAUNCH_MPCRUN_NODE'] ]
+				cc += ["-n", jargs['MPCFRAMEWORK_LAUNCH_MPCRUN_PROCESS'] ]
+				cc += ["-c", jargs['MPCFRAMEWORK_LAUNCH_MPCRUN_CORE'] ]
+				if "opt" in jargs:
+					opt = shlex.split(jargs["opt"])
+					cc += opt
+				cc += ["--export=ALL,MPC_STARTUP_ARGS={}".format(mpc_args if not is_show else '"{}"'.format(mpc_args))]
+				cc += [srun_delimiter] # To delimit the Slurm args from the executable and its args
+				cc += cmd
+				ret.append(cc)
 
-		for scmd in self._subcmd:
-			cc = []
-			(jargs, mpc_args, cmd) = scmd
-			# Autokill
-			if jargs["MPCFRAMEWORK_LAUNCH_AUTOKILL"] != 0:
-				cc += ["-t", "0:{}".format(jargs['MPCFRAMEWORK_LAUNCH_AUTOKILL'])]
-			# Nodes
-			cc += ["-N", jargs['MPCFRAMEWORK_LAUNCH_MPCRUN_NODE'] ]
-			cc += ["-n", jargs['MPCFRAMEWORK_LAUNCH_MPCRUN_PROCESS'] ]
-			cc += ["-c", jargs['MPCFRAMEWORK_LAUNCH_MPCRUN_CORE'] ]
-			if "opt" in jargs:
-				opt = shlex.split(jargs["opt"])
-				cc += opt
-			cc += ["--export=ALL,MPC_STARTUP_ARGS={}".format(mpc_args if not is_show else '"{}"'.format(mpc_args))]
-			cc += [srun_delimiter] # To delimit the Slurm args from the executable and its args
-			cc += cmd
-			ret.append(cc)
 		return "srun", ret
 
 	def _run_hydra(self):
@@ -418,9 +444,12 @@ class MpcRunner:
 
 
 if __name__ == "__main__":
-	 
+	
 	commands = split_mpmd(sys.argv[1:])
-
+	for command in commands:
+		if("--multiconf" in command):	
+			command.remove("--multiconf")
+			MULTICONF=True
 	conf = MpcConfig()
 
 	cmds = []
