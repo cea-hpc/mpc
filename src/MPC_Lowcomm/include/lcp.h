@@ -76,7 +76,7 @@ typedef enum {
 enum {
         LCP_CONTEXT_DATATYPE_OPS  = MPC_BIT(0), /**< datatype mask */
         LCP_CONTEXT_PROCESS_UID   = MPC_BIT(1), /**< process uid mask */
-        LCP_CONTEXT_NUM_PROCESSES = MPC_BIT(2), /**< num processes mask */
+        LCP_CONTEXT_NUM_TASKS     = MPC_BIT(2), /**< task number mask */
 };
 
 /**
@@ -95,8 +95,9 @@ typedef struct lcp_dt_ops {
  * routine to configure communication context initialization.
  */
 typedef struct lcp_context_param {
-        uint32_t     flags;  /**< context field mask */
+        uint32_t     field_mask;  /**< context field mask */
         uint64_t     process_uid; /**< local process UID */
+        int          num_tasks;   /**< local process UID */
         lcp_dt_ops_t dt_ops; /** datatype operations (pack/unpack) */
 } lcp_context_param_t;
 
@@ -127,6 +128,65 @@ int lcp_context_create(lcp_context_h *ctx_p, lcp_context_param_t *param);
  * @return Error code returned.
  */
 int lcp_context_fini(lcp_context_h ctx);
+
+/**
+ * @ingroup LCP_TASK
+ * @brief Create LCP Task. 
+ *
+ * Instanciate an LCP Task that will contain all communication related
+ * information that should be own by a MPI task. There are as many tasks as MPI
+ * ranks, each task is identified by its global MPI rank.
+ *
+ * @param [in] ctx  Context handle.
+ * @param [in] tid  Task identifier or MPI comm world rank.
+ * @param [out] task_p  Pointer to task handle that will be allocated by the
+ *                     routine.
+ * @return Error code returned.
+ */
+
+int lcp_task_create(lcp_context_h ctx, int tid, lcp_task_h *task_p);
+
+/**
+ * @ingroup LCP_COMM
+ * @brief LCP Task associate to manager. 
+ *
+ * Associates a task to a communication context, or \ref lcp_manager_h.
+ * Internal structures are instanciated to enable communication context
+ * isolation. Type of structure instanciated may depend on the communication
+ * model of the manager. For example, matching queues are only created for
+ * two-sided communication model.
+ *
+ * @param [in] task  Task to be associated.
+ * @param [in] mngr  Manager handle to be associated to.
+ * @return Error code returned.
+ */
+int lcp_task_associate(lcp_task_h task, lcp_manager_h mngr);
+
+/**
+ * @ingroup LCP_COMM
+ * @brief LCP Task dissociate from manager. 
+ *
+ * Remove all data structure used within the communication context, or \ref
+ * lcp_manager_h.
+ *
+ * @param [in] task  Task to be dissociated.
+ * @param [in] mngr  Manager handle to be dissociated to.
+ * @return Error code returned.
+ */
+int lcp_task_dissociate(lcp_task_h task, lcp_manager_h mngr);
+
+/**
+ * @ingroup LCP_CONTEXT
+ * @brief Get task handle. 
+ *
+ * Get the task handle based on the task identifier (TID). The TID is the MPI
+ * rank in the MPI_COMM_WORLD communicator.
+ *
+ * @param [in] ctx  Context handle.
+ * @param [in] tid  Task identifier or MPI comm world rank.
+ * @return \ref lcp_task_h task handle for the specified tid.
+ */
+lcp_task_h lcp_context_task_get(lcp_context_h ctx, int tid);
 
 /**
  * @ingroup LCP_COMM
@@ -175,7 +235,8 @@ typedef struct lcp_manager_param {
  * communications. It can be used to insulate different communication contexts
  * such as MPI windows or global contexts to allow fine grain progression,
  * endpoint flush, etc... 
- * Endpoints \ref lcp_ep_h are local to managers.
+ * Endpoints \ref lcp_ep_h are local to managers. An LCP manager is shared
+ * between a group of LCP Tasks.
  *
  * @param [in] ctx  Context handle.
  * @param [out] mngr_p  Pointer to manager handle that will be allocated by the
@@ -197,20 +258,6 @@ int lcp_manager_create(lcp_context_h ctx, lcp_manager_h *mngr_p,
  */
 int lcp_manager_fini(lcp_manager_h mngr);
 
-
-/**
- * @ingroup LCP_CONTEXT
- * @brief Get task handle.
- *
- * Get the task handle based on the task identifier (TID). The TID is the MPI
- * rank in the MPI_COMM_WORLD communicator.
- *
- * @param [in] ctx  Context handle.
- * @param [in] tid  Task identifier or MPI comm world rank.
- * @return \ref lcp_task_h task handle for the specified tid.
- */
-lcp_task_h lcp_manager_task_get(lcp_manager_h mngr, int tid);
-
 /**
  * @ingroup LCP_CONTEXT
  * @brief Communication progress.
@@ -222,21 +269,6 @@ lcp_task_h lcp_manager_task_get(lcp_manager_h mngr, int tid);
  */
 //FIXME: change to lcp_manager_progress
 int lcp_progress(lcp_manager_h mngr);
-
-/**
- * @ingroup LCP_TASK
- * @brief Create LCP Task.
- *
- * Instanciate an LCP Task that will contain all communication related
- * information that should be own by a MPI task.
- *
- * @param [in] ctx  Context handle.
- * @param [in] tid  Task identifier or MPI comm world rank.
- * @param [out] task_p  Pointer to task handle that will be allocated by the
- *                     routine.
- * @return Error code returned.
- */
-int lcp_task_create(lcp_manager_h mngr, int tid, lcp_task_h *task_p);
 
 /**
  * @ingroup LCP_EP
@@ -406,7 +438,7 @@ int lcp_tag_send_nb(lcp_ep_h ep, lcp_task_h task, const void *buffer,
  * @param [in] param  Request parameters \ref lcp_request_param_t.
  * @return Error code returned.
  */
-int lcp_tag_recv_nb(lcp_task_h task, void *buffer, size_t count,
+int lcp_tag_recv_nb(lcp_manager_h mngr, lcp_task_h task, void *buffer, size_t count, 
                     mpc_lowcomm_request_t *request,
                     lcp_request_param_t *param);
 
@@ -427,7 +459,7 @@ int lcp_tag_recv_nb(lcp_task_h task, void *buffer, size_t count,
  * @return Error code returned.
  */
 //FIXME: comm should be a const uint16_t
-int lcp_tag_probe_nb(lcp_task_h task, const int src,
+int lcp_tag_probe_nb(lcp_manager_h mngr, lcp_task_h task, const int src, 
                      const int tag, const uint64_t comm,
                      lcp_tag_recv_info_t *recv_info);
 
@@ -472,7 +504,7 @@ typedef struct lcp_am_recv_param {
  * @param [in] flags  Flags (unused).
  * @return Error code returned.
  */
-int lcp_am_set_handler_callback(lcp_task_h task, uint8_t am_id,
+int lcp_am_set_handler_callback(lcp_manager_h mngr, lcp_task_h task, uint8_t am_id,
                                 void *arg, lcp_am_callback_t cb,
                                 unsigned flags);
 
@@ -521,8 +553,8 @@ int lcp_am_send_nb(lcp_ep_h ep, lcp_task_h task, int32_t dest_tid,
  * @param [in] param  Request parameters \ref lcp_request_param_t.
  * @return Error code returned.
  */
-int lcp_am_recv_nb(lcp_task_h task, void *data_ctnr, void *buffer,
-                   size_t count, lcp_request_param_t *param);
+int lcp_am_recv_nb(lcp_manager_h mngr, lcp_task_h task, void *data_ctnr, 
+                   void *buffer, size_t count, lcp_request_param_t *param);
 
 /**
  * @ingroup LCP_COMM
@@ -537,13 +569,14 @@ int lcp_am_recv_nb(lcp_task_h task, void *data_ctnr, void *buffer,
  * @param [in] task  Task handle of the source task.
  * @param [in] buffer  Buffer from which data will be sent.
  * @param [in] length  Length of data in buffer.
- * @param [in] remote_addr  Remote address where data is written.
+ * @param [in] remote_disp  displacement from start of the target buffer
+ *                          described by \ref rkey.
  * @param [in] rkey  Remote memory key handle.
  * @param [in] param  Request parameters \ref lcp_request_param_t.
  * @return Error code returned.
  */
 int lcp_put_nb(lcp_ep_h ep, lcp_task_h task, const void *buffer,
-               size_t length, uint64_t remote_addr, lcp_mem_h rkey,
+               size_t length, uint64_t remote_disp, lcp_mem_h rkey,
                const lcp_request_param_t *param);
 
 /**

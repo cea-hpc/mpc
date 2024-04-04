@@ -992,8 +992,8 @@ int lcr_ptl_get_attr(sctk_rail_info_t *rail,
         attr->iface.cap.rndv.max_get_zcopy  = config->max_get;
         attr->iface.cap.rndv.min_frag_size  = config->min_frag_size;
 
-
-        attr->iface.cap.rma.max_put_bcopy   = config->eager_limit;
+        attr->iface.cap.rma.max_put_bcopy   = 0; //FIXME: put_bcopy not
+                                                 //       supported for now
         attr->iface.cap.rma.max_put_zcopy   = config->max_put;
         attr->iface.cap.rma.min_frag_size   = config->min_frag_size;
 

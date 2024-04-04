@@ -51,6 +51,7 @@ typedef struct mpc_lowcomm_topo_comms
  */
 typedef struct MPI_ABI_Comm
 {
+        lcp_context_h                 ctx;
 	mpc_lowcomm_communicator_id_t id;             /**< Integer unique identifier of the comm */
 	int                           linear_comm_id; /** Linear communicator id on int32 used for FORTRAN */
 	mpc_lowcomm_group_t *         group;          /**< Group supporting the comm */

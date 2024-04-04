@@ -290,7 +290,7 @@ int lcp_send_eager_am_zcopy(lcp_request_t *req)
         iovcnt++;
 
         /* Then, set the data */
-	iov[1].iov_base = req->send.buffer;
+	iov[1].iov_base = (void *)req->send.buffer;
 	iov[1].iov_len  = req->send.length;
         iovcnt++;
 
@@ -422,7 +422,7 @@ int lcp_am_send_nb(lcp_ep_h ep, lcp_task_h task, int32_t dest_tid,
 /* Receive                                        */
 /* ============================================== */
 
-int lcp_am_recv_nb(lcp_task_h task, void *data_ctnr, void *buffer,
+int lcp_am_recv_nb(lcp_manager_h mngr, lcp_task_h task, void *data_ctnr, void *buffer, 
                    size_t count, lcp_request_param_t *param)
 {
         int packed_data_size;
@@ -441,7 +441,7 @@ int lcp_am_recv_nb(lcp_task_h task, void *data_ctnr, void *buffer,
         }
 
         // initialize request
-        LCP_REQUEST_INIT_AM_RECV(req, task->mngr, task, param->recv_info, 
+        LCP_REQUEST_INIT_AM_RECV(req, mngr, task, param->recv_info, 
                                  count, buffer, param->datatype);
 
         if (param->flags & LCP_REQUEST_AM_CALLBACK) {
@@ -483,14 +483,14 @@ static int lcp_eager_am_handler(void *arg, void *data,
         void *data_ptr     = (char *)(hdr + 1) + hdr->hdr_size;
         size_t data_size   = length - sizeof(*hdr) - hdr->hdr_size;
 
-        task = lcp_manager_task_get(mngr, hdr->dest_tid);  
+        task = lcp_context_task_get(mngr->ctx, hdr->dest_tid);  
         if (task == NULL) {
                 mpc_common_errorpoint_fmt("LCP: could not find task with tid=%d length=%ld", hdr->dest_tid, hdr->hdr_size);
                 rc = LCP_ERROR;
                 goto err;
         }
 
-        handler = task->am[hdr->am_id];
+        handler = task->tcct[mngr->id]->am.handlers[hdr->am_id];
 
         //FIXME: what happen when ep is in CONNECTING state ?
         rc = lcp_ep_get_or_create(mngr, hdr->src_uid, &ep, 0);
@@ -552,14 +552,14 @@ static int lcp_rndv_am_handler(void *arg, void *data,
         lcp_rndv_hdr_t *hdr = data;
         lcp_am_user_handler_t handler;
 
-        task = lcp_manager_task_get(mngr, hdr->am.dest_tid);  
+        task = lcp_context_task_get(mngr->ctx, hdr->am.dest_tid);  
         if (task == NULL) {
                 mpc_common_errorpoint_fmt("LCP: could not find task with tid=%d length=%ld", hdr->am.dest_tid, hdr->am.hdr_size);
 
                 rc = LCP_ERROR;
                 goto err;
         }
-        handler = task->am[hdr->am.am_id];
+        handler = task->tcct[mngr->id]->am.handlers[hdr->am.am_id];
 
         //FIXME: what happen when ep is in CONNECTING state ?
         rc = lcp_ep_get_or_create(mngr, hdr->am.src_uid, &ep, 0);

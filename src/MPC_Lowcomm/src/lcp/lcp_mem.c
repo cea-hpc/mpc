@@ -398,17 +398,12 @@ lcp_mem_h lcp_pinning_mmu_pin(lcp_manager_h mngr, const void *addr,
                 /* Was acquired in the find */
                 mpc_common_debug("MEM: pinning entry exists: addr=%p, "
                                  "size=%llu, bitmap=%x", addr, size, bitmap);
-                goto add_to_list;
+                return exists->mem_entry;
         }
 
         exists = lcp_pinning_entry_list_push(&mngr->mmu->list, addr, 
                                              size, mngr, bitmap, flags);
         assume(exists);
-
-add_to_list:
-        mpc_common_spinlock_lock(&mngr->mngr_lock);
-        mpc_list_push_head(&mngr->memory_list, &exists->mem_entry->elem);
-        mpc_common_spinlock_unlock(&mngr->mngr_lock);
 
         return exists->mem_entry;
 }

@@ -38,12 +38,11 @@
 #include "lcp_request.h"
 #include "lcp_header.h"
 
-int lcp_tag_probe_nb(lcp_task_h task, const int src,
+int lcp_tag_probe_nb(lcp_manager_h mngr, lcp_task_h task, const int src,
                      const int tag, const uint64_t comm,
                      lcp_tag_recv_info_t *recv_info)
 {
         int rc = LCP_SUCCESS;
-        lcp_manager_h mngr = task->mngr;
 	lcp_unexp_ctnr_t *match = NULL;
 
         int tmask = tag == MPC_ANY_TAG ? 0 : ~0;
@@ -57,7 +56,7 @@ int lcp_tag_probe_nb(lcp_task_h task, const int src,
         }
 
         LCP_TASK_LOCK(task);
-        match = lcp_search_umqueue(task->umqs, (uint16_t)comm, tag, tmask, src, smask);
+        match = lcp_search_umqueue(task->tcct[mngr->id]->tag.umqs, (uint16_t)comm, tag, tmask, src, smask);
         if (match != NULL) {
                 if (match->flags & (LCP_RECV_CONTAINER_UNEXP_EAGER_TAG |
                                     LCP_RECV_CONTAINER_UNEXP_TASK_TAG_BCOPY)) {

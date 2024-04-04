@@ -52,7 +52,7 @@ int lcp_send_task_bcopy(lcp_request_t *sreq, lcr_pack_callback_t pack_cb, unsign
         lcp_request_t *rreq = NULL;
         lcp_task_h recv_task = NULL;
 
-        recv_task = lcp_manager_task_get(mngr, sreq->send.tag.dest_tid);  
+        recv_task = lcp_context_task_get(mngr->ctx, sreq->send.tag.dest_tid);  
         if (recv_task == NULL) {
                 mpc_common_errorpoint_fmt("LCP: could not find task with tid=%d",
                                           sreq->send.tag.dest_tid);
@@ -78,8 +78,8 @@ int lcp_send_task_bcopy(lcp_request_t *sreq, lcr_pack_callback_t pack_cb, unsign
 	LCP_TASK_LOCK(recv_task);
 
 	/* Try to match it with a posted message */
-        rreq = lcp_match_prqueue(recv_task->prqs,
-                                 sreq->send.tag.comm,
+        rreq = lcp_match_prqueue(recv_task->tcct[mngr->id]->tag.prqs, 
+                                 sreq->send.tag.comm, 
                                  sreq->send.tag.tag,
                                  sreq->send.tag.src_tid);
 
@@ -91,7 +91,7 @@ int lcp_send_task_bcopy(lcp_request_t *sreq, lcr_pack_callback_t pack_cb, unsign
                                       sreq->send.length, sreq->seqn, sreq);
 
 		// add the request to the unexpected messages
-                lcp_append_umqueue(recv_task->umqs, &ctnr->elem,
+                lcp_append_umqueue(recv_task->tcct[mngr->id]->tag.umqs, &ctnr->elem, 
                                    sreq->send.tag.comm);
 
 		LCP_TASK_UNLOCK(recv_task);
@@ -117,7 +117,7 @@ int lcp_send_task_zcopy(lcp_request_t *sreq, lcp_task_completion_t *comp)
         lcp_request_t *rreq;
         lcp_task_h recv_task = NULL;
 
-        recv_task = lcp_manager_task_get(mngr, sreq->send.tag.dest_tid);
+        recv_task = lcp_context_task_get(mngr->ctx, sreq->send.tag.dest_tid);
         if (recv_task == NULL) {
                 mpc_common_errorpoint_fmt("LCP: could not find task with tid=%d",
                                           sreq->send.tag.dest_tid);
@@ -129,8 +129,8 @@ int lcp_send_task_zcopy(lcp_request_t *sreq, lcp_task_completion_t *comp)
 	LCP_TASK_LOCK(recv_task);
 
 	/* Try to match it with a posted message */
-        rreq = lcp_match_prqueue(recv_task->prqs,
-                                 sreq->send.tag.comm,
+        rreq = lcp_match_prqueue(recv_task->tcct[mngr->id]->tag.prqs, 
+                                 sreq->send.tag.comm, 
                                  sreq->send.tag.tag,
                                  sreq->send.tag.src_tid);
 
@@ -143,7 +143,7 @@ int lcp_send_task_zcopy(lcp_request_t *sreq, lcp_task_completion_t *comp)
 
                 comp->ctnr.flags = LCP_RECV_CONTAINER_UNEXP_TASK_TAG_ZCOPY;
 		// add the request to the unexpected messages
-                lcp_append_umqueue(recv_task->umqs, &comp->ctnr.elem,
+                lcp_append_umqueue(recv_task->tcct[mngr->id]->tag.umqs, &comp->ctnr.elem, 
                                    sreq->send.tag.comm);
 
 		LCP_TASK_UNLOCK(recv_task);
@@ -159,11 +159,11 @@ err:
 	return rc;
 }
 
-int lcp_am_set_handler_callback(lcp_task_h task, uint8_t am_id,
+int lcp_am_set_handler_callback(lcp_manager_h mngr, lcp_task_h task, uint8_t am_id,
                                 void *user_arg, lcp_am_callback_t cb,
                                 unsigned flags)
 {
-        lcp_am_user_handler_t *user_handler = &task->am[am_id];
+        lcp_am_user_handler_t *user_handler = &task->tcct[mngr->id]->am.handlers[am_id];
 
         user_handler->cb       = cb;
         user_handler->user_arg = user_arg;
@@ -174,13 +174,12 @@ int lcp_am_set_handler_callback(lcp_task_h task, uint8_t am_id,
 
 
 
-int lcp_task_create(lcp_manager_h mngr, int tid, lcp_task_h *task_p)
+int lcp_task_create(lcp_context_h ctx, int tid, lcp_task_h *task_p)
 {
-        int i;
         int rc = LCP_SUCCESS;
         lcp_task_h task;
 
-        assert(mngr); assert(tid >= 0);
+        assert(ctx); assert(tid >= 0);
 
         //NOTE: In current MPC configuration, a task cannot be already
         //      created since done by init task func in comm.c
@@ -191,28 +190,23 @@ int lcp_task_create(lcp_manager_h mngr, int tid, lcp_task_h *task_p)
                 rc = LCP_ERROR;
                 goto err;
         }
+        memset(task, 0, sizeof(struct lcp_task));
 
         /* Set task unique identifier */
         task->tid = tid;
-        task->mngr = mngr;
+        task->ctx = ctx;
 
-        task->num_queues = UINT16_MAX + 1;
-        task->umqs = sctk_malloc(task->num_queues * sizeof(mpc_queue_head_t));
-        if (task->umqs == NULL) {
-                rc = LCP_ERROR;
+        /* Allocate table of communication context. */
+        task->tcct = sctk_malloc(ctx->config.max_num_managers * 
+                                 sizeof(lcp_task_comm_context_t *));
+        if (task->tcct == NULL) {
+                mpc_common_debug_error("LCP TASK: could not allocated task "
+                                       "communication context table.");
+                rc = MPC_LOWCOMM_ERROR;
                 goto err;
         }
-
-        task->prqs = sctk_malloc(task->num_queues * sizeof(mpc_queue_head_t));
-        if (task->prqs == NULL) {
-                rc = LCP_ERROR;
-                goto err;
-        }
-
-        for (i = 0; i < task->num_queues; i++) {
-                mpc_queue_init_head(&task->umqs[i]);
-                mpc_queue_init_head(&task->prqs[i]);
-        }
+        memset(task->tcct, 0, ctx->config.max_num_managers * 
+               sizeof(lcp_task_comm_context_t *));
 
         /* Init task lock used for matching lists */
 	mpc_common_spinlock_init(&task->task_lock, 0);
@@ -252,22 +246,84 @@ int lcp_task_create(lcp_manager_h mngr, int tid, lcp_task_h *task_p)
                 goto err;
         }
 
-        /* Init table of user AM callbacks */
-        task->am = sctk_malloc(LCP_AM_ID_USER_MAX * sizeof(lcp_am_user_handler_t));
-        if (task->am == NULL) {
-                mpc_common_debug_error("LCP CTX: Could not allocated user AM handlers");
-                rc = LCP_ERROR;
-                goto err;
-        }
-        memset(task->am, 0, LCP_AM_ID_USER_MAX * sizeof(lcp_am_user_handler_t));
-
         /* Compute task index used in */
-        mngr->tasks[tid] = task;
+        ctx->tasks[tid] = task;
 
         *task_p = task;
         mpc_common_debug_info("LCP: created task tid=%d", tid);
 err:
         return rc;
+}
+
+int lcp_task_associate(lcp_task_h task, lcp_manager_h mngr)
+{
+        int rc = MPC_LOWCOMM_SUCCESS;
+        int i;
+        lcp_task_comm_context_t *tcc;
+
+        assert(mngr != NULL);
+
+        if (task->tcct[mngr->id] != NULL) {
+                mpc_common_debug_warning("LCP TASK: manager already associated. "
+                                         "mngr id=%d", mngr->id);
+                return rc;
+        }
+
+        tcc = sctk_malloc(sizeof(lcp_task_comm_context_t));
+
+        if (mngr->flags & LCP_MANAGER_TSC_MODEL) {
+                tcc->tag.num_queues = UINT16_MAX + 1;
+                tcc->tag.umqs = sctk_malloc(tcc->tag.num_queues * sizeof(mpc_queue_head_t));
+                if (tcc->tag.umqs == NULL) {
+                        rc = LCP_ERROR;
+                        goto err;
+                }
+
+                tcc->tag.prqs = sctk_malloc(tcc->tag.num_queues * sizeof(mpc_queue_head_t));
+                if (tcc->tag.prqs == NULL) {
+                        rc = LCP_ERROR;
+                        goto err;
+                }
+
+                for (i = 0; i < tcc->tag.num_queues; i++) {
+                        mpc_queue_init_head(&tcc->tag.umqs[i]);
+                        mpc_queue_init_head(&tcc->tag.prqs[i]);
+                }
+
+                /* Init table of user AM callbacks */
+                tcc->am.handlers = sctk_malloc(LCP_AM_ID_USER_MAX * 
+                                      sizeof(lcp_am_user_handler_t));
+                if (tcc->am.handlers == NULL) {
+                        mpc_common_debug_error("LCP TASK: Could not allocate "
+                                               "user AM handlers");
+                        rc = LCP_ERROR;
+                        goto err;
+                }
+                memset(tcc->am.handlers, 0, LCP_AM_ID_USER_MAX * 
+                       sizeof(lcp_am_user_handler_t));
+
+        }
+
+        task->num_managers++;
+        task->tcct[mngr->id] = tcc;
+
+        mpc_common_debug_info("LCP TASK: associated task. tid=%d, mngr id=%d.",
+                              task->tid, mngr->id);
+err:
+        return rc;
+}
+
+int lcp_task_dissociate(lcp_task_h task, lcp_manager_h mngr)
+{
+        sctk_free(task->tcct[mngr->id]->tag.prqs);
+        sctk_free(task->tcct[mngr->id]->tag.umqs);
+        sctk_free(task->tcct[mngr->id]->am.handlers);
+
+        sctk_free(task->tcct[mngr->id]);
+
+        task->tcct[mngr->id] = NULL;
+        
+        return MPC_LOWCOMM_SUCCESS;
 }
 
 int lcp_task_fini(lcp_task_h task) {
@@ -277,10 +333,7 @@ int lcp_task_fini(lcp_task_h task) {
         mpc_mpool_fini(task->unexp_mp);
         sctk_free(task->unexp_mp);
 
-        sctk_free(task->umqs);
-        sctk_free(task->prqs);
-
-        sctk_free(task->am);
+        //TODO: assert that all tack communication context are dissociated.
 
         sctk_free(task);
         task = NULL;

@@ -29,68 +29,59 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#ifndef LCP_TASK_H
-#define LCP_TASK_H
+#include "osc_mpi.h"
 
-#include "lcp_def.h"
-#include "lcr_def.h"
+#include "mpc_thread_accessor.h"
 
-#include "queue.h"
-#include "mpc_mempool.h"
+int osc_flush_complete(int status, void *data) {
+        mpc_lowcomm_request_t *req = (mpc_lowcomm_request_t *)data;
 
-#include <stdatomic.h>
+        if (status != MPC_LOWCOMM_SUCCESS) {
+                mpc_common_debug_error("OSC MPI: error flushing.");
+                return 1;
+        }
 
-#define LCP_TASK_LOCK(_task) \
-	mpc_common_spinlock_lock(&((_task)->task_lock))
-#define LCP_TASK_UNLOCK(_task) \
-	mpc_common_spinlock_unlock(&((_task)->task_lock))
+        req->completion_flag = 1;
+        return 0;
+}
 
-#define LCP_TASK_MAX_COMM_CONTEXT 512
+int mpc_osc_fence(int mpi_assert, mpc_win_t *win)
+{
+        UNUSED(mpi_assert);
+        int rc = MPC_SUCCESS;
+        lcp_request_param_t param;
+        lcp_task_h task;
+        mpc_lowcomm_request_t req;
+        int tid = mpc_common_get_task_rank();
 
-typedef struct lcp_am_user_handler {
-        lcp_am_callback_t cb; /* User defined callback */
-        void *user_arg; /* User data */
-        uint64_t flags;
-} lcp_am_user_handler_t;
+        /* Init lowcomm request. */
+        req = (mpc_lowcomm_request_t) {.completion_flag = 0};
 
-//FIXME: study the possibility of using a union. A priori not possible since AM
-//       and TAG are already being used together.
-typedef struct lcp_task_comm_context {
-        struct {
-                int                    num_queues; /* Number of queues. */
-                mpc_queue_head_t      *umqs; /* Unexpected Matching Queues. */
-                mpc_queue_head_t      *prqs; /* Posted Receive Queues. */
-        } tag;
-        struct {
-                lcp_am_user_handler_t *handlers; /* Table of user AM callbacks */
-        } am;
-        struct {
-                uint32_t flush_counter;
-                uint64_t outstandings;
-        } rma;
-} lcp_task_comm_context_t;
+        /* Get task. */
+        task = lcp_context_task_get(win->ctx, tid);
 
-struct lcp_task {
-        int tid; /* task identifier */
+        param = (lcp_request_param_t) {
+                .send_cb = osc_flush_complete,
+                .user_request = &req,
+                .flags = LCP_REQUEST_RMA_CALLBACK,
+        };
 
-        lcp_context_h ctx; /* global context. */
+        rc = lcp_flush_nb(win->mngr, task, &param);
 
-        atomic_uint_fast32_t num_managers;
-        lcp_task_comm_context_t **tcct; /* Task Communication Context table. */
+        if (rc == MPC_LOWCOMM_SUCCESS) {
+                req.completion_flag = 1;
+                goto barrier;
+        }
 
-        mpc_common_spinlock_t task_lock;
-        //TODO: investigate the bug when memory pools are not allocated
-        //      dynamically with Concurrency Kit
-        mpc_mempool_t *req_mp;   /* Request memory pool */
-        mpc_mempool_t *unexp_mp; /* Unexpected memory pool */
+        while (req.completion_flag != 1) {
+                rc = lcp_progress(win->mngr);
+                if (rc != MPC_LOWCOMM_SUCCESS) {
+                        goto err;
+                }
+        }
 
-        //TODO: implement reordering.
-};
-
-/* Function for sending data between two tasks */
-int lcp_send_task_bcopy(lcp_request_t *req, lcr_pack_callback_t pack_cb,
-                        unsigned flags, lcp_task_completion_t *comp);
-int lcp_send_task_zcopy(lcp_request_t *req, lcp_task_completion_t *comp);
-int lcp_task_fini(lcp_task_h task);
-
-#endif
+barrier:
+        PMPI_Barrier(win->comm);
+err:
+        return rc;
+}

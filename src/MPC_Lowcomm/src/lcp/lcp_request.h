@@ -141,7 +141,7 @@ struct lcp_request {
 
                                 struct {
                                         int       is_get;
-                                        uint64_t  remote_addr;
+                                        uint64_t  remote_disp;
                                         lcp_mem_h rkey;
                                 } rma;
 
@@ -154,7 +154,7 @@ struct lcp_request {
                                 } ato;
 
                                 struct {
-                                        int flush;
+                                        uint64_t flush;
                                 } flush;
 			};
 
@@ -310,7 +310,7 @@ struct lcp_request {
 
 #define LCP_REQUEST_INIT_RMA_PUT(_req, _mngr, _task, _length, \
                                  _ep, _buf, _seqn, _msg_id, _dt, \
-                                 _rkey, _remote_addr) \
+                                 _rkey, _remote_disp) \
 { \
 	(_req)->msg_id               = _msg_id;                                 \
 	(_req)->seqn                 = _seqn;                                   \
@@ -323,7 +323,7 @@ struct lcp_request {
 	(_req)->send.length          = _length;                                 \
 	(_req)->send.rma.is_get      = 0;                                 \
 	(_req)->send.rma.rkey        = _rkey;                                 \
-	(_req)->send.rma.remote_addr = _remote_addr;                                 \
+	(_req)->send.rma.remote_disp = _remote_disp;                                 \
 	\
 	(_req)->state.remaining      = _length;                                 \
 	(_req)->state.offset         = 0;                                       \
@@ -331,7 +331,7 @@ struct lcp_request {
 
 #define LCP_REQUEST_INIT_RMA_GET(_req, _mngr, _task, _length, \
                                  _ep, _buf, _seqn, _msg_id, _dt, \
-                                 _rkey, _remote_addr) \
+                                 _rkey, _remote_disp) \
 { \
 	(_req)->msg_id               = _msg_id;                                 \
 	(_req)->seqn                 = _seqn;                                   \
@@ -344,7 +344,7 @@ struct lcp_request {
 	(_req)->send.length          = _length;                                 \
 	(_req)->send.rma.is_get      = 1;                                 \
 	(_req)->send.rma.rkey        = _rkey;                                 \
-	(_req)->send.rma.remote_addr = _remote_addr;                                 \
+	(_req)->send.rma.remote_disp = _remote_disp;                                 \
 	\
 	(_req)->state.remaining      = _length;                                 \
 	(_req)->state.offset         = 0;                                       \

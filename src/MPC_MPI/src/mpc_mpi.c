@@ -66,6 +66,7 @@
 #include "mpc_lowcomm_workshare.h"
 
 #include "mpi_partitioned.h"
+#include "osc_mpi.h"
 
 /*******************
 * FORTRAN SUPPORT *
@@ -15732,7 +15733,6 @@ int PMPI_Win_call_errhandler(MPI_Win win, int errorcode)
 *************************/
 
 #include "mpi_rma.h"
-#include "win/win.h"
 
 /* MPI Info storage in WIN                                              */
 
@@ -15870,8 +15870,11 @@ int PMPI_Put(const void *origin_addr, int origin_count,
              MPI_Aint target_disp, int target_count,
              MPI_Datatype target_datatype, MPI_Win win)
 {
-	return mpc_MPI_Put(origin_addr, origin_count, origin_datatype, target_rank,
-	                   target_disp, target_count, target_datatype, win);
+        return mpc_osc_put(origin_addr, origin_count, origin_datatype, 
+                           target_rank, target_disp, target_count, 
+                           target_datatype, win);
+//	return mpc_MPI_Put(origin_addr, origin_count, origin_datatype, target_rank,
+//	                   target_disp, target_count, target_datatype, win);
 }
 
 int PMPI_Rput(const void *origin_addr, int origin_count,
@@ -15895,7 +15898,8 @@ int PMPI_Rget(void *origin_addr, int origin_count, MPI_Datatype origin_datatype,
 
 int PMPI_Win_fence(int assert, MPI_Win win)
 {
-	return mpc_MPI_Win_fence(assert, win);
+        return mpc_osc_fence(assert, win);
+	//return mpc_MPI_Win_fence(assert, win);
 }
 
 /* Active target sync */

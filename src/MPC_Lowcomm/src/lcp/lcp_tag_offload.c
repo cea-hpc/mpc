@@ -251,15 +251,17 @@ int lcp_rndv_offload_reg_send_buffer(lcp_request_t *rndv_req)
                 }
 
                 /* Get source address */
-                void *start = req->datatype & LCP_DATATYPE_CONTIGUOUS ?
+                const void *start = req->datatype & LCP_DATATYPE_CONTIGUOUS ?
                         req->send.buffer : req->state.pack_buf;
 
                 //FIXME: we use the tag_context of the rndv request but the local
                 //       memory handle of the super request...
                 req->state.lmem->bm = req->send.ep->conn_map;
                 LCP_OFFLOAD_SET_MUID(muid, req->send.tag.src_tid, req->tm.mid);
+                //FIXME: modify lcp_mem_post_from_map signature to use const
+                //       start
                 rc = lcp_mem_post_from_map(req->mngr, req->state.lmem, req->state.lmem->bm, 
-                                           start, req->send.length, (lcr_tag_t)muid,
+                                           (void *)start, req->send.length, (lcr_tag_t)muid,
                                            0, &(rndv_req->send.t_ctx));
         }
 err:

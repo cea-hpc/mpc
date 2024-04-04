@@ -37,6 +37,7 @@
 
 #include <mpc_common_datastructure.h>
 
+#include <stdatomic.h>
 #include <opa_primitives.h>
 #include <list.h>
 #include <queue.h>
@@ -77,16 +78,18 @@ typedef struct lcp_ep_ctx
 struct lcp_manager {
         lcp_context_h         ctx;
         unsigned              flags;
+
+        int                   id;  /* Manager identifier. */
         
 	int                   num_eps;       /* number of endpoints created */
 	struct mpc_common_hashtable eps; /* Hash table of endpoints for other sets */
 
 	OPA_int_t             muid;          /* matching unique identifier */
-	lcp_pending_table_t * match_ht;      /* ht of matching request */
+	lcp_pending_table_t  *match_ht;      /* ht of matching request */
 
 	mpc_common_spinlock_t mngr_lock;      /* Manager lock */
 
-	lcp_task_h *          tasks;         /* LCP tasks (per thread data) */
+	lcp_task_h           *tasks;         /* LCP tasks (per thread data) */
         int                   num_tasks;     /* Number of tasks */
 
 	mpc_queue_head_t      pending_queue; /* Queue of pending requests to be sent */
@@ -94,11 +97,14 @@ struct lcp_manager {
         mpc_list_elem_t       progress_head; /* List of interface registered for progress */
 
         struct lcp_pinning_mmu *mmu;
-        mpc_list_elem_t       memory_list;
 
         int                   num_ifaces;
         sctk_rail_info_t    **ifaces;  /* Table of manager interfaces. */
         int                   priority_iface;
+
+        uint64_t              flush_count;
+        uint64_t              flush_completed;
+        mpc_queue_head_t      flush_queue;
 };
 
 #endif 

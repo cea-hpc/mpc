@@ -45,6 +45,8 @@
 #include "lowcomm_config.h"
 
 #include "lcp.h"
+#include "lcp_task.h"
+
 #include "lcr_component.h"
 #include "lcr_def.h"
 
@@ -280,6 +282,8 @@ static int _lcp_context_load_ctx_config(lcp_context_h ctx, lcp_context_param_t *
 
         ctx->config.multirail_enabled    = config->multirail_enabled;
 	ctx->config.rndv_mode            = (lcp_rndv_mode_t)config->rndv_mode;
+        ctx->config.max_num_managers     = 128; //FIXME: should be added to
+                                                //       lowcomm_config.
         ctx->process_uid                 = param->process_uid;
 
         /* Load the rail configurations from CLI. */
@@ -427,8 +431,8 @@ static int _lcp_context_load_ctx_config(lcp_context_h ctx, lcp_context_param_t *
         /* At that point, context is configured with the priority ordered list
          * of rail configs and components that will be used during run. */
 err_free:
-        if (rail_configs)      sctk_free(rail_configs);
-        if (components)       sctk_free(components);
+        if (rail_configs) sctk_free(rail_configs);
+        if (components)   sctk_free(components);
 
         return rc;
 }
@@ -537,6 +541,42 @@ err_free:
         return rc;
 }
 
+int _lcp_context_structures_init(lcp_context_h ctx)
+{
+        int rc = MPC_LOWCOMM_SUCCESS;
+
+        ctx->num_managers = 0;
+
+        /* Preallocate a table of manager handles. */
+        //NOTE: Upon manager creation, see lcp_manager_create, a handle will be
+        //      atomically retrieved by incrementing the num_managers.
+        ctx->mngrt = sctk_malloc(ctx->config.max_num_managers * 
+                                 sizeof(lcp_manager_h));
+        if (ctx-> mngrt == NULL) {
+                mpc_common_debug_error("LCP CTX: could not allocated "
+                                       "manager table.");
+                rc = MPC_LOWCOMM_ERROR;
+                goto err;
+        }
+
+        /* Init hash table of tasks */
+	ctx->tasks = sctk_malloc(ctx->num_tasks * sizeof(lcp_task_h));
+	if (ctx->tasks == NULL) {
+		mpc_common_debug_error("LCP CTX: Could not allocate tasks table.");
+		rc = MPC_LOWCOMM_ERROR;
+                goto err;
+	}
+        //NOTE: to release tasks, lcp_context_fini relies on the fact that all entries 
+        //      are memset to NULL. 
+        memset(ctx->tasks, 0, ctx->num_tasks * sizeof(lcp_task_h));
+
+        return rc;
+err:
+        if (ctx->mngrt) sctk_free(ctx->mngrt);
+
+        return rc;
+}
+
 int lcp_context_create(lcp_context_h *ctx_p, lcp_context_param_t *param)
 {
 	int rc = MPC_LOWCOMM_SUCCESS;
@@ -548,6 +588,31 @@ int lcp_context_create(lcp_context_h *ctx_p, lcp_context_param_t *param)
                 return MPC_LOWCOMM_SUCCESS;
         }
 
+        /* Parameter check. */
+        //FIXME: number of tasks is currently number of MPI ranks. This is
+        //       because the number of local tasks with
+        //       mpc_common_get_local_task_count() is not set yet. There might
+        //       be another way.
+        if ( (param->field_mask & LCP_MANAGER_NUM_TASKS) && 
+             (param->num_tasks <= 0) ) {
+                mpc_common_debug_error("LCP CTX: wrong number of tasks.");
+                rc = MPC_LOWCOMM_ERROR;
+                goto err;
+        }
+
+        if (!(param->field_mask & LCP_CONTEXT_PROCESS_UID)) {
+                mpc_common_debug_error("LCP CTX: process uid not set.");
+                rc = MPC_LOWCOMM_ERROR;
+                goto err;
+        }
+
+        //FIXME: test if param is valid
+        if (!(param->field_mask & LCP_CONTEXT_DATATYPE_OPS)) {
+                mpc_common_debug_error("LCP CTX: datatype operations not set.");
+                rc = MPC_LOWCOMM_ERROR;
+                goto err;
+        }
+
 	/* Allocate context */
 	ctx = sctk_malloc(sizeof(struct lcp_context));
 	if (ctx == NULL) {
@@ -556,16 +621,9 @@ int lcp_context_create(lcp_context_h *ctx_p, lcp_context_param_t *param)
 	}
 	memset(ctx, 0, sizeof(struct lcp_context));
 
-        //FIXME: test if param is valid
-        if (param->flags & LCP_CONTEXT_DATATYPE_OPS) {
-                ctx->dt_ops = param->dt_ops;
-        }
-
-        if (!(param->flags & LCP_CONTEXT_PROCESS_UID)) {
-                mpc_common_debug_error("LCP: process uid not set");
-                rc = MPC_LOWCOMM_ERROR;
-                goto out_free_ctx;
-        }
+        ctx->dt_ops      = param->dt_ops;
+        ctx->process_uid = param->process_uid;
+        ctx->num_tasks   = param->num_tasks;
 
         rc = _lcp_context_load_ctx_config(ctx, param);
         if (rc != MPC_LOWCOMM_SUCCESS) {
@@ -573,6 +631,11 @@ int lcp_context_create(lcp_context_h *ctx_p, lcp_context_param_t *param)
         }
 
         rc = _lcp_context_devices_load_and_filter(ctx);
+        if (rc != MPC_LOWCOMM_SUCCESS) {
+                goto out_free_ctx;
+        }
+
+        rc = _lcp_context_structures_init(ctx);
         if (rc != MPC_LOWCOMM_SUCCESS) {
                 goto out_free_ctx;
         }
@@ -601,7 +664,39 @@ int lcp_context_fini(lcp_context_h ctx)
 	sctk_free(ctx->resources);
         sctk_free(ctx->progress_counter);
 
+        /* Free task table */
+        for (i = 0; i < ctx->num_tasks; i++) {
+                if (ctx->tasks[i] != NULL) {
+                        lcp_task_fini(ctx->tasks[i]);
+                }
+        }
+        sctk_free(ctx->tasks);
+
 	sctk_free(ctx);
 
 	return MPC_LOWCOMM_SUCCESS;
+}
+
+/* Returns the manager identifier. */
+int lcp_context_register(lcp_context_h ctx, lcp_manager_h mngr) 
+{
+        int i = 0;
+        LCP_CONTEXT_LOCK(ctx);
+
+        /* Get first available slot in manager table. */
+        while (ctx->mngrt[i] != NULL) i++;
+
+        ctx->num_managers++;
+        ctx->mngrt[i] = mngr;
+
+        LCP_CONTEXT_UNLOCK(ctx);
+
+        return i;
+}
+
+void lcp_context_unregister(lcp_context_h ctx, int manager_id) 
+{
+        LCP_CONTEXT_LOCK(ctx);
+        ctx->mngrt[manager_id] = NULL;
+        LCP_CONTEXT_UNLOCK(ctx);
 }

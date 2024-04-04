@@ -79,6 +79,7 @@ static int _lcp_manager_register_iface_attrs(lcp_manager_h mngr)
                 iface = mngr->ifaces[i];
 
                 /* Register interfaces that need progression and am handlers. */
+                //FIXME: modularity. Remove direct access to rail structure.
                 if (iface->iface_progress != NULL) {
                         mpc_list_push_head(&mngr->progress_head, &iface->progress);
                 }
@@ -128,8 +129,6 @@ static int _lcp_manager_init_structures(lcp_manager_h mngr)
                 goto err;
         }
 
-        mpc_list_init_head(&mngr->memory_list);
-
         /* Initialize interfaces. */
         mngr->ifaces = sctk_malloc(mngr->ctx->num_resources * sizeof(sctk_rail_info_t *));
         if (mngr->ifaces == NULL) {
@@ -139,6 +138,7 @@ static int _lcp_manager_init_structures(lcp_manager_h mngr)
         }
         mngr->num_ifaces = mngr->ctx->num_resources;
 
+        atomic_store(&mngr->flush_count, 0);
 err:
         return rc;
 }
@@ -173,6 +173,13 @@ static int _lcp_manager_open_interfaces(lcp_manager_h mngr)
 	rc = MPC_LOWCOMM_SUCCESS;
 err:
 	return rc;
+}
+
+static inline int _lcp_manager_get_next_id(lcp_context_h ctx)
+{
+        int i = 0;
+        while (ctx->mngrt[i] != NULL) i++;
+        return i;
 }
 
 int lcp_manager_create(lcp_context_h ctx, 
@@ -230,6 +237,9 @@ int lcp_manager_create(lcp_context_h ctx,
         mngr->num_eps   = params->estimated_eps;
         mngr->flags     = params->flags;
 
+        /* Register manager on context. */
+        mngr->id = lcp_context_register(ctx, mngr);
+
         rc = _lcp_manager_init_structures(mngr);
         if (rc != MPC_LOWCOMM_SUCCESS) {
                 goto err;
@@ -244,7 +254,7 @@ int lcp_manager_create(lcp_context_h ctx,
         if (rc != MPC_LOWCOMM_SUCCESS) {
                 goto err;
         }
-        
+
         *mngr_p = mngr;
 
 err:
@@ -285,6 +295,9 @@ int lcp_manager_fini(lcp_manager_h mngr)
                 }
         }
         sctk_free(mngr->ifaces);
+
+        /* Remove manager from context table. */
+        lcp_context_unregister(mngr->ctx, mngr->id);
 
         sctk_free(mngr);
 

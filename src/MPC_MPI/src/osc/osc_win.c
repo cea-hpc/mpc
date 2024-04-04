@@ -20,12 +20,13 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#include "win.h"
+#include "osc_mpi.h"
 
 #include <assert.h>
 
 #include "mpi_conf.h"
 #include <sctk_alloc.h>
+#include <communicator.h> //FIXME: is this good include?
 
 static int _win_setup(mpc_win_t *win, void **base, size_t size,
                       int disp_unit, mpc_lowcomm_communicator_t comm,
@@ -43,33 +44,11 @@ static int _win_setup(mpc_win_t *win, void **base, size_t size,
         int total_rkey_lengths;
         char *rkeys_buf;
 
-        int comm_size = mpc_lowcomm_communicator_size(comm);
-        int comm_rank = mpc_lowcomm_communicator_rank(comm);
-
         if (flavor == MPI_WIN_FLAVOR_SHARED) {
                 rc = -1;
                 goto err;
         }
 
-        /* Get lcp context. */
-        rc = lcp_context_create(&win->ctx, NULL);
-        if (rc != MPC_LOWCOMM_SUCCESS) {
-                goto err;
-        }
-
-        lcp_manager_param_t mngr_param = {
-                .estimated_eps = comm_size,
-                .num_tasks     = comm_size,
-                .flags         = LCP_MANAGER_OSC_MODEL,
-                .field_mask    = LCP_MANAGER_ESTIMATED_EPS |
-                        LCP_MANAGER_NUM_TASKS              |
-                        LCP_MANAGER_COMM_MODEL,
-        };
-        rc = lcp_manager_create(win->ctx, &win->mngr, &mngr_param);
-        if (rc != MPC_LOWCOMM_SUCCESS) {
-                goto err;
-        }
-        
         /* Share displacement units. */
         values[0] = disp_unit;
         values[1] = -disp_unit;
@@ -80,7 +59,7 @@ static int _win_setup(mpc_win_t *win, void **base, size_t size,
                 win->disp_unit = disp_unit;
         } else {
                 win->disp_unit = -1;
-                win->disp_units = sctk_malloc(comm_size * sizeof(int));
+                win->disp_units = sctk_malloc(win->comm_size * sizeof(int));
                 if (win->disp_units == NULL) {
                         mpc_common_debug_error("WIN: could not allocated displacement "
                                                "table.");
@@ -88,7 +67,7 @@ static int _win_setup(mpc_win_t *win, void **base, size_t size,
                         goto err;
                 }
 
-                win->disp_units[comm_rank] = disp_unit;
+                win->disp_units[win->comm_rank] = disp_unit;
 
                 PMPI_Allgather(&disp_unit, 1, MPI_INT, 
                                win->disp_units, 1, MPI_INT,
@@ -140,7 +119,7 @@ static int _win_setup(mpc_win_t *win, void **base, size_t size,
                 goto err;
         }
 
-        win->lkey = w_mem;
+        win->lkey_data = w_mem;
 
         /* Exchange the memory key with every other process. */
         rc = lcp_mem_pack(win->mngr, w_mem, &key_buf, &key_len);
@@ -149,8 +128,8 @@ static int _win_setup(mpc_win_t *win, void **base, size_t size,
         }
 
         /* First send size of local key to all others. */
-        rkey_lengths = sctk_malloc(comm_size * sizeof(int));
-        disp_rkeys   = sctk_malloc(comm_size * sizeof(int));
+        rkey_lengths = sctk_malloc(win->comm_size * sizeof(int));
+        disp_rkeys   = sctk_malloc(win->comm_size * sizeof(int));
         if (rkey_lengths == NULL && disp_rkeys == NULL) {
                 mpc_common_debug_error("WIN: could not allocate remote keys "
                                        "size table");
@@ -160,7 +139,7 @@ static int _win_setup(mpc_win_t *win, void **base, size_t size,
         PMPI_Allgather(&key_len, 1, MPI_INT, rkey_lengths, 1, MPI_INT, comm);
 
         total_rkey_lengths = 0;
-        for (int i = 0; i < comm_size; i++) {
+        for (int i = 0; i < win->comm_size; i++) {
                 disp_rkeys[i]       = total_rkey_lengths; 
                 total_rkey_lengths += rkey_lengths[i];
         }
@@ -175,14 +154,14 @@ static int _win_setup(mpc_win_t *win, void **base, size_t size,
                         rkey_lengths, disp_rkeys, MPI_BYTE, comm);
 
         
-        win->rkeys = sctk_malloc(comm_size * sizeof(lcp_mem_h));
-        if (win->rkeys == NULL) {
+        win->rkeys_data = sctk_malloc(win->comm_size * sizeof(lcp_mem_h));
+        if (win->rkeys_data == NULL) {
                 mpc_common_debug_error("WIN: could not allocate memory for "
                                        "remote memory keys.");
                 goto release_key;
         }
-        for (int i = 0; i < comm_size; i++) {
-                lcp_mem_unpack(win->mngr, &win->rkeys[i], 
+        for (int i = 0; i < win->comm_size; i++) {
+                lcp_mem_unpack(win->mngr, &win->rkeys_data[i], 
                                (void *)(rkeys_buf + disp_rkeys[i]),
                                rkey_lengths[i]);
         }
@@ -222,7 +201,10 @@ int mpc_win_create(void *base, size_t size,
                    mpc_win_t **win_p)
 {
         int rc = MPC_LOWCOMM_SUCCESS;
+        static mpc_common_spinlock_t win_lock = MPC_COMMON_SPINLOCK_INITIALIZER;
         mpc_win_t *win;
+        lcp_task_h task;
+        int tid;
 
         /* Allocate the window and initialize fields. */
         win = sctk_malloc(sizeof(mpc_win_t));
@@ -230,6 +212,32 @@ int mpc_win_create(void *base, size_t size,
                 rc = -1;
                 goto err;
         }
+        memset(win, 0, sizeof(mpc_win_t));
+
+        win->comm_size = mpc_lowcomm_communicator_size(comm);
+        win->ctx       = comm->ctx;
+
+        tid = mpc_common_get_task_rank();
+        task = lcp_context_task_get(win->ctx, tid);
+
+        mpc_common_spinlock_lock(&win_lock);
+        if (win->mngr == NULL) {
+                lcp_manager_param_t mngr_param = {
+                        .estimated_eps = win->comm_size,
+                        .num_tasks     = win->comm_size,
+                        .flags         = LCP_MANAGER_OSC_MODEL,
+                        .field_mask    = LCP_MANAGER_ESTIMATED_EPS |
+                                LCP_MANAGER_NUM_TASKS              |
+                                LCP_MANAGER_COMM_MODEL,
+                };
+                rc = lcp_manager_create(win->ctx, &win->mngr, &mngr_param);
+                if (rc != MPC_LOWCOMM_SUCCESS) {
+                        goto err;
+                }
+        }
+        mpc_common_spinlock_unlock(&win_lock);
+
+        rc = lcp_task_associate(task, win->mngr);
 
         win->flavor = MPI_WIN_FLAVOR_CREATE;
         win->model  = MPI_WIN_SEPARATE;
@@ -266,13 +274,13 @@ int mpc_win_free(mpc_win_t *win)
         }
 
         /* Deregister local key */
-        rc = lcp_mem_deregister(win->mngr, win->lkey);
+        rc = lcp_mem_deregister(win->mngr, win->lkey_data);
         if (rc != LCP_SUCCESS) {
                 mpc_common_debug_error("WIN: could not deregister local memory.");
                 goto err;
         }
 
-        sctk_free(win->rkeys);
+        sctk_free(win->rkeys_data);
 
 err:
         return rc;

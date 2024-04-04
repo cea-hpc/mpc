@@ -32,7 +32,7 @@
 #ifndef LCP_TAG_MATCH_H
 #define LCP_TAG_MATCH_H
 
-#include "lcp_request.h"
+#include "lcp_request.h" //FIXME: find a way to remove this dependency.
 #include "lcp_header.h"
 
 /* NOLINTBEGIN(clang-diagnostic-unused-function) */

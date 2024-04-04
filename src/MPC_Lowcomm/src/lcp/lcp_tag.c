@@ -240,7 +240,7 @@ static void lcp_tag_task_zcopy_complete(lcp_task_completion_t *self) {
         mreq->recv.tag.tag      = sreq->send.tag.tag;
         mreq->recv.send_length  = sreq->send.length;
 
-        lcp_recv_eager_tag_data(mreq, sreq->send.buffer);
+        lcp_recv_eager_tag_data(mreq, (void *)sreq->send.buffer);
 
         /* Since recv request complete, set send remote complete */
         sreq->flags |= LCP_REQUEST_REMOTE_COMPLETED;
@@ -259,7 +259,7 @@ static void lcp_tag_task_zcopy_complete(lcp_task_completion_t *self) {
 //      the send request can only be completed if matched has happened.
 int lcp_send_task_tag_zcopy(lcp_request_t *req)
 {
-        int rc = LCP_SUCCESS;
+        int rc = MPC_LOWCOMM_SUCCESS;
 
         mpc_common_debug_info("LCP TAG: send am task tag zcopy comm=%d, src=%d, "
                               "dest=%d, tag=%d, length=%d, seqn=%d, req=%p", 
@@ -287,7 +287,7 @@ int lcp_send_task_tag_zcopy(lcp_request_t *req)
         req->msg_id = (uint64_t)req;
 
         rc = lcp_send_task_zcopy(req, &req->state.tcomp);
-        if (rc != LCP_SUCCESS) {
+        if (rc != MPC_LOWCOMM_SUCCESS) {
                 mpc_common_debug_error("LCP TAG: could not send task zcopy request");
                 goto err;
         }
@@ -304,7 +304,7 @@ int lcp_send_task_tag_bcopy(lcp_request_t *req)
                               req->send.tag.dest_tid, req->send.tag.tag, 
                               req->send.length, req->seqn, req);
 
-        int rc          = LCP_SUCCESS;
+        int rc          = MPC_LOWCOMM_SUCCESS;
         unsigned flags  = 0;
         lcr_pack_callback_t pack_cb;
 
@@ -327,7 +327,7 @@ int lcp_send_task_tag_bcopy(lcp_request_t *req)
         }
 
         rc = lcp_send_task_bcopy(req, pack_cb, flags, &req->state.tcomp);
-        if (rc != LCP_SUCCESS) {
+        if (rc != MPC_LOWCOMM_SUCCESS) {
                 mpc_common_debug_error("LCP TAG: could not send task bcopy request");
                 goto err;
         }
@@ -343,14 +343,14 @@ err:
  * @brief Tag active message bcopy eager send function
  *
  * @param req request
- * @return int LCP_SUCCESS in case of success
+ * @return int MPC_LOWCOMM_SUCCESS in case of success
  */
 int lcp_send_eager_tag_bcopy(lcp_request_t *req)
 {
         uint8_t am_id;
         lcr_pack_callback_t pack_cb;
         ssize_t payload;
-	int rc = LCP_SUCCESS;
+	int rc = MPC_LOWCOMM_SUCCESS;
 
         mpc_common_debug_info("LCP TAG: send eager tag bcopy comm=%d, src=%d, "
                               "dest=%d, length=%d, tag=%d, seqn=%d, buf=%p, req=%p.", 
@@ -377,7 +377,7 @@ int lcp_send_eager_tag_bcopy(lcp_request_t *req)
 
         payload = lcp_send_eager_bcopy(req, pack_cb, am_id);
         if (payload < 0) {
-                rc = LCP_ERROR;
+                rc = MPC_LOWCOMM_ERROR;
                 goto err;
         }
 
@@ -392,7 +392,7 @@ err:
  * @brief Tag active message zcopy eager send function
  *
  * @param req request
- * @return int LCP_SUCCESS in case of success
+ * @return int MPC_LOWCOMM_SUCCESS in case of success
  */
 int lcp_send_eager_tag_zcopy(lcp_request_t *req)
 {
@@ -417,7 +417,7 @@ int lcp_send_eager_tag_zcopy(lcp_request_t *req)
 
         req->flags |= LCP_REQUEST_LOCAL_COMPLETED;
 
-        iov[0].iov_base = req->send.buffer;
+        iov[0].iov_base = (void *)req->send.buffer;
         iov[0].iov_len  = req->send.length;
         iovcnt++;
 
@@ -428,7 +428,7 @@ int lcp_send_eager_tag_zcopy(lcp_request_t *req)
                 hdr_sync = hdr = sctk_malloc(sizeof(lcp_tag_sync_hdr_t));
                 if (hdr == NULL) {
                         mpc_common_debug_error("LCP TAG: could not allocate tag header.");
-                        rc = LCP_ERROR;
+                        rc = MPC_LOWCOMM_ERROR;
                         goto err;
                 }
 
@@ -450,7 +450,7 @@ int lcp_send_eager_tag_zcopy(lcp_request_t *req)
                 hdr_tag = hdr = sctk_malloc(sizeof(lcp_tag_hdr_t));
                 if (hdr == NULL) {
                         mpc_common_debug_error("LCP TAG: could not allocate tag header.");
-                        rc = LCP_ERROR;
+                        rc = MPC_LOWCOMM_ERROR;
                         goto err;
                 }
 
@@ -482,7 +482,7 @@ int lcp_send_eager_sync_ack(lcp_request_t *super, void *data)
 
         /* Get endpoint */
         rc = lcp_ep_get_or_create(super->mngr, hdr->src_uid, &ep, 0);
-        if (rc != LCP_SUCCESS) {
+        if (rc != MPC_LOWCOMM_SUCCESS) {
                 goto err;
         }
 
@@ -504,7 +504,7 @@ int lcp_send_eager_sync_ack(lcp_request_t *super, void *data)
         payload_size = lcp_send_eager_bcopy(ack, lcp_send_ack_pack,
                                             LCP_AM_ID_ACK_SYNC);
         if (payload_size < 0) {
-                rc = LCP_ERROR;
+                rc = MPC_LOWCOMM_ERROR;
                 goto err;
         }
 
@@ -517,7 +517,7 @@ err:
 
 static int lcp_send_rndv_tag_rts_progress(lcp_request_t *req)
 {
-        int rc = LCP_SUCCESS;
+        int rc = MPC_LOWCOMM_SUCCESS;
         ssize_t payload_size;
 
         mpc_common_debug("LCP TAG: send rndv ready-to-send bcopy (uses am). comm=%d, src=%d, "
@@ -529,7 +529,7 @@ static int lcp_send_rndv_tag_rts_progress(lcp_request_t *req)
         payload_size = lcp_send_eager_bcopy(req, lcp_send_tag_rndv_pack,
                                             LCP_AM_ID_RTS_TAG);
         if (payload_size < 0) {
-                rc = LCP_ERROR;
+                rc = MPC_LOWCOMM_ERROR;
         }
 
         return rc;
@@ -549,7 +549,7 @@ int lcp_send_rndv_tag_start(lcp_request_t *req)
         req->msg_id = (uint64_t)req->msg_id;
 
         rc = lcp_send_rndv_start(req);
-        if (rc != LCP_SUCCESS) {
+        if (rc != MPC_LOWCOMM_SUCCESS) {
                 goto err;
         }
 
@@ -563,7 +563,7 @@ err:
 /* ============================================== */
 int lcp_recv_eager_tag_data(lcp_request_t *req, void *data)
 {
-        int rc = LCP_SUCCESS;
+        int rc = MPC_LOWCOMM_SUCCESS;
         ssize_t unpacked_len = 0;
 
         mpc_common_debug_info("LCP TAG: recv tag data req=%p, src=%d, dest=%d, "
@@ -577,7 +577,7 @@ int lcp_recv_eager_tag_data(lcp_request_t *req, void *data)
                                            req->recv.buffer, data,
                                            req->recv.send_length);
         if (unpacked_len < 0) {
-                rc = LCP_ERROR;
+                rc = MPC_LOWCOMM_ERROR;
                 goto err;
         }
 
@@ -622,25 +622,25 @@ static int lcp_eager_tag_sync_handler(void *arg, void *data,
                                       size_t length,
                                       __UNUSED__ unsigned flags)
 {
-	int rc = LCP_SUCCESS;
+	int rc = MPC_LOWCOMM_SUCCESS;
 	lcp_manager_h mngr = arg;
 	lcp_unexp_ctnr_t *ctnr;
 	lcp_request_t *req;
 	lcp_tag_sync_hdr_t *hdr = data;
         lcp_task_h task = NULL;
 
-        task = lcp_manager_task_get(mngr, hdr->base.dest_tid);  
+        task = lcp_context_task_get(mngr->ctx, hdr->base.dest_tid);  
         if (task == NULL) {
                 mpc_common_errorpoint_fmt("LCP TAG: could not find task with tid=%d", hdr->base.dest_tid);
-                rc = LCP_ERROR;
+                rc = MPC_LOWCOMM_ERROR;
                 goto err;
         }
 
 
 	LCP_TASK_LOCK(task);
 	/* Try to match it with a posted message */
-        req = (lcp_request_t *)lcp_match_prqueue(task->prqs,
-                                                 hdr->base.comm,
+        req = (lcp_request_t *)lcp_match_prqueue(task->tcct[mngr->id]->tag.prqs,
+                                                 hdr->base.comm, 
                                                  hdr->base.tag,
                                                  hdr->base.src_tid);
 	/* if request is not matched */
@@ -649,20 +649,20 @@ static int lcp_eager_tag_sync_handler(void *arg, void *data,
                                  hdr->base.src_tid, length, hdr->base.seqn);
 		rc = lcp_request_init_unexp_ctnr(task, &ctnr, hdr, length,
                                                  LCP_RECV_CONTAINER_UNEXP_EAGER_TAG_SYNC);
-		if (rc != LCP_SUCCESS) {
+		if (rc != MPC_LOWCOMM_SUCCESS) {
 			goto err;
 		}
 		// add the request to the unexpected messages
-                lcp_append_umqueue(task->umqs, &ctnr->elem,
+                lcp_append_umqueue(task->tcct[mngr->id]->tag.umqs, &ctnr->elem, 
                                    hdr->base.comm);
 
 		LCP_TASK_UNLOCK(task);
-		return LCP_SUCCESS;
+		return MPC_LOWCOMM_SUCCESS;
 	}
 	LCP_TASK_UNLOCK(task);
 
         rc = lcp_send_eager_sync_ack(req, hdr);
-        if (rc != LCP_SUCCESS) {
+        if (rc != MPC_LOWCOMM_SUCCESS) {
                 goto err;
         }
 
@@ -682,26 +682,26 @@ static int lcp_eager_tag_handler(void *arg, void *data,
                                  size_t length,
                                  __UNUSED__ unsigned flags)
 {
-        int rc = LCP_SUCCESS;
+        int rc = MPC_LOWCOMM_SUCCESS;
         lcp_manager_h mngr = arg;
         lcp_unexp_ctnr_t *ctnr;
         lcp_request_t *req;
         lcp_tag_hdr_t *hdr = data;
         lcp_task_h task = NULL;
 
-        task = lcp_manager_task_get(mngr, hdr->dest_tid);  
+        task = lcp_context_task_get(mngr->ctx, hdr->dest_tid);  
         if (task == NULL) {
                 mpc_common_errorpoint_fmt("LCP TAG: could not find task with tid=%d", hdr->dest_tid);
 
-                rc = LCP_ERROR;
+                rc = MPC_LOWCOMM_ERROR;
                 goto err;
         }
 
 
 	LCP_TASK_LOCK(task);
 	/* Try to match it with a posted message */
-        req = lcp_match_prqueue(task->prqs,
-                                hdr->comm,
+        req = lcp_match_prqueue(task->tcct[mngr->id]->tag.prqs, 
+                                hdr->comm, 
                                 hdr->tag,
                                 hdr->src_tid);
 	/* if request is not matched */
@@ -712,15 +712,15 @@ static int lcp_eager_tag_handler(void *arg, void *data,
                                       hdr->seqn);
 		rc = lcp_request_init_unexp_ctnr(task, &ctnr, hdr, length,
                                                  LCP_RECV_CONTAINER_UNEXP_EAGER_TAG);
-		if (rc != LCP_SUCCESS) {
+		if (rc != MPC_LOWCOMM_SUCCESS) {
 			goto err;
 		}
 		// add the request to the unexpected messages
-		lcp_append_umqueue(task->umqs, &ctnr->elem,
+		lcp_append_umqueue(task->tcct[mngr->id]->tag.umqs, &ctnr->elem, 
 			       hdr->comm);
 
 		LCP_TASK_UNLOCK(task);
-		return LCP_SUCCESS;
+		return MPC_LOWCOMM_SUCCESS;
 	}
 	LCP_TASK_UNLOCK(task);
 
@@ -743,8 +743,8 @@ static int lcp_eager_tag_sync_ack_handler(void *arg, void *data,
         UNUSED(arg);
         UNUSED(length);
         UNUSED(flags);
-	int rc = LCP_SUCCESS;
-
+	int rc = MPC_LOWCOMM_SUCCESS;
+	
 	lcp_request_t *req;
 	lcp_ack_hdr_t *hdr = (lcp_ack_hdr_t *)data;
 
@@ -756,7 +756,7 @@ static int lcp_eager_tag_sync_ack_handler(void *arg, void *data,
 	if (req == NULL) {
                 mpc_common_debug_error("LCP TAG: could not find ack ctrl msg: "
                                        "msg id=%llu.", hdr->msg_id);
-			rc = LCP_ERROR;
+			rc = MPC_LOWCOMM_ERROR;
 			goto err;
 	}
 
@@ -772,23 +772,23 @@ static int lcp_rndv_tag_handler(void *arg, void *data,
                                 size_t length, unsigned flags)
 {
         UNUSED(flags);
-	int rc = LCP_SUCCESS;
+	int rc = MPC_LOWCOMM_SUCCESS;
 	lcp_manager_h mngr = arg;
 	lcp_request_t *req;
 	lcp_unexp_ctnr_t *ctnr;
 	lcp_rndv_hdr_t *hdr = data;
         lcp_task_h task = NULL;
 
-        task = lcp_manager_task_get(mngr, hdr->tag.dest_tid);
+        task = lcp_context_task_get(mngr->ctx, hdr->tag.dest_tid);
         if (task == NULL) {
                 mpc_common_errorpoint_fmt("LCP TAG: could not find task with tid=%d", hdr->tag.dest_tid);
-                rc = LCP_ERROR;
+                rc = MPC_LOWCOMM_ERROR;
                 goto err;
         }
 
         LCP_TASK_LOCK(task);
-        req = lcp_match_prqueue(task->prqs,
-                                hdr->tag.comm,
+        req = lcp_match_prqueue(task->tcct[mngr->id]->tag.prqs, 
+                                hdr->tag.comm, 
                                 hdr->tag.tag,
                                 hdr->tag.src_tid);
 	if (req == NULL) {
@@ -797,11 +797,11 @@ static int lcp_rndv_tag_handler(void *arg, void *data,
                                  hdr->tag.tag, hdr->size, hdr->tag.seqn);
 		rc = lcp_request_init_unexp_ctnr(task, &ctnr, hdr, length,
 						 LCP_RECV_CONTAINER_UNEXP_RNDV_TAG);
-		if (rc != LCP_SUCCESS) {
+		if (rc != MPC_LOWCOMM_SUCCESS) {
                         LCP_TASK_UNLOCK(task);
 			goto err;
 		}
-                lcp_append_umqueue(task->umqs, &ctnr->elem,
+                lcp_append_umqueue(task->tcct[mngr->id]->tag.umqs, &ctnr->elem, 
                                    hdr->tag.comm);
 
 		LCP_TASK_UNLOCK(task);

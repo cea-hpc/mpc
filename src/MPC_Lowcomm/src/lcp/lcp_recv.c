@@ -40,14 +40,13 @@
 
 #include "mpc_common_debug.h"
 
-int lcp_tag_recv_nb(lcp_task_h task, void *buffer, size_t count,
+int lcp_tag_recv_nb(lcp_manager_h mngr, lcp_task_h task, void *buffer, size_t count,
                     mpc_lowcomm_request_t *request,
                     lcp_request_param_t *param)
 {
 	int rc = LCP_SUCCESS;
 	lcp_unexp_ctnr_t *match;
 	lcp_request_t *req;
-	lcp_manager_h mngr = task->mngr;
         lcp_context_h ctx  = mngr->ctx;
 
 	// create a request to be matched with the received message
@@ -82,14 +81,14 @@ int lcp_tag_recv_nb(lcp_task_h task, void *buffer, size_t count,
         req->state.offloaded = 0;
 
 	LCP_TASK_LOCK(task);
-        match = lcp_match_umqueue(task->umqs,
+        match = lcp_match_umqueue(task->tcct[mngr->id]->tag.umqs,
                                   req->recv.tag.comm,
                                   req->recv.tag.tag,
                                   req->recv.tag.tmask,
                                   req->recv.tag.src_tid,
                                   req->recv.tag.smask);
 	if (match == NULL) {
-                lcp_append_prqueue(task->prqs, &req->match,
+                lcp_append_prqueue(task->tcct[mngr->id]->tag.prqs, &req->match,
                                    req->recv.tag.comm);
 
                 LCP_TASK_UNLOCK(task);

@@ -40,6 +40,8 @@
 #include <queue.h>
 #include <list.h>
 
+#include <stdatomic.h>
+
 #define LCP_CONTEXT_LOCK(_ctx) \
 	mpc_common_spinlock_lock_yield(&( (_ctx)->ctx_lock) )
 #define LCP_CONTEXT_UNLOCK(_ctx) \
@@ -71,6 +73,7 @@ typedef struct lcp_context_config
 	int             multirail_heterogeneous_enabled;
 	lcp_rndv_mode_t rndv_mode;
 	int             offload;
+        int             max_num_managers; //FIXME: to be added to the lowcomm_config
 } lcp_context_config_t;
 
 /**
@@ -80,13 +83,10 @@ typedef struct lcp_context_config
 struct lcp_context
 {
 	int                   priority_rail;
-
 	lcp_context_config_t  config;
-
 	unsigned              flags;
 
         lcr_component_h      *components;
-	struct lcr_component *cmpts;         /* available component handles */
 	unsigned              num_cmpts;     /* number of components */
 
 	lcr_device_t *        devices;       /* available device descriptors */
@@ -103,6 +103,15 @@ struct lcp_context
         int                   num_processes; /* number of processes in the run */
 
 	lcp_dt_ops_t          dt_ops;        /* pack/unpack functions */
+
+        int                   num_managers;  /* Number of active managers. */
+        lcp_manager_h        *mngrt;         /* Manager table. */
+
+	lcp_task_h *          tasks;         /* LCP tasks (per thread data) */
+        int                   num_tasks;     /* Number of tasks */
 };
+
+int lcp_context_register(lcp_context_h ctx, lcp_manager_h mngr);
+void lcp_context_unregister(lcp_context_h ctx, int manager_id);
 
 #endif

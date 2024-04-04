@@ -1,5 +1,5 @@
 /* ############################# MPC License ############################## */
-/* # Wed Nov 19 15:19:19 CET 2008                                         # */
+/* # Thu May  6 10:26:16 CEST 2021                                        # */
 /* # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          # */
 /* #                                                                      # */
 /* # IDDN.FR.001.230040.000.S.P.2007.000.10000                            # */
@@ -15,46 +15,19 @@
 /* # had knowledge of the CeCILL-C license and that you accept its        # */
 /* # terms.                                                               # */
 /* #                                                                      # */
+/* # Maintainers:                                                         # */
+/* # - CARRIBAULT Patrick patrick.carribault@cea.fr                       # */
+/* # - JAEGER Julien julien.jaeger@cea.fr                                 # */
+/* # - PERACHE Marc marc.perache@cea.fr                                   # */
+/* # - ROUSSEL Adrien adrien.roussel@cea.fr                               # */
+/* # - TABOADA Hugo hugo.taboada@cea.fr                                   # */
+/* #                                                                      # */
 /* # Authors:                                                             # */
-/* #   - MOREAU Gilles gilles.moreau@cea.fr                               # */
+/* # - CANAT Paul pcanat@paratools.fr                                     # */
+/* # - BESNARD Jean-Baptiste jbbesnard@paratools.com                      # */
+/* # - MOREAU Gilles gilles.moreau@cea.fr                                 # */
 /* #                                                                      # */
 /* ######################################################################## */
 
-#ifndef MPI_WIN_H 
-#define MPI_WIN_H 
+#include "osc_mpi.h"
 
-#include <mpc_mpi.h>
-#include <mpc_lowcomm_communicator.h> //NOTE: for lowcomm_communicator_t
-#include <lcp.h>
-
-#define MAX_WIN_NAME 64
-
-typedef struct MPI_ABI_Win {
-        mpc_lowcomm_communicator_t comm;
-        mpc_lowcomm_group_t *group;
-        MPI_Info info;
-
-        char win_name[MAX_WIN_NAME];
-
-        lcp_manager_h mngr;
-        lcp_context_h ctx;
-
-        int flavor; 
-        int model;
-        size_t size;
-        int disp_unit;
-        int *disp_units;
-
-        lcp_mem_h  lkey;
-        lcp_mem_h *rkeys;
-} mpc_win_t;
-
-
-int mpc_win_create(void *base, size_t size, 
-                   int disp_unit, MPI_Info info,
-                   mpc_lowcomm_communicator_t comm, 
-                   mpc_win_t **win_p);
-
-int mpc_win_free(mpc_win_t *win);
-
-#endif

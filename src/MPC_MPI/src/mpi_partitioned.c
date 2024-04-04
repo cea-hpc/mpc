@@ -75,7 +75,7 @@ int mpi_partitioned_complete_tag(int status, void *dest)
                 mpc_container_of(prtd, MPI_internal_request_t,
                                  partitioned);
  
-        task = lcp_manager_task_get(NULL, mpc_common_get_task_rank());
+        task = lcp_context_task_get(NULL, mpc_common_get_task_rank());
         if (task == NULL) {
                 mpc_common_debug_fatal("LCP: task %d not fount",
                                        mpc_common_get_task_rank());
@@ -152,8 +152,8 @@ int mpi_partitioned_complete_tag(int status, void *dest)
                 lcp_request_param_t param = (lcp_request_param_t) {
                         .recv_info = &mpi_req->req.recv_info,
                 };
-                rc = lcp_tag_recv_nb(task, &prtd->fin, sizeof(int),
-                                     &mpi_req->partitioned.fin_req,
+                rc = lcp_tag_recv_nb(NULL, task, &prtd->fin, sizeof(int), 
+                                     &mpi_req->partitioned.fin_req, 
                                      &param);
                 if (rc != MPC_LOWCOMM_SUCCESS) {
                         mpc_common_debug_error("MPI: partitioned request could not post recv");
@@ -219,7 +219,7 @@ int mpi_partitioned_complete_put_partition(int status, void *dest)
         MPI_internal_request_t *mpi_req = mpc_container_of(req, MPI_internal_request_t,
                                                            req);
 
-        task = lcp_manager_task_get(NULL, mpc_common_get_task_rank());
+        task = lcp_context_task_get(NULL, mpc_common_get_task_rank());
         if (task == NULL) {
                 mpc_common_debug_fatal("LCP: task %d not fount",
                                        mpc_common_get_task_rank());
@@ -421,7 +421,7 @@ int mpi_pstart(MPI_internal_request_t *req)
 
         //FIXME:
         req->is_active = 1;
-        task = lcp_manager_task_get(NULL, mpc_common_get_task_rank());
+        task = lcp_context_task_get(NULL, mpc_common_get_task_rank());
         if (task == NULL) {
                 mpc_common_debug_fatal("LCP: task %d not found",
                                        mpc_common_get_task_rank());
@@ -451,7 +451,7 @@ int mpi_pstart(MPI_internal_request_t *req)
                         .recv_info = &prtd->rkey_req.recv_info,
 
                 };
-                rc = lcp_tag_recv_nb(task, prtd->send.rkeys_buf, prtd->send.rkeys_size,
+                rc = lcp_tag_recv_nb(NULL, task, prtd->send.rkeys_buf, prtd->send.rkeys_size,
                                      &prtd->rkey_req, &param);
 
                 if (rc != LCP_SUCCESS) {
@@ -478,7 +478,7 @@ int mpi_pstart(MPI_internal_request_t *req)
                         .recv_info = &prtd->tag_req.recv_info,
 
                 };
-                rc = lcp_tag_recv_nb(task, &prtd->recv.send_partitions,
+                rc = lcp_tag_recv_nb(NULL, task, &prtd->recv.send_partitions,
                                      sizeof(int), &prtd->tag_req, &param);
 
                 if (rc != LCP_SUCCESS) {
@@ -506,7 +506,7 @@ int mpi_pready(int partition, MPI_internal_request_t *req)
         uint64_t remote_offset;
         size_t partition_length;
 
-        task = lcp_manager_task_get(NULL, mpc_common_get_task_rank());
+        task = lcp_context_task_get(NULL, mpc_common_get_task_rank());
         if (task == NULL) {
                 mpc_common_debug_fatal("LCP: task %d not fount",
                                        mpc_common_get_task_rank());

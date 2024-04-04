@@ -2878,7 +2878,7 @@ void _mpc_comm_ptp_message_recv_check(mpc_lowcomm_ptp_message_t *msg,
 		{
 			.recv_info = &msg->tail.request->recv_info,
 		};
-		lcp_tag_recv_nb(NULL, msg->tail.message.contiguous.addr,
+		lcp_tag_recv_nb(NULL, NULL, msg->tail.message.contiguous.addr,
 		                msg->body.header.msg_size, msg->tail.request, &param);
 		return;
 	}
@@ -3015,6 +3015,7 @@ void mpc_lowcomm_message_probe_any_source_class_comm(int destination, int tag,
 /********************************************************************/
 /*Message Interface                                                 */
 /********************************************************************/
+#if 0
 void mpc_lowcomm_request_init_struct(mpc_lowcomm_request_t *request,
                                      mpc_lowcomm_communicator_t comm,
                                      int request_type, int src, int dest,
@@ -3096,6 +3097,7 @@ void mpc_lowcomm_request_init_struct(mpc_lowcomm_request_t *request,
 	request->completion_flag       = MPC_LOWCOMM_MESSAGE_PENDING;
 	request->ptr_to_pin_ctx        = NULL;
 }
+#endif
 
 void mpc_lowcomm_request_init(mpc_lowcomm_request_t *request, mpc_lowcomm_communicator_t comm, int request_type)
 {
@@ -3305,6 +3307,7 @@ static int mpc_lowcomm_init_request_header(const int tag,
                                            mpc_lowcomm_request_type_t request_type,
                                            mpc_lowcomm_request_t *req)
 {
+        UNUSED(dt);
 	int is_intercomm = mpc_lowcomm_communicator_is_intercomm(comm);
 
 	mpc_lowcomm_peer_uid_t source_process = 0;
@@ -3429,7 +3432,7 @@ int _mpc_lowcomm_isend(int dest, const void *data, size_t size, int tag,
                 }
 	}
 
-	task = lcp_manager_task_get(lcp_mngr_loc, tid);
+	task = lcp_context_task_get(lcp_ctx_loc, tid);
 	if(task == NULL)
 	{
 		mpc_common_debug_fatal("LCP: Could not find task with tid %d.",
@@ -3473,7 +3476,7 @@ int mpc_lowcomm_irecv(int src, void *data, size_t size, int tag,
 	                                REQUEST_RECV, req);
 
 
-	task = lcp_manager_task_get(lcp_mngr_loc, tid);
+	task = lcp_context_task_get(lcp_ctx_loc, tid);
 	if(task == NULL)
 	{
 		mpc_common_debug_fatal("LCP: Could not find task with tid %d.",
@@ -3486,7 +3489,7 @@ int mpc_lowcomm_irecv(int src, void *data, size_t size, int tag,
 		             LCP_DATATYPE_DERIVED : LCP_DATATYPE_CONTIGUOUS,
 	};
 	
-        rc = lcp_tag_recv_nb(task, data, size, req, &param);
+        rc = lcp_tag_recv_nb(lcp_mngr_loc, task, data, size, req, &param);
         if (rc != MPC_LOWCOMM_SUCCESS) {
                 mpc_common_debug_fatal("LCP: Lowcomm irecv failed.");
         }
@@ -3644,14 +3647,14 @@ int mpc_lowcomm_iprobe_src_dest(const int world_source, const int world_destinat
 		*status = status_init;
 	}
 
-	task = lcp_manager_task_get(lcp_mngr_loc, world_destination);
+	task = lcp_context_task_get(lcp_ctx_loc, world_destination);
 	if(task == NULL)
 	{
 		mpc_common_debug_fatal("LCP: Could not find task with tid %d.",
 		                       world_destination);
 	}
 
-	rc = lcp_tag_probe_nb(task, world_source, tag,
+	rc = lcp_tag_probe_nb(lcp_mngr_loc, task, world_source, tag,
 	                      comm_id, &recv_info);
 
 	/* Progress communications to check if event has been raised. */
@@ -4011,12 +4014,18 @@ static void __lowcomm_init_per_task()
 
 
 		lcp_task_h task;
-		int rc = lcp_task_create(lcp_mngr_loc, task_rank, &task);
+		int rc = lcp_task_create(lcp_ctx_loc, task_rank, &task);
 		if (rc != MPC_LOWCOMM_SUCCESS)
 		{
 			mpc_common_debug_fatal("LCP: could not create task "
 			                       "tid=%d", task_rank);
 		}
+
+                rc = lcp_task_associate(task, lcp_mngr_loc);
+                if (rc != MPC_LOWCOMM_SUCCESS) {
+                        mpc_common_debug_fatal("LCP: could not associate "
+                                               "task. tid=%d.", task_rank);
+                }
 
 		mpc_lowcomm_terminaison_barrier();
 
@@ -4037,6 +4046,10 @@ static void __lowcomm_release_per_task()
 		mpc_lowcomm_terminaison_barrier();
 		_mpc_lowcomm_release_psets();
 		mpc_lowcomm_release_per_task(task_rank);
+
+                lcp_task_h task = lcp_context_task_get(lcp_ctx_loc, task_rank);
+                lcp_task_dissociate(task, lcp_mngr_loc);
+
 		mpc_common_nodebug("mpc_lowcomm_terminaison_barrier done");
 		_mpc_lowcomm_monitor_teardown_per_task();
 	}
@@ -4095,13 +4108,15 @@ static void __initialize_drivers()
         //       mpc_common_get_local_task_count() is not setup yet. 
 	lcp_context_param_t ctx_params =
 	{
-		.flags          = LCP_CONTEXT_DATATYPE_OPS  |
-		                  LCP_CONTEXT_PROCESS_UID,
+                .field_mask     = LCP_CONTEXT_DATATYPE_OPS  |
+                        LCP_CONTEXT_NUM_TASKS               |
+                        LCP_CONTEXT_PROCESS_UID,
 		.dt_ops         =
 		{
 			.pack   = mpc_lowcomm_request_pack,
 			.unpack = mpc_lowcomm_request_unpack,
 		},
+                .num_tasks      = mpc_common_get_task_count(),
 		.process_uid    = mpc_lowcomm_monitor_get_uid(),
 	};
 	rc = lcp_context_create(&lcp_ctx_loc, &ctx_params);
@@ -4110,13 +4125,11 @@ static void __initialize_drivers()
 	mpc_common_debug_fatal("COMM: context creation failed.");
 	}
 
-        /* For "PML", always require both Two-Sided and One-Sided models. */
         lcp_manager_param_t mngr_params = {
                 .field_mask     = LCP_MANAGER_ESTIMATED_EPS | LCP_MANAGER_COMM_MODEL,
                 .estimated_eps  = mpc_common_get_process_count(),
                 .num_tasks      = mpc_common_get_task_count(),
-                .flags          =  
-                        LCP_MANAGER_TSC_MODEL, 
+                .flags          = LCP_MANAGER_TSC_MODEL, 
         };
         rc = lcp_manager_create(lcp_ctx_loc, &lcp_mngr_loc, &mngr_params);
         if (rc != MPC_LOWCOMM_SUCCESS) {
