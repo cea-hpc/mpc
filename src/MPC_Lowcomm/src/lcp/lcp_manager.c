@@ -138,7 +138,7 @@ static int _lcp_manager_init_structures(lcp_manager_h mngr)
         }
         mngr->num_ifaces = mngr->ctx->num_resources;
 
-        atomic_store(&mngr->flush_count, 0);
+        mngr->flush_count = 0;
 err:
         return rc;
 }
@@ -302,10 +302,5 @@ int lcp_manager_fini(lcp_manager_h mngr)
         sctk_free(mngr);
 
         return rc;
-}
-
-lcp_task_h lcp_manager_task_get(lcp_manager_h mngr, int tid)
-{
-        return mngr->tasks[tid];
 }
 

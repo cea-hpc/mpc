@@ -700,3 +700,9 @@ void lcp_context_unregister(lcp_context_h ctx, int manager_id)
         ctx->mngrt[manager_id] = NULL;
         LCP_CONTEXT_UNLOCK(ctx);
 }
+
+lcp_task_h lcp_context_task_get(lcp_context_h ctx, int tid)
+{
+        return ctx->tasks[tid];
+}
+
