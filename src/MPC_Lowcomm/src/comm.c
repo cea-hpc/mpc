@@ -1638,6 +1638,7 @@ void mpc_lowcomm_ptp_message_header_clear(mpc_lowcomm_ptp_message_t *tmp,
 	}
 }
 
+__attribute__((deprecated("Legacy function that should be removed once PTP messages are fully unused (deprecated by the LCP rework)")))
 mpc_lowcomm_ptp_message_t *mpc_lowcomm_ptp_message_header_create(mpc_lowcomm_ptp_message_type_t msg_type)
 {
 	mpc_lowcomm_ptp_message_t *tmp;
@@ -1653,6 +1654,7 @@ mpc_lowcomm_ptp_message_t *mpc_lowcomm_ptp_message_header_create(mpc_lowcomm_ptp
 	return tmp;
 }
 
+__attribute__((deprecated("Legacy function that should be removed once PTP messages are fully unused (deprecated by the LCP rework)")))
 void mpc_lowcomm_ptp_message_set_contiguous_addr(mpc_lowcomm_ptp_message_t *restrict msg,
                                                  const void *restrict addr, const size_t size)
 {
@@ -1682,6 +1684,7 @@ static inline void __mpc_comm_fill_request(mpc_lowcomm_request_t *request,
 	request->ptr_to_pin_ctx          = NULL;
 }
 
+__attribute__((deprecated("Legacy function that should be removed once PTP messages are fully unused (deprecated by the LCP rework)")))
 void mpc_lowcomm_ptp_message_header_init(mpc_lowcomm_ptp_message_t *msg,
                                          const int message_tag,
                                          const mpc_lowcomm_communicator_t communicator,
@@ -2711,9 +2714,9 @@ int mpc_lowcomm_request_complete(mpc_lowcomm_request_t *request)
  * using the '_mpc_lowcomm_multirail_send_message' function. If the message
  * matches, we add it to the corresponding pending list
  * */
+__attribute__((deprecated("Legacy function that should be removed once PTP messages are fully unused (deprecated by the LCP rework)")))
 void _mpc_comm_ptp_message_send_check(mpc_lowcomm_ptp_message_t *msg, int poll_receiver_end)
 {
-
 	assert(mpc_common_get_process_rank() >= 0);
 	assert(
 		/* Does not overflow */
@@ -2841,6 +2844,7 @@ void _mpc_comm_ptp_message_send_check(mpc_lowcomm_ptp_message_t *msg, int poll_r
  * Function called for sending a message (i.e: MPI_Send).
  * Mostly used by the file mpc.c
  * */
+__attribute__((deprecated("Legacy function that should be removed once PTP messages are fully unused (deprecated by the LCP rework)")))
 void mpc_lowcomm_ptp_message_send(mpc_lowcomm_ptp_message_t *msg)
 {
 	mpc_common_debug("SEND to %d (size %ld) %s COMM %llu T %d", SCTK_MSG_DEST_TASK(msg),
