@@ -9,6 +9,7 @@ import copy
 import sys
 import shlex
 import os
+import tempfile
 
 #
 # This is the python rewrite of MPCRUN
@@ -334,35 +335,43 @@ class MpcRunner:
 		ret = []
 		is_show = self.show()
 		srun_delimiter = "--"
+		# Autokill
 		if(MULTICONF):
-			with open("./multi.conf", "w") as mc_file:
+			# with open("./multi.conf", "w") as mc_file:
+
+			nodes_number = self._subcmd[0][0]['MPCFRAMEWORK_LAUNCH_MPCRUN_NODE']
+			cores_per_process = self._subcmd[0][0]['MPCFRAMEWORK_LAUNCH_MPCRUN_CORE']
+			with tempfile.NamedTemporaryFile("w", delete=False) as mc_file:
 				proc_count = 0
 				for i, scmd in enumerate(self._subcmd):
-					cc = []
 					(jargs, mpc_args, cmd) = scmd
-					# running on multiple nodes with --multiconf enabled is forbidden (CF https://slurm.schedmd.com/srun.html#lbAM)
-					if(jargs["MPCFRAMEWORK_LAUNCH_MPCRUN_NODE"] > 1):
-						print("ERROR : running on multiple nodes with --multiconf enabled is forbidden (CF https://slurm.schedmd.com/srun.html#lbAM)")
-						exit
-					# Autokill
+					cc = []
 					if jargs["MPCFRAMEWORK_LAUNCH_AUTOKILL"] != 0:
 						cc += ["-t", "0:{}".format(jargs['MPCFRAMEWORK_LAUNCH_AUTOKILL'])]
-					if(jargs["MPCFRAMEWORK_LAUNCH_MPCRUN_PROCESS"] == 1):
+					# running on multiple nodes with --multiconf enabled is forbidden (CF https://slurm.schedmd.com/srun.html#lbAM)
+					if jargs["MPCFRAMEWORK_LAUNCH_MPCRUN_NODE"] != nodes_number:
+						print("nodes", jargs["MPCFRAMEWORK_LAUNCH_MPCRUN_NODE"],  nodes_number)
+						print("ERROR : running on heterogeneous nodes number with --multiconf enabled is forbidden (CF https://slurm.schedmd.com/srun.html#lbAM)")
+						exit
+					if jargs['MPCFRAMEWORK_LAUNCH_MPCRUN_CORE'] != cores_per_process:
+						print("cores", jargs['MPCFRAMEWORK_LAUNCH_MPCRUN_CORE'],  cores_per_process)
+						print("ERROR : running on heterogeneous cores per process with --multiconf enabled is forbidden (CF https://slurm.schedmd.com/srun.html#lbAM)")
+						exit
+					if jargs["MPCFRAMEWORK_LAUNCH_MPCRUN_PROCESS"] == 1:
 						proc_num = "{}".format(proc_count)
 					else:
-						proc_num = "{}-{}".format(proc_count, proc_count + jargs["MPCFRAMEWORK_LAUNCH_MPCRUN_PROCESS"])
+						proc_num = "{}-{}".format(proc_count, proc_count + jargs["MPCFRAMEWORK_LAUNCH_MPCRUN_PROCESS"] - 1)
 					mc_file.write("{iter} bash -c 'export=ALL,MPC_STARTUP_ARGS=\"{startup_args}\"; {exec}'\n".format(
 						iter = proc_num, 
 						# startup_args = mpc_args if not is_show else '"{}"'.format(mpc_args), 
 						startup_args = mpc_args,
 						exec = " ".join(jargs["binary"])))
 					proc_count += jargs["MPCFRAMEWORK_LAUNCH_MPCRUN_PROCESS"]
-				ret = [["--multi-prog", "./multi.conf"]]
+				ret = [["-c", cores_per_process, "-N", nodes_number, "--multi-prog", mc_file.name]]
 		else:
 			for scmd in self._subcmd:
 				cc = []
 				(jargs, mpc_args, cmd) = scmd
-				# Autokill
 				if jargs["MPCFRAMEWORK_LAUNCH_AUTOKILL"] != 0:
 					cc += ["-t", "0:{}".format(jargs['MPCFRAMEWORK_LAUNCH_AUTOKILL'])]
 				# Nodes
