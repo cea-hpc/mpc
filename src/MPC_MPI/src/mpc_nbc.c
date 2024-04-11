@@ -3240,7 +3240,7 @@ int NBC_Ibcast( void *buffer, int count, MPI_Datatype datatype, int root, MPI_Co
     {
         case NBC_BCAST_BINOMIAL:
         case NBC_BCAST_LINEAR:
-            /* nothing to do for persitant */
+            /* nothing to do for persistent */
             break;
     }
 
@@ -3257,7 +3257,7 @@ int NBC_Ibcast( void *buffer, int count, MPI_Datatype datatype, int root, MPI_Co
 }
 
 /** \brief Initialize NBC structures used in call of persistent Bcast using NBC interface
- *  \param buffer Adress of the pointer to the buffer
+ *  \param buffer Address of the pointer to the buffer
  *  \param count Number of elements in buffer
  *  \param datatype Type of the data elements in sendbuf
  *  \param root Rank root of the broadcast
@@ -10469,997 +10469,264 @@ int NBC_Test( NBC_Handle *handle, int *flag, __UNUSED__ MPI_Status *status )
  *                    Corporation.  All rights reserved.
  * Copyright (c) 2006 The Technical University of Chemnitz. All
  *                    rights reserved.
+ * Copyright (c) 2024 Commissariat a l'Energie Atomique et aux Energies Alternatives
+ *                    All rights reserved.
  *
  * Author(s): Torsten Hoefler <htor@cs.indiana.edu>
- *
+ *            Remi Dehenne <remi.dehenne@cea.fr>
  */
+
+/**
+ * Innermost reduction macro, see \ref MPC_NBC_OP_COMPARE_REDUCE
+ * and \ref MPC_NBC_OP_REDUCE.
+ */
+#define MPC_NBC_OP_LOOP(_mpi_op, _body)\
+	if ( op == _mpi_op )\
+	{\
+		for ( i = 0; i < count; i++ )\
+		{\
+			_body\
+		}\
+	}\
+
+/**
+ * Reduction shorthand for comparison-assignment macros `c = (a OP b) ? b : a`,
+ * i.e. min and max.
+ */
+#define MPC_NBC_OP_COMPARE_REDUCE(_mpi_op, _c_op, _c_type)\
+	MPC_NBC_OP_LOOP(_mpi_op,\
+	{\
+		if ( *( ( (_c_type *) buf1 ) + i ) _c_op *( ( (_c_type *) buf2 ) + i ) )\
+			*( ( (_c_type *) buf3 ) + i ) = *( ( (_c_type *) buf2 ) + i );\
+		else\
+			*( ( (_c_type *) buf3 ) + i ) = *( ( (_c_type *) buf1 ) + i );\
+	})
+
+/**
+ * Reduction shorthand for comparison-assignment macros `c = (a OP b) ? b : a`
+ * which also store the index of the matching element in a distinct field,
+ * i.e. minloc or maxloc.
+ */
+#define MPC_NBC_OP_COMPARE_REDUCE_LOC(_mpi_op, _c_op, _c_type, _c_type_name)\
+	MPC_NBC_OP_LOOP(_mpi_op,\
+	{\
+		typedef struct\
+		{\
+			_c_type val;\
+			int rank;\
+		} _c_type_name##_int;\
+		_c_type_name##_int *ptr1;\
+		_c_type_name##_int *ptr2;\
+		_c_type_name##_int *ptr3;\
+\
+		ptr1 = ( (_c_type_name##_int *) buf1 ) + i;\
+		ptr2 = ( (_c_type_name##_int *) buf2 ) + i;\
+		ptr3 = ( (_c_type_name##_int *) buf3 ) + i;\
+\
+		if ( ptr1->val _c_op ptr2->val )\
+		{\
+			ptr3->val = ptr2->val;\
+			ptr3->rank = ptr2->rank;\
+		}\
+		else\
+		{\
+			ptr3->val = ptr1->val;\
+			ptr3->rank = ptr1->rank;\
+		}\
+	})
+
+/**
+ * Reduction shorthand for macros `c = a OP b`, e.g. sum or product.
+ */
+#define MPC_NBC_OP_REDUCE(_mpi_op, _c_op, _c_type)\
+	MPC_NBC_OP_LOOP(_mpi_op,\
+	{\
+		*( ( (_c_type *) buf3 ) + i ) = *( ( (_c_type *) buf1 ) + i ) _c_op *( ( (_c_type *) buf2 ) + i );\
+	})
+
+/**
+ * Reduction shorthand for macros `c = bool(a) OP bool(b)`,
+ * where a and b need to be normalized to 0 or 1
+ * prior to calling OP.
+ * Only used for logical XOR (LXOR).
+ */
+#define MPC_NBC_OP_REDUCE_NORM_LOGICAL(_mpi_op, _c_op, _c_type)\
+	MPC_NBC_OP_LOOP(_mpi_op,\
+	{\
+		*( ( (_c_type *) buf3 ) + i ) = ( *( ( (_c_type *) buf1 ) + i ) ? 1 : 0)\
+			_c_op ( *( ( (_c_type *) buf2 ) + i ) ? 1 : 0);\
+	})
+
+/*
+ * Comparison-assignment operators `c = (a OP b) ? b : a`
+ */
+#define MPC_NBC_OP_MIN(_c_type) MPC_NBC_OP_COMPARE_REDUCE(MPI_MIN, >, _c_type)
+#define MPC_NBC_OP_MAX(_c_type) MPC_NBC_OP_COMPARE_REDUCE(MPI_MAX, <, _c_type)
+
+/*
+ * Comparison-assignment operators `c = (a OP b) ? b : a` that attach the index of the min/max value
+ */
+#define MPC_NBC_OP_MINLOC(_c_type, _c_type_name) MPC_NBC_OP_COMPARE_REDUCE_LOC(MPI_MINLOC, >, _c_type, _c_type_name)
+#define MPC_NBC_OP_MAXLOC(_c_type, _c_type_name) MPC_NBC_OP_COMPARE_REDUCE_LOC(MPI_MAXLOC, <, _c_type, _c_type_name)
+
+/*
+ * `c = a OP b` operators
+ */
+#define MPC_NBC_OP_SUM(_c_type)  MPC_NBC_OP_REDUCE(MPI_SUM, +, _c_type)
+#define MPC_NBC_OP_PROD(_c_type) MPC_NBC_OP_REDUCE(MPI_PROD, *, _c_type)
+#define MPC_NBC_OP_LAND(_c_type) MPC_NBC_OP_REDUCE(MPI_LAND, &&, _c_type)
+#define MPC_NBC_OP_BAND(_c_type) MPC_NBC_OP_REDUCE(MPI_BAND, &, _c_type)
+#define MPC_NBC_OP_LOR(_c_type)  MPC_NBC_OP_REDUCE(MPI_LOR, ||, _c_type)
+#define MPC_NBC_OP_BOR(_c_type)  MPC_NBC_OP_REDUCE(MPI_BOR, |, _c_type)
+#define MPC_NBC_OP_LXOR(_c_type) MPC_NBC_OP_REDUCE_NORM_LOGICAL(MPI_LXOR, ^, _c_type)
+#define MPC_NBC_OP_BXOR(_c_type) MPC_NBC_OP_REDUCE(MPI_BXOR, ^, _c_type)
+
+
+/**
+ * Define the list of reduction operators allowed for the "C Integer" group of
+ * MPI basic datatypes, as defined in the MPI Standard 4.1, Section 6.9.2.
+ */
+#define MPC_NBC_OP_DEFINE_C_INTEGER(_c_type)\
+	{\
+		/* Min, max */\
+		MPC_NBC_OP_MIN(_c_type)\
+		else MPC_NBC_OP_MAX(_c_type)\
+\
+		/* Sum, product */\
+		else MPC_NBC_OP_SUM(_c_type)\
+		else MPC_NBC_OP_PROD(_c_type)\
+\
+		/* Logical And, Or, Xor */\
+		else MPC_NBC_OP_LAND(_c_type)\
+		else MPC_NBC_OP_LOR(_c_type)\
+		else MPC_NBC_OP_LXOR(_c_type)\
+\
+		/* Binary And, Or, Xor */\
+		else MPC_NBC_OP_BAND(_c_type)\
+		else MPC_NBC_OP_BOR(_c_type)\
+		else MPC_NBC_OP_BXOR(_c_type)\
+\
+		else return NBC_OP_NOT_SUPPORTED;\
+	}
+
+/**
+ * Define the list of reduction operators allowed for the "Floating Point" group of
+ * MPI basic datatypes, as defined in the MPI Standard 4.1, Section 6.9.2.
+ */
+#define MPC_NBC_OP_DEFINE_FLOATING_POINT(_c_type)\
+	{\
+		/* Min, max */\
+		MPC_NBC_OP_MIN(_c_type)\
+		else MPC_NBC_OP_MAX(_c_type)\
+\
+		/* Sum, product */\
+		else MPC_NBC_OP_SUM(_c_type)\
+		else MPC_NBC_OP_PROD(_c_type)\
+\
+		else return NBC_OP_NOT_SUPPORTED;\
+	}
+
+/**
+ * Define the list of reduction operators allowed for the minloc/maxloc tuple types,
+ * as defined in the MPI Standard 4.1, Section 6.9.4.
+ *
+ * @param _c_type The actual C type name, e.g `double` or `long double`
+ * @param _c_type_name The C type name with no whitespace, e.g. `double` or `long_double`
+ * @see MPC_NBC_OP_DEFINE_LOC if _c_type does not contain any whitespace, i.e. _c_type == _c_type_name
+ */
+#define MPC_NBC_OP_DEFINE_LOC_NAME(_c_type, _c_type_name)\
+	{\
+		/* Minloc, maxloc */\
+		MPC_NBC_OP_MINLOC(_c_type, _c_type_name)\
+		else MPC_NBC_OP_MAXLOC(_c_type, _c_type_name)\
+\
+		else return NBC_OP_NOT_SUPPORTED;\
+	}
+
+#define MPC_NBC_OP_DEFINE_LOC(_c_type) MPC_NBC_OP_DEFINE_LOC_NAME(_c_type, _c_type)
+
+/**
+ * Define the list of reduction operators allowed for the "Byte" group of
+ * MPI basic datatypes, as defined in the MPI Standard 4.1, Section 6.9.2.
+ */
+#define MPC_NBC_OP_DEFINE_BYTE(_c_type)\
+	{\
+		/* Binary And, Or, Xor */\
+		MPC_NBC_OP_BAND(_c_type)\
+		else MPC_NBC_OP_BOR(_c_type)\
+		else MPC_NBC_OP_BXOR(_c_type)\
+\
+		else return NBC_OP_NOT_SUPPORTED;\
+	}
 
 int NBC_Operation( void *buf3, void *buf1, void *buf2, MPI_Op op, MPI_Datatype type, int count )
 {
 	int i;
+	
 
 	if ( type == MPI_INT )
 	{
-		if ( op == MPI_MIN )
-		{
-			for ( i = 0; i < count; i++ )
-			{
-				if ( *( ( (int *) buf1 ) + i ) > *( ( (int *) buf2 ) + i ) )
-					*( ( (int *) buf3 ) + i ) = *( ( (int *) buf2 ) + i );
-				else
-					*( ( (int *) buf3 ) + i ) = *( ( (int *) buf1 ) + i );
-			}
-		}
-		else if ( op == MPI_MAX )
-		{
-			for ( i = 0; i < count; i++ )
-			{
-				if ( *( ( (int *) buf1 ) + i ) < *( ( (int *) buf2 ) + i ) )
-					*( ( (int *) buf3 ) + i ) = *( ( (int *) buf2 ) + i );
-				else
-					*( ( (int *) buf3 ) + i ) = *( ( (int *) buf1 ) + i );
-			}
-		}
-		else if ( op == MPI_SUM )
-		{
-			for ( i = 0; i < count; i++ )
-			{
-				*( ( (int *) buf3 ) + i ) = *( ( (int *) buf1 ) + i ) + *( ( (int *) buf2 ) + i );
-			}
-		}
-		else if ( op == MPI_PROD )
-		{
-			for ( i = 0; i < count; i++ )
-			{
-				*( ( (int *) buf3 ) + i ) = *( ( (int *) buf1 ) + i ) * *( ( (int *) buf2 ) + i );
-			}
-		}
-		else if ( op == MPI_LAND )
-		{
-			for ( i = 0; i < count; i++ )
-			{
-				*( ( (int *) buf3 ) + i ) = *( ( (int *) buf1 ) + i ) && *( ( (int *) buf2 ) + i );
-			}
-		}
-		else if ( op == MPI_BAND )
-		{
-			for ( i = 0; i < count; i++ )
-			{
-				*( ( (int *) buf3 ) + i ) = *( ( (int *) buf1 ) + i ) & *( ( (int *) buf2 ) + i );
-			}
-		}
-		else if ( op == MPI_LOR )
-		{
-			for ( i = 0; i < count; i++ )
-			{
-				*( ( (int *) buf3 ) + i ) = *( ( (int *) buf1 ) + i ) || *( ( (int *) buf2 ) + i );
-			}
-		}
-		else if ( op == MPI_BOR )
-		{
-			for ( i = 0; i < count; i++ )
-			{
-				*( ( (int *) buf3 ) + i ) = *( ( (int *) buf1 ) + i ) | *( ( (int *) buf2 ) + i );
-			}
-		}
-		else if ( op == MPI_LXOR )
-		{
-			for ( i = 0; i < count; i++ )
-			{
-				*( ( (int *) buf3 ) + i ) = ( ( *( ( (int *) buf1 ) + i ) ? 1 : 0 ) ^ ( *( ( (int *) buf2 ) + i ) ? 1 : 0 ) );
-			}
-		}
-		else if ( op == MPI_BXOR )
-		{
-			for ( i = 0; i < count; i++ )
-			{
-				*( ( (int *) buf3 ) + i ) = ( ( *( ( (int *) buf1 ) + i ) ) ^ ( *( ( (int *) buf2 ) + i ) ) );
-			}
-		}
-		else
-			return NBC_OP_NOT_SUPPORTED;
+		MPC_NBC_OP_DEFINE_C_INTEGER(int)
 	}
 	else if ( type == MPI_LONG )
 	{
-		if ( op == MPI_MIN )
-		{
-			for ( i = 0; i < count; i++ )
-			{
-				if ( *( ( (long *) buf1 ) + i ) > *( ( (long *) buf2 ) + i ) )
-					*( ( (long *) buf3 ) + i ) = *( ( (long *) buf2 ) + i );
-				else
-					*( ( (long *) buf3 ) + i ) = *( ( (long *) buf1 ) + i );
-			}
-		}
-		else if ( op == MPI_MAX )
-		{
-			for ( i = 0; i < count; i++ )
-			{
-				if ( *( ( (long *) buf1 ) + i ) < *( ( (long *) buf2 ) + i ) )
-					*( ( (long *) buf3 ) + i ) = *( ( (long *) buf2 ) + i );
-				else
-					*( ( (long *) buf3 ) + i ) = *( ( (long *) buf1 ) + i );
-			}
-		}
-		else if ( op == MPI_SUM )
-		{
-			for ( i = 0; i < count; i++ )
-			{
-				*( ( (long *) buf3 ) + i ) = *( ( (long *) buf1 ) + i ) + *( ( (long *) buf2 ) + i );
-			}
-		}
-		else if ( op == MPI_PROD )
-		{
-			for ( i = 0; i < count; i++ )
-			{
-				*( ( (long *) buf3 ) + i ) = *( ( (long *) buf1 ) + i ) * *( ( (long *) buf2 ) + i );
-			}
-		}
-		else if ( op == MPI_LAND )
-		{
-			for ( i = 0; i < count; i++ )
-			{
-				*( ( (long *) buf3 ) + i ) = *( ( (long *) buf1 ) + i ) && *( ( (long *) buf2 ) + i );
-			}
-		}
-		else if ( op == MPI_BAND )
-		{
-			for ( i = 0; i < count; i++ )
-			{
-				*( ( (long *) buf3 ) + i ) = *( ( (long *) buf1 ) + i ) & *( ( (long *) buf2 ) + i );
-			}
-		}
-		else if ( op == MPI_LOR )
-		{
-			for ( i = 0; i < count; i++ )
-			{
-				*( ( (long *) buf3 ) + i ) = *( ( (long *) buf1 ) + i ) || *( ( (long *) buf2 ) + i );
-			}
-		}
-		else if ( op == MPI_BOR )
-		{
-			for ( i = 0; i < count; i++ )
-			{
-				*( ( (long *) buf3 ) + i ) = *( ( (long *) buf1 ) + i ) | *( ( (long *) buf2 ) + i );
-			}
-		}
-		else if ( op == MPI_LXOR )
-		{
-			for ( i = 0; i < count; i++ )
-			{
-				*( ( (long *) buf3 ) + i ) = ( ( *( ( (long *) buf1 ) + i ) ? 1 : 0 ) ^ ( *( ( (long *) buf2 ) + i ) ? 1 : 0 ) );
-			}
-		}
-		else if ( op == MPI_BXOR )
-		{
-			for ( i = 0; i < count; i++ )
-			{
-				*( ( (long *) buf3 ) + i ) = ( ( *( ( (long *) buf1 ) + i ) ) ^ ( *( ( (long *) buf2 ) + i ) ) );
-			}
-		}
-		else
-			return NBC_OP_NOT_SUPPORTED;
+		MPC_NBC_OP_DEFINE_C_INTEGER(long)
 	}
 	else if ( type == MPI_SHORT )
 	{
-		if ( op == MPI_MIN )
-		{
-			for ( i = 0; i < count; i++ )
-			{
-				if ( *( ( (short *) buf1 ) + i ) > *( ( (short *) buf2 ) + i ) )
-					*( ( (short *) buf3 ) + i ) = *( ( (short *) buf2 ) + i );
-				else
-					*( ( (short *) buf3 ) + i ) = *( ( (short *) buf1 ) + i );
-			}
-		}
-		else if ( op == MPI_MAX )
-		{
-			for ( i = 0; i < count; i++ )
-			{
-				if ( *( ( (short *) buf1 ) + i ) < *( ( (short *) buf2 ) + i ) )
-					*( ( (short *) buf3 ) + i ) = *( ( (short *) buf2 ) + i );
-				else
-					*( ( (short *) buf3 ) + i ) = *( ( (short *) buf1 ) + i );
-			}
-		}
-		else if ( op == MPI_SUM )
-		{
-			for ( i = 0; i < count; i++ )
-			{
-				*( ( (short *) buf3 ) + i ) = *( ( (short *) buf1 ) + i ) + *( ( (short *) buf2 ) + i );
-			}
-		}
-		else if ( op == MPI_PROD )
-		{
-			for ( i = 0; i < count; i++ )
-			{
-				*( ( (short *) buf3 ) + i ) = *( ( (short *) buf1 ) + i ) * *( ( (short *) buf2 ) + i );
-			}
-		}
-		else if ( op == MPI_LAND )
-		{
-			for ( i = 0; i < count; i++ )
-			{
-				*( ( (short *) buf3 ) + i ) = *( ( (short *) buf1 ) + i ) && *( ( (short *) buf2 ) + i );
-			}
-		}
-		else if ( op == MPI_BAND )
-		{
-			for ( i = 0; i < count; i++ )
-			{
-				*( ( (short *) buf3 ) + i ) = *( ( (short *) buf1 ) + i ) & *( ( (short *) buf2 ) + i );
-			}
-		}
-		else if ( op == MPI_LOR )
-		{
-			for ( i = 0; i < count; i++ )
-			{
-				*( ( (short *) buf3 ) + i ) = *( ( (short *) buf1 ) + i ) || *( ( (short *) buf2 ) + i );
-			}
-		}
-		else if ( op == MPI_BOR )
-		{
-			for ( i = 0; i < count; i++ )
-			{
-				*( ( (short *) buf3 ) + i ) = *( ( (short *) buf1 ) + i ) | *( ( (short *) buf2 ) + i );
-			}
-		}
-		else if ( op == MPI_LXOR )
-		{
-			for ( i = 0; i < count; i++ )
-			{
-				*( ( (short *) buf3 ) + i ) = ( ( *( ( (short *) buf1 ) + i ) ? 1 : 0 ) ^ ( *( ( (short *) buf2 ) + i ) ? 1 : 0 ) );
-			}
-		}
-		else if ( op == MPI_BXOR )
-		{
-			for ( i = 0; i < count; i++ )
-			{
-				*( ( (short *) buf3 ) + i ) = ( ( *( ( (short *) buf1 ) + i ) ) ^ ( *( ( (short *) buf2 ) + i ) ) );
-			}
-		}
-		else
-			return NBC_OP_NOT_SUPPORTED;
+		MPC_NBC_OP_DEFINE_C_INTEGER(short)
 	}
 	else if ( type == MPI_UNSIGNED )
 	{
-		if ( op == MPI_MIN )
-		{
-			for ( i = 0; i < count; i++ )
-			{
-				if ( *( ( (unsigned int *) buf1 ) + i ) > *( ( (unsigned int *) buf2 ) + i ) )
-					*( ( (unsigned int *) buf3 ) + i ) = *( ( (unsigned int *) buf2 ) + i );
-				else
-					*( ( (unsigned int *) buf3 ) + i ) = *( ( (unsigned int *) buf1 ) + i );
-			}
-		}
-		else if ( op == MPI_MAX )
-		{
-			for ( i = 0; i < count; i++ )
-			{
-				if ( *( ( (unsigned int *) buf1 ) + i ) < *( ( (unsigned int *) buf2 ) + i ) )
-					*( ( (unsigned int *) buf3 ) + i ) = *( ( (unsigned int *) buf2 ) + i );
-				else
-					*( ( (unsigned int *) buf3 ) + i ) = *( ( (unsigned int *) buf1 ) + i );
-			}
-		}
-		else if ( op == MPI_SUM )
-		{
-			for ( i = 0; i < count; i++ )
-			{
-				*( ( (unsigned int *) buf3 ) + i ) = *( ( (unsigned int *) buf1 ) + i ) + *( ( (unsigned int *) buf2 ) + i );
-			}
-		}
-		else if ( op == MPI_PROD )
-		{
-			for ( i = 0; i < count; i++ )
-			{
-				*( ( (unsigned int *) buf3 ) + i ) = *( ( (unsigned int *) buf1 ) + i ) * *( ( (unsigned int *) buf2 ) + i );
-			}
-		}
-		else if ( op == MPI_LAND )
-		{
-			for ( i = 0; i < count; i++ )
-			{
-				*( ( (unsigned int *) buf3 ) + i ) = *( ( (unsigned int *) buf1 ) + i ) && *( ( (unsigned int *) buf2 ) + i );
-			}
-		}
-		else if ( op == MPI_BAND )
-		{
-			for ( i = 0; i < count; i++ )
-			{
-				*( ( (unsigned int *) buf3 ) + i ) = *( ( (unsigned int *) buf1 ) + i ) & *( ( (unsigned int *) buf2 ) + i );
-			}
-		}
-		else if ( op == MPI_LOR )
-		{
-			for ( i = 0; i < count; i++ )
-			{
-				*( ( (unsigned int *) buf3 ) + i ) = *( ( (unsigned int *) buf1 ) + i ) || *( ( (unsigned int *) buf2 ) + i );
-			}
-		}
-		else if ( op == MPI_BOR )
-		{
-			for ( i = 0; i < count; i++ )
-			{
-				*( ( (unsigned int *) buf3 ) + i ) = *( ( (unsigned int *) buf1 ) + i ) | *( ( (unsigned int *) buf2 ) + i );
-			}
-		}
-		else if ( op == MPI_LXOR )
-		{
-			for ( i = 0; i < count; i++ )
-			{
-				*( ( (unsigned int *) buf3 ) + i ) = ( ( *( ( (unsigned int *) buf1 ) + i ) ? 1 : 0 ) ^ ( *( ( (unsigned int *) buf2 ) + i ) ? 1 : 0 ) );
-			}
-		}
-		else if ( op == MPI_BXOR )
-		{
-			for ( i = 0; i < count; i++ )
-			{
-				*( ( (unsigned int *) buf3 ) + i ) = ( ( *( ( (unsigned int *) buf1 ) + i ) ) ^ ( *( ( (unsigned int *) buf2 ) + i ) ) );
-			}
-		}
-		else
-			return NBC_OP_NOT_SUPPORTED;
+		MPC_NBC_OP_DEFINE_C_INTEGER(unsigned int)
 	}
 	else if ( type == MPI_UNSIGNED_LONG )
 	{
-		if ( op == MPI_MIN )
-		{
-			for ( i = 0; i < count; i++ )
-			{
-				if ( *( ( (unsigned long *) buf1 ) + i ) > *( ( (unsigned long *) buf2 ) + i ) )
-					*( ( (unsigned long *) buf3 ) + i ) = *( ( (unsigned long *) buf2 ) + i );
-				else
-					*( ( (unsigned long *) buf3 ) + i ) = *( ( (unsigned long *) buf1 ) + i );
-			}
-		}
-		else if ( op == MPI_MAX )
-		{
-			for ( i = 0; i < count; i++ )
-			{
-				if ( *( ( (unsigned long *) buf1 ) + i ) < *( ( (unsigned long *) buf2 ) + i ) )
-					*( ( (unsigned long *) buf3 ) + i ) = *( ( (unsigned long *) buf2 ) + i );
-				else
-					*( ( (unsigned long *) buf3 ) + i ) = *( ( (unsigned long *) buf1 ) + i );
-			}
-		}
-		else if ( op == MPI_SUM )
-		{
-			for ( i = 0; i < count; i++ )
-			{
-				*( ( (unsigned long *) buf3 ) + i ) = *( ( (unsigned long *) buf1 ) + i ) + *( ( (unsigned long *) buf2 ) + i );
-			}
-		}
-		else if ( op == MPI_PROD )
-		{
-			for ( i = 0; i < count; i++ )
-			{
-				*( ( (unsigned long *) buf3 ) + i ) = *( ( (unsigned long *) buf1 ) + i ) * *( ( (unsigned long *) buf2 ) + i );
-			}
-		}
-		else if ( op == MPI_LAND )
-		{
-			for ( i = 0; i < count; i++ )
-			{
-				*( ( (unsigned long *) buf3 ) + i ) = *( ( (unsigned long *) buf1 ) + i ) && *( ( (unsigned long *) buf2 ) + i );
-			}
-		}
-		else if ( op == MPI_BAND )
-		{
-			for ( i = 0; i < count; i++ )
-			{
-				*( ( (unsigned long *) buf3 ) + i ) = *( ( (unsigned long *) buf1 ) + i ) & *( ( (unsigned long *) buf2 ) + i );
-			}
-		}
-		else if ( op == MPI_LOR )
-		{
-			for ( i = 0; i < count; i++ )
-			{
-				*( ( (unsigned long *) buf3 ) + i ) = *( ( (unsigned long *) buf1 ) + i ) || *( ( (unsigned long *) buf2 ) + i );
-			}
-		}
-		else if ( op == MPI_BOR )
-		{
-			for ( i = 0; i < count; i++ )
-			{
-				*( ( (unsigned long *) buf3 ) + i ) = *( ( (unsigned long *) buf1 ) + i ) | *( ( (unsigned long *) buf2 ) + i );
-			}
-		}
-		else if ( op == MPI_LXOR )
-		{
-			for ( i = 0; i < count; i++ )
-			{
-				*( ( (unsigned long *) buf3 ) + i ) = ( ( *( ( (unsigned long *) buf1 ) + i ) ? 1 : 0 ) ^ ( *( ( (unsigned long *) buf2 ) + i ) ? 1 : 0 ) );
-			}
-		}
-		else if ( op == MPI_BXOR )
-		{
-			for ( i = 0; i < count; i++ )
-			{
-				*( ( (unsigned long *) buf3 ) + i ) = ( ( *( ( (unsigned long *) buf1 ) + i ) ) ^ ( *( ( (unsigned long *) buf2 ) + i ) ) );
-			}
-		}
-		else
-			return NBC_OP_NOT_SUPPORTED;
+		MPC_NBC_OP_DEFINE_C_INTEGER(unsigned long)
 	}
 	else if ( type == MPI_UNSIGNED_SHORT )
 	{
-		if ( op == MPI_MIN )
-		{
-			for ( i = 0; i < count; i++ )
-			{
-				if ( *( ( (unsigned short *) buf1 ) + i ) > *( ( (unsigned short *) buf2 ) + i ) )
-					*( ( (unsigned short *) buf3 ) + i ) = *( ( (unsigned short *) buf2 ) + i );
-				else
-					*( ( (unsigned short *) buf3 ) + i ) = *( ( (unsigned short *) buf1 ) + i );
-			}
-		}
-		else if ( op == MPI_MAX )
-		{
-			for ( i = 0; i < count; i++ )
-			{
-				if ( *( ( (unsigned short *) buf1 ) + i ) < *( ( (unsigned short *) buf2 ) + i ) )
-					*( ( (unsigned short *) buf3 ) + i ) = *( ( (unsigned short *) buf2 ) + i );
-				else
-					*( ( (unsigned short *) buf3 ) + i ) = *( ( (unsigned short *) buf1 ) + i );
-			}
-		}
-		else if ( op == MPI_SUM )
-		{
-			for ( i = 0; i < count; i++ )
-			{
-				*( ( (unsigned short *) buf3 ) + i ) = *( ( (unsigned short *) buf1 ) + i ) + *( ( (unsigned short *) buf2 ) + i );
-			}
-		}
-		else if ( op == MPI_PROD )
-		{
-			for ( i = 0; i < count; i++ )
-			{
-				*( ( (unsigned short *) buf3 ) + i ) = *( ( (unsigned short *) buf1 ) + i ) * *( ( (unsigned short *) buf2 ) + i );
-			}
-		}
-		else if ( op == MPI_LAND )
-		{
-			for ( i = 0; i < count; i++ )
-			{
-				*( ( (unsigned short *) buf3 ) + i ) = *( ( (unsigned short *) buf1 ) + i ) && *( ( (unsigned short *) buf2 ) + i );
-			}
-		}
-		else if ( op == MPI_BAND )
-		{
-			for ( i = 0; i < count; i++ )
-			{
-				*( ( (unsigned short *) buf3 ) + i ) = *( ( (unsigned short *) buf1 ) + i ) & *( ( (unsigned short *) buf2 ) + i );
-			}
-		}
-		else if ( op == MPI_LOR )
-		{
-			for ( i = 0; i < count; i++ )
-			{
-				*( ( (unsigned short *) buf3 ) + i ) = *( ( (unsigned short *) buf1 ) + i ) || *( ( (unsigned short *) buf2 ) + i );
-			}
-		}
-		else if ( op == MPI_BOR )
-		{
-			for ( i = 0; i < count; i++ )
-			{
-				*( ( (unsigned short *) buf3 ) + i ) = *( ( (unsigned short *) buf1 ) + i ) | *( ( (unsigned short *) buf2 ) + i );
-			}
-		}
-		else if ( op == MPI_LXOR )
-		{
-			for ( i = 0; i < count; i++ )
-			{
-				*( ( (unsigned short *) buf3 ) + i ) = ( ( *( ( (unsigned short *) buf1 ) + i ) ? 1 : 0 ) ^ ( *( ( (unsigned short *) buf2 ) + i ) ? 1 : 0 ) );
-			}
-		}
-		else if ( op == MPI_BXOR )
-		{
-			for ( i = 0; i < count; i++ )
-			{
-				*( ( (unsigned short *) buf3 ) + i ) = ( ( *( ( (unsigned short *) buf1 ) + i ) ) ^ ( *( ( (unsigned short *) buf2 ) + i ) ) );
-			}
-		}
-		else
-			return NBC_OP_NOT_SUPPORTED;
+		MPC_NBC_OP_DEFINE_C_INTEGER(unsigned short)
 	}
 	else if ( type == MPI_FLOAT )
 	{
-		if ( op == MPI_MIN )
-		{
-			for ( i = 0; i < count; i++ )
-			{
-				if ( *( ( (float *) buf1 ) + i ) > *( ( (float *) buf2 ) + i ) )
-					*( ( (float *) buf3 ) + i ) = *( ( (float *) buf2 ) + i );
-				else
-					*( ( (float *) buf3 ) + i ) = *( ( (float *) buf1 ) + i );
-			}
-		}
-		else if ( op == MPI_MAX )
-		{
-			for ( i = 0; i < count; i++ )
-			{
-				if ( *( ( (float *) buf1 ) + i ) < *( ( (float *) buf2 ) + i ) )
-					*( ( (float *) buf3 ) + i ) = *( ( (float *) buf2 ) + i );
-				else
-					*( ( (float *) buf3 ) + i ) = *( ( (float *) buf1 ) + i );
-			}
-		}
-		else if ( op == MPI_SUM )
-		{
-			for ( i = 0; i < count; i++ )
-			{
-				*( ( (float *) buf3 ) + i ) = *( ( (float *) buf1 ) + i ) + *( ( (float *) buf2 ) + i );
-			}
-		}
-		else if ( op == MPI_PROD )
-		{
-			for ( i = 0; i < count; i++ )
-			{
-				*( ( (float *) buf3 ) + i ) = *( ( (float *) buf1 ) + i ) * *( ( (float *) buf2 ) + i );
-			}
-		}
-		else
-			return NBC_OP_NOT_SUPPORTED;
+		MPC_NBC_OP_DEFINE_FLOATING_POINT(float)
 	}
 	else if ( type == MPI_DOUBLE )
 	{
-		if ( op == MPI_MIN )
-		{
-			for ( i = 0; i < count; i++ )
-			{
-				if ( *( ( (double *) buf1 ) + i ) > *( ( (double *) buf2 ) + i ) )
-					*( ( (double *) buf3 ) + i ) = *( ( (double *) buf2 ) + i );
-				else
-					*( ( (double *) buf3 ) + i ) = *( ( (double *) buf1 ) + i );
-			}
-		}
-		else if ( op == MPI_MAX )
-		{
-			for ( i = 0; i < count; i++ )
-			{
-				if ( *( ( (double *) buf1 ) + i ) < *( ( (double *) buf2 ) + i ) )
-					*( ( (double *) buf3 ) + i ) = *( ( (double *) buf2 ) + i );
-				else
-					*( ( (double *) buf3 ) + i ) = *( ( (double *) buf1 ) + i );
-			}
-		}
-		else if ( op == MPI_SUM )
-		{
-			for ( i = 0; i < count; i++ )
-			{
-				*( ( (double *) buf3 ) + i ) = *( ( (double *) buf1 ) + i ) + *( ( (double *) buf2 ) + i );
-			}
-		}
-		else if ( op == MPI_PROD )
-		{
-			for ( i = 0; i < count; i++ )
-			{
-				*( ( (double *) buf3 ) + i ) = *( ( (double *) buf1 ) + i ) * *( ( (double *) buf2 ) + i );
-			}
-		}
-		else
-			return NBC_OP_NOT_SUPPORTED;
+		MPC_NBC_OP_DEFINE_FLOATING_POINT(double)
 	}
 	else if ( type == MPI_LONG_DOUBLE )
 	{
-		if ( op == MPI_MIN )
-		{
-			for ( i = 0; i < count; i++ )
-			{
-				if ( *( ( (long double *) buf1 ) + i ) > *( ( (long double *) buf2 ) + i ) )
-					*( ( (long double *) buf3 ) + i ) = *( ( (long double *) buf2 ) + i );
-				else
-					*( ( (long double *) buf3 ) + i ) = *( ( (long double *) buf1 ) + i );
-			}
-		}
-		else if ( op == MPI_MAX )
-		{
-			for ( i = 0; i < count; i++ )
-			{
-				if ( *( ( (long double *) buf1 ) + i ) < *( ( (long double *) buf2 ) + i ) )
-					*( ( (long double *) buf3 ) + i ) = *( ( (long double *) buf2 ) + i );
-				else
-					*( ( (long double *) buf3 ) + i ) = *( ( (long double *) buf1 ) + i );
-			}
-		}
-		else if ( op == MPI_SUM )
-		{
-			for ( i = 0; i < count; i++ )
-			{
-				*( ( (long double *) buf3 ) + i ) = *( ( (long double *) buf1 ) + i ) + *( ( (long double *) buf2 ) + i );
-			}
-		}
-		else if ( op == MPI_PROD )
-		{
-			for ( i = 0; i < count; i++ )
-			{
-				*( ( (long double *) buf3 ) + i ) = *( ( (long double *) buf1 ) + i ) * *( ( (long double *) buf2 ) + i );
-			}
-		}
-		else
-			return NBC_OP_NOT_SUPPORTED;
+		MPC_NBC_OP_DEFINE_FLOATING_POINT(long double)
 	}
 	else if ( type == MPI_BYTE )
 	{
-		if ( op == MPI_BAND )
-		{
-			for ( i = 0; i < count; i++ )
-			{
-				*( ( (char *) buf3 ) + i ) = *( ( (char *) buf1 ) + i ) & *( ( (char *) buf2 ) + i );
-			}
-		}
-		else if ( op == MPI_BOR )
-		{
-			for ( i = 0; i < count; i++ )
-			{
-				*( ( (char *) buf3 ) + i ) = *( ( (char *) buf1 ) + i ) | *( ( (char *) buf2 ) + i );
-			}
-		}
-		else if ( op == MPI_BXOR )
-		{
-			for ( i = 0; i < count; i++ )
-			{
-				*( ( (char *) buf3 ) + i ) = ( ( *( ( (char *) buf1 ) + i ) ) ^ ( *( ( (char *) buf2 ) + i ) ) );
-			}
-		}
-		else
-			return NBC_OP_NOT_SUPPORTED;
+		MPC_NBC_OP_DEFINE_BYTE(char)
 	}
 	else if ( type == MPI_FLOAT_INT )
 	{
-		if ( op == MPI_MAXLOC )
-		{
-			for ( i = 0; i < count; i++ )
-			{
-				typedef struct
-				{
-					float val;
-					int rank;
-				} float_int;
-				float_int *ptr1, *ptr2, *ptr3;
-
-				ptr1 = ( (float_int *) buf1 ) + i;
-				ptr2 = ( (float_int *) buf2 ) + i;
-				ptr3 = ( (float_int *) buf3 ) + i;
-
-				if ( ptr1->val < ptr2->val )
-				{
-					ptr3->val = ptr2->val;
-					ptr3->rank = ptr2->rank;
-				}
-				else
-				{
-					ptr3->val = ptr1->val;
-					ptr3->rank = ptr1->rank;
-				}
-			}
-		}
-		else if ( op == MPI_MINLOC )
-		{
-			for ( i = 0; i < count; i++ )
-			{
-				typedef struct
-				{
-					float val;
-					int rank;
-				} float_int;
-				float_int *ptr1, *ptr2, *ptr3;
-
-				ptr1 = ( (float_int *) buf1 ) + i;
-				ptr2 = ( (float_int *) buf2 ) + i;
-				ptr3 = ( (float_int *) buf3 ) + i;
-
-				if ( ptr1->val > ptr2->val )
-				{
-					ptr3->val = ptr2->val;
-					ptr3->rank = ptr2->rank;
-				}
-				else
-				{
-					ptr3->val = ptr1->val;
-					ptr3->rank = ptr1->rank;
-				}
-			}
-		}
-		else
-			return NBC_OP_NOT_SUPPORTED;
+		MPC_NBC_OP_DEFINE_LOC(float)
 	}
 	else if ( type == MPI_DOUBLE_INT )
 	{
-		if ( op == MPI_MAXLOC )
-		{
-			for ( i = 0; i < count; i++ )
-			{
-				typedef struct
-				{
-					double val;
-					int rank;
-				} double_int;
-				double_int *ptr1, *ptr2, *ptr3;
-
-				ptr1 = ( (double_int *) buf1 ) + i;
-				ptr2 = ( (double_int *) buf2 ) + i;
-				ptr3 = ( (double_int *) buf3 ) + i;
-
-				if ( ptr1->val < ptr2->val )
-				{
-					ptr3->val = ptr2->val;
-					ptr3->rank = ptr2->rank;
-				}
-				else
-				{
-					ptr3->val = ptr1->val;
-					ptr3->rank = ptr1->rank;
-				}
-			}
-		}
-		else if ( op == MPI_MINLOC )
-		{
-			for ( i = 0; i < count; i++ )
-			{
-				typedef struct
-				{
-					double val;
-					int rank;
-				} double_int;
-				double_int *ptr1, *ptr2, *ptr3;
-
-				ptr1 = ( (double_int *) buf1 ) + i;
-				ptr2 = ( (double_int *) buf2 ) + i;
-				ptr3 = ( (double_int *) buf3 ) + i;
-
-				if ( ptr1->val > ptr2->val )
-				{
-					ptr3->val = ptr2->val;
-					ptr3->rank = ptr2->rank;
-				}
-				else
-				{
-					ptr3->val = ptr1->val;
-					ptr3->rank = ptr1->rank;
-				}
-			}
-		}
-		else
-			return NBC_OP_NOT_SUPPORTED;
+		MPC_NBC_OP_DEFINE_LOC(double)
 	}
 	else if ( type == MPI_LONG_INT )
 	{
-		if ( op == MPI_MAXLOC )
-		{
-			for ( i = 0; i < count; i++ )
-			{
-				typedef struct
-				{
-					long val;
-					int rank;
-				} long_int;
-				long_int *ptr1, *ptr2, *ptr3;
-
-				ptr1 = ( (long_int *) buf1 ) + i;
-				ptr2 = ( (long_int *) buf2 ) + i;
-				ptr3 = ( (long_int *) buf3 ) + i;
-
-				if ( ptr1->val < ptr2->val )
-				{
-					ptr3->val = ptr2->val;
-					ptr3->rank = ptr2->rank;
-				}
-				else
-				{
-					ptr3->val = ptr1->val;
-					ptr3->rank = ptr1->rank;
-				}
-			}
-		}
-		else if ( op == MPI_MINLOC )
-		{
-			for ( i = 0; i < count; i++ )
-			{
-				typedef struct
-				{
-					long val;
-					int rank;
-				} long_int;
-				long_int *ptr1, *ptr2, *ptr3;
-
-				ptr1 = ( (long_int *) buf1 ) + i;
-				ptr2 = ( (long_int *) buf2 ) + i;
-				ptr3 = ( (long_int *) buf3 ) + i;
-
-				if ( ptr1->val > ptr2->val )
-				{
-					ptr3->val = ptr2->val;
-					ptr3->rank = ptr2->rank;
-				}
-				else
-				{
-					ptr3->val = ptr1->val;
-					ptr3->rank = ptr1->rank;
-				}
-			}
-		}
-		else
-			return NBC_OP_NOT_SUPPORTED;
+		MPC_NBC_OP_DEFINE_LOC(long)
 	}
 	else if ( type == MPI_2INT )
 	{
-		if ( op == MPI_MAXLOC )
-		{
-			for ( i = 0; i < count; i++ )
-			{
-				typedef struct
-				{
-					int val;
-					int rank;
-				} int_int;
-				int_int *ptr1, *ptr2, *ptr3;
-
-				ptr1 = ( (int_int *) buf1 ) + i;
-				ptr2 = ( (int_int *) buf2 ) + i;
-				ptr3 = ( (int_int *) buf3 ) + i;
-
-				if ( ptr1->val < ptr2->val )
-				{
-					ptr3->val = ptr2->val;
-					ptr3->rank = ptr2->rank;
-				}
-				else
-				{
-					ptr3->val = ptr1->val;
-					ptr3->rank = ptr1->rank;
-				}
-			}
-		}
-		else if ( op == MPI_MINLOC )
-		{
-			for ( i = 0; i < count; i++ )
-			{
-				typedef struct
-				{
-					int val;
-					int rank;
-				} int_int;
-				int_int *ptr1, *ptr2, *ptr3;
-
-				ptr1 = ( (int_int *) buf1 ) + i;
-				ptr2 = ( (int_int *) buf2 ) + i;
-				ptr3 = ( (int_int *) buf3 ) + i;
-
-				if ( ptr1->val > ptr2->val )
-				{
-					ptr3->val = ptr2->val;
-					ptr3->rank = ptr2->rank;
-				}
-				else
-				{
-					ptr3->val = ptr1->val;
-					ptr3->rank = ptr1->rank;
-				}
-			}
-		}
-		else
-			return NBC_OP_NOT_SUPPORTED;
+		MPC_NBC_OP_DEFINE_LOC(int)
 	}
 	else if ( type == MPI_SHORT_INT )
 	{
-		if ( op == MPI_MAXLOC )
-		{
-			for ( i = 0; i < count; i++ )
-			{
-				typedef struct
-				{
-					short val;
-					int rank;
-				} short_int;
-				short_int *ptr1, *ptr2, *ptr3;
-
-				ptr1 = ( (short_int *) buf1 ) + i;
-				ptr2 = ( (short_int *) buf2 ) + i;
-				ptr3 = ( (short_int *) buf3 ) + i;
-
-				if ( ptr1->val < ptr2->val )
-				{
-					ptr3->val = ptr2->val;
-					ptr3->rank = ptr2->rank;
-				}
-				else
-				{
-					ptr3->val = ptr1->val;
-					ptr3->rank = ptr1->rank;
-				}
-			}
-		}
-		else if ( op == MPI_MINLOC )
-		{
-			for ( i = 0; i < count; i++ )
-			{
-				typedef struct
-				{
-					short val;
-					int rank;
-				} short_int;
-				short_int *ptr1, *ptr2, *ptr3;
-
-				ptr1 = ( (short_int *) buf1 ) + i;
-				ptr2 = ( (short_int *) buf2 ) + i;
-				ptr3 = ( (short_int *) buf3 ) + i;
-
-				if ( ptr1->val > ptr2->val )
-				{
-					ptr3->val = ptr2->val;
-					ptr3->rank = ptr2->rank;
-				}
-				else
-				{
-					ptr3->val = ptr1->val;
-					ptr3->rank = ptr1->rank;
-				}
-			}
-		}
-		else
-			return NBC_OP_NOT_SUPPORTED;
+		MPC_NBC_OP_DEFINE_LOC(short)
 	}
 	else if ( type == MPI_LONG_DOUBLE_INT )
 	{
-		if ( op == MPI_MAXLOC )
-		{
-			for ( i = 0; i < count; i++ )
-			{
-				typedef struct
-				{
-					long double val;
-					int rank;
-				} long_double_int;
-				long_double_int *ptr1, *ptr2, *ptr3;
-
-				ptr1 = ( (long_double_int *) buf1 ) + i;
-				ptr2 = ( (long_double_int *) buf2 ) + i;
-				ptr3 = ( (long_double_int *) buf3 ) + i;
-
-				if ( ptr1->val < ptr2->val )
-				{
-					ptr3->val = ptr2->val;
-					ptr3->rank = ptr2->rank;
-				}
-				else
-				{
-					ptr3->val = ptr1->val;
-					ptr3->rank = ptr1->rank;
-				}
-			}
-		}
-		else if ( op == MPI_MINLOC )
-		{
-			for ( i = 0; i < count; i++ )
-			{
-				typedef struct
-				{
-					long double val;
-					int rank;
-				} long_double_int;
-				long_double_int *ptr1, *ptr2, *ptr3;
-
-				ptr1 = ( (long_double_int *) buf1 ) + i;
-				ptr2 = ( (long_double_int *) buf2 ) + i;
-				ptr3 = ( (long_double_int *) buf3 ) + i;
-
-				if ( ptr1->val > ptr2->val )
-				{
-					ptr3->val = ptr2->val;
-					ptr3->rank = ptr2->rank;
-				}
-				else
-				{
-					ptr3->val = ptr1->val;
-					ptr3->rank = ptr1->rank;
-				}
-			}
-		}
-		else
-			return NBC_OP_NOT_SUPPORTED;
+		MPC_NBC_OP_DEFINE_LOC_NAME(long double, long_double)
 	}
 	else
 		return NBC_DATATYPE_NOT_SUPPORTED;
