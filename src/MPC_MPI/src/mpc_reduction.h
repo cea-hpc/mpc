@@ -81,11 +81,21 @@ MPC_DEFINED_FUNCS(MPC_SHORT_INT,mpc_short_int ,name);		\
 MPC_DEFINED_FUNCS(MPC_2INT,mpc_int_int ,name);			\
 MPC_DEFINED_FUNCS(MPC_2INTEGER,mpc_integer_integer ,name);          \
 MPC_DEFINED_FUNCS(MPC_2FLOAT,mpc_float_float ,name)	;		\
+\
 MPC_DEFINED_FUNCS(MPC_COMPLEX,mpc_float_float ,name)	;		\
+MPC_DEFINED_FUNCS(MPC_LOWCOMM_COMPLEX,mpc_float_float ,name)	;		\
+MPC_DEFINED_FUNCS(MPC_LOWCOMM_C_COMPLEX,mpc_float_float ,name)	;		\
+MPC_DEFINED_FUNCS(MPC_LOWCOMM_C_FLOAT_COMPLEX,mpc_float_float ,name)	;		\
+MPC_DEFINED_FUNCS(MPC_LOWCOMM_C_DOUBLE_COMPLEX,mpc_double_double ,name)	;		\
+MPC_DEFINED_FUNCS(MPC_LOWCOMM_C_LONG_DOUBLE_COMPLEX,mpc_longdouble_longdouble ,name)	;		\
+MPC_DEFINED_FUNCS(MPC_LOWCOMM_CXX_FLOAT_COMPLEX,mpc_float_float ,name)	;		\
+MPC_DEFINED_FUNCS(MPC_LOWCOMM_CXX_DOUBLE_COMPLEX,mpc_double_double ,name)	;		\
+MPC_DEFINED_FUNCS(MPC_LOWCOMM_CXX_LONG_DOUBLE_COMPLEX,mpc_longdouble_longdouble ,name)	;		\
+MPC_DEFINED_FUNCS(MPC_DOUBLE_COMPLEX,mpc_double_double ,name)	;		\
 MPC_DEFINED_FUNCS(MPC_COMPLEX8,mpc_float_float ,name)	;		\
 MPC_DEFINED_FUNCS(MPC_COMPLEX16,mpc_double_double ,name)	;		\
-MPC_DEFINED_FUNCS(MPC_DOUBLE_COMPLEX,mpc_double_double ,name)	;		\
 MPC_DEFINED_FUNCS(MPC_COMPLEX32,mpc_longdouble_longdouble ,name)	;		\
+\
 MPC_DEFINED_FUNCS(MPC_LOWCOMM_UNSIGNED_LONG_LONG_INT,mpc_unsigned_long_long_int ,name)	;		\
 MPC_DEFINED_FUNCS(MPC_LOWCOMM_UNSIGNED_LONG_LONG,mpc_unsigned_long_long_int ,name)	;		\
 MPC_DEFINED_FUNCS(MPC_LOWCOMM_LONG_LONG_INT, mpc_long_long_int ,name)	;		\
@@ -111,7 +121,8 @@ MPC_DEFINED_FUNCS(MPC_LOWCOMM_INT64_T, int64_t,name);   \
 MPC_DEFINED_FUNCS(MPC_LOWCOMM_COUNT, size_t, name);       \
 MPC_DEFINED_FUNCS(MPC_LOWCOMM_AINT, size_t, name);         \
 MPC_DEFINED_FUNCS(MPC_LOWCOMM_OFFSET, size_t, name);       \
-MPC_DEFINED_FUNCS(MPC_LOWCOMM_C_BOOL, char, name)
+MPC_DEFINED_FUNCS(MPC_LOWCOMM_C_BOOL, char, name);          \
+MPC_DEFINED_FUNCS(MPC_LOWCOMM_CXX_BOOL, char, name);
 
 MPC_PROTOTYPES (MIN);
 MPC_PROTOTYPES (MAX);
@@ -125,16 +136,6 @@ MPC_PROTOTYPES (LXOR);
 MPC_PROTOTYPES (BXOR);
 MPC_PROTOTYPES (LAND);
 MPC_PROTOTYPES (BAND);
-
-void MPC_SUM_func_MPC_COMPLEX (const mpc_float_float * in,mpc_float_float * inout, size_t size,mpc_lowcomm_datatype_t datatype);
-void MPC_MIN_func_MPC_COMPLEX (const mpc_float_float * in,mpc_float_float * inout, size_t size,mpc_lowcomm_datatype_t datatype);
-void MPC_MAX_func_MPC_COMPLEX (const mpc_float_float * in,mpc_float_float * inout, size_t size,mpc_lowcomm_datatype_t datatype);
-void MPC_PROD_func_MPC_COMPLEX (const mpc_float_float * in,mpc_float_float * inout, size_t size,mpc_lowcomm_datatype_t datatype);
-
-void MPC_SUM_func_MPC_DOUBLE_COMPLEX (const mpc_double_double * in,mpc_double_double * inout, size_t size,mpc_lowcomm_datatype_t datatype);
-void MPC_MIN_func_MPC_DOUBLE_COMPLEX (const mpc_double_double * in,mpc_double_double * inout, size_t size,mpc_lowcomm_datatype_t datatype);
-void MPC_MAX_func_MPC_DOUBLE_COMPLEX (const mpc_double_double * in,mpc_double_double * inout, size_t size,mpc_lowcomm_datatype_t datatype);
-void MPC_PROD_func_MPC_DOUBLE_COMPLEX (const mpc_double_double * in,mpc_double_double * inout, size_t size,mpc_lowcomm_datatype_t datatype);
 
 #ifdef __cplusplus
 }

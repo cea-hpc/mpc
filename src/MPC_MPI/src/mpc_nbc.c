@@ -41,6 +41,8 @@
 #include "mpc_thread_ng_engine.h"
 #endif
 
+#include "mpc_nbc_reduction_macros.h"
+
 #include "egreq_nbc.h"
 /* INTERNAL FOR NON-BLOCKING COLLECTIVES - CALL TO libNBC FUNCTIONS*/
 
@@ -10476,194 +10478,12 @@ int NBC_Test( NBC_Handle *handle, int *flag, __UNUSED__ MPI_Status *status )
  *            Remi Dehenne <remi.dehenne@cea.fr>
  */
 
-/**
- * Innermost reduction macro, see \ref MPC_NBC_OP_COMPARE_REDUCE
- * and \ref MPC_NBC_OP_REDUCE.
- */
-#define MPC_NBC_OP_LOOP(_mpi_op, _body)\
-	if ( op == _mpi_op )\
-	{\
-		for ( i = 0; i < count; i++ )\
-		{\
-			_body\
-		}\
-	}\
-
-/**
- * Reduction shorthand for comparison-assignment macros `c = (a OP b) ? b : a`,
- * i.e. min and max.
- */
-#define MPC_NBC_OP_COMPARE_REDUCE(_mpi_op, _c_op, _c_type)\
-	MPC_NBC_OP_LOOP(_mpi_op,\
-	{\
-		if ( *( ( (_c_type *) buf1 ) + i ) _c_op *( ( (_c_type *) buf2 ) + i ) )\
-			*( ( (_c_type *) buf3 ) + i ) = *( ( (_c_type *) buf2 ) + i );\
-		else\
-			*( ( (_c_type *) buf3 ) + i ) = *( ( (_c_type *) buf1 ) + i );\
-	})
-
-/**
- * Reduction shorthand for comparison-assignment macros `c = (a OP b) ? b : a`
- * which also store the index of the matching element in a distinct field,
- * i.e. minloc or maxloc.
- */
-#define MPC_NBC_OP_COMPARE_REDUCE_LOC(_mpi_op, _c_op, _c_type, _c_type_name)\
-	MPC_NBC_OP_LOOP(_mpi_op,\
-	{\
-		typedef struct\
-		{\
-			_c_type val;\
-			int rank;\
-		} _c_type_name##_int;\
-		_c_type_name##_int *ptr1;\
-		_c_type_name##_int *ptr2;\
-		_c_type_name##_int *ptr3;\
-\
-		ptr1 = ( (_c_type_name##_int *) buf1 ) + i;\
-		ptr2 = ( (_c_type_name##_int *) buf2 ) + i;\
-		ptr3 = ( (_c_type_name##_int *) buf3 ) + i;\
-\
-		if ( ptr1->val _c_op ptr2->val )\
-		{\
-			ptr3->val = ptr2->val;\
-			ptr3->rank = ptr2->rank;\
-		}\
-		else\
-		{\
-			ptr3->val = ptr1->val;\
-			ptr3->rank = ptr1->rank;\
-		}\
-	})
-
-/**
- * Reduction shorthand for macros `c = a OP b`, e.g. sum or product.
- */
-#define MPC_NBC_OP_REDUCE(_mpi_op, _c_op, _c_type)\
-	MPC_NBC_OP_LOOP(_mpi_op,\
-	{\
-		*( ( (_c_type *) buf3 ) + i ) = *( ( (_c_type *) buf1 ) + i ) _c_op *( ( (_c_type *) buf2 ) + i );\
-	})
-
-/**
- * Reduction shorthand for macros `c = bool(a) OP bool(b)`,
- * where a and b need to be normalized to 0 or 1
- * prior to calling OP.
- * Only used for logical XOR (LXOR).
- */
-#define MPC_NBC_OP_REDUCE_NORM_LOGICAL(_mpi_op, _c_op, _c_type)\
-	MPC_NBC_OP_LOOP(_mpi_op,\
-	{\
-		*( ( (_c_type *) buf3 ) + i ) = ( *( ( (_c_type *) buf1 ) + i ) ? 1 : 0)\
-			_c_op ( *( ( (_c_type *) buf2 ) + i ) ? 1 : 0);\
-	})
-
-/*
- * Comparison-assignment operators `c = (a OP b) ? b : a`
- */
-#define MPC_NBC_OP_MIN(_c_type) MPC_NBC_OP_COMPARE_REDUCE(MPI_MIN, >, _c_type)
-#define MPC_NBC_OP_MAX(_c_type) MPC_NBC_OP_COMPARE_REDUCE(MPI_MAX, <, _c_type)
-
-/*
- * Comparison-assignment operators `c = (a OP b) ? b : a` that attach the index of the min/max value
- */
-#define MPC_NBC_OP_MINLOC(_c_type, _c_type_name) MPC_NBC_OP_COMPARE_REDUCE_LOC(MPI_MINLOC, >, _c_type, _c_type_name)
-#define MPC_NBC_OP_MAXLOC(_c_type, _c_type_name) MPC_NBC_OP_COMPARE_REDUCE_LOC(MPI_MAXLOC, <, _c_type, _c_type_name)
-
-/*
- * `c = a OP b` operators
- */
-#define MPC_NBC_OP_SUM(_c_type)  MPC_NBC_OP_REDUCE(MPI_SUM, +, _c_type)
-#define MPC_NBC_OP_PROD(_c_type) MPC_NBC_OP_REDUCE(MPI_PROD, *, _c_type)
-#define MPC_NBC_OP_LAND(_c_type) MPC_NBC_OP_REDUCE(MPI_LAND, &&, _c_type)
-#define MPC_NBC_OP_BAND(_c_type) MPC_NBC_OP_REDUCE(MPI_BAND, &, _c_type)
-#define MPC_NBC_OP_LOR(_c_type)  MPC_NBC_OP_REDUCE(MPI_LOR, ||, _c_type)
-#define MPC_NBC_OP_BOR(_c_type)  MPC_NBC_OP_REDUCE(MPI_BOR, |, _c_type)
-#define MPC_NBC_OP_LXOR(_c_type) MPC_NBC_OP_REDUCE_NORM_LOGICAL(MPI_LXOR, ^, _c_type)
-#define MPC_NBC_OP_BXOR(_c_type) MPC_NBC_OP_REDUCE(MPI_BXOR, ^, _c_type)
-
-
-/**
- * Define the list of reduction operators allowed for the "C Integer" group of
- * MPI basic datatypes, as defined in the MPI Standard 4.1, Section 6.9.2.
- */
-#define MPC_NBC_OP_DEFINE_C_INTEGER(_c_type)\
-	{\
-		/* Min, max */\
-		MPC_NBC_OP_MIN(_c_type)\
-		else MPC_NBC_OP_MAX(_c_type)\
-\
-		/* Sum, product */\
-		else MPC_NBC_OP_SUM(_c_type)\
-		else MPC_NBC_OP_PROD(_c_type)\
-\
-		/* Logical And, Or, Xor */\
-		else MPC_NBC_OP_LAND(_c_type)\
-		else MPC_NBC_OP_LOR(_c_type)\
-		else MPC_NBC_OP_LXOR(_c_type)\
-\
-		/* Binary And, Or, Xor */\
-		else MPC_NBC_OP_BAND(_c_type)\
-		else MPC_NBC_OP_BOR(_c_type)\
-		else MPC_NBC_OP_BXOR(_c_type)\
-\
-		else return NBC_OP_NOT_SUPPORTED;\
-	}
-
-/**
- * Define the list of reduction operators allowed for the "Floating Point" group of
- * MPI basic datatypes, as defined in the MPI Standard 4.1, Section 6.9.2.
- */
-#define MPC_NBC_OP_DEFINE_FLOATING_POINT(_c_type)\
-	{\
-		/* Min, max */\
-		MPC_NBC_OP_MIN(_c_type)\
-		else MPC_NBC_OP_MAX(_c_type)\
-\
-		/* Sum, product */\
-		else MPC_NBC_OP_SUM(_c_type)\
-		else MPC_NBC_OP_PROD(_c_type)\
-\
-		else return NBC_OP_NOT_SUPPORTED;\
-	}
-
-/**
- * Define the list of reduction operators allowed for the minloc/maxloc tuple types,
- * as defined in the MPI Standard 4.1, Section 6.9.4.
- *
- * @param _c_type The actual C type name, e.g `double` or `long double`
- * @param _c_type_name The C type name with no whitespace, e.g. `double` or `long_double`
- * @see MPC_NBC_OP_DEFINE_LOC if _c_type does not contain any whitespace, i.e. _c_type == _c_type_name
- */
-#define MPC_NBC_OP_DEFINE_LOC_NAME(_c_type, _c_type_name)\
-	{\
-		/* Minloc, maxloc */\
-		MPC_NBC_OP_MINLOC(_c_type, _c_type_name)\
-		else MPC_NBC_OP_MAXLOC(_c_type, _c_type_name)\
-\
-		else return NBC_OP_NOT_SUPPORTED;\
-	}
-
-#define MPC_NBC_OP_DEFINE_LOC(_c_type) MPC_NBC_OP_DEFINE_LOC_NAME(_c_type, _c_type)
-
-/**
- * Define the list of reduction operators allowed for the "Byte" group of
- * MPI basic datatypes, as defined in the MPI Standard 4.1, Section 6.9.2.
- */
-#define MPC_NBC_OP_DEFINE_BYTE(_c_type)\
-	{\
-		/* Binary And, Or, Xor */\
-		MPC_NBC_OP_BAND(_c_type)\
-		else MPC_NBC_OP_BOR(_c_type)\
-		else MPC_NBC_OP_BXOR(_c_type)\
-\
-		else return NBC_OP_NOT_SUPPORTED;\
-	}
 
 int NBC_Operation( void *buf3, void *buf1, void *buf2, MPI_Op op, MPI_Datatype type, int count )
 {
 	int i;
 	
-
+	/* C integer */
 	if ( type == MPI_INT )
 	{
 		MPC_NBC_OP_DEFINE_C_INTEGER(int)
@@ -10675,6 +10495,14 @@ int NBC_Operation( void *buf3, void *buf1, void *buf2, MPI_Op op, MPI_Datatype t
 	else if ( type == MPI_SHORT )
 	{
 		MPC_NBC_OP_DEFINE_C_INTEGER(short)
+	}
+	else if ( type == MPI_CHAR || type == MPI_SIGNED_CHAR )
+	{
+		MPC_NBC_OP_DEFINE_C_INTEGER(char)
+	}
+	else if ( type == MPI_LONG_LONG_INT || type == MPI_LONG_LONG )
+	{
+		MPC_NBC_OP_DEFINE_C_INTEGER(long long int)
 	}
 	else if ( type == MPI_UNSIGNED )
 	{
@@ -10688,6 +10516,48 @@ int NBC_Operation( void *buf3, void *buf1, void *buf2, MPI_Op op, MPI_Datatype t
 	{
 		MPC_NBC_OP_DEFINE_C_INTEGER(unsigned short)
 	}
+	else if ( type == MPI_UNSIGNED_CHAR )
+	{
+		MPC_NBC_OP_DEFINE_C_INTEGER(unsigned char)
+	}
+	else if ( type == MPI_UNSIGNED_LONG_LONG )
+	{
+		MPC_NBC_OP_DEFINE_C_INTEGER(unsigned long long int)
+	}
+	else if ( type == MPI_INT8_T )
+	{
+		MPC_NBC_OP_DEFINE_C_INTEGER(int8_t)
+	}
+	else if ( type == MPI_INT16_T )
+	{
+		MPC_NBC_OP_DEFINE_C_INTEGER(int16_t)
+	}
+	else if ( type == MPI_INT32_T )
+	{
+		MPC_NBC_OP_DEFINE_C_INTEGER(int32_t)
+	}
+	else if ( type == MPI_INT64_T )
+	{
+		MPC_NBC_OP_DEFINE_C_INTEGER(int64_t)
+	}
+	else if ( type == MPI_UINT8_T )
+	{
+		MPC_NBC_OP_DEFINE_C_INTEGER(uint8_t)
+	}
+	else if ( type == MPI_UINT16_T )
+	{
+		MPC_NBC_OP_DEFINE_C_INTEGER(uint16_t)
+	}
+	else if ( type == MPI_UINT32_T )
+	{
+		MPC_NBC_OP_DEFINE_C_INTEGER(uint32_t)
+	}
+	else if ( type == MPI_UINT64_T )
+	{
+		MPC_NBC_OP_DEFINE_C_INTEGER(uint64_t)
+	}
+
+	/* Floating point */
 	else if ( type == MPI_FLOAT )
 	{
 		MPC_NBC_OP_DEFINE_FLOATING_POINT(float)
@@ -10700,10 +10570,48 @@ int NBC_Operation( void *buf3, void *buf1, void *buf2, MPI_Op op, MPI_Datatype t
 	{
 		MPC_NBC_OP_DEFINE_FLOATING_POINT(long double)
 	}
+
+	/* Logical */
+	else if ( type == MPI_C_BOOL )
+	{
+		MPC_NBC_OP_DEFINE_LOGICAL(_Bool)
+	}
+
+	/* Complex */
+	else if ( type == MPI_C_COMPLEX || type == MPI_C_FLOAT_COMPLEX)
+	{
+		MPC_NBC_OP_DEFINE_COMPLEX(float _Complex)
+	}
+	else if ( type == MPI_C_DOUBLE_COMPLEX)
+	{
+		MPC_NBC_OP_DEFINE_COMPLEX(double _Complex)
+	}
+	else if ( type == MPI_C_LONG_DOUBLE_COMPLEX)
+	{
+		MPC_NBC_OP_DEFINE_COMPLEX(long double _Complex)
+	}
+
+	/* Byte */
 	else if ( type == MPI_BYTE )
 	{
 		MPC_NBC_OP_DEFINE_BYTE(char)
 	}
+
+	/* Multi-language types */
+	else if ( type == MPI_AINT )
+	{
+		MPC_NBC_OP_DEFINE_MULTI_LANG(MPI_Aint)
+	}
+	else if ( type == MPI_OFFSET )
+	{
+		MPC_NBC_OP_DEFINE_MULTI_LANG(MPI_Offset)
+	}
+	else if ( type == MPI_COUNT )
+	{
+		MPC_NBC_OP_DEFINE_MULTI_LANG(MPI_Count)
+	}
+
+	/* Minloc / maxloc */
 	else if ( type == MPI_FLOAT_INT )
 	{
 		MPC_NBC_OP_DEFINE_LOC(float)

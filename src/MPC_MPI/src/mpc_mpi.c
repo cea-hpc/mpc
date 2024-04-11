@@ -5405,91 +5405,136 @@ sctk_op_t *sctk_convert_to_mpc_op(MPI_Op op)
 	op = (sctk_Op_f)func ## _ ## t; \
 	else
 
-#define COMPAT_DATA_TYPE(op, func)                                             \
-	if(op == func){                                                        \
-		ADD_FUNC_HANDLER(func, MPC_LOWCOMM_SIGNED_CHAR, op)            \
-		ADD_FUNC_HANDLER(func, MPC_LOWCOMM_CHAR, op)                   \
-		ADD_FUNC_HANDLER(func, MPC_LOWCOMM_CHARACTER, op)              \
-		ADD_FUNC_HANDLER(func, MPC_LOWCOMM_BYTE, op)                   \
-		ADD_FUNC_HANDLER(func, MPC_LOWCOMM_SHORT, op)                  \
+#define ADD_FUNC_HANDLER_C_INTEGER(op, func)                           \
 		ADD_FUNC_HANDLER(func, MPC_LOWCOMM_INT, op)                    \
-		ADD_FUNC_HANDLER(func, MPC_LOWCOMM_INTEGER, op)                \
 		ADD_FUNC_HANDLER(func, MPC_LOWCOMM_LONG, op)                   \
-		ADD_FUNC_HANDLER(func, MPC_LOWCOMM_FLOAT, op)                  \
-		ADD_FUNC_HANDLER(func, MPC_LOWCOMM_INTEGER1, op)               \
-		ADD_FUNC_HANDLER(func, MPC_LOWCOMM_INTEGER2, op)               \
-		ADD_FUNC_HANDLER(func, MPC_LOWCOMM_INTEGER4, op)               \
-		ADD_FUNC_HANDLER(func, MPC_LOWCOMM_INTEGER8, op)               \
-		ADD_FUNC_HANDLER(func, MPC_LOWCOMM_REAL, op)                   \
-		ADD_FUNC_HANDLER(func, MPC_LOWCOMM_REAL4, op)                  \
-		ADD_FUNC_HANDLER(func, MPC_LOWCOMM_REAL8, op)                  \
-		ADD_FUNC_HANDLER(func, MPC_LOWCOMM_REAL16, op)                 \
-		ADD_FUNC_HANDLER(func, MPC_LOWCOMM_DOUBLE, op)                 \
-		ADD_FUNC_HANDLER(func, MPC_LOWCOMM_DOUBLE_PRECISION, op)       \
-		ADD_FUNC_HANDLER(func, MPC_LOWCOMM_UNSIGNED_CHAR, op)          \
+		ADD_FUNC_HANDLER(func, MPC_LOWCOMM_SHORT, op)                  \
 		ADD_FUNC_HANDLER(func, MPC_LOWCOMM_UNSIGNED_SHORT, op)         \
 		ADD_FUNC_HANDLER(func, MPC_LOWCOMM_UNSIGNED, op)               \
 		ADD_FUNC_HANDLER(func, MPC_LOWCOMM_UNSIGNED_LONG, op)          \
-		ADD_FUNC_HANDLER(func, MPC_LOWCOMM_UNSIGNED_LONG_LONG, op)     \
 		ADD_FUNC_HANDLER(func, MPC_LOWCOMM_LONG_LONG_INT, op)          \
-		ADD_FUNC_HANDLER(func, MPC_LOWCOMM_LONG_DOUBLE, op)            \
-		ADD_FUNC_HANDLER(func, MPC_LOWCOMM_LONG_LONG, op)              \
-		ADD_FUNC_HANDLER(func, MPC_DOUBLE_COMPLEX, op)                 \
-		ADD_FUNC_HANDLER(func, MPC_COMPLEX, op)                        \
-		ADD_FUNC_HANDLER(func, MPC_COMPLEX8, op)                       \
-		ADD_FUNC_HANDLER(func, MPC_COMPLEX16, op)                      \
-		ADD_FUNC_HANDLER(func, MPC_COMPLEX32, op)                      \
 		ADD_FUNC_HANDLER(func, MPC_LOWCOMM_UNSIGNED_LONG_LONG_INT, op) \
-		ADD_FUNC_HANDLER(func, MPC_LOWCOMM_UINT8_T, op)                \
-		ADD_FUNC_HANDLER(func, MPC_LOWCOMM_UINT16_T, op)               \
-		ADD_FUNC_HANDLER(func, MPC_LOWCOMM_UINT32_T, op)               \
-		ADD_FUNC_HANDLER(func, MPC_LOWCOMM_UINT64_T, op)               \
+		ADD_FUNC_HANDLER(func, MPC_LOWCOMM_LONG_LONG, op)              \
+		ADD_FUNC_HANDLER(func, MPC_LOWCOMM_UNSIGNED_LONG_LONG, op)     \
+		ADD_FUNC_HANDLER(func, MPC_LOWCOMM_SIGNED_CHAR, op)            \
+		ADD_FUNC_HANDLER(func, MPC_LOWCOMM_UNSIGNED_CHAR, op)          \
 		ADD_FUNC_HANDLER(func, MPC_LOWCOMM_INT8_T, op)                 \
 		ADD_FUNC_HANDLER(func, MPC_LOWCOMM_INT16_T, op)                \
 		ADD_FUNC_HANDLER(func, MPC_LOWCOMM_INT32_T, op)                \
 		ADD_FUNC_HANDLER(func, MPC_LOWCOMM_INT64_T, op)                \
-		ADD_FUNC_HANDLER(func, MPC_LOWCOMM_COUNT, op)                  \
+		ADD_FUNC_HANDLER(func, MPC_LOWCOMM_UINT8_T, op)                \
+		ADD_FUNC_HANDLER(func, MPC_LOWCOMM_UINT16_T, op)               \
+		ADD_FUNC_HANDLER(func, MPC_LOWCOMM_UINT32_T, op)               \
+		ADD_FUNC_HANDLER(func, MPC_LOWCOMM_UINT64_T, op)
+
+
+#define ADD_FUNC_HANDLER_FORTRAN_INTEGER(op, func)                     \
+		ADD_FUNC_HANDLER(func, MPC_LOWCOMM_INTEGER, op)                \
+		ADD_FUNC_HANDLER(func, MPC_LOWCOMM_INTEGER1, op)               \
+		ADD_FUNC_HANDLER(func, MPC_LOWCOMM_INTEGER2, op)               \
+		ADD_FUNC_HANDLER(func, MPC_LOWCOMM_INTEGER4, op)               \
+		ADD_FUNC_HANDLER(func, MPC_LOWCOMM_INTEGER8, op)
+
+
+#define ADD_FUNC_HANDLER_FLOATING_POINT(op, func)                      \
+		ADD_FUNC_HANDLER(func, MPC_LOWCOMM_FLOAT, op)                  \
+		ADD_FUNC_HANDLER(func, MPC_LOWCOMM_DOUBLE, op)                 \
+		ADD_FUNC_HANDLER(func, MPC_LOWCOMM_REAL, op)                   \
+		ADD_FUNC_HANDLER(func, MPC_LOWCOMM_DOUBLE_PRECISION, op)       \
+		ADD_FUNC_HANDLER(func, MPC_LOWCOMM_LONG_DOUBLE, op)            \
+		ADD_FUNC_HANDLER(func, MPC_LOWCOMM_REAL4, op)                  \
+		ADD_FUNC_HANDLER(func, MPC_LOWCOMM_REAL8, op)                  \
+		ADD_FUNC_HANDLER(func, MPC_LOWCOMM_REAL16, op)
+
+
+#define ADD_FUNC_HANDLER_LOGICAL(op, func)                             \
+		ADD_FUNC_HANDLER(func, MPC_LOWCOMM_LOGICAL, op)                \
+		ADD_FUNC_HANDLER(func, MPC_LOWCOMM_C_BOOL, op)                 \
+		ADD_FUNC_HANDLER(func, MPC_LOWCOMM_CXX_BOOL, op)
+
+
+#define ADD_FUNC_HANDLER_COMPLEX(op, func)                             \
+		ADD_FUNC_HANDLER(func, MPC_LOWCOMM_COMPLEX, op)                \
+		ADD_FUNC_HANDLER(func, MPC_LOWCOMM_C_COMPLEX, op)              \
+		ADD_FUNC_HANDLER(func, MPC_LOWCOMM_C_FLOAT_COMPLEX, op)        \
+		ADD_FUNC_HANDLER(func, MPC_LOWCOMM_C_DOUBLE_COMPLEX, op)       \
+		ADD_FUNC_HANDLER(func, MPC_LOWCOMM_C_LONG_DOUBLE_COMPLEX, op)  \
+		ADD_FUNC_HANDLER(func, MPC_LOWCOMM_CXX_FLOAT_COMPLEX, op)      \
+		ADD_FUNC_HANDLER(func, MPC_LOWCOMM_CXX_DOUBLE_COMPLEX, op)     \
+		ADD_FUNC_HANDLER(func, MPC_LOWCOMM_CXX_LONG_DOUBLE_COMPLEX, op)\
+		ADD_FUNC_HANDLER(func, MPC_DOUBLE_COMPLEX, op)                 \
+		ADD_FUNC_HANDLER(func, MPC_COMPLEX, op)                        \
+		ADD_FUNC_HANDLER(func, MPC_COMPLEX8, op)                       \
+		ADD_FUNC_HANDLER(func, MPC_COMPLEX16, op)                      \
+		ADD_FUNC_HANDLER(func, MPC_COMPLEX32, op)
+
+
+#define ADD_FUNC_HANDLER_BYTE(op, func)                                \
+		ADD_FUNC_HANDLER(func, MPC_LOWCOMM_BYTE, op)                   \
+
+
+#define ADD_FUNC_HANDLER_MULTI_LANG(op, func)                          \
 		ADD_FUNC_HANDLER(func, MPC_LOWCOMM_AINT, op)                   \
 		ADD_FUNC_HANDLER(func, MPC_LOWCOMM_OFFSET, op)                 \
-		not_reachable();                                               \
+		ADD_FUNC_HANDLER(func, MPC_LOWCOMM_COUNT, op)
+
+#define ADD_FUNC_HANDLER_MIN_MAX_LOC(op, func)                         \
+		ADD_FUNC_HANDLER(func, MPC_LOWCOMM_AINT, op)                   \
+		ADD_FUNC_HANDLER(func, MPC_LOWCOMM_OFFSET, op)                 \
+		ADD_FUNC_HANDLER(func, MPC_LOWCOMM_COUNT, op)
+
+
+#define COMPAT_DATA_TYPE_START if (0) {}
+
+#define COMPAT_DATA_TYPE_END                                           \
+	 else {                                                            \
+		mpc_common_debug_error("No such operation");                   \
+		mpc_common_debug_abort();                                      \
 	}
 
-#define COMPAT_DATA_TYPE2(op, func)                                    \
-	if(op == func){                                                \
-		ADD_FUNC_HANDLER(func, MPC_LOWCOMM_SIGNED_CHAR, op)    \
-		ADD_FUNC_HANDLER(func, MPC_LOWCOMM_CHAR, op)           \
-		ADD_FUNC_HANDLER(func, MPC_LOWCOMM_BYTE, op)           \
-		ADD_FUNC_HANDLER(func, MPC_LOWCOMM_SHORT, op)          \
-		ADD_FUNC_HANDLER(func, MPC_LOWCOMM_INT, op)            \
-		ADD_FUNC_HANDLER(func, MPC_LOWCOMM_INTEGER, op)        \
-		ADD_FUNC_HANDLER(func, MPC_LOWCOMM_INTEGER1, op)       \
-		ADD_FUNC_HANDLER(func, MPC_LOWCOMM_INTEGER2, op)       \
-		ADD_FUNC_HANDLER(func, MPC_LOWCOMM_INTEGER4, op)       \
-		ADD_FUNC_HANDLER(func, MPC_LOWCOMM_INTEGER8, op)       \
-		ADD_FUNC_HANDLER(func, MPC_LOWCOMM_LONG, op)           \
-		ADD_FUNC_HANDLER(func, MPC_LOWCOMM_LONG_LONG, op)      \
-		ADD_FUNC_HANDLER(func, MPC_LOWCOMM_UNSIGNED_CHAR, op)  \
-		ADD_FUNC_HANDLER(func, MPC_LOWCOMM_UNSIGNED_SHORT, op) \
-		ADD_FUNC_HANDLER(func, MPC_LOWCOMM_UNSIGNED, op)       \
-		ADD_FUNC_HANDLER(func, MPC_LOWCOMM_UNSIGNED_LONG, op)  \
-		ADD_FUNC_HANDLER(func, MPC_LOWCOMM_LOGICAL, op)        \
-		ADD_FUNC_HANDLER(func, MPC_LOWCOMM_UINT8_T, op)        \
-		ADD_FUNC_HANDLER(func, MPC_LOWCOMM_UINT16_T, op)       \
-		ADD_FUNC_HANDLER(func, MPC_LOWCOMM_UINT32_T, op)       \
-		ADD_FUNC_HANDLER(func, MPC_LOWCOMM_UINT64_T, op)       \
-		ADD_FUNC_HANDLER(func, MPC_LOWCOMM_INT8_T, op)         \
-		ADD_FUNC_HANDLER(func, MPC_LOWCOMM_INT16_T, op)        \
-		ADD_FUNC_HANDLER(func, MPC_LOWCOMM_INT32_T, op)        \
-		ADD_FUNC_HANDLER(func, MPC_LOWCOMM_INT64_T, op)        \
-		ADD_FUNC_HANDLER(func, MPC_LOWCOMM_COUNT, op)          \
-		ADD_FUNC_HANDLER(func, MPC_LOWCOMM_AINT, op)           \
-		ADD_FUNC_HANDLER(func, MPC_LOWCOMM_OFFSET, op)         \
-		ADD_FUNC_HANDLER(func, MPC_LOWCOMM_C_BOOL, op)         \
-		not_reachable();                                       \
+static inline void type_unsupported()
+{
+	mpc_common_debug_abort_log(MPC_COMMON_DEBUG_INFO,
+			"Reduction operation not allowed for this type");
+}
+
+#define COMPAT_DATA_TYPE_MIN_MAX(op, func)                             \
+	else if(op == func) {                                              \
+		ADD_FUNC_HANDLER_C_INTEGER(op, func)                           \
+		ADD_FUNC_HANDLER_FORTRAN_INTEGER(op, func)                     \
+		ADD_FUNC_HANDLER_FLOATING_POINT(op, func)                      \
+		ADD_FUNC_HANDLER_MULTI_LANG(op, func)                          \
+		type_unsupported();                                            \
 	}
 
-#define COMPAT_DATA_TYPE3(op, func)                               \
-	if(op == func){                                           \
+#define COMPAT_DATA_TYPE_SUM_PROD(op, func)                            \
+	else if(op == func) {                                              \
+		ADD_FUNC_HANDLER_C_INTEGER(op, func)                           \
+		ADD_FUNC_HANDLER_FORTRAN_INTEGER(op, func)                     \
+		ADD_FUNC_HANDLER_FLOATING_POINT(op, func)                      \
+		ADD_FUNC_HANDLER_COMPLEX(op, func)                             \
+		ADD_FUNC_HANDLER_MULTI_LANG(op, func)                          \
+		type_unsupported();                                            \
+	}
+
+#define COMPAT_DATA_TYPE_LOGICAL_OP(op, func)                          \
+	else if(op == func) {                                              \
+		ADD_FUNC_HANDLER_C_INTEGER(op, func)                           \
+		ADD_FUNC_HANDLER_LOGICAL(op, func)                             \
+		type_unsupported();                                            \
+	}
+
+#define COMPAT_DATA_TYPE_BINARY_OP(op, func)                           \
+	else if(op == func) {                                              \
+		ADD_FUNC_HANDLER_C_INTEGER(op, func)                           \
+		ADD_FUNC_HANDLER_FORTRAN_INTEGER(op, func)                     \
+		ADD_FUNC_HANDLER_BYTE(op, func)                                \
+		ADD_FUNC_HANDLER_MULTI_LANG(op, func)                          \
+		type_unsupported();                                            \
+	}
+
+#define COMPAT_DATA_TYPE_MIN_MAX_LOC(op, func)            \
+	else if(op == func) {                                 \
 		ADD_FUNC_HANDLER(func, MPC_FLOAT_INT, op)         \
 		ADD_FUNC_HANDLER(func, MPC_LONG_INT, op)          \
 		ADD_FUNC_HANDLER(func, MPC_DOUBLE_INT, op)        \
@@ -5499,13 +5544,8 @@ sctk_op_t *sctk_convert_to_mpc_op(MPI_Op op)
 		ADD_FUNC_HANDLER(func, MPC_2FLOAT, op)            \
 		ADD_FUNC_HANDLER(func, MPC_2INTEGER, op)          \
 		ADD_FUNC_HANDLER(func, MPC_2REAL, op)             \
-		ADD_FUNC_HANDLER(func, MPC_COMPLEX, op)           \
 		ADD_FUNC_HANDLER(func, MPC_2DOUBLE_PRECISION, op) \
-		ADD_FUNC_HANDLER(func, MPC_COMPLEX8, op)          \
-		ADD_FUNC_HANDLER(func, MPC_COMPLEX16, op)         \
-		ADD_FUNC_HANDLER(func, MPC_DOUBLE_COMPLEX, op)    \
-		ADD_FUNC_HANDLER(func, MPC_COMPLEX32, op)         \
-		not_reachable();                                  \
+		type_unsupported();                               \
 	}
 
 sctk_Op_f sctk_get_common_function(mpc_lowcomm_datatype_t datatype, sctk_Op op)
@@ -5515,52 +5555,20 @@ sctk_Op_f sctk_get_common_function(mpc_lowcomm_datatype_t datatype, sctk_Op op)
 	func = op.func;
 
 	/*Internals function */
-	COMPAT_DATA_TYPE(func, MPC_SUM_func)
-	else
-	{
-		COMPAT_DATA_TYPE(func, MPC_MAX_func) else
-		{
-			COMPAT_DATA_TYPE(func, MPC_MIN_func) else
-			{
-				COMPAT_DATA_TYPE(func, MPC_PROD_func) else
-				{
-					COMPAT_DATA_TYPE2(func, MPC_BAND_func) else
-					{
-						COMPAT_DATA_TYPE2(func, MPC_LAND_func) else
-						{
-							COMPAT_DATA_TYPE2(
-								func,
-								MPC_BXOR_func) else
-							{
-								COMPAT_DATA_TYPE2(func,
-								                  MPC_LXOR_func) else
-								{
-									COMPAT_DATA_TYPE2(func,
-									                  MPC_BOR_func) else
-									{
-										COMPAT_DATA_TYPE2(func,
-										                  MPC_LOR_func) else
-										{
-											COMPAT_DATA_TYPE3(func,
-											                  MPC_MAXLOC_func) else
-											{
-												COMPAT_DATA_TYPE3(func,
-												                  MPC_MINLOC_func) else
-												{
-													mpc_common_debug_error("No such operation");
-													mpc_common_debug_abort();
-												}
-											}
-										}
-									}
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-	}
+	COMPAT_DATA_TYPE_START
+	COMPAT_DATA_TYPE_MIN_MAX(func, MPC_MAX_func)
+	COMPAT_DATA_TYPE_MIN_MAX(func, MPC_MIN_func)
+	COMPAT_DATA_TYPE_SUM_PROD(func, MPC_SUM_func)
+	COMPAT_DATA_TYPE_SUM_PROD(func, MPC_PROD_func)
+	COMPAT_DATA_TYPE_BINARY_OP(func, MPC_BAND_func)
+	COMPAT_DATA_TYPE_LOGICAL_OP(func, MPC_LAND_func)
+	COMPAT_DATA_TYPE_BINARY_OP(func, MPC_BXOR_func)
+	COMPAT_DATA_TYPE_LOGICAL_OP(func, MPC_LXOR_func)
+	COMPAT_DATA_TYPE_BINARY_OP(func, MPC_BOR_func)
+	COMPAT_DATA_TYPE_LOGICAL_OP(func, MPC_LOR_func)
+	COMPAT_DATA_TYPE_MIN_MAX_LOC(func, MPC_MAXLOC_func)
+	COMPAT_DATA_TYPE_MIN_MAX_LOC(func, MPC_MINLOC_func)
+	COMPAT_DATA_TYPE_END
 
 	return func;
 }
@@ -14813,7 +14821,7 @@ int PMPI_Error_string(int errorcode, char *string, int *resultlen)
 	MPI_Error_string_convert(MPI_ERR_INFO_VALUE, "Value longer than MPI_MAX_INFO_VAL");
 	MPI_Error_string_convert(MPI_ERR_INFO_NOKEY, "Invalid key passed to MPI_INFO_DELETE");
 	MPI_Error_string_convert(MPI_ERR_SPAWN, "Error in spawning processes");
-	MPI_Error_string_convert(MPI_ERR_PORT, "Ivalid port name passed to MPI_COMM_CONNECT");
+	MPI_Error_string_convert(MPI_ERR_PORT, "Invalid port name passed to MPI_COMM_CONNECT");
 	MPI_Error_string_convert(MPI_ERR_SERVICE, "Invalid service name passed to MPI_UNPUBLISH_NAME");
 	MPI_Error_string_convert(MPI_ERR_NAME, "Invalid service name passed to MPI_LOOKUP_NAME");
 	MPI_Error_string_convert(MPI_ERR_WIN, "Invalid win argument");
