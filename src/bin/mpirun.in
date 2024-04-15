@@ -349,14 +349,10 @@ class MpcRunner:
 					if jargs["MPCFRAMEWORK_LAUNCH_AUTOKILL"] != 0:
 						cc += ["-t", "0:{}".format(jargs['MPCFRAMEWORK_LAUNCH_AUTOKILL'])]
 					# running on multiple nodes with --multiconf enabled is forbidden (CF https://slurm.schedmd.com/srun.html#lbAM)
-					if jargs["MPCFRAMEWORK_LAUNCH_MPCRUN_NODE"] != nodes_number:
-						print("nodes", jargs["MPCFRAMEWORK_LAUNCH_MPCRUN_NODE"],  nodes_number)
-						print("ERROR : running on heterogeneous nodes number with --multiconf enabled is forbidden (CF https://slurm.schedmd.com/srun.html#lbAM)")
-						exit
-					if jargs['MPCFRAMEWORK_LAUNCH_MPCRUN_CORE'] != cores_per_process:
-						print("cores", jargs['MPCFRAMEWORK_LAUNCH_MPCRUN_CORE'],  cores_per_process)
-						print("ERROR : running on heterogeneous cores per process with --multiconf enabled is forbidden (CF https://slurm.schedmd.com/srun.html#lbAM)")
-						exit
+					if jargs["MPCFRAMEWORK_LAUNCH_MPCRUN_NODE"] != nodes_number and jargs["MPCFRAMEWORK_LAUNCH_MPCRUN_NODE"] > 1:
+						print("WARNING : running on heterogeneous nodes number with --multiconf enabled is forbidden, taking only first occurence into account\n(CF https://slurm.schedmd.com/srun.html#lbAM) (given {})".format(jargs["MPCFRAMEWORK_LAUNCH_MPCRUN_NODE"]))
+					if jargs['MPCFRAMEWORK_LAUNCH_MPCRUN_CORE'] != cores_per_process and jargs['MPCFRAMEWORK_LAUNCH_MPCRUN_CORE'] > 1:
+						print("WARNING : running on heterogeneous cores per process with --multiconf enabled is forbidden, taking only first occurence into account\n(CF https://slurm.schedmd.com/srun.html#lbAM) (given {})".format(jargs["MPCFRAMEWORK_LAUNCH_MPCRUN_CORE"]))
 					if jargs["MPCFRAMEWORK_LAUNCH_MPCRUN_PROCESS"] == 1:
 						proc_num = "{}".format(proc_count)
 					else:
