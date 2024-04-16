@@ -342,6 +342,9 @@ class MpcRunner:
 			nodes_number = self._subcmd[0][0]['MPCFRAMEWORK_LAUNCH_MPCRUN_NODE']
 			cores_per_process = self._subcmd[0][0]['MPCFRAMEWORK_LAUNCH_MPCRUN_CORE']
 			with tempfile.NamedTemporaryFile("w", delete=False) as mc_file:
+				opt = []
+				if "opt" in self._subcmd[0][0]:
+					opt = shlex.split(self._subcmd[0][0]["opt"])
 				proc_count = 0
 				for i, scmd in enumerate(self._subcmd):
 					(jargs, mpc_args, cmd) = scmd
@@ -357,13 +360,15 @@ class MpcRunner:
 						proc_num = "{}".format(proc_count)
 					else:
 						proc_num = "{}-{}".format(proc_count, proc_count + jargs["MPCFRAMEWORK_LAUNCH_MPCRUN_PROCESS"] - 1)
-					mc_file.write("{iter} bash -c 'export=ALL,MPC_STARTUP_ARGS=\"{startup_args}\"; {exec}'\n".format(
+					mc_file.write("{iter} bash -c 'export MPC_STARTUP_ARGS=\"{startup_args}\"; {exec}'\n".format(
 						iter = proc_num, 
 						# startup_args = mpc_args if not is_show else '"{}"'.format(mpc_args), 
 						startup_args = mpc_args,
 						exec = " ".join(jargs["binary"])))
 					proc_count += jargs["MPCFRAMEWORK_LAUNCH_MPCRUN_PROCESS"]
-				ret = [["-c", cores_per_process, "-N", nodes_number, "--multi-prog", mc_file.name]]
+				ret = [["-c", cores_per_process, "-N", nodes_number]]
+				ret[0].extend(opt)
+				ret[0].extend(["--multi-prog", mc_file.name])
 		else:
 			for scmd in self._subcmd:
 				cc = []
