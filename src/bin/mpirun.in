@@ -215,6 +215,7 @@ class MpcConfig:
 
 		# Now parse again with fully-escaped binary arguments
 		args = parser.parse_args(args)
+		print(args.binary)
 		return args, args.binary
 
 	def config_for_args(self, arguments):
@@ -337,7 +338,9 @@ class MpcRunner:
 		srun_delimiter = "--"
 		# Autokill
 		if(MULTICONF):
-			# with open("./multi.conf", "w") as mc_file:
+			filesdir = ".mpc_multiconf_launch_files"
+			if not os.path.exists(filesdir):
+				os.makedirs(filesdir)
 
 			nodes_number = self._subcmd[0][0]['MPCFRAMEWORK_LAUNCH_MPCRUN_NODE']
 			cores_per_process = self._subcmd[0][0]['MPCFRAMEWORK_LAUNCH_MPCRUN_CORE']
@@ -360,11 +363,14 @@ class MpcRunner:
 						proc_num = "{}".format(proc_count)
 					else:
 						proc_num = "{}-{}".format(proc_count, proc_count + jargs["MPCFRAMEWORK_LAUNCH_MPCRUN_PROCESS"] - 1)
+					with open(os.path.join(filesdir, "app_{}".format(i)), "w") as curapp:
+						curapp.write(shlex.join(jargs["binary"]))
+					os.chmod(curapp.name, 0o555)
 					mc_file.write("{iter} bash -c 'export MPC_STARTUP_ARGS=\"{startup_args}\"; {exec}'\n".format(
 						iter = proc_num, 
 						# startup_args = mpc_args if not is_show else '"{}"'.format(mpc_args), 
 						startup_args = mpc_args,
-						exec = " ".join(jargs["binary"])))
+						exec = curapp.name))
 					proc_count += jargs["MPCFRAMEWORK_LAUNCH_MPCRUN_PROCESS"]
 				ret = [["-c", cores_per_process, "-N", nodes_number]]
 				ret[0].extend(opt)
