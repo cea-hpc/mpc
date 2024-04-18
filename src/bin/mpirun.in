@@ -25,6 +25,15 @@ if (sys.version_info.major, sys.version_info.minor) >= (3,3):
 else:
 	from pipes import quote 
 
+def custom_join(s):
+	if (sys.version_info.major, sys.version_info.minor) >= (3,8):
+		return shlex.join(s)
+	else:
+		print("WARNING: quote escaping not supported. May generate errors.")
+
+		return " ".join(quote(i) for i in s)
+
+
 #########################
 # General Configuration #
 #########################
@@ -215,7 +224,6 @@ class MpcConfig:
 
 		# Now parse again with fully-escaped binary arguments
 		args = parser.parse_args(args)
-		print(args.binary)
 		return args, args.binary
 
 	def config_for_args(self, arguments):
@@ -338,8 +346,11 @@ class MpcRunner:
 		srun_delimiter = "--"
 		# Autokill
 		if(MULTICONF):
-			filesdir = ".mpc_multiconf_launch_files"
-			if not os.path.exists(filesdir):
+			filesdir = os.path.join(".mpc_multiconf_launch_files")
+			if os.path.exists(filesdir):
+				for f in os.listdir(filesdir):
+					os.remove(os.path.join(filesdir, f))
+			else:
 				os.makedirs(filesdir)
 
 			nodes_number = self._subcmd[0][0]['MPCFRAMEWORK_LAUNCH_MPCRUN_NODE']
@@ -364,12 +375,12 @@ class MpcRunner:
 					else:
 						proc_num = "{}-{}".format(proc_count, proc_count + jargs["MPCFRAMEWORK_LAUNCH_MPCRUN_PROCESS"] - 1)
 					with open(os.path.join(filesdir, "app_{}".format(i)), "w") as curapp:
-						curapp.write(shlex.join(jargs["binary"]))
+						curapp.write("export MPC_STARTUP_ARGS=\"{startup_args}\"\n".format(startup_args = mpc_args))
+						curapp.write(custom_join(jargs["binary"]))
 					os.chmod(curapp.name, 0o555)
-					mc_file.write("{iter} bash -c 'export MPC_STARTUP_ARGS=\"{startup_args}\"; {exec}'\n".format(
+					mc_file.write("{iter} bash {exec}\n".format(
 						iter = proc_num, 
-						# startup_args = mpc_args if not is_show else '"{}"'.format(mpc_args), 
-						startup_args = mpc_args,
+						# startup_args = mpc_args,
 						exec = curapp.name))
 					proc_count += jargs["MPCFRAMEWORK_LAUNCH_MPCRUN_PROCESS"]
 				ret = [["-c", cores_per_process, "-N", nodes_number]]
@@ -451,7 +462,12 @@ class MpcRunner:
 		if self.show():
 			print(" ".join(final_cmd))
 		else:
-			subprocess.call(final_cmd)
+			p = subprocess.call(final_cmd)
+		if self._launcher == "srun" and MULTICONF:
+			filesdir = os.path.join(".mpc_multiconf_launch_files")
+			for f in os.listdir(filesdir):
+				os.remove(os.path.join(filesdir, f))
+			os.rmdir(filesdir)
 
 
 #
