@@ -119,12 +119,13 @@ out:
         return rc;
 }
 
-int lcr_ptl_iface_open(__UNUSED__ const char *device_name, int id,
+int lcr_ptl_iface_open(int mngr_id, const char *device_name, int id,
 		       lcr_rail_config_t *rail_config, 
 		       lcr_driver_config_t *driver_config,
 		       sctk_rail_info_t **iface_p,
                        unsigned flags)
 {
+        UNUSED(device_name);
         int rc = MPC_LOWCOMM_SUCCESS;
         unsigned init_flags = 0;
         sctk_rail_info_t *iface = NULL;
@@ -138,6 +139,10 @@ int lcr_ptl_iface_open(__UNUSED__ const char *device_name, int id,
 
         //FIXME: modulo on max_num_devices so that they are correctly setup
 	iface->rail_number = id % max_num_devices; /* used as tag for pmi registration */
+        /* Build pmi tag. */
+        //FIXME: pmi_tag must be set before iface_init so that monitor callbcack
+        //       is correctly registered.
+        iface->pmi_tag = lcr_rail_build_pmi_tag(mngr_id, iface->rail_number);
 
         /* Init capabilities */
         iface->cap = LCR_IFACE_CAP_RMA | 
@@ -159,6 +164,7 @@ int lcr_ptl_iface_open(__UNUSED__ const char *device_name, int id,
         if (flags & LCR_FEATURE_OS) 
                 init_flags |= LCR_PTL_FEATURE_RMA;
 
+
         rc = lcr_ptl_iface_init(iface, init_flags);
         if (rc != MPC_LOWCOMM_SUCCESS) {
                 goto err;
@@ -179,7 +185,7 @@ int lcr_ptl_iface_open(__UNUSED__ const char *device_name, int id,
 		/* register the serialized id into the PMI */
 		int tmp_ret = mpc_launch_pmi_put_as_rank (
 						srail->connection_infos,      /* the string to publish */
-						iface->rail_number,             /* rail ID: PMI tag */
+						iface->pmi_tag,             /* rail ID: PMI tag */
 						0 /* Not local */
 						);
 		assert(tmp_ret == 0);

@@ -87,6 +87,13 @@ int lcp_mem_reg_from_map(lcp_manager_h mngr,
                          const void *buffer,
                          size_t length,
                          unsigned flags);
+
+int lcp_mem_register_with_bitmap(lcp_manager_h mngr,
+                                lcp_mem_h *mem_p,
+                                bmap_t bitmap,
+                                const void *buffer,
+                                size_t length,
+                                unsigned flags);
 int lcp_mem_unpost(lcp_manager_h mngr, lcp_mem_h mem, lcr_tag_t tag);
 
 /************************

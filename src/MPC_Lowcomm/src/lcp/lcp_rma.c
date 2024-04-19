@@ -89,30 +89,17 @@ void lcp_rma_request_complete(lcr_completion_t *comp)
         req->state.remaining -= comp->sent;
         if (req->state.remaining == 0) {
                 req->task->tcct[req->mngr->id]->rma.outstandings--;
+                lcp_mem_deregister(req->mngr, req->state.lmem);
                 lcp_request_complete(req);
         }
 }
 
 void lcp_flush_request_complete(lcr_completion_t *comp)
 {
-        lcp_request_t *flush_req;
-        mpc_queue_iter_t iter;
         lcp_request_t *req = mpc_container_of(comp, lcp_request_t, 
                                               state.comp);
 
         if (--req->state.comp.count == 0) {
-                LCP_MANAGER_LOCK(req->mngr);
-                mpc_queue_for_each_safe(flush_req, iter, lcp_request_t, 
-                                        &req->mngr->flush_queue, queue) {
-                        if (flush_req->send.flush.flush == req->send.flush.flush) {
-                                lcp_request_complete(flush_req);
-                                mpc_queue_del_iter(&req->mngr->flush_queue, iter);
-                        }
-                }
-
-                req->mngr->flush_completed++;
-                LCP_MANAGER_UNLOCK(req->mngr);
-
                 lcp_request_complete(req);
         }
 }
@@ -258,13 +245,15 @@ static inline int lcp_rma_start(lcp_ep_h ep, lcp_request_t *req)
         }
 
         if (!(req->flags & LCP_REQUEST_USER_PROVIDED_MEMH)) {
-                req->state.lmem = lcp_pinning_mmu_pin(req->mngr, req->send.buffer, 
-                                                      req->send.length, ep->conn_map, 
-                                                      0 /* static memory. */);
+                rc = lcp_mem_register_with_bitmap(req->mngr, &req->state.lmem, 
+                                                  ep->conn_map, req->send.buffer, 
+                                                  req->send.length, 0);
                 if (req->state.lmem == NULL) {
                         rc = MPC_LOWCOMM_ERROR;
                 }
-        }
+        } else {
+                //TODO: check memory and rma call validity.
+        } 
 
         return rc;
 }
@@ -278,6 +267,7 @@ int lcp_put_nb(lcp_ep_h ep, lcp_task_h task, const void *buffer, size_t length,
 
         req = lcp_request_get(task);
         if (req == NULL) {
+                mpc_common_debug_error("LCP: could not create request.");
                 rc = MPC_LOWCOMM_ERROR;
                 goto err;
         }
@@ -483,64 +473,49 @@ int lcp_flush_nb(lcp_manager_h mngr, lcp_task_h task,
                 goto err;
         }
         LCP_REQUEST_INIT_RMA_FLUSH(req, mngr, task, 0, NULL, NULL, 
-                                  0 /* no ordering for rma */, 0, param->datatype);
+                                   0 /* no ordering for rma */, 0, 
+                                   param->datatype);
 
         req->state.comp.comp_cb = lcp_flush_request_complete;
         req->send.flush.flush   = task->tcct[mngr->id]->rma.flush_counter++;
 
-        LCP_MANAGER_LOCK(mngr);
-        /* Check if someone has already started flushing. */
-        if (req->send.flush.flush < mngr->flush_count) {
-                /* Check if flushing is already completed. */
-                if (req->send.flush.flush < mngr->flush_completed) {
-                        rc = MPC_LOWCOMM_SUCCESS;
-                } else {
-                        mpc_queue_push(&mngr->flush_queue, &req->queue);
-                        rc = MPC_LOWCOMM_IN_PROGRESS;
-                }
-                goto unlock_manager;
-        } else {
-                mngr->flush_count++;
-        }
-        LCP_MANAGER_UNLOCK(mngr);
-
         if (param->flags & LCP_REQUEST_USER_MEMH) {
-                req->flags |= LCP_REQUEST_USER_PROVIDED_MEMH;
+                req->flags     |= LCP_REQUEST_USER_PROVIDED_MEMH;
                 req->state.lmem = param->mem;
         }
 
         if (param->flags & LCP_REQUEST_USER_EPH) {
-                req->flags |= LCP_REQUEST_USER_PROVIDED_EPH;
+                req->flags  |= LCP_REQUEST_USER_PROVIDED_EPH;
                 req->send.ep = param->ep;
         }
 
         if (param->flags & LCP_REQUEST_RMA_CALLBACK) {
-                req->flags |= LCP_REQUEST_RMA_COMPLETE;
+                req->flags       |= LCP_REQUEST_RMA_COMPLETE;
                 req->send.send_cb = param->send_cb;
+        }
+
+        if (param->flags & LCP_REQUEST_USER_REQUEST) {
+                req->user_data = param->user_request;
         }
 
         switch (req->flags & LCP_RMA_FLUSH_MASK) {
         case LCP_FLUSH_SCOPE_EP:
-                req->send.func = lcp_flush_ep_nb;
+                rc = lcp_flush_ep_nb(req);
                 break;
         case LCP_FLUSH_SCOPE_MEM:
-                req->send.func = lcp_flush_mem_nb;
+                rc = lcp_flush_mem_nb(req);
                 break;
         case LCP_FLUSH_SCOPE_MEM_EP:
-                req->send.func = lcp_flush_mem_ep_nb;
+                rc = lcp_flush_mem_ep_nb(req);
                 break;
         case LCP_FLUSH_SCOPE_MANAGER:
-                req->send.func = lcp_flush_manager_nb;
+                rc = lcp_flush_manager_nb(req);
                 break;
         default:
                 mpc_common_debug_error("LCP RMA: unknown flush operation.");
                 rc = MPC_LOWCOMM_ERROR;
                 break;
         }
-
-        return lcp_request_send(req);
-unlock_manager:
-        LCP_MANAGER_UNLOCK(mngr);
 err:
         return rc;
 }

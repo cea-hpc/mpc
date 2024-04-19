@@ -95,6 +95,18 @@ err:
 	return rc;
 }
 
+int lcr_rail_build_pmi_tag(int mngr_id, int rail_id) 
+{
+    // Buffer to hold the concatenated result (adjust size as necessary)
+    char result[20]; 
+
+    assert(mngr_id < UINT8_MAX && rail_id < UINT8_MAX);
+    // Convert integers to strings and concatenate
+    sprintf(result, "%d%d", mngr_id, rail_id);
+
+    // Convert the concatenated string back to an integer
+    return atoi(result);
+}
 
 void sctk_rail_disable(sctk_rail_info_t *rail)
 {

@@ -107,14 +107,14 @@ int lcr_ptl_complete_op(lcr_ptl_op_t *op)
         case LCR_PTL_OP_ATOMIC_POST:
         case LCR_PTL_OP_ATOMIC_CSWAP:
                 if (op->comp != NULL) {
-                        op->comp->sent += op->size;
+                        op->comp->sent = op->size;
                         op->comp->comp_cb(op->comp);
                 }
                 break;
         case LCR_PTL_OP_RMA_FLUSH:
                 if (--op->flush.outstandings == 0) {
                         if (op->comp != NULL) {
-                                op->comp->sent += op->size;
+                                op->comp->sent = op->size;
                                 op->comp->comp_cb(op->comp);
                         }
                         sctk_free(op->flush.op_count);
@@ -151,7 +151,7 @@ static int _lcr_ptl_iface_process_event_am(sctk_rail_info_t *rail,
         case PTL_EVENT_ACK:
                 switch (op->type) {
                 case LCR_PTL_OP_AM_BCOPY:
-                        sctk_free(op->am.bcopy_buf);
+                        mpc_mpool_push(op->am.bcopy_buf);
                         break;
                 case LCR_PTL_OP_AM_ZCOPY:
                         op->comp->sent = ev->mlength;
@@ -482,6 +482,7 @@ int lcr_ptl_flush_iface(lcr_ptl_rail_info_t *srail, lcr_ptl_op_t *flush_op)
 { 
         int rc = MPC_LOWCOMM_SUCCESS;
         int i, it = 0, num_eps = 0;
+        int is_pushed = 0;
         int64_t completed = 0, outstandings = 0;
         lcr_ptl_mem_t   *mem;
 
@@ -498,16 +499,16 @@ int lcr_ptl_flush_iface(lcr_ptl_rail_info_t *srail, lcr_ptl_op_t *flush_op)
                         lcr_ptl_flush_txq(&mem->txqt[i], completed);
                 }
 
-                if (outstandings > 0) {
+                if (outstandings > 0 && !is_pushed) {
+                        is_pushed = 1;
                         mpc_queue_push(&mem->pending_flush, &flush_op->elem);
                         rc = MPC_LOWCOMM_IN_PROGRESS;
+                } else {
+                        lcr_ptl_complete_op(flush_op);
                 }
                 it++;
 
         } /* End loop registered memories */
-        if (outstandings > 0) {
-                rc = MPC_LOWCOMM_IN_PROGRESS;
-        }
         mpc_common_spinlock_unlock(&srail->net.rma.lock);
 
         return rc;
@@ -529,7 +530,7 @@ int lcr_ptl_iface_progress_rma(lcr_ptl_rail_info_t *srail)
 
                 mpc_common_spinlock_lock(&mem->lock);
                 mpc_queue_for_each_safe(flush_op, iter, lcr_ptl_op_t, &mem->pending_flush, elem) {
-                        if (flush_op->flush.op_count[it] < completed) {
+                        if (flush_op->flush.op_count[it] <= completed) {
                                 mpc_queue_del_iter(&mem->pending_flush, iter);
                                 lcr_ptl_complete_op(flush_op);
                         }
@@ -609,7 +610,7 @@ int lcr_ptl_iface_progress(sctk_rail_info_t *rail)
         int i, count = 0;
         for (i = 0; i < srail->num_eps; i++) {
                 rc = lcr_ptl_tk_progress_pending_ops(srail,
-                                                     &srail->ept[i], 
+                                                     srail->ept[i], 
                                                      &count);
                 if (rc != MPC_LOWCOMM_SUCCESS) break;
         }
@@ -717,6 +718,7 @@ static inline void _lcr_ptl_iface_init_driver_config(lcr_ptl_rail_info_t *srail,
         srail->config.max_iovecs       = driver_config->max_iovecs;
         srail->config.num_eager_blocks = driver_config->num_eager_blocks;
         srail->config.eager_block_size = driver_config->eager_block_size;
+        srail->config.max_copyin_buf   = driver_config->num_eager_blocks;
 }
 
 /* Initialize ptl resources needed for Active Message interface. It requires
@@ -962,7 +964,7 @@ static int __ptl_monitor_callback(mpc_lowcomm_peer_uid_t from,
 static inline void __register_monitor_callback(sctk_rail_info_t* rail)
 {
 	char rail_name[32];
-	mpc_lowcomm_monitor_register_on_demand_callback(__ptl_get_rail_callback_name(rail->rail_number, rail_name, 32), 
+	mpc_lowcomm_monitor_register_on_demand_callback(__ptl_get_rail_callback_name(rail->pmi_tag, rail_name, 32), 
                                                         __ptl_monitor_callback, rail);
 }
 
@@ -995,6 +997,9 @@ int lcr_ptl_get_attr(sctk_rail_info_t *rail,
         attr->iface.cap.rma.max_put_bcopy   = 0; //FIXME: put_bcopy not
                                                  //       supported for now
         attr->iface.cap.rma.max_put_zcopy   = config->max_put;
+        attr->iface.cap.rma.max_get_bcopy   = 0; //FIXME: get_bcopy not
+                                                 //       supported for now
+        attr->iface.cap.rma.max_get_zcopy   = config->max_put;
         attr->iface.cap.rma.min_frag_size   = config->min_frag_size;
 
         attr->iface.cap.flags               = rail->cap;
@@ -1093,7 +1098,7 @@ int lcr_ptl_iface_init(sctk_rail_info_t *rail, unsigned fflags)
 
         /* Initialize table of endpoints. */
         atomic_store(&srail->num_eps, 0);
-        srail->ept = sctk_malloc(LCR_PTL_MAX_EPS * sizeof(lcr_ptl_ep_info_t));
+        srail->ept = sctk_malloc(LCR_PTL_MAX_EPS * sizeof(lcr_ptl_ep_info_t *));
         if (srail->ept == NULL) {
                 mpc_common_debug_error("LCR PTL: could not allocated table of "
                                        "endpoints.");
@@ -1131,16 +1136,17 @@ int lcr_ptl_iface_init(sctk_rail_info_t *rail, unsigned fflags)
                 rc = MPC_LOWCOMM_ERROR;
                 goto err;
         }
+        //FIXME: define suitable size for memory pool.
         mpc_mempool_param_t mp_buf_params = {
                 .alignment = MPC_COMMON_SYS_CACHE_LINE_SIZE,
-                .elem_per_chunk = 32,
+                .elem_per_chunk = 128,
                 .elem_size = srail->config.eager_limit,
-                .max_elems = srail->config.max_copyin_buf,
+                .max_elems = 1024,
                 .malloc_func = sctk_malloc,
                 .free_func = sctk_free
         };
 
-        rc = mpc_mpool_init(srail->iface_ops, &mp_buf_params);
+        rc = mpc_mpool_init(srail->buf_mp, &mp_buf_params);
         if (rc != MPC_LOWCOMM_SUCCESS) {
                 goto err;
         }
@@ -1193,8 +1199,8 @@ void lcr_ptl_iface_fini(sctk_rail_info_t* rail)
         /* Finalize TX Queues. */
         //FIXME: need to check that all memory has been removed from the list.
         for (i = 0; i < srail->num_eps; i++) {
-                assert(mpc_queue_is_empty(&srail->ept[i].am_txq.ops));
-                mpc_mpool_fini(srail->ept[i].ops_pool);
+                assert(mpc_queue_is_empty(&srail->ept[i]->am_txq.ops));
+                mpc_mpool_fini(srail->ept[i]->ops_pool);
         }
         sctk_free(srail->ept);
 

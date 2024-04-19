@@ -53,7 +53,7 @@
 
 static inline char *__gen_rail_target_name(sctk_rail_info_t *rail, char *buff, int bufflen)
 {
-	(void)snprintf(buff, bufflen, "ofi-%d", rail->rail_number);
+	(void)snprintf(buff, bufflen, "ofi-%d", rail->pmi_tag);
 	return buff;
 }
 
@@ -809,7 +809,7 @@ void _mpc_ofi_release(sctk_rail_info_t *rail)
 }
 
 
-int _mpc_ofi_iface_open(__UNUSED__ const char *device_name, int id,
+int _mpc_ofi_iface_open(int mngr_id, __UNUSED__ const char *device_name, int id,
                        lcr_rail_config_t *rail_config,
                        lcr_driver_config_t *driver_config,
                        sctk_rail_info_t **iface_p,
@@ -828,6 +828,7 @@ int _mpc_ofi_iface_open(__UNUSED__ const char *device_name, int id,
 	}
 
 	rail->rail_number = id;
+        rail->pmi_tag = lcr_rail_build_pmi_tag(mngr_id, rail->rail_number);
 
 	//FIXME: to pass the assert in sctk_network_init_tcp_all
 	rail->connect_on_demand         = _mpc_ofi_connect_on_demand;

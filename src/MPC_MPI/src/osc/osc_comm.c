@@ -75,15 +75,29 @@ int mpc_osc_put(const void *origin_addr, int origin_count,
 
                assert(target_len == origin_len);
 
+               if (win->eps[target] == NULL) {
+                       uint64_t target_uid = mpc_lowcomm_communicator_uid(win->comm, 
+                                                                          target);
+
+                       rc = lcp_ep_create(win->mngr, &win->eps[target], 
+                                          target_uid, 0);
+                       if (rc != 0) {
+                               mpc_common_debug_fatal("Could not create endpoint.");
+                       }
+                }
+
                lcp_request_param_t req_param = {
-                       .mem = win->lkey_data,
                        .ep  = win->eps[target],
-                       .flags = LCP_REQUEST_USER_MEMH,
+                       .datatype = LCP_DATATYPE_CONTIGUOUS,
+                       .flags = 0,
                };
 
                rc = lcp_put_nb(win->eps[target], task, origin_addr,
                                origin_len, target_disp, win->rkeys_data[target],
                                &req_param);
+               if (rc != MPC_LOWCOMM_SUCCESS) {
+                       mpc_common_debug_error("OSC: put. rc=%d", rc);
+               }
         }
 
 err:

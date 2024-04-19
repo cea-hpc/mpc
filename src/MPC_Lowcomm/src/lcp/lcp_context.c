@@ -558,6 +558,7 @@ int _lcp_context_structures_init(lcp_context_h ctx)
                 rc = MPC_LOWCOMM_ERROR;
                 goto err;
         }
+        memset(ctx->mngrt, 0, ctx->config.max_num_managers * sizeof(lcp_manager_h));
 
         /* Init hash table of tasks */
 	ctx->tasks = sctk_malloc(ctx->num_tasks * sizeof(lcp_task_h));
@@ -680,7 +681,7 @@ int lcp_context_fini(lcp_context_h ctx)
 /* Returns the manager identifier. */
 int lcp_context_register(lcp_context_h ctx, lcp_manager_h mngr) 
 {
-        int i = 0;
+        int i = 1;
         LCP_CONTEXT_LOCK(ctx);
 
         /* Get first available slot in manager table. */

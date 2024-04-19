@@ -2648,6 +2648,7 @@ int mpc_lowcomm_monitor_register_on_demand_callback(char *target,
 	struct __on_demand_callback * new = sctk_malloc(sizeof(struct __on_demand_callback ));
 	assume(new != NULL);
 
+        mpc_common_debug("MONITOR: register name %s", target);
 	snprintf(new->target, MPC_LOWCOMM_ONDEMAND_TARGET_LEN, "%s", target);
 	new->callback = callback;
 	new->ctx = ctx;

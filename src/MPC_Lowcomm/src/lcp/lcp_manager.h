@@ -101,10 +101,6 @@ struct lcp_manager {
         int                   num_ifaces;
         sctk_rail_info_t    **ifaces;  /* Table of manager interfaces. */
         int                   priority_iface;
-
-        uint64_t              flush_count;
-        uint64_t              flush_completed;
-        mpc_queue_head_t      flush_queue;
 };
 
 #endif 

@@ -127,8 +127,8 @@ err:
         return rc;
 }
 
-int lcr_tbsm_iface_open(__UNUSED__ const char *device_name, int id,
-                        lcr_rail_config_t *rail_config,
+int lcr_tbsm_iface_open(int mngr_id, __UNUSED__ const char *device_name, int id,
+                        lcr_rail_config_t *rail_config, 
                         lcr_driver_config_t *driver_config,
                         sctk_rail_info_t **iface_p,
                         unsigned flags)

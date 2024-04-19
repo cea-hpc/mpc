@@ -138,7 +138,6 @@ static int _lcp_manager_init_structures(lcp_manager_h mngr)
         }
         mngr->num_ifaces = mngr->ctx->num_resources;
 
-        mngr->flush_count = 0;
 err:
         return rc;
 }
@@ -153,7 +152,7 @@ static int _lcp_manager_open_interfaces(lcp_manager_h mngr)
 	for (i=0; i<ctx->num_resources; i++) {
                 /* Build required transport capabilities. */
                 rsc = &ctx->resources[i];
-                rc = rsc->component->iface_open(rsc->name, i,
+                rc = rsc->component->iface_open(mngr->id, rsc->name, i,
 				                rsc->iface_config,
                                                 rsc->driver_config,
                                                 &mngr->ifaces[i],

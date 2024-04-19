@@ -462,7 +462,9 @@ static inline int lcp_request_send(lcp_request_t *req)
 
 // NOLINTEND(clang-diagnostic-unused-function)
 
+//FIXME: remove?
 void lcp_request_storage_init();
+//FIXME: remove?
 void lcp_request_storage_release();
 
 int lcp_request_complete(lcp_request_t *req);

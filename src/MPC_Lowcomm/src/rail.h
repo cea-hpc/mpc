@@ -207,6 +207,8 @@ struct lcr_rail_attr {
                         struct {
                                 size_t max_put_bcopy;
                                 size_t max_put_zcopy;
+                                size_t max_get_bcopy;
+                                size_t max_get_zcopy;
                                 size_t min_frag_size;
                         } rma;
 
@@ -238,6 +240,7 @@ struct sctk_rail_info_s
 {
 	/* Global Info */
 	int                                                  rail_number;  /**< ID of this rail */
+        int                                                  pmi_tag;
 	int                                                  priority;     /**< Priority of this rail */
 	char *                                               network_name; /**< Name of this rail */
 	mpc_topology_device_t *                              rail_device;  /**< Device associated with the rail */
@@ -369,6 +372,7 @@ int lcr_rail_init(lcr_rail_config_t *rail_config,
                   lcr_driver_config_t *driver_config,
                   struct sctk_rail_info_s **rail_p);
 
+int lcr_rail_build_pmi_tag(int mngr_id, int rail_id);
 /* Rail  Array                                                          */
 
 

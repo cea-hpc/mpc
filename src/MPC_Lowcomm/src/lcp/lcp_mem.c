@@ -415,11 +415,6 @@ int lcp_pinning_mmu_unpin(lcp_manager_h mngr, lcp_mem_h mem)
         assert(mmu_entry != NULL);
         lcp_pinning_entry_relax(mmu_entry);
 
-        /* Remove from list. */
-        mpc_common_spinlock_lock(&mngr->mngr_lock);
-        mpc_list_del(&mmu_entry->mem_entry->elem);
-        mpc_common_spinlock_unlock(&mngr->mngr_lock);
-
         return 0;
 }
 
@@ -578,16 +573,12 @@ err:
 
 void lcp_mem_delete(lcp_mem_h mem)
 {
-        /* First, remove memory from the active list. */
-        mpc_common_spinlock_lock(&mem->mngr->mngr_lock);
-        mpc_list_del(&mem->elem);
-        mpc_common_spinlock_lock(&mem->mngr->mngr_lock);
-
         sctk_free(mem->mems);
         sctk_free(mem);
         mem = NULL;
 }
 
+//FIXME: fonction not useful, much redundancy with lcp_mem_register_with_bitmap
 int lcp_mem_reg_from_map(lcp_manager_h mngr,
                          lcp_mem_h mem,
                          bmap_t bm,
@@ -695,7 +686,7 @@ int lcp_mem_register(lcp_manager_h mngr,
 
         /* Compute bitmap registration. Strategy is to register on all
          * interfaces that have the capability. */
-        for (i = 0; mngr->num_ifaces; i++) {
+        for (i = 0; i < mngr->num_ifaces; i++) {
 		mngr->ifaces[i]->iface_get_attr(mngr->ifaces[i], &attr);
                 
                 if (attr.iface.cap.flags & LCR_IFACE_CAP_RMA) {

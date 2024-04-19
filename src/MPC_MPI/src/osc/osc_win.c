@@ -20,6 +20,7 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
+#include "mpc_launch_pmi.h"
 #include "osc_mpi.h"
 
 #include <assert.h>
@@ -27,6 +28,9 @@
 #include "mpi_conf.h"
 #include <sctk_alloc.h>
 #include <communicator.h> //FIXME: is this good include?
+
+extern lcp_context_h lcp_ctx_loc;
+static lcp_manager_h osc_mngr = NULL;
 
 static int _win_setup(mpc_win_t *win, void **base, size_t size,
                       int disp_unit, mpc_lowcomm_communicator_t comm,
@@ -215,13 +219,13 @@ int mpc_win_create(void *base, size_t size,
         memset(win, 0, sizeof(mpc_win_t));
 
         win->comm_size = mpc_lowcomm_communicator_size(comm);
-        win->ctx       = comm->ctx;
+        win->ctx       = lcp_ctx_loc;
 
         tid = mpc_common_get_task_rank();
         task = lcp_context_task_get(win->ctx, tid);
 
         mpc_common_spinlock_lock(&win_lock);
-        if (win->mngr == NULL) {
+        if (osc_mngr == NULL) {
                 lcp_manager_param_t mngr_param = {
                         .estimated_eps = win->comm_size,
                         .num_tasks     = win->comm_size,
@@ -230,12 +234,14 @@ int mpc_win_create(void *base, size_t size,
                                 LCP_MANAGER_NUM_TASKS              |
                                 LCP_MANAGER_COMM_MODEL,
                 };
-                rc = lcp_manager_create(win->ctx, &win->mngr, &mngr_param);
+                rc = lcp_manager_create(win->ctx, &osc_mngr, &mngr_param);
                 if (rc != MPC_LOWCOMM_SUCCESS) {
                         goto err;
                 }
         }
         mpc_common_spinlock_unlock(&win_lock);
+
+        win->mngr = osc_mngr;
 
         rc = lcp_task_associate(task, win->mngr);
 
@@ -248,6 +254,14 @@ int mpc_win_create(void *base, size_t size,
 
         win->comm = comm;
         win->group = mpc_lowcomm_communicator_group(comm);
+        win->eps = sctk_malloc(win->comm_size * sizeof(lcp_ep_h));
+        if (win->eps == NULL) {
+                mpc_common_debug_error("WIN: could not allocate window endpoint "
+                                       "table.");
+                rc = MPC_LOWCOMM_ERROR;
+                goto err;
+        }
+        memset(win->eps, 0, win->comm_size * sizeof(lcp_ep_h));
 
         /* Exchange windows information with other processes. */ 
         _win_setup(win, &base, size, disp_unit, 

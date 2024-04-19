@@ -49,19 +49,21 @@ ssize_t lcr_ptl_send_am_bcopy(_mpc_lowcomm_endpoint_t *ep,
                               void *arg,
                               unsigned flags)
 {
-        int rc;
+        int rc = MPC_LOWCOMM_SUCCESS;
         UNUSED(flags);
         lcr_ptl_rail_info_t* srail = &ep->rail->network.ptl;
         lcr_ptl_ep_info_t  *ptl_ep = &ep->data.ptl;
         void* start                = NULL;
         size_t size                = 0;
-        lcr_ptl_op_t *op;
+        lcr_ptl_op_t *op, *q_op;
 
         assert(ptl_ep->addr.pte.am != LCR_PTL_PT_NULL);
 
         //FIXME: use a memory pool.
         start = mpc_mpool_pop(srail->buf_mp);
         if (start == NULL) {
+                //FIXME: Should be MPC_LOWCOMM_NO_RESOURCE but LCP does not
+                //       handle pending request yet.
                 mpc_common_debug_error("LCR PTL: could not allocate bcopy buffer.");
                 size = -1;
                 goto err;
@@ -86,23 +88,38 @@ ssize_t lcr_ptl_send_am_bcopy(_mpc_lowcomm_endpoint_t *ep,
         op->am.bcopy_buf = start;
 
 #if defined (MPC_USE_PORTALS_CONTROL_FLOW)
-        int token_num = 1;
+        mpc_common_spinlock_lock(&ptl_ep->lock);
         op->id = atomic_fetch_add(&srail->net.am.op_sn, 1);
         LCR_PTL_AM_HDR_SET(op->hdr, op->am.am_id, 
                            ptl_ep->idx, 
                            ptl_ep->num_ops);
-        rc = lcr_ptl_post(ptl_ep, op, &token_num);
 
-        if (lcr_ptl_ep_needs_tokens(ptl_ep, token_num)) {
-                lcr_ptl_op_t *tk_op;
-                rc = lcr_ptl_create_token_request(srail, ptl_ep, &tk_op);
-                if (rc != MPC_LOWCOMM_SUCCESS) {
-                        goto err;
+        /* Push operation to TX Queue. */
+        mpc_queue_push(&ptl_ep->am_txq.ops, &op->elem);
+
+        /* Try to acquire a token. */
+        if (--ptl_ep->tokens >= 0) {
+                /* Get last FIFO and do operation. */
+                q_op = mpc_queue_pull_elem(&ptl_ep->am_txq.ops, lcr_ptl_op_t, elem);
+
+                rc = lcr_ptl_do_op(q_op);
+        } else {
+                /* Else, increment number of pending operations and send token
+                 * request if necessary. */
+                ptl_ep->num_ops++;
+                if (!ptl_ep->is_waiting) {
+                        lcr_ptl_op_t *tk_op;
+                        ptl_ep->is_waiting = 1;
+                        rc = lcr_ptl_create_token_request(srail, ptl_ep, &tk_op);
+                        if (rc != MPC_LOWCOMM_SUCCESS) {
+                                goto err;
+                        }
+
+                        rc = lcr_ptl_do_op(tk_op);
                 }
-                assert(ptl_ep->is_waiting == 1);
-
-                rc = lcr_ptl_do_op(tk_op);
         }
+        mpc_common_spinlock_unlock(&ptl_ep->lock);
+
 #else 
         op->hdr = (uint64_t)op->am.am_id;
         rc = lcr_ptl_do_op(op);
@@ -190,23 +207,38 @@ int lcr_ptl_send_am_zcopy(_mpc_lowcomm_endpoint_t *ep,
         op->am.am_id = id;
 
 #if defined (MPC_USE_PORTALS_CONTROL_FLOW)
-        int token_num = 1;
+        mpc_common_spinlock_lock(&ptl_ep->lock);
         op->id = atomic_fetch_add(&srail->net.am.op_sn, 1);
         LCR_PTL_AM_HDR_SET(op->hdr, op->am.am_id, 
                            ptl_ep->idx, 
                            ptl_ep->num_ops);
-        rc = lcr_ptl_post(ptl_ep, op, &token_num);
 
-        if (lcr_ptl_ep_needs_tokens(ptl_ep, token_num)) {
-                lcr_ptl_op_t *tk_op;
-                rc = lcr_ptl_create_token_request(srail, ptl_ep, &tk_op);
-                if (rc != MPC_LOWCOMM_SUCCESS) {
-                        goto err;
+        if (--ptl_ep->tokens >= 0) {
+                /* If endpoint has enough token, either send directly or push to
+                 * TX Queue if it is not empty. */
+                if (!mpc_queue_is_empty(&ptl_ep->am_txq.ops)) {
+                        ptl_ep->num_ops++;
+                        mpc_common_debug("LCR PTL: push send. token num=%d, ep num=%d", 
+                                         ptl_ep->tokens, ptl_ep->num_ops);
+                        mpc_queue_push(&ptl_ep->am_txq.ops, &op->elem);
+
+                } else {
+                        rc = lcr_ptl_do_op(op);
                 }
-                assert(ptl_ep->is_waiting == 1);
+        } else {
+                /* Else, if a token request is not already pending create it. */
+                if (!ptl_ep->is_waiting) {
+                        lcr_ptl_op_t *tk_op;
+                        ptl_ep->is_waiting = 1;
+                        rc = lcr_ptl_create_token_request(srail, ptl_ep, &tk_op);
+                        if (rc != MPC_LOWCOMM_SUCCESS) {
+                                goto err;
+                        }
 
-                rc = lcr_ptl_do_op(tk_op);
+                        rc = lcr_ptl_do_op(tk_op);
+                }
         }
+        mpc_common_spinlock_unlock(&ptl_ep->lock);
 #else 
         op->hdr = (uint64_t)op->am.am_id;
         rc = lcr_ptl_do_op(op);
@@ -838,23 +870,23 @@ int lcr_ptl_flush(sctk_rail_info_t *rail,
         lcr_ptl_mem_t       *lkey   = &list->pin.ptl;
         lcr_ptl_mem_t       *mem    = NULL;
 
-        op = mpc_mpool_pop(ptl_ep->ops_pool);
+        op = mpc_mpool_pop(srail->iface_ops);
         if (op == NULL) {
                 mpc_common_debug_warning("LCR PTL: maximum outstanding "
                                          "operations.");
                 rc = MPC_LOWCOMM_NO_RESOURCE;
                 goto err;
         }
-        _lcr_ptl_init_op_common(op, 0, lkey->mdh, 
-                                ptl_ep->addr.id, 
-                                ptl_ep->addr.pte.rma, 
-                                LCR_PTL_OP_RMA_FLUSH, 
-                                0, comp, 
-                                NULL);
-
         mpc_list_init_head(&op->flush.mem_head);
 
         if (flags & LCR_IFACE_FLUSH_EP) {
+                _lcr_ptl_init_op_common(op, 0, lkey->mdh, 
+                                        ptl_ep->addr.id, 
+                                        ptl_ep->addr.pte.rma, 
+                                        LCR_PTL_OP_RMA_FLUSH, 
+                                        0, comp, 
+                                        NULL);
+
                 assert(ep != NULL);
 
                 mpc_common_spinlock_lock(&srail->net.rma.lock);
@@ -878,6 +910,12 @@ int lcr_ptl_flush(sctk_rail_info_t *rail,
 
         } else if (flags & LCR_IFACE_FLUSH_MEM) {
                 assert(mem != NULL);
+                _lcr_ptl_init_op_common(op, 0, lkey->mdh, 
+                                        LCR_PTL_PROCESS_ANY, 
+                                        srail->net.rma.pti, 
+                                        LCR_PTL_OP_RMA_FLUSH, 
+                                        0, comp, 
+                                        NULL);
 
                 mpc_common_spinlock_lock(&mem->lock);
                 op->flush.outstandings = 1;
@@ -898,6 +936,13 @@ int lcr_ptl_flush(sctk_rail_info_t *rail,
         } else if (flags & LCR_IFACE_FLUSH_EP_MEM) {
                 assert(mem != NULL && ep != NULL);
 
+                _lcr_ptl_init_op_common(op, 0, lkey->mdh, 
+                                        ptl_ep->addr.id, 
+                                        ptl_ep->addr.pte.rma, 
+                                        LCR_PTL_OP_RMA_FLUSH, 
+                                        0, comp, 
+                                        NULL);
+
                 mpc_common_spinlock_lock(&ptl_ep->lock);
                 op->flush.outstandings = 1;
                 op->flush.op_count     = sctk_malloc(sizeof(int64_t));
@@ -915,6 +960,12 @@ int lcr_ptl_flush(sctk_rail_info_t *rail,
                 mpc_common_spinlock_unlock(&ptl_ep->lock);
 
         } else if (flags & LCR_IFACE_FLUSH_IFACE) {
+                _lcr_ptl_init_op_common(op, 0, PTL_INVALID_HANDLE, 
+                                        LCR_PTL_PROCESS_ANY, 
+                                        srail->net.rma.pti, 
+                                        LCR_PTL_OP_RMA_FLUSH, 
+                                        0, comp, 
+                                        NULL);
 
                 op->flush.outstandings = 0;
 
@@ -1022,6 +1073,10 @@ int lcr_ptl_mem_unregister(struct sctk_rail_info_s *rail,
         assert(mpc_queue_is_empty(&mem->pending_flush));
         mpc_common_spinlock_unlock(&srail->net.rma.lock);
 
+        mpc_common_debug("LCR PTL: memory deregistration. cth=%llu, mdh=%llu, "
+                         "addr=%p, size=%llu, match=%llu", *(uint64_t *)&mem->cth, 
+                         *(uint64_t *)&mem->mdh, mem->start, mem->size, mem->match);
+
         if (!(mem->flags & LCR_IFACE_REGISTER_MEM_DYN)) {
                 sctk_free(mem->op_count);
 
@@ -1079,7 +1134,7 @@ static lcr_ptl_addr_t __map_id_pmi(sctk_rail_info_t* rail,
         int tmp_ret = 
                 mpc_launch_pmi_get_as_rank (connection_infos, /* the recv buffer */
                                             MPC_COMMON_MAX_STRING_SIZE, /* the recv buffer max size */
-                                            rail->rail_number, /* rail IB: PMI tag */
+                                            rail->pmi_tag, /* rail IB: PMI tag */
                                             mpc_lowcomm_peer_get_rank(dest) /* Target process. */
                                            );
 
@@ -1107,7 +1162,7 @@ static lcr_ptl_addr_t __map_id_monitor(sctk_rail_info_t* rail, mpc_lowcomm_peer_
 
         mpc_lowcomm_monitor_response_t resp = 
                 mpc_lowcomm_monitor_ondemand(dest,
-                                             __ptl_get_rail_callback_name(rail->rail_number, 
+                                             __ptl_get_rail_callback_name(rail->pmi_tag, 
                                                                           rail_name, 32),
                                              NULL,
                                              0,
@@ -1226,9 +1281,9 @@ void lcr_ptl_connect_on_demand(struct sctk_rail_info_s *rail,
 
         /* Initialize lock, list and queues. */
         mpc_common_spinlock_init(&ptl_ep->lock, 0);
-        mpc_queue_init_head(&ptl_ep->am_txq.ops); 
 
 #if defined (MPC_USE_PORTALS_CONTROL_FLOW)
+        mpc_queue_init_head(&ptl_ep->am_txq.ops); 
         ptl_ep->tokens         = 0;
         ptl_ep->num_ops        = 0;
         ptl_ep->is_waiting     = 0;
@@ -1277,6 +1332,10 @@ void lcr_ptl_connect_on_demand(struct sctk_rail_info_s *rail,
 
         lcr_ptl_do_op(op);
 #endif
+
+        /* Finally, add to endpoint table. */
+        srail->ept[ptl_ep->idx] = ptl_ep;
+
         return;
 
 err_free_ep:

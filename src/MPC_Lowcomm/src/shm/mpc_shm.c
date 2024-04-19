@@ -1176,12 +1176,14 @@ int mpc_shm_query_devices(__UNUSED__ lcr_component_t *component,
 
 
 
-int mpc_shm_iface_open(__UNUSED__ const char *device_name, int id,
+int mpc_shm_iface_open(int mngr_id, const char *device_name, int id,
                        lcr_rail_config_t *rail_config,
                        lcr_driver_config_t *driver_config,
                        sctk_rail_info_t **iface_p,
                        unsigned flags)
 {
+        UNUSED(mngr_id);
+        UNUSED(device_name);
         UNUSED(flags);
 	int rc = MPC_LOWCOMM_SUCCESS;
 	sctk_rail_info_t *rail = NULL;

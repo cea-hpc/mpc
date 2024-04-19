@@ -161,7 +161,7 @@ typedef struct lcr_ptl_ep_info {
         lcr_ptl_txq_t          am_txq;
         mpc_common_spinlock_t  lock;
 #if defined (MPC_USE_PORTALS_CONTROL_FLOW)
-        atomic_int_least8_t    is_waiting;
+        uint8_t                is_waiting;
         int32_t                tokens;
         int32_t                num_ops;
 #endif
@@ -388,7 +388,7 @@ typedef struct lcr_ptl_rail_info {
                 lcr_ptl_tk_module_t         tk; /* Token module. */
 #endif
         } net;
-        lcr_ptl_ep_info_t          *ept; /* Table of PTL endpoints. */
+        lcr_ptl_ep_info_t         **ept; /* Table of PTL endpoints. */
         atomic_int_least32_t        num_eps;
         mpc_mempool_t              *iface_ops; //NOTE: only need for TAG interface.
         mpc_mempool_t              *buf_mp; /* Eager copy-in buffer pool. */
@@ -852,11 +852,6 @@ static inline int lcr_ptl_post_rma_resources(lcr_ptl_rail_info_t *srail,
 }
 
 #if defined (MPC_USE_PORTALS_CONTROL_FLOW)
-static inline int lcr_ptl_ep_needs_tokens(lcr_ptl_ep_info_t *ep, int token_num) {
-        int_least8_t zero = 0;
-        return (token_num <= 0 && atomic_compare_exchange_strong(&ep->is_waiting, &zero, 1));
-}
-
 static inline int lcr_ptl_create_token_request(lcr_ptl_rail_info_t *srail,
                                                lcr_ptl_ep_info_t *ep, 
                                                lcr_ptl_op_t **op_p) 
@@ -917,24 +912,21 @@ err:
 }
 
 static inline int lcr_ptl_post(lcr_ptl_ep_info_t *ep,
-                               lcr_ptl_op_t *op, 
-                               int *token_num)
+                               lcr_ptl_op_t *op)
 {
         int rc = MPC_LOWCOMM_SUCCESS;
 
         mpc_common_spinlock_lock(&ep->lock);
-        if (ep->tokens <= 0 || !mpc_queue_is_empty(&ep->am_txq.ops)) {
-                *token_num = ep->tokens;
+        if (!mpc_queue_is_empty(&ep->am_txq.ops)) {
                 ep->num_ops++;
+                mpc_common_debug("LCR PTL: push send. token num=%d, ep num=%d", 
+                                 ep->tokens, ep->num_ops);
                 mpc_queue_push(&ep->am_txq.ops, &op->elem);
 
-                goto txq_unlock;
+        } else {
+                rc = lcr_ptl_do_op(op);
         }
-        ep->tokens--;
 
-        rc = lcr_ptl_do_op(op);
-
-txq_unlock:
         mpc_common_spinlock_unlock(&ep->lock);
 
         return rc;

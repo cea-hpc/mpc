@@ -35,7 +35,8 @@ static inline void mpc_list_insert(mpc_list_elem_t *prev,
 
 static inline int mpc_list_length(mpc_list_elem_t *head) {
         int length = 0;
-        while (head->next != head) length++;
+        mpc_list_elem_t *elem = head;
+        while ((elem = elem->next) != head) length++;
         return length;
 }
 
@@ -46,7 +47,7 @@ static inline void mpc_list_insert_after(mpc_list_elem_t *elem,
 
 static inline void mpc_list_insert_before(mpc_list_elem_t *elem,
                                           mpc_list_elem_t *new_elem) {
-        mpc_list_insert(elem->next, elem, new_elem);
+        mpc_list_insert(elem->prev, elem, new_elem);
 }
 /* NOLINTEND(clang-diagnostic-unused-function) */
 

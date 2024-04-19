@@ -43,13 +43,13 @@ int lcr_ptl_tk_progress_pending_ops(lcr_ptl_rail_info_t *srail,
                                     lcr_ptl_ep_info_t *ep, int *count)
 {
         int rc = MPC_LOWCOMM_SUCCESS;
-        int tmp = 0, token_num = 1;
+        int tmp = 0;
         mpc_queue_iter_t iter;
         lcr_ptl_op_t *op;
 
-        mpc_common_spinlock_lock(&ep->am_txq.lock);
+        mpc_common_spinlock_lock(&ep->lock);
         mpc_queue_for_each_safe(op, iter, lcr_ptl_op_t, &ep->am_txq.ops, elem) {
-                if ((token_num = ep->tokens) <= 0) {
+                if (ep->tokens <= 0) {
                         break;
                 }
                 ep->tokens--; ep->num_ops--;
@@ -62,18 +62,18 @@ int lcr_ptl_tk_progress_pending_ops(lcr_ptl_rail_info_t *srail,
                 mpc_queue_del_iter(&ep->am_txq.ops, iter);
                 tmp++;
         }
-        mpc_common_spinlock_unlock(&ep->lock);
 
-        if (lcr_ptl_ep_needs_tokens(ep, token_num)) {
+        if (ep->num_ops > 0  && !ep->is_waiting) {
                 lcr_ptl_op_t *tk_op;
+                ep->is_waiting = 1;
                 rc = lcr_ptl_create_token_request(srail, ep, &tk_op);
                 if (rc != MPC_LOWCOMM_SUCCESS) {
                         goto err;
                 }
-                assert(ep->is_waiting == 1);
 
                 rc = lcr_ptl_do_op(tk_op);
         }
+        mpc_common_spinlock_unlock(&ep->lock);
 
         *count = tmp;
 err:
@@ -271,12 +271,12 @@ static int lcr_ptl_tk_process_event(lcr_ptl_rail_info_t *srail,
                         break;
                 case LCR_PTL_OP_TK_REQUEST:
                         /* Get token resources. */
+                        mpc_common_spinlock_lock(&srail->net.tk.lock);
                         rc = _lcr_ptl_get_token_resource(&srail->net.tk, ev->initiator, &rsc);
                         if (rc != MPC_LOWCOMM_SUCCESS) {
                                 goto err;
                         }
 
-                        mpc_common_spinlock_lock(&srail->net.tk.lock);
                         rsc->req.requested = LCR_PTL_CTRL_HDR_GET_TOKEN_NUM(ev->hdr_data);
                         rsc->req.granted   = 0;
                         rsc->req.scheduled = 0;
@@ -292,7 +292,7 @@ static int lcr_ptl_tk_process_event(lcr_ptl_rail_info_t *srail,
                 case LCR_PTL_OP_TK_GRANT:
                         /* Get token info from header. */
                         token_num = LCR_PTL_CTRL_HDR_GET_TOKEN_NUM(ev->hdr_data);
-                        ep = &srail->ept[LCR_PTL_CTRL_HDR_GET_TX_ID(ev->hdr_data)];
+                        ep = srail->ept[LCR_PTL_CTRL_HDR_GET_TX_ID(ev->hdr_data)];
 
                         mpc_common_debug("LCR PTL: Received TOKEN GRANT. nid=%llu, pid=%llu, "
                                          "num token granted=%d, ", ev->initiator.phys.nid, 
@@ -300,9 +300,9 @@ static int lcr_ptl_tk_process_event(lcr_ptl_rail_info_t *srail,
 
                         /* Add tokens to sender's TX Queue. */
                         mpc_common_spinlock_lock(&ep->lock);
-                        assert(token_num > 0 && ep->tokens == 0);
-                        ep->tokens += token_num;
-                        atomic_store(&ep->is_waiting, 0);
+                        assert(token_num > 0 && ep->tokens <= 0);
+                        ep->tokens = token_num;
+                        ep->is_waiting = 0;
                         mpc_common_spinlock_unlock(&ep->lock);
                         break;
                 case LCR_PTL_OP_TK_RELEASE:
@@ -348,7 +348,8 @@ int lcr_ptl_iface_progress_tk(lcr_ptl_rail_info_t *srail)
 	int ret, rc = MPC_LOWCOMM_SUCCESS;
 	ptl_event_t ev;
 
-        mpc_common_spinlock_lock(&srail->net.tk.lock);
+        //FIXME: check lock modularity.
+        mpc_common_spinlock_lock(&srail->lock);
         while (1) {
 
                 ret = PtlEQGet(srail->net.tk.eqh, &ev);
@@ -379,7 +380,7 @@ int lcr_ptl_iface_progress_tk(lcr_ptl_rail_info_t *srail)
 poll_unlock:
                 break;
         }
-        mpc_common_spinlock_unlock(&srail->net.tk.lock);
+        mpc_common_spinlock_unlock(&srail->lock);
 
         return rc;
 }

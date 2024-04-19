@@ -138,6 +138,8 @@ int lcp_ep_init_config(lcp_manager_h mngr, lcp_ep_h ep)
 	ep->config.rndv.max_get_zcopy = SIZE_MAX;
 	ep->config.rma.max_put_bcopy  = SIZE_MAX;
 	ep->config.rma.max_put_zcopy  = SIZE_MAX;
+	ep->config.rma.max_get_bcopy  = SIZE_MAX;
+	ep->config.rma.max_get_zcopy  = SIZE_MAX;
 	ep->config.offload            = 0;
         ep->cap                       = 0;
 
@@ -203,8 +205,12 @@ int lcp_ep_init_config(lcp_manager_h mngr, lcp_ep_h ep)
 			ep->cap |= LCR_IFACE_CAP_RMA;
 			ep->config.rma.max_put_bcopy = mpc_common_min(ep->config.rma.max_put_bcopy,
 			                                          attr.iface.cap.rma.max_put_bcopy);
-			ep->config.rma.max_put_bcopy = mpc_common_min(ep->config.rma.max_put_zcopy,
+			ep->config.rma.max_put_zcopy = mpc_common_min(ep->config.rma.max_put_zcopy,
 			                                          attr.iface.cap.rma.max_put_zcopy);
+			ep->config.rma.max_get_bcopy = mpc_common_min(ep->config.rma.max_get_bcopy,
+			                                          attr.iface.cap.rma.max_get_bcopy);
+			ep->config.rma.max_get_zcopy = mpc_common_min(ep->config.rma.max_get_zcopy,
+			                                          attr.iface.cap.rma.max_get_zcopy);
 		}
 	}
 
