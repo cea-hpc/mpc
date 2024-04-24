@@ -71,7 +71,7 @@ typedef union
 typedef union
 {
 #ifdef MPC_USE_PORTALS
-	lcr_ptl_mem_t       ptl;
+	lcr_ptl_mem_ctx_t       ptl;
 #endif /* MPC_USE_PORTALS */
 #ifdef MPC_USE_OFI
 struct _mpc_ofi_pinning_context ofipin;
@@ -117,6 +117,7 @@ enum {
         LCR_IFACE_FLUSH_EP_MEM      = MPC_BIT(2),
         LCR_IFACE_FLUSH_IFACE       = MPC_BIT(3),
         LCR_IFACE_REGISTER_MEM_DYN  = MPC_BIT(4),
+        LCR_IFACE_REGISTER_MEM_STAT = MPC_BIT(5),
 };
 
 enum {
@@ -285,7 +286,10 @@ struct sctk_rail_info_s
         lcr_atomic_cswap_func_t                              atomic_cswap;
 
 	/* RMA Sync API */
-        lcr_flush_func_t                                     flush;
+        lcr_flush_mem_ep_func_t                              flush_mem_ep;
+        lcr_flush_ep_func_t                                  flush_ep;
+        lcr_flush_mem_func_t                                 flush_mem;
+        lcr_flush_iface_func_t                               flush_iface;
 
 	/* Interface API */
 	lcr_iface_get_attr_func_t                            iface_get_attr;

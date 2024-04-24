@@ -88,7 +88,7 @@ libmpclowcomm_la_SOURCES += ./tcp/tcp.c ./tcp/tcp_toolkit.c
 # PTL driver #
 if PORTALS4_DRIVER_ENABLED
 AM_CPPFLAGS += -I$(abs_srcdir)/ptl/
-libmpclowcomm_la_SOURCES += ./ptl/ptl_ep.c ./ptl/ptl_iface.c ./ptl/ptl_recv.c ./ptl/ptl_rd.c
+libmpclowcomm_la_SOURCES += ./ptl/ptl_ep.c ./ptl/ptl_iface.c ./ptl/ptl_recv.c ./ptl/ptl_rd.c ./ptl/ptl_rma.c
 if PORTALS4_CONTROL_FLOW_ENABLED
 libmpclowcomm_la_SOURCES += ./ptl/ptl_tk.c
 endif

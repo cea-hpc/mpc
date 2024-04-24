@@ -643,6 +643,8 @@ int lcp_atomic_op_nb(lcp_ep_h ep, lcp_task_h task, const void *buffer,
 
 enum {
         LCP_MEM_REGISTER_ALLOCATE = MPC_BIT(0),
+        LCP_MEM_REGISTER_DYNAMIC  = MPC_BIT(1),
+        LCP_MEM_REGISTER_STATIC   = MPC_BIT(2),
 };
 
 /**

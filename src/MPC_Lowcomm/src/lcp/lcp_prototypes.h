@@ -201,13 +201,37 @@ static inline int lcp_atomic_do_cswap(_mpc_lowcomm_endpoint_t *lcr_ep,
                                           compare, size, comp);
 }
 
-static inline int lcp_do_flush(sctk_rail_info_t *rail,
-                               _mpc_lowcomm_endpoint_t *ep,
-                               lcr_memp_t *mem,
-                               lcr_completion_t *comp,
-                               unsigned flags)
+static inline int lcp_do_flush_mem_ep(sctk_rail_info_t *rail,
+                                      _mpc_lowcomm_endpoint_t *ep,
+                                      lcr_memp_t *mem,
+                                      lcr_completion_t *comp,
+                                      unsigned flags)
 {
-        return rail->flush(rail, ep, mem, comp, flags);
+        return rail->flush_mem_ep(rail, ep, mem, comp, flags);
+}
+
+static inline int lcp_do_flush_ep(sctk_rail_info_t *rail,
+                                  _mpc_lowcomm_endpoint_t *ep,
+                                  lcr_completion_t *comp, 
+                                  unsigned flags)
+{
+        return rail->flush_ep(rail, ep, comp, flags);
+}
+
+
+static inline int lcp_do_flush_mem(sctk_rail_info_t *rail,
+                                  lcr_memp_t *mem,
+                                  lcr_completion_t *comp,
+                                  unsigned flags)
+{
+        return rail->flush_mem(rail, mem, comp, flags);
+}
+
+static inline int lcp_do_flush_iface(sctk_rail_info_t *rail,
+                                  lcr_completion_t *comp,
+                                  unsigned flags)
+{
+        return rail->flush_iface(rail, comp, flags);
 }
 
 static inline int lcp_iface_do_register_mem(sctk_rail_info_t *rail,

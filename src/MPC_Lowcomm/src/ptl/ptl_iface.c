@@ -370,7 +370,6 @@ ptl_size_t lcr_ptl_poll_mem(lcr_ptl_mem_t *mem)
         uint64_t op_done;
         ptl_ct_event_t ct_ev;
 
-        mpc_common_spinlock_lock(&mem->lock);
         /* Poll CT and update operation count atomically. */
         lcr_ptl_chk(PtlCTGet(mem->cth, &ct_ev));
         if (ct_ev.failure > 0) {
@@ -379,139 +378,8 @@ ptl_size_t lcr_ptl_poll_mem(lcr_ptl_mem_t *mem)
                                          ct_ev.failure);
         }
         op_done = ct_ev.success;
-        mpc_common_spinlock_unlock(&mem->lock);
 
         return op_done;
-}
-
-static inline void lcr_ptl_flush_txq(lcr_ptl_txq_t *txq, int64_t completed) 
-{
-        lcr_ptl_op_t *op;
-        mpc_queue_iter_t iter;
-
-        mpc_common_spinlock_lock(&txq->lock);
-
-        /* Loop over pending operations and complete if identifier is lower than
-         * number of completed operations. */ 
-        mpc_queue_for_each_safe(op, iter, lcr_ptl_op_t, &txq->ops, elem) {
-                if (op->id < completed) {
-                        mpc_queue_del_iter(&txq->ops, iter);
-                        lcr_ptl_complete_op(op);
-                }
-        }
-        
-        mpc_common_spinlock_unlock(&txq->lock);
-}
-
-int lcr_ptl_flush_mem_ep(lcr_ptl_mem_t *mem, lcr_ptl_ep_info_t *ep, 
-                         lcr_ptl_op_t *flush_op)
-{
-        int rc = MPC_LOWCOMM_SUCCESS;
-        int64_t completed = 0, outstandings = 0;
-
-        lcr_ptl_txq_t *txq = &mem->txqt[ep->idx];
-
-        completed    = lcr_ptl_poll_mem(mem);
-        outstandings = mpc_common_max(0, *flush_op->flush.op_count - completed);
-
-        lcr_ptl_flush_txq(txq, completed);
-
-        if (outstandings > 0) {
-                mpc_queue_push(&mem->pending_flush, &flush_op->elem);
-                rc = MPC_LOWCOMM_IN_PROGRESS;
-        }
-
-        return rc;
-}
-
-int lcr_ptl_flush_mem(lcr_ptl_rail_info_t *srail,
-                      lcr_ptl_mem_t *mem, 
-                      lcr_ptl_op_t *flush_op)
-{
-        int rc = MPC_LOWCOMM_SUCCESS;
-        int i, num_txqs = 0;
-        int64_t completed = 0, outstandings = 0;
-
-        completed = lcr_ptl_poll_mem(mem);
-        outstandings = mpc_common_max(0, *flush_op->flush.op_count - completed);
-
-        num_txqs = atomic_load(&srail->num_eps);
-        for (i = 0; i < num_txqs; i++) {
-                lcr_ptl_flush_txq(&mem->txqt[i], completed);
-        }
-        if (outstandings > 0) {
-                mpc_queue_push(&mem->pending_flush, &flush_op->elem);
-                rc = MPC_LOWCOMM_IN_PROGRESS;
-        }
-
-        return rc;
-}
-
-int lcr_ptl_flush_ep(lcr_ptl_rail_info_t *srail, 
-                     lcr_ptl_ep_info_t *ep, 
-                     lcr_ptl_op_t *flush_op)
-{
-        int rc = MPC_LOWCOMM_SUCCESS, i = 0;
-        int64_t completed = 0, outstandings = 0;
-        lcr_ptl_mem_t   *mem;
-
-        /* First, load the number of oustanding operation. */
-        mpc_list_for_each(mem, &srail->net.rma.mem_head, lcr_ptl_mem_t, elem) {
-                if (mpc_queue_is_empty(&mem->txqt[ep->idx].ops))
-                        continue;
-
-                /* Poll memory. */
-                completed = lcr_ptl_poll_mem(mem);
-
-                /* Count the number of oustanding operations. */
-                outstandings = mpc_common_max(0, flush_op->flush.op_count[i] - completed);
-
-                lcr_ptl_flush_txq(&mem->txqt[ep->idx], completed);
-
-                if (outstandings > 0) {
-                        mpc_queue_push(&mem->pending_flush, &flush_op->elem);
-                        rc = MPC_LOWCOMM_IN_PROGRESS;
-                }
-                i++; /* Iterate over op count in flush operation. */
-        }
-
-        return rc;
-}
-
-int lcr_ptl_flush_iface(lcr_ptl_rail_info_t *srail, lcr_ptl_op_t *flush_op) 
-{ 
-        int rc = MPC_LOWCOMM_SUCCESS;
-        int i, it = 0, num_eps = 0;
-        int is_pushed = 0;
-        int64_t completed = 0, outstandings = 0;
-        lcr_ptl_mem_t   *mem;
-
-        mpc_common_spinlock_lock(&srail->net.rma.lock);
-        /* Loop on all registered memories. */
-        mpc_list_for_each(mem, &srail->net.rma.mem_head, lcr_ptl_mem_t, elem) {
-                completed = lcr_ptl_poll_mem(mem);
-
-                outstandings = mpc_common_max(0, flush_op->flush.op_count[it] - completed);
-
-                num_eps = atomic_load(&srail->num_eps);
-                /* Loop on all TX Queues that has been linked on this memory. */
-                for (i = 0; i < num_eps; i++) {
-                        lcr_ptl_flush_txq(&mem->txqt[i], completed);
-                }
-
-                if (outstandings > 0 && !is_pushed) {
-                        is_pushed = 1;
-                        mpc_queue_push(&mem->pending_flush, &flush_op->elem);
-                        rc = MPC_LOWCOMM_IN_PROGRESS;
-                } else {
-                        lcr_ptl_complete_op(flush_op);
-                }
-                it++;
-
-        } /* End loop registered memories */
-        mpc_common_spinlock_unlock(&srail->net.rma.lock);
-
-        return rc;
 }
 
 int lcr_ptl_iface_progress_rma(lcr_ptl_rail_info_t *srail) 
@@ -525,7 +393,7 @@ int lcr_ptl_iface_progress_rma(lcr_ptl_rail_info_t *srail)
 
         mpc_common_spinlock_lock(&srail->net.rma.lock);
         /* Loop on all registered memories. */
-        mpc_list_for_each(mem, &srail->net.rma.mem_head, lcr_ptl_mem_t, elem) {
+        mpc_list_for_each(mem, &srail->net.rma.poll_list, lcr_ptl_mem_t, elem) {
                 completed = lcr_ptl_poll_mem(mem);
 
                 mpc_common_spinlock_lock(&mem->lock);
@@ -719,6 +587,7 @@ static inline void _lcr_ptl_iface_init_driver_config(lcr_ptl_rail_info_t *srail,
         srail->config.num_eager_blocks = driver_config->num_eager_blocks;
         srail->config.eager_block_size = driver_config->eager_block_size;
         srail->config.max_copyin_buf   = driver_config->num_eager_blocks;
+        srail->config.min_cached_mem   = 2;
 }
 
 /* Initialize ptl resources needed for Active Message interface. It requires
@@ -879,10 +748,94 @@ static int _lcr_ptl_iface_fini_tag(lcr_ptl_rail_info_t *srail)
         return MPC_LOWCOMM_SUCCESS;
 }
 
+int lcr_ptl_mem_activate(lcr_ptl_rail_info_t *srail,
+                         lcr_ptl_mem_lifetime_t lt,
+                         const void *start,
+                         ptl_size_t length,
+                         lcr_ptl_mem_t *mem)
+{
+        int rc = MPC_LOWCOMM_SUCCESS;
+        int i;
+        ptl_md_t md;
+        ptl_me_t me;
+
+        lcr_ptl_chk(PtlCTAlloc(srail->net.nih, &mem->cth));
+
+        md = (ptl_md_t) {
+                .ct_handle = mem->cth,
+                .eq_handle = srail->net.eqh,
+                .length = length,
+                .start  = (void *)start,
+                .options = PTL_MD_EVENT_SUCCESS_DISABLE |
+                        PTL_MD_EVENT_SEND_DISABLE       |
+                        PTL_MD_EVENT_CT_ACK             | 
+                        PTL_MD_EVENT_CT_REPLY,
+        };
+        lcr_ptl_chk(PtlMDBind(srail->net.nih, &md, &mem->mdh));
+
+        mem->match = atomic_fetch_add(&srail->net.rma.mem_uid, 1);
+
+        me = (ptl_me_t) {
+                .ct_handle = PTL_CT_NONE,
+                .ignore_bits = 0,
+                .match_bits  = mem->match,
+                .match_id    = {
+                        .phys.nid = PTL_NID_ANY, 
+                        .phys.pid = PTL_PID_ANY
+                },
+                .uid         = PTL_UID_ANY,
+                .min_free    = 0,
+                .options     = PTL_ME_OP_PUT        | 
+                        PTL_ME_OP_GET               |
+                        PTL_ME_EVENT_LINK_DISABLE   | 
+                        PTL_ME_EVENT_UNLINK_DISABLE |
+                        PTL_ME_EVENT_SUCCESS_DISABLE,
+                .start       = (void *)start,
+                .length      = length 
+        };
+
+        lcr_ptl_chk(PtlMEAppend(srail->net.nih,
+                                srail->net.rma.pti,
+                                &me,
+                                PTL_PRIORITY_LIST,
+                                srail,
+                                &mem->meh
+                               ));
+
+        mem->lifetime = lt;
+        mpc_queue_init_head(&mem->pending_flush);
+
+        mem->txqt  = sctk_malloc(LCR_PTL_MAX_EPS * sizeof(lcr_ptl_txq_t));
+        if (mem->txqt == NULL) {
+                mpc_common_debug_error("LCR PTL: could not allocate "
+                                       "memory txq table.");
+                rc = MPC_LOWCOMM_ERROR;
+                goto err;
+        }
+
+        for (i = 0; i < LCR_PTL_MAX_EPS; i++) {
+                mpc_queue_init_head(&mem->txqt[i].ops);
+                mpc_common_spinlock_init(&mem->txqt[i].lock, 0);
+        }
+err:
+        return rc;
+}
+
+int lcr_ptl_mem_deactivate(lcr_ptl_mem_t *mem)
+{
+        sctk_free(mem->txqt);
+
+        lcr_ptl_chk(PtlCTFree(mem->cth));
+
+        lcr_ptl_chk(PtlMDRelease(mem->mdh));
+
+        lcr_ptl_chk(PtlMEUnlink(mem->meh));
+        return MPC_LOWCOMM_SUCCESS;
+}
+
 /* Initialize ptl resources needed for RMA interface. */
 static int _lcr_ptl_iface_init_rma(lcr_ptl_rail_info_t *srail) 
 {
-        int i;
         int rc = MPC_LOWCOMM_SUCCESS;
 
         /* Initialize one-sided required resources:
@@ -900,33 +853,49 @@ static int _lcr_ptl_iface_init_rma(lcr_ptl_rail_info_t *srail)
                                 &srail->net.rma.pti
                                ));
 
-        if (srail->config.features & LCR_PTL_FEATURE_AM) {
-                srail->net.rma.rndv_txqt = sctk_malloc(LCR_PTL_MAX_EPS * sizeof(lcr_ptl_txq_t));
-                if (srail->net.rma.rndv_txqt == NULL) {
-                        mpc_common_debug_error("LCR PTL: could not allocate "
-                                               "am memory txq table.");
-                        rc = MPC_LOWCOMM_ERROR;
-                        goto err;
-                }
+        /* Initialize pool of recv operations. */
+        srail->net.rma.mem_mp = sctk_malloc(sizeof(mpc_mempool_t));
+        if (srail->net.rma.mem_mp == NULL) {
+                mpc_common_debug_error("LCR PTL: could not allocate static "
+                                       "memory handles memory pool.");
+                rc = MPC_LOWCOMM_ERROR;
+                goto err;
+        }
+        mpc_mempool_param_t mp_mem_params = {
+                .alignment = MPC_COMMON_SYS_CACHE_LINE_SIZE,
+                .elem_per_chunk = 16,
+                .elem_size = sizeof(lcr_ptl_mem_t),
+                .max_elems = srail->config.max_limits.max_mds, //FIXME: should be minus number 
+                                                               //       of MD allocated for 
+                                                               //       other interface
+                .malloc_func = sctk_malloc,
+                .free_func = sctk_free
+        };
 
-                for (i = 0; i < LCR_PTL_MAX_EPS; i++) {
-                        mpc_queue_init_head(&srail->net.rma.rndv_txqt[i].ops);
-                        mpc_common_spinlock_init(&srail->net.rma.rndv_txqt[i].lock, 0);
-                }
-                
-                rc = lcr_ptl_post_rma_resources(srail, 
-                                                LCR_PTL_RNDV_MB, 
-                                                0, 
-                                                PTL_SIZE_MAX, 
-                                                &srail->net.rma.rndv_cth, 
-                                                &srail->net.rma.rndv_mdh, 
-                                                &srail->net.rma.rndv_meh);
-                if (rc != MPC_LOWCOMM_SUCCESS) {
-                        goto err;
-                }
+        rc = mpc_mpool_init(srail->net.rma.mem_mp, &mp_mem_params);
+        if (rc != MPC_LOWCOMM_SUCCESS) {
+                goto err;
         }
 
-        mpc_list_init_head(&srail->net.rma.mem_head);
+        srail->net.rma.dynamic_mem = mpc_mpool_pop(srail->net.rma.mem_mp);
+        assert(srail->net.rma.dynamic_mem != NULL);
+
+        rc = lcr_ptl_mem_activate(srail, 
+                                  LCR_PTL_MEM_DYNAMIC,
+                                  atomic_fetch_add(&srail->net.rma.mem_uid, 1), 
+                                  PTL_SIZE_MAX, 
+                                  srail->net.rma.dynamic_mem);
+        mpc_common_spinlock_init(&srail->net.rma.dynamic_mem->lock, 0);
+
+        if (rc != MPC_LOWCOMM_SUCCESS) {
+                goto err;
+        }
+
+        mpc_list_init_head(&srail->net.rma.poll_list);
+
+        /* Already append the dynamic memory that will always be polled. */
+        mpc_list_push_head(&srail->net.rma.poll_list, 
+                           &srail->net.rma.dynamic_mem->elem);
 
 err:
         return rc;
@@ -1199,6 +1168,9 @@ void lcr_ptl_iface_fini(sctk_rail_info_t* rail)
         /* Finalize TX Queues. */
         //FIXME: need to check that all memory has been removed from the list.
         for (i = 0; i < srail->num_eps; i++) {
+#if defined (MPC_USE_PORTALS_CONTROL_FLOW)
+                assert(srail->ept[i]->num_ops == 0);
+#endif
                 assert(mpc_queue_is_empty(&srail->ept[i]->am_txq.ops));
                 mpc_mpool_fini(srail->ept[i]->ops_pool);
         }

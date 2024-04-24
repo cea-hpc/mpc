@@ -150,12 +150,26 @@ typedef int (*lcr_atomic_cswap_func_t)(_mpc_lowcomm_endpoint_t *ep,
                                        size_t size,
                                        lcr_completion_t *ctx);
 
-// Endpoint Sync functions
-typedef int (*lcr_flush_func_t)(sctk_rail_info_t *rail,
-                                _mpc_lowcomm_endpoint_t *ep,
-                                lcr_memp_t *mem,
-                                lcr_completion_t *comp,
-                                unsigned flags);
+// RMA Sync functions
+typedef int (*lcr_flush_mem_ep_func_t)(sctk_rail_info_t *rail,
+                                       _mpc_lowcomm_endpoint_t *ep,
+                                       lcr_memp_t *mem,
+                                       lcr_completion_t *comp,
+                                       unsigned flags);
+typedef int (*lcr_flush_ep_func_t)(sctk_rail_info_t *rail,
+                                   _mpc_lowcomm_endpoint_t *ep,
+                                   lcr_completion_t *comp,
+                                   unsigned flags);
+
+typedef int (*lcr_flush_mem_func_t)(sctk_rail_info_t *rail,
+                                    lcr_memp_t *mem,
+                                    lcr_completion_t *comp,
+                                    unsigned flags);
+
+typedef int (*lcr_flush_iface_func_t)(sctk_rail_info_t *rail,
+                                      lcr_completion_t *comp,
+                                      unsigned flags);
+
 // Interface functions
 typedef int (*lcr_iface_get_attr_func_t)(sctk_rail_info_t *rail,
                                          lcr_rail_attr_t *attr);

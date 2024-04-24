@@ -83,7 +83,7 @@ static int _win_setup(mpc_win_t *win, void **base, size_t size,
                 lcp_mem_param_t param = {
                         .field_mask = LCP_MEM_ADDR_FIELD |
                                 LCP_MEM_SIZE_FIELD,
-                        .flags   = 0,
+                        .flags   = LCP_MEM_REGISTER_STATIC,
                         .address = *base,
                         .size    = size
                 };
@@ -103,7 +103,8 @@ static int _win_setup(mpc_win_t *win, void **base, size_t size,
                 lcp_mem_param_t param = {
                         .field_mask = LCP_MEM_ADDR_FIELD |
                                 LCP_MEM_SIZE_FIELD,
-                        .flags   = LCP_MEM_REGISTER_ALLOCATE,
+                        .flags   = LCP_MEM_REGISTER_ALLOCATE |
+                                LCP_MEM_REGISTER_STATIC,
                         .address = NULL,
                         .size    = size
                 };

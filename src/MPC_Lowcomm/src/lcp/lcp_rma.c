@@ -247,8 +247,9 @@ static inline int lcp_rma_start(lcp_ep_h ep, lcp_request_t *req)
         if (!(req->flags & LCP_REQUEST_USER_PROVIDED_MEMH)) {
                 rc = lcp_mem_register_with_bitmap(req->mngr, &req->state.lmem, 
                                                   ep->conn_map, req->send.buffer, 
-                                                  req->send.length, 0);
-                if (req->state.lmem == NULL) {
+                                                  req->send.length, 
+                                                  LCR_IFACE_REGISTER_MEM_DYN);
+                if (rc != MPC_LOWCOMM_SUCCESS) {
                         rc = MPC_LOWCOMM_ERROR;
                 }
         } else {
@@ -356,8 +357,7 @@ int lcp_flush_manager_nb(lcp_request_t *req)
                 iface->iface_get_attr(iface, &attr);
                 if (attr.iface.cap.flags & LCR_IFACE_CAP_RMA) {
                         req->state.comp.count++;
-                        rc = lcp_do_flush(iface, NULL, NULL, &req->state.comp, 
-                                          LCR_IFACE_FLUSH_IFACE);
+                        rc = lcp_do_flush_iface(iface, &req->state.comp, 0);
 
                         if (rc != MPC_LOWCOMM_SUCCESS) {
                                 goto err;
@@ -389,9 +389,8 @@ int lcp_flush_ep_nb(lcp_request_t *req)
                 iface->iface_get_attr(iface, &attr);
                 if (attr.iface.cap.flags & LCR_IFACE_CAP_RMA) {
                         req->state.comp.count++;
-                        rc = lcp_do_flush(iface, ep->lct_eps[i], 
-                                          NULL, &req->state.comp, 
-                                          LCR_IFACE_FLUSH_EP);
+                        rc = lcp_do_flush_ep(iface, ep->lct_eps[i], 
+                                          &req->state.comp, 0);
                         if (rc != MPC_LOWCOMM_SUCCESS) {
                                 goto err;
                         }
@@ -413,9 +412,8 @@ int lcp_flush_mem_nb(lcp_request_t *req)
                 }
 
                 req->state.comp.count++;
-                rc = lcp_do_flush(req->mngr->ifaces[i], NULL, &mem->mems[i], 
-                                  &req->state.comp, 
-                                  LCR_IFACE_FLUSH_MEM);
+                rc = lcp_do_flush_mem(req->mngr->ifaces[i], &mem->mems[i], 
+                                  &req->state.comp, 0);
                 if (rc != MPC_LOWCOMM_SUCCESS) {
                         goto err;
                 }
@@ -448,9 +446,9 @@ int lcp_flush_mem_ep_nb(lcp_request_t *req)
                 iface->iface_get_attr(iface, &attr);
                 if (attr.iface.cap.flags & LCR_IFACE_CAP_RMA) {
                         req->state.comp.count++;
-                        rc = lcp_do_flush(iface, ep->lct_eps[i], 
+                        rc = lcp_do_flush_mem_ep(iface, ep->lct_eps[i], 
                                           &mem->mems[i], &req->state.comp, 
-                                          LCR_IFACE_FLUSH_EP);
+                                          0);
                         if (rc != MPC_LOWCOMM_SUCCESS) {
                                 goto err;
                         }

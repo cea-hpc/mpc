@@ -319,12 +319,15 @@ struct lcp_pinning_entry * lcp_pinning_entry_list_push(struct lcp_pinning_entry_
                         lcp_pinning_entry_list_decimate_no_lock(list, (list->total_size + len) - list->max_total_size);
                 }
 
+                int rc;
                 lcp_mem_h mem_p = NULL;
-                lcp_mem_register_with_bitmap(mngr,
-                        &mem_p,
-                        bitmap,
-                        buffer,
-                        len, flags);
+                rc = lcp_mem_register_with_bitmap(mngr, &mem_p,
+                                                  bitmap,
+                                                  buffer,
+                                                  len, flags);
+                if (rc != MPC_LOWCOMM_SUCCESS) {
+                        goto err;
+                }
                 ret = lcp_pinning_entry_new(buffer, len, mngr, mem_p);
                 lcp_pinning_entry_acquire(ret);
 
@@ -345,6 +348,7 @@ struct lcp_pinning_entry * lcp_pinning_entry_list_push(struct lcp_pinning_entry_
 
         }
 
+err:
         mpc_common_spinlock_write_unlock(&list->lock);
 
         return ret;
@@ -659,25 +663,32 @@ int lcp_mem_register(lcp_manager_h mngr,
         lcp_mem_h mem;
         bmap_t bm = MPC_BITMAP_INIT;
         lcr_rail_attr_t attr;
+        unsigned flags = 0;
 
         if (param == NULL) {
                 mpc_common_debug_error("LCP MEM: param field must be set.");
-                return LCP_ERROR; 
+                return MPC_LOWCOMM_ERROR; 
         }
 
         if (!(param->field_mask & LCP_MEM_SIZE_FIELD) ) {
                 mpc_common_debug_error("LCP MEM: must specify size field.");
-                return LCP_ERROR;
+                return MPC_LOWCOMM_ERROR;
         }
         
         if (!(param->field_mask & LCP_MEM_ADDR_FIELD) ) {
                 mpc_common_debug_error("LCP MEM: must specify address field.");
-                return LCP_ERROR;
+                return MPC_LOWCOMM_ERROR;
         }
 
         if (param->address == NULL && !(param->flags & LCP_MEM_REGISTER_ALLOCATE)) {
                 mpc_common_debug_error("LCP MEM: must specify address field.");
                 not_implemented();
+        }
+
+        if (!(param->flags & (LCP_MEM_REGISTER_STATIC |
+                              LCP_MEM_REGISTER_DYNAMIC))) {
+                mpc_common_debug_error("LCP MEM: must specify regisration flags.");
+                return MPC_LOWCOMM_ERROR;
         }
 
         if (param->flags & LCP_MEM_REGISTER_ALLOCATE) {
@@ -694,8 +705,11 @@ int lcp_mem_register(lcp_manager_h mngr,
                 }
         }
 
+        flags = param->flags & LCP_MEM_REGISTER_DYNAMIC ?
+                LCR_IFACE_REGISTER_MEM_DYN : LCR_IFACE_REGISTER_MEM_STAT;
+
         mem = lcp_pinning_mmu_pin(mngr, param->address, param->size, 
-                                  bm, param->flags);
+                                  bm, flags);
         if (rc != MPC_LOWCOMM_SUCCESS) {
                 goto err;
         }
