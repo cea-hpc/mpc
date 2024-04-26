@@ -1186,7 +1186,8 @@ static inline int ___collectives_create_swap_array(MPI_Comm comm, int root __UNU
     swap_array[i] = i;
   }
 
-  ___collectives_allgather_topo(&rank, 1, MPI_INT, tmp_swap_array, 1, MPI_INT, comm, MPC_COLL_TYPE_BLOCKING, NULL, info);
+  ___collectives_gather_topo(&rank, 1, MPI_INT, tmp_swap_array, 1, MPI_INT, root, comm, MPC_COLL_TYPE_BLOCKING, NULL, info);
+  ___collectives_bcast_topo(tmp_swap_array, size, MPI_INT, root, comm, MPC_COLL_TYPE_BLOCKING, NULL, info);
 
   memcpy(swap_array, tmp_swap_array, size * sizeof(int));
 
