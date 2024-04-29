@@ -13,8 +13,8 @@ Welcome to mpc's documentation!
    start
    build
    runtime
-   launchers
    networks
+   privatization
    annex
 
 
