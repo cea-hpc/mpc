@@ -377,7 +377,7 @@ class MpcRunner:
 					with open(os.path.join(filesdir, "app_{}".format(i)), "w") as curapp:
 						curapp.write("export MPC_STARTUP_ARGS=\"{startup_args}\"\n".format(startup_args = mpc_args))
 						curapp.write(custom_join(jargs["binary"]))
-					os.chmod(curapp.name, 0o555)
+					os.chmod(curapp.name, 0o500)
 					mc_file.write("{iter} bash {exec}\n".format(
 						iter = proc_num, 
 						# startup_args = mpc_args,
