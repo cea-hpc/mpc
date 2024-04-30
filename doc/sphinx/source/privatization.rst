@@ -22,7 +22,7 @@ To compile a privatized program using `mpc_cc`, you can use this line :
 
     mpc_cc -fmpc-privatize myprogram.c -o ./a.out
 
-the :code:`fmpc-privatize` is not required since privatization is activated by default in mpc unless mpc-compiler-additions is disabled on build. To disable privatization you can use :code:`fmpc_privatize`. Let's try with a c code that would be problematic on thread-based runtime without privatization : 
+the :code:`-fmpc-privatize` is not required since privatization is activated by default in mpc unless mpc-compiler-additions is disabled on build. To disable privatization you can use :code:`-fno-mpc-privatize`. Let's try with a c code that would be problematic on thread-based runtime without privatization : 
 
 .. code-block:: c
 
@@ -41,5 +41,5 @@ the :code:`fmpc-privatize` is not required since privatization is activated by d
 The previous compilation command line ensures the following code behaves properly when launched with the following mpcrun options : 
 
 .. code-block:: bash
-    
+
     mpcrun -n=2 -p=1 ./a.out

@@ -27,6 +27,7 @@ In case you are building MPC offline you should place the external modules sourc
 MPC will look for pre-installed modules although you can specify paths for system modules. The option to specify a module path is :code:`--with-[module]=`. The option to disable a module is :code:`--disable-[module]`
 
 Additionally you can specify paths for :
+
 - cuda
 - opencl
 - openacc

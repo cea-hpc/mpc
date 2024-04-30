@@ -20,32 +20,16 @@ Prerequisites
 
 MPC has a few dependencies which must be installed prior to running the installation script.
 
-.. list-table::
-   :widths: 25 75
-   :header-rows: 1
+.. code-block:: bash
 
-   * - Dependency
-     - Installing on CentOS, Debian/Ubuntu, Fedora, and ArchLinux
-   * - patch command
-     - `yum install -y patch` or `apt-get install -y patch` or `yum install -y gcc-patch` or `pacman -Su patch`
-   * - C/C++ compiler (e.g. gcc and g++)
-     - `yum install -y gcc gcc-c++` or `apt-get install -y gcc g++` or `yum groupinstall "Development Tools"` or `pacman -Su group base-devel`
-   * - Fortran compiler (e.g. GFORTRAN)
-     - `yum install -y gfortran` or `apt-get install -y gfortran` or `yum install -y  gcc-gfortran` or `pacman -Su gcc-fortran`
-   * - The make command
-     - Installed by default on most distributions
-   * - Tar and Bzip commands
-     - `yum install -y tar bzip2` or `apt-get install -y tar bzip2` or `yum groupinstall "Development Tools"` or `pacman -Su tar bzip2`
-   * - pkg-config
-     - `yum install -y pkg-config` or `apt-get install -y pkg-config` or `yum install -y gcc-config` or `pacman -Su pkg-config`
-   * - curl
-     - `yum install -y curl` or `apt-get install -y curl` or `yum install -y httpd-tools` or`pacman -Su curl`
-   * - python3 (for CentOS and Debian/Ubuntu) or python (for Fedora and ArchLinux)
-     - `yum install -y python3` or `apt-get install -y python3` or `yum groupinstall "Development Tools"" (Fedora: `yum install python3`) or `pacman -Su python`
-   * - texinfo
-     - `yum install -y texinfo` or `apt-get install -y texinfo` or `yum install -y texlive texlive-texinfo` or `pacman -Su texinfo`
-   * - diffutils and file
-     - Installed by default on most distributions
+    # Install dependencies on Centos
+    yum install -y gcc gcc-gfortran gcc-c++ patch make cmake bzip2 pkg-config curl python36 texinfo diffutils file
+    # Install dependencies on Debian / Ubuntu
+    apt-get install -y gcc g++ gfortran patch make cmake bzip2 pkg-config curl python
+    # Install dependencies on Fedora
+    yum install -y gcc gcc-gfortran gcc-c++ patch make cmake bzip2 pkg-config findutils texinfo diffutils file
+    # Install dependencies on ArchLinux
+    pacman -Su gcc gcc-fortran patch make cmake bzip2 pkg-config python diffutils perl-podlators
 
 Fast Installation
 -----------------
@@ -120,8 +104,10 @@ On Fedora or ArchLinux:
    ../installmpc --prefix=$MPC_INSTALL_DIR -j8
 
 
-Launching MPI Applications
---------------------------
+Compiling and launching MPI Applications
+----------------------------------------
+
+**mpc_cc**
 
 MPC provides two main commands for launching MPI applications: `mpirun` and `mpcrun`. The `mpirun` command is used to launch an MPI application with the  default settings, while the `mpcrun` command allows you to specify mpc-specific options for your MPI application.
 
@@ -134,3 +120,17 @@ Compiling and launching a program :code:`test.c` with mpc should start like this
     mpc_cc test.c -o ./a.out
     mpcrun -n=1 -p=1 -c=1 ./a.out
 
+mpc_cc wraps ap-gcc which is a patched version of gcc allowing privatization. You can pass any option that gcc authorizes.
+
+mpcrun is a multi-process launcher that uses Hydra and Slurm to launch MPI 
+applications. This command provides various options for configuring the launch 
+process, including node number, process number, task number, CPU number per UNIX 
+process, and more.
+
+**mpcrun**
+
+To use `mpcrun`, simply specify the binary executable and any necessary user arguments : ``mpcrun -- binary [user args]``
+
+For example ``mpcrun -- ./my_mpi_app 10000`` launches `my_mpi_app` with the argument `10000`.
+
+For further explanations please refer to :doc:`the complete documentation of mpcrun<runtime>`
