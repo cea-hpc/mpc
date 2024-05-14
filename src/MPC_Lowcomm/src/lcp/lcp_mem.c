@@ -508,17 +508,9 @@ int lcp_mem_unpack(lcp_manager_h mngr, lcp_mem_h *mem_p,
         void *p = src;
         lcp_mem_h mem;
 
-        mem = sctk_malloc(sizeof(struct lcp_mem));
+        mem = mpc_mpool_pop(mngr->mem_mp);
         if (mem == NULL) {
                 mpc_common_debug_error("LCP: could not allocate memory domain.");
-                rc = MPC_LOWCOMM_ERROR;
-                goto err;
-        }
-
-        mem->mems       = sctk_malloc(mngr->num_ifaces * sizeof(lcr_memp_t));
-        mem->num_ifaces = 0;
-        if (mem->mems == NULL) {
-                mpc_common_debug_error("LCP: could not allocate memory pins.");
                 rc = MPC_LOWCOMM_ERROR;
                 goto err;
         }
@@ -551,7 +543,7 @@ int lcp_mem_create(lcp_manager_h mngr, lcp_mem_h *mem_p)
         int rc = MPC_LOWCOMM_SUCCESS;
         lcp_mem_h mem;
 
-        mem = sctk_malloc(sizeof(struct lcp_mem));
+        mem = mpc_mpool_pop(mngr->mem_mp);
         if (mem == NULL) {
                 mpc_common_debug_error("LCP: could not allocate memory domain");
                 rc = MPC_LOWCOMM_ERROR;
@@ -560,14 +552,8 @@ int lcp_mem_create(lcp_manager_h mngr, lcp_mem_h *mem_p)
 
         //NOTE: allocation on the number of interfaces even though the memories
         //      depend on the bitmap. Fits better with the bitmap.
-        mem->mems       = sctk_malloc(mngr->num_ifaces * sizeof(lcr_memp_t));
         mem->num_ifaces = 0; // num_iface is set later based on bitmap.
         mem->pointer_to_mmu_ctx = NULL;
-        if (mem->mems == NULL) {
-                mpc_common_debug_error("LCP: could not allocate memory pins");
-                rc = MPC_LOWCOMM_ERROR;
-                goto err;
-        }
         memset(mem->mems, 0, mngr->num_ifaces * sizeof(lcr_memp_t));
 
         *mem_p = mem;
@@ -577,9 +563,7 @@ err:
 
 void lcp_mem_delete(lcp_mem_h mem)
 {
-        sctk_free(mem->mems);
-        sctk_free(mem);
-        mem = NULL;
+        mpc_mpool_push(mem);
 }
 
 //FIXME: fonction not useful, much redundancy with lcp_mem_register_with_bitmap
@@ -682,7 +666,7 @@ int lcp_mem_register(lcp_manager_h mngr,
 
         if (param->address == NULL && !(param->flags & LCP_MEM_REGISTER_ALLOCATE)) {
                 mpc_common_debug_error("LCP MEM: must specify address field.");
-                not_implemented();
+                return MPC_LOWCOMM_ERROR;
         }
 
         if (!(param->flags & (LCP_MEM_REGISTER_STATIC |
@@ -691,8 +675,8 @@ int lcp_mem_register(lcp_manager_h mngr,
                 return MPC_LOWCOMM_ERROR;
         }
 
-        if (param->flags & LCP_MEM_REGISTER_ALLOCATE) {
-                not_implemented();
+        if (param->flags & LCP_MEM_REGISTER_ALLOCATE && param->address != NULL) {
+                mpc_common_debug_warning("LCP MEM: provided address not null.");
         }
 
         /* Compute bitmap registration. Strategy is to register on all

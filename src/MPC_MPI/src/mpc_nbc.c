@@ -1,5 +1,3 @@
-/* ############################# MPC License ############################## */
-/* # Wed Nov 19 15:19:19 CET 2008                                         # */
 /* # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          # */
 /* #                                                                      # */
 /* # IDDN.FR.001.230040.000.S.P.2007.000.10000                            # */
@@ -53,6 +51,13 @@ static inline int NBC_Progress( NBC_Handle *handle );
 static inline int NBC_Start_round( NBC_Handle *handle );
 static inline int NBC_Start_round_persistent( NBC_Handle *handle );
 static inline int NBC_Free( NBC_Handle *handle );
+
+#define NBC_HANDLE_ALLOC_REQ(_nbc_handle, _offset) \
+        ({ \
+                MPI_internal_request_t *__mpi_req; \
+                __mpi_req = (_nbc_handle)->req_array[_offset] = mpc_lowcomm_request_alloc(); \
+                __mpi_req; \
+         })
 
 /******* *
  * NBC.C *
@@ -259,9 +264,6 @@ static inline int __NBC_Progress( NBC_Handle *handle, int depth )
 			{
 				// sctk_debug("INSIDE THE PROGRESS THREAD");
 
-				MPI_request_struct_t *requests = __sctk_internal_get_MPC_requests();
-				__sctk_convert_mpc_request_internal( &handle->req_array[handle->array_offset],
-													 requests );
 				res = PMPI_Waitall( handle->req_count_persistent[handle->num_rounds], &handle->req_array[handle->array_offset],
 									/*&flag,*/ MPI_STATUSES_IGNORE );
 				if ( res != MPI_SUCCESS )
@@ -369,7 +371,6 @@ static inline int __NBC_Start_round_persistent( NBC_Handle *handle, int depth )
 	void *buf1, *buf2, *buf3;
 	MPI_Comm comm;
 
-	MPI_request_struct_t *requests = __sctk_internal_get_MPC_requests();
 
 	/* get schedule address */
 	myschedule = (NBC_Schedule *) ( (char *) *handle->schedule + handle->row_offset );
@@ -462,22 +463,28 @@ static inline int __NBC_Start_round_persistent( NBC_Handle *handle, int depth )
 				NBC_CHECK_NULL( handle->req_array );
 				if ( handle->is_persistent != 2 )
 				{
-					res = _mpc_cl_isend( buf1, sendargs->count, sendargs->datatype, sendargs->dest, handle->tag, comm, __sctk_new_mpc_request( handle->req_array + ( old_req_count + req_cpt - 1 ), requests ) );
+                                        MPI_Request req = NBC_HANDLE_ALLOC_REQ(handle, 
+                                                                               old_req_count + req_cpt -1);
+
+					res = _mpc_cl_isend(buf1, sendargs->count, sendargs->datatype, sendargs->dest, 
+                                                            handle->tag, comm, _mpc_cl_get_lowcomm_request(req));
 					/*mark new intermediate nbc request to keep it as long as collective isn't free*/
-					requests->tab[*( handle->req_array + ( old_req_count + req_cpt - 1 ) )]->is_persistent = 1;
+                                        req->is_persistent = 1;
 					if ( handle->is_persistent == 1 )
 					{
-						requests->tab[*( handle->req_array + req_cpt - 1 )]->is_persistent = 2;
-						requests->tab[*( handle->req_array + req_cpt - 1 )]->used = 1;
-						requests->tab[*( handle->req_array + req_cpt - 1 )]->nbc_handle.schedule = handle->schedule;
+						req->is_persistent = 2;
+						req->used = 1;
+						req->nbc_handle.schedule = handle->schedule;
+
 					}
 				}
 				else
 				{
-					requests->tab[*( handle->req_array + req_cpt - 1 )]->is_persistent = 2;
-					requests->tab[*( handle->req_array + req_cpt - 1 )]->used = 1;
-					requests->tab[*( handle->req_array + req_cpt - 1 )]->nbc_handle.schedule = handle->schedule;
-					res = _mpc_cl_isend( buf1, sendargs->count, sendargs->datatype, sendargs->dest, handle->tag, comm, &( ( requests->tab[(int) *( handle->req_array + ( handle->array_offset + req_cpt - 1 ) )] )->req ) );
+                                        MPI_Request req = NBC_HANDLE_ALLOC_REQ(handle, 
+                                                                               handle->array_offset + req_cpt -1);
+
+					res = _mpc_cl_isend(buf1, sendargs->count, sendargs->datatype, sendargs->dest, 
+                                                            handle->tag, comm, _mpc_cl_get_lowcomm_request(req));
 				}
 				if ( MPI_SUCCESS != res )
 				{
@@ -508,22 +515,27 @@ static inline int __NBC_Start_round_persistent( NBC_Handle *handle, int depth )
 				NBC_CHECK_NULL( handle->req_array );
 				if ( handle->is_persistent != 2 )
 				{
-					res = _mpc_cl_irecv( buf1, recvargs->count, recvargs->datatype, recvargs->source, handle->tag, comm, __sctk_new_mpc_request( handle->req_array + ( old_req_count + req_cpt - 1 ), requests ) );
+                                        MPI_Request mpi_req = NBC_HANDLE_ALLOC_REQ(handle, old_req_count + req_cpt - 1);
+					res = _mpc_cl_irecv(buf1, recvargs->count, recvargs->datatype, recvargs->source, 
+                                                            handle->tag, comm, _mpc_cl_get_lowcomm_request(mpi_req));
 					/*mark new intermediate nbc request to keep it as long as collective isn't free*/
-					requests->tab[*( handle->req_array + ( old_req_count + req_cpt - 1 ) )]->is_persistent = 1;
+                                        mpi_req->is_persistent = 1;
 					if ( handle->is_persistent == 1 )
 					{
-						requests->tab[*( handle->req_array + handle->array_offset + req_cpt - 1 )]->is_persistent = 2;
-						requests->tab[*( handle->req_array + handle->array_offset + req_cpt - 1 )]->used = 1;
-						requests->tab[*( handle->req_array + handle->array_offset + req_cpt - 1 )]->nbc_handle.schedule = handle->schedule;
+                                                
+						mpi_req->is_persistent = 2;
+						mpi_req->used = 1;
+						mpi_req->nbc_handle.schedule = handle->schedule;
 					}
 				}
 				else
 				{
-					requests->tab[*( handle->req_array + handle->array_offset + req_cpt - 1 )]->is_persistent = 2;
-					requests->tab[*( handle->req_array + handle->array_offset + req_cpt - 1 )]->used = 1;
-					requests->tab[*( handle->req_array + handle->array_offset + req_cpt - 1 )]->nbc_handle.schedule = handle->schedule;
-					res = _mpc_cl_irecv( buf1, recvargs->count, recvargs->datatype, recvargs->source, handle->tag, comm, &( ( requests->tab[(int) *( handle->req_array + ( handle->array_offset + req_cpt - 1 ) )] )->req ) );
+                                        MPI_Request mpi_req = NBC_HANDLE_ALLOC_REQ(handle, handle->array_offset + req_cpt - 1);
+					mpi_req->is_persistent = 2;
+					mpi_req->used = 1;
+					mpi_req->nbc_handle.schedule = handle->schedule;
+					res = _mpc_cl_irecv( buf1, recvargs->count, recvargs->datatype, recvargs->source, 
+                                                             handle->tag, comm, _mpc_cl_get_lowcomm_request(mpi_req));
 				}
 
 				if ( MPI_SUCCESS != res )
@@ -703,7 +715,6 @@ static inline int __NBC_Start_round( NBC_Handle *handle, int depth )
 	void *buf1, *buf2, *buf3;
 	MPI_Comm comm;
 
-	MPI_request_struct_t *requests = __sctk_internal_get_MPC_requests();
 
 	/* get schedule address */
 	myschedule = (NBC_Schedule *) ( (char *) *handle->schedule + handle->row_offset );
@@ -773,6 +784,7 @@ static inline int __NBC_Start_round( NBC_Handle *handle, int depth )
 
 	for ( i = 0; i < *numptr; i++ )
 	{
+                MPI_Request mpi_req;
 		/* go sizeof op-data forward */
 		switch ( *typeptr )
 		{
@@ -794,7 +806,9 @@ static inline int __NBC_Start_round( NBC_Handle *handle, int depth )
 
 				NBC_CHECK_NULL( handle->req_array );
 				// fprintf(stderr, "rank %d send to rank %d datatype %d count %d\n", mpc_common_get_task_rank(), sendargs->dest, sendargs->datatype, sendargs->count);
-				res = _mpc_cl_isend( buf1, sendargs->count, sendargs->datatype, sendargs->dest, handle->tag, comm, __sctk_new_mpc_request( handle->req_array + ( old_req_count + req_cpt - 1 ), requests ) );
+                                mpi_req = NBC_HANDLE_ALLOC_REQ(handle, old_req_count + req_cpt - 1);
+				res = _mpc_cl_isend( buf1, sendargs->count, sendargs->datatype, sendargs->dest, 
+                                                     handle->tag, comm, _mpc_cl_get_lowcomm_request(mpi_req));
 				if ( MPI_SUCCESS != res )
 				{
 					printf( "Error in MPI_Isend(%lu, %i, %lu, %i, %i, %lu) (%i)\n", (unsigned long) buf1, sendargs->count, (unsigned long) sendargs->datatype, sendargs->dest, handle->tag, (unsigned long) handle->mycomm, res );
@@ -824,7 +838,9 @@ static inline int __NBC_Start_round( NBC_Handle *handle, int depth )
 
 				NBC_CHECK_NULL( handle->req_array );
 				// fprintf(stderr, "rank %d recv from rank %d datatype %d count %d\n", mpc_common_get_task_rank(), recvargs->source, recvargs->datatype, recvargs->count);
-				res = _mpc_cl_irecv( buf1, recvargs->count, recvargs->datatype, recvargs->source, handle->tag, comm, __sctk_new_mpc_request( handle->req_array + ( old_req_count + req_cpt - 1 ), requests ) );
+                                mpi_req = NBC_HANDLE_ALLOC_REQ(handle, old_req_count + req_cpt - 1);
+				res = _mpc_cl_irecv( buf1, recvargs->count, recvargs->datatype, recvargs->source, 
+                                                     handle->tag, comm, _mpc_cl_get_lowcomm_request(mpi_req));
 
 				if ( MPI_SUCCESS != res )
 				{

@@ -64,7 +64,7 @@ int lcp_tag_send_start(lcp_ep_h ep, lcp_request_t *req,
                 size = req->send.length;
                 req->state.offloaded = 1;
 
-                if (param->flags & LCP_REQUEST_TAG_SYNC) {
+                if (param->field_mask & LCP_REQUEST_TAG_SYNC) {
                         not_implemented();
                 }
 
@@ -76,7 +76,6 @@ int lcp_tag_send_start(lcp_ep_h ep, lcp_request_t *req,
                            (param->datatype & LCP_DATATYPE_CONTIGUOUS)) {
                         req->send.func = lcp_send_tag_offload_eager_zcopy;
                 } else {
-                        req->request->synchronized = 0;
                         rc = lcp_send_rndv_offload_start(req);
                 }
         } else if (LCP_SEND_TAG_IS_TASK(req)){ /* Thread-based send */
@@ -110,7 +109,6 @@ int lcp_tag_send_start(lcp_ep_h ep, lcp_request_t *req,
                            (param->datatype & LCP_DATATYPE_CONTIGUOUS)) {
                         req->send.func = lcp_send_eager_tag_zcopy;
                 } else {
-                        req->request->synchronized = 0;
                         rc = lcp_send_rndv_tag_start(req);
                 }
         }
@@ -123,25 +121,28 @@ int lcp_tag_send_start(lcp_ep_h ep, lcp_request_t *req,
 //       the datatypes and stuff...
 //FIXME: Handle loopback, ie, sending to myself.
 int lcp_tag_send_nb(lcp_ep_h ep, lcp_task_h task, const void *buffer, 
-                    size_t count, mpc_lowcomm_request_t *request,
+                    size_t count, lcp_tag_info_t *tag_info,
                     const lcp_request_param_t *param)
 {
         int rc;
-        lcp_request_t *req;
+        lcp_request_t *req = NULL;
 
         // create the request to send
-        req = lcp_request_get(task);
-        //rc = lcp_request_create(&req);
+        req = lcp_request_get_param(task, param);
         if (req == NULL) {
                 mpc_common_debug_error("LCP: could not create request.");
                 return LCP_ERROR;
         }
-        req->flags |= LCP_REQUEST_MPI_COMPLETE;
+
+        if (param->field_mask & LCP_REQUEST_TAG_CALLBACK) {
+                req->flags       |= LCP_REQUEST_USER_CALLBACK;
+                req->send.send_cb = param->send_cb;
+        }
 
         // initialize request
-        LCP_REQUEST_INIT_TAG_SEND(req, ep->mngr, task, request, param->recv_info, 
+        LCP_REQUEST_INIT_TAG_SEND(req, ep->mngr, task, param->request, tag_info, 
                                   count, ep, (void *)buffer, 0, param->datatype,
-                                  param->flags & LCP_REQUEST_TAG_SYNC ? 1 : 0);
+                                  param->field_mask & LCP_REQUEST_TAG_SYNC ? 1 : 0);
 
         /* prepare request depending on its type */
         rc = lcp_tag_send_start(ep, req, param);

@@ -60,13 +60,6 @@
  * @}
  */
 
-/* LCP return code */
-typedef enum {
-        LCP_SUCCESS     =  0,
-        LCP_NO_RESOURCE = -1,
-        LCP_ERROR       =  1,
-} lcp_status_t;
-
 /**
  * @ingroup LCP_CONTEXT
  * @brief LCP context field mask. It is used to specify which parameters has
@@ -77,6 +70,8 @@ enum {
         LCP_CONTEXT_DATATYPE_OPS  = MPC_BIT(0), /**< datatype mask */
         LCP_CONTEXT_PROCESS_UID   = MPC_BIT(1), /**< process uid mask */
         LCP_CONTEXT_NUM_TASKS     = MPC_BIT(2), /**< task number mask */
+        LCP_CONTEXT_REQUEST_SIZE  = MPC_BIT(3), /**< upper layer request size */
+        LCP_CONTEXT_REQUEST_CB    = MPC_BIT(4), /**< request init callback */
 };
 
 /**
@@ -99,6 +94,8 @@ typedef struct lcp_context_param {
         uint64_t     process_uid; /**< local process UID */
         int          num_tasks;   /**< local process UID */
         lcp_dt_ops_t dt_ops; /** datatype operations (pack/unpack) */
+        int          request_size;
+        lcp_request_init_callback_func_t request_init;
 } lcp_context_param_t;
 
 /**
@@ -208,8 +205,8 @@ enum {
  * situation.
  */
 enum {
-        LCP_MANAGER_TSC_MODEL = MPC_BIT(0),  /**< Instanciate interface Two-Sided Communication capabilities. */
-        LCP_MANAGER_OSC_MODEL = MPC_BIT(1),  /**< Instanciate interface One-Sided Communication capabilities. */
+        LCP_MANAGER_TSC_MODEL = MPC_BIT(0),  /**< Init interface Two-Sided Communication capabilities. */
+        LCP_MANAGER_OSC_MODEL = MPC_BIT(1),  /**< Init interface One-Sided Communication capabilities. */
 };
 
 /**
@@ -332,8 +329,6 @@ enum {
 //       just a functionality (eg LCP_REQUEST_TRY_OFFLOAD or
 //       LCP_REQUEST_TAG_SYNC). Maybe this should be divided in two enum for
 //       clarity.
-//FIXME: Add LCP_REQUEST_USER_MEMKEY to specify if user has provided a local
-//       memory key to be used.
         LCP_REQUEST_TRY_OFFLOAD   = MPC_BIT(0), /**< Try offload send mask */
         LCP_REQUEST_USER_DATA     = MPC_BIT(1), /**< User data mask */
         LCP_REQUEST_USER_REQUEST  = MPC_BIT(2), /**< User request mask */
@@ -344,6 +339,7 @@ enum {
         LCP_REQUEST_REPLY_BUFFER  = MPC_BIT(7), /**< Result buffer for Atomics */
         LCP_REQUEST_USER_MEMH     = MPC_BIT(8), /**< User-provided local Memory handle */
         LCP_REQUEST_USER_EPH      = MPC_BIT(9), /**< User-provided Endpoint handle */
+        LCP_REQUEST_TAG_CALLBACK  = MPC_BIT(10), /**< TAG callback mask */ 
 };
 
 /**
@@ -360,11 +356,31 @@ typedef struct lcp_tag_recv_info {
         int32_t tag; /**< Tag of the matched request */
         int32_t src; /**< Source of the matched request */
         unsigned found; /**< Has request been found in matching list or not */
+        unsigned flags; /**< Flags containing info from LCP (truncation, ...) */
 } lcp_tag_recv_info_t;
 
 /**
  * @ingroup LCP_COMM
- * @brief Datatype type
+ * @brief Tag information
+ *
+ * Information to be returned to user whenever a request as been matched. The
+ * structure is passed from upper layer and field by LCP with tag information
+ * (length, tag, source and found in case of probing).
+ * For example, this can be used in MPI_Status.
+ */
+typedef struct lcp_tag_info {
+        int32_t tag; /**< Tag of the matched request */
+        int32_t src; /**< Source of the matched request */
+        int32_t dest; /**< Source of the matched request */
+        uint64_t src_uid; /**< Source UID */
+        uint64_t dest_uid; /**< Destination UID */
+        uint16_t comm_id; /**< Communicator ID */
+        unsigned found; /**< Has request been found in matching list or not */
+} lcp_tag_info_t;
+
+/**
+ * @ingroup LCP_COMM
+ * @brief Datatype type 
  *
  * Specifies if the datat in the request is contiguous or not (derived)
  */
@@ -382,23 +398,47 @@ enum lcp_dt_type {
  * handled by the communication primitives. It is primarily used to specify user
  * callback and to pass tag receive information (\ref lcp_tag_recv_info_t).
  */
+//FIXME: union the callbacks.
 typedef struct lcp_request_param {
-        uint32_t                     flags; /**< Flags to indicate which parameter is used */
-        lcp_tag_recv_info_t         *recv_info; /**< Receive info field upon matching completion */
-        lcp_send_callback_func_t     send_cb; /**< Completion callback for send RMA requests */
-        lcp_am_recv_callback_func_t  am_cb; /**< Completion callback for recv AM requests */
-        void                        *user_request; /**< User data attached with the AM callback 
-                                                     \ref lcp_am_recv_callback_func_t */
+        uint32_t                     field_mask; /**< Flags to indicate which parameter is used */
+        lcp_send_callback_func_t     send_cb; /**< Completion callback for send requests */
+        lcp_tag_recv_callback_func_t recv_cb; /**< Completion callback for recv requests */
+        lcp_send_callback_func_t     am_cb; /**< Completion callback for recv AM requests */
         void                        *reply_buffer; /**< Location for returned value with atomic operations */
         lcp_datatype_t               datatype; /**< Contiguous or non-contiguous data */
-        mpc_lowcomm_request_t       *request; /**< Pointer to lowcomm request for completion */
+        void                        *request; /**< Pointer to upper layer request for completion */
         lcp_mem_h                    mem; /**< Memory handle for RMA requests */
         lcp_ep_h                     ep; /**< Endpoint to be flushed. */
 } lcp_request_param_t;
 
 /**
  * @ingroup LCP_COMM
- * @brief LCP send tag communication.
+ * @brief Initialize a request.
+ *
+ * Returns an initialized pointer to a user request. Within the upper layer, it
+ * is sometimes needed to initialize fields of upper layer request before
+ * actually sending the request. 
+ * The user is then responsible to free the request using \ref lcp_request_free
+ *
+ * @param [in]  task  Task handle of the task allocating the request.
+ * @param [out] request Request handle containing the upper layer request.
+ * @return Error code returned.
+ */
+void *lcp_request_alloc(lcp_task_h task);
+
+/**
+ * @ingroup LCP_COMM
+ * @brief Free a request.
+ *
+ * Free a previously allocated request from \ref lcp_request_alloc
+ *
+ * @param [int] request Request handle to be freed.
+ * @return Error code returned.
+ */
+void lcp_request_free(void *request);
+/**
+ * @ingroup LCP_COMM
+ * @brief LCP send tag communication. 
  *
  * Communication primitive to send a tag message to the corresponding \ref
  * lcp_tag_recv_nb(). The routine is non-blocking and thus returns directly,
@@ -417,7 +457,7 @@ typedef struct lcp_request_param {
  * @return Error code returned.
  */
 int lcp_tag_send_nb(lcp_ep_h ep, lcp_task_h task, const void *buffer,
-                    size_t count, mpc_lowcomm_request_t *request,
+                    size_t count, lcp_tag_info_t *tag_info, 
                     const lcp_request_param_t *param);
 
 /**
@@ -438,9 +478,9 @@ int lcp_tag_send_nb(lcp_ep_h ep, lcp_task_h task, const void *buffer,
  * @param [in] param  Request parameters \ref lcp_request_param_t.
  * @return Error code returned.
  */
-int lcp_tag_recv_nb(lcp_manager_h mngr, lcp_task_h task, void *buffer, size_t count, 
-                    mpc_lowcomm_request_t *request,
-                    lcp_request_param_t *param);
+int lcp_tag_recv_nb(lcp_manager_h mngr, lcp_task_h task, void *buffer, 
+                    size_t count, lcp_tag_info_t *tag_info, int32_t src_mask,
+                    int32_t tag_mask, lcp_request_param_t *param);
 
 /**
  * @ingroup LCP_COMM
@@ -564,6 +604,8 @@ int lcp_am_recv_nb(lcp_manager_h mngr, lcp_task_h task, void *data_ctnr,
  *
  * User may provide a callback through \ref lcp_request_param_t so that it can
  * be notified when the request has completed.
+ * As a return value, a pointer to the upper layer is provided which can be used
+ * to check progression of the communication.
  *
  * @param [in] ep  Endpoint to destination.
  * @param [in] task  Task handle of the source task.
@@ -573,11 +615,11 @@ int lcp_am_recv_nb(lcp_manager_h mngr, lcp_task_h task, void *data_ctnr,
  *                          described by \ref rkey.
  * @param [in] rkey  Remote memory key handle.
  * @param [in] param  Request parameters \ref lcp_request_param_t.
- * @return Error code returned.
+ * @return Pointer to upper layer request.
  */
-int lcp_put_nb(lcp_ep_h ep, lcp_task_h task, const void *buffer,
-               size_t length, uint64_t remote_disp, lcp_mem_h rkey,
-               const lcp_request_param_t *param);
+lcp_status_ptr_t lcp_put_nb(lcp_ep_h ep, lcp_task_h task, const void *buffer,
+                            size_t length, uint64_t remote_disp, lcp_mem_h rkey,
+                            const lcp_request_param_t *param);
 
 /**
  * @ingroup LCP_COMM
@@ -587,6 +629,8 @@ int lcp_put_nb(lcp_ep_h ep, lcp_task_h task, const void *buffer,
  *
  * User may provide a callback through \ref lcp_request_param_t so that it can
  * be notified when the request has completed.
+ * As a return value, a pointer to the upper layer is provided which can be used
+ * to check progression of the communication.
  *
  * @param [in] ep  Endpoint to destination.
  * @param [in] task  Task handle of the source task.
@@ -597,9 +641,9 @@ int lcp_put_nb(lcp_ep_h ep, lcp_task_h task, const void *buffer,
  * @param [in] param  Request parameters \ref lcp_request_param_t.
  * @return Error code returned.
  */
-int lcp_get_nb(lcp_ep_h ep, lcp_task_h task, void *buffer, 
-               size_t length, uint64_t remote_addr, lcp_mem_h rkey,
-               const lcp_request_param_t *param); 
+lcp_status_ptr_t lcp_get_nb(lcp_ep_h ep, lcp_task_h task, void *buffer, 
+                            size_t length, uint64_t remote_addr, lcp_mem_h rkey,
+                            const lcp_request_param_t *param); 
 
 /**
  * @ingroup LCP_COMM

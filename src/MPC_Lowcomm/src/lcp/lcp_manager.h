@@ -41,6 +41,7 @@
 #include <opa_primitives.h>
 #include <list.h>
 #include <queue.h>
+#include <mpc_mempool.h>
 
 #define LCP_MANAGER_LOCK(_mngr) \
 	mpc_common_spinlock_lock_yield(&( (_mngr)->mngr_lock) )
@@ -97,6 +98,7 @@ struct lcp_manager {
         mpc_list_elem_t       progress_head; /* List of interface registered for progress */
 
         struct lcp_pinning_mmu *mmu;
+        mpc_mempool_t        *mem_mp;
 
         int                   num_ifaces;
         sctk_rail_info_t    **ifaces;  /* Table of manager interfaces. */

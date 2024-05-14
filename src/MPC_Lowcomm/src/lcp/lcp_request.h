@@ -47,16 +47,18 @@
 
 //TODO: LCP_REQUEST prefix confusing with those defined in lcp.h
 enum {
-	LCP_REQUEST_RECV_TRUNC          = MPC_BIT(1), /* flags if request is truncated */
-        LCP_REQUEST_MPI_COMPLETE        = MPC_BIT(2), /* call MPI level completion callback,
-                                                         see ucp_request_complete */
-        LCP_REQUEST_RMA_COMPLETE        = MPC_BIT(3),
-        LCP_REQUEST_OFFLOADED_RNDV      = MPC_BIT(4),
-        LCP_REQUEST_LOCAL_COMPLETED     = MPC_BIT(5),
-        LCP_REQUEST_REMOTE_COMPLETED    = MPC_BIT(6),
-        LCP_REQUEST_USER_COMPLETE       = MPC_BIT(7),
-        LCP_REQUEST_USER_PROVIDED_MEMH  = MPC_BIT(8),
-        LCP_REQUEST_USER_PROVIDED_EPH   = MPC_BIT(9),
+	LCP_REQUEST_RECV_TRUNC         = MPC_BIT(1), /* flags if request is truncated */
+        LCP_REQUEST_MPI_COMPLETE       = MPC_BIT(2), /* call MPI level completion callback, 
+                                                        see ucp_request_complete */
+        LCP_REQUEST_RMA_COMPLETE       = MPC_BIT(3),
+        LCP_REQUEST_OFFLOADED_RNDV     = MPC_BIT(4),
+        LCP_REQUEST_LOCAL_COMPLETED    = MPC_BIT(5),
+        LCP_REQUEST_REMOTE_COMPLETED   = MPC_BIT(6),
+        LCP_REQUEST_USER_CALLBACK      = MPC_BIT(7),
+        LCP_REQUEST_USER_PROVIDED_MEMH = MPC_BIT(8),
+        LCP_REQUEST_USER_PROVIDED_EPH  = MPC_BIT(9),
+        LCP_REQUEST_USER_ALLOCATED     = MPC_BIT(10),
+        LCP_REQUEST_RELEASE_REMOTE_KEY = MPC_BIT(11),
 };
 
 //TODO: rename "unexpected container" to "receive descriptor". It was initially
@@ -98,6 +100,7 @@ struct lcp_task_completion {
 typedef int (*lcp_send_func_t)(lcp_request_t *req);
 
 struct lcp_request {
+        int            status;
         uint64_t       flags;
         lcp_manager_h  mngr;
         lcp_task_h     task; 
@@ -126,7 +129,6 @@ struct lcp_request {
                                         size_t   hdr_size;
                                         uint64_t src_uid;
                                         int32_t  dest_tid;
-                                        lcp_am_recv_callback_func_t cb;
                                         void    *request;
                                 } am;
 
@@ -143,6 +145,7 @@ struct lcp_request {
                                         int       is_get;
                                         uint64_t  remote_disp;
                                         lcp_mem_h rkey;
+                                        void     *user_data;
                                 } rma;
 
                                 struct {
@@ -177,28 +180,26 @@ struct lcp_request {
                                         int32_t  dest_tid;
                                         int32_t  tag;
                                         int32_t  tmask;
+                                        lcp_tag_recv_callback_func_t recv_cb;
+                                        lcp_tag_recv_info_t info;
                                 } tag;
 
                                 struct {
                                         uint8_t  am_id;
                                         uint64_t src_uid;
                                         lcp_unexp_ctnr_t *ctnr;
-                                        lcp_am_recv_callback_func_t cb;
+                                        lcp_send_callback_func_t cb; //FIXME: rename
                                         void    *request;
                                 } am;
                         };
 		} recv;
 	};
 
-	//NOTE: break LCP modularity
-	mpc_lowcomm_request_t *request;   /* Upper layer request */
-        lcp_tag_recv_info_t   *info;
-        void                  *user_data;
+        void                  *request;   /* Pointer to upper layer request. */
+        lcp_tag_recv_info_t    info;      /* Tag info transmitted to upper layer. */
 	uint16_t               seqn;      /* Sequence number */
 	uint64_t               msg_id;    /* Unique message identifier */
         struct lcp_request    *super;     /* master request */
-        struct lcp_request    *rndv_req;  /* rndv request */ //FIXME: try avoid
-                                                             //       having this req
         mpc_queue_elem_t       queue;     /* element in pending queue */
         mpc_queue_elem_t       match;     /* element in matching queue */
 
@@ -218,19 +219,19 @@ struct lcp_request {
 	} state;
 };
 
-#define LCP_REQUEST_INIT_TAG_SEND(_req, _mngr, _task, _mpi_req, _info, _length, \
+#define LCP_REQUEST_INIT_TAG_SEND(_req, _mngr, _task, _request, _tag_info, _length, \
                                   _ep, _buf, _seqn, _dt, _is_sync) \
 { \
-	(_req)->request           = _mpi_req;                                \
-        (_req)->send.tag.src_tid  = (_mpi_req)->header.source_task;          \
-        (_req)->send.tag.dest_tid = (_mpi_req)->header.destination_task;     \
-        (_req)->send.tag.dest_uid = (_mpi_req)->header.destination;          \
-        (_req)->send.tag.src_uid  = (_mpi_req)->header.source;               \
-        (_req)->send.tag.tag      = (_mpi_req)->header.message_tag;          \
-        (_req)->send.tag.comm     = (_mpi_req)->header.communicator_id;      \
-	(_req)->info              = _info;                                   \
+        (_req)->send.tag.src_tid  = (_tag_info)->src;                        \
+        (_req)->send.tag.dest_tid = (_tag_info)->dest;                       \
+        (_req)->send.tag.dest_uid = (_tag_info)->dest_uid;                   \
+        (_req)->send.tag.src_uid  = (_tag_info)->src_uid;                    \
+        (_req)->send.tag.tag      = (_tag_info)->tag;                        \
+        (_req)->send.tag.comm     = (_tag_info)->comm_id;                    \
+	(_req)->request           = _request;                                \
 	(_req)->seqn              = _seqn;                                   \
-	(_req)->mngr               = _mngr;                                    \
+	(_req)->status            = MPC_LOWCOMM_SUCCESS;                     \
+	(_req)->mngr              = _mngr;                                   \
 	(_req)->task              = _task;                                   \
 	(_req)->msg_id            = (uint64_t)(_req);                        \
 	(_req)->datatype          = _dt;                                     \
@@ -244,41 +245,40 @@ struct lcp_request {
 	(_req)->state.offset      = 0;                                       \
 }
 
-#define LCP_REQUEST_INIT_TAG_RECV(_req, _mngr, _task, _mpi_req, _info, _length, \
-                                  _buf, _dt) \
+#define LCP_REQUEST_INIT_TAG_RECV(_req, _mngr, _task, _length, _request,      \
+                                  _buf, _tag_info, _src_mask, _tag_mask, _dt) \
 { \
-	(_req)->mngr               = _mngr;                                    \
+	(_req)->status            = MPC_LOWCOMM_SUCCESS;                     \
+	(_req)->mngr              = _mngr;                                   \
 	(_req)->task              = _task;                                   \
+	(_req)->request           = _request;                                \
 	(_req)->datatype          = _dt;                                     \
 	\
 	(_req)->recv.buffer       = _buf;                                    \
 	(_req)->recv.length       = _length;                                 \
-        (_req)->recv.tag.comm     = (_mpi_req)->header.communicator_id;      \
-        (_req)->recv.tag.src_uid  = (_mpi_req)->header.source;               \
-        (_req)->recv.tag.dest_uid = (_mpi_req)->header.destination;          \
-        (_req)->recv.tag.src_tid  = (_mpi_req)->header.source_task;          \
-        (_req)->recv.tag.dest_tid = (_mpi_req)->header.destination_task;     \
-        (_req)->recv.tag.smask    = (_mpi_req)->header.source_task == MPC_ANY_SOURCE ? 0 : ~0; \
-        (_req)->recv.tag.tag      = (_mpi_req)->header.message_tag;          \
-        (_req)->recv.tag.tmask    = (_mpi_req)->header.message_tag == MPC_ANY_TAG ? 0 : ~0; \
-        \
-	(_req)->request           = _mpi_req;                                \
-	(_req)->info              = _info;                                   \
+        (_req)->recv.tag.comm     = (_tag_info)->comm_id;                    \
+        (_req)->recv.tag.src_uid  = (_tag_info)->src_uid;                    \
+        (_req)->recv.tag.dest_uid = (_tag_info)->dest_uid;                   \
+        (_req)->recv.tag.src_tid  = (_tag_info)->src;                        \
+        (_req)->recv.tag.dest_tid = (_tag_info)->dest;                       \
+        (_req)->recv.tag.tag      = (_tag_info)->tag;                        \
+        (_req)->recv.tag.smask    = _src_mask;                               \
+        (_req)->recv.tag.tmask    = _tag_mask;                               \
 	\
 	(_req)->state.remaining   = _length;                                 \
 	(_req)->state.offset      = 0;                                       \
 }
 
-#define LCP_REQUEST_INIT_AM_SEND(_req, _mngr, _task, _am_id,                  \
-                                 _src_uid, _dest_tid, _info, _length, _ep,   \
-                                 _buf, _seqn, _msg_id, _dt, _is_sync)                  \
+#define LCP_REQUEST_INIT_AM_SEND(_req, _mngr, _task, _am_id, _request,       \
+                                 _src_uid, _dest_tid, _length, _ep,          \
+                                 _buf, _seqn, _msg_id, _dt, _is_sync)        \
 { \
         (_req)->send.am.am_id     = _am_id;                                  \
-	(_req)->info              = _info;                                   \
 	(_req)->msg_id            = _msg_id;                                 \
 	(_req)->seqn              = _seqn;                                   \
-	(_req)->mngr               = _mngr;                                    \
+	(_req)->mngr              = _mngr;                                   \
 	(_req)->task              = _task;                                   \
+	(_req)->request           = _request;                                \
 	(_req)->datatype          = _dt;                                     \
 	(_req)->is_sync           = _is_sync;                                \
 	\
@@ -294,12 +294,13 @@ struct lcp_request {
 	(_req)->state.offset      = 0;                                       \
 }
 
-#define LCP_REQUEST_INIT_AM_RECV(_req, _mngr, _task, _info, _length, _buf, _dt) \
+#define LCP_REQUEST_INIT_AM_RECV(_req, _mngr, _task, _length, _request, \
+                                 _buf, _dt) \
 { \
-	(_req)->info              = _info;                                   \
-	(_req)->mngr               = _mngr;                                    \
+	(_req)->mngr               = _mngr;                                  \
 	(_req)->task              = _task;                                   \
 	(_req)->datatype          = _dt;                                     \
+	(_req)->request           = _request;                                \
 	\
 	(_req)->recv.buffer       = _buf;                                    \
 	(_req)->recv.length       = _length;                                 \
@@ -308,7 +309,7 @@ struct lcp_request {
 	(_req)->state.offset      = 0;                                       \
 }
 
-#define LCP_REQUEST_INIT_RMA_PUT(_req, _mngr, _task, _length, \
+#define LCP_REQUEST_INIT_RMA_PUT(_req, _mngr, _task, _length, _request, \
                                  _ep, _buf, _seqn, _msg_id, _dt, \
                                  _rkey, _remote_disp) \
 { \
@@ -317,6 +318,7 @@ struct lcp_request {
 	(_req)->mngr                 = _mngr;                                    \
 	(_req)->task                 = _task;                                   \
 	(_req)->datatype             = _dt;                                     \
+	(_req)->request              = _request;                                \
 	\
 	(_req)->send.buffer          = _buf;                                    \
 	(_req)->send.ep              = _ep;                                     \
@@ -329,15 +331,16 @@ struct lcp_request {
 	(_req)->state.offset         = 0;                                       \
 }
 
-#define LCP_REQUEST_INIT_RMA_GET(_req, _mngr, _task, _length, \
+#define LCP_REQUEST_INIT_RMA_GET(_req, _mngr, _task, _length, _request, \
                                  _ep, _buf, _seqn, _msg_id, _dt, \
                                  _rkey, _remote_disp) \
 { \
 	(_req)->msg_id               = _msg_id;                                 \
 	(_req)->seqn                 = _seqn;                                   \
-	(_req)->mngr                 = _mngr;                                    \
+	(_req)->mngr                 = _mngr;                                   \
 	(_req)->task                 = _task;                                   \
 	(_req)->datatype             = _dt;                                     \
+	(_req)->request              = _request;                                \
 	\
 	(_req)->send.buffer          = _buf;                                    \
 	(_req)->send.ep              = _ep;                                     \
@@ -350,13 +353,14 @@ struct lcp_request {
 	(_req)->state.offset         = 0;                                       \
 }
 
-#define LCP_REQUEST_INIT_RMA_FLUSH(_req, _mngr, _task, _length, \
+#define LCP_REQUEST_INIT_RMA_FLUSH(_req, _mngr, _task, _length, _request, \
                                    _ep, _buf, _seqn, _msg_id, _dt) \
 { \
 	(_req)->msg_id               = _msg_id;                                 \
 	(_req)->seqn                 = _seqn;                                   \
-	(_req)->mngr                 = _mngr;                                    \
+	(_req)->mngr                 = _mngr;                                   \
 	(_req)->task                 = _task;                                   \
+	(_req)->request              = _request;                                \
 	(_req)->datatype             = _dt;                                     \
 	\
 	(_req)->send.buffer          = _buf;                                    \
@@ -367,7 +371,7 @@ struct lcp_request {
 	(_req)->state.offset         = 0;                                       \
 }
 
-#define LCP_REQUEST_INIT_ATO_SEND(_req, _mngr, _task, _length, \
+#define LCP_REQUEST_INIT_ATO_SEND(_req, _mngr, _task, _length, _request, \
                                   _ep, _buf, _seqn, _msg_id, _dt, \
                                   _rkey, _remote_offset, _op) \
 { \
@@ -376,6 +380,7 @@ struct lcp_request {
 	(_req)->mngr                   = _mngr;          \
 	(_req)->task                   = _task;          \
 	(_req)->datatype               = _dt;            \
+	(_req)->request                = _request;       \
 	\
 	(_req)->send.buffer            = _buf;           \
 	(_req)->send.ep                = _ep;            \
@@ -394,9 +399,23 @@ struct lcp_request {
         _msg_id  = (_msg_id << 32);                 \
         _msg_id |= (_seqn & 0xffffffffull);
 
+#define lcp_request_get_param(_task, _param) \
+        ({ \
+                lcp_request_t *__req; \
+                if ((_param)->field_mask & LCP_REQUEST_USER_REQUEST) {\
+                        __req = (lcp_request_t *)((_param)->request) - 1; \
+                } else { \
+                        __req = mpc_mpool_pop(&(_task)->req_mp); \
+                        if (__req != NULL) { \
+                                lcp_request_reset(__req); \
+                        } \
+                } \
+                __req; \
+         }) 
+
 #define lcp_request_get(_task) \
         ({ \
-                lcp_request_t *__req = mpc_mpool_pop((_task)->req_mp); \
+                lcp_request_t *__req = mpc_mpool_pop(&(_task)->req_mp); \
                 if (__req != NULL) { \
                         lcp_request_reset(__req); \
                 } \
@@ -406,9 +425,20 @@ struct lcp_request {
 #define lcp_request_put(_req) \
         mpc_mpool_push(_req);
 
+#define lcp_request_complete(_req, _cb, _status, ...) \
+        mpc_common_debug("LCP: complete req=%p, msg_id=%llu, " \
+                         "seqn=%d", _req, (_req)->msg_id, \
+                         (_req)->seqn); \
+        if ((_req)->flags & LCP_REQUEST_USER_CALLBACK) { \
+                (_req)->_cb(_status, (_req)->request, ## __VA_ARGS__); \
+        }\
+        if (!((_req)->flags & LCP_REQUEST_USER_ALLOCATED)) {\
+                lcp_request_put(_req); \
+        }
+
 #define lcp_container_get(_task) \
         ({ \
-                lcp_unexp_ctnr_t *__ctnr = mpc_mpool_pop((_task)->unexp_mp); \
+                lcp_unexp_ctnr_t *__ctnr = mpc_mpool_pop(&(_task)->unexp_mp); \
                 if (__ctnr != NULL) { \
                         lcp_container_reset(__ctnr); \
                 } \
@@ -467,8 +497,7 @@ void lcp_request_storage_init();
 //FIXME: remove?
 void lcp_request_storage_release();
 
-int lcp_request_complete(lcp_request_t *req);
-int lcp_request_init_unexp_ctnr(lcp_task_h task, lcp_unexp_ctnr_t **ctnr_p, void *data,
+int lcp_request_init_unexp_ctnr(lcp_task_h task, lcp_unexp_ctnr_t **ctnr_p, void *data, 
 				size_t length, unsigned flags);
 
 #endif

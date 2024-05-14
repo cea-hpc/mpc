@@ -130,8 +130,8 @@ static inline uint64_t lcp_get_process_uid(uint64_t pid, int32_t tid) {
 
 //NOTE: for offload rndv algorithm, everything is sent through the matching bit
 //      and the immediate data so there is nothing to pack.
-//TODO: add send_tag_short() API call
-static size_t lcp_rts_offload_dummy_pack(void *dest, void *data)
+//TODO: add send_tag_short() API call 
+static ssize_t lcp_rts_offload_dummy_pack(void *dest, void *data) 
 {
         UNUSED(dest);
         UNUSED(data);
@@ -145,7 +145,7 @@ static size_t lcp_rts_offload_dummy_pack(void *dest, void *data)
  * @param data source request
  * @return size_t size of packed data
  */
-static size_t lcp_send_tag_offload_pack(void *dest, void *data)
+static ssize_t lcp_send_tag_offload_pack(void *dest, void *data)
 {
         ssize_t packed_length;
         lcp_request_t *req = data;
@@ -277,11 +277,12 @@ void lcp_tag_offload_send_complete(lcr_completion_t *comp)
         lcp_request_t *req = mpc_container_of(comp, lcp_request_t, state.comp);
 
         //FIXME: should it be the state length actually received ?
-        req->info->length = req->send.length;
-        req->info->src    = req->send.tag.src_tid;
-        req->info->tag    = req->send.tag.tag;
+        req->info.length = req->send.length;
+        req->info.src    = req->send.tag.src_tid;
+        req->info.tag    = req->send.tag.tag;
 
-        lcp_request_complete(req);
+        lcp_request_complete(req, send.send_cb, MPC_LOWCOMM_SUCCESS, 
+                             req->send.length);
 }
 
 void lcp_tag_offload_recv_complete(lcr_completion_t *comp)
@@ -289,11 +290,12 @@ void lcp_tag_offload_recv_complete(lcr_completion_t *comp)
         lcp_request_t *req = mpc_container_of(comp, lcp_request_t, state.comp);
 
         //FIXME: should it be the state length actually received ?
-        req->info->length = req->recv.send_length;
-        req->info->src    = req->recv.tag.src_tid;
-        req->info->tag    = req->recv.tag.tag;
+        req->recv.tag.info.length = req->recv.send_length;
+        req->recv.tag.info.src    = req->recv.tag.src_tid;
+        req->recv.tag.info.tag    = req->recv.tag.tag;
 
-        lcp_request_complete(req);
+        lcp_request_complete(req, recv.tag.recv_cb, MPC_LOWCOMM_SUCCESS, 
+                             &req->recv.tag.info);
 }
 
 /* ============================================== */
@@ -322,7 +324,8 @@ void lcp_rndv_offload_send_complete(lcr_completion_t *comp)
                 /* Call super request completion callback */
                 super->state.comp.comp_cb(&(super->state.comp));
 
-                lcp_request_complete(rndv_req);
+                lcp_request_complete(rndv_req, send.send_cb, MPC_LOWCOMM_SUCCESS,
+                                     rndv_req->send.length);
         }
 }
 
@@ -355,7 +358,8 @@ void lcp_rndv_offload_recv_complete(lcr_completion_t *comp)
                 /* Call super request completion callback */
                 super->state.comp.comp_cb(&(super->state.comp));
 
-                lcp_request_complete(rndv_req);
+                lcp_request_complete(rndv_req, send.send_cb, MPC_LOWCOMM_SUCCESS,
+                                     rndv_req->send.length);
         }
 }
 
@@ -507,8 +511,8 @@ int lcp_send_tag_offload_eager_bcopy(lcp_request_t *req)
 		rc = LCP_ERROR;
                 goto err;
 	}
-
-        lcp_request_complete(req);
+        
+        lcp_request_complete(req, send.send_cb, rc, req->send.length);
 err:
         return rc;
 }
@@ -530,7 +534,7 @@ int lcp_send_tag_offload_eager_zcopy(lcp_request_t *req)
                              req->send.tag.comm);
 
         struct iovec iov = {
-                .iov_base = req->send.buffer,
+                .iov_base = (void *)req->send.buffer,
                 .iov_len  = req->send.length
         };
 
@@ -705,17 +709,18 @@ void lcp_recv_tag_probe_callback(lcr_completion_t *comp)
         tag = req->recv.t_ctx.tag;
 
         /* Fill out recv info given by user */
-        req->info->tag    = LCP_TM_GET_TAG(tag.t);
-        req->info->src    = LCP_TM_GET_SRC(tag.t);
-        req->info->length = LCP_TM_GET_HDR_LENGTH(imm);
-        req->info->found  = 1;
+        req->recv.tag.info.tag    = LCP_TM_GET_TAG(tag.t);
+        req->recv.tag.info.src    = LCP_TM_GET_SRC(tag.t);
+        req->recv.tag.info.length = LCP_TM_GET_HDR_LENGTH(imm); 
+        req->recv.tag.info.found  = 1;
 
         mpc_common_debug_info("LCP: probe tag callback req=%p, src=%d, size=%d, "
-                              "matching=[%d:%d:%d]", req, req->info->src,
-                              req->info->length, tag.t_tag.tag,
+                              "matching=[%d:%d:%d]", req, req->recv.tag.info.src, 
+                              req->recv.tag.info.length, tag.t_tag.tag, 
                               tag.t_tag.src, tag.t_tag.comm);
 
-        lcp_request_complete(req);
+        lcp_request_complete(req, recv.tag.recv_cb, MPC_LOWCOMM_SUCCESS, 
+                             &req->recv.tag.info);
 
         return;
 }
@@ -824,7 +829,7 @@ int lcp_recv_tag_probe(lcp_task_h task, sctk_rail_info_t *rail, const int src, c
                 goto err;
         }
 
-        probe_req->info                    = recv_info;
+        probe_req->recv.tag.info           = *recv_info;
         probe_req->recv.t_ctx.req          = probe_req;
         probe_req->recv.t_ctx.comp.comp_cb = lcp_recv_tag_probe_callback;
 
@@ -921,8 +926,9 @@ __UNUSED__ static int lcp_rndv_tag_fin_handler(void *arg, void *data,
                 rc = LCP_ERROR;
                 goto err;
         }
-
-        lcp_request_complete(req);
+        
+        lcp_request_complete(req, send.send_cb, MPC_LOWCOMM_SUCCESS, 
+                             req->send.length);
 err:
         return rc;
 }

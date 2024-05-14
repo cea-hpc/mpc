@@ -231,10 +231,12 @@ int mpc_MPI_Get(void *origin_addr, int origin_count,
                 MPI_Aint target_disp, int target_count,
                 MPI_Datatype target_data_type, MPI_Win win)
 {
+	int ret = MPI_SUCCESS;
+        not_implemented();
+#if 0
 	/* Retrieve the MPI Desc */
 	struct mpc_MPI_Win *desc = (struct mpc_MPI_Win *)mpc_lowcomm_rdma_window_get_payload(win);
 
-	int ret = MPI_SUCCESS;
 
 	mpc_MPI_Win_request_array_add_pending(&desc->source.requests);
 
@@ -243,7 +245,7 @@ int mpc_MPI_Get(void *origin_addr, int origin_count,
 	                      target_data_type, win, NULL);
 
 	mpc_MPI_Win_request_array_add_done(&desc->source.requests);
-
+#endif
 	return ret;
 }
 
@@ -253,23 +255,27 @@ int mpc_MPI_Rget(void *origin_addr, int origin_count,
                  MPI_Datatype target_data_type, MPI_Win win,
                  MPI_Request *request)
 {
+	int ret = MPI_SUCCESS;
+        not_implemented();
+#if 0
 	/* Retrieve the MPI Desc */
 	struct mpc_MPI_Win *desc = (struct mpc_MPI_Win *)mpc_lowcomm_rdma_window_get_payload(win);
 
 	mpc_MPI_Win_request_array_add_pending(&desc->source.requests);
 
 	/* Create a new MPI request */
-	mpc_lowcomm_request_t *new_request =
-		__sctk_new_mpc_request(request, __sctk_internal_get_MPC_requests() );
+	//mpc_lowcomm_request_t *new_request =
+	//	__sctk_new_mpc_request(request, __sctk_internal_get_MPC_requests() );
+        MPI_internal_request_t *req = *request = mpc_lowcomm_request_alloc();
 
-	int ret = MPI_SUCCESS;
 
 	ret = mpc_MPI_Get_RMA(desc, origin_addr, origin_count, origin_datatype,
 	                      target_rank, target_disp, target_count,
-	                      target_data_type, win, new_request);
+	                      target_data_type, win, _mpc_cl_get_lowcomm_request(req));
 
 	mpc_MPI_Win_request_array_add_done(&desc->source.requests);
 
+#endif
 	return ret;
 }
 
@@ -454,10 +460,12 @@ int mpc_MPI_Put(const void *origin_addr, int origin_count,
                 MPI_Aint target_disp, int target_count,
                 MPI_Datatype target_datatype, MPI_Win win)
 {
+	int ret = MPI_SUCCESS;
+        not_implemented();
+#if 0
 	/* Retrieve the MPI Desc */
 	struct mpc_MPI_Win *desc = (struct mpc_MPI_Win *)mpc_lowcomm_rdma_window_get_payload(win);
 
-	int ret = MPI_SUCCESS;
 
 	mpc_MPI_Win_request_array_add_pending(&desc->source.requests);
 
@@ -467,6 +475,7 @@ int mpc_MPI_Put(const void *origin_addr, int origin_count,
 
 	mpc_MPI_Win_request_array_add_done(&desc->source.requests);
 
+#endif
 	return ret;
 }
 
@@ -476,6 +485,9 @@ int mpc_MPI_Rput(const void *origin_addr, int origin_count,
                  MPI_Datatype target_datatype, MPI_Win win,
                  MPI_Request *request)
 {
+	int ret = MPI_SUCCESS;
+        not_implemented();
+#if 0
 	/* Retrieve the MPI Desc */
 	struct mpc_MPI_Win *desc = (struct mpc_MPI_Win *)mpc_lowcomm_rdma_window_get_payload(win);
 
@@ -485,7 +497,6 @@ int mpc_MPI_Rput(const void *origin_addr, int origin_count,
 	mpc_lowcomm_request_t *new_request =
 		__sctk_new_mpc_request(request, __sctk_internal_get_MPC_requests() );
 
-	int ret = MPI_SUCCESS;
 
 	ret = mpc_MPI_Put_RMA(desc, origin_addr, origin_count, origin_datatype,
 	                      target_rank, target_disp, target_count, target_datatype,
@@ -493,6 +504,7 @@ int mpc_MPI_Rput(const void *origin_addr, int origin_count,
 
 	mpc_MPI_Win_request_array_add_done(&desc->source.requests);
 
+#endif
 	return ret;
 }
 
@@ -799,10 +811,12 @@ int mpc_MPI_Accumulate(const void *origin_addr, int origin_count,
                        MPI_Aint target_disp, int target_count,
                        MPI_Datatype target_datatype, MPI_Op op, MPI_Win win)
 {
+	int ret = MPI_SUCCESS;
+        not_implemented();
+#if 0
 	/* Retrieve the MPI Desc */
 	struct mpc_MPI_Win *desc = (struct mpc_MPI_Win *)mpc_lowcomm_rdma_window_get_payload(win);
 
-	int ret = MPI_SUCCESS;
 
 	mpc_MPI_Win_request_array_add_pending(&desc->source.requests);
 
@@ -812,6 +826,7 @@ int mpc_MPI_Accumulate(const void *origin_addr, int origin_count,
 
 	mpc_MPI_Win_request_array_add_done(&desc->source.requests);
 
+#endif
 	return ret;
 }
 
@@ -821,6 +836,9 @@ int mpc_MPI_Raccumulate(const void *origin_addr, int origin_count,
                         MPI_Datatype target_datatype, MPI_Op op, MPI_Win win,
                         MPI_Request *request)
 {
+	int ret = MPI_SUCCESS;
+        not_implemented();
+#if 0
 	/* Retrieve the MPI Desc */
 	struct mpc_MPI_Win *desc = (struct mpc_MPI_Win *)mpc_lowcomm_rdma_window_get_payload(win);
 
@@ -830,7 +848,6 @@ int mpc_MPI_Raccumulate(const void *origin_addr, int origin_count,
 	mpc_lowcomm_request_t *new_request =
 		__sctk_new_mpc_request(request, __sctk_internal_get_MPC_requests() );
 
-	int ret = MPI_SUCCESS;
 
 	ret = mpc_MPI_Accumulate_RMA(desc, (void *)origin_addr, origin_count, origin_datatype,
 	                             target_rank, target_disp, target_count,
@@ -838,6 +855,7 @@ int mpc_MPI_Raccumulate(const void *origin_addr, int origin_count,
 
 	mpc_MPI_Win_request_array_add_done(&desc->source.requests);
 
+#endif
 	return ret;
 }
 
@@ -1118,12 +1136,14 @@ int mpc_MPI_Get_accumulate(const void *origin_addr, int origin_count,
                            int target_count, MPI_Datatype target_datatype,
                            MPI_Op op, MPI_Win win)
 {
+	int ret = MPI_SUCCESS;
+        not_implemented();
+#if 0
 	/* Retrieve the MPI Desc */
 	struct mpc_MPI_Win *desc = (struct mpc_MPI_Win *)mpc_lowcomm_rdma_window_get_payload(win);
 
 	mpc_MPI_Win_request_array_add_pending(&desc->source.requests);
 
-	int ret = MPI_SUCCESS;
 
 	ret = mpc_MPI_Get_accumulate_RMA(
 		desc, origin_addr, origin_count, origin_datatype, result_addr,
@@ -1132,6 +1152,7 @@ int mpc_MPI_Get_accumulate(const void *origin_addr, int origin_count,
 
 	mpc_MPI_Win_request_array_add_done(&desc->source.requests);
 
+#endif
 	return ret;
 }
 
@@ -1142,6 +1163,9 @@ int mpc_MPI_Rget_accumulate(const void *origin_addr, int origin_count,
                             int target_count, MPI_Datatype target_datatype,
                             MPI_Op op, MPI_Win win, MPI_Request *request)
 {
+	int ret = MPI_SUCCESS;
+        not_implemented();
+#if 0
 	/* Retrieve the MPI Desc */
 	struct mpc_MPI_Win *desc = (struct mpc_MPI_Win *)mpc_lowcomm_rdma_window_get_payload(win);
 
@@ -1151,7 +1175,6 @@ int mpc_MPI_Rget_accumulate(const void *origin_addr, int origin_count,
 	mpc_lowcomm_request_t *new_request =
 		__sctk_new_mpc_request(request, __sctk_internal_get_MPC_requests() );
 
-	int ret = MPI_SUCCESS;
 
 	ret = mpc_MPI_Get_accumulate_RMA(
 		desc, origin_addr, origin_count, origin_datatype, result_addr,
@@ -1162,6 +1185,7 @@ int mpc_MPI_Rget_accumulate(const void *origin_addr, int origin_count,
 
 	mpc_MPI_Win_request_array_add_done(&desc->source.requests);
 
+#endif
 	return ret;
 }
 
@@ -1295,18 +1319,20 @@ int mpc_MPI_Fetch_and_op(const void *origin_addr, void *result_addr,
                          MPI_Datatype datatype, int target_rank,
                          MPI_Aint target_disp, MPI_Op op, MPI_Win win)
 {
+	int ret = MPI_SUCCESS;
+        not_implemented();
+#if 0
 	/* Retrieve the MPI Desc */
 	struct mpc_MPI_Win *desc = (struct mpc_MPI_Win *)mpc_lowcomm_rdma_window_get_payload(win);
 
 	mpc_MPI_Win_request_array_add_pending(&desc->source.requests);
-
-	int ret = MPI_SUCCESS;
 
 	ret = mpc_MPI_Fetch_and_op_RMA(desc, origin_addr, result_addr, datatype,
 	                               target_rank, target_disp, op, win, NULL);
 
 	mpc_MPI_Win_request_array_add_done(&desc->source.requests);
 
+#endif
 	return ret;
 }
 
@@ -1399,18 +1425,21 @@ int mpc_MPI_Compare_and_swap(const void *origin_addr, const void *compare_addr,
                              int target_rank, MPI_Aint target_disp,
                              MPI_Win win)
 {
+	int ret = MPI_SUCCESS;
+        not_implemented(); 
+#if 0
+
 	/* Retrieve the MPI Desc */
 	struct mpc_MPI_Win *desc = (struct mpc_MPI_Win *)mpc_lowcomm_rdma_window_get_payload(win);
 
 	mpc_MPI_Win_request_array_add_pending(&desc->source.requests);
-
-	int ret = MPI_SUCCESS;
 
 	ret = mpc_MPI_Compare_and_swap_RMA(desc, origin_addr, compare_addr,
 	                                   result_addr, datatype, target_rank,
 	                                   target_disp, NULL);
 
 	mpc_MPI_Win_request_array_add_done(&desc->source.requests);
+#endif
 
 	return ret;
 }

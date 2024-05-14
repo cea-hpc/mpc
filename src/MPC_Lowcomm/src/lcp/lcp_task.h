@@ -81,8 +81,8 @@ struct lcp_task {
         mpc_common_spinlock_t task_lock;
         //TODO: investigate the bug when memory pools are not allocated
         //      dynamically with Concurrency Kit
-        mpc_mempool_t *req_mp;   /* Request memory pool */
-        mpc_mempool_t *unexp_mp; /* Unexpected memory pool */
+        mpc_mempool_t req_mp;   /* Request memory pool */
+        mpc_mempool_t unexp_mp; /* Unexpected memory pool */
 
         //TODO: implement reordering.
 };

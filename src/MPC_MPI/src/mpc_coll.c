@@ -838,6 +838,7 @@ static inline int ___collectives_op_type( __UNUSED__ void *res_buf, const void* 
       if(mpc_op.u_func != NULL)
       {
         mpc_op.u_func((void*)left_op_buf, right_op_buf, &count, &datatype);
+        mpc_common_debug("COLL: op done.");
       }
       else
       {
@@ -1319,14 +1320,16 @@ int PMPI_Ibcast (void *buffer, int count, MPI_Datatype datatype, int root, MPI_C
   if(csize == 1)
   {
     res = PMPI_Bcast (buffer, count, datatype, root, comm);
-    MPI_internal_request_t *tmp = NULL;
-    tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
-    tmp->req.completion_flag = MPC_LOWCOMM_MESSAGE_DONE;
+    MPI_internal_request_t *tmp = *request;
+    mpc_lowcomm_request_t *mpc_req = _mpc_cl_get_lowcomm_request(tmp);
+    //tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
+    //tmp->req.completion_flag = MPC_LOWCOMM_MESSAGE_DONE;
+    mpc_req->completion_flag = MPC_LOWCOMM_MESSAGE_DONE;
   }
   else
   {
-    MPI_internal_request_t *tmp = NULL;
-    tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
+    MPI_internal_request_t *tmp = *request = mpc_lowcomm_request_alloc();
+    //tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
     tmp->is_nbc = 1;
     tmp->nbc_handle.is_persistent = 0;
     res = ___collectives_ibcast(buffer, count, datatype, root, comm, &(tmp->nbc_handle));
@@ -1409,13 +1412,16 @@ int PMPI_Bcast_init(void *buffer, int count, MPI_Datatype datatype, int root, MP
   }
 
   MPI_internal_request_t *req = NULL;
+  mpc_lowcomm_request_t *mpc_req = NULL;
   SCTK__MPI_INIT_REQUEST (request);
-  req = __sctk_new_mpc_request_internal (request,__sctk_internal_get_MPC_requests());
+  //req = __sctk_new_mpc_request_internal (request,__sctk_internal_get_MPC_requests());
+  req = *request = mpc_lowcomm_request_alloc();
+  mpc_req = _mpc_cl_get_lowcomm_request(req);
   req->freeable = 0;
   req->is_active = 0;
   req->is_nbc = 1;
   req->is_persistent = 1;
-  req->req.request_type = REQUEST_GENERALIZED;
+  mpc_req->request_type = REQUEST_GENERALIZED;
 
   req->persistant.op = MPC_MPI_PERSISTENT_BCAST_INIT;
   req->persistant.info = info;
@@ -1842,14 +1848,16 @@ int PMPI_Ireduce (const void *sendbuf, void* recvbuf, int count, MPI_Datatype da
   {
     res = PMPI_Reduce (sendbuf, recvbuf, count, datatype, op, root,
         comm);
-    MPI_internal_request_t *tmp;
-    tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
-    tmp->req.completion_flag = MPC_LOWCOMM_MESSAGE_DONE;
+    MPI_internal_request_t *tmp = *request = mpc_lowcomm_request_alloc();
+    mpc_lowcomm_request_t *mpc_req = _mpc_cl_get_lowcomm_request(tmp);
+    //tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
+    //tmp->req.completion_flag = MPC_LOWCOMM_MESSAGE_DONE;
+    mpc_req->completion_flag = MPC_LOWCOMM_MESSAGE_DONE;
   }
   else
   {
-    MPI_internal_request_t *tmp;
-    tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
+    MPI_internal_request_t *tmp = *request = mpc_lowcomm_request_alloc();
+    //tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
     tmp->is_nbc = 1;
     tmp->nbc_handle.is_persistent = 0;
     res = ___collectives_ireduce(sendbuf, recvbuf, count, datatype, op, root, comm, &(tmp->nbc_handle));
@@ -1935,13 +1943,16 @@ int PMPI_Reduce_init(const void *sendbuf, void* recvbuf, int count, MPI_Datatype
 
   }
   MPI_internal_request_t *req;
+  mpc_lowcomm_request_t *mpc_req;
   SCTK__MPI_INIT_REQUEST (request);
-  req = __sctk_new_mpc_request_internal (request,__sctk_internal_get_MPC_requests());
+  //req = __sctk_new_mpc_request_internal (request,__sctk_internal_get_MPC_requests());
+  req = mpc_lowcomm_request_alloc(); 
+  mpc_req = _mpc_cl_get_lowcomm_request(req);
   req->freeable = 0;
   req->is_active = 0;
   req->is_nbc = 1;
   req->is_persistent = 1;
-  req->req.request_type = REQUEST_GENERALIZED;
+  mpc_req->request_type = REQUEST_GENERALIZED;
 
   req->persistant.op = MPC_MPI_PERSISTENT_REDUCE_INIT;
   req->persistant.info = info;
@@ -2583,14 +2594,15 @@ int PMPI_Iallreduce (const void *sendbuf, void* recvbuf, int count, MPI_Datatype
   if(csize == 1)
   {
     res = PMPI_Allreduce (sendbuf, recvbuf, count, datatype, op, comm);
-    MPI_internal_request_t *tmp;
-    tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
-    tmp->req.completion_flag = MPC_LOWCOMM_MESSAGE_DONE;
+    MPI_internal_request_t *tmp = mpc_lowcomm_request_alloc();
+    mpc_lowcomm_request_t *mpc_req = _mpc_cl_get_lowcomm_request(tmp);
+    //tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
+    mpc_req->completion_flag = MPC_LOWCOMM_MESSAGE_DONE;
   }
   else
   {
-    MPI_internal_request_t *tmp;
-    tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
+    MPI_internal_request_t *tmp = *request = mpc_lowcomm_request_alloc();
+    //tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
     tmp->is_nbc = 1;
     tmp->nbc_handle.is_persistent = 0;
     res = ___collectives_iallreduce (sendbuf, recvbuf, count, datatype, op, comm, &(tmp->nbc_handle));
@@ -2671,13 +2683,16 @@ int PMPI_Allreduce_init(const void *sendbuf, void* recvbuf, int count, MPI_Datat
     }
   }
   MPI_internal_request_t *req;
+  mpc_lowcomm_request_t *mpc_req;
   SCTK__MPI_INIT_REQUEST (request);
-  req = __sctk_new_mpc_request_internal (request,__sctk_internal_get_MPC_requests());
+  //req = __sctk_new_mpc_request_internal (request,__sctk_internal_get_MPC_requests());
+  req = *request = mpc_lowcomm_request_alloc();
+  mpc_req = _mpc_cl_get_lowcomm_request(req);
   req->freeable = 0;
   req->is_active = 0;
   req->is_nbc = 1;
   req->is_persistent = 1;
-  req->req.request_type = REQUEST_GENERALIZED;
+  mpc_req->request_type = REQUEST_GENERALIZED;
 
   req->persistant.op = MPC_MPI_PERSISTENT_ALLREDUCE_INIT;
   req->persistant.info = info;
@@ -3674,14 +3689,15 @@ int PMPI_Iscatter (const void *sendbuf, int sendcount, MPI_Datatype sendtype, vo
   if(csize == 1)
   {
     res = PMPI_Scatter (sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm);
-    MPI_internal_request_t *tmp = NULL;
-    tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
-    tmp->req.completion_flag = MPC_LOWCOMM_MESSAGE_DONE;
+    MPI_internal_request_t *tmp    = *request = mpc_lowcomm_request_alloc();
+    mpc_lowcomm_request_t *mpc_req = _mpc_cl_get_lowcomm_request(tmp);
+    //tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
+    mpc_req->completion_flag = MPC_LOWCOMM_MESSAGE_DONE;
   }
   else
   {
-    MPI_internal_request_t *tmp = NULL;
-    tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
+    MPI_internal_request_t *tmp = *request = mpc_lowcomm_request_alloc();
+    //tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
     tmp->is_nbc = 1;
     tmp->nbc_handle.is_persistent = 0;
     res = ___collectives_iscatter(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm, &(tmp->nbc_handle));
@@ -3770,14 +3786,15 @@ int PMPI_Scatter_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
     }
 
   }
-  MPI_internal_request_t *req = NULL;
+  MPI_internal_request_t *req = *request = mpc_lowcomm_request_alloc();
+  mpc_lowcomm_request_t *mpc_req = _mpc_cl_get_lowcomm_request(req);
   SCTK__MPI_INIT_REQUEST (request);
-  req = __sctk_new_mpc_request_internal (request,__sctk_internal_get_MPC_requests());
+  //req = __sctk_new_mpc_request_internal (request,__sctk_internal_get_MPC_requests());
   req->freeable = 0;
   req->is_active = 0;
   req->is_nbc = 1;
   req->is_persistent = 1;
-  req->req.request_type = REQUEST_GENERALIZED;
+  mpc_req->request_type = REQUEST_GENERALIZED;
 
   req->persistant.op = MPC_MPI_PERSISTENT_SCATTER_INIT;
   req->persistant.info = info;
@@ -4364,14 +4381,15 @@ int PMPI_Iscatterv (const void *sendbuf, const int *sendcounts, const int *displ
   if(csize == 1)
   {
     res = PMPI_Scatterv (sendbuf, sendcounts, displs, sendtype, recvbuf, recvcount, recvtype, root, comm);
-    MPI_internal_request_t *tmp;
-    tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
-    tmp->req.completion_flag = MPC_LOWCOMM_MESSAGE_DONE;
+    MPI_internal_request_t *tmp = *request = mpc_lowcomm_request_alloc();
+    mpc_lowcomm_request_t *mpc_req = _mpc_cl_get_lowcomm_request(tmp);
+    //tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
+    mpc_req->completion_flag = MPC_LOWCOMM_MESSAGE_DONE;
   }
   else
   {
-    MPI_internal_request_t *tmp;
-    tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
+    MPI_internal_request_t *tmp = *request = mpc_lowcomm_request_alloc();
+    //tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
     tmp->is_nbc = 1;
     tmp->nbc_handle.is_persistent = 0;
     res = ___collectives_iscatterv (sendbuf, sendcounts, displs, sendtype, recvbuf, recvcount, recvtype, root, comm, &(tmp->nbc_handle));
@@ -4472,14 +4490,15 @@ int PMPI_Scatterv_init(const void *sendbuf, const int *sendcounts, const int *di
     }
 
   }
-  MPI_internal_request_t *req;
-  SCTK__MPI_INIT_REQUEST (request);
-  req = __sctk_new_mpc_request_internal (request,__sctk_internal_get_MPC_requests());
+  MPI_internal_request_t *req = *request = mpc_lowcomm_request_alloc();
+  mpc_lowcomm_request_t *mpc_req = _mpc_cl_get_lowcomm_request(req);
+  //SCTK__MPI_INIT_REQUEST (request);
+  //req = __sctk_new_mpc_request_internal (request,__sctk_internal_get_MPC_requests());
   req->freeable = 0;
   req->is_active = 0;
   req->is_nbc = 1;
   req->is_persistent = 1;
-  req->req.request_type = REQUEST_GENERALIZED;
+  mpc_req->request_type = REQUEST_GENERALIZED;
 
   req->persistant.op = MPC_MPI_PERSISTENT_SCATTERV_INIT;
   req->persistant.info = info;
@@ -4753,14 +4772,15 @@ int PMPI_Igather (const void *sendbuf, int sendcount, MPI_Datatype sendtype, voi
   if(csize == 1)
   {
     res = PMPI_Gather (sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm);
-    MPI_internal_request_t *tmp;
-    tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
-    tmp->req.completion_flag = MPC_LOWCOMM_MESSAGE_DONE;
+    MPI_internal_request_t *tmp = *request = mpc_lowcomm_request_alloc();
+    mpc_lowcomm_request_t *mpc_req = _mpc_cl_get_lowcomm_request(tmp);
+    //tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
+    mpc_req->completion_flag = MPC_LOWCOMM_MESSAGE_DONE;
   }
   else
   {
-    MPI_internal_request_t *tmp;
-    tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
+    MPI_internal_request_t *tmp = *request = mpc_lowcomm_request_alloc();
+    //tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
     tmp->is_nbc = 1;
     tmp->nbc_handle.is_persistent = 0;
     res = ___collectives_igather(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm, &(tmp->nbc_handle));
@@ -4852,14 +4872,15 @@ int PMPI_Gather_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype, 
     }
 
   }
-  MPI_internal_request_t *req;
-  SCTK__MPI_INIT_REQUEST (request);
-  req = __sctk_new_mpc_request_internal (request,__sctk_internal_get_MPC_requests());
+  MPI_internal_request_t *req = *request = mpc_lowcomm_request_alloc();
+  mpc_lowcomm_request_t *mpc_req = _mpc_cl_get_lowcomm_request(req);
+  //SCTK__MPI_INIT_REQUEST (request);
+  //req = __sctk_new_mpc_request_internal (request,__sctk_internal_get_MPC_requests());
   req->freeable = 0;
   req->is_active = 0;
   req->is_nbc = 1;
   req->is_persistent = 1;
-  req->req.request_type = REQUEST_GENERALIZED;
+  mpc_req->request_type = REQUEST_GENERALIZED;
 
   req->persistant.op = MPC_MPI_PERSISTENT_GATHER_INIT;
   req->persistant.info = info;
@@ -5429,14 +5450,15 @@ int PMPI_Igatherv (const void *sendbuf, int sendcount, MPI_Datatype sendtype, vo
   if(csize == 1)
   {
     res = PMPI_Gatherv (sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype, root, comm);
-    MPI_internal_request_t *tmp;
-    tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
-    tmp->req.completion_flag = MPC_LOWCOMM_MESSAGE_DONE;
+    MPI_internal_request_t *tmp = *request = mpc_lowcomm_request_alloc();
+    mpc_lowcomm_request_t *mpc_req = _mpc_cl_get_lowcomm_request(tmp);
+    //tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
+    mpc_req->completion_flag = MPC_LOWCOMM_MESSAGE_DONE;
   }
   else
   {
-    MPI_internal_request_t *tmp;
-    tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
+    MPI_internal_request_t *tmp = *request = mpc_lowcomm_request_alloc();
+    //tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
     tmp->is_nbc = 1;
     tmp->nbc_handle.is_persistent = 0;
     res = ___collectives_igatherv(sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype, root, comm, &(tmp->nbc_handle));
@@ -5534,14 +5556,15 @@ int PMPI_Gatherv_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
     }
 
   }
-  MPI_internal_request_t *req;
-  SCTK__MPI_INIT_REQUEST (request);
-  req = __sctk_new_mpc_request_internal (request,__sctk_internal_get_MPC_requests());
+  MPI_internal_request_t *req = *request = mpc_lowcomm_request_alloc();
+  mpc_lowcomm_request_t *mpc_req = _mpc_cl_get_lowcomm_request(req);
+  //SCTK__MPI_INIT_REQUEST (request);
+  //req = __sctk_new_mpc_request_internal (request,__sctk_internal_get_MPC_requests());
   req->freeable = 0;
   req->is_active = 0;
   req->is_nbc = 1;
   req->is_persistent = 1;
-  req->req.request_type = REQUEST_GENERALIZED;
+  mpc_req->request_type = REQUEST_GENERALIZED;
 
   req->persistant.op = MPC_MPI_PERSISTENT_GATHERV_INIT;
   req->persistant.info = info;
@@ -5812,14 +5835,15 @@ int PMPI_Ireduce_scatter_block (const void *sendbuf, void* recvbuf, int count, M
   if(csize == 1)
   {
     res = PMPI_Reduce_scatter_block (sendbuf, recvbuf, count, datatype, op, comm);
-    MPI_internal_request_t *tmp;
-    tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
-    tmp->req.completion_flag = MPC_LOWCOMM_MESSAGE_DONE;
+    MPI_internal_request_t *tmp = *request = mpc_lowcomm_request_alloc();
+    mpc_lowcomm_request_t *mpc_req = _mpc_cl_get_lowcomm_request(tmp);
+    //tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
+    mpc_req->completion_flag = MPC_LOWCOMM_MESSAGE_DONE;
   }
   else
   {
-    MPI_internal_request_t *tmp;
-    tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
+    MPI_internal_request_t *tmp = *request = mpc_lowcomm_request_alloc();
+    //tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
     tmp->is_nbc = 1;
     tmp->nbc_handle.is_persistent = 0;
     res = ___collectives_ireduce_scatter_block (sendbuf, recvbuf, count, datatype, op, comm, &(tmp->nbc_handle));
@@ -5899,14 +5923,15 @@ int PMPI_Reduce_scatter_block_init(const void *sendbuf, void* recvbuf, int count
       mpi_check_buf(sendbuf, comm);
     }
   }
-  MPI_internal_request_t *req;
-  SCTK__MPI_INIT_REQUEST (request);
-  req = __sctk_new_mpc_request_internal (request,__sctk_internal_get_MPC_requests());
+  MPI_internal_request_t *req = *request = mpc_lowcomm_request_alloc();
+  mpc_lowcomm_request_t *mpc_req = _mpc_cl_get_lowcomm_request(req);
+  //SCTK__MPI_INIT_REQUEST (request);
+  //req = __sctk_new_mpc_request_internal (request,__sctk_internal_get_MPC_requests());
   req->freeable = 0;
   req->is_active = 0;
   req->is_nbc = 1;
   req->is_persistent = 1;
-  req->req.request_type = REQUEST_GENERALIZED;
+  mpc_req->request_type = REQUEST_GENERALIZED;
 
   req->persistant.op = MPC_MPI_PERSISTENT_REDUCE_SCATTER_BLOCK_INIT;
   req->persistant.info = info;
@@ -6286,14 +6311,15 @@ int PMPI_Ireduce_scatter (const void *sendbuf, void* recvbuf, const int *recvcou
   if(csize == 1)
   {
     res = PMPI_Reduce_scatter (sendbuf, recvbuf, recvcounts, datatype, op, comm);
-    MPI_internal_request_t *tmp;
-    tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
-    tmp->req.completion_flag = MPC_LOWCOMM_MESSAGE_DONE;
+    MPI_internal_request_t *tmp = *request = mpc_lowcomm_request_alloc();
+    mpc_lowcomm_request_t *mpc_req = _mpc_cl_get_lowcomm_request(tmp);
+    //tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
+    mpc_req->completion_flag = MPC_LOWCOMM_MESSAGE_DONE;
   }
   else
   {
-    MPI_internal_request_t *tmp;
-    tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
+    MPI_internal_request_t *tmp = *request = mpc_lowcomm_request_alloc();
+    //tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
     tmp->is_nbc = 1;
     tmp->nbc_handle.is_persistent = 0;
 
@@ -6381,14 +6407,15 @@ int PMPI_Reduce_scatter_init(const void *sendbuf, void* recvbuf, const int *recv
     mpi_check_type(datatype, comm);
 
   }
-  MPI_internal_request_t *req;
-  SCTK__MPI_INIT_REQUEST (request);
-  req = __sctk_new_mpc_request_internal (request,__sctk_internal_get_MPC_requests());
+  MPI_internal_request_t *req = *request = mpc_lowcomm_request_alloc();
+  mpc_lowcomm_request_t *mpc_req = _mpc_cl_get_lowcomm_request(req);
+  //SCTK__MPI_INIT_REQUEST (request);
+  //req = __sctk_new_mpc_request_internal (request,__sctk_internal_get_MPC_requests());
   req->freeable = 0;
   req->is_active = 0;
   req->is_nbc = 1;
   req->is_persistent = 1;
-  req->req.request_type = REQUEST_GENERALIZED;
+  mpc_req->request_type = REQUEST_GENERALIZED;
 
   req->persistant.op = MPC_MPI_PERSISTENT_REDUCE_SCATTER_INIT;
   req->persistant.info = info;
@@ -6703,14 +6730,15 @@ int PMPI_Iallgather (const void *sendbuf, int sendcount, MPI_Datatype sendtype, 
   {
     res = PMPI_Allgather (sendbuf, sendcount, sendtype, recvbuf,
         recvcount, recvtype, comm);
-    MPI_internal_request_t *tmp;
-    tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
-    tmp->req.completion_flag = MPC_LOWCOMM_MESSAGE_DONE;
+    MPI_internal_request_t *tmp = *request = mpc_lowcomm_request_alloc();
+    mpc_lowcomm_request_t *mpc_req = _mpc_cl_get_lowcomm_request(tmp);
+    //tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
+    mpc_req->completion_flag = MPC_LOWCOMM_MESSAGE_DONE;
   }
   else
   {
-    MPI_internal_request_t *tmp;
-    tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
+    MPI_internal_request_t *tmp = *request = mpc_lowcomm_request_alloc();
+    //tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
     tmp->is_nbc = 1;
 
     tmp->nbc_handle.is_persistent = 0;
@@ -6798,14 +6826,15 @@ int PMPI_Allgather_init(const void *sendbuf, int sendcount, MPI_Datatype sendtyp
       mpi_check_buf(recvbuf, comm);
     }
   }
-  MPI_internal_request_t *req;
-  SCTK__MPI_INIT_REQUEST (request);
-  req = __sctk_new_mpc_request_internal (request,__sctk_internal_get_MPC_requests());
+  MPI_internal_request_t *req = *request = mpc_lowcomm_request_alloc();
+  mpc_lowcomm_request_t *mpc_req = _mpc_cl_get_lowcomm_request(req);
+  //SCTK__MPI_INIT_REQUEST (request);
+  //req = __sctk_new_mpc_request_internal (request,__sctk_internal_get_MPC_requests());
   req->freeable = 0;
   req->is_active = 0;
   req->is_nbc = 1;
   req->is_persistent = 1;
-  req->req.request_type = REQUEST_GENERALIZED;
+  mpc_req->request_type = REQUEST_GENERALIZED;
 
   req->persistant.op = MPC_MPI_PERSISTENT_ALLGATHER_INIT;
   req->persistant.info = info;
@@ -7386,14 +7415,15 @@ int PMPI_Iallgatherv (const void *sendbuf, int sendcount, MPI_Datatype sendtype,
   if(csize == 1)
   {
     res = PMPI_Allgatherv (sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype, comm);
-    MPI_internal_request_t *tmp;
-    tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
-    tmp->req.completion_flag = MPC_LOWCOMM_MESSAGE_DONE;
+    MPI_internal_request_t *tmp = *request = mpc_lowcomm_request_alloc();
+    mpc_lowcomm_request_t *mpc_req = _mpc_cl_get_lowcomm_request(tmp);
+    //tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
+    mpc_req->completion_flag = MPC_LOWCOMM_MESSAGE_DONE;
   }
   else
   {
-    MPI_internal_request_t *tmp;
-    tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
+    MPI_internal_request_t *tmp = *request = mpc_lowcomm_request_alloc();
+    //tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
     tmp->is_nbc = 1;
     tmp->nbc_handle.is_persistent = 0;
 
@@ -7494,14 +7524,15 @@ int PMPI_Allgatherv_init(const void *sendbuf, int sendcount, MPI_Datatype sendty
     }
   }
 
-  MPI_internal_request_t *req;
-  SCTK__MPI_INIT_REQUEST (request);
-  req = __sctk_new_mpc_request_internal (request,__sctk_internal_get_MPC_requests());
+  MPI_internal_request_t *req = *request = mpc_lowcomm_request_alloc();
+  mpc_lowcomm_request_t *mpc_req = _mpc_cl_get_lowcomm_request(req);
+  //SCTK__MPI_INIT_REQUEST (request);
+  //req = __sctk_new_mpc_request_internal (request,__sctk_internal_get_MPC_requests());
   req->freeable = 0;
   req->is_active = 0;
   req->is_nbc = 1;
   req->is_persistent = 1;
-  req->req.request_type = REQUEST_GENERALIZED;
+  mpc_req->request_type = REQUEST_GENERALIZED;
 
   req->persistant.op = MPC_MPI_PERSISTENT_ALLGATHERV_INIT;
   req->persistant.info = info;
@@ -7793,8 +7824,8 @@ int PMPI_Ialltoall(const void *sendbuf, int sendcount, MPI_Datatype sendtype, vo
     MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
   }
 
-	MPI_internal_request_t *tmp;
-	tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
+        MPI_internal_request_t *tmp = *request = mpc_lowcomm_request_alloc();
+        //tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
 	tmp->is_nbc = 1;
 	tmp->nbc_handle.is_persistent = 0;
 	res = ___collectives_ialltoall (sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, &(tmp->nbc_handle));
@@ -7879,14 +7910,15 @@ int PMPI_Alltoall_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype
       mpi_check_buf (recvbuf, comm);
     }
   }
-  MPI_internal_request_t *req;
-  SCTK__MPI_INIT_REQUEST (request);
-  req = __sctk_new_mpc_request_internal (request,__sctk_internal_get_MPC_requests());
+  MPI_internal_request_t *req = *request = mpc_lowcomm_request_alloc();
+  mpc_lowcomm_request_t *mpc_req = _mpc_cl_get_lowcomm_request(req);
+  //SCTK__MPI_INIT_REQUEST (request);
+  //req = __sctk_new_mpc_request_internal (request,__sctk_internal_get_MPC_requests());
   req->freeable = 0;
   req->is_active = 0;
   req->is_nbc = 1;
   req->is_persistent = 1;
-  req->req.request_type = REQUEST_GENERALIZED;
+  mpc_req->request_type = REQUEST_GENERALIZED;
 
   req->persistant.op = MPC_MPI_PERSISTENT_ALLTOALL_INIT;
   req->persistant.info = info;
@@ -9384,8 +9416,8 @@ int PMPI_Ialltoallv(const void *sendbuf, const int *sendcounts, const int *sdisp
     MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
   }
 
-	MPI_internal_request_t *tmp;
-	tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
+        MPI_internal_request_t *tmp = *request = mpc_lowcomm_request_alloc();
+        //tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
 	tmp->is_nbc = 1;
 	tmp->nbc_handle.is_persistent = 0;
 
@@ -9485,14 +9517,15 @@ int PMPI_Alltoallv_init(const void *sendbuf, const int *sendcounts, const int *s
     }
 
   }
-  MPI_internal_request_t *req = NULL;
-  SCTK__MPI_INIT_REQUEST (request);
-  req = __sctk_new_mpc_request_internal (request,__sctk_internal_get_MPC_requests());
+  MPI_internal_request_t *req = *request = mpc_lowcomm_request_alloc();
+  mpc_lowcomm_request_t *mpc_req = _mpc_cl_get_lowcomm_request(req);
+  //SCTK__MPI_INIT_REQUEST (request);
+  //req = __sctk_new_mpc_request_internal (request,__sctk_internal_get_MPC_requests());
   req->freeable = 0;
   req->is_active = 0;
   req->is_nbc = 1;
   req->is_persistent = 1;
-  req->req.request_type = REQUEST_GENERALIZED;
+  mpc_req->request_type = REQUEST_GENERALIZED;
 
   req->persistant.op = MPC_MPI_PERSISTENT_ALLTOALLV_INIT;
   req->persistant.info = info;
@@ -9947,8 +9980,8 @@ int PMPI_Ialltoallw(const void *sendbuf, const int *sendcounts, const int *sdisp
     MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
   }
 
-	MPI_internal_request_t *tmp;
-	tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
+        MPI_internal_request_t *tmp = *request = mpc_lowcomm_request_alloc();
+        //tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
 	tmp->is_nbc = 1;
 	tmp->nbc_handle.is_persistent = 0;
 
@@ -10049,14 +10082,15 @@ int PMPI_Alltoallw_init(const void *sendbuf, const int *sendcounts, const int *s
 
   }
 
-  MPI_internal_request_t *req;
-  SCTK__MPI_INIT_REQUEST (request);
-  req = __sctk_new_mpc_request_internal (request,__sctk_internal_get_MPC_requests());
+  MPI_internal_request_t *req = *request = mpc_lowcomm_request_alloc();
+  mpc_lowcomm_request_t *mpc_req = _mpc_cl_get_lowcomm_request(req);
+  //SCTK__MPI_INIT_REQUEST (request);
+  //req = __sctk_new_mpc_request_internal (request,__sctk_internal_get_MPC_requests());
   req->freeable = 0;
   req->is_active = 0;
   req->is_nbc = 1;
   req->is_persistent = 1;
-  req->req.request_type = REQUEST_GENERALIZED;
+  mpc_req->request_type = REQUEST_GENERALIZED;
 
   req->persistant.op = MPC_MPI_PERSISTENT_ALLTOALLW_INIT;
   req->persistant.info = info;
@@ -10478,14 +10512,15 @@ int PMPI_Iscan (const void *sendbuf, void *recvbuf, int count, MPI_Datatype data
   if(csize == 1)
   {
     res = PMPI_Scan (sendbuf, recvbuf, count, datatype, op, comm);
-    MPI_internal_request_t *tmp = NULL;
-    tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
-    tmp->req.completion_flag = MPC_LOWCOMM_MESSAGE_DONE;
+    MPI_internal_request_t *tmp = *request = mpc_lowcomm_request_alloc();
+    mpc_lowcomm_request_t *mpc_req = _mpc_cl_get_lowcomm_request(tmp);
+    //tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
+    mpc_req->completion_flag = MPC_LOWCOMM_MESSAGE_DONE;
   }
   else
   {
-    MPI_internal_request_t *tmp = NULL;
-    tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
+    MPI_internal_request_t *tmp = *request = mpc_lowcomm_request_alloc();
+    //tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
     tmp->is_nbc = 1;
     tmp->nbc_handle.is_persistent = 0;
 
@@ -10569,14 +10604,15 @@ int PMPI_Scan_init (const void *sendbuf, void *recvbuf, int count, MPI_Datatype 
     }
   }
 
-  MPI_internal_request_t *req = NULL;
-  SCTK__MPI_INIT_REQUEST (request);
-  req = __sctk_new_mpc_request_internal (request,__sctk_internal_get_MPC_requests());
+  MPI_internal_request_t *req = *request = mpc_lowcomm_request_alloc();
+  mpc_lowcomm_request_t *mpc_req = _mpc_cl_get_lowcomm_request(req);
+  //SCTK__MPI_INIT_REQUEST (request);
+  //req = __sctk_new_mpc_request_internal (request,__sctk_internal_get_MPC_requests());
   req->freeable = 0;
   req->is_active = 0;
   req->is_nbc = 1;
   req->is_persistent = 1;
-  req->req.request_type = REQUEST_GENERALIZED;
+  mpc_req->request_type = REQUEST_GENERALIZED;
 
   req->persistant.op = MPC_MPI_PERSISTENT_SCAN_INIT;
   req->persistant.info = info;
@@ -10883,14 +10919,15 @@ int PMPI_Iexscan (const void *sendbuf, void *recvbuf, int count, MPI_Datatype da
   if(csize == 1)
   {
     res = PMPI_Exscan (sendbuf, recvbuf, count, datatype, op, comm);
-    MPI_internal_request_t *tmp = NULL;
-    tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
-    tmp->req.completion_flag = MPC_LOWCOMM_MESSAGE_DONE;
+    MPI_internal_request_t *tmp = *request = mpc_lowcomm_request_alloc();
+    mpc_lowcomm_request_t *mpc_req = _mpc_cl_get_lowcomm_request(tmp);
+    //tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
+    mpc_req->completion_flag = MPC_LOWCOMM_MESSAGE_DONE;
   }
   else
   {
-    MPI_internal_request_t *tmp = NULL;
-    tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
+    MPI_internal_request_t *tmp = *request = mpc_lowcomm_request_alloc();
+    //tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
     tmp->is_nbc = 1;
     tmp->nbc_handle.is_persistent = 0;
 
@@ -10974,14 +11011,15 @@ int PMPI_Exscan_init (const void *sendbuf, void *recvbuf, int count, MPI_Datatyp
     }
   }
 
-  MPI_internal_request_t *req = NULL;
-  SCTK__MPI_INIT_REQUEST (request);
-  req = __sctk_new_mpc_request_internal (request,__sctk_internal_get_MPC_requests());
+  MPI_internal_request_t *req = *request = mpc_lowcomm_request_alloc();
+  mpc_lowcomm_request_t *mpc_req = _mpc_cl_get_lowcomm_request(req);
+  //SCTK__MPI_INIT_REQUEST (request);
+  //req = __sctk_new_mpc_request_internal (request,__sctk_internal_get_MPC_requests());
   req->freeable = 0;
   req->is_active = 0;
   req->is_nbc = 1;
   req->is_persistent = 1;
-  req->req.request_type = REQUEST_GENERALIZED;
+  mpc_req->request_type = REQUEST_GENERALIZED;
 
   req->persistant.op = MPC_MPI_PERSISTENT_EXSCAN_INIT;
   req->persistant.info = info;
@@ -11289,14 +11327,15 @@ int PMPI_Ibarrier (MPI_Comm comm, MPI_Request *request) {
   if(csize == 1)
   {
     res = PMPI_Barrier(comm);
-    MPI_internal_request_t *tmp;
-    tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
-    tmp->req.completion_flag = MPC_LOWCOMM_MESSAGE_DONE;
+    MPI_internal_request_t *tmp = *request = mpc_lowcomm_request_alloc();
+    mpc_lowcomm_request_t *mpc_req = _mpc_cl_get_lowcomm_request(tmp);
+    //tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
+    mpc_req->completion_flag = MPC_LOWCOMM_MESSAGE_DONE;
   }
   else
   {
-    MPI_internal_request_t *tmp;
-    tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
+    MPI_internal_request_t *tmp = *request = mpc_lowcomm_request_alloc();
+    //tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
     tmp->is_nbc = 1;
     tmp->nbc_handle.is_persistent = 0;
 
@@ -11362,14 +11401,15 @@ int PMPI_Barrier_init (MPI_Comm comm, MPI_Info info, MPI_Request *request) {
     mpi_check_comm(comm);
   }
 
-  MPI_internal_request_t *req;
-  SCTK__MPI_INIT_REQUEST (request);
-  req = __sctk_new_mpc_request_internal (request,__sctk_internal_get_MPC_requests());
+  MPI_internal_request_t *req = *request = mpc_lowcomm_request_alloc();
+  mpc_lowcomm_request_t *mpc_req = _mpc_cl_get_lowcomm_request(req);
+  //SCTK__MPI_INIT_REQUEST (request);
+  //req = __sctk_new_mpc_request_internal (request,__sctk_internal_get_MPC_requests());
   req->freeable = 0;
   req->is_active = 0;
   req->is_nbc = 1;
   req->is_persistent = 1;
-  req->req.request_type = REQUEST_GENERALIZED;
+  mpc_req->request_type = REQUEST_GENERALIZED;
 
   req->persistant.op = MPC_MPI_PERSISTENT_BARRIER_INIT;
   req->persistant.info = info;

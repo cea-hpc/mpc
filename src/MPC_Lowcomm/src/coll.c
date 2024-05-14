@@ -259,7 +259,6 @@ __UNUSED__ static void _mpc_coll_free_message( __UNUSED__ void *ptr )
 typedef struct
 {
 	mpc_lowcomm_request_t request;
-	mpc_lowcomm_ptp_message_t msg;
 } _mpc_coll_messages_t;
 
 /* WARNING: if you change values below
@@ -281,13 +280,19 @@ typedef struct
 static void _mpc_coll_message_send( const mpc_lowcomm_communicator_t communicator, __UNUSED__ int myself, int dest, int tag, void *buffer, size_t size,
                                     __UNUSED__ mpc_lowcomm_ptp_message_class_t message_class, _mpc_coll_messages_t *msg_req, __UNUSED__ int check_msg )
 {
-        mpc_lowcomm_isend(dest, buffer, size, tag, communicator, &(msg_req->request));
+        UNUSED(check_msg);
+        UNUSED(myself);
+        UNUSED(message_class);
+        mpc_lowcomm_isend(dest, buffer, size, tag, communicator, &msg_req->request);
 }
 
 static void _mpc_coll_message_recv( const mpc_lowcomm_communicator_t communicator, int src, __UNUSED__ int myself, int tag, void *buffer, size_t size,
                                     __UNUSED__ mpc_lowcomm_ptp_message_class_t message_class, _mpc_coll_messages_t *msg_req, __UNUSED__ int check_msg )
 {
-        mpc_lowcomm_irecv(src, buffer, size, tag, communicator, &(msg_req->request));
+        UNUSED(check_msg);
+        UNUSED(myself);
+        UNUSED(message_class);
+        mpc_lowcomm_irecv(src, buffer, size, tag, communicator, &msg_req->request);
 }
 
 static void _mpc_coll_messages_table_wait( _mpc_coll_messages_table_t *tab )
@@ -296,8 +301,8 @@ static void _mpc_coll_messages_table_wait( _mpc_coll_messages_table_t *tab )
 
 	for ( i = 0; i < tab->nb_used; i++ )
 	{
-		mpc_common_nodebug( "Wait for message %d", i );
-		mpc_lowcomm_request_wait( &( tab->msg_req[i].request ) );
+		mpc_common_nodebug( "Wait for messag %d", i );
+		mpc_lowcomm_wait(  &tab->msg_req[i].request, MPC_LOWCOMM_STATUS_NULL);
 	}
 
 	tab->nb_used = 0;
@@ -2347,6 +2352,7 @@ static inline int ___gather_intra(void *sendbuf, void *recvbuf, const size_t siz
 	int div2_size = comm_size - (comm_size % 2);
 	int last_rank = comm_size - 1;
 
+
 	/* Now we are normalized we can proceed to a recursive doubling approach */
 	int round = 0;
 	int rel_rank = rank;
@@ -2359,13 +2365,14 @@ static inline int ___gather_intra(void *sendbuf, void *recvbuf, const size_t siz
 		while (rel_size)
 		{
 			int will_break = 0;
-			mpc_lowcomm_request_t round_exchange = MPC_REQUEST_NULL;
+			mpc_lowcomm_request_t round_exchange;
 
 			size_t local_size = size_this_round;
 
 			if( rel_rank % 2 )
 			{
 				/* SEND */
+                                mpc_lowcomm_request_init(&round_exchange, comm, REQUEST_SEND);
 				int dest_this_round = (rank - (1<<round));
 
 				assume(0 <= dest_this_round);
@@ -2390,6 +2397,7 @@ static inline int ___gather_intra(void *sendbuf, void *recvbuf, const size_t siz
 			{
 				/* RECV */
 				int from_this_round = (rank + (1<<round));
+                                mpc_lowcomm_request_init(&round_exchange, comm, REQUEST_RECV);
 
 				if(from_this_round != rank )
 				{
@@ -2415,6 +2423,7 @@ static inline int ___gather_intra(void *sendbuf, void *recvbuf, const size_t siz
 					}
 					else
 					{
+                                                round_exchange = MPC_REQUEST_NULL;
 						mpc_common_nodebug("R%d NOPOST %d <-- %d", round, rank, from_this_round);
 					}
 				}

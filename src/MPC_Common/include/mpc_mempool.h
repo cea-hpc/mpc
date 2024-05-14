@@ -5,6 +5,10 @@
 #include <sctk_alloc.h>
 #include <mpc_common_spinlock.h>
 
+enum {
+        MPC_COMMON_MPOOL_INIT_CALLBACK = 1ul << (0),
+};
+
 typedef struct mpc_mempool_elem  mpc_mempool_elem_t;
 typedef struct mpc_mempool_chunk mpc_mempool_chunk_t;
 typedef struct mpc_mempool_param mpc_mempool_param_t;
@@ -33,31 +37,35 @@ struct mpc_mempool_chunk {
 };
 
 struct mpc_mempool_param {
+    unsigned field_mask;
     size_t   alignment;
     size_t   elem_size;
     int      elem_per_chunk;
-    int      max_elems;
-    int      min_elems;
+    uint32_t max_elems;
+    uint32_t min_elems;
     void *(*malloc_func)(size_t size);
     void (*free_func)(void * pointer);
+    void (*obj_init_func)(mpc_mempool_t *mp, void *obj);
 };
 
 struct mpc_mempool_data {
     size_t             alignment;      /* Data alignment */
     size_t             elem_size;      /* Total element size */
     int                elem_per_chunk; /* Allocated on each grow */
-    int                min_elems;
-    int                max_elems;
-    int                num_elems;      /* Current number of allocated elements */
+    uint32_t           min_elems;
+    uint32_t           max_elems;
+    uint32_t           num_elems;      /* Current number of allocated elements */
     int                num_chunks;
     mpc_mempool_chunk_t *chunks;       /* Pointer to first chunk */
 #ifdef MPC_MP_LOG
     FILE              *logfile;
 #endif
-    int available, inertia, max_inertia;
+    uint32_t available;
+    int inertia, max_inertia;
     int initialized;
     void *(*malloc_func)(size_t size);
     void (*free_func)(void * pointer);
+    void (*obj_init_func)(mpc_mempool_t *mp, void *obj);
     mpc_common_spinlock_t lock;
 };
 

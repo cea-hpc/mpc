@@ -35,6 +35,7 @@
 
 #include "lcp_def.h"
 #include "lcp_pending.h"
+#include "lcp_context.h"
 #include "mpc_common_debug.h"
 #include "mpc_mempool.h"
 
@@ -76,6 +77,32 @@ void lcp_request_storage_release()
 	__request_mempool_count = 0;
 }
 
+void *lcp_request_alloc(lcp_task_h task)
+{
+        lcp_request_t *req = NULL;
+
+        assert(task->ctx->config.request.size > 0);
+
+        req = lcp_request_get(task);
+        if (req == NULL) {
+                mpc_common_debug_error("LCP REQ: could not allocate "
+                                       "request.");
+                return NULL;
+        }
+        req->flags |= LCP_REQUEST_USER_ALLOCATED;
+
+        return req + 1;
+}
+
+void lcp_request_free(void *request)
+{
+        lcp_request_t *req = (lcp_request_t *)(request) - 1;
+
+        assert(req->flags & LCP_REQUEST_USER_ALLOCATED);
+
+        lcp_request_put(req);
+}
+
 /**
  * @brief Store data from unexpected message.
  *
@@ -97,7 +124,7 @@ int lcp_request_init_unexp_ctnr(lcp_task_h task, lcp_unexp_ctnr_t **ctnr_p, void
 		return LCP_ERROR;
 	}
 
-        size_t elem_size = mpc_mpool_get_elem_size(task->unexp_mp);
+        size_t elem_size = mpc_mpool_get_elem_size(&task->unexp_mp);
         assert(sizeof(lcp_unexp_ctnr_t) + length < elem_size);
 
 	ctnr->length = length;
@@ -108,41 +135,5 @@ int lcp_request_init_unexp_ctnr(lcp_task_h task, lcp_unexp_ctnr_t **ctnr_p, void
         memcpy(ctnr + 1, data, length);
 
 	*ctnr_p = ctnr;
-	return LCP_SUCCESS;
-}
-
-/**
- * @brief Set a request as completed
- *
- * @param req request to be marked as completed
- * @return int LCP_SUCCESS in case of success
- */
-int lcp_request_complete(lcp_request_t *req)
-{
-        //FIXME: log below not suited for AM API.
-	mpc_common_debug("LCP: complete req=%p, comm_id=%llu, msg_id=%llu, "
-			 "seqn=%d, lcreq=%p", req, req->send.tag.comm, req->msg_id,
-			 req->seqn, req->request);
-
-        //FIXME: modifying mpc request here breaks modularity
-        if (req->flags & LCP_REQUEST_RECV_TRUNC)
-                req->request->truncated = 1;
-
-        if (req->flags & LCP_REQUEST_MPI_COMPLETE) {
-                assert(req->request);
-	        req->request->completion_flag = MPC_LOWCOMM_MESSAGE_DONE;
-        }
-
-        if (req->flags & LCP_REQUEST_RMA_COMPLETE) {
-                req->send.send_cb(req->state.offset, req->user_data);
-        }
-
-        if (req->flags & LCP_REQUEST_OFFLOADED_RNDV) {
-                lcp_pending_delete(req->mngr->match_ht, req->msg_id);
-        }
-
-        lcp_request_put(req);
-        req = NULL;
-
 	return LCP_SUCCESS;
 }

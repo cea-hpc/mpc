@@ -34,6 +34,7 @@
 
 #include <stdint.h>
 #include <stddef.h>
+#include <sys/types.h>
 
 //FIXME: to be changed
 #define LCR_AM_ID_MAX 64
@@ -72,9 +73,9 @@ typedef enum {
 typedef int (*lcr_am_callback_t)(void *arg, void *data, size_t length,
 				 unsigned flags);
 
-typedef size_t (*lcr_pack_callback_t)(void *dest, void *data);
+typedef ssize_t (*lcr_pack_callback_t)(void *dest, void *data);
 
-typedef size_t (*lcr_unpack_callback_t)(void *arg, const void *data, size_t length);
+typedef ssize_t (*lcr_unpack_callback_t)(void *arg, const void *data, size_t length);
 
 typedef void (*lcr_completion_callback_t)(lcr_completion_t *self);
 

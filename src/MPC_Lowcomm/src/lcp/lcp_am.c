@@ -75,10 +75,11 @@
  *               dest
 */
 
-static size_t lcp_send_am_eager_pack(void *dest, void *data)
+static ssize_t lcp_send_am_eager_pack(void *dest, void *data)
 {
         //TODO: add safeguard to check for max bcopy size
-        ssize_t packed_length;
+        ssize_t packed_length = 0;
+        ssize_t packed_payload_length = 0;
 	lcp_am_hdr_t *hdr = dest;
 	lcp_request_t *req = data;
         void *src = req->datatype == LCP_DATATYPE_CONTIGUOUS ?
@@ -93,18 +94,25 @@ static size_t lcp_send_am_eager_pack(void *dest, void *data)
 
         /* Pack user header */
         memcpy(hdr + 1, req->send.am.hdr, req->send.am.hdr_size);
+        packed_length += sizeof(*hdr) + req->send.am.hdr_size;
 
         /* Pack actual data */
-        packed_length = lcp_datatype_pack(req->mngr->ctx, req, req->datatype,
-                                          ptr, src, req->send.length);
+        packed_payload_length = lcp_datatype_pack(req->mngr->ctx, req, req->datatype,
+                                                  ptr, src, req->send.length);
 
-	return sizeof(*hdr) + req->send.am.hdr_size + packed_length;
+        if (packed_payload_length < 0) {
+                packed_length = packed_payload_length;
+        } else {
+                packed_length += packed_payload_length;
+        }
+
+	return packed_length;
 }
 
-static size_t lcp_send_am_rndv_pack(void *dest, void *data)
+static ssize_t lcp_send_am_rndv_pack(void *dest, void *data)
 {
         //TODO: add safeguard to check for max bcopy size
-        ssize_t packed_length;
+        ssize_t packed_length = 0;
 	lcp_rndv_hdr_t *hdr = dest;
 	lcp_request_t *req = data;
         void *ptr;
@@ -117,15 +125,17 @@ static size_t lcp_send_am_rndv_pack(void *dest, void *data)
         hdr->size        = req->send.length;
         hdr->src_uid     = req->send.am.src_uid;
         hdr->msg_id      = req->msg_id;
+        packed_length   += sizeof(*hdr);
 
         /* Pack rndv data */
-        packed_length = lcp_rndv_rts_pack(req, hdr);
+        packed_length   += lcp_rndv_rts_pack(req, hdr);
 
         /* Pack user header */
         ptr = (char *)(hdr + 1) + packed_length;
         memcpy(ptr, req->send.am.hdr, req->send.am.hdr_size);
+        packed_length += req->send.am.hdr_size;
 
-	return sizeof(*hdr) + req->send.am.hdr_size + packed_length;
+	return packed_length;
 }
 
 /* ============================================== */
@@ -139,17 +149,8 @@ static void lcp_am_send_complete(lcr_completion_t *comp) {
 
         if ((req->flags & LCP_REQUEST_REMOTE_COMPLETED) &&
             (req->flags & LCP_REQUEST_LOCAL_COMPLETED)) {
-
-                if (req->flags & LCP_REQUEST_USER_COMPLETE) {
-
-                        mpc_common_debug("LCP AM: comp user_request=%p",
-                                         req->send.am.request);
-                        /* Call user complete callback */
-                        req->send.am.cb(req->send.length, 
-                                        req->send.am.request);
-                }
-
-                lcp_request_complete(req);
+                lcp_request_complete(req, send.send_cb, 
+                                     MPC_LOWCOMM_SUCCESS, req->send.length);
         }
 }
 
@@ -157,20 +158,20 @@ static void lcp_am_recv_complete(lcr_completion_t *comp)
 {
 	lcp_request_t *req = mpc_container_of(comp, lcp_request_t,
 					      state.comp);
+        lcp_unexp_ctnr_t *ctnr = req->recv.am.ctnr;
 
+        lcp_request_complete(req, recv.am.cb, 
+                             MPC_LOWCOMM_SUCCESS, 
+                             req->recv.send_length);
+
+        //FIXME: recheck why we need to test the flags before putting back the
+        //       container.
         //FIXME: for now, these can be called only for RNDV but it should be
         //       generalized for EAGER messages also.
-        if (req->flags & LCP_REQUEST_USER_COMPLETE) {
-                mpc_common_debug("LCP AM: comp user_request=%p",
-                                 req->recv.am.request);
-                /* Call user complete callback */
-                req->recv.am.cb(req->recv.send_length, req->recv.am.request);
-
+        if (req->flags & LCP_REQUEST_USER_CALLBACK) {
                 /* Free container */
-                lcp_container_put(req->recv.am.ctnr);
+                lcp_container_put(ctnr);
         }
-
-        lcp_request_complete(req);
 }
 
 /* ============================================== */
@@ -229,9 +230,9 @@ int lcp_send_eager_am_bcopy(lcp_request_t *req)
 	int rc = LCP_SUCCESS;
 
 	mpc_common_debug_info("LCP: send eager am bcopy comm=%d, src=%d, "
-                              "dest=%d, length=%d, tag=%d, lcreq=%p.", req->send.tag.comm,
-                              req->send.tag.src_tid, req->send.tag.dest_tid,
-                              req->send.length, req->send.tag.tag, req->request);
+                              "dest=%d, length=%d, tag=%d", req->send.tag.comm,
+                              req->send.tag.src_tid, req->send.tag.dest_tid, 
+                              req->send.length, req->send.tag.tag);
 
         pack_cb = lcp_send_am_eager_pack;
         if (req->is_sync) {
@@ -321,7 +322,7 @@ int lcp_am_send_start(lcp_ep_h ep, lcp_request_t *req,
         int rc = LCP_SUCCESS;
         size_t size;
 
-        if (param->flags & LCP_REQUEST_AM_SYNC) {
+        if (param->field_mask & LCP_REQUEST_AM_SYNC) {
                 req->is_sync = 1;
         }
         //NOTE: multiplexing might not always be efficient (IO NUMA
@@ -358,7 +359,7 @@ int lcp_am_send_nb(lcp_ep_h ep, lcp_task_h task, int32_t dest_tid,
         lcp_request_t *req;
 
         // create the request to send
-        req = lcp_request_get(task);
+        req = lcp_request_get_param(task, param);
         if (req == NULL) {
                 mpc_common_debug_error("LCP: could not create request.");
                 return LCP_ERROR;
@@ -370,12 +371,11 @@ int lcp_am_send_nb(lcp_ep_h ep, lcp_task_h task, int32_t dest_tid,
         //       Reorder is to be reimplemented.
         //FIXME: what length should be set here, length of data or length of
         //       data + header size ?
-        LCP_REQUEST_INIT_AM_SEND(req, ep->mngr, task, am_id, 
+        LCP_REQUEST_INIT_AM_SEND(req, ep->mngr, task, am_id, param->request,
                                  ep->mngr->ctx->process_uid, dest_tid, 
-                                 param->recv_info, data_size, 
-                                 ep, (void *)buffer, 0 /* no seqn for am */, 
+                                 data_size, ep, (void *)buffer, 0 /* no seqn for am */, 
                                  (uint64_t)req, param->datatype,
-                                 param->flags & LCP_REQUEST_AM_SYNC ? 1 : 0);
+                                 param->field_mask & LCP_REQUEST_AM_SYNC ? 1 : 0);
 
         /* Copy user header send can be delayed and since it can be allocated on
          * the stack. */
@@ -388,12 +388,9 @@ int lcp_am_send_nb(lcp_ep_h ep, lcp_task_h task, int32_t dest_tid,
         }
         memcpy(req->send.am.hdr, hdr, hdr_size);
 
-        if (param->flags & LCP_REQUEST_AM_CALLBACK) {
-                req->flags          |= LCP_REQUEST_USER_COMPLETE;
-                req->send.am.request = param->user_request;
-                req->send.am.cb      = param->am_cb;
-                mpc_common_debug("LCP AM: user_request=%p",
-                                 req->send.am.request);
+        if (param->field_mask & LCP_REQUEST_AM_CALLBACK) {
+                req->flags          |= LCP_REQUEST_USER_CALLBACK;
+                req->send.send_cb    = param->send_cb;
         }
 
         /* Prepare request depending on its type */
@@ -434,22 +431,20 @@ int lcp_am_recv_nb(lcp_manager_h mngr, lcp_task_h task, void *data_ctnr, void *b
         assert(ctnr->flags & LCP_RECV_CONTAINER_UNEXP_RNDV_AM);
 
         /* Create the request associated to the container */
-        req = lcp_request_get(task);
+        req = lcp_request_get_param(task, param);
         if (req == NULL) {
                 mpc_common_debug_error("LCP: could not create request.");
                 return LCP_ERROR;
         }
 
         // initialize request
-        LCP_REQUEST_INIT_AM_RECV(req, mngr, task, param->recv_info, 
-                                 count, buffer, param->datatype);
+        LCP_REQUEST_INIT_AM_RECV(req, mngr, task, count, param->request, 
+                                 buffer, param->datatype);
 
-        if (param->flags & LCP_REQUEST_AM_CALLBACK) {
-                req->flags          |= LCP_REQUEST_USER_COMPLETE;
-                req->recv.am.request = param->user_request;
+        if (param->field_mask & LCP_REQUEST_AM_CALLBACK) {
+                req->flags          |= LCP_REQUEST_USER_CALLBACK;
+                req->request = param->request;
                 req->recv.am.cb      = param->am_cb;
-                mpc_common_debug("LCP AM: user_request=%p",
-                                 req->recv.am.request);
         }
 
         /* Set header */

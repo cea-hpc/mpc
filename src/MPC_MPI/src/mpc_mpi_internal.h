@@ -253,7 +253,6 @@ typedef struct MPI_internal_request_s
 {
 	mpc_common_spinlock_t                   lock; /**< Lock protecting the data-structure */
 
-	mpc_lowcomm_request_t                   req;  /**< Request to be stored */
 	int                                     used; /**< Is the request slot in use */
 	volatile struct MPI_internal_request_s *next;
 	int                                     rank; /**< Offset in the tab array from  struct \ref MPI_request_struct_s */
@@ -295,6 +294,7 @@ typedef struct MPI_internal_request_s
  *  allowing their storage in both free_list and auto_free_list
  *
  * */
+#if 0
 typedef struct MPI_request_struct_s
 {
 	mpc_common_spinlock_t            lock;           /**< Lock protecting the data-structure */
@@ -338,6 +338,7 @@ void __sctk_add_in_mpc_request(MPI_Request *req, void *t,
                                MPI_request_struct_t *requests);
 void __sctk_delete_mpc_request(MPI_Request *req,
                                MPI_request_struct_t *requests);
+#endif
 
 mpc_lowcomm_datatype_t _mpc_cl_per_mpi_process_ctx_general_datatype_get(const size_t datatype);
 
@@ -532,6 +533,8 @@ int PMPI_Isend_internal(const void *buf, int count, MPI_Datatype datatype, int d
 
 int PMPI_Irecv_internal(void *buf, int count, MPI_Datatype datatype, int source,
                         int tag, MPI_Comm comm, MPI_Request *request);
+
+void PMPI_internal_free_request(MPI_Request *request);
 
 /* error handling */
 

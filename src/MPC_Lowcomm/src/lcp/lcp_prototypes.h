@@ -39,8 +39,8 @@
 
 /* NOLINTBEGIN(clang-diagnostic-unused-function): False positives */
 
-static inline int lcp_send_do_am_bcopy(_mpc_lowcomm_endpoint_t *lcr_ep,
-                                       uint8_t am_id,
+static inline ssize_t lcp_send_do_am_bcopy(_mpc_lowcomm_endpoint_t *lcr_ep, 
+                                       uint8_t am_id, 
                                        lcr_pack_callback_t pack,
                                        void *arg)
 {
@@ -60,7 +60,7 @@ static inline int lcp_send_do_am_zcopy(_mpc_lowcomm_endpoint_t *lcr_ep,
                                            iovcnt, 0, comp);
 }
 
-static inline int lcp_send_do_tag_bcopy(_mpc_lowcomm_endpoint_t *lcr_ep,
+static inline ssize_t lcp_send_do_tag_bcopy(_mpc_lowcomm_endpoint_t *lcr_ep,
                                         lcr_tag_t tag,
                                         uint64_t imm,
                                         lcr_pack_callback_t pack,
@@ -103,7 +103,7 @@ static inline int lcp_send_do_get_tag_zcopy(_mpc_lowcomm_endpoint_t *lcr_ep,
                                            remote_offset, size, comp);
 }
 
-static inline int lcp_send_do_put_bcopy(_mpc_lowcomm_endpoint_t *lcr_ep,
+static inline ssize_t lcp_send_do_put_bcopy(_mpc_lowcomm_endpoint_t *lcr_ep,
                                         lcr_pack_callback_t pack,
                                         void *arg,
                                         uint64_t remote_addr,
@@ -114,7 +114,7 @@ static inline int lcp_send_do_put_bcopy(_mpc_lowcomm_endpoint_t *lcr_ep,
                                        remote_addr, local_key, remote_key);
 }
 
-static inline int lcp_send_do_get_bcopy(_mpc_lowcomm_endpoint_t *lcr_ep,
+static inline ssize_t lcp_send_do_get_bcopy(_mpc_lowcomm_endpoint_t *lcr_ep,
                                         lcr_unpack_callback_t unpack,
                                         void *arg,
                                         uint64_t remote_addr,

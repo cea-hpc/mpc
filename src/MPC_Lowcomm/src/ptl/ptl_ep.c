@@ -54,7 +54,7 @@ ssize_t lcr_ptl_send_am_bcopy(_mpc_lowcomm_endpoint_t *ep,
         lcr_ptl_rail_info_t* srail = &ep->rail->network.ptl;
         lcr_ptl_ep_info_t  *ptl_ep = &ep->data.ptl;
         void* start                = NULL;
-        size_t size                = 0;
+        ssize_t size               = 0;
         lcr_ptl_op_t *op;
 #if defined (MPC_USE_PORTALS_CONTROL_FLOW)
         lct_ptl_op_t *q_op;
@@ -72,7 +72,10 @@ ssize_t lcr_ptl_send_am_bcopy(_mpc_lowcomm_endpoint_t *ep,
                 goto err;
         }
         size = pack(start, arg);
-        assert(size <= srail->config.eager_limit);
+        if (size < 0) {
+                goto err;
+        }
+        assert((size_t)size <= srail->config.eager_limit);
 
         op = mpc_mpool_pop(ptl_ep->ops_pool); 
         if (op == NULL) {
@@ -215,6 +218,7 @@ int lcr_ptl_send_am_zcopy(_mpc_lowcomm_endpoint_t *ep,
         LCR_PTL_AM_HDR_SET(op->hdr, op->am.am_id, 
                            ptl_ep->idx, 
                            ptl_ep->num_ops);
+        not_implemented();
 
         if (--ptl_ep->tokens >= 0) {
                 /* If endpoint has enough token, either send directly or push to
@@ -259,7 +263,7 @@ ssize_t lcr_ptl_send_tag_bcopy(_mpc_lowcomm_endpoint_t *ep,
                                __UNUSED__ unsigned cflags)
 {
         void* start                = NULL;
-        size_t size                = 0;
+        ssize_t size                = 0;
         lcr_ptl_rail_info_t* srail = &ep->rail->network.ptl;
         lcr_ptl_ep_info_t  *ptl_ep = &ep->data.ptl;
 
@@ -274,8 +278,11 @@ ssize_t lcr_ptl_send_tag_bcopy(_mpc_lowcomm_endpoint_t *ep,
                 goto err;
         }
         size = pack(start, arg);
+        if (size < 0) {
+                goto err;
+        }
 
-        assert(size <= srail->config.eager_limit);
+        assert((size_t)size <= srail->config.eager_limit);
         assert(ptl_ep->addr.pte.tag != LCR_PTL_PT_NULL);
 
         lcr_ptl_op_t *op = mpc_mpool_pop(ptl_ep->ops_pool);
@@ -443,7 +450,7 @@ int lcr_ptl_send_put_bcopy(_mpc_lowcomm_endpoint_t *ep,
 {
         int rc = MPC_LOWCOMM_SUCCESS;
         void* start                = NULL;
-        size_t size                = 0;
+        ssize_t size               = 0;
         lcr_ptl_rail_info_t* srail = &ep->rail->network.ptl;
         lcr_ptl_ep_info_t  *ptl_ep = &ep->data.ptl;
         lcr_ptl_txq_t      *txq    = NULL;
@@ -460,6 +467,9 @@ int lcr_ptl_send_put_bcopy(_mpc_lowcomm_endpoint_t *ep,
                 goto err;
         }
         size = pack(start, arg);
+        if (size < 0) {
+                goto err;
+        }
 
         /* Link memory to endpoint if not already done. */
         txq = &lctx->mem->txqt[ptl_ep->idx];
@@ -515,7 +525,7 @@ int lcr_ptl_send_get_bcopy(_mpc_lowcomm_endpoint_t *ep,
         int rc = MPC_LOWCOMM_SUCCESS;
         lcr_ptl_rail_info_t* srail = &ep->rail->network.ptl;
         void* start                = NULL;
-        size_t size                = 0;
+        ssize_t size               = 0;
         lcr_ptl_ep_info_t  *ptl_ep = &ep->data.ptl;
         lcr_ptl_txq_t      *txq    = NULL;
         lcr_ptl_mem_ctx_t  *lctx   = &local_key->pin.ptl;
@@ -531,6 +541,9 @@ int lcr_ptl_send_get_bcopy(_mpc_lowcomm_endpoint_t *ep,
                 goto err;
         }
         size = pack(start, arg);
+        if (size < 0) {
+                goto err;
+        }
 
         txq = &lctx->mem->txqt[ptl_ep->idx];
 
@@ -590,12 +603,8 @@ int lcr_ptl_send_put_zcopy(_mpc_lowcomm_endpoint_t *ep,
         lcr_ptl_mem_ctx_t *rctx   = &remote_key->pin.ptl;
         lcr_ptl_op_t      *op     = NULL;         
 
-        /* Link memory to endpoint if not already done. */
         txq = &lctx->mem->txqt[ptl_ep->idx];
 
-        //NOTE: Operation identifier and Put must be done atomically to make
-        //      sure the operation is pushed to the NIC with the correct
-        //      sequence number.
         op = mpc_mpool_pop(ptl_ep->ops_pool);
         if (op == NULL) {
                 mpc_common_debug_warning("LCR PTL: maximum outstanding "
@@ -622,13 +631,18 @@ int lcr_ptl_send_put_zcopy(_mpc_lowcomm_endpoint_t *ep,
                 op->rma.remote_offset += (uint64_t)rctx->start;
         }
 
+        /* Increment operation counts. */
+        mpc_common_spinlock_lock(&lctx->mem->lock);
+        //NOTE: Operation identifier and Put must be done atomically to make
+        //      sure the operation is pushed to the NIC with the correct
+        //      sequence number.
+        op->id = lctx->mem->op_count++;
+
+        //NOTE: op must be pushed to TX Queue for completion AFTER the operation
+        //      id is set, otherwise 
         mpc_common_spinlock_lock(&txq->lock);
         mpc_queue_push(&txq->ops, &op->elem);
         mpc_common_spinlock_unlock(&txq->lock);
-
-        /* Increment operation counts. */
-        mpc_common_spinlock_lock(&lctx->mem->lock);
-        op->id = lctx->mem->op_count++;
 
         mpc_common_debug("LCR PTL: local key. lkey size=%llu, addr=%p, "
                          "local offset=%llu, remote offset=%llu, "
@@ -640,6 +654,7 @@ int lcr_ptl_send_put_zcopy(_mpc_lowcomm_endpoint_t *ep,
         mpc_common_debug("LCR PTL: remote key. addr=%p, match=%llu", rctx->start,
                          (uint64_t)op->rma.match);
         rc = lcr_ptl_do_op(op);
+
         mpc_common_spinlock_unlock(&lctx->mem->lock);
 
 err:
@@ -689,22 +704,16 @@ int lcr_ptl_send_get_zcopy(_mpc_lowcomm_endpoint_t *ep,
                 op->rma.remote_offset += (uint64_t)rctx->start;
         }
 
+        mpc_common_spinlock_lock(&lctx->mem->lock);
+        //NOTE: Operation identifier and Put must be done atomically to make
+        //      sure the operation is pushed to the NIC with the correct
+        //      sequence number.
+        op->id = lctx->mem->op_count++;
+        
         mpc_common_spinlock_lock(&txq->lock);
         mpc_queue_push(&txq->ops, &op->elem);
         mpc_common_spinlock_unlock(&txq->lock);
 
-        /* Increment operation counts. */
-        mpc_common_spinlock_lock(&lctx->mem->lock);
-        mpc_common_debug("LCR PTL: local key.  lkey size=%llu, addr=%p, "
-                         "local offset=%llu, remote offset=%llu, "
-                         "cth=%llu, mdh=%llu.", lctx->size, 
-                         lctx->start, op->rma.local_offset,
-                         op->rma.remote_offset,
-                         *(uint64_t*)&op->rma.lkey->cth,
-                         *(uint64_t*)&op->rma.lkey->mdh);
-        mpc_common_debug("LCR PTL: remote key. addr=%p, match=%llu", 
-                         rctx->start, (uint64_t)op->rma.match);
-        op->id = lctx->mem->op_count++;
         rc = lcr_ptl_do_op(op);
         mpc_common_spinlock_unlock(&lctx->mem->lock);
 err:
@@ -1111,8 +1120,8 @@ void lcr_ptl_connect_on_demand(struct sctk_rail_info_s *rail,
         /* Initialize lock, list and queues. */
         mpc_common_spinlock_init(&ptl_ep->lock, 0);
 
-#if defined (MPC_USE_PORTALS_CONTROL_FLOW)
         mpc_queue_init_head(&ptl_ep->am_txq.ops); 
+#if defined (MPC_USE_PORTALS_CONTROL_FLOW)
         ptl_ep->tokens         = 0;
         ptl_ep->num_ops        = 0;
         ptl_ep->is_waiting     = 0;

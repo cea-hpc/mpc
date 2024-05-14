@@ -108,7 +108,7 @@ int mpc_osc_rput(const void *origin_addr, int origin_count,
                  _mpc_lowcomm_general_datatype_t *origin_dt,
                  int target, ptrdiff_t target_disp, int target_count,
                  _mpc_lowcomm_general_datatype_t *target_dt,
-                 mpc_win_t *win, mpc_lowcomm_request_t *request);
+                 mpc_win_t *win, MPI_Request *req);
 int mpc_osc_rget(void *origin_addr, int origin_count, 
                  _mpc_lowcomm_general_datatype_t *origin_dt,
                  int target, ptrdiff_t target_disp, int target_count,

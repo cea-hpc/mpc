@@ -626,6 +626,13 @@ int lcp_context_create(lcp_context_h *ctx_p, lcp_context_param_t *param)
         ctx->process_uid = param->process_uid;
         ctx->num_tasks   = param->num_tasks;
 
+        if (param->field_mask & LCP_CONTEXT_REQUEST_SIZE) {
+                ctx->config.request.size = param->request_size;
+        }
+        if (param->field_mask & LCP_CONTEXT_REQUEST_SIZE) {
+                ctx->config.request.init = param->request_init;
+        }
+
         rc = _lcp_context_load_ctx_config(ctx, param);
         if (rc != MPC_LOWCOMM_SUCCESS) {
                 goto out_free_ctx;

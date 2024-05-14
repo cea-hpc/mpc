@@ -218,6 +218,8 @@ int _mpc_cl_op_free(sctk_Op *);
 /*****************************
 * POINT TO POINT OPERATIONS *
 *****************************/
+#define _mpc_cl_get_lowcomm_request(_req) ((mpc_lowcomm_request_t *)(_req) - 1)
+int _mpc_cl_pass_mpi_request_info(size_t request_size, void (*init_mpi_request)(void *request));
 
 int _mpc_cl_isend(const void *buf, mpc_lowcomm_msg_count_t count,
                   mpc_lowcomm_datatype_t datatype, int dest, int tag,

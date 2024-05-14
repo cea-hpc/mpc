@@ -172,7 +172,15 @@ int lcp_am_set_handler_callback(lcp_manager_h mngr, lcp_task_h task, uint8_t am_
         return LCP_SUCCESS;
 }
 
+void lcp_task_request_init(mpc_mempool_t *mp, void *request) {
+        lcp_request_t *req = (lcp_request_t *)request;
+        lcp_task_h task   = mpc_container_of(mp, struct lcp_task, req_mp);
+        lcp_context_h ctx = task->ctx;
 
+        if (ctx->config.request.init != NULL) {
+                ctx->config.request.init(req + 1);
+        }
+}
 
 int lcp_task_create(lcp_context_h ctx, int tid, lcp_task_h *task_p)
 {
@@ -212,23 +220,23 @@ int lcp_task_create(lcp_context_h ctx, int tid, lcp_task_h *task_p)
 	mpc_common_spinlock_init(&task->task_lock, 0);
 
         /* Init memory pool of requests */
-        task->req_mp = sctk_malloc(sizeof(mpc_mempool_t));
         mpc_mempool_param_t mp_req_params = {
+                .field_mask = MPC_COMMON_MPOOL_INIT_CALLBACK,
                 .alignment = MPC_COMMON_SYS_CACHE_LINE_SIZE,
                 .elem_per_chunk = 512,
-                .elem_size = sizeof(lcp_request_t),
-                .max_elems = 2048,
+                .elem_size = sizeof(lcp_request_t) + ctx->config.request.size,
+                .max_elems = UINT_MAX,
                 .malloc_func = sctk_malloc,
-                .free_func = sctk_free
+                .free_func = sctk_free,
+                .obj_init_func = lcp_task_request_init,
         };
-
-        rc = mpc_mpool_init(task->req_mp, &mp_req_params);
+                
+        rc = mpc_mpool_init(&task->req_mp, &mp_req_params);
         if (rc != LCP_SUCCESS) {
                 goto err;
         }
 
         /* Init memory pool of requests */
-        task->unexp_mp = sctk_malloc(sizeof(mpc_mempool_t));
         //FIXME: define suitable size for unexpected buffers. Could be a set of
         //       memory pools, based on size to be copied the appropriate memory
         //       pool would be chosen.
@@ -240,8 +248,8 @@ int lcp_task_create(lcp_context_h ctx, int tid, lcp_task_h *task_p)
                 .malloc_func = sctk_malloc,
                 .free_func = sctk_free
         };
-
-        rc = mpc_mpool_init(task->unexp_mp, &mp_unexp_params);
+                
+        rc = mpc_mpool_init(&task->unexp_mp, &mp_unexp_params);
         if (rc != LCP_SUCCESS) {
                 goto err;
         }
@@ -264,12 +272,16 @@ int lcp_task_associate(lcp_task_h task, lcp_manager_h mngr)
         assert(mngr != NULL);
 
         if (task->tcct[mngr->id] != NULL) {
-                mpc_common_debug_warning("LCP TASK: manager already associated. "
-                                         "mngr id=%d", mngr->id);
                 return rc;
         }
 
         tcc = sctk_malloc(sizeof(lcp_task_comm_context_t));
+        if (tcc == NULL) {
+                mpc_common_debug_error("LCP TASK: could not allocate task communication "
+                                       "context.");
+                rc = MPC_LOWCOMM_ERROR;
+                goto err;
+        }
 
         if (mngr->flags & LCP_MANAGER_TSC_MODEL) {
                 tcc->tag.num_queues = UINT16_MAX + 1;
@@ -328,10 +340,8 @@ int lcp_task_dissociate(lcp_task_h task, lcp_manager_h mngr)
 
 int lcp_task_fini(lcp_task_h task) {
 
-        mpc_mpool_fini(task->req_mp);
-        sctk_free(task->req_mp);
-        mpc_mpool_fini(task->unexp_mp);
-        sctk_free(task->unexp_mp);
+        mpc_mpool_fini(&task->req_mp);
+        mpc_mpool_fini(&task->unexp_mp);
 
         //TODO: assert that all tack communication context are dissociated.
 

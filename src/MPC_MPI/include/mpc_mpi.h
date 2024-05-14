@@ -446,7 +446,7 @@ extern "C"
 
 typedef mpc_lowcomm_datatype_t       MPI_Datatype; /* ABI compliant pointer */
 typedef mpc_lowcomm_communicator_t   MPI_Comm;     /* pointer */
-typedef int                          MPI_Request;
+typedef struct MPI_internal_request_s *MPI_Request;
 typedef ssize_t                      MPI_Aint;
 typedef ssize_t                      MPI_Count;
 typedef MPC_Errhandler               MPI_Errhandler;
@@ -5005,8 +5005,8 @@ int PMPI_Pready(int partition, MPI_Request request);
  * @return int MPI_SUCCESS on success other MPI_* error code otherwise
  */
 
-int MPI_Parrived(int partition, MPI_Request request, int *flag);
-int PMPI_Parrived(int partition, MPI_Request request, int *flag);
+int MPI_Parrived(MPI_Request request, int partition, int *flag);
+int PMPI_Parrived(MPI_Request request, int partition, int *flag);
 
 /*MPI_Status_set_cancelled*/
 

@@ -222,11 +222,12 @@ static inline void __mpc_cl_request_progress(mpc_lowcomm_request_t *request)
 		return;
 	}
 
-	struct mpc_lowcomm_ptp_msg_progress_s _wait;
+        mpc_lowcomm_request_wait(request);
+	//struct mpc_lowcomm_ptp_msg_progress_s _wait;
 
-	mpc_lowcomm_ptp_msg_wait_init(&_wait, request, 0);
+	//mpc_lowcomm_ptp_msg_wait_init(&_wait, request, 0);
 
-	mpc_lowcomm_ptp_msg_progress(&_wait);
+	//mpc_lowcomm_ptp_msg_progress(&_wait);
 }
 
 /************************************************************************/
@@ -2179,6 +2180,10 @@ int _mpc_cl_get_processor_name(char *name, int *resultlen)
 /* Point to point communications                                        */
 /************************************************************************/
 
+int _mpc_cl_pass_mpi_request_info(size_t request_size, void (*init_mpi_request)(void *request))
+{
+        mpc_lowcomm_pass_mpi_request_info(request_size, init_mpi_request);
+}
 
 int _mpc_cl_isend(const void *buf, mpc_lowcomm_msg_count_t count,
                   mpc_lowcomm_datatype_t datatype, int dest, int tag,
@@ -2332,8 +2337,8 @@ int _mpc_cl_sendrecv(void *sendbuf, mpc_lowcomm_msg_count_t sendcount, mpc_lowco
 {
 	mpc_lowcomm_request_t reqs[2];
 
-	reqs[0] = MPC_REQUEST_NULL;
-	reqs[1] = MPC_REQUEST_NULL;
+        mpc_lowcomm_request_init(&reqs[0], comm, REQUEST_RECV);
+        mpc_lowcomm_request_init(&reqs[1], comm, REQUEST_SEND);
 
 	//mpc_common_debug_error("SEND %p CNT %d DEST %d TAG %d", sendbuf, sendcount, dest, sendtag);
 	//mpc_common_debug_error("RECV %p CNT %d SRC %d TAG %d", recvbuf, recvcount, source, recvtag);

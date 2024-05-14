@@ -74,6 +74,10 @@ typedef struct lcp_context_config
 	lcp_rndv_mode_t rndv_mode;
 	int             offload;
         int             max_num_managers; //FIXME: to be added to the lowcomm_config
+        struct {
+                int                              size;  /* Request size from upper layer. */
+                lcp_request_init_callback_func_t init; /* Request init callback. */
+        } request;
 } lcp_context_config_t;
 
 /**
@@ -109,6 +113,7 @@ struct lcp_context
 
 	lcp_task_h *          tasks;         /* LCP tasks (per thread data) */
         int                   num_tasks;     /* Number of tasks */
+
 };
 
 int lcp_context_register(lcp_context_h ctx, lcp_manager_h mngr);

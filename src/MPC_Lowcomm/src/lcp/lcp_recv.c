@@ -40,9 +40,9 @@
 
 #include "mpc_common_debug.h"
 
-int lcp_tag_recv_nb(lcp_manager_h mngr, lcp_task_h task, void *buffer, size_t count,
-                    mpc_lowcomm_request_t *request,
-                    lcp_request_param_t *param)
+int lcp_tag_recv_nb(lcp_manager_h mngr, lcp_task_h task, void *buffer, 
+                    size_t count, lcp_tag_info_t *tag_info, int32_t src_mask,
+                    int32_t tag_mask, lcp_request_param_t *param)
 {
 	int rc = LCP_SUCCESS;
 	lcp_unexp_ctnr_t *match;
@@ -50,20 +50,25 @@ int lcp_tag_recv_nb(lcp_manager_h mngr, lcp_task_h task, void *buffer, size_t co
         lcp_context_h ctx  = mngr->ctx;
 
 	// create a request to be matched with the received message
-        req = lcp_request_get(task);
+        req = lcp_request_get_param(task, param);
         //lcp_request_create(&req);
         if (req == NULL) {
                 mpc_common_debug_error("LCP TAG: could not create receive "
                                        "tag request.");
                 return LCP_ERROR;
         }
-	req->flags |= LCP_REQUEST_MPI_COMPLETE;
-	LCP_REQUEST_INIT_TAG_RECV(req, mngr, task, request, param->recv_info,
-										count, buffer, param->datatype);
+
+        if (param->field_mask & LCP_REQUEST_TAG_CALLBACK) {
+                req->flags           |= LCP_REQUEST_USER_CALLBACK;
+                req->recv.tag.recv_cb = param->recv_cb;
+        }
+
+        LCP_REQUEST_INIT_TAG_RECV(req, mngr, task, count, param->request, buffer, 
+                                  tag_info, src_mask, tag_mask, param->datatype);
 
 	// get interface for the request to go through
 	// if we have to try offload
-	if (ctx->config.offload || param->flags & LCP_REQUEST_TRY_OFFLOAD) {
+	if (ctx->config.offload || param->field_mask & LCP_REQUEST_TRY_OFFLOAD) {
 	        sctk_rail_info_t *iface = mngr->ifaces[mngr->priority_iface];
 		req->state.offloaded = 1;
 		// try to receive using zero copy
@@ -72,11 +77,10 @@ int lcp_tag_recv_nb(lcp_manager_h mngr, lcp_task_h task, void *buffer, size_t co
 		return rc;
 	}
 
-        mpc_common_debug_info("LCP: post recv tag comm=%d, src_tid=%d, src_uid=%lu, "
-                              "tag=%d, length=%d, buf=%p, req=%p, lcreq=%p",
-                              req->recv.tag.comm, req->recv.tag.src_tid,
-                              req->recv.tag.src_uid, req->recv.tag.tag,
-                              count, buffer, req, request);
+        mpc_common_debug_info("LCP: post recv tag comm=%d, src=%d, tag=%d, "
+                              "length=%d, buf=%p, req=%p",
+                              req->recv.tag.comm, req->recv.tag.src_tid, 
+                              req->recv.tag.tag, count, buffer, req);
 
         req->state.offloaded = 0;
 
@@ -99,8 +103,8 @@ int lcp_tag_recv_nb(lcp_manager_h mngr, lcp_task_h task, void *buffer, size_t co
 
         /* Get pointer to payload */
 	if (match->flags & LCP_RECV_CONTAINER_UNEXP_RNDV_TAG) {
-		mpc_common_debug_info("LCP: matched rndv unexp req=%p, flags=%x",
-				      match, match->flags);
+		mpc_common_debug_info("LCP: matched rndv unexp req=%p, flags=%x", 
+				      req, match->flags);
 
                 lcp_recv_rndv_tag_data(req, match + 1);
                 rc = lcp_rndv_process_rts(req, match + 1,

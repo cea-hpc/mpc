@@ -62,9 +62,8 @@ int mpc_osc_fence(int mpi_assert, mpc_win_t *win)
 
         param = (lcp_request_param_t) {
                 .send_cb = osc_flush_complete,
-                .user_request = &req,
-                .flags = LCP_REQUEST_RMA_CALLBACK |
-                        LCP_REQUEST_USER_REQUEST,
+                .request = &req,
+                .field_mask = LCP_REQUEST_RMA_CALLBACK,
         };
 
         rc = lcp_flush_nb(win->mngr, task, &param);

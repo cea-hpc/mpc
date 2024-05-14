@@ -188,6 +188,7 @@ typedef struct lcr_ptl_mem {
         ptl_handle_me_t        meh;
         lcr_ptl_txq_t         *txqt;
         uint64_t               op_count;       /* Sequence number of the last pushed op. */
+        atomic_int_least32_t   outstandings;
         mpc_common_spinlock_t  lock;
         mpc_queue_head_t       pending_flush;
 } lcr_ptl_mem_t;
@@ -279,6 +280,7 @@ typedef struct lcr_ptl_op {
                         };
                 } ato;
 
+                //FIXME: add union for flush type (ep, mem, iface)
                 struct {
                         int             outstandings;
                         mpc_list_elem_t mem_head;
@@ -620,10 +622,10 @@ static inline char * __ptl_get_rail_callback_name(int rail_number, char * buff, 
 static inline int lcr_ptl_do_op(lcr_ptl_op_t *op) {
 
         int rc = MPC_LOWCOMM_SUCCESS;
-        mpc_common_debug("LCR PTL: op type=%s, nid=%llu, pid=%llu, pti=%d, "
-                         "id=%d, mdh=%llu, txq=%p, size=%llu, hdr=0x%08x.", 
-                         lcr_ptl_op_decode(op), op->addr.phys.nid,
-                         op->addr.phys.pid, op->pti, op->id,
+        mpc_common_debug("LCR PTL: op id=%d, op=%p, type=%s, nid=%llu, pid=%llu, pti=%d, "
+                         "mdh=%llu, txq=%p, size=%llu, hdr=0x%08x.", 
+                         op->id, op, lcr_ptl_op_decode(op), op->addr.phys.nid,
+                         op->addr.phys.pid, op->pti,
                          op->mdh, op->txq, op->size, op->hdr);
 
         switch(op->type) {
@@ -952,7 +954,7 @@ int lcr_ptl_atomic_cswap(_mpc_lowcomm_endpoint_t *ep,
                          size_t size,
                          lcr_completion_t *comp);
 
-void lcr_ptl_flush_txq(lcr_ptl_txq_t *txq, int64_t completed);
+int lcr_ptl_flush_txq(lcr_ptl_mem_t *mem, lcr_ptl_txq_t *txq, int64_t completed);
 
 int lcr_ptl_flush_mem_ep(sctk_rail_info_t *rail,
                          _mpc_lowcomm_endpoint_t *ep,

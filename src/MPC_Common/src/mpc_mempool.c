@@ -109,6 +109,7 @@ int mpc_mempool_init(mpc_mempool_t *mp,
                                        "memory pool data.");
                 return 1;
         }
+        memset(mp->data, 0, sizeof(mpc_mempool_data_t));
 
 	mp->data->elem_size   = size;
 	mp->data->num_elems   = 0;
@@ -135,7 +136,7 @@ int mpc_mempool_init(mpc_mempool_t *mp,
 	mpc_common_spinlock_unlock(&mp_lock);
 #endif
 
-	for(i = 0; i < mp->data->min_elems; i++)
+	for(i = 0; i < (int)mp->data->min_elems; i++)
 	{
 		_mpc_mempool_add(mp, _mpc_mempool_malloc(mp) );
 	}
@@ -308,6 +309,9 @@ void mpc_mpool_grow(mpc_mempool_t *mp)
                 elem->next = mp->free_list;
                 mp->free_list = elem;
 #endif
+                if (mp->data->obj_init_func != NULL) {
+                        mp->data->obj_init_func(mp, elem + 1);
+                }
         }
 
         /* Add chunk to list */
@@ -386,7 +390,7 @@ int mpc_mpool_init(mpc_mempool_t *mp, mpc_mempool_param_t *params)
         int rc = 0;
 
         if (params->alignment == 0 || !mpc_common_is_powerof2(params->alignment) ||
-            params->elem_per_chunk == 0 || params->max_elems < params->elem_per_chunk)
+            params->elem_per_chunk == 0 || params->max_elems < (uint32_t)params->elem_per_chunk) 
         {
                 mpc_common_debug_error("COMMON: wrong parameter, could not "
                                        "create mpool.");
@@ -406,6 +410,8 @@ int mpc_mpool_init(mpc_mempool_t *mp, mpc_mempool_param_t *params)
                 rc = 1;
                 goto err;
         }
+        memset(mp->data, 0, sizeof(mpc_mempool_data_t));
+
         mp->data->alignment        = params->alignment;
         mp->data->num_elems        = 0;
         mp->data->num_chunks       = 0;
@@ -415,6 +421,9 @@ int mpc_mpool_init(mpc_mempool_t *mp, mpc_mempool_param_t *params)
         mp->data->max_elems        = params->max_elems;
         mp->data->free_func        = params->free_func;
         mp->data->malloc_func      = params->malloc_func;
+        if (params->field_mask & MPC_COMMON_MPOOL_INIT_CALLBACK) {
+                mp->data->obj_init_func = params->obj_init_func;
+        }
         mpc_common_spinlock_init(&(mp->data->lock), 0);
 
         mpc_common_debug("MEMPOOL: user elem size=%d, alignment=%d, struct chunk size=%d.",

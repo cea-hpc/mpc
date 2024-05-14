@@ -95,7 +95,9 @@ void _mpc_handle_factory_delete(struct _mpc_handle_factory *fact, MPI_Fint handl
 static struct _mpc_handle_factory __comm_factory;
 static struct _mpc_handle_factory __types_factory;
 static struct _mpc_handle_factory __groups_factory;
+#endif
 static struct _mpc_handle_factory __requests_factory;
+#if 0
 static struct _mpc_handle_factory __wins_factory;
 static struct _mpc_handle_factory __ops_factory;
 static struct _mpc_handle_factory __infos_factory;
@@ -114,8 +116,10 @@ static void __initialize_handle_factories()
 	assume(sizeof(MPI_Group) <= sizeof(_fortran_handle_storage_t) );
 	_mpc_handle_factory_init(&__groups_factory);
 
+#endif
 	assume(sizeof(MPI_Request) <= sizeof(_fortran_handle_storage_t) );
 	_mpc_handle_factory_init(&__requests_factory);
+#if 0
 
 	assume(sizeof(MPI_Win) <= sizeof(_fortran_handle_storage_t) );
 	_mpc_handle_factory_init(&__wins_factory);
@@ -298,7 +302,7 @@ void mpc_fortran_group_delete(__UNUSED__ MPI_Fint *group)
 
 MPI_Request PMPI_Request_f2c(MPI_Fint request)
 {
-#if 0
+#if 1 
 	_fortran_handle_storage_t prequest = NULL;
 	prequest = _mpc_handle_factory_get(&__requests_factory, request);
 
@@ -313,7 +317,7 @@ MPI_Request PMPI_Request_f2c(MPI_Fint request)
 
 MPI_Fint PMPI_Request_c2f(MPI_Request request)
 {
-#if 0
+#if 1
 	_fortran_handle_storage_t prequest = NULL;
 	memcpy(&prequest, &request, sizeof(MPI_Request) );
 

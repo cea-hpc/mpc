@@ -138,6 +138,31 @@ static int _lcp_manager_init_structures(lcp_manager_h mngr)
         }
         mngr->num_ifaces = mngr->ctx->num_resources;
 
+        int key_size = sizeof(struct lcp_mem) + 
+                mngr->num_ifaces * sizeof(lcr_memp_t);
+
+        /* Initialize pool of memory handles. */
+        mngr->mem_mp = sctk_malloc(sizeof(mpc_mempool_t));
+        if (mngr->mem_mp == NULL) {
+                mpc_common_debug_error("LCP MEM: could not allocate "
+                                       "memory keys memory pool.");
+                rc = MPC_LOWCOMM_ERROR;
+                goto err;
+        }
+        mpc_mempool_param_t mp_mem_params = {
+                .alignment = MPC_COMMON_SYS_CACHE_LINE_SIZE,
+                .elem_per_chunk = 16,
+                .elem_size = key_size,
+                .max_elems = 1024,
+                .malloc_func = sctk_malloc,
+                .free_func = sctk_free
+        };
+
+        rc = mpc_mpool_init(mngr->mem_mp, &mp_mem_params);
+        if (rc != MPC_LOWCOMM_SUCCESS) {
+                goto err;
+        }
+
 err:
         return rc;
 }

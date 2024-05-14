@@ -218,6 +218,13 @@ int mpc_lowcomm_lookup_name(const char *service_name,
 
 /** This is the MPC low-level point to point interface */
 
+/** Allocate a request from lower layer. */
+void *mpc_lowcomm_request_alloc();
+/** Free a request from lower layer. */
+void mpc_lowcomm_request_free(mpc_lowcomm_request_t *request);
+/** Pass to LCP layer the upper layer request information. */
+int mpc_lowcomm_pass_mpi_request_info(size_t request_size, void (*request_init_func)(void *));
+
 /** Wait for a communication completion
  * @warning All communications issuing a request in the low-level
  * comm interface MUST be waited

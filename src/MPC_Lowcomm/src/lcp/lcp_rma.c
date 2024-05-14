@@ -60,7 +60,7 @@ enum {
  * @param arg input request buffer
  * @return size_t size of copy
  */
-size_t lcp_rma_pack(void *dest, void *arg) {
+ssize_t lcp_rma_pack(void *dest, void *arg) {
         lcp_request_t *req = (lcp_request_t *)arg;
 
         memcpy(dest, req->send.buffer, req->send.length);
@@ -68,7 +68,7 @@ size_t lcp_rma_pack(void *dest, void *arg) {
         return req->send.length;
 }
 
-size_t lcp_rma_unpack(void* req, const void *dest, size_t arg) {
+ssize_t lcp_rma_unpack(void* req, const void *dest, size_t arg) {
         UNUSED(req);
         UNUSED(dest);
         UNUSED(arg);
@@ -90,8 +90,10 @@ void lcp_rma_request_complete(lcr_completion_t *comp)
         if (req->state.remaining == 0) {
                 req->task->tcct[req->mngr->id]->rma.outstandings--;
                 lcp_mem_deregister(req->mngr, req->state.lmem);
-                lcp_request_complete(req);
-        }
+
+                lcp_request_complete(req, send.send_cb, MPC_LOWCOMM_SUCCESS, 
+                                     0);
+        } 
 }
 
 void lcp_flush_request_complete(lcr_completion_t *comp)
@@ -100,7 +102,8 @@ void lcp_flush_request_complete(lcr_completion_t *comp)
                                               state.comp);
 
         if (--req->state.comp.count == 0) {
-                lcp_request_complete(req);
+                lcp_request_complete(req, send.send_cb, MPC_LOWCOMM_SUCCESS,
+                                     0);
         }
 }
 
@@ -143,7 +146,7 @@ int lcp_rma_progress_bcopy(lcp_request_t *req)
                 goto err;
 	}
 
-        lcp_request_complete(req);
+        lcp_request_complete(req, send.send_cb, rc, req->send.length);
 
 err:
         return rc;
@@ -249,7 +252,9 @@ static inline int lcp_rma_start(lcp_ep_h ep, lcp_request_t *req)
                                                   ep->conn_map, req->send.buffer, 
                                                   req->send.length, 
                                                   LCR_IFACE_REGISTER_MEM_DYN);
+
                 if (rc != MPC_LOWCOMM_SUCCESS) {
+                        //FIXME: something is off with this error handling
                         rc = MPC_LOWCOMM_ERROR;
                 }
         } else {
@@ -259,32 +264,32 @@ static inline int lcp_rma_start(lcp_ep_h ep, lcp_request_t *req)
         return rc;
 }
 
-int lcp_put_nb(lcp_ep_h ep, lcp_task_h task, const void *buffer, size_t length,
-               uint64_t remote_disp, lcp_mem_h rkey,
-               const lcp_request_param_t *param) 
+lcp_status_ptr_t lcp_put_nb(lcp_ep_h ep, lcp_task_h task, const void *buffer, size_t length,
+                            uint64_t remote_disp, lcp_mem_h rkey,
+                            const lcp_request_param_t *param) 
 {
+        lcp_status_ptr_t status = NULL;
         int rc = MPC_LOWCOMM_SUCCESS;
         lcp_request_t *req;
 
-        req = lcp_request_get(task);
+        req = lcp_request_get_param(task, param);
         if (req == NULL) {
                 mpc_common_debug_error("LCP: could not create request.");
                 rc = MPC_LOWCOMM_ERROR;
                 goto err;
         }
-        LCP_REQUEST_INIT_RMA_PUT(req, ep->mngr, task, length, ep, buffer, 
+        LCP_REQUEST_INIT_RMA_PUT(req, ep->mngr, task, length, param->request, ep, buffer, 
                                   0 /* no ordering for rma */, 0, param->datatype, 
                                   rkey, remote_disp);
 
         task->tcct[ep->mngr->id]->rma.outstandings++;
 
-        if (param->flags & LCP_REQUEST_RMA_CALLBACK) {
-                assert(param->flags & LCP_REQUEST_USER_REQUEST);
+        if (param->field_mask & LCP_REQUEST_RMA_CALLBACK) {
+                assert(param->field_mask & LCP_REQUEST_USER_REQUEST);
                 req->send.send_cb = param->send_cb;
-                req->user_data    = param->user_request;
         }
 
-        if (param->flags & LCP_REQUEST_USER_MEMH) {
+        if (param->field_mask & LCP_REQUEST_USER_MEMH) {
                 req->flags |= LCP_REQUEST_USER_PROVIDED_MEMH;
                 req->state.lmem = param->mem;
         }
@@ -295,18 +300,24 @@ int lcp_put_nb(lcp_ep_h ep, lcp_task_h task, const void *buffer, size_t length,
         }
 
         rc = lcp_request_send(req);
+        if (rc != MPC_LOWCOMM_SUCCESS) {
+                status = (lcp_status_ptr_t)(uint64_t)rc;
+        } else {
+                status = (lcp_status_ptr_t)(req + 1);
+        }
 err:
-        return rc;
+        return status;
 }
 
-int lcp_get_nb(lcp_ep_h ep, lcp_task_h task, void *buffer, 
-               size_t length, uint64_t remote_addr, lcp_mem_h rkey,
-               const lcp_request_param_t *param) 
+lcp_status_ptr_t lcp_get_nb(lcp_ep_h ep, lcp_task_h task, void *buffer, 
+                            size_t length, uint64_t remote_addr, lcp_mem_h rkey,
+                            const lcp_request_param_t *param) 
 {
+        lcp_status_ptr_t status = NULL;
         int rc = MPC_LOWCOMM_SUCCESS;
         lcp_request_t *req;
 
-        if (!(param->flags & LCP_REQUEST_USER_MEMH)) {
+        if (!(param->field_mask & LCP_REQUEST_USER_MEMH)) {
                 mpc_common_debug_error("LCP RMA: rma get without "
                                        "user-provided memory handle not "
                                        "supported yet.");
@@ -314,22 +325,22 @@ int lcp_get_nb(lcp_ep_h ep, lcp_task_h task, void *buffer,
                 goto err;
         }
 
-        req = lcp_request_get(task);
+        req = lcp_request_get_param(task, param);
         if (req == NULL) {
                 rc = MPC_LOWCOMM_ERROR;
                 goto err;
         }
-        LCP_REQUEST_INIT_RMA_GET(req, ep->mngr, task, length, ep, (void *)buffer, 
-                                  0 /* no ordering for rma */, 0, param->datatype, 
-                                  rkey, remote_addr);
+        LCP_REQUEST_INIT_RMA_GET(req, ep->mngr, task, length, param->request, 
+                                 ep, (void *)buffer, 
+                                 0 /* no ordering for rma */, 0, param->datatype, 
+                                 rkey, remote_addr);
 
-        if (param->flags & LCP_REQUEST_RMA_CALLBACK) {
-                assert(param->flags & LCP_REQUEST_USER_REQUEST);
+        if (param->field_mask & LCP_REQUEST_RMA_CALLBACK) {
+                assert(param->field_mask & LCP_REQUEST_USER_REQUEST);
                 req->send.send_cb = param->send_cb;
-                req->user_data    = param->user_request;
         }
 
-        if (param->flags & LCP_REQUEST_USER_MEMH) {
+        if (param->field_mask & LCP_REQUEST_USER_MEMH) {
                 req->flags |= LCP_REQUEST_USER_PROVIDED_MEMH;
                 req->state.lmem = param->mem;
         }
@@ -340,8 +351,13 @@ int lcp_get_nb(lcp_ep_h ep, lcp_task_h task, void *buffer,
         }
 
         rc = lcp_request_send(req);
+        if (rc != MPC_LOWCOMM_SUCCESS) {
+                status = (lcp_status_ptr_t)(uint64_t)rc;
+        } else {
+                status = (lcp_status_ptr_t)(req + 1);
+        }
 err:
-        return rc;
+        return status;
 }
 
 int lcp_flush_manager_nb(lcp_request_t *req)
@@ -465,35 +481,32 @@ int lcp_flush_nb(lcp_manager_h mngr, lcp_task_h task,
         int rc = MPC_LOWCOMM_SUCCESS;
         lcp_request_t *req;
 
-        req = lcp_request_get(task);
+        req = lcp_request_get_param(task, param);
         if (req == NULL) {
                 rc = MPC_LOWCOMM_ERROR;
                 goto err;
         }
-        LCP_REQUEST_INIT_RMA_FLUSH(req, mngr, task, 0, NULL, NULL, 
+
+        LCP_REQUEST_INIT_RMA_FLUSH(req, mngr, task, 0, param->request, NULL, NULL, 
                                    0 /* no ordering for rma */, 0, 
                                    param->datatype);
 
         req->state.comp.comp_cb = lcp_flush_request_complete;
         req->send.flush.flush   = task->tcct[mngr->id]->rma.flush_counter++;
 
-        if (param->flags & LCP_REQUEST_USER_MEMH) {
+        if (param->field_mask & LCP_REQUEST_USER_MEMH) {
                 req->flags     |= LCP_REQUEST_USER_PROVIDED_MEMH;
                 req->state.lmem = param->mem;
         }
 
-        if (param->flags & LCP_REQUEST_USER_EPH) {
+        if (param->field_mask & LCP_REQUEST_USER_EPH) {
                 req->flags  |= LCP_REQUEST_USER_PROVIDED_EPH;
                 req->send.ep = param->ep;
         }
 
-        if (param->flags & LCP_REQUEST_RMA_CALLBACK) {
+        if (param->field_mask & LCP_REQUEST_RMA_CALLBACK) {
                 req->flags       |= LCP_REQUEST_RMA_COMPLETE;
                 req->send.send_cb = param->send_cb;
-        }
-
-        if (param->flags & LCP_REQUEST_USER_REQUEST) {
-                req->user_data = param->user_request;
         }
 
         switch (req->flags & LCP_RMA_FLUSH_MASK) {

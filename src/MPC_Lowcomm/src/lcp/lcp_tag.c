@@ -86,30 +86,39 @@
  * @param data data to pack
  * @return size_t size of packed data
  */
-static size_t lcp_send_tag_eager_pack(void *dest, void *data)
+static ssize_t lcp_send_tag_eager_pack(void *dest, void *data)
 {
-        ssize_t packed_length;
+        ssize_t packed_length = 0;
+        ssize_t packed_payload_length = 0;
 	lcp_tag_hdr_t *hdr = dest;
 	lcp_request_t *req = data;
         void *src = req->datatype == LCP_DATATYPE_CONTIGUOUS ?
-               req->send.buffer : NULL;
+               req->send.buffer : NULL; 
+	
+	hdr->comm      = req->send.tag.comm;
+	hdr->tag       = req->send.tag.tag;
+	hdr->src_tid   = req->send.tag.src_tid;
+        hdr->dest_tid  = req->send.tag.dest_tid;
+	hdr->seqn      = req->seqn; 
 
-	hdr->comm     = req->send.tag.comm;
-	hdr->tag      = req->send.tag.tag;
-	hdr->src_tid  = req->send.tag.src_tid;
-        hdr->dest_tid = req->send.tag.dest_tid;
-	hdr->seqn     = req->seqn;
+        packed_length += sizeof(*hdr);
 
-        packed_length = lcp_datatype_pack(req->mngr->ctx, req, req->datatype,
-                                          (void *)(hdr + 1), src, 
-                                          req->send.length);
+        packed_payload_length = lcp_datatype_pack(req->mngr->ctx, req, req->datatype,
+                                                   (void *)(hdr + 1), src, 
+                                                   req->send.length);
+        if (packed_payload_length < 0) {
+                packed_length = packed_payload_length;
+        } else {
+                packed_length += packed_payload_length;
+        }
 
-	return sizeof(*hdr) + packed_length;
+	return packed_length;
 }
 
-static size_t lcp_send_tag_eager_sync_pack(void *dest, void *data)
+static ssize_t lcp_send_tag_eager_sync_pack(void *dest, void *data)
 {
-        ssize_t packed_length;
+        ssize_t packed_length = 0;
+        ssize_t packed_payload_length = 0;
 	lcp_tag_sync_hdr_t *hdr = dest;
 	lcp_request_t *req = data;
         void *src = req->datatype == LCP_DATATYPE_CONTIGUOUS ?
@@ -122,12 +131,19 @@ static size_t lcp_send_tag_eager_sync_pack(void *dest, void *data)
 	hdr->base.seqn     = req->seqn;
         hdr->msg_id        = req->msg_id;
         hdr->src_uid       = req->send.tag.src_uid;
+        
+        packed_length += sizeof(*hdr);
 
-        packed_length = lcp_datatype_pack(req->mngr->ctx, req, req->datatype,
+        packed_payload_length = lcp_datatype_pack(req->mngr->ctx, req, req->datatype,
                                           (void *)(hdr + 1), src, 
                                           req->send.length);
+        if (packed_payload_length < 0) {
+                packed_length = packed_payload_length;
+        } else {
+                packed_length += packed_payload_length;
+        }
 
-	return sizeof(*hdr) + packed_length;
+	return packed_length;
 }
 
 /**
@@ -137,7 +153,7 @@ static size_t lcp_send_tag_eager_sync_pack(void *dest, void *data)
  * @param data data to pack
  * @return size_t size of packed data
  */
-size_t lcp_send_ack_pack(void *dest, void *data)
+ssize_t lcp_send_ack_pack(void *dest, void *data)
 {
 	lcp_ack_hdr_t *hdr = dest;
 	lcp_request_t *req = data;
@@ -148,7 +164,7 @@ size_t lcp_send_ack_pack(void *dest, void *data)
 	return sizeof(*hdr);
 }
 
-static size_t lcp_send_tag_rndv_pack(void *dest, void *data)
+static ssize_t lcp_send_tag_rndv_pack(void *dest, void *data) 
 {
         size_t rkey_packed_size = 0;
 	lcp_rndv_hdr_t *hdr = dest;
@@ -181,13 +197,9 @@ static void lcp_tag_send_complete(lcr_completion_t *comp) {
 	lcp_request_t *req = mpc_container_of(comp, lcp_request_t,
 					      state.comp);
 
-        req->info->length = req->send.length;
-        req->info->src    = req->send.tag.src_tid;
-        req->info->tag    = req->send.tag.tag;
-
-        if ((req->flags & LCP_REQUEST_REMOTE_COMPLETED) &&
+        if ((req->flags & LCP_REQUEST_REMOTE_COMPLETED) && 
             (req->flags & LCP_REQUEST_LOCAL_COMPLETED)) {
-                lcp_request_complete(req);
+                lcp_request_complete(req, send.send_cb, req->status, req->send.length);
         }
 }
 
@@ -196,11 +208,12 @@ static void lcp_tag_recv_complete(lcr_completion_t *comp) {
 	lcp_request_t *req = mpc_container_of(comp, lcp_request_t,
 					      state.comp);
 
-        req->info->length = req->recv.send_length;
-        req->info->src    = req->recv.tag.src_tid;
-        req->info->tag    = req->recv.tag.tag;
+        req->recv.tag.info.length = req->recv.send_length;
+        req->recv.tag.info.src    = req->recv.tag.src_tid;
+        req->recv.tag.info.tag    = req->recv.tag.tag;
 
-	lcp_request_complete(req);
+	lcp_request_complete(req, recv.tag.recv_cb, req->status, 
+                             &req->recv.tag.info);
 }
 
 static void lcp_tag_task_bcopy_complete(lcp_task_completion_t *self) {
@@ -500,8 +513,7 @@ int lcp_send_eager_sync_ack(lcp_request_t *super, void *data)
         mpc_common_debug("LCP TAG: send sync ack. dest_tid=%d",
                          hdr->base.dest_tid);
 
-
-        payload_size = lcp_send_eager_bcopy(ack, lcp_send_ack_pack,
+        payload_size = lcp_send_eager_bcopy(ack, lcp_send_ack_pack, 
                                             LCP_AM_ID_ACK_SYNC);
         if (payload_size < 0) {
                 rc = MPC_LOWCOMM_ERROR;
@@ -509,7 +521,8 @@ int lcp_send_eager_sync_ack(lcp_request_t *super, void *data)
         }
 
         /* Complete ack request */
-        lcp_request_complete(ack);
+        lcp_request_complete(ack, send.send_cb, MPC_LOWCOMM_SUCCESS, 
+                             ack->send.length);
 
 err:
 	return rc;
@@ -539,14 +552,13 @@ int lcp_send_rndv_tag_start(lcp_request_t *req)
 {
         int rc;
 
-        /* Set both completion flags since completion will be called only once
-         * upon reception of FIN message */
+        //FIXME: effectively set REMOTE_COMPLETED upon reception of the FIN
+        //       message.
         req->flags |= LCP_REQUEST_LOCAL_COMPLETED |
                 LCP_REQUEST_REMOTE_COMPLETED;
 	req->state.comp = (lcr_completion_t) {
                 .comp_cb = lcp_tag_send_complete
         };
-        req->msg_id = (uint64_t)req->msg_id;
 
         rc = lcp_send_rndv_start(req);
         if (rc != MPC_LOWCOMM_SUCCESS) {
@@ -561,6 +573,19 @@ err:
 /* ============================================== */
 /* Receive                                        */
 /* ============================================== */
+
+static inline size_t lcp_recv_set_truncate(lcp_request_t *req) {
+        size_t length = req->recv.send_length;
+        /* Check for truncation. */
+        if (req->recv.send_length > req->recv.length) {
+                length = req->recv.length;
+                req->status = MPC_LOWCOMM_ERR_TRUNCATE;
+                mpc_common_debug_warning("LCP TAG: request truncated.");
+        } 
+
+        return length;
+}
+
 int lcp_recv_eager_tag_data(lcp_request_t *req, void *data)
 {
         int rc = MPC_LOWCOMM_SUCCESS;
@@ -571,6 +596,9 @@ int lcp_recv_eager_tag_data(lcp_request_t *req, void *data)
                               req->recv.tag.src_tid, req->recv.tag.dest_tid, 
                               req->recv.tag.tag, req->recv.tag.comm, 
                               req->recv.send_length, req->seqn);
+
+        /* Overwrite send length in case truncation is needed. */
+        req->recv.send_length = lcp_recv_set_truncate(req);
 
         /* copy data to receiver buffer and complete request */
         unpacked_len = lcp_datatype_unpack(req->mngr->ctx, req, req->datatype, 
@@ -604,6 +632,9 @@ void lcp_recv_rndv_tag_data(lcp_request_t *req, void *data)
         req->state.comp        = (lcr_completion_t) {
                 .comp_cb = lcp_tag_recv_complete,
         };
+
+        /* Overwrite send length in case truncation is needed. */
+        req->recv.send_length = lcp_recv_set_truncate(req);
 }
 
 /* ============================================== */

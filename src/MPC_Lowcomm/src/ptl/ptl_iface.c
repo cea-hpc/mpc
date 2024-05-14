@@ -89,9 +89,9 @@ static inline int lcr_ptl_invoke_am(sctk_rail_info_t *rail,
 int lcr_ptl_complete_op(lcr_ptl_op_t *op) 
 {
         int rc = MPC_LOWCOMM_SUCCESS;
-        mpc_common_debug("LCR PTL: complete op. id=%llu, size=%llu, "
+        mpc_common_debug("LCR PTL: complete op. id=%llu, op=%p, size=%llu, "
                          "nid=%lu, pid=%lu, pti=%d, type=%s, hdr=0x%08x.",
-                         op->id, op->size, op->addr.phys.nid,
+                         op->id, op, op->size, op->addr.phys.nid,
                          op->addr.phys.pid, op->pti, lcr_ptl_op_decode(op),
                          op->hdr);
 
@@ -258,6 +258,16 @@ static int _lcr_ptl_iface_process_event_tag(sctk_rail_info_t *rail,
                 op->comp->comp_cb(op->comp);
                 break;
         case PTL_EVENT_ACK:
+                if (ev->ni_fail_type == PTL_NI_PT_DISABLED) {
+                        //FIXME: need to handle such error. As soon as the first
+                        //       event with such error, subsequent operations
+                        //       should not be pulled from TX Queue, all event
+                        //       should be drained from the Event Queue,
+                        //       operation associated to these event need to be
+                        //       handled respecting message ordering. 
+                        mpc_common_debug_fatal("LCR PTL: PT DISABLED. Increase "
+                                               "num_eager_blocks.")
+                }
                 switch (op->type) {
                 case LCR_PTL_OP_TAG_BCOPY:
                         sctk_free(op->am.bcopy_buf);
@@ -316,7 +326,6 @@ static int _lcr_ptl_iface_process_event_tag(sctk_rail_info_t *rail,
         case PTL_EVENT_ATOMIC_OVERFLOW:       /* a previously received ATOMIC matched a just appended one */
         case PTL_EVENT_PT_DISABLED:           /* ERROR: The local PTE is disabled (FLOW_CTRL) */
         case PTL_EVENT_LINK:                  /* MISC: A new ME has been linked, (maybe not useful) */
-                not_reachable();              /* have been disabled */
                 break;
         default:
                 break;
@@ -367,7 +376,6 @@ err:
 //NOTE: must be called with mem lock
 ptl_size_t lcr_ptl_poll_mem(lcr_ptl_mem_t *mem) 
 {
-        uint64_t op_done;
         ptl_ct_event_t ct_ev;
 
         /* Poll CT and update operation count atomically. */
@@ -377,9 +385,7 @@ ptl_size_t lcr_ptl_poll_mem(lcr_ptl_mem_t *mem)
                 mpc_common_debug_warning("LCR PTL: %llu event failures.", 
                                          ct_ev.failure);
         }
-        op_done = ct_ev.success;
-
-        return op_done;
+        return ct_ev.success;
 }
 
 int lcr_ptl_iface_progress_rma(lcr_ptl_rail_info_t *srail) 
@@ -408,7 +414,7 @@ int lcr_ptl_iface_progress_rma(lcr_ptl_rail_info_t *srail)
 
                 num_eps = atomic_load(&srail->num_eps);
                 for (i = 0; i < num_eps; i++) {
-                        lcr_ptl_flush_txq(&mem->txqt[i], completed);
+                        lcr_ptl_flush_txq(mem, &mem->txqt[i], completed);
                 } 
         } 
         mpc_common_spinlock_unlock(&srail->net.rma.lock);
@@ -442,7 +448,10 @@ int lcr_ptl_iface_progress(sctk_rail_info_t *rail)
                                               ev.user_ptr, ev.start,
                                               ev.remote_offset, *(uint64_t *)&srail->net.nih);
 
-                        if (op->pti == srail->net.am.pti) {
+                        if (ev.type == PTL_EVENT_PT_DISABLED) {
+                                mpc_common_debug_fatal("LCR PTL: PT DISABLED. Increase "
+                                                       "num_eager_block.");
+                        } else if (op->pti == srail->net.am.pti) {
                                 _lcr_ptl_iface_process_event_am(rail, &ev);
                         } else if (op->pti == srail->net.tag.pti) {
                                 _lcr_ptl_iface_process_event_tag(rail, &ev);
@@ -635,7 +644,7 @@ static int _lcr_ptl_iface_init_am(lcr_ptl_rail_info_t *srail)
                 .elem_per_chunk = srail->config.num_eager_blocks,
                 .elem_size      = sizeof(lcr_ptl_recv_block_t) + 
                         srail->config.eager_block_size,
-                .max_elems      = 16,
+                .max_elems      = 32, 
                 .alignment      = MPC_COMMON_SYS_CACHE_LINE_SIZE,
                 .malloc_func    = sctk_malloc,
                 .free_func      = sctk_free,
@@ -804,6 +813,7 @@ int lcr_ptl_mem_activate(lcr_ptl_rail_info_t *srail,
 
         mem->lifetime = lt;
         mpc_queue_init_head(&mem->pending_flush);
+        mem->op_count = 0;
 
         mem->txqt  = sctk_malloc(LCR_PTL_MAX_EPS * sizeof(lcr_ptl_txq_t));
         if (mem->txqt == NULL) {
@@ -817,6 +827,8 @@ int lcr_ptl_mem_activate(lcr_ptl_rail_info_t *srail,
                 mpc_queue_init_head(&mem->txqt[i].ops);
                 mpc_common_spinlock_init(&mem->txqt[i].lock, 0);
         }
+        atomic_store(&mem->outstandings, 0);
+
 err:
         return rc;
 }
@@ -853,7 +865,7 @@ static int _lcr_ptl_iface_init_rma(lcr_ptl_rail_info_t *srail)
                                 &srail->net.rma.pti
                                ));
 
-        /* Initialize pool of recv operations. */
+        /* Initialize pool of memory handles. */
         srail->net.rma.mem_mp = sctk_malloc(sizeof(mpc_mempool_t));
         if (srail->net.rma.mem_mp == NULL) {
                 mpc_common_debug_error("LCR PTL: could not allocate static "
@@ -882,7 +894,7 @@ static int _lcr_ptl_iface_init_rma(lcr_ptl_rail_info_t *srail)
 
         rc = lcr_ptl_mem_activate(srail, 
                                   LCR_PTL_MEM_DYNAMIC,
-                                  atomic_fetch_add(&srail->net.rma.mem_uid, 1), 
+                                  0, 
                                   PTL_SIZE_MAX, 
                                   srail->net.rma.dynamic_mem);
         mpc_common_spinlock_init(&srail->net.rma.dynamic_mem->lock, 0);

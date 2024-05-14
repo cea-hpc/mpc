@@ -71,9 +71,7 @@ int lcr_ptl_mem_register(struct sctk_rail_info_s *rail,
 
         if (flags & LCR_IFACE_REGISTER_MEM_DYN) {
                 ctx->mem = srail->net.rma.dynamic_mem;
-
-                assert(ctx->mem->cth != PTL_INVALID_HANDLE);
-
+                assert(!PtlHandleIsEqual(ctx->mem->cth, PTL_INVALID_HANDLE));
         } else {
                 ctx->mem = mpc_mpool_pop(srail->net.rma.mem_mp); 
                 if (ctx->mem == NULL) {
@@ -174,8 +172,9 @@ int lcr_ptl_unpack_rkey(sctk_rail_info_t *rail,
  * Flush operations.
  *################################################*/
 
-void lcr_ptl_flush_txq(lcr_ptl_txq_t *txq, int64_t completed) 
+int lcr_ptl_flush_txq(lcr_ptl_mem_t *mem, lcr_ptl_txq_t *txq, int64_t completed) 
 {
+        UNUSED(mem);
         lcr_ptl_op_t *op;
         mpc_queue_iter_t iter;
 
@@ -191,6 +190,7 @@ void lcr_ptl_flush_txq(lcr_ptl_txq_t *txq, int64_t completed)
         }
         
         mpc_common_spinlock_unlock(&txq->lock);
+
 }
 
 int lcr_ptl_exec_flush_mem_ep(lcr_ptl_mem_t *mem, lcr_ptl_ep_info_t *ep, 
@@ -204,7 +204,7 @@ int lcr_ptl_exec_flush_mem_ep(lcr_ptl_mem_t *mem, lcr_ptl_ep_info_t *ep,
         completed    = lcr_ptl_poll_mem(mem);
         outstandings = mpc_common_max(0, *flush_op->flush.op_count - completed);
 
-        lcr_ptl_flush_txq(txq, completed);
+        lcr_ptl_flush_txq(mem, txq, completed);
 
         if (outstandings > 0) {
                 mpc_queue_push(&mem->pending_flush, &flush_op->elem);
@@ -285,7 +285,7 @@ static int lcr_ptl_exec_flush_ep(lcr_ptl_rail_info_t *srail,
                 /* Count the number of oustanding operations. */
                 outstandings = mpc_common_max(0, flush_op->flush.op_count[i] - completed);
 
-                lcr_ptl_flush_txq(&mem->txqt[ep->idx], completed);
+                lcr_ptl_flush_txq(mem, &mem->txqt[ep->idx], completed);
 
                 if (outstandings > 0) {
                         mpc_queue_push(&mem->pending_flush, &flush_op->elem);
@@ -362,7 +362,7 @@ static int lcr_ptl_exec_flush_mem(lcr_ptl_rail_info_t *srail,
 
         num_txqs = atomic_load(&srail->num_eps);
         for (i = 0; i < num_txqs; i++) {
-                lcr_ptl_flush_txq(&mem->txqt[i], completed);
+                lcr_ptl_flush_txq(mem, &mem->txqt[i], completed);
         }
         if (outstandings > 0) {
                 mpc_queue_push(&mem->pending_flush, &flush_op->elem);
@@ -439,7 +439,7 @@ static int lcr_ptl_exec_flush_iface(lcr_ptl_rail_info_t *srail, lcr_ptl_op_t *fl
                 num_eps = atomic_load(&srail->num_eps);
                 /* Loop on all TX Queues that has been linked on this memory. */
                 for (i = 0; i < num_eps; i++) {
-                        lcr_ptl_flush_txq(&mem->txqt[i], completed);
+                        lcr_ptl_flush_txq(mem, &mem->txqt[i], completed);
                 }
 
                 if (outstandings > 0 && !is_pushed) {
@@ -477,6 +477,7 @@ int lcr_ptl_flush_iface(sctk_rail_info_t *rail,
         }
         mpc_list_init_head(&op->flush.mem_head);
 
+        //FIXME: no need for underscore in function name. To be removed.
         _lcr_ptl_init_op_common(op, 0, PTL_INVALID_HANDLE, 
                                 LCR_PTL_PROCESS_ANY, 
                                 srail->net.rma.pti, 

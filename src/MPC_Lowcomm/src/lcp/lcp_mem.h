@@ -35,6 +35,8 @@
 #include "lcr/lcr_def.h"
 #include "lcp_def.h"
 
+#include "rail.h"
+
 #include <bitmap.h>
 #include <list.h>
 #include <mpc_common_spinlock.h>
@@ -62,12 +64,12 @@ struct lcp_mem {
         uint64_t base_addr;
         size_t length;
         int num_ifaces;
-        lcr_memp_t *mems; /* table of memp pointers */
         bmap_t bm;
         unsigned flags;
         void * pointer_to_mmu_ctx; /* When handled by the MMU this 
                                       points to the management slot */
         mpc_list_elem_t elem; /* Element in list of active memories. */
+        lcr_memp_t mems[0]; /* table of memp pointers */
 };
 
 int lcp_mem_create(lcp_manager_h mngr, lcp_mem_h *mem_p);
