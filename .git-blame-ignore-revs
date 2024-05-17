@@ -27,3 +27,6 @@ b06f69b28ad67b6a25f75430e7db11620b3169ab
 
 # MPI ABI: Uncrustify all modified files
 864f9517c7a28368275f40a35a20eb3587a44720
+
+# PRECOMM: Apply pre-commit rules on all files
+26c9fc2084ad0a137c2572ed045d0bdeb038b6f4
