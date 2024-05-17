@@ -1,0 +1,19 @@
+# See https://pre-commit.com for more information
+# See https://pre-commit.com/hooks.html for more hooks
+repos:
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+    -   id: check-executables-have-shebangs
+    -   id: check-merge-conflict
+    -   id: check-yaml
+        exclude: .gitlab-ci.yml # Error caused by syntax "<<: *run_by_main"
+    -   id: end-of-file-fixer
+    -   id: trailing-whitespace
+        args: [--markdown-linebreak-ext=md]
+        exclude: .gitlab/issue_templates/bugreport.md
+-   repo: git@gitlab.paratools.com:cea/mpc-pre-commit-hooks.git
+    rev: 90dac57b3624db79877f93a59d218255463d708f
+    hooks:
+    -   id: git-blame-ignore-revs
+exclude: (.m4|.in|.3in|.f90|src/MPC_IO/src/romio)
