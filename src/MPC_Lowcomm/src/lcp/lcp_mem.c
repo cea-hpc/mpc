@@ -88,7 +88,7 @@ struct lcp_pinning_entry * lcp_pinning_entry_new(void * start, size_t size, lcp_
 
 int lcp_pinning_entry_contains(struct lcp_pinning_entry *entry, void * start, size_t size, bmap_t bitmap)
 {
-        if( (entry->start <= start) && ((start + size) <= (entry->start + entry->size)) 
+        if( (entry->start <= start) && ((start + size) <= (entry->start + entry->size))
             && (entry->size == size) && MPC_BITMAP_AND(entry->mem_entry->bm, bitmap))
         {
                 mpc_common_nodebug("(%p - %lld) is in (%p -- %lld)", start, size, entry->start, entry->size);
@@ -170,7 +170,7 @@ int lcp_pinning_entry_list_release(struct lcp_pinning_entry_list *list, void (*f
 }
 
 
-struct lcp_pinning_entry * lcp_pinning_entry_list_find_no_lock(struct lcp_pinning_entry_list * list, 
+struct lcp_pinning_entry * lcp_pinning_entry_list_find_no_lock(struct lcp_pinning_entry_list * list,
                                                                void * start, size_t size, bmap_t bitmap)
 {
         struct lcp_pinning_entry * ret = NULL;
@@ -193,7 +193,7 @@ struct lcp_pinning_entry * lcp_pinning_entry_list_find_no_lock(struct lcp_pinnin
         return ret;
 }
 
-struct lcp_pinning_entry * lcp_pinning_entry_list_find(struct lcp_pinning_entry_list * list, void * start, 
+struct lcp_pinning_entry * lcp_pinning_entry_list_find(struct lcp_pinning_entry_list * list, void * start,
                                                        size_t size, bmap_t bitmap)
 {
         struct lcp_pinning_entry * ret = NULL;
@@ -411,7 +411,7 @@ int lcp_pinning_mmu_unpin(lcp_context_h  ctx, lcp_mem_h mem)
 
 /**
  * @brief Pack data as rkey buffer.
- * 
+ *
  * @param ctx lcp context
  * @param mem data to pack
  * @param dest packed rkey buffer
@@ -435,7 +435,7 @@ size_t lcp_mem_rkey_pack(lcp_context_h ctx, lcp_mem_h mem, void *dest)
                 if (MPC_BITMAP_GET(mem->bm, i)) {
                         iface = ctx->resources[i].iface;
                         //FIXME: no error handling in case returned size is < 0
-                        packed_size += iface->iface_pack_memp(iface, &mem->mems[i], 
+                        packed_size += iface->iface_pack_memp(iface, &mem->mems[i],
                                                               rkey_buf + packed_size);
                 }
         }
@@ -445,14 +445,14 @@ size_t lcp_mem_rkey_pack(lcp_context_h ctx, lcp_mem_h mem, void *dest)
 
 /**
  * @brief Pack data as rkey and return buffer size.
- * 
+ *
  * @param ctx lcp context
  * @param mem memory to pack
  * @param rkey_buf_p output rkey buffer
  * @param rkey_len output rkey buffer length
  * @return int LCP_SUCCESS in case of success
  */
-int lcp_mem_pack(lcp_context_h ctx, lcp_mem_h mem, 
+int lcp_mem_pack(lcp_context_h ctx, lcp_mem_h mem,
                  void **rkey_buf_p, size_t *rkey_len)
 {
         int i;
@@ -486,7 +486,7 @@ void lcp_mem_release_rkey_buf(void *rkey_buffer)
         sctk_free(rkey_buffer);
 }
 
-int lcp_mem_unpack(lcp_context_h ctx, lcp_mem_h *mem_p, 
+int lcp_mem_unpack(lcp_context_h ctx, lcp_mem_h *mem_p,
                    void *src, size_t size)
 {
         int i, rc = LCP_SUCCESS;
@@ -517,8 +517,8 @@ int lcp_mem_unpack(lcp_context_h ctx, lcp_mem_h *mem_p,
         for (i=0; i<ctx->num_resources; i++) {
                 if (MPC_BITMAP_GET(mem->bm, i)) {
                         iface = ctx->resources[i].iface;
-                        unpacked_size += iface->iface_unpack_memp(iface, 
-                                                                  &mem->mems[i], 
+                        unpacked_size += iface->iface_unpack_memp(iface,
+                                                                  &mem->mems[i],
                                                                   p + unpacked_size);
                         mem->num_ifaces++;
                         if (unpacked_size == size) {
@@ -531,7 +531,7 @@ int lcp_mem_unpack(lcp_context_h ctx, lcp_mem_h *mem_p,
         assert(size == unpacked_size);
 
         *mem_p = mem;
-err: 
+err:
         return rc;
 }
 
@@ -616,7 +616,7 @@ int lcp_mem_register_with_bitmap(lcp_context_h ctx,
         (*mem_p)->base_addr = (uint64_t)buffer;
         (*mem_p)->bm = bitmap;
 
-        rc = lcp_mem_reg_from_map(ctx, *mem_p, bitmap, buffer, length); 
+        rc = lcp_mem_reg_from_map(ctx, *mem_p, bitmap, buffer, length);
 err:
         return rc;
 }
@@ -639,7 +639,7 @@ int lcp_mem_register(lcp_context_h ctx,
 
 /**
  * @brief Post a buffer
- * 
+ *
  * @param ctx lcp context
  * @param mem_p memory pointer
  * @param buffer buffer to post
@@ -649,13 +649,13 @@ int lcp_mem_register(lcp_context_h ctx,
  * @param tag_ctx tag context
  * @return int LCP_SUCCESS in case of success
  */
-int lcp_mem_post_from_map(lcp_context_h ctx, 
-                          lcp_mem_h mem, 
+int lcp_mem_post_from_map(lcp_context_h ctx,
+                          lcp_mem_h mem,
                           bmap_t bm,
-                          void *buffer, 
+                          void *buffer,
                           size_t length,
                           lcr_tag_t tag,
-                          unsigned flags, 
+                          unsigned flags,
                           lcr_tag_context_t *tag_ctx)
 {
         int rc = LCP_SUCCESS;
@@ -693,7 +693,7 @@ int lcp_mem_post_from_map(lcp_context_h ctx,
                         continue;
                 }
                 iface = ctx->resources[i].iface;
-                rc = iface->post_tag_zcopy(iface, tag, ign, iov, 
+                rc = iface->post_tag_zcopy(iface, tag, ign, iov,
                                            iovcnt, flags, tag_ctx);
                 if (rc != LCP_SUCCESS) {
                         mpc_common_debug_error("LCP MEM: could not post on "
@@ -713,7 +713,7 @@ err:
         return rc;
 }
 
-int lcp_mem_unpost(lcp_context_h ctx, lcp_mem_h mem, lcr_tag_t tag) 
+int lcp_mem_unpost(lcp_context_h ctx, lcp_mem_h mem, lcr_tag_t tag)
 {
         int i;
         int rc = LCP_SUCCESS;
@@ -731,7 +731,7 @@ int lcp_mem_unpost(lcp_context_h ctx, lcp_mem_h mem, lcr_tag_t tag)
                         rc = iface->unpost_tag_zcopy(iface, tag);
                         if (rc != LCP_SUCCESS) {
                                goto err;
-                        } 
+                        }
                 }
         }
 
@@ -742,7 +742,7 @@ err:
 }
 
 //FIXME: this is not used anymore since deregistration is performed by the mmu.
-//       What happen a deregistration is explicitely needed? 
+//       What happen a deregistration is explicitely needed?
 int lcp_mem_deregister(lcp_context_h ctx, lcp_mem_h mem)
 {
         int i;

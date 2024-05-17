@@ -131,7 +131,7 @@ _mpc_omp_ompt_frame_set_infos( mpc_omp_ompt_frame_info_t* frame_infos ) {
     thread->frame_infos = *frame_infos;
 }
 
-/* Only used once to retrieve frame infos needed by callbacks during 
+/* Only used once to retrieve frame infos needed by callbacks during
  * initialization of the runtime.
  */
 static inline void

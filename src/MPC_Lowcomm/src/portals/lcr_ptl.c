@@ -83,8 +83,8 @@ ssize_t lcr_ptl_send_am_bcopy(_mpc_lowcomm_endpoint_t *ep,
                             srail->ptl_info.am_pte,
                             match.raw,
                             0, /* remote offset */
-                            ptl_comp, 
-                            id	
+                            ptl_comp,
+                            id
                            ));
 
 err:
@@ -146,7 +146,7 @@ int lcr_ptl_send_am_zcopy(_mpc_lowcomm_endpoint_t *ep,
 		srail->iface,      /* the NI handler */
 		&iov_md,           /* the MD to bind with memory region */
 		&ptl_comp->iov_mdh /* out: the MD handler */
-	)); 
+	));
 
         ptl_comp->comp = comp;
         ptl_comp->iov  = ptl_iovec;
@@ -161,7 +161,7 @@ int lcr_ptl_send_am_zcopy(_mpc_lowcomm_endpoint_t *ep,
                             match.raw,
                             0,
                             ptl_comp,
-                            id	
+                            id
                            ));
 
 err:
@@ -201,8 +201,8 @@ ssize_t lcr_ptl_send_tag_bcopy(_mpc_lowcomm_endpoint_t *ep,
         ptl_comp->bcopy_buf = start;
 
         mpc_common_debug_info("lcr ptl: send tag bcopy to %d (iface=%llu, match=[%d,%d,%d], "
-                              "remote=%llu, idx=%d, sz=%llu)", ep->dest, srail->iface, 
-                              tag.t_tag.tag, tag.t_tag.src, tag.t_tag.comm, 
+                              "remote=%llu, idx=%d, sz=%llu)", ep->dest, srail->iface,
+                              tag.t_tag.tag, tag.t_tag.src, tag.t_tag.comm,
                               remote, srail->ptl_info.tag_pte, size);
         sctk_ptl_chk(PtlPut(srail->ptl_info.mdh,
                             (ptl_size_t) start, /* local offset */
@@ -213,7 +213,7 @@ ssize_t lcr_ptl_send_tag_bcopy(_mpc_lowcomm_endpoint_t *ep,
                             tag.t,
                             0, /* remote offset */
                             ptl_comp,
-                            imm 
+                            imm
                            ));
 
 err:
@@ -253,9 +253,9 @@ int lcr_ptl_send_tag_zcopy(_mpc_lowcomm_endpoint_t *ep,
         ptl_comp->comp      = comp;
 
         mpc_common_debug_info("LCR PTL: send tag zcopy to %d (iface=%llu, match=[%d,%d,%d], "
-                              "remote=%llu, idx=%d, sz=%llu, user_ptr=%p)", 
-                              ep->dest, srail->iface, 
-                              tag.t_tag.tag, tag.t_tag.src, tag.t_tag.comm, 
+                              "remote=%llu, idx=%d, sz=%llu, user_ptr=%p)",
+                              ep->dest, srail->iface,
+                              tag.t_tag.tag, tag.t_tag.src, tag.t_tag.comm,
                               remote, srail->ptl_info.tag_pte, size, ptl_comp);
         sctk_ptl_chk(PtlPut(srail->ptl_info.mdh,
                             (ptl_size_t) iov[0].iov_base, /* local offset */
@@ -266,7 +266,7 @@ int lcr_ptl_send_tag_zcopy(_mpc_lowcomm_endpoint_t *ep,
                             tag.t,
                             0, /* remote offset */
                             ptl_comp,
-                            imm	
+                            imm
                            ));
 
 err:
@@ -275,15 +275,15 @@ err:
 
 int lcr_ptl_post_tag_zcopy(sctk_rail_info_t *rail,
                            lcr_tag_t tag, lcr_tag_t ign_tag,
-                           const struct iovec *iov, 
+                           const struct iovec *iov,
                            size_t iovcnt, /* only one iov supported */
                            unsigned flags,
-                           lcr_tag_context_t *ctx) 
+                           lcr_tag_context_t *ctx)
 {
         int rc = MPC_LOWCOMM_SUCCESS;
         ptl_me_t me;
         ptl_handle_me_t meh;
-        unsigned int persistant = flags & LCR_IFACE_TM_PERSISTANT_MEM ? 
+        unsigned int persistant = flags & LCR_IFACE_TM_PERSISTANT_MEM ?
                 0 : SCTK_PTL_ONCE;
         unsigned int search = flags & LCR_IFACE_TM_SEARCH;
         lcr_ptl_persistant_post_t *persistant_post;
@@ -302,14 +302,14 @@ int lcr_ptl_post_tag_zcopy(sctk_rail_info_t *rail,
                         .length = iov[iovcnt-1].iov_len,
                         .start = iov[iovcnt-1].iov_base,
                         .uid = PTL_UID_ANY,
-                        .options = SCTK_PTL_ME_PUT_FLAGS    | 
+                        .options = SCTK_PTL_ME_PUT_FLAGS    |
                                 SCTK_PTL_ME_GET_FLAGS       |
-                                persistant           
+                                persistant
         };
 
         mpc_common_debug_info("LCR PTL: post recv zcopy to %p (idx=%d, tag=%llu, "
                               "sz=%llu, buf=%p)", rail, tag.t,
-                              srail->ptl_info.tag_pte, iov[0].iov_len, 
+                              srail->ptl_info.tag_pte, iov[0].iov_len,
                               iov[0].iov_base);
 
         ptl_comp = sctk_malloc(sizeof(lcr_ptl_send_comp_t));
@@ -412,7 +412,7 @@ int lcr_ptl_send_put_bcopy(_mpc_lowcomm_endpoint_t *ep,
         ptl_comp->bcopy_buf = start;
 
         mpc_common_debug_info("lcr ptl: send am bcopy to %d ("
-                              "remote=%llu, sz=%llu, pte=%d)", ep->dest, 
+                              "remote=%llu, sz=%llu, pte=%d)", ep->dest,
                               remote, size, srail->ptl_info.am_pte);
 
         //FIXME: there are questions around the completion of bcopy requests.
@@ -425,7 +425,7 @@ int lcr_ptl_send_put_bcopy(_mpc_lowcomm_endpoint_t *ep,
                             srail->ptl_info.rma_pte,
                             match.raw,
                             (uint64_t)remote_key->pin.ptl.start + remote_addr,
-                            ptl_comp, 
+                            ptl_comp,
                             0
                            ));
 
@@ -438,7 +438,7 @@ int lcr_ptl_send_put_zcopy(_mpc_lowcomm_endpoint_t *ep,
                            uint64_t remote_offset,
                            lcr_memp_t *remote_key,
                            size_t size,
-                           lcr_completion_t *comp) 
+                           lcr_completion_t *comp)
 {
         int rc = MPC_LOWCOMM_SUCCESS;
         _mpc_lowcomm_endpoint_info_portals_t* infos = &ep->data.ptl;
@@ -449,10 +449,10 @@ int lcr_ptl_send_put_zcopy(_mpc_lowcomm_endpoint_t *ep,
 
         mpc_common_debug_info("PTL: remote key. match=%s, remote=%llu, "
                               "remote off=%llu, pte idx=%d, local addr=%p, "
-                              "remote addr=%p", 
-                              __sctk_ptl_match_str(sctk_malloc(32), 32, 
+                              "remote addr=%p",
+                              __sctk_ptl_match_str(sctk_malloc(32), 32,
                                                    remote_key->pin.ptl.match.raw),
-                              remote, remote_offset, srail->ptl_info.rma_pte, 
+                              remote, remote_offset, srail->ptl_info.rma_pte,
                               local_addr, remote_key->pin.ptl.start);
 
         ptl_comp = sctk_malloc(sizeof(lcr_ptl_send_comp_t));
@@ -465,7 +465,7 @@ int lcr_ptl_send_put_zcopy(_mpc_lowcomm_endpoint_t *ep,
         ptl_comp->type = LCR_PTL_COMP_RMA_PUT;
         ptl_comp->comp = comp;
 
-        sctk_ptl_chk(PtlPut(srail->ptl_info.mdh, local_addr, 
+        sctk_ptl_chk(PtlPut(srail->ptl_info.mdh, local_addr,
                             size, PTL_ACK_REQ, remote,
                             srail->ptl_info.rma_pte, rdv_match.raw,
                             (uint64_t)remote_key->pin.ptl.start + remote_offset,
@@ -480,7 +480,7 @@ int lcr_ptl_send_get_zcopy(_mpc_lowcomm_endpoint_t *ep,
                            uint64_t remote_offset,
                            lcr_memp_t *remote_key,
                            size_t size,
-                           lcr_completion_t *comp) 
+                           lcr_completion_t *comp)
 {
         int rc = MPC_LOWCOMM_SUCCESS;
         _mpc_lowcomm_endpoint_info_portals_t* infos = &ep->data.ptl;
@@ -491,10 +491,10 @@ int lcr_ptl_send_get_zcopy(_mpc_lowcomm_endpoint_t *ep,
 
         mpc_common_debug_info("PTL: remote key. match=%s, remote=%llu, "
                               "remote off=%llu, pte idx=%d, local addr=%p, "
-                              "remote addr=%p, iface=%d", 
-                              __sctk_ptl_match_str(sctk_malloc(32), 32, 
+                              "remote addr=%p, iface=%d",
+                              __sctk_ptl_match_str(sctk_malloc(32), 32,
                                                    remote_key->pin.ptl.match.raw),
-                              remote, remote_offset, srail->ptl_info.rma_pte, 
+                              remote, remote_offset, srail->ptl_info.rma_pte,
                               local_addr, remote_key->pin.ptl.start, srail->iface);
 
         ptl_comp = sctk_malloc(sizeof(lcr_ptl_send_comp_t));
@@ -513,7 +513,7 @@ int lcr_ptl_send_get_zcopy(_mpc_lowcomm_endpoint_t *ep,
                             srail->ptl_info.rma_pte,
                             rdv_match.raw,
                             (uint64_t)remote_key->pin.ptl.start + remote_offset,
-                            ptl_comp	
+                            ptl_comp
                            ));
 err:
         return rc;
@@ -534,7 +534,7 @@ int lcr_ptl_get_tag_zcopy(_mpc_lowcomm_endpoint_t *ep,
 
         mpc_common_debug_info("PTL: get tag remote key. "
                               "iface=%p, remote=%llu, remote off=%llu, pte idx=%d, "
-                              "local addr=%p", ep->rail, remote, remote_offset, 
+                              "local addr=%p", ep->rail, remote, remote_offset,
                               srail->ptl_info.tag_pte, local_offset);
 
         ptl_comp = sctk_malloc(sizeof(lcr_ptl_send_comp_t));
@@ -553,7 +553,7 @@ int lcr_ptl_get_tag_zcopy(_mpc_lowcomm_endpoint_t *ep,
                             srail->ptl_info.tag_pte,
                             tag.t,
                             remote_offset,
-                            ptl_comp	
+                            ptl_comp
                            ));
 
 err:
@@ -561,17 +561,17 @@ err:
 
 }
 
-void lcr_ptl_mem_register(struct sctk_rail_info_s *rail, 
-                          struct sctk_rail_pin_ctx_list *list, 
+void lcr_ptl_mem_register(struct sctk_rail_info_s *rail,
+                          struct sctk_rail_pin_ctx_list *list,
                           void * addr, size_t size)
 {
         UNUSED(rail);
         UNUSED(addr);
         UNUSED(size);
-        list->pin.ptl.start = addr; 
+        list->pin.ptl.start = addr;
 }
 
-void lcr_ptl_mem_unregister(struct sctk_rail_info_s *rail, 
+void lcr_ptl_mem_unregister(struct sctk_rail_info_s *rail,
                             struct sctk_rail_pin_ctx_list *list)
 {
         UNUSED(rail);
@@ -583,7 +583,7 @@ int lcr_ptl_pack_rkey(sctk_rail_info_t *rail,
                       lcr_memp_t *memp, void *dest)
 {
         UNUSED(rail);
-        void *p = dest;	
+        void *p = dest;
 
         *(uint64_t *)p = (uint64_t)memp->pin.ptl.start;
 
@@ -594,7 +594,7 @@ int lcr_ptl_unpack_rkey(sctk_rail_info_t *rail,
                         lcr_memp_t *memp, void *dest)
 {
         UNUSED(rail);
-        void *p = dest;	
+        void *p = dest;
 
         /* deserialize data */
         memp->pin.ptl.start = *(uint64_t *)p;

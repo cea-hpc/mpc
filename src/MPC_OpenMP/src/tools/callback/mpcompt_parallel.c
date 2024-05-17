@@ -27,7 +27,7 @@ _mpc_omp_ompt_callback_parallel_begin ( unsigned int requested_parallelism,
 #if MPCOMPT_HAS_FRAME_SUPPORT
             const void* ret_addr = thread->frame_infos.ompt_return_addr;
 #else
-            const void* ret_addr = NULL; 
+            const void* ret_addr = NULL;
 #endif
 
             mpc_common_debug( "%s: %p ( %p, %p, %p, %u, %d, %p )",
@@ -61,7 +61,7 @@ _mpc_omp_ompt_callback_parallel_end ( int flags ) {
 #if MPCOMPT_HAS_FRAME_SUPPORT
             const void* ret_addr = thread->frame_infos.ompt_return_addr;
 #else
-            const void* ret_addr = NULL; 
+            const void* ret_addr = NULL;
 #endif
 
             mpc_common_debug( "%s: %p ( %p, %p, %d, %p )",

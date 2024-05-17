@@ -22,7 +22,7 @@
 ########################################################################
 SCTK_CHECK_HEADER assert.h
 SCTK_CHECK_HEADER elf.h
-if test "${SCTK_OS}" = "Linux"; then 
+if test "${SCTK_OS}" = "Linux"; then
 SCTK_CHECK_HEADER execinfo.h
 fi
 SCTK_CHECK_HEADER stdarg.h
@@ -59,7 +59,7 @@ SCTK_CHECK_FUNC gethostname
 SCTK_CHECK_FUNC listen
 SCTK_CHECK_FUNC socket
 SCTK_CHECK_FUNC_NOFAIL setenv
-if test "$SCTK_SCTK_CHECK_FUNC_RES" = 0 ; then 
+if test "$SCTK_SCTK_CHECK_FUNC_RES" = 0 ; then
 	SCTK_CHECK_OPTION "-DSCTK_HAVE_SETENV"
 else
 SCTK_CHECK_FUNC putenv
@@ -67,9 +67,9 @@ fi
 
 begin_section Backtrace
 check_libunwind
-end_section 
+end_section
 
-if test "$SCTK_DEBUG" = "1" ; then 
+if test "$SCTK_DEBUG" = "1" ; then
 begin_section Valgrind
 check_debug
 end_section

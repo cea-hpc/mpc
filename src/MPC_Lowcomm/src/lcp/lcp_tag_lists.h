@@ -49,7 +49,7 @@ typedef struct lcp_mtch_prq_elem_s
 	void *value;
 } lcp_mtch_prq_elem_t;
 
-typedef struct  
+typedef struct
 {
 	mpc_common_spinlock_t lock;
 	mpc_mempool_t elem_pool;
@@ -73,7 +73,7 @@ typedef struct lcp_mtch_umq_elem_s
 	void *value;
 } lcp_mtch_umq_elem_t;
 
-typedef struct  
+typedef struct
 {
 	lcp_mtch_umq_elem_t *list;
 	int size;

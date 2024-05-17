@@ -66,7 +66,7 @@ int main(int argc, char** argv) {
 	mpc_launch_pmi_barrier();
 
 	/* init world and self comm */
-	_mpc_lowcomm_communicator_init();	
+	_mpc_lowcomm_communicator_init();
 
 	/* get uids */
 	suid = mpc_lowcomm_monitor_get_gid();
@@ -111,7 +111,7 @@ int main(int argc, char** argv) {
 		},
 		.completion_flag = 0,
 		.request_completion_fn = lowcomm_request_complete
-	};                          
+	};
 
 	/* send/recv */
 	if (my_tid == 0) {

@@ -55,7 +55,7 @@ int main(int argc, char** argv) {
 		printf("ERROR: init pmi\n");
 		goto err;
 	}
-	
+
 	//TODO: assert(num_proc == 2)
 
 	/* setup monitor: necessary to exchange set uid */
@@ -80,7 +80,7 @@ int main(int argc, char** argv) {
 	mpc_launch_pmi_barrier();
 
 	/* init world and self comm */
-	_mpc_lowcomm_communicator_init();	
+	_mpc_lowcomm_communicator_init();
 
 	/* get uids */
 	suid = mpc_lowcomm_monitor_get_gid();
@@ -135,7 +135,7 @@ int main(int argc, char** argv) {
 		},
 		.completion_flag = 0,
 		.request_completion_fn = lowcomm_request_complete
-	};                          
+	};
 
 	/* send/recv */
 	if (my_tid == 0) {
@@ -148,9 +148,9 @@ int main(int argc, char** argv) {
 			printf("ERROR: send\n");
 		}
 	} else {
-                lcp_request_param_t param = { 
+                lcp_request_param_t param = {
                         .datatype  = LCP_DATATYPE_CONTIGUOUS,
-                        .recv_info = &req.recv_info 
+                        .recv_info = &req.recv_info
                 };
 		rc = lcp_tag_recv_nb(task, (void *)data, size*sizeof(int), &req, &param);
 		if (rc != 0) {
@@ -170,7 +170,7 @@ int main(int argc, char** argv) {
         }
 
 	/* receiver perform data check */
-	if (my_tid == 1) {	
+	if (my_tid == 1) {
 		for (i=0; i<(int)size; i++) {
 			if (data[i] != data_check[i]) {
                                 printf("%d\n", i);

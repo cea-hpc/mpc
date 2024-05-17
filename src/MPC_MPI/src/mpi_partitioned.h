@@ -6,12 +6,12 @@
 
 typedef struct MPI_internal_request_s MPI_internal_request_t;
 
-int mpi_psend_init(const void *buf, int partitions, int count, 
-                    MPI_Datatype datatype, int dest, int tag, 
+int mpi_psend_init(const void *buf, int partitions, int count,
+                    MPI_Datatype datatype, int dest, int tag,
                     MPI_Comm comm, MPI_internal_request_t *req);
 
-int mpi_precv_init(void *buf, int partitions, int count, 
-                    MPI_Datatype datatype, int source, int tag, 
+int mpi_precv_init(void *buf, int partitions, int count,
+                    MPI_Datatype datatype, int source, int tag,
                     MPI_Comm comm, MPI_internal_request_t *req);
 
 int mpi_pstart(MPI_internal_request_t *req);

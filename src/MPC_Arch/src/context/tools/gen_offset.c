@@ -28,7 +28,7 @@
 #define print_reg(reg) printf("#define o%s 0x%x\n",__STRING(reg),(size_t)(&(uc.uc_mcontext.gregs[REG_##reg])) - (size_t)(&uc))
 
 int main(int argc,char**argv){
-	ucontext_t uc; 
+	ucontext_t uc;
 
         print_reg(RAX);
         print_reg(RBX);

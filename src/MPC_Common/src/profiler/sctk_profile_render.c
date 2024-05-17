@@ -60,10 +60,10 @@ void sctk_profiler_renderer_clear_handlers( struct sctk_profile_renderer *rd )
 void sctk_profile_renderer_register_output_iface( struct sctk_profile_renderer *rd, sctk_profile_render_type render_type )
 {
 	sctk_profiler_renderer_clear_handlers( rd );
-	
+
 	switch( render_type )
 	{
-		
+
 		case SCTK_PROFILE_RENDER_FILE :
 			sctk_profile_render_text_register( rd, 0, 0, 0 );
 		break;
@@ -120,7 +120,7 @@ static int sctk_profile_renderer_is_alpha( char c )
 	{
 		return 0;
 	}
-	
+
 	if( c <= 'Z' && 'A' <= c )
 		return 0;
 
@@ -161,13 +161,13 @@ int sctk_profile_renderer_check_render_list( char *render_list )
 	render_list = strdup(render_list);
 
 	int i = 0;
-	
+
 	for( i = 0 ; i < len ; i++ )
 	{
-		if( sctk_profile_renderer_is_alpha( render_list[i] ) 
-		    && sctk_profile_renderer_is_numeric( render_list[i] ) 
-		    && sctk_profile_renderer_is_comma( render_list[i] )  
-		    && sctk_profile_renderer_is_authorized_symbol( render_list[i] ) 
+		if( sctk_profile_renderer_is_alpha( render_list[i] )
+		    && sctk_profile_renderer_is_numeric( render_list[i] )
+		    && sctk_profile_renderer_is_comma( render_list[i] )
+		    && sctk_profile_renderer_is_authorized_symbol( render_list[i] )
 		  )
 		 {
 			mpc_common_debug_warning("Render list contains unauthorized character : '%c' ", render_list[i]);
@@ -184,7 +184,7 @@ int sctk_profile_renderer_check_render_list( char *render_list )
 int sctk_profile_renderer_render_sting_to_id( char *render_string )
 {
 	int i = 0;
-	
+
 	for( i = 0 ; i < SCTK_PROFILE_RENDER_COUNT; i++ )
 	{
 		if( !strcasecmp( render_string, sctk_profile_render_keys[i] ) )
@@ -197,11 +197,11 @@ int sctk_profile_renderer_render_sting_to_id( char *render_string )
 
 void sctk_profile_renderer_init( struct sctk_profile_renderer *rd, struct sctk_profiler_array *array, char *render_list )
 {
-	
+
 	sctk_performance_tree_init( &rd->ptree, array);
 	rd->array = array;
 	rd->walk_mode = SCTK_PROFILE_RENDER_WALK_DFS;
-	
+
 	if( sctk_profile_renderer_check_render_list( render_list ) )
 	{
 		mpc_common_debug_error( "Provided render list syntax is not correct: %s", render_list );
@@ -226,9 +226,9 @@ void sctk_profile_renderer_release( struct sctk_profile_renderer *rd )
 
 char * sctk_profile_renderer_get_next_render_string( char **render_list )
 {
-	
 
-	
+
+
 	if( ! (*render_list) )
 		return NULL;
 
@@ -254,7 +254,7 @@ char * sctk_profile_renderer_get_next_render_string( char **render_list )
 		ret = *render_list;
 		*render_list = comma + 1;
 	}
-	
+
 	return ret;
 
 }
@@ -264,7 +264,7 @@ char * sctk_profile_renderer_get_next_render_string( char **render_list )
 void sctk_profile_renderer_render_entry( struct sctk_profiler_array *array, int id, int parent_id, int depth, void *arg, int going_up )
 {
 	struct sctk_profile_renderer *rd = (struct sctk_profile_renderer *)arg;
-	
+
 	if( rd->render_profile )
 		(rd->render_profile)( array, id, parent_id, depth, going_up, rd);
 }
@@ -289,7 +289,7 @@ void sctk_profile_renderer_render( struct sctk_profile_renderer *rd )
 	while( ( render_string = sctk_profile_renderer_get_next_render_string( &render_list ) ) )
 	{
 		int rd_type = sctk_profile_renderer_render_sting_to_id( render_string );
-		
+
 		if( rd_type < 0 )
 		{
 			mpc_common_debug_warning( "No such renderer type : %s", render_string );
@@ -300,7 +300,7 @@ void sctk_profile_renderer_render( struct sctk_profile_renderer *rd )
 
 
 		sctk_profile_renderer_register_output_iface( rd, rd_type);
-		
+
 			/* SETUP */
 			if( rd->setup )
 				(rd->setup )( rd );
@@ -330,8 +330,8 @@ void sctk_profile_renderer_render( struct sctk_profile_renderer *rd )
 				(rd->teardown )( rd );
 
 		sctk_profile_renderer_remove_output_iface( rd );
-		
-		
+
+
 	}
 }
 
@@ -353,7 +353,7 @@ char *sctk_profile_renderer_convert_to_size( uint64_t size , char *to_size )
 
 char *sctk_profile_renderer_convert_to_time( uint64_t duration , char *to_unit )
 {
-	  
+
 	  if( duration == 0 )
 	  {
 		sprintf(to_unit, "0");
@@ -362,7 +362,7 @@ char *sctk_profile_renderer_convert_to_time( uint64_t duration , char *to_unit )
 
 
 	  double time_sec = duration / (sctk_internal_profiler_get_meta()->ticks_per_second);
-	 
+
 	  uint64_t hour = floor(time_sec/3600);
 	  uint64_t min = floor((double)(time_sec - hour*3600)/60);
 	  uint64_t sec = time_sec - hour*3600 - min * 60;
@@ -402,13 +402,13 @@ char * sctk_profile_renderer_date( char *buffer )
 {
 	time_t t = time( NULL );
 	struct tm *time_entry = localtime( &t );
-	
+
 	if( strftime( buffer, 300, "%F_%H-%M-%S", time_entry ) <= 0 )
 	{
 		buffer[0] = '\0';
 	}
 
-	
+
 	return buffer;
 }
 
@@ -416,13 +416,13 @@ char * sctk_profile_renderer_date_clean( char *buffer )
 {
 	time_t t = time( NULL );
 	struct tm *time_entry = localtime( &t );
-	
+
 	if( strftime( buffer, 300, "%F %H:%M:%S", time_entry ) <= 0 )
 	{
 		buffer[0] = '\0';
 	}
 
-	
+
 	return buffer;
 }
 
@@ -431,7 +431,7 @@ char * sctk_profile_renderer_date_clean( char *buffer )
 void sctk_profile_renderer_write_ntabs( FILE *fd, int n )
 {
 	int i = 0;
-	
+
 	for( i = 0 ; i < n ; i++ )
 	{
 		fprintf( fd, "    |");
@@ -442,7 +442,7 @@ void sctk_profile_renderer_write_ntabs( FILE *fd, int n )
 void sctk_profile_renderer_print_ntabs( int n )
 {
 	int i = 0;
-	
+
 	for( i = 0 ; i < n ; i++ )
 	{
 		printf( "    ");
@@ -453,11 +453,11 @@ void sctk_profile_renderer_print_ntabs( int n )
 
 struct MPC_prof_color sctk_profile_renderer_to_rgb( char *hex_col )
 {
-	
+
 	struct MPC_prof_color ret = { 255, 255, 255 };
-	
+
 	int r, g, b;
-	
+
 	if( sscanf(hex_col,"#%2x%2x%2x",&r,&g,&b) == 3 )
 	{
 		ret.r = r;
@@ -502,21 +502,21 @@ char *sctk_profile_render_sanitize_string( char *string )
 {
   int len = strlen( string );
   char *ret = malloc( 2* len );
-  
+
   int i = 0;
   int off = 0;
-  
+
   for( i = 0 ; i <= len ; i++)
   {
     if( i == len )
       ret[off] = '\0';
-    
+
     if( off == len * 2 )
     {
 	ret[off]= '\0';
     }
-    
-    
+
+
     if( string[i] == '_' )
     {
 	ret[off] = '\\';
@@ -542,6 +542,6 @@ char *sctk_profile_render_sanitize_string( char *string )
 
     off++;
   }
-  
+
   return ret;
 }

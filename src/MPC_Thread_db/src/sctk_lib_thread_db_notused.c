@@ -80,10 +80,10 @@ td_err_e td_thr_setprio (const td_thrhandle_t *th, int prio)
 /** *****************   NOT USED IN GDB   *************************************** **/
 /* Set pending signals for thread TH.  */
 #if defined (TDB___linux__)
-td_err_e td_thr_setsigpending (const td_thrhandle_t *th, 
+td_err_e td_thr_setsigpending (const td_thrhandle_t *th,
                                       unsigned char n, const sigset_t *ss)
 #else
-td_err_e td_thr_setsigpending (const td_thrhandle_t *th, 
+td_err_e td_thr_setsigpending (const td_thrhandle_t *th,
                                       unsigned char n, const sigset_t ss)
 #endif
 {
@@ -138,9 +138,9 @@ td_err_e td_thr_tsd (const td_thrhandle_t *th,
 #if 0
   if ((tk >= SCTK_THREAD_KEYS_MAX) || (tk < 0))
     return TD_ERR ;
-  
+
   /* *data = th->th_unique->tls[tk] */
-  
+
   /* threadData = *th->th_unique */
   ret = ps_pdread(th->th_ta_p->ph, th->th_unique, &threadData, sizeof(sctk_thread_data_t *)) ;
   assert (ret == PS_OK) ;
@@ -159,7 +159,7 @@ td_err_e td_thr_tsd (const td_thrhandle_t *th,
 /* Call for each defined thread local data entry the callback function KI.  */
 td_err_e td_ta_tsd_iter (const td_thragent_t *ta, td_key_iter_f *callback,
                          void *cbdata_p)
-{   
+{
   tdb_log("td_ta_tsd_iter: Not available");
 #if 0
   if (ta == NULL)
@@ -167,25 +167,25 @@ td_err_e td_ta_tsd_iter (const td_thragent_t *ta, td_key_iter_f *callback,
 
   td_thrhandle_t handle ;
   handle.th_ta_p = (td_thragent_t *) ta ;
-  
+
   sctk_thread_data_t data ;
-  
-  /*read the nb of keys currently used*/ 
+
+  /*read the nb of keys currently used*/
   ret = ps_lookup (ta->ph, TLD_KEY_POS, &tmp_addr) ;
   assert(ret == PS_OK);
   ps_pdread (ta->ph, tmp_addr, &last_key, sizeof(int));
   assert(ret == PS_OK);
-  
+
   /*read the @ of the destructor function array */
   ret = ps_lookup (ta->ph, DESTR_FUNCT_TAB, &tmp_addr) ;
   assert(ret == PS_OK);
   ps_pdread (ta->ph, tmp_addr, &destr_funct_tab, sizeof(stck_ethread_key_destr_function_t *));
   assert(ret == PS_OK);
-  
-  for (key = 0; key < last_key; key++) {   
+
+  for (key = 0; key < last_key; key++) {
     /*read the @ of the ith destructor function */
     ret = ps_pdread (ta->ph, destr_funct_tab + key, &destr_funct, sizeof(stck_ethread_key_destr_function_t));
-    assert(ret == PS_OK);  
+    assert(ret == PS_OK);
     if (callback (key, destr_funct, cbdata_p) != TD_OK)
       return TD_DBERR;
   }
@@ -241,7 +241,7 @@ td_err_e td_thr_lockowner(const td_thrhandle_t *th, td_sync_iter_f *cb, void *cb
   tdb_log("td_thr_lockowner: Not available") ;
   return TD_NOCAPAB ;
 }
-  
+
 
 /*
  * Return the sync. handle of the object this thread is sleeping on.

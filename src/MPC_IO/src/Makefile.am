@@ -31,7 +31,7 @@ AM_CPPFLAGS += -I$(abs_top_builddir)/src/MPC_IO/include/ -I$(abs_top_srcdir)/src
 if MPC_BUILD_OPENPA
 AM_CPPFLAGS += -I$(abs_top_srcdir)/contrib/openpa/src -I$(abs_top_builddir)/contrib/openpa/src
 else
-AM_CPPFLAGS+=$(OPA_CFLAGS) 
+AM_CPPFLAGS+=$(OPA_CFLAGS)
 endif
 
 if MPC_FORTRAN_ENABLED
@@ -45,5 +45,4 @@ lib_LTLIBRARIES = libmpcio.la
 
 libmpcio_la_SOURCES = mpl.c mpir_ext.c
 
-libmpcio_la_LIBADD = ../../MPC_MPI/src/libmpcmpi.la ./romio/libromio.la  ./romio/libpromio.la 
-
+libmpcio_la_LIBADD = ../../MPC_MPI/src/libmpcmpi.la ./romio/libromio.la  ./romio/libpromio.la

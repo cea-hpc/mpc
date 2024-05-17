@@ -28,7 +28,7 @@ void lcr_tbsm_connect_on_demand(sctk_rail_info_t *rail, uint64_t uid)
                         return;
                 }
 
-                _mpc_lowcomm_endpoint_init(ep, uid, rail, 
+                _mpc_lowcomm_endpoint_init(ep, uid, rail,
                                            _MPC_LOWCOMM_ENDPOINT_DYNAMIC);
 
                 /* Append endpoint to table */
@@ -79,7 +79,7 @@ int lcr_tbsm_iface_init(sctk_rail_info_t *iface)
         _mpc_lowcomm_tbsm_rail_info_t *tbsm_iface = &(iface->network.tbsm);
         struct _mpc_lowcomm_config_struct_net_driver_tbsm tbsm_info =
                 iface->runtime_config_driver_config->driver.value.tbsm;
-         
+
         /* Init queuing mecanism */
         mpc_common_spinlock_init(&(tbsm_iface->conn_lock), 0);
 
@@ -126,7 +126,7 @@ err:
 }
 
 int lcr_tbsm_iface_open(__UNUSED__ const char *device_name, int id,
-                        lcr_rail_config_t *rail_config, 
+                        lcr_rail_config_t *rail_config,
                         lcr_driver_config_t *driver_config,
                         sctk_rail_info_t **iface_p)
 {

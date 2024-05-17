@@ -1167,7 +1167,7 @@ You may track issued commands using the "-v" flag.
   --disable-fortran                       : Disable fortran
   --disable-hydra                         : Disable Hydra
   --disable-romio                         : Disable ROMIO MPI-IO support
-  --enable-ck                             : Enable Concurrency-Kit (spack only) 
+  --enable-ck                             : Enable Concurrency-Kit (spack only)
   --{enable,disable}-gdb                  : Enable/Disable gdb
   --{enable,disable}-tbb                  : Enable/Disable TBB
 
@@ -1747,7 +1747,7 @@ check_glibc_is_compatible()
 
 check_glibc_is_compatible
 
-#If a default GCC version is passed 
+#If a default GCC version is passed
 GCC_VERSION_SPACK=""
 GCC_VERSION_ARG=""
 if test -n "${GCC_VERSION}"; then
@@ -1811,7 +1811,7 @@ fi
 MPC_CONFIGURE_OPTS="--prefix=${PREFIX} $MPCFRAMEWORK_BUILD_PARAMETERS"
 
 #
-# Autogen MPC 
+# Autogen MPC
 #
 
 checking "Autogen MPC"

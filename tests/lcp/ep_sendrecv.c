@@ -65,7 +65,7 @@ int main(int argc, char** argv) {
 	mpc_launch_pmi_barrier();
 
 	/* init world and self comm */
-	_mpc_lowcomm_communicator_init();	
+	_mpc_lowcomm_communicator_init();
 
 	/* get uids */
 	suid = mpc_lowcomm_monitor_get_gid();
@@ -110,23 +110,23 @@ int main(int argc, char** argv) {
 		},
 		.completion_flag = 0,
 		.request_completion_fn = lowcomm_request_complete
-	};                          
+	};
 
 	/* send/recv */
 	if (my_tid == 0) {
 		data = 42;
-                lcp_request_param_t param = { 
+                lcp_request_param_t param = {
                         .datatype  = LCP_DATATYPE_CONTIGUOUS,
-                        .recv_info = &req.recv_info 
+                        .recv_info = &req.recv_info
                 };
 		rc = lcp_tag_send_nb(ep, task, &data, sizeof(data), &req, &param);
 		if (rc != 0) {
 			printf("ERROR: send\n");
 		}
 	} else {
-                lcp_request_param_t param = { 
+                lcp_request_param_t param = {
                         .datatype  = LCP_DATATYPE_CONTIGUOUS,
-                        .recv_info = &req.recv_info 
+                        .recv_info = &req.recv_info
                 };
 		rc = lcp_tag_recv_nb(task, &data, sizeof(data), &req, &param);
 		if (rc != 0) {

@@ -247,8 +247,8 @@ omp_get_nested__ ()
   return omp_get_nested ();
 }
 
-void 
-omp_set_schedule_ ( omp_sched_t * kind, int * modifier ) 
+void
+omp_set_schedule_ ( omp_sched_t * kind, int * modifier )
 {
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
   _mpc_omp_ompt_frame_get_pre_init_infos();
@@ -257,8 +257,8 @@ omp_set_schedule_ ( omp_sched_t * kind, int * modifier )
     omp_set_schedule( *kind, *modifier ) ;
 }
 
-void 
-omp_set_schedule__ ( omp_sched_t * kind, int * modifier ) 
+void
+omp_set_schedule__ ( omp_sched_t * kind, int * modifier )
 {
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
   _mpc_omp_ompt_frame_get_pre_init_infos();
@@ -388,7 +388,7 @@ omp_get_ancestor_thread_num__ (int * level)
 	return omp_get_ancestor_thread_num(*level);
 }
 
-int 
+int
 omp_get_team_size_ (int * level)
 {
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
@@ -398,7 +398,7 @@ omp_get_team_size_ (int * level)
 	return omp_get_team_size(*level);
 }
 
-int 
+int
 omp_get_team_size__ (int * level)
 {
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
@@ -408,7 +408,7 @@ omp_get_team_size__ (int * level)
 	return omp_get_team_size(*level);
 }
 
-int 
+int
 omp_get_active_level_ ()
 {
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
@@ -418,7 +418,7 @@ omp_get_active_level_ ()
 	return omp_get_active_level ();
 }
 
-int 
+int
 omp_get_active_level__ ()
 {
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
@@ -607,7 +607,7 @@ omp_test_lock__ (omp_lock_t * lock)
 
 /* NEST-LOCK FUNCTIONS */
 void
-omp_init_nest_lock_ (omp_nest_lock_t * lock) 
+omp_init_nest_lock_ (omp_nest_lock_t * lock)
 {
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
   _mpc_omp_ompt_frame_get_infos();
@@ -622,7 +622,7 @@ omp_init_nest_lock_ (omp_nest_lock_t * lock)
 }
 
 void
-omp_init_nest_lock__ (omp_nest_lock_t * lock) 
+omp_init_nest_lock__ (omp_nest_lock_t * lock)
 {
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
   _mpc_omp_ompt_frame_get_infos();
@@ -636,8 +636,8 @@ omp_init_nest_lock__ (omp_nest_lock_t * lock)
 #endif /* OMPT_SUPPORT */
 }
 
-void 
-omp_destroy_nest_lock_ (omp_nest_lock_t * lock) 
+void
+omp_destroy_nest_lock_ (omp_nest_lock_t * lock)
 {
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
   _mpc_omp_ompt_frame_get_infos();
@@ -651,8 +651,8 @@ omp_destroy_nest_lock_ (omp_nest_lock_t * lock)
 #endif /* OMPT_SUPPORT */
 }
 
-void 
-omp_destroy_nest_lock__ (omp_nest_lock_t * lock) 
+void
+omp_destroy_nest_lock__ (omp_nest_lock_t * lock)
 {
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
   _mpc_omp_ompt_frame_get_infos();
@@ -666,8 +666,8 @@ omp_destroy_nest_lock__ (omp_nest_lock_t * lock)
 #endif /* OMPT_SUPPORT */
 }
 
-void 
-omp_set_nest_lock_ (omp_nest_lock_t * lock) 
+void
+omp_set_nest_lock_ (omp_nest_lock_t * lock)
 {
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
   _mpc_omp_ompt_frame_get_infos();
@@ -681,8 +681,8 @@ omp_set_nest_lock_ (omp_nest_lock_t * lock)
 #endif /* OMPT_SUPPORT */
 }
 
-void 
-omp_set_nest_lock__ (omp_nest_lock_t * lock) 
+void
+omp_set_nest_lock__ (omp_nest_lock_t * lock)
 {
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
   _mpc_omp_ompt_frame_get_infos();
@@ -696,8 +696,8 @@ omp_set_nest_lock__ (omp_nest_lock_t * lock)
 #endif /* OMPT_SUPPORT */
 }
 
-void 
-omp_unset_nest_lock_ (omp_nest_lock_t * lock) 
+void
+omp_unset_nest_lock_ (omp_nest_lock_t * lock)
 {
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
   _mpc_omp_ompt_frame_get_infos();
@@ -711,8 +711,8 @@ omp_unset_nest_lock_ (omp_nest_lock_t * lock)
 #endif /* OMPT_SUPPORT */
 }
 
-void 
-omp_unset_nest_lock__ (omp_nest_lock_t * lock) 
+void
+omp_unset_nest_lock__ (omp_nest_lock_t * lock)
 {
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
   _mpc_omp_ompt_frame_get_infos();
@@ -726,8 +726,8 @@ omp_unset_nest_lock__ (omp_nest_lock_t * lock)
 #endif /* OMPT_SUPPORT */
 }
 
-int 
-omp_test_nest_lock_ (omp_nest_lock_t * lock) 
+int
+omp_test_nest_lock_ (omp_nest_lock_t * lock)
 {
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
   _mpc_omp_ompt_frame_get_infos();
@@ -737,8 +737,8 @@ omp_test_nest_lock_ (omp_nest_lock_t * lock)
   return omp_test_nest_lock( lock ) ;
 }
 
-int 
-omp_test_nest_lock__ (omp_nest_lock_t * lock) 
+int
+omp_test_nest_lock__ (omp_nest_lock_t * lock)
 {
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
   _mpc_omp_ompt_frame_get_infos();
@@ -773,4 +773,3 @@ omp_get_wtick__ ()
 {
   return omp_get_wtick ();
 }
-

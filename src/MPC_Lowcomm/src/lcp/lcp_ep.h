@@ -45,12 +45,12 @@ enum {
 	LCP_EP_FLAG_CONNECTED = 0,
 	LCP_EP_FLAG_CONNECTING,
 	LCP_EP_FLAG_USED,
-	LCP_EP_FLAG_CLOSED 
+	LCP_EP_FLAG_CLOSED
 };
 
 /**
  * @brief configuration of rendez-vous for a given endpoint (specifies fragmentation threshold)
- * 
+ *
  */
 typedef struct lcp_ep_rndv_config {
 	size_t frag_thresh;
@@ -58,7 +58,7 @@ typedef struct lcp_ep_rndv_config {
 
 /**
  * @brief configuration of endpoint
- * 
+ *
  */
 typedef struct lcp_ep_config {
         struct {
@@ -109,7 +109,7 @@ struct lcp_ep {
 };
 
 
-int lcp_context_ep_create(lcp_context_h ctx, lcp_ep_h *ep_p, 
+int lcp_context_ep_create(lcp_context_h ctx, lcp_ep_h *ep_p,
 			  uint64_t uid, unsigned flags);
 int lcp_ep_progress_conn(lcp_context_h ctx, lcp_ep_h ep);
 void lcp_ep_delete(lcp_ep_h ep);

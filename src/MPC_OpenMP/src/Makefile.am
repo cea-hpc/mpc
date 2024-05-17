@@ -44,7 +44,7 @@ AM_CPPFLAGS += $(tools_inc)
 if MPC_BUILD_OPENPA
 AM_CPPFLAGS += -I$(abs_top_srcdir)/contrib/openpa/src -I$(abs_top_builddir)/contrib/openpa/src
 else
-AM_CPPFLAGS+=$(OPA_CFLAGS) 
+AM_CPPFLAGS+=$(OPA_CFLAGS)
 endif
 
 lib_LTLIBRARIES = libmpcomp.la
@@ -72,4 +72,3 @@ lib_LTLIBRARIES += libiomp5.la libgomp.la
 
 libiomp5_la_SOURCES = ./fakelib/fakelib.c
 libgomp_la_SOURCES = ./fakelib/fakelib.c
-

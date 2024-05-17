@@ -174,7 +174,3 @@ void sctk_profile_render_text_render_entry( struct sctk_profiler_array *array, i
 	}
 
 }
-
-
-
-

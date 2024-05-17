@@ -39,7 +39,7 @@
 #include "lcp_request.h"
 #include "lcp_header.h"
 
-int lcp_tag_probe_nb(lcp_task_h task, const int src, 
+int lcp_tag_probe_nb(lcp_task_h task, const int src,
                      const int tag, const uint64_t comm,
                      lcp_tag_info_t *recv_info)
 {
@@ -63,16 +63,16 @@ int lcp_tag_probe_nb(lcp_task_h task, const int src,
                 if (match->flags & (LCP_RECV_CONTAINER_UNEXP_EAGER_TAG |
                                     LCP_RECV_CONTAINER_UNEXP_TASK_TAG_BCOPY)) {
                         lcp_tag_hdr_t *hdr = (lcp_tag_hdr_t *)(match + 1);
-                        
+
                         recv_info->tag    = hdr->tag;
                         recv_info->length = match->length - sizeof(lcp_tag_hdr_t);
                         recv_info->src    = hdr->src_tid;
 
                 } else if (match->flags & (LCP_RECV_CONTAINER_UNEXP_EAGER_TAG_SYNC |
-                                           LCP_RECV_CONTAINER_UNEXP_TASK_TAG_ZCOPY | 
+                                           LCP_RECV_CONTAINER_UNEXP_TASK_TAG_ZCOPY |
                                            LCP_RECV_CONTAINER_UNEXP_TASK_TAG_SYNC) ) {
                         lcp_tag_sync_hdr_t *hdr = (lcp_tag_sync_hdr_t *)(match + 1);
-                        
+
                         recv_info->tag    = hdr->base.tag;
                         recv_info->length = match->length - sizeof(lcp_tag_sync_hdr_t);
                         recv_info->src    = hdr->base.src_tid;
@@ -85,7 +85,7 @@ int lcp_tag_probe_nb(lcp_task_h task, const int src,
                         recv_info->length = hdr->size;
                 }
                 recv_info->found = 1;
-                mpc_common_debug("LCP: probed request src=%d, tag=%d, length=%lu", 
+                mpc_common_debug("LCP: probed request src=%d, tag=%d, length=%lu",
                                  recv_info->src, recv_info->tag, recv_info->length);
 
         }

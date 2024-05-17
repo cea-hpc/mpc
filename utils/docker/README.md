@@ -40,7 +40,7 @@ This first version contains 3 images, ready to be deployed for MPC:
   image is labeled `centos`;
 * Debian 9 : built from the official Debian 9 image, added to the programs
 	above. The image is labeled `debian`;
-* Alpine3.5 : Not fully functional yet because of shell compliance (even when 
+* Alpine3.5 : Not fully functional yet because of shell compliance (even when
         run with `bash`). We are working on it. The image is
 	labeled `alpine`;
 
@@ -128,7 +128,7 @@ Organization. This will let you download the image directly, instead of building
 first (reachable through `docker pull paratoolsfrance/mpc-env:<os>` commands).
 To enable this script to access to the Hub, you can pass `--net` to the script.
 If the image cannot be found locally, it will try to download it from the Docker
-Hub. Please note that 
+Hub. Please note that
 
 Useful tricks
 -------------
@@ -137,4 +137,3 @@ Useful tricks
 ```
 docker exec -u 0 -it `docker ps -q -f "ancestor=mpc-env:<os>"` bash
 ```
-

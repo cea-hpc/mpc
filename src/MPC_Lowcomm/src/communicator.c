@@ -1928,7 +1928,7 @@ mpc_lowcomm_communicator_t mpc_lowcomm_communicator_split(mpc_lowcomm_communicat
 			mpc_common_nodebug("GROUP is %d", group_size);
 
 
-      _mpc_lowcomm_group_rank_descriptor_t * group_descriptor = 
+      _mpc_lowcomm_group_rank_descriptor_t * group_descriptor =
         (_mpc_lowcomm_group_rank_descriptor_t * )sctk_malloc(group_size * sizeof(_mpc_lowcomm_group_rank_descriptor_t));
 			assume(group_descriptor != NULL);
 

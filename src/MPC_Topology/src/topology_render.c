@@ -18,13 +18,13 @@ static char textual_file_output[128];
 static hwloc_topology_t topology_compute_node;
 
 typedef struct sctk_text_option_s{
-                int *os_index ; 
-                int *vp_tab ; 
-                int *rank_mpi; 
-                int *compact_tab ; 
-                int *scatter_tab ; 
-                int *balanced_tab ; 
-                int *pid_tab; 
+                int *os_index ;
+                int *vp_tab ;
+                int *rank_mpi;
+                int *compact_tab ;
+                int *scatter_tab ;
+                int *balanced_tab ;
+                int *pid_tab;
 } sctk_text_option_t;
 
 
@@ -256,7 +256,7 @@ static void chose_color_task(int task_id, int nb_task, int *r, int *g, int *b, i
 
     }
     *r = red;
-    *g = green; 
+    *g = green;
     *b = blue;
     *r_m = red_m;
     *g_m = green_m;
@@ -464,7 +464,7 @@ static void sctk_read_format_option_graphic_placement_and_complet_topo_infos(FIL
         if(c == EOF){
             break;
         }
-        int logical_ind = 
+        int logical_ind =
             mpc_topology_render_get_logical_from_os_id(atoi(os_ind));
         hwloc_obj_t obj;
         if(mpc_common_get_flags()->enable_smt_capabilities){
@@ -503,7 +503,7 @@ static void transform_char(char *str){
 static void name_and_date_file_text(char *file_name){
 
     time_t timestamp = time(NULL);
-    char *buffer= ctime(&timestamp); 
+    char *buffer= ctime(&timestamp);
     transform_char(buffer);
     strcat(file_name, "_");
     strcat(file_name, buffer);
@@ -512,7 +512,7 @@ static void name_and_date_file_text(char *file_name){
 /* init struct for text placement option */
 static void sctk_init_text_option(struct sctk_text_option_s **tab_option){
     int lenght = hwloc_get_nbobjs_by_type(mpc_topology_get(), HWLOC_OBJ_PU);
-    *tab_option = (struct sctk_text_option_s *)malloc(sizeof(struct sctk_text_option_s)); 
+    *tab_option = (struct sctk_text_option_s *)malloc(sizeof(struct sctk_text_option_s));
     (*tab_option)->os_index = (int *)malloc(sizeof(int)*lenght);
     (*tab_option)->vp_tab = sctk_malloc(sizeof(int)*lenght);
     (*tab_option)->rank_mpi= sctk_malloc(sizeof(int)*lenght);
@@ -648,7 +648,7 @@ static void sctk_read_format_option_text_placement(FILE *f_textual, struct sctk_
 
 
 /* Write in file as lstopo adding informations on the topology and thread placement (text option) */
-static void print_children(hwloc_topology_t hwtopology, hwloc_obj_t obj, 
+static void print_children(hwloc_topology_t hwtopology, hwloc_obj_t obj,
         int depth, struct sctk_text_option_s *tab_option, int num_os, unsigned int higher_logical , int lower_logical, const char* HostName, FILE* f, int __UNUSED__ ind_child, int last_arity)
 {
     char string[128];
@@ -672,7 +672,7 @@ static void print_children(hwloc_topology_t hwtopology, hwloc_obj_t obj,
         && obj->type != HWLOC_OBJ_MACHINE && obj->type != HWLOC_OBJ_PACKAGE)
 #endif
         {
-            fprintf(f,"\n\n|------------------------------BEGINNING RESERVATION HOST %s-------------------------|\n", HostName); 
+            fprintf(f,"\n\n|------------------------------BEGINNING RESERVATION HOST %s-------------------------|\n", HostName);
             already_begining_done = 0;
         }
     }
@@ -697,7 +697,7 @@ static void print_children(hwloc_topology_t hwtopology, hwloc_obj_t obj,
                     fprintf(f,"\n%*s%s#%d %s", 2*depth, "", string,obj->logical_index, string_mpc);
                 }
                 if(obj->logical_index == higher_logical){
-                    fprintf(f,"\n\n|------------------------------END RESERVATION HOST %s------------------------------|\n", HostName); 
+                    fprintf(f,"\n\n|------------------------------END RESERVATION HOST %s------------------------------|\n", HostName);
                 }
                 goto arity; /* pu has been find */
             }
@@ -711,7 +711,7 @@ static void print_children(hwloc_topology_t hwtopology, hwloc_obj_t obj,
     }
     if(obj->type == type){
         if(obj->logical_index == higher_logical){
-            fprintf(f,"\n\n|------------------------------END RESERVATION HOST %s------------------------------|\n", HostName); 
+            fprintf(f,"\n\n|------------------------------END RESERVATION HOST %s------------------------------|\n", HostName);
         }
     }
 
@@ -742,7 +742,7 @@ static void sctk_destroy_text_option(struct sctk_text_option_s *tab_option){
 
 
 static hwloc_obj_t hwloc_get_core_by_os_index(hwloc_topology_t hwtopology, unsigned int os_i){
-    int depth_core = hwloc_get_type_depth(hwtopology, HWLOC_OBJ_CORE); 
+    int depth_core = hwloc_get_type_depth(hwtopology, HWLOC_OBJ_CORE);
     int i;
     int nb_core = hwloc_get_nbobjs_by_depth(hwtopology, depth_core);
     for(i = 0; i <  nb_core; i++){
@@ -789,7 +789,7 @@ static int sctk_determine_higher_logical(int *os_index, int lenght){
     int i;
     int higher_logical = -1;
     int current_logical = 0;
-    hwloc_obj_t pu; 
+    hwloc_obj_t pu;
     for(i=0;i<lenght;i++){
         if(os_index[i] != -1){
                 if(mpc_common_get_flags()->enable_smt_capabilities){
@@ -943,7 +943,7 @@ void topology_graph_enable_graphic_placement( void )
 #if (HWLOC_API_VERSION < 0x00020000)
 		hwloc_topology_export_xml( mpc_topology_get(), file_placement );
 #else
-    hwloc_topology_export_xml( mpc_topology_get(), file_placement, HWLOC_TOPOLOGY_EXPORT_XML_FLAG_V1); 
+    hwloc_topology_export_xml( mpc_topology_get(), file_placement, HWLOC_TOPOLOGY_EXPORT_XML_FLAG_V1);
 #endif
 		if ( 1 )
 		{ //TODO one among each nodes

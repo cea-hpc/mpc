@@ -465,4 +465,3 @@ $(mpc_manpages):%:man/%in
 	@manpage_date=`date -d"@${MPC_GENERATION_DATE}" +%m/%Y`; \
 	sed -i -e "s,#PACKAGE_DATE#,$$manpage_date," -e "s/#PACKAGE_VERSION#/$(MPC_VERSION_STRING)/g" -e "s/#PACKAGE_NAME#/$(PACKAGE_NAME)/g" $@
 endif
-

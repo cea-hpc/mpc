@@ -117,4 +117,3 @@ mpc__makecontext (sctk_ucontext_t *ucp, void (*func) (void), int argc, ...)
   va_end (ap);
 
 }
-

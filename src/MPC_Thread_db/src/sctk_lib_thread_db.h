@@ -48,7 +48,7 @@
  * of the former
  *
  * The name passed should be a basename, not a full pathname. (Ivan Soleimanipour)
- * 
+ *
  * */
 #ifndef LIB_RTDB_SO
   #define LIB_RTDB_SO "libmpc_framework.so"
@@ -63,12 +63,12 @@
 /*
  * Bottom end of the libthread_db : call back to GDB
  * (not present in the system under Linux)
- * 
+ *
  * */
 #if defined (TDB___linux__)
   #include "my_proc_service.h"
 #else
-  #include <proc_service.h>  
+  #include <proc_service.h>
 #endif
 
 
@@ -132,7 +132,7 @@ ps_err_e ps_lookup (struct ps_prochandle *ps, int idx, psaddr_t *sym_addr);
 td_err_e td_write(struct ps_prochandle *ph, int idx, int val) ;
 td_err_e update_event_set (struct ps_prochandle *ph,
                            td_thr_events_t *event_addr,
-                           td_thr_events_t *new_events, 
+                           td_thr_events_t *new_events,
                            int enable) ;
 
 void td_utils_context_to_prgregset(const td_thragent_t *ta,

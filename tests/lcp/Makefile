@@ -5,7 +5,7 @@ CFLAGS+=-g
 LIBS=`pkg-config --libs libmpclowcomm`
 LIBS+=-lmpcconfig
 
-%.o: %.c 
+%.o: %.c
 	$(CC) -c -o $@ $< $(CFLAGS)
 
 all: ep_init context_init ep_earlysend ep_earlyrecv ep_sendfrag ep_double

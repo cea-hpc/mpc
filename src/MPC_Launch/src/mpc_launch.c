@@ -63,7 +63,7 @@
 
 /**
  * @brief This holds the configuration for MPC_Launch
- * 
+ *
  */
 struct mpc_launch_config{
 	int bt_sig_enabled; /** Produce backtraces on error */
@@ -255,7 +255,7 @@ static inline int __parse_arg_eq(char *arg,
 			return;                                                         \
 		}  \
 	} while (0);
-	
+
 
 
 #define SET_FLAG_STRING(arg, flag)                  \
@@ -546,17 +546,17 @@ static inline void __register_config(void)
 	__set_default_values();
 
 	mpc_conf_root_config_init("mpcframework");
-	
+
 	char user_prefix[512];
 	mpc_conf_user_prefix("mpcframework", user_prefix, 512);
-	
+
 	mpc_conf_root_config_search_path("mpcframework", MPC_PREFIX_PATH"/etc/mpcframework/", user_prefix, "both");
 
 #ifdef MPC_ENABLE_SHELL_COLORS
  	mpc_common_get_flags()->colors = 1;
 #endif
 	/* Register debug config */
-	mpc_conf_config_type_t *debug = mpc_conf_config_type_init("debug",	
+	mpc_conf_config_type_t *debug = mpc_conf_config_type_init("debug",
 	                                                       PARAM("backtrace", &__launch_config.bt_sig_enabled ,MPC_CONF_BOOL, "Produce backtraces on error"),
 														   PARAM("verbosity", &mpc_common_get_flags()->verbosity, MPC_CONF_INT, "Should debug messages be displayed (1-3)"),
 														   PARAM("callbacks", &mpc_common_get_flags()->debug_callbacks, MPC_CONF_BOOL, "Print callbacks debug information"),

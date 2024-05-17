@@ -44,7 +44,7 @@ typedef struct lcp_am_hdr {
 
 /**
  * @brief tag matched message header
- * 
+ *
  */
 typedef struct lcp_tag_hdr {
 	int32_t  src_tid;  /* source task identifier         */
@@ -56,7 +56,7 @@ typedef struct lcp_tag_hdr {
 
 /**
  * @brief tag matched sync message header
- * 
+ *
  */
 typedef struct lcp_tag_sync_hdr {
         lcp_tag_hdr_t base;
@@ -66,12 +66,12 @@ typedef struct lcp_tag_sync_hdr {
 
 /**
  * @brief rendez-vous message header
- * 
+ *
  */
 typedef struct lcp_rndv_hdr {
         union {
                 lcp_tag_hdr_t tag;
-                lcp_am_hdr_t  am; 
+                lcp_am_hdr_t  am;
         };
         uint64_t msg_id;  /* message id   */
 	uint64_t src_uid; /* source uid   */
@@ -80,7 +80,7 @@ typedef struct lcp_rndv_hdr {
 
 /**
  * @brief acknowledgement message header
- * 
+ *
  */
 typedef struct lcp_ack_hdr {
 	int32_t  src;

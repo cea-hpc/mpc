@@ -213,7 +213,7 @@ static inline void __mpc_aio_set_error( struct aiocb *cb, int error )
 	}
 
 	/* As the error field is not standardized
-	 * we rely on the priority field which is 
+	 * we rely on the priority field which is
 	 * not used in our implementation */
 	volatile int *errorfield = &cb->aio_reqprio;
 	*errorfield = error;
@@ -228,7 +228,7 @@ static inline void __mpc_aio_get_error( struct aiocb *cb, int *error )
 	}
 
 	/* As the error field is not standardized
-	 * we rely on the priority field which is 
+	 * we rely on the priority field which is
 	 * not used in our implementation */
 	volatile int *errorfield = &cb->aio_reqprio;
 	*error = *errorfield;
@@ -335,7 +335,7 @@ static inline int __mpc_aio_sigevent( struct sigevent *sig )
 			break;
 
 		case SIGEV_THREAD:
-			/* A clean implementation should create a thread here 
+			/* A clean implementation should create a thread here
 			 * but this would not be so efficient so we just call
 			 * the target function if no attr was set */
 
@@ -708,7 +708,7 @@ static inline void __mpc_aio_listio_ctx_notify( union sigval pctx )
 	if ( do_free )
 	{
 		/* First the last one does the notification as we overrided
-		 * it to get here, we first do this before signaling the 
+		 * it to get here, we first do this before signaling the
 		 * total processing end */
 
 		/* Notify Individual sigevent from each aiocb */

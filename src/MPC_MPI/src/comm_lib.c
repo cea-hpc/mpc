@@ -2607,9 +2607,9 @@ int _mpc_cl_waitallp(mpc_lowcomm_msg_count_t count, mpc_lowcomm_request_t *parra
 		{
 			MPC_ERROR_SUCCESS();
 		}
-		
+
 					MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL();
-	
+
 
 		direct_pass_count--;
 	}while( (flag == 0) && (direct_pass_count != 0) );
@@ -3105,7 +3105,7 @@ void _mpc_cl_abort_error(mpc_lowcomm_communicator_t *comm, const int *error, cha
 int _mpc_cl_error_init()
 {
         mpc_mpi_err_init();
-        
+
         //NOTE: next are common to all tasks, so must be initialized only once
         if (mpc_common_get_local_task_rank() == 0) {
                 _mpc_mpi_errhandler_register_on_slot( ( _mpc_mpi_generic_errhandler_func_t )_mpc_cl_default_error,
@@ -3380,7 +3380,7 @@ int mpc_mpi_cl_add_pack_absolute(const void *buf, mpc_lowcomm_msg_count_t count,
 int mpc_mpi_cl_isend_pack(int dest, int tag, mpc_lowcomm_communicator_t comm, mpc_lowcomm_request_t *request)
 {
 	SCTK_PROFIL_START(MPC_Isend_pack);
-	
+
 	if(dest == MPC_PROC_NULL)
 	{
 		mpc_lowcomm_request_init(request, comm, REQUEST_SEND);
@@ -3461,7 +3461,7 @@ int _mpc_cl_info_free(MPC_Info *info)
 		MPC_ERROR_REPORT(MPC_COMM_WORLD, MPC_ERR_INFO,
 		                 "Failled to delete MPI_Info");
 	}
-	
+
 			/* Delete was successful */
 		*info = MPC_INFO_NULL;
 		MPC_ERROR_SUCCESS();
@@ -3592,7 +3592,7 @@ int _mpc_cl_info_get_count(MPC_Info info, int n, char *key)
 		MPC_ERROR_REPORT(MPC_COMM_WORLD, MPC_ERR_INFO_NOKEY,
 		                 "Failled to retrieve an MPI_Info's key");
 	}
-	
+
 			/* Found just snprintf the key */
 		(void)snprintf(key, MPC_MAX_INFO_KEY, "%s", keyEntry->key);
 

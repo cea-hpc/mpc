@@ -35,7 +35,7 @@ struct sctk_performance_tree
 	/* Global metrics */
 	uint64_t total_time;
 	uint64_t total_hits;
-	
+
 	double entry_total_percentage_time[ SCTK_PROFILE_KEY_COUNT ];
 	double entry_total_percentage_hits[ SCTK_PROFILE_KEY_COUNT ];
 

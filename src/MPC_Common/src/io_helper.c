@@ -184,9 +184,9 @@ ssize_t mpc_common_io_safe_write( int fd, const void *buf, size_t count )
 	return res;
 }
 
-ssize_t mpc_common_iovec_safe_write(int fd, 
-				    struct iovec *iov, 
-				    size_t iovcnt, 
+ssize_t mpc_common_iovec_safe_write(int fd,
+				    struct iovec *iov,
+				    size_t iovcnt,
 				    size_t length)
 {
 	/* vars */
@@ -503,7 +503,7 @@ char ** mpc_common_helper_command_line(void)
 	for(i = 0; i < size; i++)
 	{
 
-		
+
 		if(buff[i] == '\0')
 		{
 			cnt++;
@@ -828,8 +828,8 @@ int mpc_common_resolve_local_ip_for_iface(char * ip, int iplen, char *preferred_
             {
     		struct sockaddr_in* inaddr = (struct sockaddr_in*)ifa->ifa_addr;
 		__print_ipv4(inaddr, ip, iplen);
-	
-		/* We really dont want to answer localhost ! */	
+
+		/* We really dont want to answer localhost ! */
 		if(!strstr(ip, "127.0."))
 		{
 			goto LOCADDRDONE;

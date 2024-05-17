@@ -41,7 +41,7 @@
 #include <mpc_lowcomm_monitor.h>
 
 //NOTE: with multiple nics, __ranks_ids_map cannot be global.
-static inline void __ranks_ids_map_set(struct mpc_common_hashtable *ranks_ids_map, 
+static inline void __ranks_ids_map_set(struct mpc_common_hashtable *ranks_ids_map,
                                        mpc_lowcomm_peer_uid_t dest, sctk_ptl_id_t id)
 {
 	/* We prefer to do this to ensure we have no storage size problem
@@ -150,7 +150,7 @@ void sctk_ptl_send_message(mpc_lowcomm_ptp_message_t* msg, _mpc_lowcomm_endpoint
 	}
 }
 
-int lcr_ptl_handle_eq_ev(sctk_rail_info_t *rail, 
+int lcr_ptl_handle_eq_ev(sctk_rail_info_t *rail,
 			 sctk_ptl_event_t *ev)
 {
         UNUSED(rail);
@@ -305,7 +305,7 @@ void sctk_ptl_eqs_poll(sctk_rail_info_t* rail, size_t threshold)
 
 		if( mpc_common_spinlock_trylock(&__poll_lock) )
 			return;
-		
+
 		polling = 1;
 
 		for( i = 0 ; i < srail->pt_table.table_size; i++)
@@ -353,7 +353,7 @@ void lcr_ptl_handle_md_ev(sctk_ptl_event_t *ev)
 	{
 		case PTL_EVENT_ACK:  /* the Put() reached the remote process */
 			//TODO: free start if it was bcopy
-			
+
 			/* complete callback */
 			ctx->comp.sent = ev->mlength;
 			ctx->comp.comp_cb(&ctx->comp);
@@ -414,7 +414,7 @@ void sctk_ptl_mds_poll(sctk_rail_info_t* rail, size_t threshold)
 					 * Remember that full event at initiator-side are really limited.
 					 * (Only type, list, length, user_ptr & fail_type)
 					 *
-					 * As we know that 
+					 * As we know that
 					 */
 					assert(user_ptr->prot != SCTK_PTL_PROT_NONE);
 #ifdef MPC_LOWCOMM_PROTOCOL
@@ -530,7 +530,7 @@ static inline sctk_ptl_id_t __map_id_monitor(sctk_rail_info_t* rail, mpc_lowcomm
 	return out_id;
 }
 
-/** 
+/**
  * Retrieve the ptl_process_id object, associated with a given MPC process rank.
  * \param[in] rail the Portals rail
  * \param[in] dest the MPC process rank
@@ -587,7 +587,7 @@ static int __ptl_monitor_callback(mpc_lowcomm_peer_uid_t from,
 
 	return 0;
 }
-					
+
 
 
 static inline void __register_monitor_callback(sctk_rail_info_t* rail)
@@ -645,9 +645,9 @@ void sctk_ptl_comm_delete(sctk_ptl_rail_info_t* srail, mpc_lowcomm_communicator_
 
 /**
  * @brief probe a message described by its header.
- * 
+ *
  * This function will block until a request is notified from the Portals interface.
- * 
+ *
  * @param rail the Portals rail
  * @param hdr the message header built from upstream
  * @param probe_level searching level, from Portals semantics (SEARCH_ONLY | SEARCH_DELETE)
@@ -660,7 +660,7 @@ int sctk_ptl_pending_me_probe(sctk_rail_info_t* rail, mpc_lowcomm_ptp_message_he
 	int ret = -1;
 
 	mpc_common_nodebug("PROBE: c%ld r%d t%d", hdr->communicator_id, rank, tag);
-	
+
 	sctk_ptl_rail_info_t* prail = &rail->network.ptl;
 	sctk_ptl_pte_t* pte = mpc_common_hashtable_get(&prail->pt_table, (int)(hdr->communicator_id + SCTK_PTL_PTE_HIDDEN_NB));
 	sctk_ptl_matchbits_t match, ign;
@@ -673,8 +673,8 @@ int sctk_ptl_pending_me_probe(sctk_rail_info_t* rail, mpc_lowcomm_ptp_message_he
 	};
 
 	/* almost sure the rank could be translated to the corresponding PID/NID and be used
-	 * as an additional criteria. This is not mandatory as the rank is already part of the 
-	 * match_bits. The @see ranks_ids_map table could be used. However, the struct could not 
+	 * as an additional criteria. This is not mandatory as the rank is already part of the
+	 * match_bits. The @see ranks_ids_map table could be used. However, the struct could not
 	 * be defined if no route have been created to the remote process yet.
 	 */
 	ign.data = (sctk_ptl_std_content_t)
@@ -684,7 +684,7 @@ int sctk_ptl_pending_me_probe(sctk_rail_info_t* rail, mpc_lowcomm_ptp_message_he
 		.type = hdr->message_type,
 		.uid = SCTK_PTL_IGN_UID
 	};
-	
+
 	/* create the ME to match. The 'start' field does not need to be valid,
 	 * in case of a match, the event will return the address of the overflow buffer.
 	 * The size could be used if, one day, the NO_TRUNCATE attribute is set,
@@ -733,7 +733,7 @@ void sctk_ptl_init_interface(sctk_rail_info_t* rail)
 	num_eager_blocks = rail->runtime_config_driver_config->driver.value.portals.num_eager_blocks;
 	eager_block_size = rail->runtime_config_driver_config->driver.value.portals.eager_block_size;
 	offloading  = SCTK_PTL_OFFLOAD_NONE_FLAG;
-	
+
 	/* avoid truncating size_t payload in RDV protocols */
 	if(eager_limit < sizeof(size_t))
 		eager_limit = sizeof(size_t);
@@ -751,7 +751,7 @@ void sctk_ptl_init_interface(sctk_rail_info_t* rail)
 
 	/* init low-level driver */
         sctk_ptl_interface_t iface        = (rail->runtime_config_rail->max_ifaces == 1) ?
-                PTL_IFACE_DEFAULT : (unsigned int)rail->rail_number; 
+                PTL_IFACE_DEFAULT : (unsigned int)rail->rail_number;
 	rail->network.ptl                 = sctk_ptl_hardware_init(iface);
 	rail->network.ptl.eager_limit     = eager_limit;
 	rail->network.ptl.cutoff          = cut;
@@ -760,16 +760,16 @@ void sctk_ptl_init_interface(sctk_rail_info_t* rail)
         rail->network.ptl.ptl_info.eager_block_size = eager_block_size;
 
 	ptl_driver_config = rail->runtime_config_driver_config->driver.value.portals;
-	rail->network.ptl.max_mr          = ptl_driver_config.max_msg_size < 
+	rail->network.ptl.max_mr          = ptl_driver_config.max_msg_size <
                 rail->network.ptl.max_limits.max_msg_size ?
-		(unsigned long int)ptl_driver_config.max_msg_size : 
+		(unsigned long int)ptl_driver_config.max_msg_size :
                 rail->network.ptl.max_limits.max_msg_size;
 	rail->network.ptl.max_put         = rail->network.ptl.max_mr;
 	rail->network.ptl.max_get         = rail->network.ptl.max_mr;
 	rail->network.ptl.min_frag_size   = min_frag_size;
 
 	rail->network.ptl.offload_support = offloading;
-	
+
 #ifdef MPC_LOWCOMM_PROTOCOL
         rc = lcr_ptl_software_init(&rail->network.ptl, min_comms);
         if (rc != MPC_LOWCOMM_SUCCESS) {

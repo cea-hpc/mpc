@@ -48,6 +48,3 @@ void mpc_common_set_node_rank(int node_rank)
 {
     __node_rank = node_rank;
 }
-
-
-

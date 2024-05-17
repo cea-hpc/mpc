@@ -51,7 +51,7 @@ void json_decref( json_t *json )
 
 json_t * __json_t_init( json_type type )
 {
-	/* 
+	/*
 	   COMPUTE SIZE
 	   */
 	size_t extra_type_size = 0;
@@ -90,7 +90,7 @@ json_t * __json_t_init( json_type type )
 		return NULL;
 	}
 
-	/* 
+	/*
 	   ALLOCATE
 	   */
 
@@ -102,7 +102,7 @@ json_t * __json_t_init( json_type type )
 		return NULL;
 	}
 
-	/* 
+	/*
 	   INIT CONTAINER
 	   */
 
@@ -120,7 +120,7 @@ void __json_t_release( json_t *json )
 	if( !json )
 		return;
 
-	/* 
+	/*
 	   CLEAN OBJECT
 	   */
 
@@ -225,7 +225,7 @@ json_t * json_string_l( const char *string , int len )
 
 void json_string_destroy(json_t * json)
 {
-	json_string_t * s = json_to_string( json );	
+	json_string_t * s = json_to_string( json );
 	free( s->value );
 	s->value = NULL;
 }
@@ -243,7 +243,7 @@ json_t * json_int( int64_t value )
 
 void json_int_destroy(json_t * json)
 {
-	json_int_t * i = json_to_int( json );	
+	json_int_t * i = json_to_int( json );
 	i->value = 0;
 }
 
@@ -260,7 +260,7 @@ json_t * json_real( double value )
 
 void json_real_destroy(json_t * json)
 {
-	json_real_t * r = json_to_real( json );	
+	json_real_t * r = json_to_real( json );
 	r->value = 0.0;
 }
 
@@ -367,7 +367,7 @@ void ObjectHT_release( struct ObjectHT *ht )
 }
 
 static inline unsigned int hashString( const char *s , int bit_width )
-{	
+{
 	unsigned int ret = 0;
 	int i = 1;
 
@@ -381,7 +381,7 @@ static inline unsigned int hashString( const char *s , int bit_width )
 	int dec = 32 - bit_width;
 
 	ret += ret >> dec;
-	ret = (ret << dec) >> dec; 
+	ret = (ret << dec) >> dec;
 
 	return ret?ret-1:ret;
 }
@@ -435,7 +435,7 @@ void ObjectHT_set( struct ObjectHT *ht, const char *key, json_t * elem )
 	struct ObjectHT_entry *ent = ObjectHT_get( ht, key );
 
 	if( ent )
-	{	
+	{
 		json_decref( ent->elem );
 		json_incref_lf( elem );
 		ent->elem = elem;
@@ -461,7 +461,7 @@ struct ObjectHT_entry * __ObjectHT_delete( struct ObjectHT_entry *ent, const cha
 		struct ObjectHT_entry * ret = __ObjectHT_delete( ent->prev, key, 1 );
 
 		json_decref( ent->elem );
-		free( ent->key );	
+		free( ent->key );
 		free( ent );
 
 		return ret;
@@ -530,7 +530,7 @@ json_t * json_object_get( json_t * json, const char *key )
 
 	ret = ent?ent->elem:NULL;
 
-	if( ret ) 
+	if( ret )
 		json_incref( ret );
 
 	json_unlock( json );
@@ -794,7 +794,7 @@ char * c_newline( int newline )
 		return "\n";
 	else
 		return "";
-} 
+}
 
 void stream_indent( char *tmp_buff, struct string_buff *out, int depth )
 {
@@ -861,12 +861,12 @@ void __json_dump( char *tmp_buff, struct string_buff *out, json_t * json, int de
 			/* DUMP OBJECT */
 
 			/*
-			 *  This strange do while loop is made in order to put the comas 
+			 *  This strange do while loop is made in order to put the comas
 			 * at the right places as we do not have a counter but
 			 * only an iterator.
 			 */
 
-			
+
 
 			json_object_iterator_init( &it, json );
 
@@ -891,7 +891,7 @@ void __json_dump( char *tmp_buff, struct string_buff *out, json_t * json, int de
 				cont = json_object_iterator_next( &it );
 
 				/* IF AN ENTRY FOLLOWS */
-				if( cont /* NO COMA FOR THE LAST */ 
+				if( cont /* NO COMA FOR THE LAST */
 						&& is_first != 1 /* NO COMA FOR THE FIRST DUMMY*/)
 				{
 					snprintf( tmp_buff, 4096, ",%s", c_newline( newline ) );
@@ -1025,7 +1025,7 @@ int is_alphanumeric( char * c )
 		return 1;
 
 	if( 'A' <= *c && *c <= 'Z' )
-		return 1;    
+		return 1;
 
 	if( '0' <= *c && *c <= '9' )
 		return 1;
@@ -1061,7 +1061,7 @@ int pad_buff( char **buff, char expect )
 
 
 		s++;
-	} 
+	}
 
 	*buff = s;
 
@@ -1071,7 +1071,7 @@ int pad_buff( char **buff, char expect )
 
 char * parse_string(  char ** json_string )
 {
-	char *s = *json_string;  
+	char *s = *json_string;
 
 	/* First quote */
 	if( pad_buff( &s, '"' ) )
@@ -1085,7 +1085,7 @@ char * parse_string(  char ** json_string )
 
 	/* Second quote */
 	while( (*s != '"' || skip_next_quote ) && *s )
-	{    
+	{
 
 		if( *s == '\\' )
 			skip_next_quote = 1;
@@ -1093,7 +1093,7 @@ char * parse_string(  char ** json_string )
 		if( skip_next_quote )
 			skip_next_quote = 0;
 
-		s++; 
+		s++;
 	}
 
 	if( *s != '"' )
@@ -1208,7 +1208,7 @@ int json_infer_type( char * ent )
 		if( is_true( s ) || is_false( s ) )
 			return JSON_BOOL;
 
-		s++; 
+		s++;
 	}
 
 	return JSON_SOMETHING_ELSE;
@@ -1246,7 +1246,7 @@ json_t * json_parse_int( char ** buff )
 
 	*s = end_char;
 
-	return json_int( val );	
+	return json_int( val );
 }
 
 json_t * json_parse_real( char ** buff )
@@ -1409,7 +1409,7 @@ char * json_parse_key (  char ** json_string )
 		return NULL;
 	}
 
-	*json_string = s + 1;   
+	*json_string = s + 1;
 
 	return key;
 }
@@ -1521,7 +1521,7 @@ json_t * _json_parse( char ** buff )
 		case JSON_SOMETHING_ELSE:
 			return NULL;
 	}
-	
+
 	return NULL;
 }
 

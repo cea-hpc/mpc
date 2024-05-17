@@ -115,7 +115,7 @@ static inline void __coll_param_defaults( void )
   opts->topo.non_blocking = 0;
   opts->topo.blocking = 0;
   opts->topo.max_level = 1;
-  
+
   opts->topo.allgather = 0;
 
   /* MULTIPORT COLLECTIVE ALGORITHMS */
@@ -264,7 +264,7 @@ mpc_conf_config_type_t *_mpc_mpi_config_coll_algorithm_array_conf( struct _mpc_m
 
 mpc_conf_config_type_t *_mpc_mpi_config_topo_array_conf( struct _mpc_mpi_config_topo_coll_opts *opts )
 {
-                              
+
   mpc_conf_config_type_t *ret = mpc_conf_config_type_init( "topo",
                                  PARAM( "full", &opts->full, MPC_CONF_STRING,
                                     "Force enable/disable topological algorithms for all collective operations <on|off|true|false|auto>" ),

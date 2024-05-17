@@ -110,7 +110,7 @@ const char * mpc_common_debug_get_basename(const char * path)
 {
 	char * ret = strrchr(path, '/');
 	return ret?(ret + 1):path;
-} 
+}
 
 
 int MPC_check_compatibility_lib( int major, int minor, int patch, char *pre )

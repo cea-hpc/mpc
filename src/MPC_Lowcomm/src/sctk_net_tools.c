@@ -63,11 +63,11 @@ sctk_net_convert_msg_to_iovec( mpc_lowcomm_ptp_message_t *msg, int *iovlen, size
 			char skip = 0;
 			size_t i, j, size, total;
 			void * body;
-			
+
 			total = 0;
 			*iovlen = 0;
 			pos = 0;
-				
+
 			if (SCTK_MSG_SIZE(msg) > 0)
 			{
 				for ( i = 0; ( ( i < msg->tail.message.pack.count ) && !skip ); i++ )
@@ -80,7 +80,7 @@ sctk_net_convert_msg_to_iovec( mpc_lowcomm_ptp_message_t *msg, int *iovlen, size
 						body = ((char *) (msg->tail.message.pack.list.std[i].addr)) +
 							msg->tail.message.pack.list.std[i].begins[j] *
 							msg->tail.message.pack.list.std[i].elem_size;
-						 
+
 						if ( total + size > max_size )
 						{
 							skip = 1;
@@ -90,7 +90,7 @@ sctk_net_convert_msg_to_iovec( mpc_lowcomm_ptp_message_t *msg, int *iovlen, size
 						pos++;
 						result = (struct iovec*) sctk_realloc(result, pos*sizeof(struct iovec));
 						result[pos-1].iov_len = size;
-						result[pos-1].iov_base = body;  
+						result[pos-1].iov_base = body;
 						total += size;
 						assume ( total <= max_size );
 					}
@@ -124,7 +124,7 @@ sctk_net_convert_msg_to_iovec( mpc_lowcomm_ptp_message_t *msg, int *iovlen, size
 						body = (( char * ) (msg->tail.message.pack.list.absolute[i].addr )) +
 						                 msg->tail.message.pack.list.absolute[i].begins[j] *
 						                 msg->tail.message.pack.list.absolute[i].elem_size;
-						
+
 						if ( total + size > max_size )
 						{
 							skip = 1;
@@ -133,7 +133,7 @@ sctk_net_convert_msg_to_iovec( mpc_lowcomm_ptp_message_t *msg, int *iovlen, size
 						pos++;
 						result = (struct iovec*) sctk_realloc(result, pos*sizeof(struct iovec));
 						result[pos-1].iov_len = size;
-						result[pos-1].iov_base = body;  
+						result[pos-1].iov_base = body;
 						total += size;
 						assume ( total <= max_size );
 					}
@@ -147,11 +147,11 @@ sctk_net_convert_msg_to_iovec( mpc_lowcomm_ptp_message_t *msg, int *iovlen, size
 		default:
 			not_reachable();
 	}
-	
+
 	return result;
 }
 
-void sctk_net_copy_msg_from_iovec( mpc_lowcomm_ptp_message_content_to_copy_t *tmp, sctk_iovec_cpy_t driver_func )  
+void sctk_net_copy_msg_from_iovec( mpc_lowcomm_ptp_message_content_to_copy_t *tmp, sctk_iovec_cpy_t driver_func )
 {
 	int iovlen;
 	mpc_lowcomm_ptp_message_t *send;
@@ -162,16 +162,16 @@ void sctk_net_copy_msg_from_iovec( mpc_lowcomm_ptp_message_content_to_copy_t *tm
 	recv = tmp->msg_recv;
 
 	SCTK_MSG_COMPLETION_FLAG_SET ( send , NULL );
-	
-	/* MPI 1.3 : The length of the received message must be less than or equal 
+
+	/* MPI 1.3 : The length of the received message must be less than or equal
 		     to the length of the receive buffer */
 	assume_m( SCTK_MSG_SIZE ( send ) <= SCTK_MSG_SIZE( recv ), "NORME 1.3 ...");
 
 	if ( SCTK_MSG_SIZE ( send ) > 0 )
 	{
-		result = sctk_net_convert_msg_to_iovec(recv, &iovlen, SCTK_MSG_SIZE(recv));	
+		result = sctk_net_convert_msg_to_iovec(recv, &iovlen, SCTK_MSG_SIZE(recv));
 		driver_func(result, iovlen, send);
-		sctk_free(result);		
+		sctk_free(result);
 	}
 	_mpc_comm_ptp_message_commit_request(send,recv);
 }
@@ -747,7 +747,7 @@ void sctk_net_message_copy_from_buffer ( char *body,
 						         recv->tail.message.pack.list.std[i].begins[j] +
 						         1 ) * recv->tail.message.pack.list.std[i].elem_size;
 
-						mpc_common_nodebug("%p - %p \n", recv->tail.message.pack.list.std[i].begins[j], recv->tail.message.pack.list.std[i].ends[j]); 
+						mpc_common_nodebug("%p - %p \n", recv->tail.message.pack.list.std[i].begins[j], recv->tail.message.pack.list.std[i].ends[j]);
 						if ( total + size > SCTK_MSG_SIZE ( send ) )
 						{
 							skip = 1;
@@ -788,7 +788,7 @@ void sctk_net_message_copy_from_buffer ( char *body,
 						         recv->tail.message.pack.list.absolute[i].begins[j] +
 						         1 ) * recv->tail.message.pack.list.absolute[i].elem_size;
 
-						mpc_common_nodebug("%p - %p \n", recv->tail.message.pack.list.std[i].begins[j], recv->tail.message.pack.list.std[i].ends[j]); 
+						mpc_common_nodebug("%p - %p \n", recv->tail.message.pack.list.std[i].begins[j], recv->tail.message.pack.list.std[i].ends[j]);
 						if ( total + size > SCTK_MSG_SIZE ( send ) )
 						{
 							skip = 1;

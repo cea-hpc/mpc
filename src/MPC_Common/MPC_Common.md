@@ -20,7 +20,7 @@ CONTENTS:
 * **sctk_topology/**       : hardware topology management
 * **sctk_spinlock/**       : lock interfaces for MPC
 * **sctk_helpers/**        : MPC helpers (net,I/O...)
-    
+
 
 COMPONENTS:
 -----------
@@ -54,4 +54,3 @@ is two ways to elect a program:
    binary. This can be performed with `MPC_SYMBOL_REGEX`, accepting any kind of
    regular expressions `grep` can use.
    For example: `MPC_SYMBOL_REGEX="MPI_Init" mpcrun ./mpi_helloworld`
-

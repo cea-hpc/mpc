@@ -40,7 +40,7 @@
 
 #include "mpc_common_debug.h"
 
-int lcp_tag_recv_nb(lcp_task_h task, void *buffer, size_t count, 
+int lcp_tag_recv_nb(lcp_task_h task, void *buffer, size_t count,
                     mpc_lowcomm_request_t *request,
                     lcp_request_param_t *param)
 {
@@ -98,7 +98,7 @@ int lcp_tag_recv_nb(lcp_task_h task, void *buffer, size_t count,
 
         /* Get pointer to payload */
 	if (match->flags & LCP_RECV_CONTAINER_UNEXP_RNDV_TAG) {
-		mpc_common_debug_info("LCP: matched rndv unexp req=%p, flags=%x", 
+		mpc_common_debug_info("LCP: matched rndv unexp req=%p, flags=%x",
 				      match, match->flags);
 
                 lcp_recv_rndv_tag_data(req, match + 1);
@@ -116,7 +116,7 @@ int lcp_tag_recv_nb(lcp_task_h task, void *buffer, size_t count,
                                    LCP_RECV_CONTAINER_UNEXP_TASK_TAG_BCOPY |
                                    LCP_RECV_CONTAINER_UNEXP_EAGER_TAG_SYNC )) {
                 intptr_t data_offset;
-		mpc_common_debug_info("LCP: matched eager bcopy unexp req=%p, flags=%x", 
+		mpc_common_debug_info("LCP: matched eager bcopy unexp req=%p, flags=%x",
 				      req, match->flags);
 
                 if (match->flags & LCP_RECV_CONTAINER_UNEXP_EAGER_TAG_SYNC) {
@@ -135,7 +135,7 @@ int lcp_tag_recv_nb(lcp_task_h task, void *buffer, size_t count,
                 req->seqn              = hdr->seqn;
                 req->recv.tag.tag      = hdr->tag;
                 req->recv.send_length  = match->length - data_offset;
-                        
+
                 rc = lcp_recv_eager_tag_data(req, (char *)hdr + data_offset);
 
                 if (rc != LCP_SUCCESS) {
@@ -148,7 +148,7 @@ int lcp_tag_recv_nb(lcp_task_h task, void *buffer, size_t count,
 
 	} else if (match->flags & LCP_RECV_CONTAINER_UNEXP_TASK_TAG_ZCOPY) {
 
-		mpc_common_debug_info("LCP: matched eager bcopy sync unexp req=%p, flags=%x", 
+		mpc_common_debug_info("LCP: matched eager bcopy sync unexp req=%p, flags=%x",
 				      match, match->flags);
 
                 lcp_task_completion_t *tcomp = (lcp_task_completion_t *)match;

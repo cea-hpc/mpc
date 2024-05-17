@@ -34,7 +34,7 @@ AM_CPPFLAGS += -I$(abs_top_srcdir)/src/MPC_Lowcomm/src/cplane/
 if MPC_BUILD_OPENPA
 AM_CPPFLAGS += -I$(abs_top_srcdir)/contrib/openpa/src -I$(abs_top_builddir)/contrib/openpa/src
 else
-AM_CPPFLAGS+=$(OPA_CFLAGS) 
+AM_CPPFLAGS+=$(OPA_CFLAGS)
 endif
 
 if MPC_THREAD_ENABLED

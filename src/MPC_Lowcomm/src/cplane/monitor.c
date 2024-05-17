@@ -327,7 +327,7 @@ static char *__server_uid_name(char *buf, int size)
 
 static inline mpc_lowcomm_monitor_retcode_t __bootstrap_ring(void)
 {
-    int process_count = mpc_common_get_process_count(); 
+    int process_count = mpc_common_get_process_count();
 	if( process_count == 1)
 	{
 		return MPC_LOWCOMM_MONITOR_RET_SUCCESS;
@@ -1026,9 +1026,9 @@ static mpc_lowcomm_monitor_retcode_t __start_server_socket(struct _mpc_lowcomm_m
     /* As the DNS does not take the load we resolve once
      * per server instead of once per client as we
      * do not want to break anything ! */
- 
+
     char resolved_ip[256];
-  
+
     if( mpc_common_resolve_local_ip_for_iface(resolved_ip, 256, "ib") < 0 )
     {
         /* Only use hostname and hope for the best */
@@ -2309,7 +2309,7 @@ static inline _mpc_lowcomm_monitor_wrap_t * __generate_ondemand_cmd(mpc_lowcomm_
 	}
 
 	snprintf(cmd->content->on_demand.target, MPC_LOWCOMM_ONDEMAND_TARGET_LEN, "%s", target);
-	
+
 	if(data != NULL)
 	{
 		memcpy(cmd->content->on_demand.data, data, data_size);

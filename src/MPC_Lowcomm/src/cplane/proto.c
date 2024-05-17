@@ -100,4 +100,3 @@ _mpc_lowcomm_monitor_wrap_t *_mpc_lowcomm_monitor_recv(int socket)
 
 	return ret;
 }
-

@@ -46,7 +46,7 @@ void sctk_ptl_cm_free_memory(void* msg)
  */
 void sctk_ptl_cm_message_copy(mpc_lowcomm_ptp_message_content_to_copy_t* msg)
 {
-	/* dirty line: get back the ME address, where data are located 
+	/* dirty line: get back the ME address, where data are located
 	 * + complete and free the message.
 	 */
 	_mpc_lowcomm_msg_cpy_from_buffer(msg->msg_send->tail.ptl.user_ptr->slot.me.start, msg, 1);
@@ -70,7 +70,7 @@ static inline void sctk_ptl_cm_recv_message(sctk_rail_info_t* rail, sctk_ptl_eve
 	assert(ev.ni_fail_type == PTL_NI_OK);
 	assert(ev.mlength <= rail->network.ptl.eager_limit);
 	assert(ev.type == PTL_EVENT_PUT);
-	
+
 	/* rebuild a complete MPC header msg (inter_thread_comm needs it) */
 	mpc_lowcomm_ptp_message_header_clear(net_msg, MPC_LOWCOMM_MESSAGE_CONTIGUOUS , sctk_ptl_cm_free_memory, sctk_ptl_cm_message_copy);
 	SCTK_MSG_SRC_PROCESS_SET     ( net_msg ,  match.data.rank);
@@ -134,10 +134,10 @@ void sctk_ptl_cm_send_message(mpc_lowcomm_ptp_message_t* msg, _mpc_lowcomm_endpo
 	remote          = infos->dest;
 	pte             = mpc_common_hashtable_get(&srail->pt_table, SCTK_PTL_PTE_CM);
 	request         = sctk_ptl_md_create(srail, start, size, flags);
-	
+
 	assert(pte);
 	assert(request);
-	
+
 	/* double-linking */
 	request->msg           = msg;
 	msg->tail.ptl.user_ptr = request;
@@ -149,7 +149,7 @@ void sctk_ptl_cm_send_message(mpc_lowcomm_ptp_message_t* msg, _mpc_lowcomm_endpo
 
 	sctk_ptl_md_register(srail, request);
 	sctk_ptl_emit_put(request, size, remote, pte, match, 0, 0, hdr.raw, request);
-	
+
 	mpc_common_nodebug("PORTALS: SEND-CM to %d (idx=%d, match=%s, addr=%p, sz=%llu)", SCTK_MSG_DEST_PROCESS(msg), pte->idx, __sctk_ptl_match_str(malloc(32), 32, match.raw), start, size);
 }
 

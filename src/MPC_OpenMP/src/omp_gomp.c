@@ -2494,4 +2494,3 @@ void mpc_omp_GOMP_doacross_ull_wait (__UNUSED__ unsigned long long *first, ...)
 	not_implemented();
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 }
-

@@ -57,9 +57,9 @@ mpi08_module.f90: mpi_f08_ctypes.f90 mpi_f08_types.f90 mpi_f08_constants.f90 mpi
 lib_LTLIBRARIES = libmpcfortran.la
 
 # F08 Iface
-libmpcfortran_la_SOURCES =  mpi08_module.f90 
+libmpcfortran_la_SOURCES =  mpi08_module.f90
 # F90 Iface
-libmpcfortran_la_SOURCES += mpi_module.f90 
+libmpcfortran_la_SOURCES += mpi_module.f90
 # F77 Iface
 libmpcfortran_la_SOURCES += mpc_fortran.c mpc_fortran_helpers.c
 # OMP
@@ -82,13 +82,13 @@ mpi08_module_priv.f90 :  mpi08_module.f90 libmpcfortran.la
 	cat $< > $@
 
 # F08 Iface
-libmpcfortran_priv_la_SOURCES =  mpi08_module_priv.f90 
+libmpcfortran_priv_la_SOURCES =  mpi08_module_priv.f90
 # F90 Iface
 
 mpi_module_priv.f90 :  mpi_module.f90 libmpcfortran.la
 	cat $< > $@
 
-libmpcfortran_priv_la_SOURCES += mpi_module_priv.f90 
+libmpcfortran_priv_la_SOURCES += mpi_module_priv.f90
 # F77 Iface
 libmpcfortran_priv_la_SOURCES += mpc_fortran.c mpc_fortran_helpers.c
 # OMP
@@ -96,7 +96,7 @@ libmpcfortran_priv_la_SOURCES += mpc_fortran.c mpc_fortran_helpers.c
 omp_priv.f90: omp.f90 libmpcfortran.la
 	cat $< > $@
 
-libmpcfortran_priv_la_SOURCES += omp_priv.f90 
+libmpcfortran_priv_la_SOURCES += omp_priv.f90
 
 libmpcfortran_priv_la_CFLAGS = -fmpc-privatize $(AM_CPPFLAGS)
 libmpcfortran_priv_la_FCFLAGS = -fmpc-privatize $(AM_FCFLAGS)

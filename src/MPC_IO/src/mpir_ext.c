@@ -89,7 +89,7 @@ int MPIR_Abort(MPI_Comm comm, int mpi_errno, int exit_code, const char *error_ms
 	PMPI_Abort(comm, exit_code);
 }
 
-int MPIR_File_call_cxx_errhandler( __UNUSED__ void *fh, __UNUSED__ int *errorcode, 
+int MPIR_File_call_cxx_errhandler( __UNUSED__ void *fh, __UNUSED__ int *errorcode,
 			   __UNUSED__ void (*c_errhandler)(void  *, int *, ... ) )
 {
 
@@ -117,9 +117,9 @@ void MPIR_Datatype_iscontig(MPI_Datatype datatype, int *flag)
  *******************/
 
 /** \brief This function is an extension to the standard used to fill a status from a size
- *  
- *  This routine directly computes the count from a size 
- * 
+ *
+ *  This routine directly computes the count from a size
+ *
  *  \param status Status to be filled
  *  \param datatype Datatype stored in the status
  *  \param nbytes Size in bytes of datatype kind stored
@@ -128,14 +128,14 @@ int MPIR_Status_set_bytes(MPI_Status *status, MPI_Datatype datatype, MPI_Count n
 {
 	MPI_Count type_size;
 	PMPI_Type_size_x(datatype, &type_size);
-	
+
 	MPI_Count count = 0;
-	
+
 	if( type_size != 0 )
 	{
 		count = nbytes / type_size;
 	}
-	
+
 	return PMPI_Status_set_elements_x(status, datatype, count);
 }
 
@@ -211,7 +211,7 @@ MPI_Request PMPIO_Request_f2c(MPI_Fint rid )
  *  ROMIO has at his core data-type flattening, using this function we make it
  *  faster as we already stor ethe internal layout. And also more reliable
  *  as the recursive implementation ion ROMIO chrashed in some cases (darray).
- * 
+ *
  *  \param datatype Data-type to be flattened
  *  \param blocklen OUT size of blocks
  *  \param indices OUT offsets of block starts

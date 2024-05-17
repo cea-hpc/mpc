@@ -23,7 +23,7 @@ if sys.version_info.major == 3:
 if (sys.version_info.major, sys.version_info.minor) >= (3,3):
 	from shlex import quote
 else:
-	from pipes import quote 
+	from pipes import quote
 
 def custom_join(s):
 	if (sys.version_info.major, sys.version_info.minor) >= (3,8):
@@ -161,7 +161,7 @@ class MpcConfig:
 				self._conf["MPCFRAMEWORK_LAUNCH_MPCRUN_PLUGIN"] = LAUNCHER_TO_EXE[MPC_LAUNCHER_PROGRAM]
 			else:
 				raise Exception("No launcher for {} in LAUNCHER_TO_EXE".format(MPC_LAUNCHER_PROGRAM))
-		
+
 		pass
 
 	def __init__(self):
@@ -202,12 +202,12 @@ class MpcConfig:
 		parser.add_argument('--opt', type=unicode, help="Launcher specific options")
 		parser.add_argument('-k', '--autokill', type=int, help="Timeout in second before killing the job")
 		parser.add_argument('binary', type=unicode, help="The program to be executed and its options", nargs='+')
-		
+
 
 		delimiter = '--'
 		if delimiter not in args:
 			# Parse the arguments a first time to extract the binary name.
-			# This parsing is incorrect when a known argparse option is 
+			# This parsing is incorrect when a known argparse option is
 			# specified *after* the binary name.
 			# For instance,
 			# mpirun -N 2 -n 2 -c 4 -p 2 ./a -m cats -n 1000 -r
@@ -217,7 +217,7 @@ class MpcConfig:
 
 			# Retrieve the binary name in the original list
 			binary_index = args.index(parsed_args.binary[0])
-			
+
 			# Then, insert manually an escaping "--" delimiter before the
 			# binary name to escape any following argument & option
 			args = args[:binary_index] + [delimiter] + args[binary_index:]
@@ -276,10 +276,10 @@ class MpcConfig:
 		# Check at least one node and process and core
 		if target_config["MPCFRAMEWORK_LAUNCH_MPCRUN_PROCESS"] == 0:
 			target_config["MPCFRAMEWORK_LAUNCH_MPCRUN_PROCESS"] = 1
-		
+
 		if target_config["MPCFRAMEWORK_LAUNCH_MPCRUN_NODE"] == 0:
 			target_config["MPCFRAMEWORK_LAUNCH_MPCRUN_NODE"] = 1
-		
+
 		if target_config["MPCFRAMEWORK_LAUNCH_MPCRUN_CORE"] == 0:
 			target_config["MPCFRAMEWORK_LAUNCH_MPCRUN_CORE"] = 1
 
@@ -425,7 +425,7 @@ class MpcRunner:
 				cc += opt
 			cc += ["-envall"]
 			cc += ["-env", "MPC_STARTUP_ARGS", "{}".format(mpc_args) if not is_show else quote(mpc_args)]
-			
+
 			# Quote all binary arguments that contain a white space
 			# when running mpirun --show ...
 			cc += [quote(x) if is_show and " " in x else x for x in cmd]
@@ -476,7 +476,7 @@ class MpcRunner:
 
 
 if __name__ == "__main__":
-	
+
 	commands = split_mpmd(sys.argv[1:])
 	for command in commands:
 		if("--multiconf" in command):	
@@ -505,7 +505,7 @@ if __name__ == "__main__":
 		launch = jconf["MPCFRAMEWORK_LAUNCH_MPCRUN_PLUGIN"]
 		if launch not in launchers:
 			launchers[launch] = []
-		
+
 		launchers[launch].append((jconf, cmd))
 
 	if len(launchers.keys()) > 1:
@@ -520,5 +520,5 @@ if __name__ == "__main__":
 		for (jargs, cmd) in v:
 			mpc_args = conf.unfold_to_mpcargs(jargs)
 			run.push(jargs, mpc_args, cmd)
-		
+
 		run.run()

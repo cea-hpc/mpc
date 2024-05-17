@@ -107,7 +107,7 @@ typedef enum
 {
    MPC_SHM_CMA_NOK = 0,
    MPC_SHM_CMA_OK = 1,
-   MPC_SHM_CMA_UNCHECKED = 2   
+   MPC_SHM_CMA_UNCHECKED = 2
 }mpc_shm_cma_state_t;
 
 

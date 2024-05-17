@@ -6,8 +6,8 @@
 
 #include "mpimem.h"
 
-/* 
- * This file contains two of the routines from the "safe" versions of the 
+/*
+ * This file contains two of the routines from the "safe" versions of the
  * various string routines in src/util/mem/safestr.c .  These are duplicated
  * here because the MPICH2 utility routines can no longer be used by other
  * applications.
@@ -17,7 +17,7 @@
  * MPIU_Strncpy - Copy at most n characters.  Stop once a null is reached.
  *
  * This is different from strncpy, which null pads so that exactly
- * n characters are copied.  The strncpy behavior is correct for many 
+ * n characters are copied.  The strncpy behavior is correct for many
  * applications because it guarantees that the string has no uninitialized
  * data.
  *
@@ -28,7 +28,7 @@
  * since we know it?
  */
 /*@ MPIU_Strncpy - Copy a string with a maximum length
-  
+
     Input Parameters:
 +   instr - String to copy
 -   maxlen - Maximum total length of 'outstr'
@@ -37,11 +37,11 @@
 .   outstr - String to copy into
 
     Notes:
-    This routine is the routine that you wish 'strncpy' was.  In copying 
-    'instr' to 'outstr', it stops when either the end of 'outstr' (the 
+    This routine is the routine that you wish 'strncpy' was.  In copying
+    'instr' to 'outstr', it stops when either the end of 'outstr' (the
     null character) is seen or the maximum length 'maxlen' is reached.
-    Unlike 'strncpy', it does not add enough nulls to 'outstr' after 
-    copying 'instr' in order to move precisely 'maxlen' characters.  
+    Unlike 'strncpy', it does not add enough nulls to 'outstr' after
+    copying 'instr' in order to move precisely 'maxlen' characters.
     Thus, this routine may be used anywhere 'strcpy' is used, without any
     performance cost related to large values of 'maxlen'.
 
@@ -64,13 +64,13 @@ int MPIU_Strncpy( char *dest, const char *src, size_t n )
     while (*s_ptr && i-- > 0) {
 	*d_ptr++ = *s_ptr++;
     }
-    
-    if (i > 0) { 
+
+    if (i > 0) {
 	*d_ptr = 0;
 	return 0;
     }
     else {
-	/* Force a null at the end of the string (gives better safety 
+	/* Force a null at the end of the string (gives better safety
 	   in case the user fails to check the error code) */
 	dest[n-1] = 0;
 	/* We may want to force an error message here, at least in the
@@ -93,7 +93,7 @@ int MPIU_Strncpy( char *dest, const char *src, size_t n )
 
     Notes:
     This routine is similar to 'strncat' except that the 'maxlen' argument
-    is the maximum total length of 'outstr', rather than the maximum 
+    is the maximum total length of 'outstr', rather than the maximum
     number of characters to move from 'instr'.  Thus, this routine is
     easier to use when the declared size of 'instr' is known.
 
@@ -118,17 +118,16 @@ int MPIU_Strnapp( char *dest, const char *src, size_t n )
 
     /* We allow i >= (not just >) here because the first while decrements
        i by one more than there are characters, leaving room for the null */
-    if (i >= 0) { 
+    if (i >= 0) {
 	*d_ptr = 0;
 	return 0;
     }
     else {
 	/* Force the null at the end */
 	*--d_ptr = 0;
-    
+
 	/* We may want to force an error message here, at least in the
 	   debugging version */
 	return 1;
     }
 }
-

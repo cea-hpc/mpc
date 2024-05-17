@@ -3442,14 +3442,14 @@ int _mpc_lowcomm_isend(int dest, const void *data, size_t size, int tag,
 #ifdef MPC_LOWCOMM_PROTOCOL
 	int      src;
 	int      tid = mpc_common_get_task_rank();
-	lcp_ep_h ep = NULL; 
+	lcp_ep_h ep = NULL;
         lcp_task_h task;
 	//FIXME: how to handle task rank? Using only get_task_rank for now.
 	src = mpc_lowcomm_communicator_rank_of(comm, tid);
 	mpc_lowcomm_init_request_header(tag, comm, src, dest,
 	                                size, MPC_DATATYPE_IGNORE,
 	                                REQUEST_SEND, req);
-        
+
 	ep = lcp_ep_get(lcp_ctx_loc, req->header.destination);
 	if(ep == NULL)
 	{
@@ -4221,7 +4221,7 @@ static void __initialize_drivers()
 #ifdef MPC_LOWCOMM_PROTOCOL
         //FIXME: task count is number of MPI task while ctx->num_tasks should be
         //       the number of local tasks. At this point,
-        //       mpc_common_get_local_task_count() is not setup yet. 
+        //       mpc_common_get_local_task_count() is not setup yet.
 	lcp_context_param_t param =
 	{
 		.flags          = LCP_CONTEXT_DATATYPE_OPS  |

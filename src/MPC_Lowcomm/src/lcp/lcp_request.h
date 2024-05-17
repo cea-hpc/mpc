@@ -50,7 +50,7 @@
 //TODO: LCP_REQUEST prefix confusing with those defined in lcp.h
 enum {
 	LCP_REQUEST_RECV_TRUNC          = LCP_BIT(1), /* flags if request is truncated */
-        LCP_REQUEST_MPI_COMPLETE        = LCP_BIT(2), /* call MPI level completion callback, 
+        LCP_REQUEST_MPI_COMPLETE        = LCP_BIT(2), /* call MPI level completion callback,
                                                          see ucp_request_complete */
         LCP_REQUEST_RMA_COMPLETE        = LCP_BIT(3),
         LCP_REQUEST_OFFLOADED_RNDV      = LCP_BIT(4),
@@ -99,8 +99,8 @@ typedef int (*lcp_send_func_t)(lcp_request_t *req);
 
 struct lcp_request {
         uint64_t       flags;
-        lcp_context_h  ctx; 
-        lcp_task_h     task; 
+        lcp_context_h  ctx;
+        lcp_task_h     task;
         lcp_datatype_t datatype;
         int is_sync;
         union {
@@ -195,7 +195,7 @@ struct lcp_request {
                                                              //       having this req
         mpc_queue_elem_t       queue;     /* element in pending queue */
         mpc_queue_elem_t       match;     /* element in matching queue */
-        
+
         struct {
                 lcr_tag_t imm;
                 int mid; /* matching id */
@@ -334,10 +334,10 @@ struct lcp_request {
                         lcp_request_reset(__req); \
                 } \
                 __req; \
-         }) 
+         })
 
 #define lcp_request_put(_req) \
-        mpc_mpool_push(_req); 
+        mpc_mpool_push(_req);
 
 #define lcp_container_get(_task) \
         ({ \
@@ -346,28 +346,28 @@ struct lcp_request {
                         lcp_container_reset(__ctnr); \
                 } \
                 __ctnr; \
-         }) 
+         })
 
 #define lcp_container_put(_ctnr) \
-        mpc_mpool_push(_ctnr); 
+        mpc_mpool_push(_ctnr);
 
-static inline void lcp_request_reset(lcp_request_t *req) 
+static inline void lcp_request_reset(lcp_request_t *req)
 {
         req->flags = 0;
 }
 
-static inline void lcp_container_reset(lcp_unexp_ctnr_t *ctnr) 
+static inline void lcp_container_reset(lcp_unexp_ctnr_t *ctnr)
 {
         ctnr->flags = 0;
 }
 
-static inline void lcp_request_init_rma_put(lcp_request_t *req, 
+static inline void lcp_request_init_rma_put(lcp_request_t *req,
                                             uint64_t remote_addr,
                                             lcp_mem_h rkey,
                                             const lcp_request_param_t *param)
 {
         req->send.rma.remote_addr = remote_addr;
-        req->send.rma.rkey        = rkey; 
+        req->send.rma.rkey        = rkey;
         req->request              = param->request;
 };
 
@@ -408,7 +408,7 @@ void lcp_request_storage_release();
 //      has been replaced by lcp_request_get which uses a memory pool.
 int lcp_request_create(lcp_request_t **req_p);
 int lcp_request_complete(lcp_request_t *req);
-int lcp_request_init_unexp_ctnr(lcp_task_h task, lcp_unexp_ctnr_t **ctnr_p, void *data, 
+int lcp_request_init_unexp_ctnr(lcp_task_h task, lcp_unexp_ctnr_t **ctnr_p, void *data,
 				size_t length, unsigned flags);
 void *lcp_request_get_unexp_ctnr_payload(lcp_unexp_ctnr_t *ctnr);
 

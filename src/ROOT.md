@@ -48,7 +48,7 @@ operations.
 
 MPC provides its own MPI implementation, and fully respects the **MPI 3.1
 standard**, such as an efficient MPI_THREAD_MULTIPLE support, a full MPI I/O
-support, a full non-blocking collectives support with efficient progress threads 
+support, a full non-blocking collectives support with efficient progress threads
 and an efficient Generalized requests support.
 
 MPC provides a thread-based MPI implementation (e.g MPI processes are threads
@@ -58,7 +58,7 @@ process (MPC’s default mode uses one OS process per node). These MPI Processes
 use the optimized thread-scheduler polling method and thread-scheduler
 integrated collectives to communicate with each other. As far as inter-node
 communications are concerned, MPC uses direct access to the TCP, InfiniBand or
-Portals4 interconnect. 
+Portals4 interconnect.
 
 MPC provides performances close to MPICH or OpenMPI, but with a much better
 support of hybrid programming models (e.g., MPI/PThreads, MPI/OpenMP, …) and
@@ -76,7 +76,7 @@ applications thanks to its built-in OpenMP 3.1 runtime. This OpenMP
 implementation supports GNU and Intel compilers. The main MPC package contains a
 patched version of GCC (6.2.0) called MPC_GCC which is automatically installed
 when building MPC. The OpenMP implementation is also compatible with Intel C/C++
-and FORTRAN compilers starting at version 15.0. 
+and FORTRAN compilers starting at version 15.0.
 
 The OpenMP runtime has been optimized to efficiently support large NUMA
 architectures and hybrid MPI/OpenMP codes.

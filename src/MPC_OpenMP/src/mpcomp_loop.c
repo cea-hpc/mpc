@@ -407,7 +407,7 @@ int mpc_omp_static_loop_next( long *from, long *to )
 
 	mpc_common_nodebug( "[%d] ___mpcomp_static_loop_next: got a chunk %d -> %d",
 	              t->rank, *from, *to );
- 
+
 #if OMPT_SUPPORT
     ompt_data_t ompt_from = { (uint64_t) *from };
     _mpc_omp_ompt_callback_dispatch( ompt_dispatch_iteration,
@@ -2474,7 +2474,7 @@ static inline void __loop_internal_ordered_begin( mpc_omp_thread_t *t, mpc_omp_l
     const long cur_ordered_iter = loop->cur_ordered_iter;
 
 	/* First iteration of the loop -> initialize 'next_ordered_offset' */
-	if( cur_ordered_iter == loop->lb ) 
+	if( cur_ordered_iter == loop->lb )
     {
         while( OPA_cas_int( &( t->instance->team->next_ordered_offset_finalized ), 0, 1 ) )
             mpc_thread_yield();
@@ -2485,7 +2485,7 @@ static inline void __loop_internal_ordered_begin( mpc_omp_thread_t *t, mpc_omp_l
     /* Do we have to wait for the right iteration? */
     while( cur_ordered_iter != ( loop->lb + loop->incr * t->instance->team->next_ordered_offset ) )
 	    mpc_thread_yield();
-} 
+}
 
 static inline void __loop_internal_ordered_begin_ull( mpc_omp_thread_t *t, mpc_omp_loop_gen_info_t* loop_infos )
 {
@@ -2494,7 +2494,7 @@ static inline void __loop_internal_ordered_begin_ull( mpc_omp_thread_t *t, mpc_o
     const unsigned long long cur_ordered_iter = loop->cur_ordered_iter;
 
     /* First iteration of the loop -> initialize 'next_ordered_offset' */
-    if( cur_ordered_iter == loop->lb )                   
+    if( cur_ordered_iter == loop->lb )
     {
         while( OPA_cas_int( &( t->instance->team->next_ordered_offset_finalized), 0, 1 ) )
             mpc_thread_yield();
@@ -2514,12 +2514,12 @@ void mpc_omp_ordered_begin( void )
 #endif /* OMPT_SUPPORT */
 
 	mpc_omp_thread_t *t;
-    mpc_omp_loop_gen_info_t* loop_infos; 
+    mpc_omp_loop_gen_info_t* loop_infos;
 
 	mpc_omp_init();
 
 	t = (mpc_omp_thread_t *) mpc_omp_tls;
-	assert(t != NULL); 
+	assert(t != NULL);
 
     /* No need to check something in case of 1 thread */
     if ( t->info.num_threads == 1 )
@@ -2528,7 +2528,7 @@ void mpc_omp_ordered_begin( void )
     loop_infos = &( t->info.loop_infos );
 
     if( loop_infos->type == MPC_OMP_LOOP_TYPE_LONG )
-    { 
+    {
 //        fprintf(stderr, ":: %s :: Start ordered  %d\n", __func__, t->rank);
         __loop_internal_ordered_begin( t, loop_infos );
     }
@@ -2586,7 +2586,7 @@ static inline void __internal_ordered_end_ull( mpc_omp_thread_t* t, mpc_omp_loop
 	    cast_cur_ordered_iter -=  loop->incr;
     }
 
-    loop->cur_ordered_iter = ( long ) cast_cur_ordered_iter; 
+    loop->cur_ordered_iter = ( long ) cast_cur_ordered_iter;
 
     isLastIteration += (loop->up && cast_cur_ordered_iter >= loop->b) ?  (unsigned long long) 1 : (unsigned long long) 0;
     isLastIteration += (!loop->up && cast_cur_ordered_iter <= loop->b) ? (unsigned long long) 1 : (unsigned long long) 0;
@@ -2609,10 +2609,10 @@ void mpc_omp_ordered_end( void )
 #endif /* OMPT_SUPPORT */
 
 	mpc_omp_thread_t *t;
-    mpc_omp_loop_gen_info_t* loop_infos; 
+    mpc_omp_loop_gen_info_t* loop_infos;
 
 	t = (mpc_omp_thread_t *) mpc_omp_tls;
-	assert(t != NULL); 
+	assert(t != NULL);
 
     /* No need to check something in case of 1 thread */
     if ( t->info.num_threads == 1 ) return ;
@@ -2620,7 +2620,7 @@ void mpc_omp_ordered_end( void )
     loop_infos = &( t->info.loop_infos );
 
     if( loop_infos->type == MPC_OMP_LOOP_TYPE_LONG )
-    { 
+    {
         __internal_ordered_end( t, loop_infos );
     }
     else

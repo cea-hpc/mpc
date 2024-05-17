@@ -99,7 +99,7 @@ __kmp_invoke_microtask(microtask_t pkfn, int gtid, int tid, int argc, void *p_ar
 #endif
 
 // int __kmp_invoke_microtask(
-//     void (*pkfn) (int * global_tid, int * bound_tid, ...), 
+//     void (*pkfn) (int * global_tid, int * bound_tid, ...),
 //     int gtid, int npr, int argc, void *argv[] ){
 //   assert(0);
 // }
@@ -128,4 +128,3 @@ double     __kmp_test_then_add_real64( kmp_real64 *a, kmp_real64 b){assert(0);}
 
 extern  void __sctk_cpu_relax ();
 int __kmp_x86_pause(){sctk_cpu_relax(); return 0;}
-

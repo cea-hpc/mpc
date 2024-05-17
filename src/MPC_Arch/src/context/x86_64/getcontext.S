@@ -69,4 +69,3 @@ mpc__getcontext:
 	xorl	%eax, %eax
 	ret
 .size mpc__getcontext,.-mpc__getcontext;
-

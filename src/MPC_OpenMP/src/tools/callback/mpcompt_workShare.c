@@ -25,7 +25,7 @@ _mpc_omp_ompt_callback_master ( ompt_scope_endpoint_t endpoint ) {
 #if MPCOMPT_HAS_FRAME_SUPPORT
             const void* ret_addr = thread->frame_infos.ompt_return_addr;
 #else
-            const void* ret_addr = NULL; 
+            const void* ret_addr = NULL;
 #endif
 
             mpc_common_debug( "%s: %p ( %d, %p, %p, %p )",
@@ -77,7 +77,7 @@ _mpc_omp_ompt_callback_work ( ompt_work_t wstype,
 #if MPCOMPT_HAS_FRAME_SUPPORT
             const void* ret_addr = thread->frame_infos.ompt_return_addr;
 #else
-            const void* ret_addr = NULL; 
+            const void* ret_addr = NULL;
 #endif
 
             mpc_common_debug( "%s: %p ( %d, %d, %p, %p, %llu, %p )",

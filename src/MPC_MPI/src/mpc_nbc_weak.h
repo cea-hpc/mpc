@@ -22,4 +22,3 @@
 
 // PROFILER MPI_NBC MPI Non Blocking Collectives
 /* Non Blocking Collectives  */
-

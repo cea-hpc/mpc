@@ -55,7 +55,7 @@ void rand_seed_init(void) {
 	struct timeval tv;
 
 	gettimeofday(&tv, NULL);
-	rand_seed = large_primes[0] * tv.tv_sec  + 
+	rand_seed = large_primes[0] * tv.tv_sec  +
 		    large_primes[1] * tv.tv_usec +
 		    large_primes[2] * syscall(SYS_gettid);
 }

@@ -160,7 +160,7 @@ MPC_ARG_FORCE_CPU_NB=""
 ############################################
 
 # FIXME: Commenting out this export breaks
-# sed, uname and basically the whole script 
+# sed, uname and basically the whole script
 #if test "${MPC_ALLOCATOR}" = "mpcalloc"; then
     #export LD_PRELOAD="@MPC_ALLOCATOR_PRELOAD@:$LD_PRELOAD"
 #fi

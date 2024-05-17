@@ -872,7 +872,7 @@ int NBC_Iallgatherv( const void *sendbuf, int sendcount, MPI_Datatype sendtype, 
 		}
 		return MPI_SUCCESS;
 	}
-	
+
     res = _mpc_cl_comm_rank( comm, &rank );
     if ( MPI_SUCCESS != res )
     {
@@ -2195,7 +2195,7 @@ int NBC_Ialltoall( const void *sendbuf, int sendcount, MPI_Datatype sendtype, vo
 
 		return MPI_SUCCESS;
 	}
-	
+
         NBC_IN_PLACE( sendbuf, recvbuf, inplace );
 
     res = _mpc_cl_comm_rank( comm, &rank );
@@ -2738,7 +2738,7 @@ int NBC_Ialltoallv( const void *sendbuf, const int *sendcounts, const int *sdisp
 		}
 		return MPI_SUCCESS;
 	}
-	
+
         res = _mpc_cl_comm_rank( comm, &rank );
     if ( MPI_SUCCESS != res )
     {
@@ -3223,7 +3223,7 @@ int NBC_Ibcast( void *buffer, int count, MPI_Datatype datatype, int root, MPI_Co
 		}
 		return MPI_SUCCESS;
 	}
-	
+
         if ( p > 4 )
     {
         alg = NBC_BCAST_BINOMIAL;
@@ -4286,7 +4286,7 @@ int NBC_Igatherv( const void *sendbuf, int sendcount, MPI_Datatype sendtype, voi
 		}
 		return MPI_SUCCESS;
 	}
-	
+
 
 	res = _mpc_cl_comm_rank( comm, &rank );
 	if ( MPI_SUCCESS != res )
@@ -10613,4 +10613,3 @@ int NBC_Finalize( __UNUSED__ mpc_thread_t *NBC_thread )
 	}
 	return NBC_OK;
 }
-

@@ -33,18 +33,18 @@
 #define MAXVALLEN 1024
 #define MAXKEYLEN   32
 
-/* These are not the keyvals in the keyval space that is part of the 
+/* These are not the keyvals in the keyval space that is part of the
    PMI specification.
    They are just part of this implementation's internal utilities.
 */
 struct PMIU_keyval_pairs {
     char key[MAXKEYLEN];
-    char value[MAXVALLEN];	
+    char value[MAXVALLEN];
 };
 static struct PMIU_keyval_pairs PMIU_keyval_tab[64] = { { {0}, {0} } };
 static int  PMIU_keyval_tab_idx = 0;
 
-/* This is used to prepend printed output.  Set the initial value to 
+/* This is used to prepend printed output.  Set the initial value to
    "unset" */
 static char PMIU_print_id[PMIU_IDSIZE] = "unset";
 
@@ -66,7 +66,7 @@ void PMIU_printf( int print_flag, const char *fmt, ... )
 {
     va_list ap;
     static FILE *logfile= 0;
-    
+
     /* In some cases when we are debugging, the handling of stdout or
        stderr may be unreliable.  In that case, we make it possible to
        select an output file. */
@@ -77,7 +77,7 @@ void PMIU_printf( int print_flag, const char *fmt, ... )
 	    char filename[1024];
 	    p = getenv("PMI_ID");
 	    if (p) {
-		MPIU_Snprintf( filename, sizeof(filename), 
+		MPIU_Snprintf( filename, sizeof(filename),
 			       "testclient-%s.out", p );
 		logfile = fopen( filename, "w" );
 	    }
@@ -85,7 +85,7 @@ void PMIU_printf( int print_flag, const char *fmt, ... )
 		logfile = fopen( "testserver.out", "w" );
 	    }
 	}
-	else 
+	else
 	    logfile = stderr;
     }
 
@@ -102,22 +102,22 @@ void PMIU_printf( int print_flag, const char *fmt, ... )
 }
 
 #define MAX_READLINE 1024
-/* 
+/*
  * Return the next newline-terminated string of maximum length maxlen.
  * This is a buffered version, and reads from fd as necessary.  A
  */
 int PMIU_readline( int fd, char *buf, int maxlen )
 {
     static char readbuf[MAX_READLINE];
-    static char *nextChar = 0, *lastChar = 0;  /* lastChar is really one past 
+    static char *nextChar = 0, *lastChar = 0;  /* lastChar is really one past
 						  last char */
     static int lastfd = -1;
     int curlen, n;
     char *p, ch;
 
-    /* Note: On the client side, only one thread at a time should 
-       be calling this, and there should only be a single fd.  
-       Server side code should not use this routine (see the 
+    /* Note: On the client side, only one thread at a time should
+       be calling this, and there should only be a single fd.
+       Server side code should not use this routine (see the
        replacement version in src/pm/util/pmiserv.c) */
     if (nextChar != lastChar && fd != lastfd) {
 	MPIU_Internal_error_printf( "Panic - buffer inconsistent\n" );
@@ -154,7 +154,7 @@ int PMIU_readline( int fd, char *buf, int maxlen )
 	    /* FIXME: Make this an optional output */
 	    /* printf( "Readline %s\n", readbuf ); */
 	}
-	
+
 	ch   = *nextChar++;
 	*p++ = ch;
 	curlen++;
@@ -168,7 +168,7 @@ int PMIU_readline( int fd, char *buf, int maxlen )
     return curlen-1;
 }
 
-int PMIU_writeline( int fd, char *buf )	
+int PMIU_writeline( int fd, char *buf )
 {
     int size, n;
 
@@ -234,20 +234,20 @@ int PMIU_parse_keyvals( char *st )
 	/* Null terminate the key */
 	*p = 0;
 	/* store key */
-        MPIU_Strncpy( PMIU_keyval_tab[PMIU_keyval_tab_idx].key, keystart, 
+        MPIU_Strncpy( PMIU_keyval_tab[PMIU_keyval_tab_idx].key, keystart,
 		      MAXKEYLEN );
 
 	valstart = ++p;			/* start of value */
 	while ( *p != ' ' && *p != '\n' && *p != '\0' )
 	    p++;
 	/* store value */
-        MPIU_Strncpy( PMIU_keyval_tab[PMIU_keyval_tab_idx].value, valstart, 
+        MPIU_Strncpy( PMIU_keyval_tab[PMIU_keyval_tab_idx].value, valstart,
 		      MAXVALLEN );
 	offset = p - valstart;
 	/* When compiled with -fPIC, the pgcc compiler generates incorrect
-	   code if "p - valstart" is used instead of using the 
+	   code if "p - valstart" is used instead of using the
 	   intermediate offset */
-	PMIU_keyval_tab[PMIU_keyval_tab_idx].value[offset] = '\0';  
+	PMIU_keyval_tab[PMIU_keyval_tab_idx].value[offset] = '\0';
 	PMIU_keyval_tab_idx++;
 	if ( *p == ' ' )
 	    continue;
@@ -259,23 +259,23 @@ int PMIU_parse_keyvals( char *st )
 void PMIU_dump_keyvals( void )
 {
     int i;
-    for (i=0; i < PMIU_keyval_tab_idx; i++) 
+    for (i=0; i < PMIU_keyval_tab_idx; i++)
 	PMIU_printf(1, "  %s=%s\n",PMIU_keyval_tab[i].key, PMIU_keyval_tab[i].value);
 }
 
 char *PMIU_getval( const char *keystr, char *valstr, int vallen )
 {
     int i, rc;
-    
+
     for (i = 0; i < PMIU_keyval_tab_idx; i++) {
-	if ( strcmp( keystr, PMIU_keyval_tab[i].key ) == 0 ) { 
+	if ( strcmp( keystr, PMIU_keyval_tab[i].key ) == 0 ) {
 	    rc = MPIU_Strncpy( valstr, PMIU_keyval_tab[i].value, vallen );
 	    if (rc != 0) {
 		PMIU_printf( 1, "MPIU_Strncpy failed in PMIU_getval\n" );
 		return NULL;
 	    }
 	    return valstr;
-       } 
+       }
     }
     valstr[0] = '\0';
     return NULL;
@@ -284,7 +284,7 @@ char *PMIU_getval( const char *keystr, char *valstr, int vallen )
 void PMIU_chgval( const char *keystr, char *valstr )
 {
     int i;
-    
+
     for ( i = 0; i < PMIU_keyval_tab_idx; i++ ) {
 	if ( strcmp( keystr, PMIU_keyval_tab[i].key ) == 0 ) {
 	    MPIU_Strncpy( PMIU_keyval_tab[i].value, valstr, MAXVALLEN - 1 );

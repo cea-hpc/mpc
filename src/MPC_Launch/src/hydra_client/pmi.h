@@ -178,7 +178,7 @@ Return values:
 int PMI_Get_appnum( int *appnum );
 
 /*@
-PMI_Publish_name - publish a name 
+PMI_Publish_name - publish a name
 
 Input parameters:
 . service_name - string representing the service being published
@@ -294,7 +294,7 @@ This function returns the string length required to store a keyval space name.
 
 A routine is used rather than setting a maximum value in 'pmi.h' to allow
 different implementations of PMI to be used with the same executable.  These
-different implementations may allow different maximum lengths; by using a 
+different implementations may allow different maximum lengths; by using a
 routine here, we can interface with a variety of implementations of PMI.
 
 @*/
@@ -352,7 +352,7 @@ Return values:
 
 Notes:
 This function puts the key/value pair in the specified keyval space.  The
-value is not visible to other processes until 'PMI_KVS_Commit()' is called.  
+value is not visible to other processes until 'PMI_KVS_Commit()' is called.
 The function may complete locally.  After 'PMI_KVS_Commit()' is called, the
 value may be retrieved by calling 'PMI_KVS_Get()'.  All keys put to a keyval
 space must be unique to the keyval space.  You may not put more than once
@@ -428,7 +428,7 @@ Input Parameters:
 . cmds - array of command strings
 . argvs - array of argv arrays for each command string
 . maxprocs - array of maximum processes to spawn for each command string
-. info_keyval_sizes - array giving the number of elements in each of the 
+. info_keyval_sizes - array giving the number of elements in each of the
   'info_keyval_vectors'
 . info_keyval_vectors - array of keyval vector arrays
 . preput_keyval_size - Number of elements in 'preput_keyval_vector'
@@ -449,7 +449,7 @@ field refers to the size of the array parameters - 'cmd', 'argvs', 'maxprocs',
 to the size of the 'preput_keyval_vector' array.  The 'preput_keyval_vector'
 contains keyval pairs that will be put in the keyval space of the newly
 created process group before the processes are started.  The 'maxprocs' array
-specifies the desired number of processes to create for each 'cmd' string.  
+specifies the desired number of processes to create for each 'cmd' string.
 The actual number of processes may be less than the numbers specified in
 maxprocs.  The acceptable number of processes spawned may be controlled by
 ``soft'' keyvals in the info arrays.  The ``soft'' option is specified by

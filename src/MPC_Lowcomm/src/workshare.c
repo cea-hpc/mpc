@@ -112,7 +112,7 @@ void mpc_lowcomm_workshare_init_func_pointers()
     __get_chunk_and_execute = __get_chunk_and_execute_steal_from_end;
   else
     __get_chunk_and_execute = __get_chunk_and_execute_steal_from_start;
-  
+
   switch(steal_mode)
   {
     case WS_STEAL_MODE_ROUNDROBIN:
@@ -159,7 +159,7 @@ void mpc_lowcomm_workshare_start(void (*func) (void*,long long,long long) , void
   ws_infos->chunk_size = chunk_size;
   ws_infos->steal_chunk_size = steal_chunk_size;
   /* 3 last bits for scheduling, 3 bits before for steal scheduling */
-  ws_infos->scheduling_type = scheduling_types & 7; 
+  ws_infos->scheduling_type = scheduling_types & 7;
   ws_infos->steal_scheduling_type = scheduling_types >> 3;
   ws_infos->func = func;
   ws_infos->shareds = shareds;
@@ -218,12 +218,12 @@ void mpc_lowcomm_workshare_start(void (*func) (void*,long long,long long) , void
 
 
 static inline unsigned long long __get_chunk_and_execute_steal_from_end(mpc_workshare *ws_infos,int is_stealing, __attribute__((unused)) int is_in_collective)
-{  
+{
   /* Function called when stealing from end (WS_STEAL_FROM_END=1) */
   long long int ret = 0,cur_index,new_cur_index, chunk_size,reverse_index,new_reverse_index,steal_chunk_size,not_stealing_chunk_size;
   int num_tasks;
-  unsigned long long chunk_done = 0; 
-  int new_threshold_index = 0,not_stealing_threshold_index,anc_threshold_index,stealers_threshold_index; 
+  unsigned long long chunk_done = 0;
+  int new_threshold_index = 0,not_stealing_threshold_index,anc_threshold_index,stealers_threshold_index;
   if(is_stealing)
   {
     if(ws_infos->steal_scheduling_type == MPC_WORKSHARE_SCHEDULE_GUIDED)
@@ -232,7 +232,7 @@ static inline unsigned long long __get_chunk_and_execute_steal_from_end(mpc_work
       {
         long long current_chunk_size = (long long) OPA_load_ptr(&(ws_infos->current_chunk_size));
         reverse_index = (long long) OPA_load_ptr(&(ws_infos->reverse_index));
-        if(reverse_index == ws_infos->lb - ws_infos->incr) 
+        if(reverse_index == ws_infos->lb - ws_infos->incr)
           return 0;
         cur_index = (long long) OPA_load_ptr(&(ws_infos->cur_index));
 
@@ -247,16 +247,16 @@ static inline unsigned long long __get_chunk_and_execute_steal_from_end(mpc_work
           chunk_size = (ws_infos->incr > 0) ? (reverse_index - cur_index - ws_infos->chunk_size) / (ws_infos->incr * num_tasks) : (cur_index - reverse_index - ws_infos->chunk_size) / (-ws_infos->incr * num_tasks);
         }
 
-        if(chunk_size < ws_infos->steal_chunk_size) 
+        if(chunk_size < ws_infos->steal_chunk_size)
           chunk_size = ws_infos->steal_chunk_size;
-        if(ws_infos->scheduling_type == MPC_WORKSHARE_SCHEDULE_GUIDED)  
+        if(ws_infos->scheduling_type == MPC_WORKSHARE_SCHEDULE_GUIDED)
           not_stealing_chunk_size = (long long) OPA_load_ptr(&(ws_infos->current_chunk_size));
         else
           not_stealing_chunk_size = ws_infos->chunk_size;
         new_reverse_index = reverse_index - chunk_size * ws_infos->incr;
         if((reverse_index - cur_index - (chunk_size + not_stealing_chunk_size + ws_infos->chunk_size) * ws_infos->incr < 0 && ws_infos->incr > 0) || (reverse_index - cur_index - chunk_size * ws_infos->incr > 0 && ws_infos->incr < 0) )
         {
-          return 0; 
+          return 0;
         }
         if((long long) OPA_load_ptr(&(ws_infos->cur_index)) !=cur_index)
           return 0;
@@ -273,12 +273,12 @@ static inline unsigned long long __get_chunk_and_execute_steal_from_end(mpc_work
       while(ret == 0)
       {
         reverse_index = (long long) OPA_load_ptr(&(ws_infos->reverse_index));
-        if(reverse_index == ws_infos->lb - ws_infos->incr) 
+        if(reverse_index == ws_infos->lb - ws_infos->incr)
           return 0;
         chunk_size = ws_infos->steal_chunk_size;
         new_reverse_index = reverse_index - chunk_size * ws_infos->incr;
 
-        if(ws_infos->scheduling_type == MPC_WORKSHARE_SCHEDULE_GUIDED)  
+        if(ws_infos->scheduling_type == MPC_WORKSHARE_SCHEDULE_GUIDED)
         {
           not_stealing_chunk_size = (long long) OPA_load_ptr(&(ws_infos->current_chunk_size));
         }
@@ -295,7 +295,7 @@ static inline unsigned long long __get_chunk_and_execute_steal_from_end(mpc_work
         cur_index = (long long) OPA_load_ptr(&(ws_infos->cur_index));
         if((ws_infos->incr > 0 && reverse_index - cur_index - (chunk_size + not_stealing_chunk_size) * ws_infos->incr < 0 ) || (ws_infos->incr < 0 && cur_index - reverse_index - ((chunk_size + not_stealing_chunk_size) * (-ws_infos->incr)) < 0 ) )
         {
-          return 0; 
+          return 0;
         }
         else
         {
@@ -322,7 +322,7 @@ cas_ptr:
   {
     if(ws_infos->steal_scheduling_type == MPC_WORKSHARE_SCHEDULE_GUIDED)
     {
-      if(ws_infos->scheduling_type == MPC_WORKSHARE_SCHEDULE_GUIDED)  
+      if(ws_infos->scheduling_type == MPC_WORKSHARE_SCHEDULE_GUIDED)
       {
         while(ret == 0)
         {
@@ -332,7 +332,7 @@ cas_ptr:
 
           long long current_chunk_size = (long long)OPA_load_ptr(&(ws_infos->current_chunk_size));
           chunk_size = (ws_infos->incr > 0) ? (reverse_index - cur_index - (num_tasks - 1) * ws_infos->steal_chunk_size) / (ws_infos->incr * num_tasks) : (cur_index - reverse_index - (num_tasks - 1) * ws_infos->steal_chunk_size) / (-ws_infos->incr * num_tasks);
-          if(chunk_size < ws_infos->chunk_size) 
+          if(chunk_size < ws_infos->chunk_size)
             chunk_size = ws_infos->chunk_size;
           ret = (long long) OPA_cas_ptr(&(ws_infos->current_chunk_size),(void*) current_chunk_size,(void*) chunk_size);
           ret = (ret == current_chunk_size) ? 1 : 0;
@@ -354,7 +354,7 @@ cas_ptr:
     }
     else
     {
-      if(ws_infos->scheduling_type == MPC_WORKSHARE_SCHEDULE_GUIDED)  
+      if(ws_infos->scheduling_type == MPC_WORKSHARE_SCHEDULE_GUIDED)
       {
         cur_index = (long long) OPA_load_ptr(&(ws_infos->cur_index));
         reverse_index = (long long) OPA_load_ptr(&(ws_infos->reverse_index));
@@ -363,7 +363,7 @@ cas_ptr:
         steal_chunk_size = ws_infos->steal_chunk_size;
         num_tasks = mpc_topology_get_pu_count();
         chunk_size = (ws_infos->incr > 0) ? (reverse_index - cur_index - current_chunk_size) / (ws_infos->incr * num_tasks) : (cur_index - reverse_index - current_chunk_size) / (-ws_infos->incr * num_tasks);
-        if(chunk_size < ws_infos->chunk_size) 
+        if(chunk_size < ws_infos->chunk_size)
           chunk_size = ws_infos->chunk_size;
         OPA_store_ptr(&(ws_infos->current_chunk_size),(void*)chunk_size);
         new_cur_index = cur_index + chunk_size * ws_infos->incr;
@@ -381,7 +381,7 @@ cas_ptr:
         if(anc_threshold_index != new_threshold_index)
         {
           OPA_incr_int(&(ws_infos->threshold_index));
-        }  
+        }
         stealers_threshold_index = OPA_load_int(&(ws_infos->rev_threshold_index));
         if(new_threshold_index < stealers_threshold_index -1)
         {
@@ -417,10 +417,10 @@ cas_ptr:
 }
 
 static inline unsigned long long __get_chunk_and_execute_steal_from_start(mpc_workshare *ws_infos, int is_stealing, int is_in_collective)
-{  
+{
   /* Function called when stealing from start (is the default) */
   long long int ret = 0,cur_index,new_cur_index, chunk_size;
-  unsigned long long chunk_done = 0; 
+  unsigned long long chunk_done = 0;
   while(ret == 0)
   {
     cur_index = (long long) OPA_load_ptr(&(ws_infos->cur_index));
@@ -429,7 +429,7 @@ static inline unsigned long long __get_chunk_and_execute_steal_from_start(mpc_wo
       if(ws_infos->steal_scheduling_type == MPC_WORKSHARE_SCHEDULE_DYNAMIC) {
         chunk_size = ws_infos->steal_chunk_size;
       }
-      else if(ws_infos->steal_scheduling_type == MPC_WORKSHARE_SCHEDULE_GUIDED) { 
+      else if(ws_infos->steal_scheduling_type == MPC_WORKSHARE_SCHEDULE_GUIDED) {
         int num_tasks = mpc_topology_get_pu_count();
         chunk_size = (ws_infos->ub - cur_index) / (ws_infos->incr * num_tasks);
         if(chunk_size < 0) chunk_size = - chunk_size;
@@ -445,7 +445,7 @@ static inline unsigned long long __get_chunk_and_execute_steal_from_start(mpc_wo
       if(ws_infos->scheduling_type == MPC_WORKSHARE_SCHEDULE_DYNAMIC) {
         chunk_size = ws_infos->chunk_size;
       }
-      else if(ws_infos->scheduling_type == MPC_WORKSHARE_SCHEDULE_GUIDED) { 
+      else if(ws_infos->scheduling_type == MPC_WORKSHARE_SCHEDULE_GUIDED) {
         int num_tasks = mpc_topology_get_pu_count();
         chunk_size = (ws_infos->ub - cur_index) / (ws_infos->incr * num_tasks);
         if(chunk_size < 0) chunk_size = - chunk_size;
@@ -487,12 +487,12 @@ void __mpc_lowcomm_workshare_steal_wait_for_value(volatile int* data, int value,
   if(rank != -1)
   {
     ws_infos = &workshare[rank];
-    if(!ws_infos || ws_infos->is_allowed_to_steal == 0) 
+    if(!ws_infos || ws_infos->is_allowed_to_steal == 0)
       return;
   }
   int target_rank = -2;
   target_rank = __choose_target(workshare,rank);
-  if(target_rank != -1)  
+  if(target_rank != -1)
   {
     cw_rank = mpc_common_get_task_rank();
     ws_infos = &workshare[target_rank];
@@ -517,7 +517,7 @@ void __mpc_lowcomm_workshare_steal_wait_for_value(volatile int* data, int value,
       if(data && !is_in_collective)
         while(OPA_load_int(&(ws_infos->is_last_iter)) == 0 && (volatile int)*data != value)
         {
-          __get_chunk_and_execute(ws_infos,1,0); // steal until I can continue my own execution 
+          __get_chunk_and_execute(ws_infos,1,0); // steal until I can continue my own execution
           if(func)
             func(arg);
         }
@@ -578,7 +578,7 @@ static int __choose_target_roundrobin(mpc_workshare* workshare,int rank)
   if(mpc_common_get_task_rank() == -1)
   {
     ws_infos = &workshare[rank];
-    if(OPA_load_int(&(ws_infos->is_last_iter)) == 0) 
+    if(OPA_load_int(&(ws_infos->is_last_iter)) == 0)
     {
 
       return rank;
@@ -587,7 +587,7 @@ static int __choose_target_roundrobin(mpc_workshare* workshare,int rank)
   i = (rank +1) % num_tasks;
   while(found_target == 0 && i != rank) {
     ws_infos = &workshare[i];
-    if(OPA_load_int(&(ws_infos->is_last_iter)) == 0) 
+    if(OPA_load_int(&(ws_infos->is_last_iter)) == 0)
     {
       found_target = 1;
       target_rank = i;
@@ -610,7 +610,7 @@ static int __choose_target_topological(mpc_workshare* workshare,int rank)
   for(i=first_numa_rank;i<last_numa_rank;i++)
   {
     ws_infos = &workshare[i];
-    if(OPA_load_int(&(ws_infos->is_last_iter)) == 0) 
+    if(OPA_load_int(&(ws_infos->is_last_iter)) == 0)
     {
       return i;
     }
@@ -626,7 +626,7 @@ static int __choose_target_topological(mpc_workshare* workshare,int rank)
   {
     if(i>=first_numa_rank && i <= last_numa_rank) continue;
     ws_infos = &workshare[i];
-    if(OPA_load_int(&(ws_infos->is_last_iter)) == 0) 
+    if(OPA_load_int(&(ws_infos->is_last_iter)) == 0)
     {
       return i;
     }
@@ -636,7 +636,7 @@ static int __choose_target_topological(mpc_workshare* workshare,int rank)
   {
     if(i>=first_socket_rank && i < last_socket_rank) continue;
     ws_infos = &workshare[i];
-    if(OPA_load_int(&(ws_infos->is_last_iter)) == 0) 
+    if(OPA_load_int(&(ws_infos->is_last_iter)) == 0)
     {
       return i;
     }
@@ -664,7 +664,7 @@ static int __choose_target_strictly_topological(mpc_workshare* workshare, int ra
   {
     if(i>=mpc_common_get_local_task_count()) break;
     ws_infos = &workshare[i];
-    if(OPA_load_int(&(ws_infos->is_last_iter)) == 0) 
+    if(OPA_load_int(&(ws_infos->is_last_iter)) == 0)
     {
       return i;
     }
@@ -675,7 +675,7 @@ static int __choose_target_strictly_topological(mpc_workshare* workshare, int ra
     if(i>=mpc_common_get_local_task_count()) break;
     if(i>=first_numa_rank && i <= last_numa_rank) continue;
     ws_infos = &workshare[i];
-    if(OPA_load_int(&(ws_infos->is_last_iter)) == 0) 
+    if(OPA_load_int(&(ws_infos->is_last_iter)) == 0)
     {
       return i;
     }
@@ -705,7 +705,7 @@ static int __choose_target_producer(mpc_workshare* workshare, int rank)
     }
     i = (i+1) % num_tasks;
   }
-  while(i != rank); 
+  while(i != rank);
   return target_rank;
 }
 
@@ -714,7 +714,7 @@ static int __choose_target_less_stealers(mpc_workshare* workshare, int rank)
   /* Steal the MPI process that has the less processes that are also stealing */
   int i, target_rank = -1;
   mpc_workshare *ws_infos ;
-  if(rank == -1) 
+  if(rank == -1)
     rank = 0;
 
   int num_tasks = mpc_common_get_local_task_count();
@@ -728,12 +728,12 @@ static int __choose_target_less_stealers(mpc_workshare* workshare, int rank)
     {
       min = threads_stealing;
       target_rank = i;
-      if(threads_stealing == 0) 
+      if(threads_stealing == 0)
         return target_rank;
     }
     i = (i+1) % num_tasks;
   }
-  while(i != rank); 
+  while(i != rank);
   return target_rank;
 }
 
@@ -778,7 +778,7 @@ static int __choose_target_random(mpc_workshare* workshare,int rank)
     num_tries ++;
     if(i != rank) {
       ws_infos = &workshare[i];
-      if(OPA_load_int(&(ws_infos->is_last_iter)) == 0) 
+      if(OPA_load_int(&(ws_infos->is_last_iter)) == 0)
       {
         found_target = 1;
         target_rank = i;
@@ -787,4 +787,3 @@ static int __choose_target_random(mpc_workshare* workshare,int rank)
   }
   return target_rank;
 }
-

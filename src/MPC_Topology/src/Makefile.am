@@ -28,7 +28,7 @@ AM_CPPFLAGS += -I$(abs_top_srcdir)/src/include/ -I$(abs_top_builddir)/src/includ
 if MPC_BUILD_OPENPA
 AM_CPPFLAGS += -I$(abs_top_srcdir)/contrib/openpa/src -I$(abs_top_builddir)/contrib/openpa/src
 else
-AM_CPPFLAGS+=$(OPA_CFLAGS) 
+AM_CPPFLAGS+=$(OPA_CFLAGS)
 endif
 
 if MPC_THREAD_ENABLED
@@ -42,4 +42,3 @@ noinst_LTLIBRARIES = libmpctopology.la
 libmpctopology_la_SOURCES = topology.c  topology_device.c  topology_render.c
 
 libmpctopology_la_LIBADD = $(abs_top_builddir)/src/MPC_Common/src/libmpccommon.la $(abs_top_builddir)/src/MPC_Config/src/libmpcconfig.la $(HWLOC_LIBS)
-

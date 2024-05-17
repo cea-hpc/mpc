@@ -42,8 +42,8 @@
 
 #define NUM_QUEUES UINT16_MAX
 
-int lcp_send_task_bcopy(lcp_request_t *sreq, lcr_pack_callback_t pack_cb, unsigned flags, 
-                        lcp_task_completion_t *comp) 
+int lcp_send_task_bcopy(lcp_request_t *sreq, lcr_pack_callback_t pack_cb, unsigned flags,
+                        lcp_task_completion_t *comp)
 {
         int rc = LCP_SUCCESS;
         lcp_context_h ctx = sreq->ctx;
@@ -51,9 +51,9 @@ int lcp_send_task_bcopy(lcp_request_t *sreq, lcr_pack_callback_t pack_cb, unsign
         lcp_request_t *rreq = NULL;
         lcp_task_h recv_task = NULL;
 
-        recv_task = lcp_context_task_get(ctx, sreq->send.tag.dest_tid);  
+        recv_task = lcp_context_task_get(ctx, sreq->send.tag.dest_tid);
         if (recv_task == NULL) {
-                mpc_common_errorpoint_fmt("LCP: could not find task with tid=%d", 
+                mpc_common_errorpoint_fmt("LCP: could not find task with tid=%d",
                                           sreq->send.tag.dest_tid);
 
                 rc = LCP_ERROR;
@@ -62,7 +62,7 @@ int lcp_send_task_bcopy(lcp_request_t *sreq, lcr_pack_callback_t pack_cb, unsign
 
         /* For buffered copy, data is systematically copied to a shaddow buffer
          * before being sent. */
-        rc = lcp_request_init_unexp_ctnr(recv_task, &ctnr, sreq->send.buffer, 
+        rc = lcp_request_init_unexp_ctnr(recv_task, &ctnr, sreq->send.buffer,
                                          0, flags);
         if (rc != LCP_SUCCESS) {
                 goto err;
@@ -77,20 +77,20 @@ int lcp_send_task_bcopy(lcp_request_t *sreq, lcr_pack_callback_t pack_cb, unsign
 	LCP_TASK_LOCK(recv_task);
 
 	/* Try to match it with a posted message */
-        rreq = lcp_match_prqueue(recv_task->prqs, 
-                                 sreq->send.tag.comm, 
+        rreq = lcp_match_prqueue(recv_task->prqs,
+                                 sreq->send.tag.comm,
                                  sreq->send.tag.tag,
                                  sreq->send.tag.src_tid);
 
 	/* If request is not matched */
 	if (rreq == NULL) {
                 mpc_common_debug_info("LCP: recv unexp tag src=%d, tag=%d, dest=%d, "
-                                      "length=%d, sequence=%d, req=%p", sreq->send.tag.src_tid, 
-                                      sreq->send.tag.tag, sreq->send.tag.dest_tid, 
+                                      "length=%d, sequence=%d, req=%p", sreq->send.tag.src_tid,
+                                      sreq->send.tag.tag, sreq->send.tag.dest_tid,
                                       sreq->send.length, sreq->seqn, sreq);
 
 		// add the request to the unexpected messages
-                lcp_append_umqueue(recv_task->umqs, &ctnr->elem, 
+                lcp_append_umqueue(recv_task->umqs, &ctnr->elem,
                                    sreq->send.tag.comm);
 
 		LCP_TASK_UNLOCK(recv_task);
@@ -109,7 +109,7 @@ err:
 	return rc;
 }
 
-int lcp_send_task_zcopy(lcp_request_t *sreq, lcp_task_completion_t *comp) 
+int lcp_send_task_zcopy(lcp_request_t *sreq, lcp_task_completion_t *comp)
 {
         int rc = LCP_SUCCESS;
         lcp_context_h ctx = sreq->ctx;
@@ -118,7 +118,7 @@ int lcp_send_task_zcopy(lcp_request_t *sreq, lcp_task_completion_t *comp)
 
         recv_task = lcp_context_task_get(ctx, sreq->send.tag.dest_tid);
         if (recv_task == NULL) {
-                mpc_common_errorpoint_fmt("LCP: could not find task with tid=%d", 
+                mpc_common_errorpoint_fmt("LCP: could not find task with tid=%d",
                                           sreq->send.tag.dest_tid);
 
                 rc = LCP_ERROR;
@@ -128,21 +128,21 @@ int lcp_send_task_zcopy(lcp_request_t *sreq, lcp_task_completion_t *comp)
 	LCP_TASK_LOCK(recv_task);
 
 	/* Try to match it with a posted message */
-        rreq = lcp_match_prqueue(recv_task->prqs, 
-                                 sreq->send.tag.comm, 
+        rreq = lcp_match_prqueue(recv_task->prqs,
+                                 sreq->send.tag.comm,
                                  sreq->send.tag.tag,
                                  sreq->send.tag.src_tid);
 
 	/* If request is not matched */
 	if (rreq == NULL) {
                 mpc_common_debug_info("LCP: recv unexp task tag src=%d, tag=%d, dest=%d, "
-                                      "length=%d, sequence=%d, req=%p", sreq->send.tag.src_tid, 
-                                      sreq->send.tag.tag, sreq->send.tag.dest_tid, 
+                                      "length=%d, sequence=%d, req=%p", sreq->send.tag.src_tid,
+                                      sreq->send.tag.tag, sreq->send.tag.dest_tid,
                                       sreq->send.length, sreq->seqn, sreq);
 
                 comp->ctnr.flags = LCP_RECV_CONTAINER_UNEXP_TASK_TAG_ZCOPY;
 		// add the request to the unexpected messages
-                lcp_append_umqueue(recv_task->umqs, &comp->ctnr.elem, 
+                lcp_append_umqueue(recv_task->umqs, &comp->ctnr.elem,
                                    sreq->send.tag.comm);
 
 		LCP_TASK_UNLOCK(recv_task);
@@ -181,8 +181,8 @@ int lcp_task_create(lcp_context_h ctx, int tid, lcp_task_h *task_p)
 
         assert(ctx); assert(tid >= 0);
 
-        //NOTE: In current MPC configuration, a task cannot be already 
-        //      created since done by init task func in comm.c 
+        //NOTE: In current MPC configuration, a task cannot be already
+        //      created since done by init task func in comm.c
 
         task = sctk_malloc(sizeof(struct lcp_task));
         if (task == NULL) {
@@ -226,7 +226,7 @@ int lcp_task_create(lcp_context_h ctx, int tid, lcp_task_h *task_p)
                 .malloc_func = sctk_malloc,
                 .free_func = sctk_free
         };
-                
+
         rc = mpc_mpool_init(task->req_mp, &mp_req_params);
         if (rc != LCP_SUCCESS) {
                 goto err;
@@ -245,7 +245,7 @@ int lcp_task_create(lcp_context_h ctx, int tid, lcp_task_h *task_p)
                 .malloc_func = sctk_malloc,
                 .free_func = sctk_free
         };
-                
+
         rc = mpc_mpool_init(task->unexp_mp, &mp_unexp_params);
         if (rc != LCP_SUCCESS) {
                 goto err;

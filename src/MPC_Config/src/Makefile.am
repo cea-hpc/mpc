@@ -28,5 +28,4 @@ lib_LTLIBRARIES = libmpcconfig.la
 
 libmpcconfig_la_SOURCES = loader.c  conf_types.c  mpc_conf.c  utils.c
 
-libmpcconfig_la_LIBADD = 
-
+libmpcconfig_la_LIBADD =

@@ -18,4 +18,3 @@
 	[ "integer*2 x", 2],
 	[ "integer*2 x(*)", 2]
 ]
-	

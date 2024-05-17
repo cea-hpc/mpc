@@ -40,11 +40,11 @@ static inline lcp_tag_hdr_t * lcp_ctnr_get_tag(lcp_unexp_ctnr_t *ctnr) {
 }
 void *lcp_match_prqueue(mpc_queue_head_t *prqs, uint16_t comm_id, int32_t tag, int32_t src);
 void lcp_append_prqueue(mpc_queue_head_t *prqs, mpc_queue_elem_t *elem, uint16_t comm_id);
-void *lcp_match_umqueue(mpc_queue_head_t *umqs, 
+void *lcp_match_umqueue(mpc_queue_head_t *umqs,
                         uint16_t comm_id, int32_t tag, int32_t tmask,
                         int32_t src, int32_t smask);
 void lcp_append_umqueue(mpc_queue_head_t *umqs, mpc_queue_elem_t *elem, uint16_t comm_id);
-void *lcp_search_umqueue(mpc_queue_head_t *umqs, 
+void *lcp_search_umqueue(mpc_queue_head_t *umqs,
                          uint16_t comm_id, int32_t tag, int32_t tmask,
                          int32_t src, int32_t smask);
 

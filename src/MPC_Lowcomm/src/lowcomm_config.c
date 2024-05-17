@@ -252,7 +252,7 @@ static inline mpc_conf_config_type_t *__init_driver_shm(struct _mpc_lowcomm_conf
 	driver->type = MPC_LOWCOMM_CONFIG_DRIVER_SHM;
 
 
-	mpc_conf_config_type_t *ret = 
+	mpc_conf_config_type_t *ret =
                 mpc_conf_config_type_init("shm",
                                           NULL);
 
@@ -278,19 +278,19 @@ static inline mpc_conf_config_type_t *__init_driver_tbsm(struct _mpc_lowcomm_con
 	  Create the config object
 	*/
 
-	mpc_conf_config_type_t *ret = 
+	mpc_conf_config_type_t *ret =
                 mpc_conf_config_type_init("tbsm",
-                                          PARAM("eagerlimit", 
-                                                &tbsm->eager_limit, 
-                                                MPC_CONF_INT, 
+                                          PARAM("eagerlimit",
+                                                &tbsm->eager_limit,
+                                                MPC_CONF_INT,
                                                 "Eager limit."),
-                                          PARAM("maxmsgsize", 
-                                                &tbsm->max_msg_size, 
-                                                MPC_CONF_LONG_INT, 
+                                          PARAM("maxmsgsize",
+                                                &tbsm->max_msg_size,
+                                                MPC_CONF_LONG_INT,
                                                 "Max message size."),
-                                          PARAM("bcopybufsize", 
-                                                &tbsm->bcopy_buf_size, 
-                                                MPC_CONF_INT, 
+                                          PARAM("bcopybufsize",
+                                                &tbsm->bcopy_buf_size,
+                                                MPC_CONF_INT,
                                                 "Size of buffered copies."),
                                           NULL);
 
@@ -302,10 +302,10 @@ static inline mpc_conf_config_type_t *__init_driver_tcp(struct _mpc_lowcomm_conf
 {
 	driver->type = MPC_LOWCOMM_CONFIG_DRIVER_TCP;
 
-	/* 
+	/*
 	 * Set defaults
 	 */
-	
+
 	struct _mpc_lowcomm_config_struct_net_driver_tcp *tcp = &driver->value.tcp;
 
 	tcp->max_msg_size = INT_MAX;
@@ -328,10 +328,10 @@ static inline mpc_conf_config_type_t *__init_driver_portals(struct _mpc_lowcomm_
 {
 	driver->type = MPC_LOWCOMM_CONFIG_DRIVER_PORTALS;
 
-	/* 
+	/*
 	 * Set defaults
 	 */
-	
+
 	struct _mpc_lowcomm_config_struct_net_driver_portals *portals = &driver->value.portals;
 
 	portals->eager_limit = 8192;
@@ -375,7 +375,7 @@ static inline mpc_conf_config_type_t *__init_driver_portals(struct _mpc_lowcomm_
 
 /**
  * @brief This updates string values to enum values
- * 
+ *
  * @param driver driver to update
  */
 static inline void __mpc_lowcomm_driver_conf_unfold_values(struct _mpc_lowcomm_config_struct_net_driver *driver)
@@ -445,7 +445,7 @@ static inline mpc_conf_config_type_t *__mpc_lowcomm_driver_conf_default_driver(c
 
 	mpc_conf_config_type_t *ret = mpc_conf_config_type_init(config_name,
 	                                                        PARAM(driver->name, driver, MPC_CONF_TYPE, "Driver configuration"),
-	                                                        NULL);	
+	                                                        NULL);
 
 	__append_new_driver_to_unfolded(new_conf);
 
@@ -503,7 +503,7 @@ void ___mpc_lowcomm_driver_conf_validate()
 			all_configs->elems[i]->addr = new_config;
 			/* Reget new conf */
 			unfold = _mpc_lowcomm_conf_driver_unfolded_get(config->name);
-			
+
 			if(!unfold)
 			{
 				continue;
@@ -654,7 +654,7 @@ mpc_conf_config_type_t *__new_rail_conf_instance(
 	                                                         PARAM("offload", &ret->offload, MPC_CONF_BOOL, "Can this rail provide tag offload capabilities"),
 	                                                         PARAM("maxifaces", &ret->max_ifaces, MPC_CONF_INT, "Maximum number of rails instances that can be used for multirail"),
 	                                                         PARAM("config", ret->config, MPC_CONF_STRING, "Name of the rail configuration to be used for this rail"),
-	                                                         NULL); 
+	                                                         NULL);
 
 
 	__append_new_rail_to_unfolded(ret);
@@ -728,7 +728,7 @@ static inline mpc_conf_config_type_t *___mpc_lowcomm_rail_instanciate_from_defau
 
 	/* Here we override with what was already present in the config */
 	mpc_conf_config_type_t *current_rail = mpc_conf_config_type_elem_get_inner(elem);
-   
+
 	return mpc_conf_config_type_elem_update(default_rail, current_rail, 1);
 }
 
@@ -799,7 +799,7 @@ static mpc_conf_config_type_t *___mpc_lowcomm_cli_conf_option_init(char *name, c
 		char *ar3 = malloc(sizeof(char) * MPC_CONF_STRING_SIZE);
 		assume(ar3);
 		snprintf(ar3, MPC_CONF_STRING_SIZE, rail3);
-	
+
 		rails = mpc_conf_config_type_init(name,
 		                                  PARAM("first", ar1, MPC_CONF_STRING, "First rail to pick"),
 		                                  PARAM("second", ar2, MPC_CONF_STRING, "Second rail to pick"),

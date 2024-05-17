@@ -119,7 +119,7 @@ char * _utils_trim(char * path)
 	{
 		ret[off] = '\0';
 		off--;
-	}	
+	}
 
 	return ret;
 }
@@ -306,7 +306,7 @@ int _utils_is_file(char * path)
 		return 1;
 	}
 
-	return 0;	
+	return 0;
 }
 
 ssize_t _util_file_size(char * path)
@@ -320,7 +320,7 @@ ssize_t _util_file_size(char * path)
         return -1;
     }
 
-	return st.st_size;	
+	return st.st_size;
 }
 
 

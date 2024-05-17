@@ -60,7 +60,7 @@ static inline int __print_enum(char *buff, int len, int *ptr, int add_color, mpc
       break;
     }
   }
-  
+
   if(index == -1) {
     _utils_verbose_output(0,"unknown enum value '%d'\n", *ptr);
     return -1;
@@ -258,7 +258,7 @@ static inline int __parse_enum(char *buff, int *val, mpc_conf_enum_keyval_t * ek
       return 0;
     }
   }
-  
+
   char err_msg[1024] = "\0";
   for(int i = 0; i < ekv_length; i++) {
     if(i != 0) {
@@ -364,7 +364,7 @@ int mpc_conf_type_set_value_from_string(mpc_conf_type_t type, void **dest, char 
 			_utils_verbose_output(0,"Failed parsing %s from string '%s'\n", mpc_conf_type_name(type), from);
 			return 1;
 		}
-	
+
 		return 0;
 	}
 	else

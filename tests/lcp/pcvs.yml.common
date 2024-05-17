@@ -8,7 +8,7 @@ context_init:
   run:
     depends_on: ["compile_units"]
     program: @BUILDPATH@/lcp_compute_env.sh @BUILDPATH@/context_init
-    iterate: 
+    iterate:
       n_core:
         values: [2]
       n_node:
@@ -20,7 +20,7 @@ ep_init:
   run:
     depends_on: ["compile_units"]
     program: @BUILDPATH@/lcp_compute_env.sh @BUILDPATH@/ep_init
-    iterate: 
+    iterate:
       n_core:
         values: [2]
       n_node:
@@ -32,7 +32,7 @@ ep_double:
   run:
     depends_on: ["compile_units"]
     program: @BUILDPATH@/lcp_compute_env.sh @BUILDPATH@/ep_double
-    iterate: 
+    iterate:
       n_core:
         values: [2]
       n_node:
@@ -44,7 +44,7 @@ ep_earlysend:
   run:
     depends_on: ["compile_units"]
     program: @BUILDPATH@/lcp_compute_env.sh @BUILDPATH@/ep_earlysend
-    iterate: 
+    iterate:
       n_core:
         values: [2]
       n_node:
@@ -56,7 +56,7 @@ ep_earlyrecv:
   run:
     program: @BUILDPATH@/lcp_compute_env.sh @BUILDPATH@/ep_earlyrecv
     depends_on: ["compile_units"]
-    iterate: 
+    iterate:
       n_core:
         values: [2]
       n_node:
@@ -68,7 +68,7 @@ ep_sendrecv:
   run:
     program: @BUILDPATH@/lcp_compute_env.sh @BUILDPATH@/ep_sendrecv
     depends_on: ["compile_units"]
-    iterate: 
+    iterate:
       n_core:
         values: [2]
       n_node:
@@ -80,7 +80,7 @@ ep_sendfrag:
   run:
     depends_on: ["compile_units"]
     program: @BUILDPATH@/lcp_compute_env.sh @BUILDPATH@/ep_sendfrag
-    iterate: 
+    iterate:
       n_core:
         values: [2]
       n_node:
@@ -97,7 +97,7 @@ ep_am:
   run:
     depends_on: ["compile_units"]
     program: @BUILDPATH@/lcp_compute_env.sh @BUILDPATH@/ep_am
-    iterate: 
+    iterate:
       n_core:
         values: [2]
       n_node:

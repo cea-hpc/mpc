@@ -298,17 +298,17 @@ static inline void __setup_pool(mpc_lowcomm_communicator_t per_node_comm)
 #if !defined(MPC_IN_PROCESS_MODE)
 		mpc_lowcomm_communicator_free(&process_master_comm);
 #endif
-	
+
 		/* First mark segment start for debug */
 		int * canary =  (int *)__mpc_lowcomm_memory_pool._pool;
 		*canary = 1377;
 
 		/* After we have a lock */
 		void * after_canary = canary + 1;
-		
+
 		__mpc_lowcomm_memory_pool.lock = after_canary;
 
-		/* A bit array */		
+		/* A bit array */
 		void * bit_array = __mpc_lowcomm_memory_pool.lock + 1;
 
 		/* And to finish the actual memory pool */

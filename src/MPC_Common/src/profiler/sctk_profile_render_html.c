@@ -49,7 +49,7 @@ void sctk_profile_render_html_setup( struct sctk_profile_renderer *rd )
 
 	sctk_profile_render_filename( output_file, "html" );
 	rd->output_file = fopen( output_file, "w" );
-	
+
 	if( !rd->output_file )
 	{
 		mpc_common_debug_error( "Failed to open profile file : %s ", output_file );
@@ -164,7 +164,7 @@ void sctk_profile_render_html_render_profile( struct sctk_profiler_array *array,
 																		prefix[ (prefix_id < 3)? prefix_id : 2 ], to_unit_min,  suffix[ (prefix_id < 3)? prefix_id : 2 ],
 																		prefix[ (prefix_id < 3)? prefix_id : 2 ], to_unit_max,  suffix[ (prefix_id < 3)? prefix_id : 2 ],
 																		prefix[ (prefix_id < 3)? prefix_id : 2 ], rd->ptree.entry_relative_percentage_time[id] * 100,  suffix[ (prefix_id < 3)? prefix_id : 2 ],
-																		prefix[ (prefix_id < 3)? prefix_id : 2 ], rd->ptree.entry_total_percentage_time[id] * 100,   suffix[ (prefix_id < 3)? prefix_id : 2 ]); 
+																		prefix[ (prefix_id < 3)? prefix_id : 2 ], rd->ptree.entry_total_percentage_time[id] * 100,   suffix[ (prefix_id < 3)? prefix_id : 2 ]);
 	}
 
 }
@@ -174,6 +174,3 @@ void sctk_profile_render_html_teardown_profile( struct sctk_profile_renderer *rd
 {
 	fprintf(rd->output_file, "</table>");
 }
-
-
-

@@ -142,4 +142,3 @@ from the shell :
 * `mpc_print_config` the configuration printer for MPC
 * Any mpi\* derivative from the commands above (`mpicc`, `mpicxx`, `mpif*`,
   `mpirun`...)
-

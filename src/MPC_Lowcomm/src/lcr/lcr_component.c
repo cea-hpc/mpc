@@ -38,7 +38,7 @@
 #include "sctk_alloc.h"
 
 /* Init component list */
-lcr_component_t *lcr_component_list = NULL; 
+lcr_component_t *lcr_component_list = NULL;
 
 
 lcr_component_t * lcr_query_component_by_name(const char * name)
@@ -56,7 +56,7 @@ lcr_component_t * lcr_query_component_by_name(const char * name)
 
 
 
-int lcr_query_components(lcr_component_h **components_p, 
+int lcr_query_components(lcr_component_h **components_p,
                          unsigned *num_components_p)
 {
         int rc = MPC_LOWCOMM_SUCCESS;
@@ -84,7 +84,7 @@ err:
         return rc;
 }
 
-int lcr_free_components(lcr_component_h *components, unsigned num_components, int devices) 
+int lcr_free_components(lcr_component_h *components, unsigned num_components, int devices)
 {
         int i;
         if (devices) {

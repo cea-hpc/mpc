@@ -108,8 +108,8 @@ static void _mpc_lowcomm_portals_notify_perform(__UNUSED__ mpc_lowcomm_peer_uid_
 	__ptl_poll(rail, 3);
 }
 
-static void _mpc_lowcomm_portals_notify_any_source (__UNUSED__ int polling_task_id, 
-                                                    __UNUSED__ int blocking, 
+static void _mpc_lowcomm_portals_notify_any_source (__UNUSED__ int polling_task_id,
+                                                    __UNUSED__ int blocking,
                                                     sctk_rail_info_t* rail)
 {
 	__ptl_poll(rail, 2);
@@ -171,7 +171,7 @@ static int sctk_send_message_from_network_ptl ( mpc_lowcomm_ptp_message_t *msg )
 	return 1;
 }
 
-/** 
+/**
  * Function called globally when C/R is enabled, to close the rail before checkpointing.
  * \param[in] rail the Portals rail to shut down.
  */
@@ -296,7 +296,7 @@ int lcr_ptl_get_attr(sctk_rail_info_t *rail,
         attr->iface.cap.rma.min_frag_size   = rail->network.ptl.min_frag_size;
 
         attr->mem.cap.max_reg      = PTL_SIZE_MAX;
-        attr->mem.size_packed_mkey = sizeof(uint64_t); //FIXME: to be generalized 
+        attr->mem.size_packed_mkey = sizeof(uint64_t); //FIXME: to be generalized
 
         return MPC_LOWCOMM_SUCCESS;
 }
@@ -317,7 +317,7 @@ int lcr_ptl_query_devices(__UNUSED__ lcr_component_t *component,
         num_devices = 0;
 
         /* First, try simulator */
-        const char *ptl_iface_name; 
+        const char *ptl_iface_name;
         if ((ptl_iface_name = getenv("PTL_IFACE_NAME")) != NULL) {
                 devices = sctk_malloc(sizeof(lcr_device_t));
                 strcpy(devices[0].name, ptl_iface_name);
@@ -363,9 +363,9 @@ int lcr_ptl_query_devices(__UNUSED__ lcr_component_t *component,
                         rc = MPC_LOWCOMM_ERROR;
                         goto close_dir;
                 }
-                
+
                 //FIXME: interface name should always be of the form:
-                //       bxi<id> with id, 0 < id < 9 
+                //       bxi<id> with id, 0 < id < 9
                 strcpy(devices[num_devices].name, entry->d_name);
                 ++num_devices;
         }
@@ -383,7 +383,7 @@ out:
 }
 
 int lcr_ptl_iface_open(__UNUSED__ const char *device_name, int id,
-		       lcr_rail_config_t *rail_config, 
+		       lcr_rail_config_t *rail_config,
 		       lcr_driver_config_t *driver_config,
 		       sctk_rail_info_t **iface_p)
 {
@@ -406,7 +406,7 @@ int lcr_ptl_iface_open(__UNUSED__ const char *device_name, int id,
 	iface->iface_get_attr = lcr_ptl_get_attr;
 
         /* Init capabilities */
-        iface->cap = LCR_IFACE_CAP_RMA | 
+        iface->cap = LCR_IFACE_CAP_RMA |
                 LCR_IFACE_CAP_SELF     |
                 LCR_IFACE_CAP_REMOTE;
 
@@ -433,7 +433,7 @@ int lcr_ptl_iface_open(__UNUSED__ const char *device_name, int id,
 
         *iface_p = iface;
 err:
-        return rc; 
+        return rc;
 }
 
 lcr_component_t ptl_component = {

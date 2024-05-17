@@ -68,10 +68,10 @@ int lcr_ptl_send_tag_zcopy(_mpc_lowcomm_endpoint_t *ep,
 
 int lcr_ptl_post_tag_zcopy(sctk_rail_info_t *rail,
                            lcr_tag_t tag, lcr_tag_t ign_tag,
-                           const struct iovec *iov, 
+                           const struct iovec *iov,
                            size_t iovcnt, /* only one iov supported */
                            unsigned flags,
-                           lcr_tag_context_t *ctx); 
+                           lcr_tag_context_t *ctx);
 
 int lcr_ptl_unpost_tag_zcopy(sctk_rail_info_t *rail,
                              lcr_tag_t tag);
@@ -103,10 +103,10 @@ int lcr_ptl_get_tag_zcopy(_mpc_lowcomm_endpoint_t *ep,
                           size_t size,
                           lcr_completion_t *ctx);
 
-void lcr_ptl_mem_register(struct sctk_rail_info_s *rail, 
-                          struct sctk_rail_pin_ctx_list *list, 
+void lcr_ptl_mem_register(struct sctk_rail_info_s *rail,
+                          struct sctk_rail_pin_ctx_list *list,
                           void * addr, size_t size);
-void lcr_ptl_mem_unregister(struct sctk_rail_info_s *rail, 
+void lcr_ptl_mem_unregister(struct sctk_rail_info_s *rail,
                             struct sctk_rail_pin_ctx_list *list);
 int lcr_ptl_pack_rkey(sctk_rail_info_t *rail,
                       lcr_memp_t *memp, void *dest);

@@ -49,14 +49,14 @@ static void FLOAT_convert(int type_byte_size, char *src, char *dest) {
 
 static inline int sctk_is_float_datatype( mpc_lowcomm_datatype_t type)
 {
-    return ((type == MPC_LOWCOMM_FLOAT) || 
+    return ((type == MPC_LOWCOMM_FLOAT) ||
 	    (type == MPC_LOWCOMM_DOUBLE) ||
             (type == MPC_LOWCOMM_LONG_DOUBLE) ||
             (type == MPC_LOWCOMM_DOUBLE_PRECISION) ||
             (type == MPC_COMPLEX) ||
             (type == MPC_DOUBLE_COMPLEX) ||
             (type == MPC_LOWCOMM_REAL4) ||
-            (type == MPC_LOWCOMM_REAL8) || 
+            (type == MPC_LOWCOMM_REAL8) ||
             (type == MPC_LOWCOMM_REAL16));
 }
 
@@ -79,7 +79,7 @@ static inline void uinteger_8_64( uint8_t in, uint64_t * out )
 
 static inline void uinteger_8_convert( uint8_t in, void * out, size_t target )
 {
-	
+
 	switch( target )
 	{
 		case 16:
@@ -93,7 +93,7 @@ static inline void uinteger_8_convert( uint8_t in, void * out, size_t target )
 		break;
 		default:
 			mpc_common_debug_fatal("No such converter 8 to %d", target );
-	}	
+	}
 }
 
 
@@ -116,7 +116,7 @@ static inline void uinteger_16_64( uint16_t in, uint64_t * out )
 
 static inline void uinteger_16_convert( uint16_t in, void * out, size_t target )
 {
-	
+
 	switch( target )
 	{
 		case 8:
@@ -130,7 +130,7 @@ static inline void uinteger_16_convert( uint16_t in, void * out, size_t target )
 		break;
 		default:
 			mpc_common_debug_fatal("No such converter 16 to %d", target );
-	}	
+	}
 }
 
 /* 32 bits uinteger */
@@ -151,7 +151,7 @@ static inline void uinteger_32_64( uint32_t in, uint64_t * out )
 
 static inline void uinteger_32_convert( uint32_t in, void * out, size_t target )
 {
-	
+
 	switch( target )
 	{
 		case 8:
@@ -165,7 +165,7 @@ static inline void uinteger_32_convert( uint32_t in, void * out, size_t target )
 		break;
 		default:
 			mpc_common_debug_fatal("No such converter 16 to %d", target );
-	}	
+	}
 }
 
 /* 64 bits uinteger */
@@ -186,7 +186,7 @@ static inline void uinteger_64_32( uint64_t in, uint32_t * out )
 
 static inline void uinteger_64_convert( uint64_t in, void * out, size_t target )
 {
-	
+
 	switch( target )
 	{
 		case 8:
@@ -200,7 +200,7 @@ static inline void uinteger_64_convert( uint64_t in, void * out, size_t target )
 		break;
 		default:
 			mpc_common_debug_fatal("No such converter 16 to %d", target );
-	}	
+	}
 }
 
 /* 8 bits integer */
@@ -221,7 +221,7 @@ static inline void integer_8_64( int8_t in, int64_t * out )
 
 static inline void integer_8_convert( int8_t in, void * out, size_t target )
 {
-	
+
 	switch( target )
 	{
 		case 16:
@@ -235,7 +235,7 @@ static inline void integer_8_convert( int8_t in, void * out, size_t target )
 		break;
 		default:
 			mpc_common_debug_fatal("No such converter 8 to %d", target );
-	}	
+	}
 }
 
 
@@ -258,7 +258,7 @@ static inline void integer_16_64( int16_t in, int64_t * out )
 
 static inline void integer_16_convert( int16_t in, void * out, size_t target )
 {
-	
+
 	switch( target )
 	{
 		case 8:
@@ -272,7 +272,7 @@ static inline void integer_16_convert( int16_t in, void * out, size_t target )
 		break;
 		default:
 			mpc_common_debug_fatal("No such converter 16 to %d", target );
-	}	
+	}
 }
 
 /* 32 bits integer */
@@ -293,7 +293,7 @@ static inline void integer_32_64( int32_t in, int64_t * out )
 
 static inline void integer_32_convert( int32_t in, void * out, size_t target )
 {
-	
+
 	switch( target )
 	{
 		case 8:
@@ -307,7 +307,7 @@ static inline void integer_32_convert( int32_t in, void * out, size_t target )
 		break;
 		default:
 			mpc_common_debug_fatal("No such converter 16 to %d", target );
-	}	
+	}
 }
 
 /* 64 bits integer */
@@ -328,7 +328,7 @@ static inline void integer_64_32( int64_t in, int32_t * out )
 
 static inline void integer_64_convert( int64_t in, void * out, size_t target )
 {
-	
+
 	switch( target )
 	{
 		case 8:
@@ -342,7 +342,7 @@ static inline void integer_64_convert( int64_t in, void * out, size_t target )
 		break;
 		default:
 			mpc_common_debug_fatal("No such converter 16 to %d", target );
-	}	
+	}
 }
 
 
@@ -357,7 +357,7 @@ void sctk_integer_convert_width( void * in, size_t in_size, int unsgn, void * ou
 		memcpy( out, in, in_size );
 		return;
 	}
-	
+
 	if( unsgn)
 	{
 		switch( in_size )
@@ -394,7 +394,7 @@ void sctk_integer_convert_width( void * in, size_t in_size, int unsgn, void * ou
 			break;
 		}
 	}
-	
+
 }
 
 
@@ -406,11 +406,11 @@ static inline void MPC_Extern32_encode( mpc_lowcomm_datatype_t type, char * in, 
 	{
 		mpc_common_debug_fatal("Cannot convert a non-common data-type");
 	}
-	
+
 	/* Prepare for width Conversion */
 	size_t type_size = mpc_lowcomm_datatype_common_get_size( type );
 	size_t type_extern_size = MPC_Extern32_common_type_size( type );
-	
+
 	if( type_size != type_extern_size )
 	{
 		if( sctk_is_float_datatype( type ) )
@@ -426,14 +426,14 @@ static inline void MPC_Extern32_encode( mpc_lowcomm_datatype_t type, char * in, 
 	{
 		memcpy( out, in, type_extern_size );
 	}
-	
+
 	/* At this point data should be in the OUT buffer */
-	
+
 	/* Put in a tmp buff on stack */
 	char tmpbuff[512];
 	assume( type_size < 512 );
 	memcpy( tmpbuff, out, type_extern_size );
-	
+
 	/* Apply indianess conversion on the OUT buffer (on the extern type) */
 	if( sctk_is_float_datatype( type ) )
 	{
@@ -447,7 +447,7 @@ static inline void MPC_Extern32_encode( mpc_lowcomm_datatype_t type, char * in, 
 
 static inline void MPC_Extern32_decode( mpc_lowcomm_datatype_t type, char * in, char * out )
 {
-	
+
 	size_t type_size = mpc_lowcomm_datatype_common_get_size( type );
 	size_t type_extern_size = MPC_Extern32_common_type_size( type );
 
@@ -459,13 +459,13 @@ static inline void MPC_Extern32_decode( mpc_lowcomm_datatype_t type, char * in, 
 	else
 	{
 		BASIC_convert(type_extern_size, in, out);
-	}	
-	
+	}
+
 	/* Prepare for width Conversion */
 	char tmpbuff[512];
 	assume( type_extern_size < 512 );
 
-			
+
 	if( type_size != type_extern_size )
 	{
 		if( sctk_is_float_datatype( type ) )
@@ -483,27 +483,27 @@ static inline void MPC_Extern32_decode( mpc_lowcomm_datatype_t type, char * in, 
 
 
 void MPC_Extern32_convert( mpc_lowcomm_datatype_t * typevector ,
-						   int type_vector_size, 
-						   char * native_buff, 
-						   size_t max_native_size, 
-						   char * extern_buff, 
-						   size_t max_extern_size , 
+						   int type_vector_size,
+						   char * native_buff,
+						   size_t max_native_size,
+						   char * extern_buff,
+						   size_t max_extern_size ,
 						   int encode )
 {
 	int typeIdx = 0;
 	size_t current_offset = 0;
 	size_t extern_offset = 0;
-	
+
 	char * current_entry = native_buff;
 	char * current_extern_entry = extern_buff;
-	
+
 	while( 1 )
 	{
 		mpc_lowcomm_datatype_t current_type = typevector[ typeIdx ];
 		typeIdx = ( typeIdx + 1 ) % type_vector_size;
-		
+
 		/* Apply conversion */
-		
+
 		if( encode )
 		{
 			MPC_Extern32_encode( current_type, current_entry, current_extern_entry);
@@ -512,22 +512,20 @@ void MPC_Extern32_convert( mpc_lowcomm_datatype_t * typevector ,
 		{
 			MPC_Extern32_decode( current_type, current_extern_entry, current_entry );
 		}
-		
+
 		/* Move in the input */
 		current_offset += mpc_lowcomm_datatype_common_get_size( current_type );
 		current_entry = native_buff + current_offset;
-		
+
 		/* Move in the output */
 		extern_offset += MPC_Extern32_common_type_size( typevector[ typeIdx ] );
 		current_extern_entry = (void*)(extern_buff + extern_offset);
-	
-		
+
+
 		if( max_native_size <= current_offset )
 			break;
-	
+
 		if( max_extern_size <= extern_offset )
 			break;
 	}
 }
-
-

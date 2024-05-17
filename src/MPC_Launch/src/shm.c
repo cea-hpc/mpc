@@ -71,7 +71,7 @@ static inline void *__map_shm_segment_pmi(size_t size)
 
 		if(!is_singleton)
 			mpc_launch_pmi_put(segment_name, segment_key, 1 /* local to node */);
-		
+
 		/* Time to create the segment */
 		shm_fd = shm_open(segment_name, O_CREAT | O_EXCL | O_RDWR | O_TRUNC, 0600);
 

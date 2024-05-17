@@ -9,7 +9,7 @@ CONTENTS:
 ---------
 * **include/** : Headers used as interface with other modules
 * **src/**     : module main source files
-    
+
 
 COMPONENTS:
 -----------

@@ -73,9 +73,9 @@ prepare_includes:$(M_PWD)/include_modules/MPC_Debugger
 
 
 ifneq ($(SCTK_MAKE_NO_DEP),yes)
-DEPENDS=$(DEP_include) $(DEP_dbg_thread) $(DEP_src) 
+DEPENDS=$(DEP_include) $(DEP_dbg_thread) $(DEP_src)
 
-$(DEPENDS):Makefile 
+$(DEPENDS):Makefile
 endif
 
 ifneq ($(SCTK_MAKE_NO_DEP),yes)

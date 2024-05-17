@@ -185,7 +185,7 @@ sctk_ptl_rail_info_t sctk_ptl_hardware_init(sctk_ptl_interface_t iface)
 	assert(sizeof(sctk_ptl_cm_data_t)         <= sizeof(ptl_hdr_data_t));
 	assert(sizeof(sctk_ptl_offload_data_t)    <= sizeof(ptl_hdr_data_t));
 	assert(sizeof(sctk_ptl_imm_data_t)        <= sizeof(ptl_hdr_data_t));
-	
+
 	/* init the driver */
 	sctk_ptl_chk(PtlInit());
 
@@ -228,7 +228,7 @@ void sctk_ptl_hardware_fini(sctk_ptl_rail_info_t* srail)
  * Map the Portals structure in user-space to be ready for communication.
  *
  * After this functions, Portals entries should be ready to use. This function
- * is different from hardware init beceause it is possible to have multiple 
+ * is different from hardware init beceause it is possible to have multiple
  * software implementation relying on the same NI (why not?).
  * \param[in] srail the Portals rail
  * \param[in] dims PT dimensions
@@ -244,7 +244,7 @@ void sctk_ptl_software_init(sctk_ptl_rail_info_t* srail, size_t comm_dims)
 
 	table = sctk_malloc(sizeof(sctk_ptl_pte_t) * comm_dims); /* one CM, one recovery, one RDMA */
 	memset(table, 0, comm_dims * sizeof(sctk_ptl_pte_t));
-	
+
 	mpc_common_hashtable_init(&srail->pt_table, (comm_dims < 64) ? 64 : comm_dims);
 	mpc_common_hashtable_init(&srail->reverse_pt_table, (comm_dims < 64) ? 64 : comm_dims);
 
@@ -280,7 +280,7 @@ void sctk_ptl_software_init(sctk_ptl_rail_info_t* srail, size_t comm_dims)
 	 * This is the only situation where ME-PUT w/ IGNORE_ALL should be
 	 * pushed into the priority list !
 	 */
-	//NOTE: this leaked it is already allocated in previous loop 
+	//NOTE: this leaked it is already allocated in previous loop
 	//sctk_ptl_me_feed(srail, table + SCTK_PTL_PTE_CM, eager_size, SCTK_PTL_ME_OVERFLOW_NB, SCTK_PTL_PRIORITY_LIST, SCTK_PTL_TYPE_CM, SCTK_PTL_PROT_NONE);
 
 	//NOTE: initially allocated to avoid dynamical porte allocation
@@ -300,7 +300,7 @@ void sctk_ptl_software_init(sctk_ptl_rail_info_t* srail, size_t comm_dims)
 	OPA_store_int(&srail->rdma_cpt, 0);
 	if(srail->max_mr > srail->max_limits.max_msg_size)
 		srail->max_mr = srail->max_limits.max_msg_size;
-	
+
 	if(sctk_ptl_offcoll_enabled(srail))
 		sctk_ptl_offcoll_init(srail);
 
@@ -341,7 +341,7 @@ mpc_lowcomm_communicator_id_t sctk_ptl_pte_idx_to_comm_id(sctk_ptl_rail_info_t* 
 sctk_ptl_pte_t *lcr_ptl_pte_idx_to_pte(sctk_ptl_rail_info_t *srail,
                                       ptl_pt_index_t idx)
 {
-        mpc_lowcomm_communicator_id_t comm_id = 
+        mpc_lowcomm_communicator_id_t comm_id =
                 sctk_ptl_pte_idx_to_comm_id(srail, idx);
         return (sctk_ptl_pte_t *)mpc_common_hashtable_get(&srail->pt_table, comm_id);
 }
@@ -366,7 +366,7 @@ void sctk_ptl_pte_create(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte, ptl_p
 		requested_index,  /* the desired index value */
 		&pte->idx       /* the effective index value */
 	));
-#else 
+#else
 	/* create the EQ for this PT */
 	sctk_ptl_chk(PtlEQAlloc(
 		srail->iface,         /* the NI handler */
@@ -411,7 +411,7 @@ static inline void __pte_release(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pt
 {
 	if(sctk_ptl_offcoll_enabled(srail))
 		sctk_ptl_offcoll_pte_fini(srail, pte);
-	
+
 #ifndef MPC_LOWCOMM_PROTOCOL
 	sctk_ptl_chk(PtlEQFree(
 		pte->eq       /* the EQ handler */
@@ -421,7 +421,7 @@ static inline void __pte_release(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pt
 	sctk_ptl_chk(PtlPTFree(
 		srail->iface,     /* the NI handler */
 		pte->idx      /* the PTE to destroy */
-	));	
+	));
 
 	srail->nb_entries--;
 }
@@ -523,10 +523,10 @@ void sctk_ptl_ct_wait_thrs(sctk_ptl_cnth_t cth, size_t thrs, sctk_ptl_cnt_t* ev)
 	int i = 1;
 
 	/* choose one */
-#if 0 
+#if 0
 	PtlCTWait(cth, thrs, ev);
 #else
-	/* by benching these two methods, the BXI Wait() 
+	/* by benching these two methods, the BXI Wait()
 	 * is longer than a while(){Get();} but is probably also
 	 * less stressful. Also the solution below let the program
 	 * works even if -c=1, as polling is required to progress those
@@ -597,8 +597,8 @@ sctk_ptl_local_data_t* sctk_ptl_me_create(void * start, size_t size, sctk_ptl_id
  */
 sctk_ptl_local_data_t* sctk_ptl_me_create_with_cnt(sctk_ptl_rail_info_t* srail, void * start, size_t size, sctk_ptl_id_t remote, sctk_ptl_matchbits_t match, sctk_ptl_matchbits_t ign, int flags )
 {
-	sctk_ptl_local_data_t* ret; 
-	
+	sctk_ptl_local_data_t* ret;
+
 	ret = sctk_ptl_me_create(start, size, remote, match, ign, (flags | PTL_ME_EVENT_CT_COMM | PTL_ME_EVENT_CT_OVERFLOW));
 
 	__sctk_ptl_ct_alloc(srail, &ret->slot.me.ct_handle);
@@ -675,7 +675,7 @@ void sctk_ptl_me_free(sctk_ptl_local_data_t* request, int free_buffer)
 sctk_ptl_local_data_t* sctk_ptl_md_create(sctk_ptl_rail_info_t* srail, void* start, size_t length, int flags)
 {
 	sctk_ptl_local_data_t* user = sctk_malloc(sizeof(sctk_ptl_local_data_t));
-	
+
 	*user = (sctk_ptl_local_data_t){
 		.slot.md = (sctk_ptl_md_t){
 			.start = start,
@@ -699,7 +699,7 @@ sctk_ptl_local_data_t* sctk_ptl_md_create_with_cnt(sctk_ptl_rail_info_t* srail, 
 {
 	sctk_ptl_local_data_t* user = NULL;
 	user = sctk_ptl_md_create(srail, start, length, flags);
-	
+
 	__sctk_ptl_ct_alloc(srail, &user->slot.md.ct_handle);
 
 	return user;
@@ -727,7 +727,7 @@ int lcr_ptl_md_register(sctk_ptl_rail_info_t* srail, sctk_ptl_local_data_t* user
 		&user->slot.md,   /* the MD to bind with memory region */
 		&user->slot_h.mdh /* out: the MD handler */
 	));
-	
+
 	return MPC_LOWCOMM_SUCCESS;
 }
 #endif
@@ -802,7 +802,7 @@ void sctk_ptl_me_feed(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte, size_t m
 				buf, /* keep it explicit... */
 				me_size, /* buffer size */
 				SCTK_PTL_ANY_PROCESS, /* targetable by any process */
-				SCTK_PTL_MATCH_INIT, /* we don't care the match_bits */ 
+				SCTK_PTL_MATCH_INIT, /* we don't care the match_bits */
 				SCTK_PTL_IGN_ALL, /* triggers all requestss */
 				((list == SCTK_PTL_PRIORITY_LIST) ? SCTK_PTL_ME_PUT_FLAGS : SCTK_PTL_ME_OVERFLOW_FLAGS) | SCTK_PTL_ONCE
 		);
@@ -1025,7 +1025,7 @@ int sctk_ptl_emit_trig_get(sctk_ptl_local_data_t* user, size_t size, sctk_ptl_id
 {
 	/** WARNING: the API provide a prototype where user_ptr & remote_off are inverted.
 	 *
-	 * It is probably a typo error in the API  but be careful if some implementation chose to 
+	 * It is probably a typo error in the API  but be careful if some implementation chose to
 	 * be strict with the standard. The BXI implementation inverts them to be consistent
 	 * with Get() initial syntax
 	 */

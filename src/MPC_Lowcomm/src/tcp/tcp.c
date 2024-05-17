@@ -236,7 +236,7 @@ int lcr_tcp_get_attr(sctk_rail_info_t *rail,
 
 	attr->iface.cap.am.max_iovecs = 6; //FIXME: arbitrary value...
 	attr->iface.cap.am.max_bcopy  = 0; /* FIXME: send() return whenever data has been
-										* copied to kernel buf. So, potentiel benefit 
+										* copied to kernel buf. So, potentiel benefit
 										* compared to zcopy...
 										* TCP socket are blocking, hence
 	                                    * no need for buffered copy.
@@ -256,7 +256,7 @@ int lcr_tcp_get_attr(sctk_rail_info_t *rail,
  * \param[in] tmp the route to progress
  * \return NULL
  */
-static inline int lcr_tcp_invoke_am(sctk_rail_info_t *rail, 
+static inline int lcr_tcp_invoke_am(sctk_rail_info_t *rail,
 				    uint8_t am_id,
 				    size_t length,
 				    void *data)
@@ -297,7 +297,7 @@ static void *lcr_tcp_thread_loop(_mpc_lowcomm_endpoint_t *ep)
 		} else {
 			data = sctk_malloc(hdr.length);
 			recv_length = mpc_common_io_safe_read(fd, data, hdr.length);
-			if (recv_length <= 0) 
+			if (recv_length <= 0)
 				break;
 			else if ((size_t)recv_length < hdr.length)
 				break;
@@ -324,7 +324,7 @@ static void *lcr_tcp_thread_loop(_mpc_lowcomm_endpoint_t *ep)
  * the buffer
  *
  */
-static ssize_t lcr_tcp_send_am_bcopy(_mpc_lowcomm_endpoint_t *ep, uint8_t id, 
+static ssize_t lcr_tcp_send_am_bcopy(_mpc_lowcomm_endpoint_t *ep, uint8_t id,
 				     lcr_pack_callback_t pack, void *arg,
 				     __UNUSED__ unsigned flags)
 {
@@ -350,14 +350,14 @@ static ssize_t lcr_tcp_send_am_bcopy(_mpc_lowcomm_endpoint_t *ep, uint8_t id,
 		payload_length = -1;
 	}
 
-	sctk_free(hdr);	
+	sctk_free(hdr);
 err:
-	return payload_length;	
+	return payload_length;
 }
 
 static void lcr_tcp_send_am_prepare(const struct iovec *iov, int iovcnt,
 				   const void *header, unsigned hdr_length,
-				   uint8_t id, lcr_tcp_am_zcopy_hdr_t *hdr, 
+				   uint8_t id, lcr_tcp_am_zcopy_hdr_t *hdr,
 				   size_t *payload_length)
 {
 	int i;
@@ -409,7 +409,7 @@ static int lcr_tcp_send_am_zcopy(_mpc_lowcomm_endpoint_t *ep,
 	hdr->base.length = payload_length + hdr_length;
 
 	mpc_common_spinlock_lock(&(ep->data.tcp.lock));
-	sent = mpc_common_iovec_safe_write(ep->data.tcp.fd, hdr->iov, hdr->iovcnt, 
+	sent = mpc_common_iovec_safe_write(ep->data.tcp.fd, hdr->iov, hdr->iovcnt,
 					   hdr->base.length + sizeof(lcr_tcp_am_hdr_t));
 	mpc_common_spinlock_unlock(&(ep->data.tcp.lock));
 	if (sent < 0) {
@@ -425,7 +425,7 @@ static int lcr_tcp_send_am_zcopy(_mpc_lowcomm_endpoint_t *ep,
 clean_buf:
 	sctk_free(hdr);
 err:
-	return rc;	
+	return rc;
 }
 
 int lcr_tcp_init_iface(sctk_rail_info_t *rail)

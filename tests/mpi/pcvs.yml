@@ -5,7 +5,7 @@ send_rdv_multiple:
       binary: send_rdv_multiple
       cflags: -g -O0
   run:
-    program: @SRCPATH@/script.sh @BUILDPATH@/send_rdv_multiple
+    program: "@SRCPATH@/script.sh @BUILDPATH@/send_rdv_multiple"
 send_rdv_sym:
   build:
     files: ./send_rdv_sym.c
@@ -13,7 +13,7 @@ send_rdv_sym:
       binary: send_rdv_sym
       cflags: -g -O0
   run:
-    program: @SRCPATH@/script.sh @BUILDPATH@/send_rdv_sym
+    program: "@SRCPATH@/script.sh @BUILDPATH@/send_rdv_sym"
 send_rdv_unsym:
   build:
     files: ./send_rdv_unsym.c
@@ -21,7 +21,7 @@ send_rdv_unsym:
       binary: send_rdv_unsym
       cflags: -g -O0
   run:
-    program: @SRCPATH@/script.sh @BUILDPATH@/send_rdv_unsym
+    program: "@SRCPATH@/script.sh @BUILDPATH@/send_rdv_unsym"
 partitioned:
   build:
     files: ./partitioned.c
@@ -29,4 +29,4 @@ partitioned:
       binary: partitioned
       cflags: -g -O0
   run:
-    program: @SRCPATH@/script.sh @BUILDPATH@/partitioned
+    program: "@SRCPATH@/script.sh @BUILDPATH@/partitioned"

@@ -35,8 +35,8 @@ static mpc_omp_ompt_enumerate_infos_t mpcompt_mutexImpl_infos[] = {
 };
 
 static inline int
-_mpc_omp_ompt_get_next_mutexImpl ( int current_impl, 
-                             int *next_impl, 
+_mpc_omp_ompt_get_next_mutexImpl ( int current_impl,
+                             int *next_impl,
                              const char **next_impl_name ) {
     uint64_t i;
     static const uint64_t mtx_impl_len =

@@ -193,7 +193,7 @@ static inline int nbc_op_trigger( struct nbc_op * op )
         case TYPE_SEND:
             LOG(stderr, "%d ----> SEND %d\n", rank, op->remote);
             PMPI_Isend(op->buff, op->count, op->datatype, op->remote, op->tag, op->comm, &op->request);
-            break; 
+            break;
         case TYPE_RECV:
             LOG(stderr, "%d <---- RECV %d\n", rank, op->remote);
             PMPI_Irecv(op->buff, op->count, op->datatype, op->remote, op->tag, op->comm, &op->request);
@@ -337,7 +337,7 @@ static inline xMPI_Request * xMPI_Request_new(MPI_Request * parent, int size)
      * adding a null event at the end seems to solve it*/
     //size++;
     xMPI_Request * ret = xMPI_Request_from_pool(size);
-    
+
     if( !ret )
         ret = sctk_malloc( sizeof(xMPI_Request) + (sizeof(struct nbc_op) * size));
 
@@ -412,7 +412,7 @@ static inline int xMPI_Request_gen_poll( xMPI_Request *xreq )
         for (i = 0; i < xreq->current_off ; ++i)
         {
             //LOG(stderr, "%d @ %d (%d / %d)\n", rank,  i, xreq->current_off, xreq->size);
-            int ret = nbc_op_trigger( &xreq->op[i] ); 
+            int ret = nbc_op_trigger( &xreq->op[i] );
 
 
             if( ret == NBC_WAIT_OP )
@@ -699,7 +699,7 @@ int MPI_Ixreduce(const void* sendbuf, void* recvbuf, int count, MPI_Datatype dat
 
     if(size > 1) {
 
-        void * lc_buff = NULL; 
+        void * lc_buff = NULL;
         int free_lc_buff = 0;
         void * rc_buff = NULL;
         int free_rc_buff = 0;
@@ -731,7 +731,7 @@ int MPI_Ixreduce(const void* sendbuf, void* recvbuf, int count, MPI_Datatype dat
             free_work_buff = 1;
             nbc_op_mpi_op_init(&xreq->op[3], datatype, count, lc_buff, rc_buff, work_buff, op);
         } else if( lc_buff != NULL ) {
-            // If I have only one child, I just save it for the next step.    
+            // If I have only one child, I just save it for the next step.
             work_buff = lc_buff;
         }
 
@@ -781,7 +781,7 @@ int MPI_Ixreduce(const void* sendbuf, void* recvbuf, int count, MPI_Datatype dat
     return start_request(xreq, request);
 }
 
-int MPI_Ixbcast(void* buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, MPI_Request *request) { 
+int MPI_Ixbcast(void* buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, MPI_Request *request) {
     // This is more or less the same as the barrier, except that we start from the root
     // of the tree instead of the leaves, and the tree can have an arbitrary root
     // (which is accomplished by swapping 0 and the user-specified root)
@@ -790,9 +790,9 @@ int MPI_Ixbcast(void* buffer, int count, MPI_Datatype datatype, int root, MPI_Co
     int rank, size, parent, lc, rc;
     setup_binary_tree(comm, root, &rank, &size, &parent, &lc, &rc);
 
-    if(0 <= parent) { 
+    if(0 <= parent) {
         // If this node has a parent, receive from it
-        nbc_op_init(&xreq->op[0], TYPE_RECV, parent, comm, datatype, count, buffer, 12345);    
+        nbc_op_init(&xreq->op[0], TYPE_RECV, parent, comm, datatype, count, buffer, 12345);
         // and wait until I receive from it
         nbc_op_wait_init(&xreq->op[1]);
     }
@@ -832,7 +832,7 @@ int MPI_Ixbarrier( MPI_Comm comm , MPI_Request * req )
     }
 
 
-    if( 0 <= rc ) 
+    if( 0 <= rc )
     {
         //LOG(stderr, "POST %d RECV from Rc %d\n", rank, rc );
         nbc_op_init( &xreq->op[1], TYPE_RECV, rc, comm, MPI_CHAR, 1, &c, 12345 );
@@ -849,10 +849,10 @@ int MPI_Ixbarrier( MPI_Comm comm , MPI_Request * req )
         nbc_op_init( &xreq->op[3], TYPE_SEND, parent, comm, MPI_CHAR, 1, &c, 12345 );
         //LOG(stderr, "POST %d RECV from Par %d\n", rank, parent );
         nbc_op_init( &xreq->op[4], TYPE_RECV, parent, comm, MPI_CHAR, 1, &c, 12345 );
-        
+
         nbc_op_wait_init(&xreq->op[8]);
     }
-    
+
 
 
     //LOG(stderr, "POST %d WAIT\n", rank );
@@ -878,5 +878,3 @@ int MPI_Ixbarrier( MPI_Comm comm , MPI_Request * req )
 
     return start_request(xreq, req);
 }
-
-

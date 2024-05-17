@@ -141,4 +141,3 @@ struct _mpc_ofi_request_t * _mpc_ofi_request_acquire(struct _mpc_ofi_request_cac
 
    return req;
 }
-

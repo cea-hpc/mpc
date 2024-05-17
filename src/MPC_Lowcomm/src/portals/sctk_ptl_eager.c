@@ -40,18 +40,18 @@ void sctk_ptl_eager_free_memory(void* msg)
 }
 
 /** What to do when a network message matched a locally posted request ?.
- *  
+ *
  *  \param[in,out] msg the send/recv bundle where both message headers are stored
  */
 void sctk_ptl_eager_message_copy(mpc_lowcomm_ptp_message_content_to_copy_t* msg)
 {
 	sctk_ptl_local_data_t* recv_data = msg->msg_recv->tail.ptl.user_ptr;
-	
+
 	/* We ensure data are already stored in the user buffer (zero-copy) only if the two condition are met:
 	 *  1 - The message is a contiguous one (the locally-posted request is contiguous, the network request
 	 *      is always contiguous). This is notified by the 'copy' field true in the recv msdg.
 	 *  2 - The recv has been posted before the network message arrived. This means that Portals directly
-	 *      matched the request with a PRIORITY_LIST ME. This is notified by the 'copy' field true 
+	 *      matched the request with a PRIORITY_LIST ME. This is notified by the 'copy' field true
 	 *      in the 'send' msg.
 	 */
 	if(msg->msg_send->tail.ptl.copy || msg->msg_recv->tail.ptl.copy)
@@ -89,7 +89,7 @@ static inline void sctk_ptl_eager_recv_message(sctk_rail_info_t* rail, sctk_ptl_
 	assert(rail);
 	assert(ev.ni_fail_type == PTL_NI_OK);
 	assert(ev.mlength <= rail->network.ptl.eager_limit);
-	
+
 	/* rebuild a complete MPC header msg (inter_thread_comm needs it) */
 	mpc_lowcomm_ptp_message_header_clear(net_msg, MPC_LOWCOMM_MESSAGE_CONTIGUOUS , sctk_ptl_eager_free_memory, sctk_ptl_eager_message_copy);
 
@@ -104,7 +104,7 @@ static inline void sctk_ptl_eager_recv_message(sctk_rail_info_t* rail, sctk_ptl_
 							    match.data.rank,
 							    mpc_lowcomm_get_process_rank(),
 	/* WARNING this line breaks portals for INTER process-set but we have no way to guess UID */
-							    mpc_lowcomm_monitor_local_uid_of(match.data.rank)); 
+							    mpc_lowcomm_monitor_local_uid_of(match.data.rank));
 
 	assert(0 <= comm_rank);
 
@@ -169,7 +169,7 @@ void sctk_ptl_eager_send_message(mpc_lowcomm_ptp_message_t* msg, _mpc_lowcomm_en
 	sctk_ptl_id_t remote           = SCTK_PTL_ANY_PROCESS;
 	_mpc_lowcomm_endpoint_info_portals_t* infos   = &endpoint->data.ptl;
 	sctk_ptl_imm_data_t hdr;
-	
+
 	/* clear the PTL msg tail struct */
 	memset(&msg->tail.ptl, 0, sizeof(sctk_ptl_tail_t));
 
@@ -238,7 +238,7 @@ void sctk_ptl_eager_notify_recv(mpc_lowcomm_ptp_message_t* msg, sctk_ptl_rail_in
 
 	/* clear the PTL msg tail struct */
 	memset(&msg->tail.ptl, 0, sizeof(sctk_ptl_tail_t));
-	
+
 	/* is the message contiguous ? */
 	if(msg->tail.message_type == MPC_LOWCOMM_MESSAGE_CONTIGUOUS)
 	{
@@ -281,7 +281,7 @@ void sctk_ptl_eager_notify_recv(mpc_lowcomm_ptp_message_t* msg, sctk_ptl_rail_in
 	user_ptr->prot         = SCTK_PTL_PROT_EAGER;
 	msg->tail.ptl.user_ptr = user_ptr;
 	sctk_ptl_me_register(srail, user_ptr, pte);
-	
+
 	mpc_common_debug("PORTALS: NOTIFY-RECV-EAGER from %d (idx=%llu, match=%s, ign=%s start=%p, sz=%llu)", SCTK_MSG_SRC_TASK(msg), pte->idx, __sctk_ptl_match_str(malloc(32), 32, match.raw), __sctk_ptl_match_str(malloc(32), 32, ign.raw), start, size);
 }
 
@@ -332,7 +332,7 @@ void sctk_ptl_eager_event_md(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 	sctk_ptl_local_data_t* user_ptr = (sctk_ptl_local_data_t*)ev.user_ptr;
 	mpc_lowcomm_ptp_message_t* msg = (mpc_lowcomm_ptp_message_t*)user_ptr->msg;
 
-	UNUSED(rail); 
+	UNUSED(rail);
 
 	switch(ev.type)
 	{

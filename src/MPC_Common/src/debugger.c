@@ -366,7 +366,7 @@ void sctk_vprint_backtrace( const char *format, va_list ap )
 {
 	if( mpc_common_spinlock_trylock( &big_lock ) == 1 )
 	{
-		/* Already locked do not backtrace again 
+		/* Already locked do not backtrace again
 		   we may have crashed backtracing use execinfo*/
 		/* As it may be another thread backtracing just sleep a few
 		   seconds before ending abruptly*/
@@ -483,7 +483,7 @@ void mpc_common_debugger_sig_handler( int sig, siginfo_t *info, __UNUSED__ void 
 	mpc_common_debug_error( "                                                          " );
 	mpc_common_debug_error( "!!! MPC will now segfault indiferently from the signal !!!" );
 	mpc_common_debug_error( "==========================================================" );
-	
+
 	static __thread int already_in_sighandler = 0;
 
 	if(!already_in_sighandler)
@@ -493,7 +493,7 @@ void mpc_common_debugger_sig_handler( int sig, siginfo_t *info, __UNUSED__ void 
 	}
 	else
 	{
-		/* Something went wrong when backtracing 
+		/* Something went wrong when backtracing
 		   use fallback method*/
 		__execinfo_backtrace();
 	}

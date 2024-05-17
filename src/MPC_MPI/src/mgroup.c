@@ -164,7 +164,7 @@ int PMPI_Comm_create_from_group(MPI_Group group, const char *stringtag, MPI_Info
 int PMPI_Comm_remote_group(MPI_Comm comm, MPI_Group *mpi_group)
 {
 	mpc_common_nodebug("Enter Comm_remote_group");
-	
+
 	mpi_check_comm(comm);
 	if(mpc_lowcomm_communicator_is_intercomm(comm) == 0)
 	{

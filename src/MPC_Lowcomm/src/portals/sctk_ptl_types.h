@@ -214,7 +214,7 @@ enum {
 };
 
 /**
- * How the match_bits is divided to store essential information to 
+ * How the match_bits is divided to store essential information to
  * match MPI msg.
  * Valid for P2P messages and non-offloaded collectives
  */
@@ -303,7 +303,7 @@ typedef struct sctk_ptl_probing_data_s
 } sctk_ptl_probing_data_t;
 
 /**
- * Structure storing everything we need locally to map 
+ * Structure storing everything we need locally to map
  * a msg with a PTL request
  */
 typedef struct sctk_ptl_local_data_s
@@ -319,7 +319,7 @@ typedef struct sctk_ptl_local_data_s
 	sctk_ptl_probing_data_t probe;  /**< related to probing */
 	sctk_ptl_matchbits_t match;     /**< request match bits (RDV-spec) */
 	size_t req_sz;                  /**< message size intented to be retrieved (RDV spec) */
-	
+
 } sctk_ptl_local_data_t;
 
 /**

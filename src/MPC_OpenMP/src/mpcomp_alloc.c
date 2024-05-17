@@ -189,7 +189,7 @@ omp_init_allocator(
   assert(idx >= 0 && idx < MPC_OMP_MAX_ALLOCATORS);
 
   mpcomp_global_allocators.list[idx].memspace = memspace;
-  
+
   int i;
   for(i = 0; i < ntraits; ++i)
   {
@@ -276,7 +276,7 @@ omp_destroy_allocator(omp_allocator_handle_t allocator)
 	mpc_common_spinlock_unlock( &mpcomp_global_allocators.lock );
 }
 
-/* 
+/*
  * This function modifies the def_allocator_var ICV
  */
 void
@@ -290,7 +290,7 @@ omp_set_default_allocator(omp_allocator_handle_t allocator)
   t->default_allocator = allocator;
 }
 
-/* 
+/*
  * This function gives the values of the def_allocator_var ICV
  */
 omp_allocator_handle_t

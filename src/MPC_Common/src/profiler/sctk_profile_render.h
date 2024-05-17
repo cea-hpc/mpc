@@ -81,7 +81,7 @@ struct sctk_profile_renderer
 	void (*setup_profile)( struct sctk_profile_renderer *rd );
 	void (*teardown_profile)( struct sctk_profile_renderer *rd );
 	void (*render_profile)( struct sctk_profiler_array *array, int id, int parent_id, int depth, int going_up, struct sctk_profile_renderer *rd );
-	
+
 	FILE *output_file;
 
 };

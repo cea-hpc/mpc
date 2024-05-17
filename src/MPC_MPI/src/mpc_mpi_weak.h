@@ -377,4 +377,3 @@
 #pragma weak MPI_Neighbor_alltoallw_init = PMPI_Neighbor_alltoallw_init
 #pragma weak MPI_Neighbor_alltoall_init = PMPI_Neighbor_alltoall_init
 #pragma weak MPI_Neighbor_allgather_init = PMPI_Neighbor_allgather_init
-

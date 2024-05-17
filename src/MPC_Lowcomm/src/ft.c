@@ -193,7 +193,7 @@ int sctk_ft_no_suspend_start()
 {
 
         int old = sctk_ft_critical_section++;
-        
+
 	/* if i'm the first to request the critical section */
         if(old == 0)
         {
@@ -262,7 +262,7 @@ void sctk_ft_checkpoint_finalize()
 		default: break;
 	}
 #endif
-	
+
 	unsigned int i;
 	size_t nb = sctk_rail_count();
 	for (i = 0; i < nb; ++i) {
@@ -276,7 +276,7 @@ void sctk_ft_checkpoint_finalize()
 #endif
 	}
 	/* recall driver init function & update mpc_common_get_flags()->sctk_network_description_string string */
-	
+
 	mpc_common_spinlock_write_unlock(&checkpoint_lock);
 }
 
@@ -336,7 +336,7 @@ mpc_lowcomm_checkpoint_state_t sctk_ft_checkpoint_wait()
 	while(new_nb_checkpoints == nb_checkpoints && new_nb_restarts == nb_restarts);
 
 	__state = (new_nb_restarts == nb_restarts) ? MPC_STATE_CHECKPOINT : MPC_STATE_RESTART;
-	
+
 #endif
 	return __state;
 }

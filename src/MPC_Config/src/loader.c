@@ -137,7 +137,7 @@ mpc_conf_config_type_t *mpc_conf_config_loader_search_path(char *conf_name)
 int mpc_conf_config_loader_push(char *conf_name, char *key, char *value, char *sep, int can_create)
 {
 	_utils_verbose_output(1, "PUSH: %s to %s with value %s (can_create %d)\n", conf_name, key, value, can_create);
-	
+
 	/* Are we prefixed with conf_name or not (if not add it) */
 	char expanded_key[MAX_KEY_LENGTH];
 
@@ -309,7 +309,7 @@ static inline int ___mpc_conf_config_load_eq_list(char *conf_name, char *data, c
 		{
 			break;
 		}
-	
+
 		cur_line = nl + 1;
 		nl       = _utils_split_next_newline(cur_line);
 
@@ -422,7 +422,7 @@ static inline int ___mpc_conf_config_load_file_ini(char * conf_name, char * path
 			_utils_verbose_output(1, "%s: loading content before first section\n", path);
 			size_t first_sec_offset = (sections_starts[0] - dup);
 			file_content[first_sec_offset - 1] = '\0';
-			
+
 			_utils_trim(file_content);
 			if(strlen(file_content))
 			{

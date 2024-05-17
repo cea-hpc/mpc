@@ -44,7 +44,7 @@ void sctk_ptl_rdv_free_memory(void* msg)
 }
 
 /** What to do when a network message matched a locally posted request ?.
- *  
+ *
  *  \param[in,out] msg the send/recv bundle where both message headers are stored
  */
 void sctk_ptl_rdv_message_copy(mpc_lowcomm_ptp_message_content_to_copy_t* msg)
@@ -68,7 +68,7 @@ void sctk_ptl_rdv_message_copy(mpc_lowcomm_ptp_message_content_to_copy_t* msg)
 
 /**
  * What to do with a network incoming message ?.
- * 
+ *
  * Note that this function is called when a PUT (expected or not) is received.
  * This is called by the ME polling -> target side
  * For GET-REPLY, \see sctk_ptl_rdv_reply_message.
@@ -99,14 +99,14 @@ static inline void sctk_ptl_rdv_recv_message(sctk_rail_info_t* rail, sctk_ptl_ev
 	 *
 	 * Thus, This function should resolve these different scenarios:
 	 *   (A-1) ''NOTHING TO DO'', the PUT reached the PRIORITY_LIST & GET ops should be triggered by itself
-	 *   (B-1) We just have to call PtlCTInc() on the ME CT event, to trigger the GET manually. It is 
-	 *         because the match in OVERFLOW_LIST did not reach the planned ME (to be sure, check the 
+	 *   (B-1) We just have to call PtlCTInc() on the ME CT event, to trigger the GET manually. It is
+	 *         because the match in OVERFLOW_LIST did not reach the planned ME (to be sure, check the
 	 *         ct_handle.success field, to ensure the GET did not trigger).
 	 *   (*-2) Whatever the list the request matches, this function will have to emit the GET op. Maybe
 	 *         to avoid code duplication, we could publish a TriggeredGet on the previous ct_handle and
 	 *         use the same 'if' than for (B-1) to trigger the operation.
 	 */
-	
+
 	/* is the message contiguous ? Maybe we could try to get an IOVEC instead of packing ? */
 	if(msg->tail.message_type == MPC_LOWCOMM_MESSAGE_CONTIGUOUS)
 	{
@@ -145,12 +145,12 @@ static inline void sctk_ptl_rdv_recv_message(sctk_rail_info_t* rail, sctk_ptl_ev
 	get_request->type                  = SCTK_PTL_TYPE_STD;
 	get_request->prot                  = SCTK_PTL_PROT_RDV;
 
-	/* retreive and store the match_bits, it contains the actual SRC_RANK (in case of ANY_SOURCE, 
+	/* retreive and store the match_bits, it contains the actual SRC_RANK (in case of ANY_SOURCE,
 	 * we don't have such information) */
 	get_request->match      = (sctk_ptl_matchbits_t)ev.match_bits;
 	get_request->msg_seq_nb = ((sctk_ptl_imm_data_t)ev.hdr_data).std.msg_seq_nb;
 	OPA_store_int(&get_request->cnt_frag, chunk_nb);
-	
+
 	/* The GET request only target slots with the bit to 1 */
 	sctk_ptl_md_register(srail, get_request);
 
@@ -282,7 +282,7 @@ void sctk_ptl_rdv_send_message(mpc_lowcomm_ptp_message_t* msg, _mpc_lowcomm_endp
 	sctk_ptl_pte_t* pte;
 	sctk_ptl_matchbits_t match, ign;
 	sctk_ptl_imm_data_t hdr;
-	
+
 	memset(&msg->tail.ptl, 0, sizeof(sctk_ptl_tail_t));
 
 	md_request      = me_request = NULL;
@@ -330,10 +330,10 @@ void sctk_ptl_rdv_send_message(mpc_lowcomm_ptp_message_t* msg, _mpc_lowcomm_endp
 		_mpc_lowcomm_msg_cpy_in_buffer(msg, start);
 		msg->tail.ptl.copy = 1;
 	}
-	
+
 	sctk_ptl_matchbits_t me_match = match;
 	/* Set the bit to 1 to differenciate incoming PUT and waiting-to-complete GETs
-	 * Set the rank to DEST process to identify it among others 
+	 * Set the rank to DEST process to identify it among others
 	 * It is this one which is stored into rdv_extras struct
 	 */
 	me_match.data.rank = SCTK_MSG_DEST_TASK(msg);
@@ -341,8 +341,8 @@ void sctk_ptl_rdv_send_message(mpc_lowcomm_ptp_message_t* msg, _mpc_lowcomm_endp
 	/* create the MD request and configure it */
 	me_request = sctk_ptl_me_create(
 		start,
-		SCTK_MSG_SIZE(msg), 
-		remote, 
+		SCTK_MSG_SIZE(msg),
+		remote,
 		me_match,
 		ign,
 		me_flags
@@ -360,7 +360,7 @@ void sctk_ptl_rdv_send_message(mpc_lowcomm_ptp_message_t* msg, _mpc_lowcomm_endp
 
 	msg->tail.ptl.user_ptr = me_request;
 	sctk_ptl_me_register(srail, me_request, pte);
-	
+
 	sctk_ptl_emit_put(md_request, sizeof(size_t), remote, pte, match, 0, 0, hdr.raw, md_request); /* empty Put() */
 
 	/* TODO: Need to handle the case where the data is larger than the max ME size */
@@ -397,7 +397,7 @@ void sctk_ptl_rdv_notify_recv(mpc_lowcomm_ptp_message_t* msg, sctk_ptl_rail_info
 	put_flags = SCTK_PTL_ME_PUT_FLAGS | SCTK_PTL_ONCE;
 	put_request  = sctk_ptl_me_create(NULL, sizeof(size_t), SCTK_PTL_ANY_PROCESS, match, ign, put_flags);
 	/* when dealing with RDV, the first PUT will transfer the total size to send
-	 * As we prepare a buffer in the local_data to receive it (but me_create() 
+	 * As we prepare a buffer in the local_data to receive it (but me_create()
 	 * allocates it, we need to set up AFTER calling the IFACE function
 	 */
 	 put_request->slot.me.start = &put_request->req_sz;

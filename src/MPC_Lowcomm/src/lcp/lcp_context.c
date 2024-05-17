@@ -60,17 +60,17 @@ static int lcp_context_is_initialized = 0;
 static lcp_context_h static_ctx = NULL;
 
 
-static inline int lcp_context_set_am_handler(lcp_context_h ctx, 
+static inline int lcp_context_set_am_handler(lcp_context_h ctx,
                                              sctk_rail_info_t *iface)
 {
 	int rc = 0;
         int am_id = 0;
 
 	for (am_id=0; am_id<LCP_AM_ID_LAST; am_id++) {
-		
-		rc = lcr_iface_set_am_handler(iface, am_id, 
-					      lcp_am_handlers[am_id].cb, 
-					      ctx, 
+
+		rc = lcr_iface_set_am_handler(iface, am_id,
+					      lcp_am_handlers[am_id].cb,
+					      ctx,
 					      lcp_am_handlers[am_id].flags);
 
 		if (rc != LCP_SUCCESS) {
@@ -83,7 +83,7 @@ static inline int lcp_context_set_am_handler(lcp_context_h ctx,
 
 /**
  * @brief Open all resources from a context.
- * 
+ *
  * @param ctx context to open
  * @return int MPI_SUCCESS in case of success
  */
@@ -113,7 +113,7 @@ static int lcp_context_open_interfaces(lcp_context_h ctx)
                 }
 
 		rc = lcp_context_set_am_handler(ctx, rsc->iface);
-		if (rc != LCP_SUCCESS) 
+		if (rc != LCP_SUCCESS)
 			goto err;
 
                 if (rsc->iface->iface_progress != NULL) {
@@ -121,7 +121,7 @@ static int lcp_context_open_interfaces(lcp_context_h ctx)
                 }
 
 	}
-	
+
 	rc = LCP_SUCCESS;
 err:
 	return rc;
@@ -129,7 +129,7 @@ err:
 
 /**
  * @brief Alloc and initialize structures in context
- * 
+ *
  * @param ctx context to initialize
  * @return int MPI_SUCCESS in case of success
  */
@@ -155,8 +155,8 @@ static int lcp_context_init_structures(lcp_context_h ctx)
 		rc = LCP_ERROR;
 		goto out_free_pending_tables;
 	}
-        //NOTE: to release tasks, lcp_context_fini relies on the fact that all entries 
-        //      are memset to NULL. 
+        //NOTE: to release tasks, lcp_context_fini relies on the fact that all entries
+        //      are memset to NULL.
         memset(ctx->tasks, 0, ctx->num_tasks * sizeof(lcp_task_h));
 
         mpc_common_hashtable_init(&ctx->eps, 1024);
@@ -168,14 +168,14 @@ static int lcp_context_init_structures(lcp_context_h ctx)
         return rc;
 
 out_free_pending_tables:
-        sctk_free(ctx->match_ht); 
+        sctk_free(ctx->match_ht);
 err:
 	return rc;
 }
 
 /**
  * @brief Get the resources of a component.
- * 
+ *
  * @param component component to get the resources from
  * @param devices_p resources (out)
  * @param num_devices_p number of resources
@@ -225,7 +225,7 @@ static inline void lcp_context_resource_init(lcp_rsc_desc_t *resource_p,
                                              lcr_device_t *device)
 {
         /* Fetch configuration */
-        lcr_rail_config_t *iface_config = 
+        lcr_rail_config_t *iface_config =
                 _mpc_lowcomm_conf_rail_unfolded_get((char *)component->rail_name);
         assume(iface_config != NULL);
         lcr_driver_config_t *driver_config =
@@ -344,7 +344,7 @@ static inline int __init_lcr_component(struct _mpc_lowcomm_config_struct_net_rai
 
 /**
  * @brief This function is a logic used to filter rails in function of the state of MPC **before** starting them
- * 
+ *
  * @param rails array of rail pointers to be checked
  * @param rail_count a pointer to the number of rails (to be changed if needed)
  * @return int 0 on success
@@ -418,7 +418,7 @@ TODO(understand why it crashes running without networking);
 
 /**
  * @brief This function is used to sort the rail array by priority before unfolding resources
- * 
+ *
  * @param pa pointer to pointer of rail (qsort)
  * @param pb pointer to pointer of rail (qsort)
  * @return int order function result
@@ -551,7 +551,7 @@ static inline int __init_rails(lcp_context_h ctx)
 
         for(k = 0; k < (unsigned int)ctx->num_resources; ++k)
 	{
-                total_priorities += ctx->progress_counter[k]; 
+                total_priorities += ctx->progress_counter[k];
         }
 
         unsigned int max_prio = 0;
@@ -570,7 +570,7 @@ static inline int __init_rails(lcp_context_h ctx)
                 {
                         max_prio = ctx->progress_counter[k];
                 }
-        
+
         }
 
         assume(max_prio > 0);
@@ -630,7 +630,7 @@ __UNUSED__ static inline unsigned int __get_component_device_count(lcp_context_h
 
 /**
  * @brief This function generates the listing of the network configuration when passing -v to mpcrun
- * 
+ *
  * @param ctx the context to generate the description of
  * @return int 0 on success
  */
@@ -689,7 +689,7 @@ static inline int __generate_configuration_summary(lcp_context_h ctx)
 
 /**
  * @brief Count non composable rails (TBSM and SHM only are composable)
- * 
+ *
  * @param ctx context to count from
  * @return unsigned number of rails not counting TBSM and SHM
  */
@@ -705,7 +705,7 @@ static unsigned int __count_non_composable_rails(lcp_context_h ctx)
 
                 if(!strcmp(comp->name, "shm") || !strcmp(comp->name, "tbsm"))
                         continue;
-        
+
                 num_composable++;
         }
 
@@ -730,7 +730,7 @@ static int lcp_context_check_offload(lcp_context_h ctx)
                 }
         }
 
-        if (ctx->config.offload && 
+        if (ctx->config.offload &&
             mpc_common_get_process_count() != (int)mpc_common_get_task_count()) {
                 mpc_common_debug_error("LCP CTX: offload must be run in "
                                        "process mode.");
@@ -750,7 +750,7 @@ static int lcp_context_check_offload(lcp_context_h ctx)
                                        "supported with heterogeneous multirail");
                 rc = LCP_ERROR;
                 goto err;
-        } 
+        }
 err:
         return rc;
 }
@@ -758,7 +758,7 @@ err:
 
 /**
  * @brief This is called after fully initializing drivers to validate final configuration
- * 
+ *
  * @param ctx the context to validate
  * @return int 1 on error.
  */
@@ -905,7 +905,7 @@ out_free_resources:
         }
         sctk_free(ctx->resources);
 out_free_components:
-        //FIXME: wrong release of components 
+        //FIXME: wrong release of components
         //lcr_free_components(&ctx->cmpts, ctx->num_cmpts, 0);
 out_free_ctx:
         sctk_free(ctx);
@@ -940,11 +940,11 @@ int lcp_context_fini(lcp_context_h ctx)
 
 	sctk_rail_info_t *iface = NULL;
 	for (i=0; i<ctx->num_resources; i++) {
-		iface = ctx->resources[i].iface; 
+		iface = ctx->resources[i].iface;
 		if (iface->driver_finalize)
 			iface->driver_finalize(iface);
 		sctk_free(iface);
-                
+
                 sctk_free(ctx->resources[i].name);
 	}
 	sctk_free(ctx->resources);

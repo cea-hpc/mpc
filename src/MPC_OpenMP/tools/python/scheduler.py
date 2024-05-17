@@ -156,7 +156,7 @@ def parse_traces(traces, show_progress, inspectors):
     # TODO : add 'standard' passes that fill the 'env'
     # so the user can decide which information it needs to compute
     bound = {}
-    
+
     # replay the scheduling to compute stats
     for pid in records:
 

@@ -264,7 +264,7 @@ int mpc_conf_config_type_elem_set(mpc_conf_config_type_elem_t *elem, mpc_conf_ty
 			_utils_verbose_output(0, "ELEM: cannot set %ld to %s as it is larger than what MPC_CONF_INT can store\n", source_value, elem->name);
 			abort();
 		}
-	} 
+	}
 	else if( (elem->type == MPC_CONF_LONG_INT) && (type == MPC_CONF_INT) )
 	{
 		/* Promote int to long when needed */
@@ -321,12 +321,12 @@ int mpc_config_type_pop_elem(mpc_conf_config_type_t *type, mpc_conf_config_type_
 			unsigned int j;
 			for(j = i ; j < type->elem_count -1; j++)
 			{
-				type->elems[j] = type->elems[j + 1]; 
+				type->elems[j] = type->elems[j + 1];
 			}
 
 			type->elems[type->elem_count] = NULL;
 			type->elem_count--;
-		
+
 			return 0;
 		}
 	}
@@ -360,10 +360,10 @@ int mpc_config_type_match_order(mpc_conf_config_type_t *type, mpc_conf_config_ty
 					mpc_conf_config_type_elem_t * tmp = type->elems[i];
 					type->elems[i] = type->elems[j];
 					type->elems[j] = tmp;
-				} 
+				}
 			}
 		}
-	}	
+	}
 
 
 	return 0;
@@ -392,7 +392,7 @@ int mpc_conf_config_type_elem_set_from_string(mpc_conf_config_type_elem_t *elem,
 			_utils_verbose_output(3, "ELEM: mismatching types %s != %s  when setting '%s' to %s\n", mpc_conf_type_name(type) , mpc_conf_type_name(elem->type), elem->name, string);
 			return -1;
 		}
-		
+
 	}
 
 	return mpc_conf_type_set_value_from_string(elem->type, &elem->addr, string, elem->ekv, elem->ekv_length);
@@ -848,7 +848,7 @@ static inline int __mpc_conf_config_type_print_conf(mpc_conf_config_type_t *type
 			{
 				fprintf(fd,"\n#%s\n\n",type->elems[i]->doc);
 			}
-			
+
 			ret |= __mpc_conf_config_type_print_conf(mpc_conf_config_type_elem_get_inner(type->elems[i]), fd, output_type);
 		}
 		else
@@ -878,7 +878,7 @@ int mpc_conf_config_type_print_fd(mpc_conf_config_type_t *type, FILE * fd, mpc_c
 
 	return 1;
 
-	
+
 }
 
 int mpc_conf_config_type_print(mpc_conf_config_type_t *type, mpc_conf_output_type_t output_type)

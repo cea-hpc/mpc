@@ -1,6 +1,6 @@
 CC=mpc_cc -g
 
-%.o: %.c 
+%.o: %.c
 	$(CC) -c -o $@ $< $(CFLAGS)
 
 all: ep_am

@@ -21,7 +21,7 @@
    copied by Kevin Pouget (07-29-2009) to build the Remote Thread_DB
    library
    ** **
-   
+
    */
 
 /* The definitions in this file must correspond to those in the debugger.  */

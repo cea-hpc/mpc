@@ -40,4 +40,3 @@ set the project back to a "development" mode:*
     * https://pcvs.io/download/
 * [ ] After-merge, push the master to repos (Gitlab & Github)
 * [ ] Bump PCVS version to `X.Y.(Z+1)dev0`
-

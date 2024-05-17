@@ -541,7 +541,7 @@ void mpc_lowcomm_bcast_opt_messages( void *buffer, const size_t size,
 					_mpc_coll_message_recv(
 					    communicator, ( dest + root ) % total, myself, root,
 					    buffer, size, MPC_LOWCOMM_BROADCAST_MESSAGE,
-					    _mpc_coll_message_table_get_item( &table, OPT_COLL_MAX_ASYNC ), 
+					    _mpc_coll_message_table_get_item( &table, OPT_COLL_MAX_ASYNC ),
 						( size < (size_t)broadcast_check_threshold ) );
 					_mpc_coll_messages_table_wait( &table );
 					break;
@@ -566,7 +566,7 @@ void mpc_lowcomm_bcast_opt_messages( void *buffer, const size_t size,
 						    ( dest + root + ( j * ( i / BROADCAST_ARRITY ) ) ) %
 						    total,
 						    root, buffer, size, MPC_LOWCOMM_BROADCAST_MESSAGE,
-						    _mpc_coll_message_table_get_item( &table, OPT_COLL_MAX_ASYNC ), 
+						    _mpc_coll_message_table_get_item( &table, OPT_COLL_MAX_ASYNC ),
 							( size < (size_t)broadcast_check_threshold ) );
 					}
 				}
@@ -2067,7 +2067,7 @@ int mpc_lowcomm_barrier_shm_on_context(struct shared_mem_barrier *barrier_ctx,
 					}
 				}
 	}
-	
+
     return MPC_LOWCOMM_SUCCESS;
 }
 
@@ -2293,7 +2293,7 @@ static inline int ___gather_intra(void *sendbuf, void *recvbuf, const size_t siz
 				continue;
 			}
 
-			mpc_lowcomm_recv(i, recvbuf + i * size, size, MPC_GATHER_TAG, comm); 
+			mpc_lowcomm_recv(i, recvbuf + i * size, size, MPC_GATHER_TAG, comm);
 		}
 
 	}
@@ -2522,7 +2522,7 @@ int mpc_lowcomm_allgather(void *sendbuf,  void *recvbuf, size_t data_size, mpc_l
 	if(mpc_lowcomm_communicator_is_intercomm(comm) )
 	{
 		int remote_size = mpc_lowcomm_communicator_remote_size(comm);
-	
+
 		void *tmp_buf = NULL;
 
 		if(rank == 0)

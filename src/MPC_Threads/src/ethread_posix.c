@@ -1838,4 +1838,3 @@ int _mpc_thread_ethread_posix_getattr_np(_mpc_thread_ethread_t th, _mpc_thread_e
 	*attr->ptr = th->attr;
 	return 0;
 }
-

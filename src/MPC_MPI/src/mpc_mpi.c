@@ -1328,10 +1328,10 @@ static int __Irecv_test_req(void *buf, int count, MPI_Datatype datatype,
 			return _mpc_cl_irecv(buf, count, datatype, source, tag, comm,
 			                     __sctk_convert_mpc_request(request, requests) );
 		}
-		
+
 		return _mpc_cl_irecv(buf, count, datatype, source, tag, comm,
 		             __sctk_new_mpc_request(request, requests) );
-	
+
 	}
 }
 
@@ -6659,7 +6659,7 @@ int __INTERNAL__PMPI_Reduce_intra(void *sendbuf, void *recvbuf, int count,
 
 		return MPI_SUCCESS;
 	}
-	
+
 	return _mpc_mpi_collectives_reduce(sendbuf, recvbuf, count, datatype, op, root, comm);
 }
 
@@ -11286,7 +11286,7 @@ int PMPI_Type_struct(int count,
 			{
 				max_pad_value = cur_type_extent;
 			}
-		
+
 		}
 
 
@@ -11745,7 +11745,7 @@ int PMPI_Type_get_elements_x(MPI_Status *status, MPI_Datatype datatype, MPI_Coun
 			}
 		}
 	}
-	
+
 
 	MPI_HANDLE_RETURN_VAL(res, comm);
 }

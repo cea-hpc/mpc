@@ -36,7 +36,7 @@ def post_process(filename, show=False):
             ax.plot(x, toplot[3], label="available buffers")
             ax.plot(x, toplot[4], label="inertia")
             ax.plot(x, toplot[5], label="effective malloc and free")
-            
+
             ax.legend(loc='upper left', shadow=True, fontsize='x-large')
             ax.set_xlabel("mempool operations")
             ax.set_title("ratio : {}".format(n_effective_mallocs / n_mallocs))

@@ -47,7 +47,7 @@ static const char *symbol_list_arr[] = {
 td_err_e td_init (void) {
   td_err_e err ;
   verbosity_level = INIT_VERBOSITY ;
-  
+
   tdb_log ("td_init");
 
   tdb_log ("#############");
@@ -57,11 +57,11 @@ td_err_e td_init (void) {
   tdb_log ("## GDB COMPLIANT");
 #endif
   tdb_log ("#############");
-  
+
 #if defined (ENABLE_TEST) && 0
   test_td_init () ;
 #endif
-  
+
   err = TD_OK ;
   tdb_log("%s returns: %s", __FUNCTION__, tdb_err_str(err)) ;
 /*
@@ -78,13 +78,13 @@ td_err_e td_ta_new (struct ps_prochandle *ph, td_thragent_t **ta) {
   static int count = 0 ;
   static td_thragent_t *ta_p = NULL ;
   td_err_e err; ps_err_e ps_err ;
-  
+
 #if defined (ENABLE_TEST)
   err = test_td_ta_new (ph, ta) ;
   if (err != TD_CONTINUE)
     return err ;
 #endif
-  
+
   /* special parameters -> reset static data*/
   if (ph == (void *) -1 && ta == (void *) -1) {
     ta_p = NULL ;
@@ -94,23 +94,23 @@ td_err_e td_ta_new (struct ps_prochandle *ph, td_thragent_t **ta) {
   }
 
   tdb_log ("td_ta_new %d", count);
-  
+
   count++ ;
-  if (ph == NULL) { 
+  if (ph == NULL) {
     return TD_BADPH;
-  } else if (ta == NULL) { 
+  } else if (ta == NULL) {
     return TD_ERR;
   }
-  
+
   if (ta_p == NULL) {
     /* instanciate the thread agent*/
     (*ta) = (td_thragent_t *) malloc (sizeof (td_thragent_t));
-    if ((*ta) == NULL) {  
+    if ((*ta) == NULL) {
       return TD_MALLOC;
     }
     tdb_log ("td_ta_new Save process ...");
     (*ta)->ph = ph ;
-    
+
     ta_p = *ta ;
 
     /*initialize TA pointers-to-inferior-space to 0 :
@@ -119,13 +119,13 @@ td_err_e td_ta_new (struct ps_prochandle *ph, td_thragent_t **ta) {
 
 
     /* actual initialization will occure when the user provides them */
-    
+
     ta_p->reg_offsets.size = 0 ;
-    
+
   } else {
     (*ta) = ta_p  ;
   }
-  
+
   ps_err = ps_try_stop(ph) ;
   if (ps_err != PS_OK)
     return TD_DBERR ;
@@ -164,9 +164,9 @@ td_err_e td_ta_new (struct ps_prochandle *ph, td_thragent_t **ta) {
     err = TD_NOCAPAB ;
     goto exit ;
   }
-  
+
   err = TD_OK ;
-  
+
 exit:
   ps_err = ps_continue(ph) ;
   if (ps_err != PS_OK)
@@ -180,36 +180,36 @@ exit:
 
 /* Free resources allocated for TA.  */
 td_err_e td_ta_delete (td_thragent_t *ta) {
-  ps_err_e ps_err; 
+  ps_err_e ps_err;
   td_err_e err ;
-  
+
 #if defined (ENABLE_TEST)
   ps_err = test_td_ta_delete (ta) ;
   if (ps_err != TD_CONTINUE)
     return ps_err ;
 #endif
-  
+
   tdb_log("td_ta_delete");
-  
+
   if (ta == NULL)
     return TD_BADTA ;
   else if (ta->ph == NULL)
     return TD_BADPH ;
-  
+
   ps_err = ps_try_stop(ta->ph) ;
   if (ps_err != PS_OK)
     return TD_DBERR ;
-  
+
   /* reinit ta_new static data (for the next run) */
   td_ta_new ((void *)-1, (void *)-1) ;
-    
+
   ps_err = ps_continue(ta->ph) ;
   if (ps_err != PS_OK)
     return TD_DBERR ;
 
-  
+
   free(ta) ;
-  
+
   err = TD_OK ;
   tdb_log("%s returns: %s", __FUNCTION__, tdb_err_str(err)) ;
   return err ;
@@ -222,13 +222,13 @@ td_err_e td_is_ta_initialized (const td_thragent_t *ta) {
 
   if (ta == NULL) return TD_BADTA ;
   else if (ta->ph == NULL) return TD_BADPH ;
-  
+
   return TD_OK ;
 }
 
 /* ensure that variables in MPC space have been initialized */
 td_err_e td_is_ta_ready (const td_thragent_t *ta) {
-  td_err_e err; 
+  td_err_e err;
 
   err = td_is_ta_initialized (ta) ;
   if (err != TD_OK) return err ;
@@ -239,7 +239,7 @@ td_err_e td_is_ta_ready (const td_thragent_t *ta) {
     tdb_log("td_is_ta_ready thread_data_list_addr is NULL") ;
     return TD_NOCAPAB ;
   }
-  
+
   return TD_OK ;
 }
 
@@ -252,12 +252,12 @@ td_err_e td_is_ta_ready (const td_thragent_t *ta) {
 /** SET or DEL events */
 td_err_e update_event_set (struct ps_prochandle *ph,
                            td_thr_events_t *event_addr,
-                           td_thr_events_t *new_events, 
-                           int enable) 
+                           td_thr_events_t *new_events,
+                           int enable)
 {
   int i, err; ps_err_e ps_err;
   td_thr_events_t thread_event ;
-  
+
   /* read event set from the user process */
   tdb_log ("read event set @ %p", event_addr);
   ps_err = ps_pdread (ph, (psaddr_t) event_addr, &thread_event, sizeof(td_thr_events_t));
@@ -265,25 +265,25 @@ td_err_e update_event_set (struct ps_prochandle *ph,
     tdb_log("read failed");
     return TD_ERR ;
   }
-  
+
   for (i = TD_MIN_EVENT_NUM; i <= TD_MAX_EVENT_NUM; i++) {
     if (td_eventismember(new_events, i)) {
       if (enable == SET) {
         td_event_addset(&thread_event, i) ;
       } else {
         td_event_delset(&thread_event, i) ;
-      }       
+      }
     }
   }
 #if defined (ENABLE_TEST)
   /*ensure that all the events asked have been enabled*/
   for (i = TD_MIN_EVENT_NUM; i <= TD_MAX_EVENT_NUM; i++) {
-    tdb_log("test event #%d", i);       
+    tdb_log("test event #%d", i);
     if ((td_eventismember(new_events, i) && !td_eventismember(&thread_event, i))) {
       if (enable == SET) {
         tdb_log("td_eventismember failed") ;
         assert(0);
-      }       
+      }
     } else {
       if (enable == DEL) {
         tdb_log("td_eventismember failed") ;
@@ -294,7 +294,7 @@ td_err_e update_event_set (struct ps_prochandle *ph,
 #endif
 
   err = TD_OK ;
-  
+
   /* write event set back to the user process */
   ps_err = ps_pdwrite (ph, (psaddr_t) event_addr, &thread_event, sizeof(td_thr_events_t));
   if (ps_err != PS_OK) {
@@ -314,7 +314,7 @@ td_err_e td_ta_set_event (const td_thragent_t *ta,
   td_err_e err ;
   td_thr_events_t *event_addr ;
   ps_err_e ps_err ;
-  
+
 #if defined (ENABLE_TEST)
   err = test_td_ta_set_event(ta, event);
   if (err != TD_CONTINUE)
@@ -330,7 +330,7 @@ td_err_e td_ta_set_event (const td_thragent_t *ta,
   if (err != TD_OK) {
     goto exit ;
   }
-  
+
   /*the event set has not yet been hooked to the ta_debug structure */
   ps_err = ps_lookup(ta->ph, TA_EVENTS, (psaddr_t *)&event_addr) ;
   if (ps_err != PS_OK) {
@@ -338,7 +338,7 @@ td_err_e td_ta_set_event (const td_thragent_t *ta,
     goto exit ;
   }
   tdb_log("td_ta_set_event ta_event located at %p", event_addr);
-    
+
   err = update_event_set (ta->ph, (td_thr_events_t *) event_addr, event, SET) ;
 
 exit:
@@ -359,24 +359,24 @@ td_err_e td_ta_clear_event (const td_thragent_t *ta,
   psaddr_t event_addr ;
   td_err_e err ;
   ps_err_e ps_err ;
-  
+
 #if defined (ENABLE_TEST)
   err = test_td_ta_clear_event(ta, event);
   if (err != TD_CONTINUE)
     return err ;
 #endif
-  
+
   tdb_log("td_ta_clear_event");
 
   ps_err = ps_try_stop(ta->ph) ;
   if (ps_err != PS_OK)
     return TD_DBERR ;
-  
+
   err = td_is_ta_initialized (ta) ;
   if (err != TD_OK) {
-    goto exit ;    
-  } 
-  
+    goto exit ;
+  }
+
   ps_err = ps_lookup(ta->ph, TA_EVENTS, (psaddr_t *)&event_addr) ;
   if (ps_err == PS_OK) {
     err = update_event_set (ta->ph, (td_thr_events_t *) event_addr, event, DEL) ;
@@ -390,7 +390,7 @@ exit:
   ps_err = ps_continue(ta->ph) ;
   if (ps_err != PS_OK)
     return TD_DBERR ;
-  
+
   tdb_log("%s returns: %s", __FUNCTION__, tdb_err_str(err)) ;
   return err ;
 }
@@ -400,9 +400,9 @@ exit:
 /* ON/OFF reporting events for thread TH.  */
 td_err_e td_thr_event_enable (const td_thrhandle_t *th, int on_off)
 {
-  td_err_e err; ps_err_e ps_err ; 
+  td_err_e err; ps_err_e ps_err ;
   tdb_thread_debug_t *thread ;
-  
+
   tdb_log("td_thr_event_enable");
 
 #if defined (ENABLE_TEST)
@@ -421,9 +421,9 @@ td_err_e td_thr_event_enable (const td_thrhandle_t *th, int on_off)
   }
 
   thread = (tdb_thread_debug_t *) th->th_unique ;
-  
+
   tdb_log("td_thr_event_enable %p : %s",thread, on_off ? "on" : "off");
-    
+
   /* write enable or disable reporting in the user process */
   ps_err = ps_pdwrite (th->th_ta_p->ph,
 		       &thread->info.ti_traceme, &on_off, sizeof(int));
@@ -431,9 +431,9 @@ td_err_e td_thr_event_enable (const td_thrhandle_t *th, int on_off)
     err = TD_ERR ;
     goto exit ;
   }
-  
+
   err = TD_OK ;
-  
+
 exit:
   ps_err = ps_continue(th->th_ta_p->ph) ;
   if (ps_err != PS_OK)
@@ -459,7 +459,7 @@ td_err_e td_thr_set_event (const td_thrhandle_t *th,
 #endif
 
   tdb_log("td_thr_set_event");
-      
+
   ps_err = ps_try_stop(th->th_ta_p->ph) ;
   if (ps_err != PS_OK)
     return TD_DBERR ;
@@ -469,10 +469,10 @@ td_err_e td_thr_set_event (const td_thrhandle_t *th,
     goto exit ;
   }
   thread_p = (tdb_thread_debug_t *) th->th_unique ;
-  
+
   //event_p = debug_p->event
   event_p = &thread_p->info.ti_events ;
-  
+
   err = update_event_set (th->th_ta_p->ph, event_p, event, SET) ;
 
 exit:
@@ -481,7 +481,7 @@ exit:
     return TD_DBERR ;
 
   tdb_log("%s returns: %s", __FUNCTION__, tdb_err_str(err)) ;
-  return err ;       
+  return err ;
 }
 
 /** *****************   NOT USED IN GDB   *************************************** **/
@@ -498,24 +498,24 @@ td_err_e td_thr_clear_event (const td_thrhandle_t *th,
   if (err != TD_CONTINUE)
     return err ;
 #endif
-      
+
   tdb_log("td_thr_clear_event");
-  
+
   ps_err = ps_try_stop(th->th_ta_p->ph) ;
   if (ps_err != PS_OK)
     return TD_DBERR ;
 
   err = td_thr_validate (th) ;
-  if (err != TD_OK) {    
+  if (err != TD_OK) {
     goto exit ;
   }
-  
+
   thread_p = (tdb_thread_debug_t *) th->th_unique ;
-  
+
   event_p = &thread_p->info.ti_events ;
-  
+
   err = update_event_set (th->th_ta_p->ph, event_p, event, DEL) ;
-  
+
 exit:
   ps_err = ps_continue(th->th_ta_p->ph) ;
   if (ps_err != PS_OK)
@@ -536,7 +536,7 @@ td_err_e td_ta_event_addr (const td_thragent_t *ta,
   int idx = -1 ;
   td_err_e err = TD_NOEVENT;
   ps_err_e ps_err ;
-  
+
 #if defined (ENABLE_TEST)
   err = test_td_ta_event_addr(ta, event, ptr) ;
   if (err != TD_CONTINUE)
@@ -544,7 +544,7 @@ td_err_e td_ta_event_addr (const td_thragent_t *ta,
 #endif
 
   tdb_log ("td_ta_event_addr #%d", event);
-  
+
   ps_err = ps_try_stop(ta->ph) ;
   if (ps_err != PS_OK)
     return TD_DBERR ;
@@ -553,7 +553,7 @@ td_err_e td_ta_event_addr (const td_thragent_t *ta,
   if (err != TD_OK) {
     goto exit ;
   }
-  
+
   switch(event) {
     case TD_CREATE : idx = CREATE_EVENT ; break ;
     case TD_DEATH :  idx = DEATH_EVENT  ; break ;
@@ -561,7 +561,7 @@ td_err_e td_ta_event_addr (const td_thragent_t *ta,
       /* Event cannot be handled.  */
       break ;
   }
-  
+
   /* Now get the address.  */
   if (idx != -1) {
     psaddr_t addr;
@@ -583,7 +583,7 @@ exit:
     return TD_DBERR ;
 
   tdb_log("%s returns: %s", __FUNCTION__, tdb_err_str(err)) ;
-  return err ; 
+  return err ;
 
 }
 
@@ -594,19 +594,19 @@ int td_event_getmsg_callback(const td_thrhandle_t *th, void *cb_data) ;
 /* Return information about last event.  */
 td_err_e td_ta_event_getmsg (const td_thragent_t *ta,
                              td_event_msg_t *msg)
-{ 
+{
   /* XXX (LinuxThread) I cannot think of another way but using a static variable.*/
   static td_thrhandle_t th;
   td_err_e err; ps_err_e ps_err ;
-  
+
 #if defined (ENABLE_TEST)
   err = test_td_ta_event_getmsg (ta, msg) ;
   if (err != TD_CONTINUE)
     return err ;
 #endif
-  
+
   tdb_log("td_ta_event_getmsg (static th@%p), msg %p", &th, msg);
-  
+
   ps_err = ps_try_stop(ta->ph) ;
   if (ps_err != PS_OK)
     return TD_DBERR ;
@@ -619,8 +619,8 @@ td_err_e td_ta_event_getmsg (const td_thragent_t *ta,
     goto exit ;
   }
 
-  
-  /* static part of the thread_agent */ 
+
+  /* static part of the thread_agent */
   th.th_ta_p = (td_thragent_t *) ta ;
   th.th_unique = NULL ;
 
@@ -628,12 +628,12 @@ td_err_e td_ta_event_getmsg (const td_thragent_t *ta,
   msg->th_p = &th ;
 
   /*iterate over the threads until one has a message*/
-  tdb_log("td_ta_event_getmsg iterate"); 
+  tdb_log("td_ta_event_getmsg iterate");
   err = td_ta_thr_iter(ta, td_event_getmsg_callback, msg,
 		       TD_THR_ANY_STATE, TD_THR_LOWEST_PRIORITY,
 		       TD_SIGNO_MASK, TD_THR_ANY_USER_FLAGS) ;
   tdb_log("td_ta_event_getmsg iteration returned %s",  tdb_err_str(err));
-  
+
   tdb_log("msg = %p", msg);
   if (err == TD_OK) {
     err = TD_NOMSG ;
@@ -663,7 +663,7 @@ exit:
  * thr_event_getmsg copies his th to msg->th_p. So we first need to save
  * msg->th_p, call thr_event_getmsg, then RESTORE its original value, to ensure
  * that msg->th_p pointes to the static address
- * 
+ *
  * */
 int td_event_getmsg_callback(const td_thrhandle_t *th, void *cb_data) {
   td_event_msg_t *msg = (td_event_msg_t *) cb_data ;
@@ -671,11 +671,11 @@ int td_event_getmsg_callback(const td_thrhandle_t *th, void *cb_data) {
   /*save the static handle provided by ta_getmsg*/
   /*(th is local at thr_iter)*/
   td_thrhandle_t *th_good = (td_thrhandle_t *) msg->th_p ;
-  
+
   /* get the msg of the current thread*/
   tdb_log("td_event_getmsg_callback callback for thread %p with msg %p", th->th_unique, msg);
   err = td_thr_event_getmsg (th, msg) ;
-  
+
   /* stop once a non-none msg is found or an error occured*/
   if (err == TD_OK && msg->event == TD_EVENT_NONE) {
     err = TD_OK ;
@@ -685,7 +685,7 @@ int td_event_getmsg_callback(const td_thrhandle_t *th, void *cb_data) {
   /*copy information back to the static handle*/
   th_good->th_unique = th->th_unique ;
   msg->th_p = th_good ;
-  
+
   tdb_log("td_event_getmsg_callback return %d", err);
   return err ;
 }
@@ -703,14 +703,14 @@ td_err_e td_thr_event_getmsg (const td_thrhandle_t *th,
   td_err_e err; ps_err_e ps_err ;
   td_event_e event ;
   tdb_thread_debug_t *thread_p = NULL;
-  
+
 #if defined (ENABLE_TEST)
   err = test_td_thr_event_getmsg (th, msg) ;
   if (err != TD_CONTINUE)
     return err ;
 #endif
   tdb_log("td_thr_event_getmsg %p, msg : %p", thread_p, msg);
-  
+
   ps_err = ps_try_stop(th->th_ta_p->ph) ;
   if (ps_err != PS_OK)
     return TD_DBERR ;
@@ -719,20 +719,20 @@ td_err_e td_thr_event_getmsg (const td_thrhandle_t *th,
     err = TD_ERR;
     goto exit ;
   }
-  
+
   err = td_thr_validate (th) ;
-  if (err != TD_OK) {  
+  if (err != TD_OK) {
     goto exit ;
   }
 
   thread_p = (tdb_thread_debug_t *) th->th_unique ;
-  
+
   tdb_log("td_thr_event_getmsg@%p", thread_p);
-  
+
   msg->th_p = (td_thrhandle_t *)th;
 
   /*event = th->th_unique->debug->last_event */
-  
+
   /* event = debug_p->last_event */
   ps_err = ps_pdread(th->th_ta_p->ph,
 		     (psaddr_t) &thread_p->last_event,
@@ -744,10 +744,10 @@ td_err_e td_thr_event_getmsg (const td_thrhandle_t *th,
   tdb_log("td_thr_event_getmsg event read : %d (TD_CREATE %d, TD_DEATH %d,TD_EVENT_NONE %d)",
       event, TD_CREATE, TD_DEATH, TD_EVENT_NONE);
   tdb_log("msg : %p", msg);
-  msg->event = event ; 
-  
+  msg->event = event ;
+
   /* empty the last_event buffer */
-  
+
   /* debug_p->last_event = TD_EVENT_NONE*/
   event = TD_EVENT_NONE ;
   tdb_log("td_thr_event_getmsg write TD_EVENT_NONE");
@@ -780,7 +780,7 @@ td_err_e td_ta_thr_iter (const td_thragent_t *ta,
                          sigset_t *ti_sigmask_p,
                          unsigned int ti_user_flags)
 {
-  td_err_e err; ps_err_e ps_err ; 
+  td_err_e err; ps_err_e ps_err ;
   tdb_thread_debug_t *first ;
   tdb_thread_debug_t *current ;
   td_thrhandle_t handle ;
@@ -793,7 +793,7 @@ td_err_e td_ta_thr_iter (const td_thragent_t *ta,
   if (err != TD_CONTINUE)
     return err ;
 #endif
-  
+
   tdb_log("td_ta_thr_iter");
 
   err = td_is_ta_ready (ta) ;
@@ -803,16 +803,16 @@ td_err_e td_ta_thr_iter (const td_thragent_t *ta,
       err = TD_OK ;
     return err ;
   }
-  
+
   ps_err = ps_try_stop(ta->ph) ;
   if (ps_err != PS_OK)
     return TD_DBERR ;
-  
+
   handle.th_ta_p = (td_thragent_t *) ta ;
-  
+
   /* read the head of the list */
   tdb_log("td_ta_thr_iter Read the head of the thread list");
-  /*current = *ta->thread_list_p */ 
+  /*current = *ta->thread_list_p */
   ps_err = ps_pdread (ta->ph, ta->thread_list_p,
 		      &first, sizeof(tdb_thread_debug_t *));
   if (ps_err != PS_OK) {
@@ -831,7 +831,7 @@ td_err_e td_ta_thr_iter (const td_thragent_t *ta,
 
     tdb_log("td_ta_thr_iter there are some threads (%d)", nb);
   }
-  
+
 
   current = first ;
   do {
@@ -843,9 +843,9 @@ td_err_e td_ta_thr_iter (const td_thragent_t *ta,
       err = TD_ERR ;
       goto exit ;
     }
-    
+
     assert(current != NULL);
-    
+
     is_system = 0;
     if(1){
       if(info.ti_type == TD_THR_SYSTEM){
@@ -857,14 +857,14 @@ td_err_e td_ta_thr_iter (const td_thragent_t *ta,
 
     if (((state == TD_THR_ANY_STATE || info.ti_state == state)) && (is_system == 0)) {
       handle.th_unique = (psaddr_t) current ;
-            
+
       tdb_log("td_ta_thr_iter callback for %p", current);
       if (callback (&handle, cbdata_p) != 0) {
 	tdb_log("td_ta_thr_iter callback returned error, -> TD_DBERR %d", TD_DBERR) ;
 	err = TD_DBERR ;
 	goto exit ;
-      }       
-      
+      }
+
       tdb_log("td_ta_thr_iter end of callback");
     }
 
@@ -876,7 +876,7 @@ td_err_e td_ta_thr_iter (const td_thragent_t *ta,
       goto exit ;
     }
   } while (current != first) ;
-  
+
   tdb_log("td_ta_thr_iter return");
   err = TD_OK ;
 
@@ -900,7 +900,7 @@ td_err_e td_thr_get_info (const td_thrhandle_t *th,
   td_err_e err; ps_err_e ps_err ;
   tdb_thread_debug_t *thread_p ;
   prgregset_t prgregset ;
-    
+
 #if defined (ENABLE_TEST)
   err =  test_td_thr_get_info(th, infop);
   if (err != TD_CONTINUE)
@@ -908,7 +908,7 @@ td_err_e td_thr_get_info (const td_thrhandle_t *th,
 #endif
 
   tdb_log("td_thr_get_info");
-  
+
   ps_err = ps_try_stop(th->th_ta_p->ph) ;
   if (ps_err != PS_OK)
     return TD_ERR ;
@@ -919,12 +919,12 @@ td_err_e td_thr_get_info (const td_thrhandle_t *th,
   }
 
   thread_p = (tdb_thread_debug_t *) th->th_unique ;
-  
-  tdb_log("td_thr_get_info@%p", thread_p);  
-  
-  /* read the structures from user space*/ 
+
+  tdb_log("td_thr_get_info@%p", thread_p);
+
+  /* read the structures from user space*/
   /* data = *th->th_unique */
-   
+
   ps_err = ps_pdread (th->th_ta_p->ph, &thread_p->info,
 		      infop, sizeof(td_thrinfo_t));
   if (ps_err != PS_OK) {
@@ -932,9 +932,9 @@ td_err_e td_thr_get_info (const td_thrhandle_t *th,
     goto exit ;
   }
   assert(infop->ti_lid != 0) ;
-  
+
   infop->ti_ta_p = th->th_ta_p ;
-    
+
   tdb_log("td_thr_get_info ti_type %d (TD_THR_USER %d) (TD_THR_SYSTEM %d)",
       infop->ti_type, TD_THR_USER, TD_THR_SYSTEM);
 
@@ -951,15 +951,15 @@ td_err_e td_thr_get_info (const td_thrhandle_t *th,
   tdb_log("td_thr_get_info ti_sp : %p ", infop->ti_sp);
   tdb_log("td_thr_get_info ti_pc : %p ", infop->ti_pc);
   tdb_log("td_thr_get_info ti_state : %p ", infop->ti_state);
-  
+
   err = TD_OK ;
-  
+
 exit:
   ps_err = ps_continue(th->th_ta_p->ph) ;
   if (ps_err != PS_OK)
     return TD_DBERR ;
 
-  
+
   tdb_log("%s returns: %s", __FUNCTION__, tdb_err_str(err)) ;
   return err ;
 }
@@ -977,21 +977,21 @@ td_err_e td_thr_validate (const td_thrhandle_t *th)
   td_err_e err; ps_err_e ps_err ;
   tdb_thread_debug_t *thread_p ;
   td_thrhandle_t th_to_lookfor ;
-  
+
   if (th == NULL) {
     tdb_log("td_thr_validate TD_BADTH (%d)", TD_BADTH);
     return TD_BADTH ;
   }
-  
+
   thread_p = (tdb_thread_debug_t *) th->th_unique ;
-  
+
   if (thread_p == NULL) {
     tdb_log("td_thr_validate TD_NOTHR (%d)", TD_NOTHR);
     return TD_NOTHR ;
   }
 
   tdb_log("td_thr_validate") ;
-  
+
   ps_err = ps_try_stop(th->th_ta_p->ph) ;
   if (ps_err != PS_OK)
     return TD_DBERR ;
@@ -1010,14 +1010,14 @@ td_err_e td_thr_validate (const td_thrhandle_t *th)
     err = TD_NOTHR ;
     goto exit;
   }
-  
+
   err = TD_OK ;
-  
+
 exit:
   ps_err = ps_continue(th->th_ta_p->ph) ;
   if (ps_err != PS_OK)
     return TD_DBERR ;
-  
+
   tdb_log("%s returns: %s", __FUNCTION__, tdb_err_str(err)) ;
   return err ;
 }
@@ -1038,7 +1038,7 @@ td_err_e td_ta_get_ph (const td_thragent_t *ta,
 
   err = td_is_ta_initialized (ta) ;
   if (err != TD_OK) return err ;
-  
+
   (*ph) = ta->ph ;
 
   tdb_log("%s returns: %s", __FUNCTION__, tdb_err_str(err)) ;
@@ -1072,25 +1072,25 @@ int td_map_callback(const td_thrhandle_t *th, void *cb_data) {
   td_err_e err; ps_err_e ps_err ;
 
   read = malloc(data->size) ;
-  
+
   ps_err = ps_pdread (th->th_ta_p->ph, (psaddr_t) current+data->offset, &read, data->size);
   if (ps_err != PS_OK) return TD_ERR ;
-  
+
   err = TD_OK ;
   tdb_log("%s thread %p, value %p == read %p ?", __FUNCTION__, current,data->value, read) ;
   if (memcmp(&read, data->value, data->size) == 0) {
     tdb_log("%s yes !", __FUNCTION__) ;
     /* save this thread in any case*/
     data->th->th_unique = (psaddr_t) current ;
-      
+
     /* stop only if we look for the first, or the thread is running*/
     if (data->first) err = TD_ERR ;
     else {
       int status ;
-      
+
       ps_err = ps_pdread (th->th_ta_p->ph, (psaddr_t) &current->info.ti_state, &status, sizeof(int));
       if (ps_err != PS_OK) return TD_ERR ;
-      
+
       if (status != TD_THR_ACTIVE) {
 	tdb_log("%s %d matches but is not running",__FUNCTION__, current) ;
 	err = TD_OK ;
@@ -1113,26 +1113,26 @@ td_err_e td_ta_map (const td_thragent_t *ta,
 {
   struct td_map_data_s data ;
   td_err_e err; ps_err_e ps_err ;
-  
+
   ps_err = ps_try_stop(ta->ph) ;
   if (ps_err != PS_OK)
-    return TD_DBERR ;  
+    return TD_DBERR ;
 
   err = td_is_ta_initialized (ta) ;
   if (err != TD_OK) goto exit ;
 
   th->th_ta_p = (td_thragent_t *) ta ;
   th->th_unique = NULL ;
-  
+
   data.th = th ;
   data.value = value ;
   data.offset = offset ;
   data.size = size ;
   data.first = first ;
-  
+
   /* iterate over the threads until we find one bound to lid */
   td_ta_thr_iter(ta, td_map_callback, &data, TD_THR_ANY_STATE, TD_THR_LOWEST_PRIORITY, TD_SIGNO_MASK, TD_THR_ANY_USER_FLAGS) ;
-  
+
   /*if a thread has been found */
   if (th->th_unique != NULL) {
     err = td_thr_validate (th) ;
@@ -1173,12 +1173,12 @@ td_err_e td_ta_map_lwp2thr (const td_thragent_t *ta, lwpid_t lwpid,
 
   if (th == NULL) return TD_BADTH ;
   thread_p = (tdb_thread_debug_t *) th->th_unique ;
-  
+
   tdb_log("td_ta_map_lwp2thr %d (%p)", lwpid, lwpid) ;
   offset = (void *) &thread_p->info.ti_lid - (void *) thread_p ;
 
   err = td_ta_map (ta, &lwpid, offset, sizeof(lwpid_t), 0, th) ;
-  
+
   tdb_log("%s returns: %s", __FUNCTION__, tdb_err_str(err)) ;
   return err ;
 }
@@ -1190,7 +1190,7 @@ td_err_e td_ta_map_id2thr (const td_thragent_t *ta, pthread_t pt, td_thrhandle_t
 {
   tdb_thread_debug_t *thread_p ;
   size_t offset ;
-  td_err_e err; 
+  td_err_e err;
 #if defined (ENABLE_TEST)
   err = test_td_ta_map_id2thr (ta, pt, th) ;
   if (err != TD_CONTINUE)
@@ -1199,18 +1199,18 @@ td_err_e td_ta_map_id2thr (const td_thragent_t *ta, pthread_t pt, td_thrhandle_t
 
   if (th == NULL) return TD_BADTH ;
   thread_p = (tdb_thread_debug_t *) th->th_unique ;
-  
+
   offset = (void *) &thread_p->info.ti_tid - (void *) thread_p ;
-  
+
   tdb_log("td_ta_map_id2thr %p", (void *) pt) ;
-  
+
   th->th_unique = NULL ;
   err = td_ta_map (ta, &pt, offset, sizeof(pthread_t), 1, th) ;
 
   tdb_log("td_ta_map_id2thr %p -> %p", (void *) pt, th->th_unique) ;
-  
+
   tdb_log("%s returns: %s", __FUNCTION__, tdb_err_str(err)) ;
-  return err ; 
+  return err ;
 }
 
 /** ***************************************************************************** **/
@@ -1220,25 +1220,25 @@ td_err_e td_ta_map_id2thr (const td_thragent_t *ta, pthread_t pt, td_thrhandle_t
 int td_check_reg_offsets (const td_thragent_t *ta) {
   int ok = 1 ;
   ps_err_e ps_err;
-  
+
   /* do we need to read the register offsets ?*/
   if (ta->reg_offsets.size == 0) {
     psaddr_t reg_off_p ;
-    
+
     tdb_log("td_thr_getgregs Register offsets not read yet");
-    
+
     ps_err = ps_lookup(ta->ph, REG_OFFSETS ,&reg_off_p);
     if (ps_err != PS_OK) return 0 ;
-    
+
     ps_err = ps_pdread(ta->ph, reg_off_p, (psaddr_t) &ta->reg_offsets,
 		       sizeof(register_offsets_t));
     if (ps_err != PS_OK) return 0 ;
-    
+
     if (ta->reg_offsets.size == 0) {
       ok = 0 ;
     }
   }
-  
+
   return ok ;
 }
 
@@ -1249,7 +1249,7 @@ td_thr_state_e td_thr_getRunningState (const td_thrhandle_t *th, lwpid_t *lid_p,
   td_thr_state_e status ;
 
   if (state == NULL) return TD_ERR ;
-  
+
   /* read the current status */
   ps_err = ps_pdread (th->th_ta_p->ph,
 		   (psaddr_t)  &thread_p->info.ti_state,
@@ -1266,13 +1266,13 @@ td_thr_state_e td_thr_getRunningState (const td_thrhandle_t *th, lwpid_t *lid_p,
     if (ps_err != PS_OK) {
       return TD_ERR ;
     }
-    
+
     tdb_log("td_thr_getsetRunningRegs %p is running on %d", thread_p, lid);
     *lid_p = lid ;
   } else {
     tdb_log("td_thr_getsetRunningRegs %p is not running (%d)", thread_p, status);
   }
-  
+
   return TD_OK ;
 }
 
@@ -1300,10 +1300,10 @@ td_err_e td_thr_getgregs (const td_thrhandle_t *th,
   if (err != TD_OK) goto exit ;
 
   thread_p = (tdb_thread_debug_t *) th->th_unique ;
-  
+
   err = td_thr_getRunningState (th, &lid, &state) ;
   if (err != TD_OK) goto exit ;
-  
+
   if(state == TD_THR_ACTIVE) {
     ps_err = ps_lgetregs (th->th_ta_p->ph, lid, gregs) ;
 
@@ -1313,7 +1313,7 @@ td_err_e td_thr_getgregs (const td_thrhandle_t *th,
     }
     else
       err = TD_OK ;
-    
+
   } else {
     psaddr_t registers_p ;
     static psaddr_t *registers ; /* never freed, but not important*/
@@ -1325,7 +1325,7 @@ td_err_e td_thr_getgregs (const td_thrhandle_t *th,
       goto exit ;
     }
     assert(th->th_ta_p->reg_offsets.size != 0) ;
-    
+
     if (registers == NULL) {
       registers = malloc (sizeof(psaddr_t) * th->th_ta_p->reg_offsets.size) ;
       if (registers == NULL) {
@@ -1340,7 +1340,7 @@ td_err_e td_thr_getgregs (const td_thrhandle_t *th,
       err = TD_ERR ;
       goto exit ;
     }
-    
+
     tdb_log("td_thr_getgregs Read register set at %p", registers_p);
 
 
@@ -1360,13 +1360,13 @@ thread in initialization ...");
     }
 
     td_utils_context_to_prgregset (th->th_ta_p, registers, gregs) ;
-    
+
     err = TD_PARTIALREG ;
   }
 
   tdb_log("td_thr_getgregs SP (%d) [%p]", TDB_SP, gregs[TDB_SP]);
   tdb_log("td_thr_getgregs PC (%d) [%p]", TDB_PC,  gregs[TDB_PC]);
-  
+
   tdb_log("td_thr_getgregs returns %s", tdb_err_str(err)) ;
 
 exit:
@@ -1389,22 +1389,22 @@ td_err_e td_thr_setgregs (const td_thrhandle_t *th,
   td_err_e err; ps_err_e ps_err ;
   lwpid_t lid ;
   td_thr_state_e state ;
-  
+
 #if defined (ENABLE_TEST)
   err = test_td_thr_setgregs (th, gregs) ;
   if (err != TD_CONTINUE)
     return err ;
 #endif
-  
+
   tdb_log("td_thr_setgregs");
-  
+
   ps_err = ps_try_stop(th->th_ta_p->ph) ;
   if (ps_err != PS_OK)
     return TD_DBERR ;
 
   err = td_thr_validate (th) ;
   if (err != TD_OK) goto exit ;
-  
+
   err = td_thr_getRunningState (th, &lid, &state) ;
   if (err != TD_OK) goto exit ;
 
@@ -1415,7 +1415,7 @@ td_err_e td_thr_setgregs (const td_thrhandle_t *th,
       err = TD_DBERR ;
     else
       err = TD_OK ;
-    
+
     goto exit ;
   } else {
     tdb_log("td_thr_setgregs thread is not running ... %d", state);
@@ -1448,14 +1448,14 @@ td_err_e td_thr_setgregs (const td_thrhandle_t *th,
 	goto exit ;
       }
     }
-        
+
     ps_err = ps_pdread (th->th_ta_p->ph, (psaddr_t) &thread_p->context, &registers_p,
 			sizeof(psaddr_t));
     if (ps_err != PS_OK) {
       err = TD_ERR ;
       goto exit ;
     }
-       
+
     ps_err = ps_pdread (th->th_ta_p->ph, registers_p, registers,
 		     sizeof(psaddr_t)*size);
     if (ps_err != PS_OK) {
@@ -1464,18 +1464,18 @@ td_err_e td_thr_setgregs (const td_thrhandle_t *th,
     }
 
     td_utils_prgregset_to_context (th->th_ta_p, gregs, registers) ;
-    
+
     ps_err = ps_pdwrite (th->th_ta_p->ph, registers_p, registers,
 		      sizeof(psaddr_t)*size);
     if (ps_err != PS_OK) {
       err = TD_ERR ;
       goto exit ;
     }
-    
+
     err = TD_PARTIALREG ;
   }
 #endif
-  
+
 exit:
   ps_err = ps_continue(th->th_ta_p->ph) ;
   if (ps_err != PS_OK)
@@ -1494,7 +1494,7 @@ td_err_e td_thr_getfpregs (const td_thrhandle_t *th,
   td_err_e err; ps_err_e ps_err ;
   lwpid_t lid ;
   td_thr_state_e state ;
-  
+
 #if defined (ENABLE_TEST)
   err = test_td_thr_getfpregs (th, regset) ;
   if (err != TD_CONTINUE)
@@ -1502,17 +1502,17 @@ td_err_e td_thr_getfpregs (const td_thrhandle_t *th,
 #endif
 
   tdb_log("td_thr_getfpregs");
-  
+
   ps_err = ps_try_stop(th->th_ta_p->ph) ;
   if (ps_err != PS_OK)
     return TD_DBERR ;
 
   err = td_thr_validate (th) ;
   if (err != TD_OK) goto exit ;
-  
+
   err = td_thr_getRunningState (th, &lid, &state) ;
   if (err != TD_OK) goto exit ;
-  
+
   if(state == TD_THR_ACTIVE) {
     ps_err = ps_lgetfpregs (th->th_ta_p->ph, lid, regset) ;
     if (ps_err != PS_OK)
@@ -1541,33 +1541,33 @@ td_err_e td_thr_setfpregs (const td_thrhandle_t *th,
   td_err_e err; ps_err_e ps_err ;
   lwpid_t lid ;
   td_thr_state_e state ;
-    
+
 #if defined (ENABLE_TEST)
   err = test_td_thr_setfpregs (th, fpregs) ;
   if (err != TD_CONTINUE)
     return err ;
 #endif
-    
+
   tdb_log("td_thr_setfpregs");
-  
+
   ps_err = ps_try_stop(th->th_ta_p->ph) ;
   if (ps_err != PS_OK)
     return TD_DBERR ;
 
   err = td_thr_validate (th) ;
   if (err != TD_OK) goto exit ;
-  
+
   err = td_thr_getRunningState (th, &lid, &state) ;
   if (err != TD_OK) goto exit ;
-  
+
   if(state == TD_THR_ACTIVE) {
     ps_err = ps_lsetfpregs (th->th_ta_p->ph, lid, fpregs) ;
     if (ps_err != PS_OK)
       err = TD_DBERR ;
     else
-      err = TD_OK ;  
+      err = TD_OK ;
   } else {
-    err =  TD_OK ;  
+    err =  TD_OK ;
   }
 
 exit:
@@ -1594,16 +1594,16 @@ td_err_e td_thr_getxregs (const td_thrhandle_t *th, void *xregs)
   if (err != TD_CONTINUE)
     return err ;
 #endif
-  
+
   tdb_log("td_thr_getxregs");
-  
+
   ps_err = ps_try_stop(th->th_ta_p->ph) ;
   if (ps_err != PS_OK)
     return TD_DBERR ;
 
   err = td_thr_validate (th) ;
   if (err != TD_OK) goto exit ;
-  
+
   err = td_thr_getRunningState (th, &lid, &state) ;
   if (err != TD_OK) goto exit ;
   if(state == TD_THR_ACTIVE) {
@@ -1622,7 +1622,7 @@ exit:
   ps_err = ps_continue(th->th_ta_p->ph) ;
   if (ps_err != PS_OK)
     return TD_DBERR ;
-  
+
   return err ;
 #else
 #if defined (ENABLE_TEST)
@@ -1643,22 +1643,22 @@ td_err_e td_thr_getxregsize (const td_thrhandle_t *th, int *sizep)
 {
 #if defined (SCTK_sparc_ARCH_SCTK)
     #error  not implemented
-  td_err_e err = TD_DBERR; 
+  td_err_e err = TD_DBERR;
 #if defined (ENABLE_TEST)
   err = test_td_thr_getxregsize (th, sizep) ;
   if (err != TD_CONTINUE)
     return err ;
 #endif
-  
+
   tdb_log("td_thr_getxregsize");
-    
+
   ps_err = ps_try_stop(th->th_ta_p->ph) ;
   if (ps_err != PS_OK)
     return TD_DBERR ;
 
   err = td_thr_validate (th) ;
   if (err != TD_OK) goto exit ;
-  
+
   err = td_thr_getRunningState (th, &lid) ;
   if(state == TD_THR_ACTIVE) {
     ps_err = ps_lgetxregsize (ta->ph, lid, sizep) ;
@@ -1678,9 +1678,9 @@ exit:
 
   tdb_log("%s returns: %s", __FUNCTION__, tdb_err_str(err)) ;
   return err ;
-#else 
+#else
   td_err_e err = TD_DBERR;
-  
+
 #if defined (ENABLE_TEST)
   err = test_td_thr_getxregsize (th, sizep) ;
   if (err != TD_CONTINUE)
@@ -1697,7 +1697,7 @@ exit:
 td_err_e td_thr_setxregs (const td_thrhandle_t *th,
                           const void *addr)
 {
-  td_err_e err = TD_DBERR; 
+  td_err_e err = TD_DBERR;
 #if defined (SCTK_sparc_ARCH_SCTK)
     #error  not implemented
   lwpid_t lid ;
@@ -1715,7 +1715,7 @@ td_err_e td_thr_setxregs (const td_thrhandle_t *th,
 
   err = td_thr_validate (th) ;
   if (err != TD_OK) goto exit ;
-  
+
   err = td_thr_getRunningState (th, &lid) ;
   if(state == TD_THR_ACTIVE) {
     ps_err = ps_lsetxregs (ta->ph, lid, addr) ;
@@ -1724,7 +1724,7 @@ td_err_e td_thr_setxregs (const td_thrhandle_t *th,
     else
       err = TD_OK ;
 
-    goto exit ;    
+    goto exit ;
   } else {
     err = TD_NOXREGS ;
   }
@@ -1737,7 +1737,7 @@ exit:
   tdb_log("%s returns: %s", __FUNCTION__, tdb_err_str(err)) ;
   return err ;
 #else
-    
+
 #if defined (ENABLE_TEST)
   err = test_td_thr_setxregs (th, addr) ;
   if (err != TD_CONTINUE)
@@ -1756,9 +1756,9 @@ exit:
 /* Get number of currently running threads in process associated with TA.  */
 td_err_e td_ta_get_nthreads (const td_thragent_t *ta, int *np)
 {
-  psaddr_t addr ; 
+  psaddr_t addr ;
   td_err_e err; ps_err_e ps_err ;
-  unsigned long nb_thread ; 
+  unsigned long nb_thread ;
 
 #if defined (ENABLE_TEST)
   err = test_td_ta_get_nthreads (ta, np);
@@ -1770,19 +1770,19 @@ td_err_e td_ta_get_nthreads (const td_thragent_t *ta, int *np)
 
   err = td_is_ta_initialized (ta) ;
   if (err != TD_OK) return err ;
-  else if (np == NULL) 
-    return TD_ERR;    
-  
+  else if (np == NULL)
+    return TD_ERR;
+
   ps_err = ps_try_stop(ta->ph) ;
   if (ps_err != PS_OK)
     return TD_DBERR ;
-  
+
   *np = 0 ;
   ps_err = ps_lookup (ta->ph, NB_THREAD, &addr) ;
   if (ps_err != PS_OK) {
     tdb_log("td_ta_get_nthreads rtdb_thread_number_alive not loaded yet -> 0 thread");
     *np = 0 ;
-    
+
   } else {
     ps_err = ps_pdread(ta->ph, addr, &nb_thread, sizeof(unsigned long)) ;
     if (ps_err != PS_OK) {
@@ -1810,9 +1810,9 @@ td_err_e td_write(struct ps_prochandle *ph, int idx, int val) {
   const char ** symb ;
   psaddr_t addr ;
   td_err_e err; ps_err_e ps_err;
-  
+
   tdb_log("lookup") ;
-  ps_err = ps_lookup (ph, idx, &addr) ; 
+  ps_err = ps_lookup (ph, idx, &addr) ;
   if (ps_err != PS_OK) {
     tdb_log ("td_write Lookup not yet possible to read");
     err = TD_NOCAPAB ;
@@ -1820,13 +1820,13 @@ td_err_e td_write(struct ps_prochandle *ph, int idx, int val) {
   }
   tdb_log("----");
   symb = td_symbol_list() ;
-  
+
   if (idx == LIB_STATE && val == TDB_LIB_TO_START) {
     /* ensure that the library has not already been enabled */
     int action ;
-    
+
     tdb_log ("td_write Initialization of libthread_db");
-    
+
     ps_err = ps_pdread(ph, addr, &action, sizeof(int)) ;
     if (ps_err != PS_OK) {
       tdb_log ("td_write Read not yet possible to read");
@@ -1838,7 +1838,7 @@ td_err_e td_write(struct ps_prochandle *ph, int idx, int val) {
       err = TD_OK ;
       goto exit ;
     }
-    
+
     ps_err = ps_pdwrite(ph, addr, &idx, sizeof(int)) ;
     if (ps_err == PS_OK) {
       tdb_log ("td_write Initialized");
@@ -1850,7 +1850,7 @@ td_err_e td_write(struct ps_prochandle *ph, int idx, int val) {
       goto exit ;
     }
   }
-  
+
   tdb_log("td_write #%d -> %s@%p", val, symb[idx], addr);
   ps_err = ps_pdwrite(ph, addr, &idx, sizeof(int)) ;
   if (ps_err != PS_OK) {
@@ -1888,27 +1888,27 @@ void td_utils_prgregset_to_context(const td_thragent_t *ta,
 #elif defined(MPC_X86_64_ARCH)
 void td_utils_context_to_prgregset(const td_thragent_t *ta,
 				   psaddr_t *context, prgregset_t prgregset) {
-  prgregset[RBX] = (long) context[ta->reg_offsets.off_rbx] ; 
-  prgregset[RBP] = (long) context[ta->reg_offsets.off_rbp] ;  
-  prgregset[R12] = (long) context[ta->reg_offsets.off_r12] ; 
-  prgregset[R13] = (long) context[ta->reg_offsets.off_r13] ;   
-  prgregset[R14] = (long) context[ta->reg_offsets.off_r14] ; 
-  prgregset[R15] = (long) context[ta->reg_offsets.off_r15] ;  
-  prgregset[RSP] = (long) context[ta->reg_offsets.off_rsp] ; 
-  prgregset[RIP] = (long) context[ta->reg_offsets.off_pc] ;  
+  prgregset[RBX] = (long) context[ta->reg_offsets.off_rbx] ;
+  prgregset[RBP] = (long) context[ta->reg_offsets.off_rbp] ;
+  prgregset[R12] = (long) context[ta->reg_offsets.off_r12] ;
+  prgregset[R13] = (long) context[ta->reg_offsets.off_r13] ;
+  prgregset[R14] = (long) context[ta->reg_offsets.off_r14] ;
+  prgregset[R15] = (long) context[ta->reg_offsets.off_r15] ;
+  prgregset[RSP] = (long) context[ta->reg_offsets.off_rsp] ;
+  prgregset[RIP] = (long) context[ta->reg_offsets.off_pc] ;
 }
 
 void td_utils_prgregset_to_context(const td_thragent_t *ta,
 				   prgregset_t prgregset, psaddr_t *context) {
-  context[ta->reg_offsets.off_rbx] = (psaddr_t) prgregset[RBX]; 
-  context[ta->reg_offsets.off_rbp] = (psaddr_t) prgregset[RBP];  
-  context[ta->reg_offsets.off_r12] = (psaddr_t) prgregset[R12]; 
-  context[ta->reg_offsets.off_r13] = (psaddr_t) prgregset[R13];   
-  context[ta->reg_offsets.off_r14] = (psaddr_t) prgregset[R14]; 
-  context[ta->reg_offsets.off_r15] = (psaddr_t) prgregset[R15];  
-  context[ta->reg_offsets.off_rsp] = (psaddr_t) prgregset[RSP]; 
- context[ta->reg_offsets.off_pc] = (psaddr_t) prgregset[RIP]; 
-}   
+  context[ta->reg_offsets.off_rbx] = (psaddr_t) prgregset[RBX];
+  context[ta->reg_offsets.off_rbp] = (psaddr_t) prgregset[RBP];
+  context[ta->reg_offsets.off_r12] = (psaddr_t) prgregset[R12];
+  context[ta->reg_offsets.off_r13] = (psaddr_t) prgregset[R13];
+  context[ta->reg_offsets.off_r14] = (psaddr_t) prgregset[R14];
+  context[ta->reg_offsets.off_r15] = (psaddr_t) prgregset[R15];
+  context[ta->reg_offsets.off_rsp] = (psaddr_t) prgregset[RSP];
+ context[ta->reg_offsets.off_pc] = (psaddr_t) prgregset[RIP];
+}
 #else
 void td_utils_context_to_prgregset(const td_thragent_t *ta,
 				   psaddr_t *context, prgregset_t prgregset) {
@@ -1916,7 +1916,7 @@ void td_utils_context_to_prgregset(const td_thragent_t *ta,
 
 void td_utils_prgregset_to_context(const td_thragent_t *ta,
 				   prgregset_t prgregset, psaddr_t *context) {
-}   
+}
 #error "Architecture not supported"
 #endif
 
@@ -1928,16 +1928,16 @@ ps_err_e ps_lookup (struct ps_prochandle *ph, int idx, psaddr_t *sym_addr)
 {
   /* static */ char *lib_path = LIB_RTDB_SO ;
   int ps_err;
-  
+
   assert (ph != NULL);
   assert (sym_addr != NULL);
 
-  
-  *sym_addr = NULL ; 
+
+  *sym_addr = NULL ;
   assert (idx >= 0 && idx < NUM_MESSAGES);
-  
+
   tdb_log("ps_pglobal_lookup %s", symbol_list_arr[idx]);
-  
+
   ps_err = ps_pglobal_lookup (ph, lib_path, symbol_list_arr[idx], sym_addr) ;
   if (ps_err != PS_OK && lib_path != NULL) {
     tdb_log("ps_lookup Impossible to read in %s, try NULL...", lib_path);
@@ -1950,9 +1950,9 @@ ps_err_e ps_lookup (struct ps_prochandle *ph, int idx, psaddr_t *sym_addr)
   } else {
     tdb_log("ps_pglobal_lookup %p", *sym_addr);
   }
-  
+
   return ps_err;
-  
+
 }
 
 /** ***************************************************************************** **/
@@ -1974,7 +1974,7 @@ ps_err_e ps_try_stop (struct ps_prochandle *ph) {
   int ps_err = PS_OK ;
 
   td_stopped.count++ ;
-  
+
   if (!td_stopped.lock) {
     ps_err = ps_pstop (ph) ;
     tdb_log("-----------------------> STOP");
@@ -1986,7 +1986,7 @@ ps_err_e ps_try_stop (struct ps_prochandle *ph) {
   else {
     tdb_log("STOP %d", td_stopped.count) ;
   }
-  
+
   return ps_err ;
 }
 
@@ -2001,7 +2001,7 @@ ps_err_e ps_continue (struct ps_prochandle *ph) {
 
   if (td_stopped.count == 1) {
     ps_err = ps_pcontinue (ph) ;
-    
+
     tdb_log("-----------------------> CONTINUE");
     td_stopped.lock = 0 ;
   }
@@ -2010,7 +2010,7 @@ ps_err_e ps_continue (struct ps_prochandle *ph) {
   }
 
   td_stopped.count-- ;
-    
+
   return ps_err ;
 }
 
@@ -2033,7 +2033,7 @@ void tdb_formated_assert_print (FILE * stream, const int line,
 	    "Assertion %s fail at line %d file %s\n",
 	    fmt, line,
 	    file);
-    
+
   va_start (ap, fmt);
   vfprintf (stream, buff, ap);
   va_end (ap);
@@ -2058,14 +2058,14 @@ void tdb_log (const char *fmt, ...) {
   char str[SMALL_BUFFER_SIZE];
   char tab[MAX_INDENT] ;
   int indent ;
-  
+
   va_list ap;
 
   if (td_stopped.count >= MAX_INDENT)
     indent = MAX_INDENT - 1 ;
   else
     indent = td_stopped.count ;
-  
+
   if (verbosity_level <= td_stopped.count) return ;
 
   if (indent != 0) {
@@ -2078,12 +2078,12 @@ void tdb_log (const char *fmt, ...) {
   snprintf (buff, SMALL_BUFFER_SIZE,
 	    "\033[31m/!\\%s%s \033[0;0m\n",
 	    tab, fmt);
-  
+
   va_start (ap, fmt);
   vsprintf(str, buff, ap) ;
   to_output (stderr, str);
   va_end (ap);
-} 
+}
 
 int verbosity_level ;
 void td_set_tdb_verbosity (int n) {
@@ -2150,7 +2150,7 @@ td_err_e td_thr_tlsbase (const td_thrhandle_t *th,
   *__base = NULL;
 
   thread_p = (tdb_thread_debug_t *) th->th_unique ;
-  
+
   ps_err = ps_pdread(th->th_ta_p->ph, &thread_p->extls, &tls, sizeof(tls)) ;
   if (ps_err != PS_OK) {
     return TD_ERR;

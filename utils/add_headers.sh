@@ -16,7 +16,7 @@ set_comm_del()
 {
     (echo "$1" | grep "\\." > /dev/null) || (echo "$1 has no extension"; exit 1)
     EXT=$(echo "$1" | rev | cut -d "." -f 1 | rev)
-    
+
     case $EXT in
         sh)
             SDL="# "
@@ -66,7 +66,7 @@ get_authors()
 wrap()
 {
     while read -r l
-    do 
+    do
         if test -n "$l"; then
             printf "%s - %-66s %s~~" "$SDL" "$l" "$ENDL"
         fi
@@ -76,7 +76,7 @@ wrap()
 wrap2()
 {
     while read -r l
-    do 
+    do
         if test -n "$l"; then
             printf "%s %-68s %s" "$SDL" "$l" "$ENDL"
         fi

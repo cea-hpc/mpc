@@ -163,7 +163,7 @@ int PMPI_Pready(int partition, MPI_Request request)
 
         requests = __sctk_internal_get_MPC_requests();
         req      = __sctk_convert_mpc_request_internal(&request, requests);
-        lc_req   = req->partitioned.p_reqs[partition]; 
+        lc_req   = req->partitioned.p_reqs[partition];
 
         /* compute matching tag */
         tag |= (req->partitioned.id & 0xffffffu);
@@ -179,10 +179,10 @@ int PMPI_Pready(int partition, MPI_Request request)
                 partition_size = req->partitioned.count / req->partitioned.partitions;
         }
         _mpc_cl_type_size(req->partitioned.datatype, &dt_size);
-        buf = req->partitioned.buf + partition_size * dt_size * partition; 
+        buf = req->partitioned.buf + partition_size * dt_size * partition;
 
-        res = _mpc_cl_isend(buf, partition_size, 
-                            req->partitioned.datatype, 
+        res = _mpc_cl_isend(buf, partition_size,
+                            req->partitioned.datatype,
                             req->partitioned.dest_source,
                             tag,
                             req->partitioned.comm,
@@ -199,7 +199,7 @@ int PMPI_Parrived(MPI_Request request, int partition, int *flags)
 
         requests = __sctk_internal_get_MPC_requests();
         req      = __sctk_convert_mpc_request_internal(&request, requests);
-        lc_req   = req->partitioned.p_reqs[partition]; 
+        lc_req   = req->partitioned.p_reqs[partition];
 
         if (lc_req.completion_flag == MPC_LOWCOMM_MESSAGE_DONE) {
                 *flags = 1;
@@ -209,4 +209,3 @@ int PMPI_Parrived(MPI_Request request, int partition, int *flags)
 
         return MPI_SUCCESS;
 }
-

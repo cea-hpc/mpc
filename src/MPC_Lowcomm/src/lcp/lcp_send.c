@@ -40,14 +40,14 @@
 #include "mpc_common_debug.h"
 
 #define LCP_SEND_TAG_IS_TASK(_req) \
-        ((_req)->send.tag.dest_uid == (_req)->ctx->process_uid) 
+        ((_req)->send.tag.dest_uid == (_req)->ctx->process_uid)
 
 /**
- * @brief Switch between protocols. Available protocols are : 
+ * @brief Switch between protocols. Available protocols are :
  * - buffered copy
  * - zero copy
  * - rendez-vous
- * 
+ *
  * @param ep endpoint to send the message
  * @param req request used to send the message
  * @param param request parameter used for offload flag
@@ -87,23 +87,23 @@ int lcp_tag_send_start(lcp_ep_h ep, lcp_request_t *req,
                 size = lcp_send_get_total_tag_payload(req->send.length);
 
                 //NOTE: there are no rendez-vous for thread-based send.
-                if ((size <= ep->ep_config.am.max_bcopy) || 
+                if ((size <= ep->ep_config.am.max_bcopy) ||
                     (param->datatype & LCP_DATATYPE_DERIVED)) {
                         req->send.func = lcp_send_task_tag_bcopy;
                 } else {
-                       assume(size <= ep->ep_config.am.max_zcopy); 
+                       assume(size <= ep->ep_config.am.max_zcopy);
                        req->send.func = lcp_send_task_tag_zcopy;
                 }
         } else { /* Process-based send */
                 //NOTE: multiplexing might not always be efficient (IO NUMA
-                //      effects). A specific scheduling policy should be 
+                //      effects). A specific scheduling policy should be
                 //      implemented to decide
                 req->state.offloaded = 0;
 
                 /* Get the total payload size */
                 size = lcp_send_get_total_tag_payload(req->send.length);
 
-                if (size <= ep->ep_config.am.max_bcopy || 
+                if (size <= ep->ep_config.am.max_bcopy ||
                     ((req->send.length <= ep->ep_config.tag.max_zcopy) &&
                      (param->datatype & LCP_DATATYPE_DERIVED))) {
                         req->send.func = lcp_send_eager_tag_bcopy;
@@ -122,7 +122,7 @@ int lcp_tag_send_start(lcp_ep_h ep, lcp_request_t *req,
 //FIXME: It is not clear whether count is the number of elements or the length in
 //       bytes. For now, the actual length in bytes is given taking into account
 //       the datatypes and stuff...
-int lcp_tag_send_nb(lcp_ep_h ep, lcp_task_h task, const void *buffer, 
+int lcp_tag_send_nb(lcp_ep_h ep, lcp_task_h task, const void *buffer,
                     size_t size, mpc_lowcomm_request_t *request,
                     const lcp_request_param_t *param)
 {
@@ -139,7 +139,7 @@ int lcp_tag_send_nb(lcp_ep_h ep, lcp_task_h task, const void *buffer,
         req->flags |= LCP_REQUEST_MPI_COMPLETE;
 
         // initialize request
-        LCP_REQUEST_INIT_TAG_SEND(req, ep->ctx, task, request, param->tag_info, 
+        LCP_REQUEST_INIT_TAG_SEND(req, ep->ctx, task, request, param->tag_info,
                                   size, ep, (void *)buffer, 0, param->datatype,
                                   param->flags & LCP_REQUEST_TAG_SYNC ? 1 : 0);
 
@@ -153,8 +153,8 @@ int lcp_tag_send_nb(lcp_ep_h ep, lcp_task_h task, const void *buffer,
 #ifdef MPC_ENABLE_TOPOLOGY_SIMULATION
         /* simulate latency/bandwidth if needed */
         mpc_topology_simulate_distance(
-                mpc_lowcomm_peer_get_rank(mpc_lowcomm_monitor_get_uid()), 
-                req->send.tag.dest_tid, 
+                mpc_lowcomm_peer_get_rank(mpc_lowcomm_monitor_get_uid()),
+                req->send.tag.dest_tid,
                 size);
 #endif
 

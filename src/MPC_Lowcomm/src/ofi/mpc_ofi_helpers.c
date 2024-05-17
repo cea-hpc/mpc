@@ -156,7 +156,7 @@ enum fi_ep_type _mpc_ofi_encode_endpoint_type(const char * type)
 	{
 		return FI_EP_MSG;
 	}
-	
+
 	if(!strcmp(type, "FI_EP_DGRAM"))
 	{
 		return FI_EP_DGRAM;

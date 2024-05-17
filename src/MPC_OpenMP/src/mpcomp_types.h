@@ -878,7 +878,7 @@ typedef struct  mpc_omp_task_s
 
     /* the task priority, used for scheduling. See mpcomp_task_priority_policy */
     int priority;
-    
+
     /* task priorities propagation version */
     int propagation_version;
 

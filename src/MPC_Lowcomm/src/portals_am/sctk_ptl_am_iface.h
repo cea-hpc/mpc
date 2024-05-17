@@ -102,7 +102,7 @@ sctk_ptl_id_t sctk_ptl_am_self(sctk_ptl_am_rail_info_t* srail);
 
 /**
  * @brief function to check if the given Portals id struct can match any process
- * 
+ *
  * @param r the struct to check
  * @return 1 if true, 0 otherwise
  */
@@ -114,7 +114,7 @@ static inline int __sctk_ptl_am_id_undefined(sctk_ptl_id_t r)
 
 /**
  * @brief Decode the return code provided by Portals code, to display them as string
- * 
+ *
  * @param rc the rc to decode
  * @return const char * the actual string
  */
@@ -129,14 +129,14 @@ static inline const char * sctk_ptl_am_rc_decode(int rc)
 		case PTL_IGNORED: return "PTL_IGNORED"; break;
 		case PTL_PID_IN_USE: return "PTL_PID_IN_USE"; break;
 		case PTL_INTERRUPTED: return "PTL_INTERRUPTED"; break;
-		
+
 		case PTL_NO_SPACE: return "PTL_NO_SPACE"; break;
 		case PTL_ARG_INVALID: return "PTL_ARG_INVALID"; break;
-		
+
 		case PTL_PT_IN_USE: return "PTL_PT_IN_USE"; break;
 		case PTL_PT_FULL: return "PTL_PT_FULL"; break;
 		case PTL_PT_EQ_NEEDED: return "PTL_PT_EQ_NEEDED"; break;
-		
+
 		case PTL_LIST_TOO_LONG: return "PTL_LIST_TOO_LONG"; break;
 		case PTL_EQ_EMPTY: return "PTL_EQ_EMPTY"; break;
 		case PTL_EQ_DROPPED: return "PTL_EQ_DROPPED"; break;
@@ -144,7 +144,7 @@ static inline const char * sctk_ptl_am_rc_decode(int rc)
 		default:
 		{
 			char* buf = (char*)sctk_malloc(sizeof(char) * 40);
-			snprintf(buf, 40, "Portals return code not known: %d", rc); 
+			snprintf(buf, 40, "Portals return code not known: %d", rc);
 			return buf;
 			break;
 		}
@@ -154,7 +154,7 @@ static inline const char * sctk_ptl_am_rc_decode(int rc)
 
 /**
  * @brief decode an event to display its type as a string.
- * 
+ *
  * @param ev the event to stringify
  * @return const char  * the actual string.
  */
@@ -164,25 +164,25 @@ static inline const char * sctk_ptl_am_event_decode(sctk_ptl_event_t ev)
 	{
 	case PTL_EVENT_GET: return "PTL_EVENT_GET"; break;
 	case PTL_EVENT_GET_OVERFLOW: return "PTL_EVENT_GET_OVERFLOW"; break;
-	
+
 	case PTL_EVENT_PUT: return "PTL_EVENT_PUT"; break;
 	case PTL_EVENT_PUT_OVERFLOW: return "PTL_EVENT_PUT_OVERFLOW"; break;
-	
+
 	case PTL_EVENT_ATOMIC: return "PTL_EVENT_ATOMIC"; break;
 	case PTL_EVENT_ATOMIC_OVERFLOW: return "PTL_EVENT_ATOMIC_OVERFLOW"; break;
-	
+
 	case PTL_EVENT_FETCH_ATOMIC: return "PTL_EVENT_FETCH_ATOMIC"; break;
 	case PTL_EVENT_FETCH_ATOMIC_OVERFLOW: return "PTL_EVENT_FETCH_ATOMIC_OVERFLOW"; break;
 	case PTL_EVENT_REPLY: return "PTL_EVENT_REPLY"; break;
 	case PTL_EVENT_SEND: return "PTL_EVENT_SEND"; break;
 	case PTL_EVENT_ACK: return "PTL_EVENT_ACK"; break;
-	
+
 	case PTL_EVENT_PT_DISABLED: return "PTL_EVENT_PT_DISABLED"; break;
 	case PTL_EVENT_LINK: return "PTL_EVENT_LINK"; break;
 	case PTL_EVENT_AUTO_UNLINK: return "PTL_EVENT_AUTO_UNLINK"; break;
 	case PTL_EVENT_AUTO_FREE: return "PTL_EVENT_AUTO_FREE"; break;
 	case PTL_EVENT_SEARCH: return "PTL_EVENT_SEARCH"; break;
-	
+
 	default:
 		return "Portals Event not known"; break;
 	}
@@ -242,7 +242,7 @@ static inline int sctk_ptl_am_data_deserialize ( const char *inval, void *outval
  * \param[in] invallen input object size
  * \param[out] outval the string version of the object
  * \param[in] outvallen the max string length
- * \return the effective string size if succeeded, -1 otherwise 
+ * \return the effective string size if succeeded, -1 otherwise
  */
 static inline int sctk_ptl_am_data_serialize ( const void *inval, int invallen, char *outval, int outvallen )
 {
@@ -283,12 +283,12 @@ static inline int sctk_ptl_am_eq_poll_md(sctk_ptl_am_rail_info_t* srail, sctk_pt
 	int ret;
 
 	unsigned int id = -1;
-	
+
 	assert(ev);
 	ret = PtlEQPoll(&srail->mds_eq, 1, SCTK_PTL_AM_EQ_TIMEOUT, ev, &id);
 	sctk_ptl_chk(ret);
 	assert(ret == PTL_EQ_EMPTY || id == 0);
-	
+
 	return ret;
 }
 
@@ -307,7 +307,7 @@ static inline int sctk_ptl_am_eq_poll_md(sctk_ptl_am_rail_info_t* srail, sctk_pt
 static inline int sctk_ptl_am_eq_poll_me(sctk_ptl_am_rail_info_t* srail, sctk_ptl_event_t* ev, unsigned int* idx)
 {
 	int ret;
-	
+
 	assert(ev && srail);
 	ret = PtlEQPoll(srail->meqs_table, srail->nb_entries, SCTK_PTL_AM_EQ_TIMEOUT, ev, idx);
 	sctk_ptl_chk(ret);
@@ -340,7 +340,7 @@ static inline const char * __sctk_ptl_am_ign_str(char*buf, size_t s, ptl_match_b
 {
 	sctk_ptl_am_matchbits_t m2;
 	m2.raw = m;
-	snprintf(buf, s, "[S?%u/R?%u]{T?%u} -> D?%u-R?%u-L?%u", 
+	snprintf(buf, s, "[S?%u/R?%u]{T?%u} -> D?%u-R?%u-L?%u",
 		m2.data.srvcode == SCTK_PTL_AM_IGN_SRV,
 		m2.data.rpcode == SCTK_PTL_AM_IGN_RPC,
 		m2.data.tag == SCTK_PTL_AM_IGN_TAG,

@@ -65,11 +65,11 @@ typedef struct lcr_component {
         int                   count; /* Number of current instance */
         unsigned              flags;
         struct lcr_component *next; /* Next component in the list */
-        int (*query_devices)(struct lcr_component *component, 
-                             lcr_device_t **device_list, 
+        int (*query_devices)(struct lcr_component *component,
+                             lcr_device_t **device_list,
                              unsigned int *num_devices);
         int (*iface_open)(const char *device_name, int id,
-			  lcr_rail_config_t *rail_config, 
+			  lcr_rail_config_t *rail_config,
                           lcr_driver_config_t *driver_config,
                           sctk_rail_info_t **iface_p);
 } lcr_component_t;
@@ -77,9 +77,9 @@ typedef struct lcr_component {
 
 lcr_component_t * lcr_query_component_by_name(const char * name);
 
-int lcr_query_components(lcr_component_h **components_p, 
+int lcr_query_components(lcr_component_h **components_p,
                          unsigned *num_components_p);
-int lcr_free_components(lcr_component_h *components, 
+int lcr_free_components(lcr_component_h *components,
                         unsigned num_components,
                         int devices);
 

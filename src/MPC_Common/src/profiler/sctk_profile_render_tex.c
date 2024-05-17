@@ -52,12 +52,12 @@ void sctk_profile_render_tex_setup( struct sctk_profile_renderer *rd )
 {
 	char buff[300];
 	char output_file[500];
-	
+
 	sctk_profile_render_filename( output_file, "tex" );
-	
+
 
 	rd->output_file = fopen( output_file, "w" );
-	
+
 	if( !rd->output_file )
 	{
 		mpc_common_debug_error( "Failed to open profile file : %s ", output_file );
@@ -74,10 +74,10 @@ void sctk_profile_render_tex_setup( struct sctk_profile_renderer *rd )
 		"\\usepackage{babel}\n"
 		"\\usepackage{subfigure}\n"
 		"\\usepackage[table]{xcolor}\n");
-		
+
 
 		int i = 0;
-		
+
 		for( i = 0 ; i < sctk_profile_get_config()->level_colors_size ; i++ )
 		{
 			struct MPC_prof_color col = sctk_profile_renderer_to_rgb( sctk_profile_get_config()->level_colors[i] );
@@ -141,7 +141,7 @@ void sctk_profile_render_tex_setup_profile( struct sctk_profile_renderer *rd )
 void sctk_profile_render_tex_render_profile( struct sctk_profiler_array *array, int id, int parent_id, int depth, int going_up, struct sctk_profile_renderer *rd )
 {
 	char buffA[100], buffB[100], buffC[100], buffD[100];
-	
+
 	const char *prefix[3] = { "\\textbf", " ", "\\textit" };
 
 	int prefix_id = (depth<sctk_profile_get_config()->level_colors_size)?depth:sctk_profile_get_config()->level_colors_size - 1;
@@ -209,5 +209,3 @@ void sctk_profile_render_tex_teardown_profile( struct sctk_profile_renderer *rd 
 	fprintf(rd->output_file, "\\end{tabular}\n"
 							 "\\end{center}\n");
 }
-
-

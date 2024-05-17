@@ -63,7 +63,7 @@ int main(int argc, char** argv) {
 	mpc_launch_pmi_barrier();
 
 	/* init world and self comm */
-	_mpc_lowcomm_communicator_init();	
+	_mpc_lowcomm_communicator_init();
 
 	/* get uids */
 	suid = mpc_lowcomm_monitor_get_gid();
@@ -92,7 +92,7 @@ int main(int argc, char** argv) {
 		},
 		.completion_flag = 0,
 		.request_completion_fn = lowcomm_request_complete
-	};                          
+	};
 
 	/* send/recv */
 	if (mpc_lowcomm_peer_get_rank(my_uid) == 0) {
@@ -110,8 +110,8 @@ int main(int argc, char** argv) {
 	} else {
 		size = 4096 * sizeof(int);
 		data1 = malloc(size);
-                lcp_request_param_t param = { 
-                        .recv_info = &req1.recv_info 
+                lcp_request_param_t param = {
+                        .recv_info = &req1.recv_info
                 };
 		rc = lcp_tag_recv_nb(ctx, &data1, size, &req1, &param);
 		if (rc != 0) {

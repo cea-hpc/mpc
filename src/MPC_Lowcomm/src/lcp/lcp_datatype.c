@@ -36,8 +36,8 @@
 
 #include <string.h>
 
-int lcp_datatype_pack(lcp_context_h ctx, lcp_request_t *req, 
-                      lcp_datatype_t datatype, void *dest, 
+int lcp_datatype_pack(lcp_context_h ctx, lcp_request_t *req,
+                      lcp_datatype_t datatype, void *dest,
                       const void *src, size_t length)
 {
         size_t packed_len = 0;
@@ -48,7 +48,7 @@ int lcp_datatype_pack(lcp_context_h ctx, lcp_request_t *req,
         switch (datatype) {
         case LCP_DATATYPE_CONTIGUOUS:
                 assert(src);
-                memcpy(dest, src, length); 
+                memcpy(dest, src, length);
                 packed_len = length;
                 break;
         case LCP_DATATYPE_DERIVED:
@@ -61,15 +61,15 @@ int lcp_datatype_pack(lcp_context_h ctx, lcp_request_t *req,
                 packed_len = -1;
                 break;
         }
-        
+
         return packed_len;
 }
 
 //FIXME: Ambiguity because for DERIVED, dest argument could have any value set
 //       by the calling function which would not have any impact.
 //       This is not readable...
-int lcp_datatype_unpack(lcp_context_h ctx, lcp_request_t *req, 
-                        lcp_datatype_t datatype, void *dest, 
+int lcp_datatype_unpack(lcp_context_h ctx, lcp_request_t *req,
+                        lcp_datatype_t datatype, void *dest,
                         const void *src, size_t length)
 {
         size_t unpacked_len = 0;
@@ -79,7 +79,7 @@ int lcp_datatype_unpack(lcp_context_h ctx, lcp_request_t *req,
 
         switch (datatype) {
         case LCP_DATATYPE_CONTIGUOUS:
-               memcpy(dest, src, length); 
+               memcpy(dest, src, length);
                unpacked_len = length;
                break;
         case LCP_DATATYPE_DERIVED:
@@ -91,6 +91,6 @@ int lcp_datatype_unpack(lcp_context_h ctx, lcp_request_t *req,
                unpacked_len = -1;
                break;
         }
-        
+
         return unpacked_len;
 }

@@ -7,10 +7,10 @@ better understanding and readability for out-soured user interested by using MPC
 and its modules.
 
 MPC will be completely documented through Doxygen comments (under mpcframework/
-folder). In addition to in-source documentation, complete and well-written, 
+folder). In addition to in-source documentation, complete and well-written,
 each module should provide a Markdown file, named with the module name it
 describes. For example, the documentation file for MPC_Common module should be
-named "MPC_Common.md". 
+named "MPC_Common.md".
 
 MARKDOWN DOCUMENTATION FILE STRUCTURE
 -------------------------------------
@@ -25,7 +25,7 @@ split into three main sections (detailed after the example):
 	---------
 	Goal of the module is to provide global configuration interface for the
 	whole framework.
-	
+
 	CONTENTS:
 	---------
 		* src/     : contains modules source files
@@ -43,7 +43,7 @@ split into three main sections (detailed after the example):
 
 
 As seen above, there should be three sections. Obviously, MODULE_NAME should be
-set with actual module name. 
+set with actual module name.
 
 ### SUMMARY ###
 A short description of the goal of this module. You should not write
@@ -88,7 +88,7 @@ Header 1 can be replaced by underlining the text with '=' (at least 3) and
 header 2 can be replaced by underlining the text with '-' (at least 3).
 Generally, header 1 and 2 should be used by major sections inside main file and
 should not be used by your written documentation. However you can use as many
-header sub-levels as you want, without any restrictions. 
+header sub-levels as you want, without any restrictions.
 
 Tip: In order to make it well-balanced, you can surround your header with
 '#' at the beginning and the end of the title.
@@ -228,7 +228,7 @@ to briefly explain what the file contains (then used by Doxygen as file summary)
 
 ### Conclusion ###
 Doxygen provides a lot a other features not presented here and you are invited
-to add them in this documentation if useful. 
+to add them in this documentation if useful.
 To generate a PDF version of this file, you can use Pandoc, in the following
 way:
 

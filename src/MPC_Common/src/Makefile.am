@@ -27,7 +27,7 @@ AM_CPPFLAGS += -I$(abs_top_srcdir)/src/MPC_Arch/include/ -I$(abs_top_builddir)/s
 if MPC_BUILD_OPENPA
 AM_CPPFLAGS += -I$(abs_top_srcdir)/contrib/openpa/src -I$(abs_top_builddir)/contrib/openpa/src
 else
-AM_CPPFLAGS+=$(OPA_CFLAGS) 
+AM_CPPFLAGS+=$(OPA_CFLAGS)
 endif
 
 if MPC_THREAD_ENABLED
@@ -59,5 +59,5 @@ libmpccommon_la_LIBADD = $(abs_top_builddir)/src/MPC_Arch/src/libmpcarch.la $(AL
 if MPC_BUILD_OPENPA
 libmpccommon_la_LIBADD += $(abs_top_builddir)/contrib/openpa/src/libopa.la
 else
-libmpccommon_la_LIBADD += $(OPA_LIBS) 
+libmpccommon_la_LIBADD += $(OPA_LIBS)
 endif

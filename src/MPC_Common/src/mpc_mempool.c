@@ -16,7 +16,7 @@ int mempool_number;
 
 mpc_mempool_elem_t *mpc_mempool_elem_shift_back(void *buf)
 {
-	return (mpc_mempool_elem_t *)buf - 1; 
+	return (mpc_mempool_elem_t *)buf - 1;
 }
 
 void _mpc_mempool_add(mpc_mempool_t *mp, mpc_mempool_elem_t *elem)
@@ -31,7 +31,7 @@ void _mpc_mempool_add(mpc_mempool_t *mp, mpc_mempool_elem_t *elem)
 mpc_mempool_elem_t *_mpc_mempool_malloc(mpc_mempool_t *mp)
 {
 	return (mpc_mempool_elem_t *)
-                mp->data->malloc_func(mp->data->elem_size + 
+                mp->data->malloc_func(mp->data->elem_size +
                                       sizeof(mpc_mempool_elem_t));
 }
 
@@ -205,7 +205,7 @@ void mpc_mempool_free(mpc_mempool_t *mp, void *obj)
 		}
 	}
 #ifdef MPC_MP_LOG
-	fprintf(mp->logfile, "free,%d,%d,%d,%d\n", mp->data->allocated, 
+	fprintf(mp->logfile, "free,%d,%d,%d,%d\n", mp->data->allocated,
                 mp->data->available, mp->data->inertia, effective_free);
 #endif
 	mpc_common_spinlock_unlock(&mp->data->lock);
@@ -239,7 +239,7 @@ static size_t mpc_mempool_elem_real_size(mpc_mempool_data_t *data) {
 static void *mpc_mempool_chunk_elems(mpc_mempool_data_t *data, mpc_mempool_chunk_t *chunk) {
         size_t chunk_header_padding;
         //FIXME: approximative use of intptr_t and uintptr_t
-        uintptr_t chunk_header = (uintptr_t)chunk + sizeof(mpc_mempool_chunk_t) + 
+        uintptr_t chunk_header = (uintptr_t)chunk + sizeof(mpc_mempool_chunk_t) +
                 sizeof(mpc_mempool_elem_t);
 
         chunk_header_padding = mpc_common_padding(chunk_header, data->alignment);
@@ -247,15 +247,15 @@ static void *mpc_mempool_chunk_elems(mpc_mempool_data_t *data, mpc_mempool_chunk
                         sizeof(mpc_mempool_elem_t));
 }
 
-static mpc_mempool_elem_t *mpc_mempool_chunk_elem(mpc_mempool_data_t *mp, 
-                                             mpc_mempool_chunk_t *chunk, 
-                                             int index) 
+static mpc_mempool_elem_t *mpc_mempool_chunk_elem(mpc_mempool_data_t *mp,
+                                             mpc_mempool_chunk_t *chunk,
+                                             int index)
 {
-        return (mpc_mempool_elem_t *)((uintptr_t)chunk->elems + (intptr_t)(index * 
+        return (mpc_mempool_elem_t *)((uintptr_t)chunk->elems + (intptr_t)(index *
                                     mpc_mempool_elem_real_size(mp)));
 }
 
-void mpc_mpool_grow(mpc_mempool_t *mp) 
+void mpc_mpool_grow(mpc_mempool_t *mp)
 {
         mpc_mempool_data_t *data = mp->data;
         mpc_mempool_chunk_t *chunk;
@@ -277,17 +277,17 @@ void mpc_mpool_grow(mpc_mempool_t *mp)
 #endif
 
         //FIXME: explain why data->alignment needs to be in size.
-        chunk_size = sizeof(mpc_mempool_chunk_t) + data->alignment + 
+        chunk_size = sizeof(mpc_mempool_chunk_t) + data->alignment +
                 data->elem_per_chunk * mpc_mempool_elem_real_size(data);
 
-        ptr   = data->malloc_func(chunk_size); 
+        ptr   = data->malloc_func(chunk_size);
         if (ptr == NULL) {
                 mpc_common_debug_error("MEMPOOL: could not grow");
                 return;
         }
         chunk = (mpc_mempool_chunk_t *)ptr;
-        chunk->elems = mpc_mempool_chunk_elems(data, chunk); 
-        chunk->num_elems = data->elem_per_chunk; 
+        chunk->elems = mpc_mempool_chunk_elems(data, chunk);
+        chunk->num_elems = data->elem_per_chunk;
 
         for (i = 0; i < data->elem_per_chunk; i++) {
                 mpc_mempool_elem_t *elem = mpc_mempool_chunk_elem(data, chunk, i);
@@ -311,7 +311,7 @@ void mpc_mpool_grow(mpc_mempool_t *mp)
 }
 
 #if MPC_USE_CK
-static mpc_mempool_elem_t *mpc_mpool_get_grow(mpc_mempool_t *mp) 
+static mpc_mempool_elem_t *mpc_mpool_get_grow(mpc_mempool_t *mp)
 {
         mpc_mempool_elem_t *elem;
         mpc_mpool_grow(mp);
@@ -325,20 +325,20 @@ static mpc_mempool_elem_t *mpc_mpool_get_grow(mpc_mempool_t *mp)
 }
 #endif
 
-void *mpc_mpool_pop(mpc_mempool_t *mp) 
-{ 
+void *mpc_mpool_pop(mpc_mempool_t *mp)
+{
         mpc_mempool_elem_t *elem;
 
 #if MPC_USE_CK
         elem = (mpc_mempool_elem_t *)ck_stack_pop_mpmc(mp->ck_free_list);
-#else 
+#else
         mpc_common_spinlock_lock(&mp->data->lock);
         elem = mp->free_list;
 #endif
         if (elem == NULL) {
 #if MPC_USE_CK
                 elem = mpc_mpool_get_grow(mp);
-#else 
+#else
                 mpc_mpool_grow(mp);
                 elem = mp->free_list;
                 if (elem == NULL) {
@@ -362,7 +362,7 @@ void mpc_mpool_push(void *obj)
 
 #if MPC_USE_CK
         ck_stack_push_mpmc(elem->mp->ck_free_list, (ck_stack_entry_t *)elem);
-#else 
+#else
         mpc_mempool_t *mp = elem->mp;
         mpc_common_spinlock_lock(&mp->data->lock);
         elem->next = mp->free_list;
@@ -371,12 +371,12 @@ void mpc_mpool_push(void *obj)
 #endif
 }
 
-int mpc_mpool_init(mpc_mempool_t *mp, mpc_mempool_param_t *params) 
+int mpc_mpool_init(mpc_mempool_t *mp, mpc_mempool_param_t *params)
 {
         int rc = 0;
 
         if (params->alignment == 0 || !mpc_common_is_powerof2(params->alignment) ||
-            params->elem_per_chunk == 0 || params->max_elems < params->elem_per_chunk) 
+            params->elem_per_chunk == 0 || params->max_elems < params->elem_per_chunk)
         {
                 mpc_common_debug_error("COMMON: wrong parameter, could not "
                                        "create mpool.");
@@ -416,7 +416,7 @@ err:
         return rc;
 }
 
-void mpc_mpool_fini(mpc_mempool_t *mp) 
+void mpc_mpool_fini(mpc_mempool_t *mp)
 {
         mpc_mempool_chunk_t *chunk, *next_chunk;
 

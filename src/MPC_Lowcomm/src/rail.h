@@ -202,7 +202,7 @@ struct lcr_rail_attr {
                 struct {
                         size_t max_reg;
                 } cap;
-                
+
                 size_t size_packed_mkey;
         } mem;
 };

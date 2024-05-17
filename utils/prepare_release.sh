@@ -15,7 +15,7 @@ safe_exec()
 }
 move_to_contrib(){
     cd "$SCRIPTPATH/../contrib" || exit
-    if ! test -f ../installmpc 
+    if ! test -f ../installmpc
     then
         echo "please do not move this file"
         exit
@@ -23,7 +23,7 @@ move_to_contrib(){
 }
 
 init_env(){
-# we fail to configure the installation on rockylinux 8 
+# we fail to configure the installation on rockylinux 8
 # because hwloc-devel package doesn't seem to be present on the corresponding yum repositories
 
 # if [ "$DISTRIB" == "rockylinux:8" ]; then
@@ -90,7 +90,7 @@ prepare() {
 	mv hydra* hydra
 	mv openpa* openpa
 	cd "\$srcdir/\$pkgname-\$pkgver"
-	mkdir -p BUILD	
+	mkdir -p BUILD
 }
 
 build() {
@@ -135,7 +135,7 @@ extract_arch()
     safe_exec docker run --user $USER --rm -v $(readlink -f $TARGET):/host mpc_release_$DISTRIB /bin/sh -c cp /pkg/mpcframework-1:$VERSION-1-x86_64.pkg.tar.zst /host/mpcframework-"$VERSION"-"$DISTRIB".tar.zst
 }
 
-########### DEB packages ############### 
+########### DEB packages ###############
 
 build_dockerfile_deb(){
 cat << EOF > release/Dockerfile
@@ -143,7 +143,7 @@ FROM $DISTRIB
 COPY debbuild /root/debbuild
 COPY build_deb.sh /root/build_deb.sh
 COPY control /root/control
-RUN $CREATEOWNER 
+RUN $CREATEOWNER
 RUN apt update
 RUN DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC apt-get -y install tzdata
 RUN apt install -y util-linux cmake patch make gcc $CXX $CFORTRAN pkg-config wget git hwloc libhwloc-dev python3 dpkg-dev
@@ -194,14 +194,14 @@ cat << EOF > release/Dockerfile
 FROM $DISTRIB
 COPY rpmbuild /root/rpmbuild
 COPY build_rpm.sh /root/build_rpm.sh
-RUN $CREATEOWNER 
+RUN $CREATEOWNER
 RUN yum clean all
 RUN yum check-update || :
 RUN rpm -vv --import /etc/pki/rpm-gpg/*
 RUN dnf update -y --nogpgcheck
 RUN yum install -y util-linux cmake patch make gcc $CXX $CFORTRAN pkg-config wget rpm rpm-build git hwloc $HWLOC_DEVEL || :
 RUN sh /root/build_rpm.sh
-RUN chown -R $USER /root/rpmbuild 
+RUN chown -R $USER /root/rpmbuild
 RUN mv /root/rpmbuild /
 EOF
 }
@@ -215,7 +215,7 @@ Release:        1%{?dist}
 Summary:        mpi runtime for exascale
 
 License:        GPL
-URL:		    https://gitlab.paratools.com/cea/mpc 
+URL:		    https://gitlab.paratools.com/cea/mpc
 Source0:        %{name}.tar.gz
 
 Requires:	cmake, make, gcc, $CXX, $CFORTRAN, wget, hwloc, $HWLOC_DEVEL
@@ -244,7 +244,7 @@ export PATH=%{_bindir}:\$PATH
 # 0x0003 corresponds to a logical and for 0x0001|0x0002.
 # QA_RPATHS=\$[ 0x0001|0x0002 ] would not work because 0x0002 would not be found
 # CF https://unix.stackexchange.com/questions/202009/rpm-build-check-rpaths-error-0x0001
-export QA_RPATHS=\$[0x0003] 
+export QA_RPATHS=\$[0x0003]
 
 export DESTDIR=\$RPM_BUILD_ROOT
 cd BUILD
@@ -256,7 +256,7 @@ make install -j
 
 %changelog
 * Mon Jul 18 2022 root
-- 
+-
 
 EOF
 }
@@ -298,7 +298,7 @@ help()
 cat << EOF
 Prepares and builds a rpm archive
 
-You must have docker installed. This script looks for "fedora" image by default. 
+You must have docker installed. This script looks for "fedora" image by default.
 For any other distribution please specify with adequate option.
 
 This script works for commit a1da0c933be6f07de058b949420cf4070c786c60.
@@ -324,13 +324,13 @@ for arg in "$@"
 do
 	case "$arg" in
         --distribution=*)
-            DISTRIB=$(echo "$arg" | sed -e "s/^--distribution=//g") 
+            DISTRIB=$(echo "$arg" | sed -e "s/^--distribution=//g")
             ;;
         --target=*)
-            TARGET=$(echo "$arg" | sed -e "s/^--target=//g") 
+            TARGET=$(echo "$arg" | sed -e "s/^--target=//g")
             ;;
         --version=*)
-            VERSION=$(echo "$arg" | sed -e "s/^--version=//g") 
+            VERSION=$(echo "$arg" | sed -e "s/^--version=//g")
             ;;
 		--help|-h)
 			help
@@ -370,7 +370,7 @@ fi
 if test -z "$TARGET" ; then
     echo "setting target to default ...... (release/)"
     TARGET=$SCRIPTPATH/../release/pkgs/
-else 
+else
     mkdir -p $TARGET || (echo "Target must not exist or must already be a directory (is currently $TARGET)"; exit 1)
 fi
 

@@ -70,7 +70,7 @@
 /**
  * @brief This initializes a fragment factory. This allows the copy of the incoming fragments
  * and manages the total size to call a callback on completion.
- * 
+ *
  * @param factory the factory to initialize.
  * @return int 0 on success
  */
@@ -90,7 +90,7 @@ int _mpc_shm_fragment_factory_init(struct _mpc_shm_fragment_factory *factory)
 
 /**
  * @brief This registers a new segment for tracking and returns a segment ID
- * 
+ *
  * @param factory the factory to register in
  * @param addr the base address of the segment
  * @param size the size of the segment
@@ -117,7 +117,7 @@ uint64_t _mpc_shm_fragment_factory_register_segment(struct _mpc_shm_fragment_fac
 
 /**
  * @brief Remove a previously registered segment from the factory
- * 
+ *
  * @param factory the factory to manage
  * @param regid the registration ID as returned from @ref _mpc_shm_fragment_factory_register_segment
  * @return int 0 on success 1 if the segment is not known
@@ -140,10 +140,10 @@ int _mpc_shm_fragment_factory_unregister_segment(struct _mpc_shm_fragment_factor
 
 /**
  * @brief Get the segment matching a registration ID (see @ref _mpc_shm_fragment_factory_register_segment)
- * 
+ *
  * @param factory the factory to get from
  * @param id the registration id
- * @return struct _mpc_shm_region* the segment NULL if not found 
+ * @return struct _mpc_shm_region* the segment NULL if not found
  */
 struct _mpc_shm_region * _mpc_shm_fragment_factory_get_segment(struct _mpc_shm_fragment_factory *factory, uint64_t id)
 {
@@ -152,7 +152,7 @@ struct _mpc_shm_region * _mpc_shm_fragment_factory_get_segment(struct _mpc_shm_f
 
 /**
  * @brief This initializes a fragmented operation over a factory. A fragment is a write to a segment relying on multiple copies
- * 
+ *
  * @param factory the factory to manipulate
  * @param segment_id the id of the segment to reference (@ref _mpc_shm_fragment_factory_register_segment)
  * @param base_addr the base address of where to copy the data
@@ -186,7 +186,7 @@ uint64_t _mpc_shm_fragment_init(struct _mpc_shm_fragment_factory *factory, uint6
 
 /**
  * @brief Notify incoming data on a fragment. This copies the data in the target buffers and tracks completion (calling the callback)
- * 
+ *
  * @param factory the factory to manipulate
  * @param frag_id the fragment ID
  * @param buffer the buffer to inject in the fragment
@@ -229,7 +229,7 @@ int _mpc_shm_fragment_notify(struct _mpc_shm_fragment_factory *factory, uint64_t
 
 /**
  * @brief This initializes an SHM list
- * 
+ *
  * @param head the list to initialize
  */
 void _mpc_shm_list_head_init(struct _mpc_shm_list_head *head)
@@ -243,7 +243,7 @@ void _mpc_shm_list_head_init(struct _mpc_shm_list_head *head)
 /**
  * @brief Add a segment in the SHM list using segment-local offsets only
  * @warning call with no locks
- * 
+ *
  * @param list the target list object
  * @param cell the cell to push in (must be in the segment)
  * @param base the base address of the SHM segment
@@ -263,7 +263,7 @@ static inline void ___mpc_shm_list_head_push_no_lock(struct _mpc_shm_list_head *
    else
    {
       /* Need the true address to modify the target cell */
-      struct _mpc_shm_cell * phead = (struct _mpc_shm_cell *)((void *)list->head + (uint64_t)base); 
+      struct _mpc_shm_cell * phead = (struct _mpc_shm_cell *)((void *)list->head + (uint64_t)base);
       phead->prev = relative_cell_addr;
    }
 
@@ -274,7 +274,7 @@ static inline void ___mpc_shm_list_head_push_no_lock(struct _mpc_shm_list_head *
 
 /**
  * @brief Add a segment in the SHM list (threadsafe)
- * 
+ *
  * @param list the target list object
  * @param cell the cell to push in (must be in the segment)
  * @param base the base address of the SHM segment
@@ -291,7 +291,7 @@ static inline void _mpc_shm_list_head_push(struct _mpc_shm_list_head * list, str
 /**
  * @brief Try to add a segment in the SHM list using segment-local offsets only
  * @warning call with no locks
- * 
+ *
  * @param list the target list object
  * @param cell the cell to push in (must be in the segment)
  * @param base the base address of the SHM segment
@@ -314,7 +314,7 @@ static inline int _mpc_shm_list_head_try_push(struct _mpc_shm_list_head * list, 
 
 /**
  * @brief Try to get a cell from a list
- * 
+ *
  * @param list the list to query
  * @param base the base address of the SHM segment
  * @return struct _mpc_shm_cell* the cell if queried (NULL otherwise either list empty already locked)
@@ -354,7 +354,7 @@ int __do_cma_read(pid_t pid, void * src, void *dest, size_t size)
 {
    struct iovec local;
    struct iovec remote;
-   
+
    local.iov_base=dest;
    local.iov_len = size;
 
@@ -381,7 +381,7 @@ int __do_cma_write(pid_t pid, void * src, void *dest, size_t size)
 {
    struct iovec local;
    struct iovec remote;
-   
+
    local.iov_base=dest;
    local.iov_len = size;
 
@@ -638,13 +638,13 @@ int __get_zcopy_over_frag(_mpc_lowcomm_endpoint_t *ep,
                            uint64_t remote_offset,
                            lcr_memp_t *remote_key,
                            size_t size,
-                           lcr_completion_t *comp) 
+                           lcr_completion_t *comp)
 {
    sctk_rail_info_t *rail = ep->rail;
 
    comp->sent = size;
 
-   uint64_t fragment_id = _mpc_shm_fragment_init(&rail->network.shm.frag_factory, 
+   uint64_t fragment_id = _mpc_shm_fragment_init(&rail->network.shm.frag_factory,
                                               remote_key->pin.shm.id,
                                               (void*)local_addr,
                                               size,
@@ -720,7 +720,7 @@ int mpc_shm_get_zcopy(_mpc_lowcomm_endpoint_t *ep,
                            uint64_t remote_offset,
                            lcr_memp_t *remote_key,
                            size_t size,
-                           lcr_completion_t *comp) 
+                           lcr_completion_t *comp)
 {
 
  #if MPC_USE_CMA
@@ -900,11 +900,11 @@ int mpc_shm_progress(sctk_rail_info_t *rail)
 
 /**
  * @brief This internal function computes the size of the SHM segment
- * 
+ *
  * @param process_count Number of processes on the node
  * @param task_count Number of tasks on the node
- * @param freelist_count 
- * @return size_t 
+ * @param freelist_count
+ * @return size_t
  */
 static size_t _mpc_shm_storage_get_size(unsigned int process_count,
                                         unsigned int freelist_count)
@@ -946,7 +946,7 @@ Cells used for transfer
 /**
  * @brief This function is central in SHM it defines the layout of the SHM segment
  * all operations on the SHM segment are done using structures located in this segment
- * 
+ *
  * @param storage the storage to initialize
  * @return int 0 on success
  */

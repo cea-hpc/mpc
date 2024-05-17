@@ -198,10 +198,10 @@ void sctk_ptl_am_hardware_fini( sctk_ptl_am_rail_info_t *srail )
 
 /**
  * @brief Create a list of chunks to append to the given PT entry.
- * 
+ *
  * Chunk type will be given by the me_type parameter. This function can be used to append ME for both
  * REQUEST of RESPONSE slots (but not large).
- * 
+ *
  * @param srail the AM Portals rail
  * @param srv_idx The index to fill ME with
  * @param me_type types of slots to create (REQ/REP)
@@ -298,7 +298,7 @@ static void sctk_ptl_am_pte_populate( sctk_ptl_am_rail_info_t *srail, int srv_id
 				pte->rep_tail->next = first;
 				first->prev = pte->rep_tail;
 			}
-			
+
 			pte->rep_tail = last;
 
 			if ( !pte->rep_head )
@@ -311,7 +311,7 @@ static void sctk_ptl_am_pte_populate( sctk_ptl_am_rail_info_t *srail, int srv_id
  * Map the Portals structure in user-space to be ready for communication.
  *
  * After this functions, Portals entries should be ready to use. This function
- * is different from hardware init beceause it is possible to have multiple 
+ * is different from hardware init beceause it is possible to have multiple
  * software implementation relying on the same NI (why not?).
  * \param[in] srail the Portals rail
  * \param[in] dims PT dimensions
@@ -453,9 +453,9 @@ void sctk_ptl_am_pte_create( sctk_ptl_am_rail_info_t *srail, size_t key )
 
 /**
  * @brief Emit an RPC request to a remote process described by the sctk_ptl_am_msg_t parameter.
- * 
+ *
  * This function will block until RPC completion.
- * 
+ *
  * @param srail the AM portals rail
  * @param srv the SRV code as emitted by the ARPC wrapper
  * @param rpc the RPC code as emitted by the ARPC wrapper
@@ -536,7 +536,7 @@ sctk_ptl_am_msg_t *sctk_ptl_am_send_request( sctk_ptl_am_rail_info_t *srail, int
 		tag = rep_me->tag;
 		OPA_incr_int( &rep_me->refcnt );
 
-		/* as each response cell contains an header, save the header addr and 
+		/* as each response cell contains an header, save the header addr and
 		 * the space to put back the response. The req_imm.data.offset is the 64-bit extra info
 		 * injected into the Portals PUT() request. It should be cell_offset + header_sz.
 		 */
@@ -594,9 +594,9 @@ sctk_ptl_am_msg_t *sctk_ptl_am_send_request( sctk_ptl_am_rail_info_t *srail, int
 
 /**
  * @brief Emit the response after executing the RPC.
- * 
+ *
  * This function will not block until completion (once the response is emited, the function returns).
- * 
+ *
  * @param srail the AM portals rail
  * @param srv the SRV code as emitted by the ARPC wrapper
  * @param rpc the RPC code as emitted by the ARPC wrapper
@@ -669,9 +669,9 @@ void sctk_ptl_am_send_response( sctk_ptl_am_rail_info_t *srail, int srv, int rpc
 
 /**
  * @brief Wait for the response to arrive.
- * 
+ *
  * This is relevant to use on the am_msg_t returned by send_request call.
- *  
+ *
  * @param srail the AM portals rail
  * @param msg the response msg.
  */
@@ -686,7 +686,7 @@ void sctk_ptl_am_wait_response( sctk_ptl_am_rail_info_t *srail, sctk_ptl_am_msg_
 
 /**
  * @brief Free a chunk (REP/REQ, large or not) after being consumed.
- * 
+ *
  * @param c the local_data_t attached to the ME.
  */
 static inline void __sctk_ptl_am_free_chunk( sctk_ptl_am_local_data_t *c )
@@ -707,14 +707,14 @@ static inline void __sctk_ptl_am_free_chunk( sctk_ptl_am_local_data_t *c )
 
 /**
  * @brief Free the response resources.
- * 
+ *
  * Should be called after each RPC call from upper layer to notify Portals that the cell
  * used to return data has be conusmed and can be recycled. With the protobuf interface,
  * this is done just before de-serializing data info the C++ object.
- * 
+ *
  * We know that the cell is built with a header, directly preceding the actual payload.
  * Thus, from the data pointer, we can retrieve the cell header (through container_of).
- * 
+ *
  * @param addr the data address
  * @return 0 if this call to free() really freed its attached chunk, 1 otherwise.
  */
@@ -731,7 +731,7 @@ int sctk_ptl_am_free_response( void *addr )
 	if ( last_val - 1 == 0 && cas_val == 0 )
 	{
 		sctk_ptl_am_me_release( msg->chunk_addr->uptr );
-		
+
 		/* TODO: Reuse buffer */
 		/*__sctk_ptl_am_free_chunk( msg->chunk_addr->uptr );*/
 		return 0;
@@ -741,7 +741,7 @@ int sctk_ptl_am_free_response( void *addr )
 
 /**
  * @brief Static inlined function, to deal with incoming put event.
- * 
+ *
  * @param srail the AM portals rail
  * @param ev the polled put event
  * @param pte the PT where this event has been found.
@@ -858,7 +858,7 @@ static inline void __sctk_ptl_am_event_handle_put( sctk_ptl_am_rail_info_t *srai
 
 /**
  * @brief Static inlined function to deal with UNLINK event.
- * 
+ *
  * @param srail the AM portals rail
  * @param ev the polled event
  * @param pte the PTE where the event has been found
@@ -905,9 +905,9 @@ static inline void __sctk_ptl_am_event_handle_unlink(__UNUSED__ sctk_ptl_am_rail
 
 /**
  * @brief Main polling loop, for handling the next incoming event frmo the Portals card.
- * 
+ *
  * This function will call sctk_ptl_am_eq_poll_me, calling itself PtlEQPoll.
- * 
+ *
  * @param srail AM Portals rail
  * @return 0 if one event has been polled, 1 otherwise
  */
@@ -964,7 +964,7 @@ int sctk_ptl_am_incoming_lookup( sctk_ptl_am_rail_info_t *srail )
 
 /**
  * @brief Main polling loop, handling the next outgoing event (from MD-EQ).
- * 
+ *
  * @param srail the AM portals rail
  * @return 0 if an event has been polled, 1 otherwise.
  */
@@ -1186,7 +1186,7 @@ void sctk_ptl_am_register_process( sctk_ptl_am_rail_info_t *srail )
  mpc_launch_pmi_barrier();
 }
 
-/** 
+/**
  * Retrieve the ptl_process_id object, associated with a given MPC process rank.
  * \param[in] rail the Portals rail
  * \param[in] dest the MPC process rank

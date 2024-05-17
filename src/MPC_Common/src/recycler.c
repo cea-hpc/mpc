@@ -172,4 +172,3 @@ mpc_common_nrecycler_recycle(mpc_common_nrecycler_t * nrecycler, void * object, 
     const unsigned int n = __nrecycler_p2_exponent(size);
     __recycler_info_recycle(nrecycler->infos + n, object, nrecycler->allocator, nrecycler->deallocator);
 }
-

@@ -43,7 +43,7 @@
 
 /**
  * @brief Copy buffer from argument request to destination
- * 
+ *
  * @param dest destination buffer
  * @param arg input request buffer
  * @return size_t size of copy
@@ -58,23 +58,23 @@ size_t lcp_rma_put_pack(void *dest, void *arg) {
 
 /**
  * @brief Complete a request.
- * 
+ *
  * @param comp completion
  */
 void lcp_rma_request_complete_put(lcr_completion_t *comp)
 {
-        lcp_request_t *req = mpc_container_of(comp, lcp_request_t, 
+        lcp_request_t *req = mpc_container_of(comp, lcp_request_t,
                                               send.t_ctx.comp);
 
         req->state.remaining -= comp->sent;
         if (req->state.remaining == 0) {
                 lcp_request_complete(req);
-        } 
+        }
 }
 
 /**
  * @brief Put a buffer copy request.
- * 
+ *
  * @param req request to put
  * @return int LCP_SUCCESS in case of success
  */
@@ -88,8 +88,8 @@ int lcp_rma_put_bcopy(lcp_request_t *req)
 
 	mpc_common_debug_info("LCP: send put bcopy remote addr=%p, dest=%d",
 			      req->send.rma.remote_addr, ep->uid);
-        payload_size = lcp_send_do_put_bcopy(ep->lct_eps[cc], 
-                                             lcp_rma_put_pack, req, 
+        payload_size = lcp_send_do_put_bcopy(ep->lct_eps[cc],
+                                             lcp_rma_put_pack, req,
                                              req->send.rma.remote_addr,
                                              &req->send.rma.rkey->mems[cc]);
 
@@ -107,8 +107,8 @@ err:
 
 //FIXME: code very similar with lcp_send_rput_common
 /**
- * @brief Put a zero copy 
- * 
+ * @brief Put a zero copy
+ *
  * @param req request to put
  * @return int LCP_SUCCESS in case of succes
  */
@@ -168,12 +168,12 @@ int lcp_rma_put_zcopy(lcp_request_t *req)
 
 /**
  * @brief Register a send buffer and start a send
- * 
+ *
  * @param ep endpoint
  * @param req request
  * @return int LCP_SUCCESS in case of success
  */
-static inline int lcp_rma_put_start(lcp_ep_h ep, lcp_request_t *req) 
+static inline int lcp_rma_put_start(lcp_ep_h ep, lcp_request_t *req)
 {
         if (req->send.length <= ep->ep_config.rma.max_put_bcopy) {
                 req->send.func = lcp_rma_put_bcopy;
@@ -190,7 +190,7 @@ static inline int lcp_rma_put_start(lcp_ep_h ep, lcp_request_t *req)
 
 int lcp_put_nb(lcp_ep_h ep, lcp_task_h task, const void *buffer, size_t length,
                uint64_t remote_addr, lcp_mem_h rkey,
-               const lcp_request_param_t *param) 
+               const lcp_request_param_t *param)
 {
         int rc = LCP_SUCCESS;
         lcp_request_t *req;
@@ -203,13 +203,13 @@ int lcp_put_nb(lcp_ep_h ep, lcp_task_h task, const void *buffer, size_t length,
                 goto err;
         }
         req->flags |= LCP_REQUEST_RMA_COMPLETE;
-        LCP_REQUEST_INIT_RMA_SEND(req, ep->ctx, task, NULL, NULL, length, ep, (void *)buffer, 
+        LCP_REQUEST_INIT_RMA_SEND(req, ep->ctx, task, NULL, NULL, length, ep, (void *)buffer,
                                   0 /* no ordering for rma */, 0, param->datatype);
         lcp_request_init_rma_put(req, remote_addr, rkey, param);
 
         rc = lcp_rma_put_start(ep, req);
         if (rc != LCP_SUCCESS) {
-                goto err;  
+                goto err;
         }
 
         rc = lcp_request_send(req);

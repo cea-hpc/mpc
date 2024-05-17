@@ -52,7 +52,7 @@ void sctk_profile_render_xml_setup( struct sctk_profile_renderer *rd )
 
 	sctk_profile_render_filename( output_file, "xml" );
 	rd->output_file = fopen( output_file, "w" );
-	
+
 	if( !rd->output_file )
 	{
 		mpc_common_debug_error( "Failed to open profile file : %s ", output_file );
@@ -67,13 +67,13 @@ void sctk_profile_render_xml_setup( struct sctk_profile_renderer *rd )
 
 	fprintf(rd->output_file, "<colors>\n");
 	int i = 0;
-	
+
 	for( i = 0 ; i < sctk_profile_get_config()->level_colors_size ; i++ )
 	{
 		struct MPC_prof_color col = sctk_profile_renderer_to_rgb( sctk_profile_get_config()->level_colors[i] );
 		fprintf(rd->output_file, "\t<color_%d r=\"%d\" g=\"%d\" b=\"%d\"/>\n", i, col.r, col.g, col.b);
 	}
-	
+
 	fprintf(rd->output_file, "</colors>\n");
 
 }
@@ -253,5 +253,3 @@ void sctk_profile_render_xml_teardown_profile( struct sctk_profile_renderer *rd 
 {
 	fprintf(rd->output_file, "</profile>\n");
 }
-
-

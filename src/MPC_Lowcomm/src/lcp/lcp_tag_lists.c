@@ -41,10 +41,10 @@
  ******************************************************/
  /**
   * @brief Cancel and delete a request from the PRQ.
-  * 
+  *
   * @param list PRQ
   * @param req request to delete
-  * @return int 
+  * @return int
   */
 int lcp_prq_cancel(lcp_mtch_prq_list_t *list, void *req)
 {
@@ -63,11 +63,11 @@ int lcp_prq_cancel(lcp_mtch_prq_list_t *list, void *req)
 
 /**
  * @brief Find a request by tag in the PRQ.
- * 
+ *
  * @param list PRQ
  * @param tag tag of the target request
  * @param peer source to be matched using request mask
- * @return void* 
+ * @return void*
  */
 void *lcp_prq_find(lcp_mtch_prq_list_t *list, int tag, uint64_t peer)
 {
@@ -86,11 +86,11 @@ void *lcp_prq_find(lcp_mtch_prq_list_t *list, int tag, uint64_t peer)
 
 /**
  * @brief Find a request by tag and delete it from the PRQ.
- * 
+ *
  * @param list PRQ
  * @param tag tag of the request to delete
  * @param peer source to be matched using request mask
- * @return void* 
+ * @return void*
  */
 void *lcp_prq_find_dequeue(lcp_mtch_prq_list_t *list, int tag, uint64_t peer)
 {
@@ -101,7 +101,7 @@ void *lcp_prq_find_dequeue(lcp_mtch_prq_list_t *list, int tag, uint64_t peer)
 		result = ((elem->tag == tag) || (!elem->tmask && tag >= 0)) &&
 			((elem->src & elem->smask) == (peer & elem->smask));
 		if (result) {
-			DL_DELETE(list->list, elem);	
+			DL_DELETE(list->list, elem);
 			list->size--;
 			void * ret = elem->value;
 			sctk_free(elem);
@@ -113,11 +113,11 @@ void *lcp_prq_find_dequeue(lcp_mtch_prq_list_t *list, int tag, uint64_t peer)
 
 /**
  * @brief Add a request to the PRQ.
- * 
+ *
  * @param list PRQ
  * @param payload content of the request
  * @param tag tag of the request (can be MPC_ANY_TAG)
- * @param source request source 
+ * @param source request source
  */
 void lcp_prq_append(lcp_mtch_prq_list_t *list, void *payload, int tag, uint64_t source)
 {
@@ -135,14 +135,14 @@ void lcp_prq_append(lcp_mtch_prq_list_t *list, void *payload, int tag, uint64_t 
 	} else {
 		mask_tag = ~0;
 	}
-	
+
 	lcp_mtch_prq_elem_t *elem = sctk_malloc(sizeof(lcp_mtch_prq_elem_t));
 
 	elem->tag = tag;
 	elem->tmask = mask_tag;
 	elem->src = source;
 	elem->smask = mask_src;
-	elem->value = payload;	
+	elem->value = payload;
 	list->size++;
 
 	DL_APPEND(list->list, elem);
@@ -150,7 +150,7 @@ void lcp_prq_append(lcp_mtch_prq_list_t *list, void *payload, int tag, uint64_t 
 
 /**
  * @brief Allocate and initialize a PRQ.
- * 
+ *
  * @return lcp_mtch_prq_list_t* initialized request
  */
 lcp_mtch_prq_list_t *lcp_prq_init()
@@ -163,7 +163,7 @@ lcp_mtch_prq_list_t *lcp_prq_init()
 }
 /**
  * @brief Destroy a PRQ.
- * 
+ *
  * @param list PRQ to destroy
  */
 void lcp_mtch_prq_destroy(lcp_mtch_prq_list_t *list)
@@ -177,7 +177,7 @@ void lcp_mtch_prq_destroy(lcp_mtch_prq_list_t *list)
  ******************************************************/
 /**
  * @brief Cancel and delete a request from an UMQ
- * 
+ *
  * @param list UMQ
  * @param req reqeuest to delete
  * @return int LCP_SUCCESS in case of success
@@ -199,11 +199,11 @@ int lcp_umq_cancel(lcp_mtch_umq_list_t *list, void *req)
 
 /**
  * @brief Find a request by tag in an UMQ.
- * 
+ *
  * @param list UMQ
  * @param tag tag of the target request
  * @param peer source to be matched using request mask
- * @return void* 
+ * @return void*
  */
 void *lcp_umq_find(lcp_mtch_umq_list_t *list, int tag, uint64_t peer)
 {
@@ -233,11 +233,11 @@ void *lcp_umq_find(lcp_mtch_umq_list_t *list, int tag, uint64_t peer)
 
 /**
  * @brief Find a request by tag in an UMQ and delete it.
- * 
+ *
  * @param list UMQ
  * @param tag tag of the request to delete
  * @param peer source to be matched using request mask
- * @return void* 
+ * @return void*
  */
 void *lcp_umq_find_dequeue(lcp_mtch_umq_list_t *list, int tag, uint64_t peer)
 {
@@ -258,7 +258,7 @@ void *lcp_umq_find_dequeue(lcp_mtch_umq_list_t *list, int tag, uint64_t peer)
                 result = ((elem->tag == tag) || (!tmask && elem->tag >= 0)) &&
                         ((elem->src & smask) == (peer & smask));
 		if (result) {
-			DL_DELETE(list->list, elem);	
+			DL_DELETE(list->list, elem);
 			list->size--;
 			void * ret = elem->value;
 			sctk_free(elem);
@@ -270,11 +270,11 @@ void *lcp_umq_find_dequeue(lcp_mtch_umq_list_t *list, int tag, uint64_t peer)
 
 /**
  * @brief Add a request in an UMQ.
- * 
+ *
  * @param list UMQ
  * @param payload content of the request
  * @param tag tag of the request (can be MPC_ANY_TAG)
- * @param source request source 
+ * @param source request source
  */
 void lcp_umq_append(lcp_mtch_umq_list_t *list, void *payload, int tag, uint64_t source)
 {
@@ -282,7 +282,7 @@ void lcp_umq_append(lcp_mtch_umq_list_t *list, void *payload, int tag, uint64_t 
 
 	elem->tag = tag;
 	elem->src = source;
-	elem->value = payload;	
+	elem->value = payload;
 	list->size++;
 
 	DL_APPEND(list->list, elem);
@@ -290,7 +290,7 @@ void lcp_umq_append(lcp_mtch_umq_list_t *list, void *payload, int tag, uint64_t 
 
 /**
  * @brief Allocate and initialize an UMQ.
- * 
+ *
  * @return lcp_mtch_prq_list_t* initialized request
  */
 lcp_mtch_umq_list_t *lcp_umq_init()
@@ -306,7 +306,7 @@ lcp_mtch_umq_list_t *lcp_umq_init()
 
 /**
  * @brief Destroy an UMQ
- * 
+ *
  * @param list UMQ to destroy
  */
 void lcp_mtch_umq_destroy(lcp_mtch_umq_list_t *list)

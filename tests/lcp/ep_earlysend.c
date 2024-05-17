@@ -66,7 +66,7 @@ int main(int argc, char** argv) {
 	mpc_launch_pmi_barrier();
 
 	/* init world and self comm */
-	_mpc_lowcomm_communicator_init();	
+	_mpc_lowcomm_communicator_init();
 
 	/* get uids */
 	suid = mpc_lowcomm_monitor_get_gid();
@@ -111,7 +111,7 @@ int main(int argc, char** argv) {
 		},
 		.completion_flag = 0,
 		.request_completion_fn = lowcomm_request_complete
-	};                          
+	};
 
 	mpc_launch_pmi_barrier();
 
@@ -130,9 +130,9 @@ int main(int argc, char** argv) {
 		/* wait to force early send */
                 usleep(1000);
 		lcp_progress(ctx);
-                lcp_request_param_t param = { 
+                lcp_request_param_t param = {
                         .datatype  = LCP_DATATYPE_CONTIGUOUS,
-                        .recv_info = &req.recv_info 
+                        .recv_info = &req.recv_info
                 };
 		rc = lcp_tag_recv_nb(task, &data, sizeof(data), &req, &param);
 		if (rc != 0) {
@@ -148,7 +148,7 @@ int main(int argc, char** argv) {
 
         int check = 0;
         if (my_tid == 1) {
-                if (data == 'c') 
+                if (data == 'c')
                         check = 1;
         } else {
                 check = 1;

@@ -8,7 +8,7 @@ ep_am:
   run:
     depends_on: ["compile_units"]
     program: @BUILDPATH@/lcp_compute_env.sh @BUILDPATH@/ep_am
-    iterate: 
+    iterate:
       n_core:
         values: [2]
       n_node:

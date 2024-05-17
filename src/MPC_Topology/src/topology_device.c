@@ -102,7 +102,7 @@ mpc_topology_device_type_t mpc_topology_device_type_from_hwloc(hwloc_obj_osdev_t
 			break;
 
 		case HWLOC_OBJ_OSDEV_DMA:
-			return MPC_TOPO_DEVICE_DMA;	
+			return MPC_TOPO_DEVICE_DMA;
 	}
 
 	return MPC_TOPO_DEVICE_UKNOWN;
@@ -461,7 +461,7 @@ static void __topology_device_init( hwloc_topology_t topology, mpc_topology_devi
 	if ( 0 <= io_dev_offset )
 	{
         hwloc_obj_t io = __get_nth_io_child(obj, io_dev_offset);
-        
+
 		if ( io->type == HWLOC_OBJ_OS_DEVICE )
 		{
 			os_level_obj = io;
@@ -740,7 +740,7 @@ void _mpc_topology_device_init( hwloc_topology_t topology )
 			for ( i = 0; i < pci_dev->io_arity; i++ )
 			{
                 hwloc_obj_t io = __get_nth_io_child(pci_dev, i);
-				
+
                 if ( io->type == HWLOC_OBJ_OS_DEVICE )
 				{
 					__mpc_topology_device_list_count++;
@@ -800,7 +800,7 @@ void _mpc_topology_device_init( hwloc_topology_t topology )
 			}
 #endif
 
-        
+
         }
 
 		pci_dev = hwloc_get_next_pcidev( topology, pci_dev );
@@ -816,7 +816,7 @@ void _mpc_topology_device_init( hwloc_topology_t topology )
 #endif
 #endif
 
-#if 0	
+#if 0
 	int j;
 	for ( j = 0; j < __mpc_topology_device_list_count; j++ )
 	{

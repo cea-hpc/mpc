@@ -33,7 +33,7 @@
 #define COLL_ARITY 2
 
 extern sctk_ptl_id_t* ranks_id_map;
- 
+
 /** TODO: REMOVE all these global variables (should be per rail) */
 sctk_ptl_local_data_t* md_up;
 sctk_ptl_local_data_t* md_down;
@@ -44,7 +44,7 @@ static inline int __sctk_ptl_offcoll_enabled(sctk_ptl_rail_info_t* srail)
 {
 	static int cache = -1;
 	if(cache == -1)
-		cache = SCTK_PTL_IS_OFFLOAD_COLL(srail->offload_support); 
+		cache = SCTK_PTL_IS_OFFLOAD_COLL(srail->offload_support);
 
 	return cache;
 }
@@ -97,7 +97,7 @@ void sctk_ptl_offcoll_pte_init(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte)
 	assert(srail);
 	assert(pte);
 	assert(__sctk_ptl_offcoll_enabled(srail));
-	
+
 	int i;
 	sctk_ptl_offcoll_tree_node_t* cur;
 	/* the tree topologies, for each type of collectives */
@@ -168,7 +168,7 @@ void sctk_ptl_offcoll_pte_fini(__UNUSED__ sctk_ptl_rail_info_t* srail, sctk_ptl_
 {
 	assert(__sctk_ptl_offcoll_enabled(srail));
 	int i = 0;
-	sctk_ptl_offcoll_tree_node_t* cur; 
+	sctk_ptl_offcoll_tree_node_t* cur;
 	for(i = 0; i < SCTK_PTL_OFFCOLL_NB; i++)
 	{
 		cur = pte->node+i;
@@ -216,7 +216,7 @@ static inline int __sctk_ptl_offcoll_rotate_ranks(int rank, int root)
  */
 static inline void __sctk_ptl_offcoll_build_tree(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte, int local_rank, int root, int size, int collective)
 {
-        int l_child = -1, h_child = -1, parent_rank, child_rank; 
+        int l_child = -1, h_child = -1, parent_rank, child_rank;
         size_t i, nb_children;
         assert(srail);
         sctk_rail_info_t* rail = sctk_ptl_promote_to_rail(srail);
@@ -229,8 +229,8 @@ static inline void __sctk_ptl_offcoll_build_tree(sctk_ptl_rail_info_t* srail, sc
                 mpc_common_spinlock_lock(&node->lock);
                 if(node->leaf == -1 || node->root != root)
                 {
-                        /* get children range for the current process 
-                         * h_child is the child with the highest rank 
+                        /* get children range for the current process
+                         * h_child is the child with the highest rank
                          * m_child is the child with the lowest_rank
                          */
 			local_rank = __sctk_ptl_offcoll_rotate_ranks(local_rank, root);
@@ -243,7 +243,7 @@ static inline void __sctk_ptl_offcoll_build_tree(sctk_ptl_rail_info_t* srail, sc
 			mpc_lowcomm_communicator_t comm = mpc_lowcomm_get_communicator_from_id(pte->idx - SCTK_PTL_PTE_HIDDEN);
 			assume(comm != MPC_COMM_NULL);
 
-			/* as ranks are "rotated" the rank 0 is now the tree root (whatever its 
+			/* as ranks are "rotated" the rank 0 is now the tree root (whatever its
 			 * initial MPI rank was).
 			 * If not the root, compute the parent rank.
 			 */
@@ -263,13 +263,13 @@ static inline void __sctk_ptl_offcoll_build_tree(sctk_ptl_rail_info_t* srail, sc
 				/* the highest child should be bound in case of an irregular tree (no a multiple of ARITY) */
 				h_child = (h_child >= size) ? size -1 : h_child;
                         	nb_children = h_child - l_child + 1;
-				
+
                                 node->children = sctk_malloc(sizeof(int) * nb_children);
-                                for (i = 0; i < nb_children; ++i) 
+                                for (i = 0; i < nb_children; ++i)
                                 {
                                         child_rank = mpc_lowcomm_communicator_world_rank_of(comm, l_child + i);
                                         node->children[i] = sctk_ptl_map_id(
-						rail, 
+						rail,
 						__sctk_ptl_offcoll_rotate_ranks(child_rank, root)
 					);
                                 }
@@ -300,11 +300,11 @@ static inline void __sctk_ptl_offcoll_barrier_run(__UNUSED__ sctk_ptl_rail_info_
         assert(srail);
         assert(__sctk_ptl_offcoll_enabled(srail));
 
-        size_t i, nb_children; 
+        size_t i, nb_children;
 	int cnt_prev_ops;
 	sctk_ptl_cnth_t *me_cnt_up, *me_cnt_down;
-        sctk_ptl_cnt_t dummy; 
-	sctk_ptl_offcoll_tree_node_t* bnode; 
+        sctk_ptl_cnt_t dummy;
+	sctk_ptl_offcoll_tree_node_t* bnode;
 
 	bnode        = pte->node + SCTK_PTL_OFFCOLL_BARRIER;
         nb_children  = bnode->nb_children;
@@ -334,7 +334,7 @@ static inline void __sctk_ptl_offcoll_barrier_run(__UNUSED__ sctk_ptl_rail_info_
                          */
 			sctk_ptl_emit_trig_put(md_up, 0, bnode->parent, pte, SCTK_PTL_MATCH_OFFCOLL_BARRIER_UP, 0, 0, 0, md_up, *me_cnt_up, (size_t)((cnt_prev_ops + 1) * nb_children));
                 }
-                
+
 		/* emitting to all the children :
                  * (1) directly straight forward for the root (just after the trig_cnt_incr)
                  * (2) only after receiving the put() from the parent
@@ -358,7 +358,7 @@ static inline void __sctk_ptl_offcoll_barrier_run(__UNUSED__ sctk_ptl_rail_info_
  */
 static inline void __sctk_ptl_offcoll_bcast_eager_run(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte, void* buf, size_t bytes, int is_root)
 {
-	sctk_ptl_offcoll_tree_node_t* bnode; 
+	sctk_ptl_offcoll_tree_node_t* bnode;
 	size_t nb_children, i;
 	sctk_ptl_cnt_t dummy;
 	sctk_ptl_local_data_t* recv_me = NULL, *tmp_md = NULL;
@@ -376,7 +376,7 @@ static inline void __sctk_ptl_offcoll_bcast_eager_run(sctk_ptl_rail_info_t* srai
 	if(bnode->leaf && is_root)
 		return;
 
-	/* If current node is not a leaf, children exist 
+	/* If current node is not a leaf, children exist
 	 * and data will be propagated ==> need an MD to do it
 	 */
 	if(!bnode->leaf)
@@ -409,7 +409,7 @@ static inline void __sctk_ptl_offcoll_bcast_eager_run(sctk_ptl_rail_info_t* srai
 		recv_me->prot = SCTK_PTL_PROT_EAGER; /* handled by offload protocols */
 		sctk_ptl_me_register(srail, recv_me, pte);
 		assert(recv_me);
-		
+
 		/* register a trigger to send data to children once data have been received.
 		 * The ct_event is set to SCTK_PTL_ACTIVE_UNLOCK_THRS from a software manner
 		 * (eq_poll_me) as the payload can reach an ME in the PRIORITY_LIST (when the ME is submitted
@@ -482,7 +482,7 @@ static inline void __sctk_ptl_offcoll_bcast_eager_run(sctk_ptl_rail_info_t* srai
  */
 static inline void __sctk_ptl_offcoll_bcast_large_run(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte, void* buf, size_t bytes, int is_root)
 {
-	sctk_ptl_offcoll_tree_node_t* bnode; 
+	sctk_ptl_offcoll_tree_node_t* bnode;
 	size_t nb_children, i;
 	size_t chunk, chunk_sz, chunk_nb, rest, cur_off;
 	int cnt_ops;
@@ -526,7 +526,7 @@ static inline void __sctk_ptl_offcoll_bcast_large_run(sctk_ptl_rail_info_t* srai
 		assert(get_me);
 		/*mpc_common_debug_error("INTERMEDIATE set a GET-ME match=%s SZ=%llu", __sctk_ptl_match_str(sctk_malloc(32), 32, SCTK_PTL_MATCH_OFFCOLL_BCAST_LARGET(cnt_ops).raw), bytes);*/
 	}
-	
+
 	/* compute number of chunks (fragmentation) needed to retrieve/expose */
 	sctk_ptl_compute_chunks(srail, bytes, &chunk_sz, &chunk_nb, &rest);
 
@@ -721,7 +721,7 @@ int ptl_offcoll_barrier(int comm_idx, int rank, int size)
 {
         sctk_ptl_pte_t* pte = SCTK_PTL_PTE_ENTRY(grail->pt_table, comm_idx);
         assert(pte);
-	
+
 	__sctk_ptl_offcoll_build_tree(grail, pte, rank, 0, size, SCTK_PTL_OFFCOLL_BARRIER);
         __sctk_ptl_offcoll_barrier_run(grail, pte);
         return 0;

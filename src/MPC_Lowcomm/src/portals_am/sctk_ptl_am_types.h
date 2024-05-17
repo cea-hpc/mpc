@@ -256,7 +256,7 @@ typedef struct sctk_ptl_am_pte_s
 	ptl_pt_index_t idx; /**< the effective PT index */
 	mpc_common_spinlock_t pte_lock;
 	OPA_int_t next_tag;
-	
+
 	sctk_ptl_am_chunk_t* req_head;
 	sctk_ptl_am_chunk_t* req_tail;
 
@@ -310,7 +310,7 @@ typedef struct sctk_ptl_am_rail_info_s
 
 	size_t nb_entries;                      /**< current number of PT entries */
 	size_t eager_limit;                     /**< the max size for a small payload */
-	
+
 	char connection_infos[MPC_COMMON_MAX_STRING_SIZE]; /**< string identifying this rail over the PMI */
 	size_t connection_infos_size;           /**< Size of the above string */
 } sctk_ptl_am_rail_info_t;

@@ -39,7 +39,7 @@
 
 /**
  * @brief memory object
- * 
+ *
  */
 
 struct lcp_mem {
@@ -56,13 +56,13 @@ struct lcp_mem {
 int lcp_mem_create(lcp_context_h ctx, lcp_mem_h *mem_p);
 void lcp_mem_delete(lcp_mem_h mem);
 size_t lcp_mem_rkey_pack(lcp_context_h ctx, lcp_mem_h mem, void *dest);
-int lcp_mem_post_from_map(lcp_context_h ctx, 
-                          lcp_mem_h mem, 
+int lcp_mem_post_from_map(lcp_context_h ctx,
+                          lcp_mem_h mem,
                           bmap_t bm,
-                          void *buffer, 
+                          void *buffer,
                           size_t length,
                           lcr_tag_t tag,
-                          unsigned flags, 
+                          unsigned flags,
                           lcr_tag_context_t *tag_ctx);
 int lcp_mem_reg_from_map(lcp_context_h ctx,
                          lcp_mem_h mem,

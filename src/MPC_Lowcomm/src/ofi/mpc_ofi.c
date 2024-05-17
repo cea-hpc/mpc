@@ -228,7 +228,7 @@ void _mpc_ofi_connect_on_demand(struct sctk_rail_info_s *rail, mpc_lowcomm_peer_
 	/* I attempt to bootstrap the connection */
 
    struct _mpc_ofi_net_infos my_infos = { 0 };
-   my_infos.size = 0; 
+   my_infos.size = 0;
    my_infos.my_uid =mpc_lowcomm_monitor_get_uid();
    my_infos.can_initiate_connection = 0;
 
@@ -301,7 +301,7 @@ static int __ofi_on_demand_callback_connectionless(mpc_lowcomm_peer_uid_t from,
    my_infos->size = MPC_OFI_ADDRESS_LEN;
 
    int addr_found = 0;
-   _mpc_ofi_dns_resolve(&ctx->dns, mpc_lowcomm_monitor_get_uid(), my_infos->addr, &my_infos->size, &addr_found); 
+   _mpc_ofi_dns_resolve(&ctx->dns, mpc_lowcomm_monitor_get_uid(), my_infos->addr, &my_infos->size, &addr_found);
 
    if( !addr_found )
    {
@@ -383,7 +383,7 @@ static int __ofi_on_demand_callback(mpc_lowcomm_peer_uid_t from,
 	my_infos->can_initiate_connection = is_connecting;
 
    int addr_found = 0;
-   _mpc_ofi_dns_resolve(&ctx->dns, mpc_lowcomm_monitor_get_uid(), my_infos->addr, &my_infos->size, &addr_found); 
+   _mpc_ofi_dns_resolve(&ctx->dns, mpc_lowcomm_monitor_get_uid(), my_infos->addr, &my_infos->size, &addr_found);
 
    if( !addr_found )
    {
@@ -571,7 +571,7 @@ int _mpc_ofi_get_zcopy(_mpc_lowcomm_endpoint_t *ep,
                            uint64_t remote_offset,
                            lcr_memp_t *remote_key,
                            size_t size,
-                           lcr_completion_t *comp) 
+                           lcr_completion_t *comp)
 {
 	struct _mpc_ofi_deffered_completion_s *completion =  mpc_mempool_alloc(&ep->data.ofi.deffered);
    assume(completion != NULL);
@@ -608,7 +608,7 @@ int _mpc_ofi_send_put_zcopy(_mpc_lowcomm_endpoint_t *ep,
                            uint64_t remote_offset,
                            lcr_memp_t *remote_key,
                            size_t size,
-                           lcr_completion_t *comp) 
+                           lcr_completion_t *comp)
 {
 	struct _mpc_ofi_deffered_completion_s *completion =  mpc_mempool_alloc(&ep->data.ofi.deffered);
    assume(completion != NULL);

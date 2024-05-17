@@ -39,7 +39,7 @@
 #include "mpc_common_datastructure.h"
 #include "mpc_common_debug.h"
 
-void *lcp_search_umqueue(mpc_queue_head_t *umqs, 
+void *lcp_search_umqueue(mpc_queue_head_t *umqs,
                          uint16_t comm_id, int32_t tag, int32_t tmask,
                          int32_t src, int32_t smask)
 {
@@ -67,7 +67,7 @@ void lcp_append_umqueue(mpc_queue_head_t *umqs, mpc_queue_elem_t *elem, uint16_t
         mpc_queue_push(&umqs[comm_id], elem);
 }
 
-void *lcp_match_umqueue(mpc_queue_head_t *umqs, 
+void *lcp_match_umqueue(mpc_queue_head_t *umqs,
                         uint16_t comm_id, int32_t tag, int32_t tmask,
                         int32_t src, int32_t smask)
 {

@@ -38,11 +38,11 @@ struct sctk_mpi_halo_context
 	struct sctk_mpi_halo_s ** halo_cells;
 	int halo_counter;
 	int halo_size;
-	
+
 	struct sctk_mpi_halo_exchange_s ** exchange_cells;
 	int exchange_counter;
 	int exchange_size;
-	
+
 	mpc_common_spinlock_t lock;
 };
 
@@ -83,7 +83,7 @@ struct sctk_mpi_halo_s
 	sctk_mpi_halo_type_t type;
 	char * label;
 	int is_committed;
-	
+
 	/* Message info */
 	void * halo_buffer;
 	sctk_mpi_halo_buffer_type_t halo_buffer_type;
@@ -105,7 +105,7 @@ int sctk_mpi_halo_get(  struct sctk_mpi_halo_s * halo, void ** ptr );
 /************************************************************************/
 
 /*
- * Exchange Action 
+ * Exchange Action
  */
 typedef enum
 {
@@ -131,7 +131,7 @@ struct sctk_mpi_halo_exchange_action_s * sctk_mpi_halo_exchange_new_action( stru
 int sctk_mpi_halo_exchange_action_free( struct sctk_mpi_halo_exchange_action_s * action );
 
 /*
- * Exchange Request 
+ * Exchange Request
  */
 struct sctk_mpi_halo_exchange_request
 {
@@ -153,7 +153,7 @@ struct sctk_mpi_halo_exchange_s
 	 struct sctk_mpi_halo_s ** halo;
 	 int halo_count;
 	 int halo_size;
-	
+
 	struct sctk_mpi_halo_exchange_action_s * halo_actions;
 
 };

@@ -39,17 +39,17 @@ volatile tdb_lock_t rtdb_lock = {NULL, NULL, NULL, NULL};
 tdb_err_e rtdb_add_thread (const void *tid, volatile tdb_thread_debug_t **thread_p) {
   volatile tdb_thread_debug_t *thread ;
   rtdb_log("new tid : %p", tid);
-  
+
   assert(tid != NULL) ;
 
   assert(rtdb_lib_state == TDB_LIB_STARTED) ;
   if (rtdb_lib_state != TDB_LIB_STARTED) return TDB_LIB_NOT_STARTED ;
-  
+
   thread = (tdb_thread_debug_t *) malloc(sizeof(tdb_thread_debug_t)) ;
-  
+
   tdb_assert(thread != NULL) ;
   if (thread == NULL) return TDB_MALLOC ;
-  
+
   thread->tid = tid ;
   thread->context = NULL ;
   thread->extls = NULL ;
@@ -61,12 +61,12 @@ tdb_err_e rtdb_add_thread (const void *tid, volatile tdb_thread_debug_t **thread
   thread->info.ti_tid = (thread_t) tid ;
   thread->info.ti_startfunc = rtdb_unknown_start_function ;
   td_event_emptyset(&thread->info.ti_events) ;
-  
+
   rtdb_update_thread_this_lid (thread);
-  
+
   tdb_assert(rtdb_lock.lock != NULL) ;
   if (rtdb_lock.lock == NULL) return TDB_LOCK_UNINIT ;
-  
+
   if (rtdb_lock.lock != RTDB_NOLOCK) {
     if (rtdb_lock.acquire (rtdb_lock.lock) != 0) {
       rtdb_log("Impossible to acquire the lock ...");
@@ -74,7 +74,7 @@ tdb_err_e rtdb_add_thread (const void *tid, volatile tdb_thread_debug_t **thread
       return TDB_DBERR ;
     }
   }
-  
+
   if (rtdb_thread_list == NULL) {
       thread->prev = thread;
       thread->next = thread;
@@ -95,7 +95,7 @@ tdb_err_e rtdb_add_thread (const void *tid, volatile tdb_thread_debug_t **thread
   rtdb_log("new thread is %p", thread);
   /* give a thread handle to the user, if he wants*/
   if (thread_p != NULL) *thread_p = thread ;
-  
+
   return TDB_OK ;
 }
 
@@ -106,21 +106,21 @@ tdb_err_e rtdb_remove_thread (volatile tdb_thread_debug_t *thread) {
 
   tdb_assert(rtdb_lock.lock != NULL) ;
   if (rtdb_lock.lock == NULL) return TDB_LOCK_UNINIT ;
-  
+
   if (rtdb_lock.lock != RTDB_NOLOCK) {
     if (rtdb_lock.acquire (rtdb_lock.lock) != 0) {
       tdb_assert(NULL) ;
       return TDB_DBERR ;
     }
-  } 
-  
+  }
+
   if (thread->next == thread) {
       rtdb_thread_list = NULL;
   } else {
     if (thread == rtdb_thread_list) {
       rtdb_thread_list = thread->next;
     }
-    
+
     thread->next->prev = thread->prev;
     thread->prev->next = thread->next;
   }
@@ -130,7 +130,7 @@ tdb_err_e rtdb_remove_thread (volatile tdb_thread_debug_t *thread) {
   if (rtdb_lock.lock != RTDB_NOLOCK) {
     rtdb_lock.release (rtdb_lock.lock) ;
   }
-    
+
   free ((void *) thread) ;
 
   return TDB_OK ;
@@ -141,8 +141,8 @@ volatile tdb_thread_debug_t *rtdb_get_thread (const void *tid) {
   volatile tdb_thread_debug_t *first;
   volatile tdb_thread_debug_t *current ;
   int found = 0 ;
-  
-  
+
+
   if (rtdb_lock.lock != RTDB_NOLOCK) {
     assert (rtdb_lock.acquire (rtdb_lock.lock) == 0);
   }
@@ -150,14 +150,14 @@ volatile tdb_thread_debug_t *rtdb_get_thread (const void *tid) {
   first = rtdb_thread_list ;
 
   tdb_assert(tid != NULL);
-  
-  if (first == NULL){ 
+
+  if (first == NULL){
     if (rtdb_lock.lock != RTDB_NOLOCK) {
       rtdb_lock.release (rtdb_lock.lock) ;
-    }    
+    }
     return NULL ;
   }
-  
+
   current = first ;
   do {
     if (current->tid == tid) {
@@ -168,12 +168,12 @@ volatile tdb_thread_debug_t *rtdb_get_thread (const void *tid) {
   } while (current != first) ;
 
   if (!found) current = NULL ;
-    
+
   rtdb_log("rtdb_get_thread %p -> %p", tid, current);
-  
+
   if (rtdb_lock.lock != RTDB_NOLOCK) {
     rtdb_lock.release (rtdb_lock.lock) ;
-  }    
+  }
 
   return current ;
 }
@@ -181,13 +181,13 @@ volatile tdb_thread_debug_t *rtdb_get_thread (const void *tid) {
 tdb_err_e rtdb_enable_lib_thread_db (void) {
   tdb_err_e err ;
   rtdb_log("sctk_enable_lib_thread_db : %d (TO_START : %d)", rtdb_lib_state, TDB_LIB_TO_START);
-  
+
   if (rtdb_lib_state == TDB_LIB_TO_START) {
     rtdb_lib_state = TDB_LIB_STARTED ;
     rtdb_log("sctk_enable_lib_thread_db Started !");
 
     rtdb_reg_offsets.size = 0 ;
-    
+
     err = TDB_OK ;
   } else if (rtdb_lib_state == TDB_LIB_STARTED){
     rtdb_log("sctk_enable_lib_thread_db Already started");
@@ -204,7 +204,7 @@ tdb_err_e rtdb_disable_lib_thread_db (void) {
   if (rtdb_lib_state == TDB_LIB_STARTED) {
     err = TDB_LIB_ALREADY ;
   } else {
-  
+
     rtdb_lib_state = TDB_LIB_INHIB ;
     err = TDB_OK ;
   }
@@ -220,7 +220,7 @@ tdb_err_e rtdb_report_event (
 
   tdb_assert(rtdb_lib_state == TDB_LIB_STARTED) ;
   if (rtdb_lib_state != TDB_LIB_STARTED) return TDB_LIB_NOT_STARTED ;
-  
+
   tdb_assert(thread != NULL) ;
   if (thread == NULL) return TDB_NO_THR ;
 
@@ -233,7 +233,7 @@ tdb_err_e rtdb_report_event (
   if (!thread->info.ti_traceme) {
     return TDB_OK ;
   }
-  
+
   /* Check whether this event has to be reported */
   if (!td_eventismember(&rtdb_ta_events, event) &&
       !td_eventismember(&thread->info.ti_events, event))
@@ -263,7 +263,7 @@ tdb_err_e rtdb_report_creation_event (volatile tdb_thread_debug_t *thread) {
 /** ***************************************************************************** **/
 /* call by sctk_thread.c:sctk_thread_create_tmp_start_routine */
 tdb_err_e rtdb_report_death_event (volatile tdb_thread_debug_t *thread) {
-  
+
   rtdb_log("--------------------> REPORT DEATH <------------------------------");
   //return rtdb_report_event (thread, TD_DEATH, rtdb_bp_death);
   return TDB_OK ;

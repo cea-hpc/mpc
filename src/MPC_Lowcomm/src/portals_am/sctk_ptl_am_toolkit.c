@@ -204,11 +204,11 @@ void sctk_ptl_eqs_poll(sctk_rail_info_t* rail, int threshold)
 		{
 			mpc_common_debug("PORTALS: EQS EVENT '%s' idx=%d, type=%x, prot=%x, match=%s from %s, sz=%llu", sctk_ptl_event_decode(ev), ev.pt_index, user_ptr->type, user_ptr->prot, __sctk_ptl_match_str(malloc(32), 32, ev.match_bits), SCTK_PTL_STR_LIST(((sctk_ptl_local_data_t*)ev.user_ptr)->list), ev.mlength);
 
-	
+
 			/* we only consider Portals-succeded events */
-			if(ev.ni_fail_type != PTL_NI_OK) 
+			if(ev.ni_fail_type != PTL_NI_OK)
 				mpc_common_debug_fatal("ME: Failed event %s: %d", sctk_ptl_event_decode(ev), ev.ni_fail_type);
-		
+
 			/* if the request consumed an unexpected slot, append a new one */
 			if(user_ptr->list == SCTK_PTL_OVERFLOW_LIST)
 			{
@@ -217,7 +217,7 @@ void sctk_ptl_eqs_poll(sctk_rail_info_t* rail, int threshold)
 				sctk_free(user_ptr);
 				continue;
 			}
-			
+
 			switch((int)user_ptr->type) /* normal message */
 			{
 				case SCTK_PTL_TYPE_STD:
@@ -280,7 +280,7 @@ void sctk_ptl_mds_poll(sctk_rail_info_t* rail, int threshold)
 					 * Remember that full event at initiator-side are really limited.
 					 * (Only type, list, length, user_ptr & fail_type)
 					 *
-					 * As we know that 
+					 * As we know that
 					 */
 					switch((int)user_ptr->prot)
 					{
@@ -325,7 +325,7 @@ void sctk_ptl_create_ring ( sctk_rail_info_t *rail )
 	 * 2. if process number > 2 create a route to the process to the left
 	 * => Bidirectional ring
 	 */
-	
+
 	/* serialize the id_t to a string, compliant with PMI handling */
 	srail->connection_infos_size = sctk_ptl_data_serialize(
 			&srail->id,              /* the process it to serialize */
@@ -360,7 +360,7 @@ void sctk_ptl_create_ring ( sctk_rail_info_t *rail )
 			right_rank                   /* which process we are targeting */
 	);
 	assert(tmp_ret == 0);
-	
+
 	/* de-serialize the string to retrive the real ptl_id_t */
 	sctk_ptl_data_deserialize(
 			right_rank_connection_infos, /* the buffer containing raw data */
@@ -400,7 +400,7 @@ void sctk_ptl_create_ring ( sctk_rail_info_t *rail )
  mpc_launch_pmi_barrier();
 }
 
-/** 
+/**
  * Retrieve the ptl_process_id object, associated with a given MPC process rank.
  * \param[in] rail the Portals rail
  * \param[in] dest the MPC process rank
@@ -421,7 +421,7 @@ sctk_ptl_id_t sctk_ptl_map_id(sctk_rail_info_t* rail, int dest)
 	);
 
 	assert(tmp_ret == 0);
-	
+
 	sctk_ptl_data_deserialize(
 			connection_infos, /* the buffer containing raw data */
 			&id,               /* the target struct */
@@ -471,9 +471,9 @@ void sctk_ptl_init_interface(sctk_rail_info_t* rail)
 	/* init low-level driver */
 	rail->network.ptl             = sctk_ptl_hardware_init();
 	rail->network.ptl.eager_limit = eager_limit;
-	
+
 	sctk_ptl_software_init( &rail->network.ptl, min_comms);
-	
+
 	assert(eager_limit == rail->network.ptl.eager_limit);
 	rail->network.ptl.max_mr      = rail->network.ptl.max_limits.max_msg_size;
 	rail->network.ptl.cutoff      = cut;

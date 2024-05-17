@@ -37,7 +37,7 @@
 typedef struct lcr_ptl_recv_block {
         void *start;
         size_t size;
-        
+
         sctk_ptl_rail_info_t *rail;
         sctk_ptl_meh_t meh;
         lcr_ptl_send_comp_t comp;

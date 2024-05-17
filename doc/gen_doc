@@ -42,7 +42,7 @@ safe_exec()
 		exit 1
 	fi
 	printf "${GRE}${text} : OK${DEF}\n"
-	
+
 }
 
 CURRENT_PATH="`dirname $0`"

@@ -1073,7 +1073,7 @@ for const in mpcconstants:
     fval = const["value"]
     # Skip F77 Procedures
     if ismpif:
-        continue 
+        continue
     # HANDLE LINK TIME VALUES
     if name == "MPI_COMM_WORLD":
         module_file_data += "	type(MPI_Comm), dimension(1), bind(C, name=\"mpc_f08_world\"), target :: MPI_COMM_WORLD\n"
@@ -1782,4 +1782,3 @@ f = open("mpi_f08.f90", "w")
 f.write(module_file_data)
 
 f.close()
-

@@ -81,8 +81,8 @@ int lcr_ptl_iface_progress(sctk_rail_info_t *rail)
                 if (ret == PTL_OK) {
                         mpc_common_debug_info("PORTALS: EQS EVENT '%s' idx=%d, "
                                               "sz=%llu, user=%p, start=%p, "
-                                              "remote_offset=%p, iface=%d", 
-                                              sctk_ptl_event_decode(ev), ev.pt_index, 
+                                              "remote_offset=%p, iface=%d",
+                                              sctk_ptl_event_decode(ev), ev.pt_index,
                                               ev.mlength, ev.user_ptr, ev.start,
                                               ev.remote_offset, srail->iface);
                         did_poll = 1;
@@ -174,7 +174,7 @@ int lcr_ptl_iface_progress(sctk_rail_info_t *rail)
                                         break;
                                 case LCR_PTL_PTE_IDX_AM_EAGER:
                                         am_id = (uint8_t)ev.hdr_data;
-                                        lcr_ptl_invoke_am(rail, am_id, ev.mlength, 
+                                        lcr_ptl_invoke_am(rail, am_id, ev.mlength,
                                                           ev.start);
                                         break;
                                 default:
@@ -197,7 +197,7 @@ int lcr_ptl_iface_progress(sctk_rail_info_t *rail)
                         case PTL_EVENT_AUTO_UNLINK:
                                 ptl_comp = (lcr_ptl_send_comp_t *)ev.user_ptr;
                                 block = mpc_container_of(ptl_comp, lcr_ptl_recv_block_t, comp);
-                                sctk_ptl_list_t list = ev.pt_index == LCR_PTL_PTE_IDX_TAG_EAGER ? 
+                                sctk_ptl_list_t list = ev.pt_index == LCR_PTL_PTE_IDX_TAG_EAGER ?
                                         SCTK_PTL_OVERFLOW_LIST : SCTK_PTL_PRIORITY_LIST;
                                 lcr_ptl_recv_block_activate(block, ev.pt_index, list);
                                 goto poll_unlock;
@@ -243,8 +243,8 @@ int lcr_ptl_software_init(sctk_ptl_rail_info_t *srail, size_t comm_dims)
 	srail->nb_entries = 0;
 
         /* create the EQ */
-        sctk_ptl_chk(PtlEQAlloc(srail->iface,         
-                                SCTK_PTL_EQ_PTE_SIZE, 
+        sctk_ptl_chk(PtlEQAlloc(srail->iface,
+                                SCTK_PTL_EQ_PTE_SIZE,
                                 &srail->ptl_info.eqh
                                ));
 
@@ -260,13 +260,13 @@ int lcr_ptl_software_init(sctk_ptl_rail_info_t *srail, size_t comm_dims)
 	sctk_ptl_chk(PtlMDBind(
 		srail->iface,
 		&md,
-		&srail->ptl_info.mdh 
-	)); 
+		&srail->ptl_info.mdh
+	));
 
 	OPA_store_int(&srail->rdma_cpt, 0);
 	if(srail->max_mr > srail->max_limits.max_msg_size)
 		srail->max_mr = srail->max_limits.max_msg_size;
-	
+
 	if(sctk_ptl_offcoll_enabled(srail))
 		sctk_ptl_offcoll_init(srail);
 
@@ -328,9 +328,9 @@ int lcr_ptl_software_init(sctk_ptl_rail_info_t *srail, size_t comm_dims)
                 .match_id    = SCTK_PTL_ANY_PROCESS,
                 .uid         = PTL_UID_ANY,
                 .min_free    = 0,
-                .options     = SCTK_PTL_ME_PUT_FLAGS | 
+                .options     = SCTK_PTL_ME_PUT_FLAGS |
                         SCTK_PTL_ME_GET_FLAGS  |
-                        PTL_ME_EVENT_LINK_DISABLE | 
+                        PTL_ME_EVENT_LINK_DISABLE |
                         PTL_ME_EVENT_UNLINK_DISABLE |
                         PTL_ME_EVENT_COMM_DISABLE,
                 .start       = 0,

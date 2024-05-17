@@ -49,7 +49,7 @@
 
 /**
  * @brief Pack data for rget.
- * 
+ *
  * @param dest destination header
  * @param data request to pack
  * @return size_t size of packed data
@@ -63,7 +63,7 @@ static size_t lcp_rndv_rtr_pack(void *dest, void *data)
         lcp_request_t *super    = rndv_req->super;
 
         hdr->msg_id = rndv_req->msg_id;
-        packed_size = lcp_mem_rkey_pack(super->ctx, 
+        packed_size = lcp_mem_rkey_pack(super->ctx,
                                         super->state.lmem,
                                         hdr + 1);
 
@@ -72,7 +72,7 @@ static size_t lcp_rndv_rtr_pack(void *dest, void *data)
 
 /**
  * @brief Pack data for rput
- * 
+ *
  * @param dest destination header
  * @param data request to pack
  * @return size_t size of packed data
@@ -82,14 +82,14 @@ size_t lcp_rndv_rts_pack(lcp_request_t *super, void *dest)
 {
         lcp_request_t *rndv_req = super->rndv_req;
         lcp_rndv_hdr_t *hdr = (lcp_rndv_hdr_t *)dest;
-        size_t packed_size = 0; 
+        size_t packed_size = 0;
 
-        hdr->size   = rndv_req->send.length; 
-        hdr->msg_id = rndv_req->msg_id; 
+        hdr->size   = rndv_req->send.length;
+        hdr->msg_id = rndv_req->msg_id;
 
         if (super->ctx->config.rndv_mode == LCP_RNDV_GET) {
                 /* Pack remote key from super request */
-                packed_size = lcp_mem_rkey_pack(super->ctx, 
+                packed_size = lcp_mem_rkey_pack(super->ctx,
                                                 super->state.lmem,
                                                 hdr + 1);
         }
@@ -99,7 +99,7 @@ size_t lcp_rndv_rts_pack(lcp_request_t *super, void *dest)
 
 /**
  * @brief Pack data for rendez-vous finalization message
- * 
+ *
  * @param dest destination header
  * @param data request to pack
  * @return size_t size of packed data
@@ -121,7 +121,7 @@ static size_t lcp_rndv_fin_pack(void *dest, void *data)
 
 /**
  * @brief Send a rma request.
- * 
+ *
  * @param super request to send
  * @param rmem // TODO ?
  * @return int LCP_SUCCESS in case of success
@@ -137,12 +137,12 @@ int lcp_rndv_rma_progress(lcp_request_t *rndv_req)
         lcr_rail_attr_t attr;
         uint64_t start;
 
-        rkey      = rndv_req->send.rndv.rkey; 
+        rkey      = rndv_req->send.rndv.rkey;
         ep        = rndv_req->send.ep;
         remaining = rndv_req->state.remaining;
         offset    = rndv_req->state.offset;
         start     = rndv_req->datatype & LCP_DATATYPE_DERIVED ?
-                (uint64_t)rndv_req->state.pack_buf : 
+                (uint64_t)rndv_req->state.pack_buf :
                 (uint64_t)rndv_req->send.buffer;
 
         cc = lcp_ep_get_next_cc(ep);
@@ -167,8 +167,8 @@ int lcp_rndv_rma_progress(lcp_request_t *rndv_req)
                 if (rndv_req->ctx->config.rndv_mode == LCP_RNDV_GET) {
                         /* Get source address */
                         rc = lcp_send_do_get_zcopy(ep->lct_eps[cc],
-                                                   start + offset, 
-                                                   offset, 
+                                                   start + offset,
+                                                   offset,
                                                    &(rkey->mems[cc]),
                                                    length,
                                                    &(rndv_req->state.comp));
@@ -180,7 +180,7 @@ int lcp_rndv_rma_progress(lcp_request_t *rndv_req)
                                                    length,
                                                    &(rndv_req->state.comp));
                 }
-                
+
                 if (rc == MPC_LOWCOMM_NO_RESOURCE) {
                         /* Save state */
                         rndv_req->state.remaining = remaining;
@@ -205,7 +205,7 @@ int lcp_rndv_reg_send_buffer(lcp_request_t *req)
         if (req->ctx->config.rndv_mode == LCP_RNDV_GET) {
 
 
-                mpc_common_debug("LCP: register send buffer. Conn map=%x", 
+                mpc_common_debug("LCP: register send buffer. Conn map=%x",
                                  req->send.ep->conn_map);
                 /* Get source address */
                 void *start = req->datatype & LCP_DATATYPE_CONTIGUOUS ?
@@ -230,7 +230,7 @@ int lcp_rndv_reg_recv_buffer(lcp_request_t *rndv_req)
         void *start = req->datatype & LCP_DATATYPE_CONTIGUOUS ?
                 req->recv.buffer : req->state.pack_buf;
 
-        mpc_common_debug("LCP: register recv buffer. Conn map=%x", 
+        mpc_common_debug("LCP: register recv buffer. Conn map=%x",
                          rndv_req->send.ep->conn_map);
         /* Register and pack memory pin context that will be sent to remote */
         req->state.lmem = lcp_pinning_mmu_pin(req->ctx, start, req->recv.send_length,
@@ -248,7 +248,7 @@ int lcp_rndv_reg_recv_buffer(lcp_request_t *rndv_req)
 void lcp_rndv_complete(lcr_completion_t *comp)
 {
         int payload;
-        lcp_request_t *rndv_req = mpc_container_of(comp, lcp_request_t, 
+        lcp_request_t *rndv_req = mpc_container_of(comp, lcp_request_t,
                                                    state.comp);
 
         rndv_req->state.remaining -= comp->sent;
@@ -280,7 +280,7 @@ void lcp_rndv_complete(lcr_completion_t *comp)
 
 /**
  * @brief Start an rndv protocol with active message
- * 
+ *
  * @param req request
  * @return int LCP_SUCCESS In case of success
  */
@@ -303,7 +303,7 @@ int lcp_send_rndv_start(lcp_request_t *req)
                 }
 
                 lcp_datatype_pack(req->ctx, req, req->datatype,
-                                  req->state.pack_buf, NULL, 
+                                  req->state.pack_buf, NULL,
                                   req->send.length);
         }
 
@@ -332,7 +332,7 @@ int lcp_send_rndv_start(lcp_request_t *req)
         //      receiver in FIN message so that rndv_req can be found and
         //      completed.
         req->rndv_req    = rndv_req;
-        rndv_req->msg_id = (uint64_t)rndv_req; 
+        rndv_req->msg_id = (uint64_t)rndv_req;
 
 err:
         return rc;
@@ -367,9 +367,9 @@ err:
 //       header ? Some necessary info are in the tag/am part of the request.
 //       Acceding them here would break rndv modularity
 int lcp_rndv_process_rts(lcp_request_t *rreq,
-                         void *data, size_t length) 
+                         void *data, size_t length)
 {
-        int rc; 
+        int rc;
         lcp_request_t *rndv_req;
         lcp_rndv_hdr_t *hdr = data;
 
@@ -406,19 +406,19 @@ int lcp_rndv_process_rts(lcp_request_t *rreq,
 
         /* Get endpoint */
         if (!(rndv_req->send.ep = lcp_ep_get(rndv_req->ctx, hdr->src_uid))) {
-                rc = lcp_ep_create(rndv_req->ctx, &(rndv_req->send.ep), 
+                rc = lcp_ep_create(rndv_req->ctx, &(rndv_req->send.ep),
                                    hdr->src_uid, 0);
                 if (rc != LCP_SUCCESS) {
                         mpc_common_debug_error("LCP: could not create ep "
                                                "after match.");
                         goto err;
                 }
-        } 
+        }
 
         switch (rreq->ctx->config.rndv_mode) {
         case LCP_RNDV_PUT:
                 /* Register memory through rndv request since we need the
-                 * endpoint connection map stored in the endpoint */ 
+                 * endpoint connection map stored in the endpoint */
                 mpc_common_debug("LCP RNDV: process rts put request=%p",
                                  rndv_req);
                 rc = lcp_rndv_reg_recv_buffer(rndv_req);
@@ -437,7 +437,7 @@ int lcp_rndv_process_rts(lcp_request_t *rreq,
 
                 mpc_common_debug("LCP RNDV: process rts get request=%p", rndv_req);
                 /* Unpack remote key */
-                rc = lcp_mem_unpack(rreq->ctx, &(rndv_req->send.rndv.rkey), 
+                rc = lcp_mem_unpack(rreq->ctx, &(rndv_req->send.rndv.rkey),
                                     hdr + 1, length);
                 if (rc < 0) {
                         goto err;
@@ -462,7 +462,7 @@ err:
 
 /* RTR handler will be run for PUT protocol only */
 static int lcp_rndv_rtr_handler(void *arg, void *data,
-                                size_t size, 
+                                size_t size,
                                 unsigned flags)
 {
         UNUSED(flags);
@@ -477,7 +477,7 @@ static int lcp_rndv_rtr_handler(void *arg, void *data,
         //       null test may not be enough
         assume(rndv_req != NULL);
 
-        rc = lcp_mem_unpack(ctx, &(rndv_req->send.rndv.rkey), hdr + 1, 
+        rc = lcp_mem_unpack(ctx, &(rndv_req->send.rndv.rkey), hdr + 1,
                             size - sizeof(lcp_ack_hdr_t));
         if (rc < 0) {
                 goto err;
@@ -493,7 +493,7 @@ err:
 
 /**
  * @brief Callback for rendez-vous finalization.
- * 
+ *
  * @param arg lcp context
  * @param data rendez-vous header
  * @param length header length
@@ -501,7 +501,7 @@ err:
  * @return int LCP_SUCCESS in case of success
  */
 static int lcp_rndv_fin_handler(void *arg, void *data,
-                                size_t length, 
+                                size_t length,
                                 unsigned flags)
 {
         UNUSED(length);
@@ -520,7 +520,7 @@ static int lcp_rndv_fin_handler(void *arg, void *data,
 
         if (req->datatype & LCP_DATATYPE_DERIVED) {
                 lcp_datatype_unpack(req->ctx, req, req->datatype,
-                                    NULL, req->state.pack_buf, 
+                                    NULL, req->state.pack_buf,
                                     req->state.lmem->length);
                 /* Free buffer allocated by rndv */
                 sctk_free(req->state.pack_buf);

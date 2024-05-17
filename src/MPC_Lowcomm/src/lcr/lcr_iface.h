@@ -50,7 +50,7 @@ typedef int (*lcr_send_am_zcopy_func_t)(_mpc_lowcomm_endpoint_t *ep,
                                         unsigned header_length,
                                         const struct iovec *iov,
                                         size_t iovcnt,
-                                        unsigned flags, 
+                                        unsigned flags,
                                         lcr_completion_t *comp);
 
 typedef ssize_t (*lcr_send_tag_bcopy_func_t)(_mpc_lowcomm_endpoint_t *ep,
@@ -119,11 +119,11 @@ typedef int (*lcr_iface_get_attr_func_t)(sctk_rail_info_t *rail,
 typedef int (*lcr_iface_progress_func_t)(sctk_rail_info_t *rail);
 
 typedef int (*lcr_iface_pack_memp_func_t)(sctk_rail_info_t *rail,
-                                          lcr_memp_t *memp, 
+                                          lcr_memp_t *memp,
                                           void *dest);
 
 typedef int (*lcr_iface_unpack_memp_func_t)(sctk_rail_info_t *rail,
-                                            lcr_memp_t *memp, 
+                                            lcr_memp_t *memp,
                                             void *dest);
 
 typedef int (*lcr_iface_is_reachable_func_t)(sctk_rail_info_t *rail,

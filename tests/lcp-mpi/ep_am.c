@@ -42,14 +42,14 @@ int recv_completion(size_t sent, void *user_data) {
 }
 
 #define AM_ID 1
-int am_handler(void *arg, void *user_hdr, size_t hdr_size, 
+int am_handler(void *arg, void *user_hdr, size_t hdr_size,
                void *data, size_t length,
-               lcp_am_recv_param_t *am_param) 
+               lcp_am_recv_param_t *am_param)
 {
         int rc = 0;
         gateway_t *gateway = (gateway_t *)arg;
         hdr_request_t *hdr = (hdr_request_t *)user_hdr;
-        
+
         assert(hdr->magic == magic);
         gateway->request.buffer = malloc(hdr->size);
         gateway->request.size   = hdr->size;
@@ -63,14 +63,14 @@ int am_handler(void *arg, void *user_hdr, size_t hdr_size,
                         .flags = LCP_REQUEST_AM_CALLBACK,
                         .user_request = &gateway->request,
                 };
-                rc = lcp_am_recv_nb(gateway->task, data, gateway->request.buffer, 
+                rc = lcp_am_recv_nb(gateway->task, data, gateway->request.buffer,
                                     hdr->size, &param);
                 if (rc != LCP_SUCCESS) {
                         printf("ERROR: could not receive data");
                 }
         } else if (am_param->flags & LCP_AM_EAGER) {
                 memcpy(gateway->request.buffer, hdr + 1, hdr->size);
-                
+
                 recv_completion(length, &gateway->request);
         }
 
@@ -114,7 +114,7 @@ int main(int argc, char** argv) {
                 printf("ERROR: create context\n");
                 goto err;
         }
-        
+
         /* pmi barrier needed to commit pmi rail registration */
         mpc_launch_pmi_barrier();
 
@@ -186,7 +186,7 @@ int main(int argc, char** argv) {
                         .user_request = &gateway.request,
                         .flags        = LCP_REQUEST_AM_CALLBACK
                 };
-                rc = lcp_am_send_nb(ep, task, dest_tid, AM_ID, &hdr, sizeof(hdr), 
+                rc = lcp_am_send_nb(ep, task, dest_tid, AM_ID, &hdr, sizeof(hdr),
                                     (void *)data, size*sizeof(int), &param);
 		if (rc != LCP_SUCCESS) {
 			printf("ERROR: send\n");
@@ -200,7 +200,7 @@ int main(int argc, char** argv) {
 	}
 
 	/* receiver perform data check */
-	if (my_tid == 1) {	
+	if (my_tid == 1) {
 		for (i=0; i<(int)size; i++) {
 			if (data[i] != data_check[i]) {
                                 printf("%d\n", i);

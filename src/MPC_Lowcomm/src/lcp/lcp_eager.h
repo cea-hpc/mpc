@@ -36,7 +36,7 @@
 #include "lcr/lcr_def.h"
 #include "lcp_types.h"
 
-int lcp_send_eager_bcopy(lcp_request_t *req, 
+int lcp_send_eager_bcopy(lcp_request_t *req,
                          lcr_pack_callback_t pack,
                          uint8_t am_id);
 

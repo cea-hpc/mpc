@@ -393,7 +393,7 @@ promote_to_rpath()
         # In MPC in order to fortify link/runtime dependencies
         # we prefer to add rpath as much as possible to be
         # more independent from the build env (closer to static build)
-        # the role of this helper is to look for libdirs and 
+        # the role of this helper is to look for libdirs and
         # add them as rpaths (if not already present)
 
         # Remove space in GCC's library search path args
@@ -666,10 +666,10 @@ __append_if_not_here()
 extract_pkg_config_lib_prefixes()
 {
     PLDFLAGS="$2"
-    
+
     # Do we have a libdir var ?
     PLIBD=$(__get_pkg_config_var "$1" libdir)
-    
+
     if test -d "$PLIBD"; then
         # LIBDIR EXISTS
         RET=$(__append_if_not_here "-L" "$PLIBD" "$PLDFLAGS")
@@ -678,7 +678,7 @@ extract_pkg_config_lib_prefixes()
         # This is a special case we handle here
         if test "$1" = "pmix"; then
                 if test -d "${PLIBD}/pmix2/lib/"; then
-                        RET=$(__append_if_not_here "-L" "${PLIBD}/pmix2/lib/" "$RET")    
+                        RET=$(__append_if_not_here "-L" "${PLIBD}/pmix2/lib/" "$RET")
                 fi
         fi
 
@@ -689,7 +689,7 @@ extract_pkg_config_lib_prefixes()
 
     # Do we have a pcfiledir var ?
     PCDIR=$(__get_pkg_config_var "$1" pcfiledir)
-    
+
     if test -n "$PCDIR"; then
         if test -d "${PCDIR}/../"; then
                 # LIBDIR EXISTS
@@ -713,10 +713,10 @@ extract_pkg_config_lib_prefixes()
 extract_pkg_config_inc_prefixes()
 {
     PCFLAGS="$2"
-    
+
     # Do we have an includedir var ?
     PINCD=$(__get_pkg_config_var "$1" includedir)
-    
+
     if test -d "$PINCD"; then
         # INCIDR EXISTS
         RET=$(__append_if_not_here "-I" "$PINCD" "$PCFLAGS")
@@ -727,7 +727,7 @@ extract_pkg_config_inc_prefixes()
                 PLIBD=$(__get_pkg_config_var "$1" libdir)
                 if test -n "$PLIBD"; then
                         if test -d "${PLIBD}/pmix2/include/"; then
-                                RET=$(__append_if_not_here "-I" "${PLIBD}/pmix2/include/" "$RET")    
+                                RET=$(__append_if_not_here "-I" "${PLIBD}/pmix2/include/" "$RET")
                         fi
                 fi
         fi
@@ -739,11 +739,11 @@ extract_pkg_config_inc_prefixes()
 
     # Do we have a pcfiledir var ?
     PCDIR=$(__get_pkg_config_var "$1" pcfiledir)
-    
+
     if test -n "$PCDIR"; then
         if test -d "${PCDIR}/../../include/"; then
                 # PCDIR EXISTS
-                RET=$(__append_if_not_here "-I" "${PCDIR}/../../include/" "$PCFLAGS")        
+                RET=$(__append_if_not_here "-I" "${PCDIR}/../../include/" "$PCFLAGS")
                 echo "$RET"
                 # DONE
                 return
@@ -915,7 +915,7 @@ AC_DEFUN([MPC_DETECT_DEPENDENCY],
                                 fi
                         fi
 
-                        
+
                         AC_MSG_CHECKING([$2 cflags])
                         XXCFLAGS=$(eval echo \${$4_CFLAGS})
                         AC_MSG_RESULT([$XXCFLAGS])
@@ -1144,7 +1144,7 @@ AM_CONDITIONAL([PORTALS4_DRIVER_ENABLED], [test "x$portals4_enabled" = "xyes"])
 AC_SUBST([MPC_NETWORK_LIST])
 
 #
-# Detect LowComm Protocol 
+# Detect LowComm Protocol
 #
 
 mpc_lcp_enabled="no"
@@ -1251,7 +1251,7 @@ elif test "x$mpc_pmix_enabled" != "xno"; then
 
         # In the PMIX configuration check for the PMIx Runtime
         AC_PATH_PROG([PRTERUN], [prterun], [no])
-        
+
         if test "x$PRTERUN" = "xno"
 	then
 		# Try with the PRUN name if prterun is not found
@@ -1262,7 +1262,7 @@ elif test "x$mpc_pmix_enabled" != "xno"; then
 			PRTERUN="${PRUN}"
 		fi
 	fi
-	
+
 	if test "x$PRTERUN" = "xno"
         then
                 AC_MSG_WARN([Could not locate 'PMIx Runtime PRTE' in PATH. support will not be built.])
@@ -1418,7 +1418,7 @@ AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[ ]],
                                   [[return __func__;]])],
                 res_macro=yes,res_macro=no)
 
-if test "$res_macro" = "yes" ; then 
+if test "$res_macro" = "yes" ; then
    MPC_ARCH_DETECTED_FUNCTION="__func__"
    AC_MSG_RESULT(yes)
    AC_SUBST(MPC_ARCH_DETECTED_FUNCTION)
@@ -1435,7 +1435,7 @@ AC_PREPROC_IFELSE([AC_LANG_SOURCE([[#include <stdio.h>
                                   #endif]])],
                 res_macro=yes,res_macro=no)
 
-if test "$res_macro" = "yes" ; then 
+if test "$res_macro" = "yes" ; then
   MPC_ARCH_DETECTED_STRING="__STRING"
    AC_MSG_RESULT(yes)
    AC_SUBST(MPC_ARCH_DETECTED_STRING)
@@ -1454,7 +1454,7 @@ AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <stdlib.h>
                                 [[return environ;]])],
                                 res_macro=yes,res_macro=no)
 
-if test "$res_macro" = "yes" ; then 
+if test "$res_macro" = "yes" ; then
    AC_MSG_RESULT(yes)
    AC_DEFINE([HAVE_ENVIRON_VAR],[1],[The environ variable is present])
 else
@@ -1865,7 +1865,7 @@ fi
 
 AC_CHECK_TYPE(pthread_mutex_t,is_mutex=yes,is_mutex=no,[#include <pthread.h>])
 
-if test "$is_mutex" = "yes" ; then 
+if test "$is_mutex" = "yes" ; then
         AC_CHECK_SIZEOF(pthread_mutex_t,,[#include <pthread.h>])
         AC_SUBST([SIZEOF_PTHREAD_MUTEX_T],[$ac_cv_sizeof_pthread_mutex_t])
 
@@ -1894,7 +1894,7 @@ fi
 
 AC_CHECK_TYPE(pthread_rwlock_t,is_rwlock=yes,is_rwlock=no,[#include <pthread.h>])
 
-if test "$is_rwlock" = "yes" ; then 
+if test "$is_rwlock" = "yes" ; then
         AC_CHECK_SIZEOF(pthread_rwlock_t,,[#include <pthread.h>])
         AC_SUBST([SIZEOF_PTHREAD_RWLOCK_T],[$ac_cv_sizeof_pthread_rwlock_t])
 
@@ -1943,7 +1943,7 @@ AC_CHECK_HEADER([semaphore.h])
 
 AC_CHECK_TYPE(sem_t,is_semaphore=yes,is_semaphore=no,[#include <semaphore.h>])
 
-if test "$is_semaphore" = "yes" ; then 
+if test "$is_semaphore" = "yes" ; then
         AC_CHECK_SIZEOF(sem_t,,[#include <semaphore.h>])
         AC_SUBST([SIZEOF_SEM_T],[$ac_cv_sizeof_sem_t])
         AC_CHECK_FUNCS(sem_init)
@@ -2659,7 +2659,7 @@ if test -n "$file_system_xfs"; then
 #include <unistd.h>
 #include <fcntl.h>
 #include <stdio.h>
-int main(int argc, char **argv) { 
+int main(int argc, char **argv) {
         struct dioattr st;
         int fd = open("/tmp/romio_tmp.bin", O_RDWR | O_CREAT, 0644);
         FILE *f=fopen("confmemalignval","w");
@@ -2704,7 +2704,7 @@ if test -n "$file_system_pvfs2"; then
         [AM_CONDITIONAL([BUILD_AD_PVFS2], [true])
         AC_DEFINE(HAVE_PVFS2_SUPER_MAGIC, 1, [Define if PVFS2_SUPER_MAGIC defined.])
         ROMIO_FS_LIST="${ROMIO_FS_LIST} pvfs2"],
-        AC_MSG_ERROR([PVFS2 support requested but cannot find pvfs2.h header file])                                        
+        AC_MSG_ERROR([PVFS2 support requested but cannot find pvfs2.h header file])
     )
 fi
 
@@ -2714,13 +2714,13 @@ if test -n "$file_system_pvfs2"; then
         AC_LANG_SOURCE([
 #include <stdlib.h>
 #include "pvfs2.h"
-          int main(int argc, char **argv) { 
+          int main(int argc, char **argv) {
               PVFS_object_ref ref;
               PVFS_sys_attr attr;
-              PVFS_sys_create(NULL, ref, attr, NULL, NULL, NULL, NULL); 
+              PVFS_sys_create(NULL, ref, attr, NULL, NULL, NULL, NULL);
           return 0; }
        ])],
-       , AC_DEFINE(HAVE_PVFS2_CREATE_WITHOUT_LAYOUT, 1, 
+       , AC_DEFINE(HAVE_PVFS2_CREATE_WITHOUT_LAYOUT, 1,
                        [Define if PVFS_sys_create does not have layout parameter])
        )
 fi
@@ -2909,10 +2909,10 @@ if test "x${autopriv_support_found}" = "xyes"; then
                 echo "!!!!!!!!!!!!!!!!!!!!!!!!"
                 AC_MSG_CHECKING([priv in $CC])
                 AC_MSG_RESULT([$CC_PRIV])
-                
+
                 AC_MSG_CHECKING([priv in $CXX])
                 AC_MSG_RESULT([$CXX_PRIV])
-                
+
                 AC_MSG_CHECKING([priv in $FC])
                 AC_MSG_RESULT([$FC_PRIV])
 

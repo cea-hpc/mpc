@@ -26,7 +26,7 @@ _mpc_omp_ompt_callback_mutex_acquire ( ompt_mutex_t kind,
 #if MPCOMPT_HAS_FRAME_SUPPORT
             const void* ret_addr = thread->frame_infos.ompt_return_addr;
 #else
-            const void* ret_addr = NULL; 
+            const void* ret_addr = NULL;
 #endif
 
             mpc_common_debug( "%s: %p ( %d, %u, %u, %llu, %p )",
@@ -60,7 +60,7 @@ _mpc_omp_ompt_callback_lock_init ( ompt_mutex_t kind,
 #if MPCOMPT_HAS_FRAME_SUPPORT
             const void* ret_addr = thread->frame_infos.ompt_return_addr;
 #else
-            const void* ret_addr = NULL; 
+            const void* ret_addr = NULL;
 #endif
 
             mpc_common_debug( "%s: %p ( %d, %u, %u, %llu, %p )",
@@ -92,7 +92,7 @@ _mpc_omp_ompt_callback_lock_destroy ( ompt_mutex_t kind,
 #if MPCOMPT_HAS_FRAME_SUPPORT
             const void* ret_addr = thread->frame_infos.ompt_return_addr;
 #else
-            const void* ret_addr = NULL; 
+            const void* ret_addr = NULL;
 #endif
 
             mpc_common_debug( "%s: %p ( %d, %llu, %p )",
@@ -124,7 +124,7 @@ _mpc_omp_ompt_callback_mutex_acquired ( ompt_mutex_t kind,
 #if MPCOMPT_HAS_FRAME_SUPPORT
             const void* ret_addr = thread->frame_infos.ompt_return_addr;
 #else
-            const void* ret_addr = NULL; 
+            const void* ret_addr = NULL;
 #endif
 
             mpc_common_debug( "%s: %p ( %d, %llu, %p )",
@@ -156,7 +156,7 @@ _mpc_omp_ompt_callback_mutex_released ( ompt_mutex_t kind,
 #if MPCOMPT_HAS_FRAME_SUPPORT
             const void* ret_addr = thread->frame_infos.ompt_return_addr;
 #else
-            const void* ret_addr = NULL; 
+            const void* ret_addr = NULL;
 #endif
 
             mpc_common_debug( "%s: %p ( %d, %llu, %p )",
@@ -188,7 +188,7 @@ _mpc_omp_ompt_callback_nest_lock ( ompt_scope_endpoint_t endpoint,
 #if MPCOMPT_HAS_FRAME_SUPPORT
             const void* ret_addr = thread->frame_infos.ompt_return_addr;
 #else
-            const void* ret_addr = NULL; 
+            const void* ret_addr = NULL;
 #endif
 
             mpc_common_debug( "%s: %p ( %d, %llu, %p )",

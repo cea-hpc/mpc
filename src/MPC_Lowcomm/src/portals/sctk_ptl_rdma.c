@@ -58,7 +58,7 @@ static inline ptl_datatype_t __sctk_ptl_convert_type(RDMA_type type)
 		case RDMA_TYPE_UNSIGNED_LONG_LONG : return PTL_UINT64_T    ; break ;
 		case RDMA_TYPE_UNSIGNED_SHORT     : return PTL_UINT16_T    ; break ;
 		case RDMA_TYPE_WCHAR              : return PTL_INT16_T     ; break ;
-		default: 
+		default:
 			mpc_common_debug_fatal("Type not handled by Portals: %d", type);
 	}
 	return 0;
@@ -105,7 +105,7 @@ static inline short __sctk_ptl_is_unary_op(RDMA_op op, RDMA_type type, char* buf
 	}
 
 	assert(size >= RDMA_type_size(type));
-	
+
 	memset(buf, 0, size);
 	if(op == RDMA_INC)
 	{
@@ -232,7 +232,7 @@ static inline short __sctk_ptl_is_unary_op(RDMA_op op, RDMA_type type, char* buf
 /** boolean to check if Portals support 'fetch_and_op', which it supports */
 int sctk_ptl_rdma_fetch_and_op_gate( sctk_rail_info_t *rail, size_t size, RDMA_op op, RDMA_type type )
 {
-	UNUSED(rail); 
+	UNUSED(rail);
 	UNUSED(size);
 	UNUSED(type);
 	/* trouble with PtlFetchAtomic() & the BXI, disabling the call, fallback w/ CMs */
@@ -286,7 +286,7 @@ void sctk_ptl_rdma_fetch_and_op(  sctk_rail_info_t *rail,
 	assert(fetch_addr  >= local_start);
 	assert(fetch_addr + size <= local_start + local_key->pin.ptl.md_data->slot.md.length);
 	assert(remote_addr >= remote_start);
-	
+
 	local_off  = fetch_addr  - local_start;
 	remote_off = remote_addr - remote_start;
 
@@ -296,14 +296,14 @@ void sctk_ptl_rdma_fetch_and_op(  sctk_rail_info_t *rail,
 
 	add_md->type = SCTK_PTL_TYPE_RDMA;
 	add_md->msg = NULL;
-	
+
 	/* this is dirty: see comments in sctk_ptl_pin_region() */
 	copy                   = sctk_malloc(sizeof(sctk_ptl_local_data_t));
 	*copy                  = *local_key->pin.ptl.md_data;
 	copy->msg              = msg;
 	msg->tail.ptl.user_ptr = add_md;
 	copy->type = SCTK_PTL_TYPE_RDMA;
-	
+
 	sctk_ptl_emit_fetch_atomic(
 		local_key->pin.ptl.md_data,   /* GET MD --> fetch_addr */
 		add_md,                       /* PUT MD  --> add */
@@ -373,7 +373,7 @@ void sctk_ptl_rdma_cas(sctk_rail_info_t *rail,
 	assert(res_addr  >= local_start);
 	assert(res_addr + size <= local_start + local_key->pin.ptl.md_data->slot.md.length);
 	assert(remote_addr >= remote_start);
-	
+
 	local_off  = res_addr  - local_start;
 	remote_off = remote_addr - remote_start;
 
@@ -383,7 +383,7 @@ void sctk_ptl_rdma_cas(sctk_rail_info_t *rail,
 
 	new_md->type = SCTK_PTL_TYPE_RDMA;
 	new_md->msg = NULL;
-	
+
 	/* this is dirty: see comments in sctk_ptl_pin_region() */
 	copy                   = sctk_malloc(sizeof(sctk_ptl_local_data_t));
 	*copy                  = *local_key->pin.ptl.md_data;
@@ -412,11 +412,11 @@ void sctk_ptl_rdma_cas(sctk_rail_info_t *rail,
 /**
  * Implement the one-sided Write() method.
  *
- * Note that because we don't store the effective size of the remote region, 
+ * Note that because we don't store the effective size of the remote region,
  * we can't check that dest_addr is inside the pinned segment.
  *
  * Please see also notes in \see sctk_ptl_pin_region.
- * 
+ *
  *
  * \param[in] rail the Portals rail
  * \param[in] msg the built msg
@@ -443,7 +443,7 @@ void sctk_ptl_rdma_write(sctk_rail_info_t *rail, mpc_lowcomm_ptp_message_t *msg,
 	assert(src_addr  >= local_start);
 	assert(src_addr + size <= local_start + local_key->pin.ptl.md_data->slot.md.length);
 	assert(dest_addr >= remote_start);
-	
+
 	/* compute offsets, WRITE --> src = local, dest = remote */
 	local_off  = src_addr  - local_start;
 	remote_off = dest_addr - remote_start;
@@ -455,7 +455,7 @@ void sctk_ptl_rdma_write(sctk_rail_info_t *rail, mpc_lowcomm_ptp_message_t *msg,
 	msg->tail.ptl.user_ptr = NULL; /* 'no extra allocated data' */
 	msg->tail.ptl.copy     = 0;
 	copy->type = SCTK_PTL_TYPE_RDMA;
-	
+
 	sctk_ptl_emit_put(
 		local_key->pin.ptl.md_data, /* The base MD */
 		size,                      /* request size */
@@ -471,11 +471,11 @@ void sctk_ptl_rdma_write(sctk_rail_info_t *rail, mpc_lowcomm_ptp_message_t *msg,
 /**
  * Implement the one-sided Read() method.
  *
- * Note that because we don't store the effective size of the remote region, 
+ * Note that because we don't store the effective size of the remote region,
  * we can't check that src_addr is inside the pinned segment.
  *
  * Please see also notes in \see sctk_ptl_pin_region.
- * 
+ *
  *
  * \param[in] rail the Portals rail
  * \param[in] msg the built msg
@@ -503,7 +503,7 @@ void sctk_ptl_rdma_read(sctk_rail_info_t *rail, mpc_lowcomm_ptp_message_t *msg,
 	assert(dest_addr + size <= local_start + local_key->pin.ptl.md_data->slot.md.length);
 	assert(src_addr  >= remote_start);
 	assert(dest_addr >= local_start);
-	
+
 	/* compute offsets, READ --> src = remote, dest = local */
 	local_off  = dest_addr - local_start;
 	remote_off = src_addr  - remote_start;

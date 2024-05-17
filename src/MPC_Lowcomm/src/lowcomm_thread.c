@@ -20,7 +20,7 @@ int _mpc_lowcomm_kernel_thread_create(_mpc_lowcomm_kernel_thread_t *th,
 	mpc_thread_core_thread_create(&th->th, &attr, (void * (*)(void *) )func, arg);
 #else
 	pthread_create(&th->th, NULL, (void * (*)(void *) )func, arg);
-#endif	
+#endif
 	return 0;
 }
 

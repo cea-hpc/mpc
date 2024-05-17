@@ -11,7 +11,7 @@ exchange data between threads or processes. The module provides:
 - Resource management: automatic discovery of available network interfaces (also
   based on user input).
 
-Architecture with two layers: 
+Architecture with two layers:
 - top layer for protocols (LCP): message passing and active message
   communication models supported, eager, rendez-vous, data striping protocols,
   memory registration,...
@@ -51,7 +51,7 @@ TODO: describe bcopy and zcopy semantics
 
 LCP is reponsible for:
 - Resource initialization: automatically discover available network resources
-  and instanciation based on user input. 
+  and instanciation based on user input.
 - Connection management: endpoint creation, communication establishement,
   multirail.
 - Communication protocols: optimized datapath for different communication
@@ -111,7 +111,7 @@ Context initialization has 7 steps:
 #### Connection management
 
 **Connection management** relies on endpoints which conceptually refer to the
-communication channels or connection points through which processes can 
+communication channels or connection points through which processes can
 exchange messages and data. They have the following properties:
 - Each process has a set of endpoints, and each endpoint is uniquely identified
   by a specific identifier (addressing scheme described later).
@@ -130,7 +130,7 @@ Endpoints follows the two layers architecture:
   connection information (like IP address for TCP, Queue Pairs for InfiniBand, or
   Process Identifiers in Portals4) and an interface object.
 
-**Addressing scheme** is based on `monitor.c`. Each endpoint is identified by a 
+**Addressing scheme** is based on `monitor.c`. Each endpoint is identified by a
 unique `uint64_t` where:
 - 32 most significant bits are the **set id**: used for multi-job runs for example.
 - 32 least significant bits are the **process id**: used to identify an UNIX process.
@@ -138,7 +138,7 @@ unique `uint64_t` where:
 #### Communication protocols
 
 Without going into much detail, we describe impactful design choice in LCP.
- 
+
 ##### Datapaths
 
 LCP defines multiple **datapaths** depending on message size, resquest
@@ -147,7 +147,7 @@ networks and their capabilities. For both TAG and AM API, branching is located
 in `*start*` functions (`lcp_tag_send_start` and `lcp_am_send_start`).
 
 ##### Internal communication model
- 
+
 **Internal communication model** is based on the active message paradigm:
 - Handlers are registered and assigned an active message id.
 - Upon reception of data from the network, appropriate handler will be called
@@ -161,16 +161,16 @@ For example in `lcp_tag.c`, `LCP_DEFINE_AM(LCP_AM_ID_EAGER_TAG,
 lcp_eager_tag_handler, 0);` defines the handler that processes eager message
 for the TAG API. It will be executed by the underlying network transport, see
 `tcp.c` in function `lcr_tcp_invoke_am`.
- 
+
 ##### Data layout
 
 Before being sent to the network, data is successively encapsulated by the two
 layers, each adding their own protocol data. Indeed, through IOVEC or packing,
 user data is preceeded by a header containing protocol data of the current
-layer.  Unpacking is performed upon data reception. 
+layer.  Unpacking is performed upon data reception.
 
 Actual memory layout for both TAG and AM API may be found in `lcp_tag.c` and
-`lcp_am.c`. 
+`lcp_am.c`.
 
 We mention that tag-matching offloading protocols require a completely
 different data layout since all protocol data has to be contained in metadata
@@ -180,7 +180,7 @@ container provided by the lower layer. For more details, check
 ##### Software tag matching
 
 Tag matching is implemented by `lcp_tag_match.c` using intrusive queue
-datastructures. It implements the Unexpected Message Queues (UMQ) and 
+datastructures. It implements the Unexpected Message Queues (UMQ) and
 Posted Receive Queues (PRQ). There are a unique queue per MPI rank.
 
 Before being posted to the UMQ, the message data is copied to a receive

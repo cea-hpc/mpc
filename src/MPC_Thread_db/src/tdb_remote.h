@@ -72,7 +72,7 @@ extern "C"
     TDB_OK,
     TDB_MALLOC,
     TDB_NO_THR,
-    
+
     TDB_LIB_NOT_STARTED,
     TDB_LIB_ALREADY,
     TDB_LIB_INHIBED,
@@ -87,10 +87,10 @@ extern "C"
     TDB_LIB_TO_START,
     TDB_LIB_STARTED,
   } tdb_lib_state_e ;
-  
+
   typedef struct tdb_thread_debug_s {
     const void *tid ;
-    
+
     void *context ;
     td_thrinfo_t info ;
     td_event_e last_event ;
@@ -99,12 +99,12 @@ extern "C"
 
     volatile struct tdb_thread_debug_s *next ;
     volatile struct tdb_thread_debug_s *prev ;
-    
+
   } tdb_thread_debug_t ;
 
 
 #if defined(MPC_I686_ARCH)
-#include <sys/reg.h> 
+#include <sys/reg.h>
   #define TDB_PC EIP
   #define TDB_SP UESP
   typedef struct {
@@ -116,7 +116,7 @@ extern "C"
     size_t size ;
   } register_offsets_t ;
 #elif defined(MPC_X86_64_ARCH)
-#include <sys/reg.h> 
+#include <sys/reg.h>
   #define TDB_PC RIP
   #define TDB_SP RSP
   typedef struct {
@@ -136,7 +136,7 @@ extern "C"
   typedef struct {
     size_t size ;
   } register_offsets_t ;
-  
+
   #warning "Architecture not supported"
 #endif
 
@@ -148,19 +148,19 @@ extern "C"
     int (*release) (void *) ;
     int (*free) (void *) ;
   } tdb_lock_t ;
-    
+
   extern volatile register_offsets_t rtdb_reg_offsets ;
   extern volatile int rtdb_thread_number_alive ;
   extern volatile tdb_thread_debug_t *rtdb_thread_list;
   extern volatile tdb_lock_t rtdb_lock ;
-  
+
   /* indicates whether lib_threaddb is already initialized */
   extern volatile int rtdb_lib_state ;
   /* static structure for enabled event, always reachable */
-  extern volatile struct td_thr_events rtdb_ta_events ; 
+  extern volatile struct td_thr_events rtdb_ta_events ;
 
   void rtdb_log (const char *fmt, ...) ;
-  
+
   void rtdb_bp_creation (void) ;
   void rtdb_bp_death (void) ;
 
@@ -175,13 +175,13 @@ extern "C"
   tdb_err_e rtdb_report_death_event    (volatile tdb_thread_debug_t *thread) ;
 
   void rtdb_unknown_start_function(void) ;
-  
+
   static inline tdb_err_e rtdb_set_thread_startfunc (
     volatile tdb_thread_debug_t *thread, void *fct){
 
     tdb_assert(thread != NULL) ;
     if (thread == NULL) return TDB_NO_THR ;
-    
+
     if (fct != NULL)
       thread->info.ti_startfunc = fct ;
 
@@ -204,7 +204,7 @@ extern "C"
 
     tdb_assert(thread != NULL) ;
     if (thread == NULL) return TDB_NO_THR ;
-    
+
     thread->info.ti_stkbase = stkbase ;
     return TDB_OK ;
   }
@@ -214,7 +214,7 @@ extern "C"
 
     tdb_assert(thread != NULL) ;
     if (thread == NULL) return TDB_NO_THR ;
-	
+
     thread->info.ti_stksize = stksize ;
     return TDB_OK ;
   }
@@ -224,7 +224,7 @@ extern "C"
 
     tdb_assert(thread != NULL) ;
     if (thread == NULL) return TDB_NO_THR ;
-    
+
     thread->info.ti_type = type ;
     rtdb_log("set type for thead %p : %d", thread, type);
     return TDB_OK ;
@@ -255,23 +255,23 @@ extern "C"
   }
 
   /* *************************************************************** */
-  
+
   static inline tdb_err_e rtdb_update_thread_state (
     volatile tdb_thread_debug_t *thread, td_thr_state_e state){
 /*     td_thr_state_e old_state ; */
 
 /*     tdb_assert(thread != NULL) ; */
 /*     if (thread == NULL) return TDB_NO_THR ; */
-    
+
 /*     rtdb_log("new state for thead %p : %d (old: %d)", thread, state, thread->info.ti_state); */
-   
+
     /*ensure that the thread is active for the assert*/
 /*     old_state = thread->info.ti_state ; */
 /*     thread->info.ti_state = TD_THR_ACTIVE ; */
-     
+
 /*     tdb_assert(old_state != TD_THR_ANY_STATE); */
 /*     tdb_assert(old_state != state); */
-    
+
     thread->info.ti_state = state ;
     return TDB_OK ;
   }
@@ -291,28 +291,28 @@ extern "C"
 #endif
     return lid ;
   }
-  
+
   static inline tdb_err_e rtdb_update_thread_lid (
     volatile tdb_thread_debug_t *thread, lwpid_t lid){
 
     tdb_assert(thread != NULL) ;
     if (thread == NULL) return TDB_NO_THR ;
-    
+
     tdb_assert(lid != 0) ;
     tdb_assert(lid == rtdb_get_lid());
-    
+
     thread->info.ti_lid = lid ;
     return TDB_OK ;
   }
 
 #define rtdb_update_thread_this_lid(a) rtdb_update_thread_lid (a, rtdb_get_lid())
-  
+
   static inline tdb_err_e rtdb_update_thread_pri (
     volatile tdb_thread_debug_t *thread, int pri){
 
     tdb_assert(thread != NULL) ;
     if (thread == NULL) return TDB_NO_THR ;
-    
+
     thread->info.ti_pri = pri ;
     return TDB_OK ;
   }
@@ -321,7 +321,7 @@ extern "C"
 #if defined(MPC_I686_ARCH)
   static inline tdb_err_e rtdb_set_eip_offset (size_t offset) {
     rtdb_reg_offsets.off_eip = offset ;
-    
+
     if (rtdb_reg_offsets.size < (offset + 1))
       rtdb_reg_offsets.size = offset + 1  ;
 
@@ -330,7 +330,7 @@ extern "C"
   }
   static inline tdb_err_e rtdb_set_esp_offset (size_t offset) {
     rtdb_reg_offsets.off_esp = offset ;
-    
+
     if (rtdb_reg_offsets.size < (offset + 1))
       rtdb_reg_offsets.size = offset + 1  ;
 
@@ -348,7 +348,7 @@ extern "C"
   }
   static inline tdb_err_e rtdb_set_ebx_offset (size_t offset) {
     rtdb_reg_offsets.off_ebx = offset ;
-    
+
     if (rtdb_reg_offsets.size < (offset + 1))
       rtdb_reg_offsets.size = offset + 1  ;
 
@@ -364,10 +364,10 @@ extern "C"
     rtdb_log ("%s -> %d, size = %d", __FUNCTION__, offset, rtdb_reg_offsets.size);
     return TDB_OK ;
   }
-#elif defined(MPC_X86_64_ARCH) 
+#elif defined(MPC_X86_64_ARCH)
   static inline tdb_err_e rtdb_set_rbx_offset (size_t offset) {
     rtdb_reg_offsets.off_rbx = offset ;
-    
+
     if (rtdb_reg_offsets.size < (offset + 1))
       rtdb_reg_offsets.size = offset + 1  ;
 
@@ -376,7 +376,7 @@ extern "C"
   }
   static inline tdb_err_e rtdb_set_rbp_offset (size_t offset) {
     rtdb_reg_offsets.off_rbp = offset ;
-    
+
     if (rtdb_reg_offsets.size < (offset + 1))
       rtdb_reg_offsets.size = offset + 1  ;
 
@@ -385,7 +385,7 @@ extern "C"
   }
   static inline tdb_err_e rtdb_set_r12_offset (size_t offset) {
     rtdb_reg_offsets.off_r12 = offset ;
-    
+
     if (rtdb_reg_offsets.size < (offset + 1))
       rtdb_reg_offsets.size = offset + 1  ;
 
@@ -394,7 +394,7 @@ extern "C"
   }
   static inline tdb_err_e rtdb_set_r13_offset (size_t offset) {
     rtdb_reg_offsets.off_r13 = offset ;
-    
+
     if (rtdb_reg_offsets.size < (offset + 1))
       rtdb_reg_offsets.size = offset + 1  ;
 
@@ -403,7 +403,7 @@ extern "C"
   }
   static inline tdb_err_e rtdb_set_r14_offset (size_t offset) {
     rtdb_reg_offsets.off_r14 = offset ;
-    
+
     if (rtdb_reg_offsets.size < (offset + 1))
       rtdb_reg_offsets.size = offset + 1  ;
 
@@ -412,7 +412,7 @@ extern "C"
   }
   static inline tdb_err_e rtdb_set_r15_offset (size_t offset) {
     rtdb_reg_offsets.off_r15 = offset ;
-    
+
     if (rtdb_reg_offsets.size < (offset + 1))
       rtdb_reg_offsets.size = offset + 1  ;
 
@@ -421,7 +421,7 @@ extern "C"
   }
   static inline tdb_err_e rtdb_set_rsp_offset (size_t offset) {
     rtdb_reg_offsets.off_rsp = offset ;
-    
+
     if (rtdb_reg_offsets.size < (offset + 1))
       rtdb_reg_offsets.size = offset + 1  ;
 
@@ -430,7 +430,7 @@ extern "C"
   }
   static inline tdb_err_e rtdb_set_pc_offset (size_t offset) {
     rtdb_reg_offsets.off_pc = offset ;
-    
+
     if (rtdb_reg_offsets.size < (offset + 1))
       rtdb_reg_offsets.size = offset + 1  ;
 
@@ -440,20 +440,20 @@ extern "C"
 #else
   #warning System unsupported by lib_thread_db
 #endif
-  
+
   static inline tdb_err_e rtdb_set_lock (void *lock,
-					 int (*acquire) (void *), 
+					 int (*acquire) (void *),
 					 int (*release) (void *),
 					 int (*lock_free) (void *))
   {
     rtdb_lock.lock = lock ;
     tdb_assert(lock != NULL) ;
     if (lock == NULL) return TDB_ERR ;
-    
+
     rtdb_lock.acquire = acquire ;
     tdb_assert(acquire != NULL) ;
     if (acquire == NULL) return TDB_ERR ;
-    
+
     rtdb_lock.release = release ;
     tdb_assert(release != NULL) ;
     if (release == NULL) return TDB_ERR ;
@@ -482,7 +482,7 @@ extern "C"
 #define rtdb_update_thread_lid_tid(a, b) rtdb_update_thread_lid (rtdb_get_thread(a),b)
 #define rtdb_update_thread_this_lid_tid(a) rtdb_update_thread_this_lid (rtdb_get_thread(a))
 #define rtdb_update_thread_pri_tid(a, b) rtdb_update_thread_pri (rtdb_get_thread(a),b)
-  
+
 #ifdef __cplusplus
 }
 #endif

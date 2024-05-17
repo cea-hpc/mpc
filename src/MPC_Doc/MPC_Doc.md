@@ -61,7 +61,7 @@ compile time to build an up-to-date documentation while keeping the task of
 documenting easy for developers. The `man_static/` directory contains every
 man-pages in 'man-page format', used in the case the tool is not available when
 building the documentation. Any man-page in `man/` should have a static version,
-already generated into the `main_static/` directory. 
+already generated into the `main_static/` directory.
 
 How-to build the documentation
 ------------------------------
@@ -104,7 +104,7 @@ How-to update the documentation
 * Developers are encouraged to keep their code documented through Doxygen for
   both functions **AND** global/static variables. It will help any further
   maintainer to understand how and why any piece of codes are required to make
-  everything work. 
+  everything work.
 
 * When adding a new option to any command-line program, please keep the help
   updated as well as the man-page. Keep in mind that no one can be aware of such
@@ -125,4 +125,3 @@ How-to update the documentation
     - PACKAGE_DATE: Date of build
     - PACKAGE_NAME: Name of the project (Multi-Processor Computing)
     - PACKAGE_VERSION: The actual version
-

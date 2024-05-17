@@ -40,7 +40,7 @@ int lcr_ptl_recv_block_init(sctk_ptl_rail_info_t *srail, lcr_ptl_recv_block_t **
         int rc = MPC_LOWCOMM_SUCCESS;
         lcr_ptl_recv_block_t *block;
 
-        block = sctk_malloc(sizeof(lcr_ptl_recv_block_t));        
+        block = sctk_malloc(sizeof(lcr_ptl_recv_block_t));
         if (block == NULL) {
                 mpc_common_debug_error("LCR PTL: could not allocate eager block structure");
                 rc = MPC_LOWCOMM_ERROR;
@@ -57,7 +57,7 @@ int lcr_ptl_recv_block_init(sctk_ptl_rail_info_t *srail, lcr_ptl_recv_block_t **
                 rc = MPC_LOWCOMM_ERROR;
                 goto err;
         }
-        
+
         block->meh = PTL_INVALID_HANDLE;
 
         *block_p = block;
@@ -82,8 +82,8 @@ int lcr_ptl_recv_block_activate(lcr_ptl_recv_block_t *block, sctk_ptl_pte_id_t p
                 .match_id    = SCTK_PTL_ANY_PROCESS,
                 .match_bits  = match.raw,
                 .min_free    = block->rail->ptl_info.eager_block_size,
-                .options     = PTL_ME_OP_PUT | 
-                        PTL_ME_MANAGE_LOCAL | 
+                .options     = PTL_ME_OP_PUT |
+                        PTL_ME_MANAGE_LOCAL |
                         PTL_ME_MAY_ALIGN |
                         PTL_ME_EVENT_LINK_DISABLE,
                 .uid         = PTL_UID_ANY,
@@ -99,7 +99,7 @@ int lcr_ptl_recv_block_activate(lcr_ptl_recv_block_t *block, sctk_ptl_pte_id_t p
                                  &block->meh
                                 ));
 
-        mpc_common_debug("LCR_PTL: activate block. start=%p, ptl_comp=%p, block=%p", 
+        mpc_common_debug("LCR_PTL: activate block. start=%p, ptl_comp=%p, block=%p",
                          block->start, &block->comp, block);
 
         return MPC_LOWCOMM_SUCCESS;
@@ -137,7 +137,7 @@ int lcr_ptl_recv_block_enable(sctk_ptl_rail_info_t *srail, sctk_ptl_pte_id_t pte
                         goto err;
                         break;
                 }
-               
+
                 rc = lcr_ptl_recv_block_activate(block, pte, list);
         }
 

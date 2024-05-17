@@ -616,12 +616,12 @@ static inline MPI_Datatype __conf_type_to_mpi(mpc_conf_type_t type)
         {
             return MPI_INT64_T;
         }
-        
+
         if(sizeof(long int) == 4)
         {
             return MPI_INT32_T;
         }
-        
+
         not_implemented();
     }
 	case MPC_CONF_DOUBLE:

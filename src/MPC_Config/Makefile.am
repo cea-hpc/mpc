@@ -22,6 +22,6 @@
 #                                                                      #
 ########################################################################
 mpc_headerdir=$(pkgincludedir)
-mpc_header_HEADERS= ./include/mpc_conf.h  ./include/mpc_conf_types.h 
+mpc_header_HEADERS= ./include/mpc_conf.h  ./include/mpc_conf_types.h
 
 SUBDIRS=src conf

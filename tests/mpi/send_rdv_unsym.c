@@ -35,8 +35,8 @@ int main(int argc, char** argv) {
 	else {
 		MPI_Recv(array_to_recv, recv_size, MPI_INT, 0, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 		printf("Received %d octets\n", send_size*4);
-	} 
- 
+	}
+
 	/* Check */
 	if (process_Rank == 1) {
 		int array_check = 1;

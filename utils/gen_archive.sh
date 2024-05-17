@@ -43,7 +43,7 @@ do_check()
 	safe_exec cp -r ./MPC_Test_Suite ./mpcframework-${VERSION}/
 	safe_exec cd mpcframework-${VERSION}/MPC_Test_Suite
 	safe_exec rm -fr ./build/
-	./mpc_validation --build --color 
+	./mpc_validation --build --color
 	safe_exec ./mpc_validation --test --color --select=simple
 }
 
@@ -80,7 +80,7 @@ Generate an archive of the MPC repository.
 
 It must be called from MPC's root directory.
 
-$0 [--version=x.x.x] [--light] [--no-checksum] [--check] 
+$0 [--version=x.x.x] [--light] [--no-checksum] [--check]
 
 This script supports the following arguments:
 

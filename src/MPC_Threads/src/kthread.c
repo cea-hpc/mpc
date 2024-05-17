@@ -188,7 +188,7 @@ int _mpc_thread_kthread_create(mpc_thread_kthread_t *thread, void *(*start_routi
 	_mpc_thread_kthread_create_start_t *found = NULL;
 	_mpc_thread_kthread_create_start_t *cursor;
 	size_t kthread_stack_size = _mpc_thread_config_get()->kthread_stack_size;
-	
+
 	mpc_common_nodebug("Scan already started kthreads");
 	mpc_common_spinlock_lock(&__thread_list_lock);
 	cursor = (_mpc_thread_kthread_create_start_t *)__thread_list;

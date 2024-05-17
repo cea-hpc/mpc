@@ -35,7 +35,7 @@ ADD --chown=mpcuser:mpcuser https://france.paratools.com/mpc/releases/MPC_${mpc_
 RUN cd /build \
 	&& tar -xf MPC_${mpc_version}.tar.gz \
 	&& /build/MPC_${mpc_version}/installmpc --prefix=/install/ --disable-color -j2 \
-	&& rm -rf /build/* 
+	&& rm -rf /build/*
 COPY docker_entrypoint.sh /install/
 ENTRYPOINT ["/bin/bash", "/install/docker_entrypoint.sh"]
 
@@ -51,4 +51,3 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
 	&& apt-get autoremove -y \
 	&& rm -rf /var/lib/apt/lists/*
 USER mpcuser
-

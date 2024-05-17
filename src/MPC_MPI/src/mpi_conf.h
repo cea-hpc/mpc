@@ -210,7 +210,7 @@ struct _mpc_mpi_config_topo_coll_opts
 
     int max_level;
 
-    /* 
+    /*
      * Use topological algorithms for all persistent / non-blocking /
      * blocking operations
      */
@@ -218,7 +218,7 @@ struct _mpc_mpi_config_topo_coll_opts
     int non_blocking;
     int blocking;
 
-    /* 
+    /*
      * Use topological algorithms for a given collective operation.
      * A topological algorithm is called if either the operation type (blocking,
      * non-blocking...) OR the collective operation (bcast, reduce...) are non-zero.

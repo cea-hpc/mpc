@@ -13,7 +13,7 @@ CONTENTS:
 * **src/**     : module main source files
 * **mpc/**     : MPC-specific interface for MPI standard
 * **mpi/**     : MPI-compatibility layer redirecting to MPC calls
-    
+
 
 COMPONENTS:
 -----------

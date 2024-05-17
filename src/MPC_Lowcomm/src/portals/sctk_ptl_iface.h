@@ -43,7 +43,7 @@
 
 /** global static array to stringify type ID (through SCTK_PTL_STR_TYPE macro) */
 static __UNUSED__ char * __sctk_ptl_str_type[] = {
-	"SCTK_PTL_TYPE_RECOVERY", 
+	"SCTK_PTL_TYPE_RECOVERY",
 	"SCTK_PTL_TYPE_CM",
 	"SCTK_PTL_TYPE_RDMA",
 	"SCTK_PTL_TYPE_STD",
@@ -139,7 +139,7 @@ int sctk_ptl_emit_get(sctk_ptl_local_data_t*, size_t, sctk_ptl_id_t, sctk_ptl_pt
 int sctk_ptl_emit_put(sctk_ptl_local_data_t*, size_t, sctk_ptl_id_t, sctk_ptl_pte_t*, sctk_ptl_matchbits_t, size_t, size_t, size_t, void*);
 int sctk_ptl_emit_atomic(
 		sctk_ptl_local_data_t* put_user, size_t size, sctk_ptl_id_t remote,
-		sctk_ptl_pte_t* pte, sctk_ptl_matchbits_t match, size_t local_off, 
+		sctk_ptl_pte_t* pte, sctk_ptl_matchbits_t match, size_t local_off,
 		size_t remote_off, sctk_ptl_rdma_op_t op, sctk_ptl_rdma_type_t type, void* user_ptr);
 int sctk_ptl_emit_fetch_atomic(
 		sctk_ptl_local_data_t* get_user, sctk_ptl_local_data_t* put_user,
@@ -168,8 +168,8 @@ int sctk_ptl_emit_trig_atomic(
 		sctk_ptl_matchbits_t match, size_t local_off, size_t remote_off, sctk_ptl_rdma_op_t op,
 		sctk_ptl_rdma_type_t type, void* user_ptr, sctk_ptl_cnth_t cnt, size_t threshold);
 int sctk_ptl_emit_trig_fetch_atomic(
-		sctk_ptl_local_data_t* get_user, sctk_ptl_local_data_t* put_user, size_t size, 
-		sctk_ptl_id_t remote, sctk_ptl_pte_t* pte, sctk_ptl_matchbits_t match, size_t local_getoff, 
+		sctk_ptl_local_data_t* get_user, sctk_ptl_local_data_t* put_user, size_t size,
+		sctk_ptl_id_t remote, sctk_ptl_pte_t* pte, sctk_ptl_matchbits_t match, size_t local_getoff,
 		size_t local_putoff, size_t remote_off, sctk_ptl_rdma_op_t op, sctk_ptl_rdma_type_t type,
 		void* user_ptr, sctk_ptl_cnth_t cnt, size_t threshold);
 int sctk_ptl_emit_trig_swap(
@@ -197,14 +197,14 @@ static inline const char * sctk_ptl_rc_decode(int rc)
 		case PTL_IGNORED: return "PTL_IGNORED"; break;
 		case PTL_PID_IN_USE: return "PTL_PID_IN_USE"; break;
 		case PTL_INTERRUPTED: return "PTL_INTERRUPTED"; break;
-		
+
 		case PTL_NO_SPACE: return "PTL_NO_SPACE"; break;
 		case PTL_ARG_INVALID: return "PTL_ARG_INVALID"; break;
-		
+
 		case PTL_PT_IN_USE: return "PTL_PT_IN_USE"; break;
 		case PTL_PT_FULL: return "PTL_PT_FULL"; break;
 		case PTL_PT_EQ_NEEDED: return "PTL_PT_EQ_NEEDED"; break;
-		
+
 		case PTL_LIST_TOO_LONG: return "PTL_LIST_TOO_LONG"; break;
 		case PTL_EQ_EMPTY: return "PTL_EQ_EMPTY"; break;
 		case PTL_EQ_DROPPED: return "PTL_EQ_DROPPED"; break;
@@ -212,7 +212,7 @@ static inline const char * sctk_ptl_rc_decode(int rc)
 		default:
 		{
 			char* buf = (char*)sctk_malloc(sizeof(char) * 40);
-			snprintf(buf, 40, "Portals return code not known: %d", rc); 
+			snprintf(buf, 40, "Portals return code not known: %d", rc);
 			return buf;
 			break;
 		}
@@ -226,25 +226,25 @@ static inline const char * sctk_ptl_event_decode(sctk_ptl_event_t ev)
 	{
 	case PTL_EVENT_GET: return "PTL_EVENT_GET"; break;
 	case PTL_EVENT_GET_OVERFLOW: return "PTL_EVENT_GET_OVERFLOW"; break;
-	
+
 	case PTL_EVENT_PUT: return "PTL_EVENT_PUT"; break;
 	case PTL_EVENT_PUT_OVERFLOW: return "PTL_EVENT_PUT_OVERFLOW"; break;
-	
+
 	case PTL_EVENT_ATOMIC: return "PTL_EVENT_ATOMIC"; break;
 	case PTL_EVENT_ATOMIC_OVERFLOW: return "PTL_EVENT_ATOMIC_OVERFLOW"; break;
-	
+
 	case PTL_EVENT_FETCH_ATOMIC: return "PTL_EVENT_FETCH_ATOMIC"; break;
 	case PTL_EVENT_FETCH_ATOMIC_OVERFLOW: return "PTL_EVENT_FETCH_ATOMIC_OVERFLOW"; break;
 	case PTL_EVENT_REPLY: return "PTL_EVENT_REPLY"; break;
 	case PTL_EVENT_SEND: return "PTL_EVENT_SEND"; break;
 	case PTL_EVENT_ACK: return "PTL_EVENT_ACK"; break;
-	
+
 	case PTL_EVENT_PT_DISABLED: return "PTL_EVENT_PT_DISABLED"; break;
 	case PTL_EVENT_LINK: return "PTL_EVENT_LINK"; break;
 	case PTL_EVENT_AUTO_UNLINK: return "PTL_EVENT_AUTO_UNLINK"; break;
 	case PTL_EVENT_AUTO_FREE: return "PTL_EVENT_AUTO_FREE"; break;
 	case PTL_EVENT_SEARCH: return "PTL_EVENT_SEARCH"; break;
-	
+
 	default:
 		return "Portals Event not known"; break;
 	}
@@ -322,7 +322,7 @@ static inline int sctk_ptl_data_deserialize ( const char *inval, void *outval, u
  * \param[in] invallen input object size
  * \param[out] outval the string version of the object
  * \param[in] outvallen the max string length
- * \return the effective string size if succeeded, -1 otherwise 
+ * \return the effective string size if succeeded, -1 otherwise
  */
 static inline int sctk_ptl_data_serialize ( const void *inval, size_t invallen, char *outval, size_t outvallen )
 {
@@ -361,11 +361,11 @@ static inline int sctk_ptl_data_serialize ( const void *inval, size_t invallen, 
 static inline int sctk_ptl_eq_poll_md(sctk_ptl_rail_info_t* srail, sctk_ptl_event_t* ev)
 {
 	int ret;
-	
+
 	assert(ev);
 	ret = PtlEQGet(srail->mds_eq, ev);
 	sctk_ptl_chk(ret);
-	
+
 	return ret;
 }
 
@@ -384,7 +384,7 @@ static inline int sctk_ptl_eq_poll_md(sctk_ptl_rail_info_t* srail, sctk_ptl_even
 static inline int sctk_ptl_eq_poll_me(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte, sctk_ptl_event_t* ev)
 {
 	int ret;
-	
+
 	assert(ev && pte && srail);
 	ret = PtlEQGet(pte->eq, ev);
 	sctk_ptl_chk(ret);
@@ -449,7 +449,7 @@ static inline void sctk_ptl_compute_chunks(sctk_ptl_rail_info_t* srail, size_t d
 	/* first, if the msg size reached the cufoff, the chunk size if a simple division */
 	size = (total > srail->cutoff) ? (size_t)(total / SCTK_PTL_MAX_RDV_BLOCKS) : total;
 	nb   = (size < total) ? SCTK_PTL_MAX_RDV_BLOCKS : 1;
-		
+
 	/* if sub-blocks are larger than the largest possible ME/MD
 	 * Set dimension to the system one.
 	 * NOTE: This can lead to resource exhaustion if srail->max_mr << MSG_SIZE

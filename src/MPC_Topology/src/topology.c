@@ -148,7 +148,7 @@ void _mpc_topology_map_and_restrict_by_cpuset(hwloc_topology_t target_topology,
 
 		hwloc_bitmap_copy( cpuset, pinning_constraints);
 	}
-        
+
     __restrict_topo_to_cpuset(target_topology, cpuset);
 
 	hwloc_bitmap_free(cpuset);
@@ -1406,7 +1406,7 @@ int _mpc_topology_add_distance(hwloc_topology_t topology, int object_count,
     unsigned long hwloc_kind)
 {
   hwloc_distances_add_handle_t handle;
-  // Create the empty distance structure 
+  // Create the empty distance structure
   handle = hwloc_distances_add_create(topology, NULL, hwloc_kind, 0);
 
   if (!handle)
@@ -1499,10 +1499,10 @@ void mpc_topology_init_distance_simulation_factors(int * tab_cpuid, int size) {
 
   hwloc_uint64_t * latency_matrix   = sctk_malloc(size * size * sizeof(hwloc_uint64_t));
   hwloc_uint64_t * bandwidth_matrix = sctk_malloc(size * size * sizeof(hwloc_uint64_t));
-  
+
   for(int i = 0; i < size; i++) {
     hwloc_obj_t obj = hwloc_get_obj_by_type(global_topology, HWLOC_OBJ_PU, tab_cpuid[i * 2]);
-    
+
     latency_matrix[i * size + i] = 0;
     bandwidth_matrix[i * size + i] = 0;
     for(int j = i+1; j < size; j++) {
@@ -1537,12 +1537,12 @@ void mpc_topology_init_distance_simulation_factors(int * tab_cpuid, int size) {
   if(latency_size)
   {
     _mpc_topology_add_distance(global_topology, size, objs, latency_matrix,
-        HWLOC_DISTANCES_KIND_FROM_USER | HWLOC_DISTANCES_KIND_MEANS_LATENCY);    
+        HWLOC_DISTANCES_KIND_FROM_USER | HWLOC_DISTANCES_KIND_MEANS_LATENCY);
   }
 
   if(bandwidth_size) {
     _mpc_topology_add_distance(global_topology, size, objs, bandwidth_matrix,
-        HWLOC_DISTANCES_KIND_FROM_USER | HWLOC_DISTANCES_KIND_MEANS_BANDWIDTH);    
+        HWLOC_DISTANCES_KIND_FROM_USER | HWLOC_DISTANCES_KIND_MEANS_BANDWIDTH);
   }
 
 
@@ -1644,10 +1644,10 @@ int mpc_topology_get_numa_node_count()
 	return _mpc_topology_get_numa_node_count( __mpc_module_topology);
 }
 
-int mpc_topology_get_socket_count()                                  
-{ 
+int mpc_topology_get_socket_count()
+{
   return _mpc_topology_get_socket_count( __mpc_module_topology);
-}  
+}
 
 int mpc_topology_has_numa_nodes(void)
 {
