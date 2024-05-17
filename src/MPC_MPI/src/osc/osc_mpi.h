@@ -30,11 +30,12 @@
 #define MAX_WIN_NAME 64
 
 typedef struct mpc_osc_module_state {
-        
+        volatile uint64_t completion_counter;
+        volatile uint64_t post_state[0]; /* Depends on the group size. */
 } mpc_osc_module_state_t;
 
 typedef struct mpc_osc_module {
-        mpc_osc_module_state_t state;
+        mpc_osc_module_state_t *state;
 
 } mpc_osc_module_t;
 
@@ -57,8 +58,12 @@ typedef struct MPI_ABI_Win {
         int disp_unit;
         int *disp_units;
 
+        lcp_mem_h  lkey_state;
         lcp_mem_h  lkey_data;
         lcp_mem_h *rkeys_data;
+        lcp_mem_h *rkeys_state;
+
+        mpc_osc_module_t win_module;
 } mpc_win_t;
 
 #define OSC_MPI_GET_DISP(_win, _target) \
@@ -113,12 +118,12 @@ int mpc_osc_rget(void *origin_addr, int origin_count,
                  _mpc_lowcomm_general_datatype_t *origin_dt,
                  int target, ptrdiff_t target_disp, int target_count,
                  _mpc_lowcomm_general_datatype_t *target_dt, mpc_win_t *win,
-                 mpc_lowcomm_request_t *request);
+                 MPI_Request *req);
 int mpc_osc_raccumulate(const void *origin_addr, int origin_count, 
                         _mpc_lowcomm_general_datatype_t *origin_dt,
                         int target, ptrdiff_t target_disp, int target_count,
                         _mpc_lowcomm_general_datatype_t *target_dt, MPI_Op op,
-                        mpc_win_t *win, mpc_lowcomm_request_t *request);
+                        mpc_win_t *win, MPI_Request *request);
 int mpc_osc_rget_accumulate(const void *origin_addr, int origin_count, 
                                 _mpc_lowcomm_general_datatype_t *origin_datatype,
                                 void *result_addr, int result_count, 
@@ -126,7 +131,7 @@ int mpc_osc_rget_accumulate(const void *origin_addr, int origin_count,
                                 int target_rank, ptrdiff_t target_disp, int target_count,
                                 _mpc_lowcomm_general_datatype_t *target_datatype,
                                 MPI_Op op, mpc_win_t *win,
-                                mpc_lowcomm_request_t *request);
+                                MPI_Request *request);
 
 /* Passive target. */
 int mpc_osc_lock(int lock_type, int target, int mpi_assert, mpc_win_t *win);

@@ -117,6 +117,7 @@ int mpc_osc_rput(const void *origin_addr,
         size_t origin_len, target_len;
         int is_orig_dt_contiguous   = 0;
         int is_target_dt_contiguous = 0;
+        mpc_lowcomm_request_t *request;
         lcp_task_h task;
 
         is_orig_dt_contiguous = mpc_lowcomm_datatype_is_common(origin_dt) ||
@@ -167,13 +168,162 @@ int mpc_osc_rput(const void *origin_addr,
                        .field_mask = 0,
                };
 
-               *req = (MPI_internal_request_t *)lcp_put_nb(win->eps[target], task, origin_addr,
-                                                              origin_len, target_disp, win->rkeys_data[target],
-                                                              &req_param);
+               request = (mpc_lowcomm_request_t *)lcp_put_nb(win->eps[target], task, origin_addr,
+                                                             origin_len, target_disp, win->rkeys_data[target],
+                                                             &req_param);
+
+               *req = (MPI_internal_request_t *)(request + 1);
         } else {
                 not_implemented();
         }
 
 err:
         return rc;
+}
+
+int mpc_osc_get(void *origin_addr, int origin_count, 
+                _mpc_lowcomm_general_datatype_t *origin_dt,
+                int target, ptrdiff_t target_disp, int target_count,
+                _mpc_lowcomm_general_datatype_t *target_dt, mpc_win_t *win) 
+{
+        int rc = MPC_SUCCESS;
+        size_t origin_len, target_len;
+        int is_orig_dt_contiguous   = 0;
+        int is_target_dt_contiguous = 0;
+        lcp_task_h task;
+        lcp_status_ptr_t status;
+
+        is_orig_dt_contiguous = mpc_lowcomm_datatype_is_common(origin_dt) ||
+                mpc_mpi_cl_type_is_contiguous(origin_dt);
+        is_target_dt_contiguous = mpc_lowcomm_datatype_is_common(target_dt) ||
+                mpc_mpi_cl_type_is_contiguous(target_dt);
+
+        if (!is_orig_dt_contiguous) {
+                not_implemented();
+        }
+
+        if (!is_target_dt_contiguous) {
+                not_implemented();
+        }
+
+        rc = _mpc_cl_type_size(origin_dt, &origin_len);
+        if (rc != MPC_SUCCESS) {
+                goto err;
+        }
+
+        rc = _mpc_cl_type_size(target_dt, &target_len);
+        if (rc != MPC_SUCCESS) {
+                goto err;
+        }
+
+        task = lcp_context_task_get(win->ctx, mpc_common_get_task_rank());
+
+        if (is_orig_dt_contiguous && is_target_dt_contiguous) {
+               origin_len += origin_count;
+               target_len += target_count;
+
+               assert(target_len == origin_len);
+
+               if (win->eps[target] == NULL) {
+                       uint64_t target_uid = mpc_lowcomm_communicator_uid(win->comm, 
+                                                                          target);
+
+                       rc = lcp_ep_create(win->mngr, &win->eps[target], 
+                                          target_uid, 0);
+                       if (rc != 0) {
+                               mpc_common_debug_fatal("Could not create endpoint.");
+                       }
+                }
+
+               lcp_request_param_t req_param = {
+                       .ep  = win->eps[target],
+                       .datatype = LCP_DATATYPE_CONTIGUOUS,
+                       .field_mask = 0,
+               };
+
+               status = lcp_get_nb(win->eps[target], task, origin_addr,
+                                   origin_len, target_disp, win->rkeys_data[target],
+                                   &req_param);
+               if (LCP_STATUS_IS_ERR(status)) {
+                       mpc_common_debug_error("OSC: put. rc=%d", status);
+               }
+        }
+
+err:
+        return rc;
+}
+
+int mpc_osc_rget(void *origin_addr, int origin_count, 
+                 _mpc_lowcomm_general_datatype_t *origin_dt,
+                 int target, ptrdiff_t target_disp, int target_count,
+                 _mpc_lowcomm_general_datatype_t *target_dt, mpc_win_t *win,
+                 MPI_Request *req)
+{
+        int rc = MPC_SUCCESS;
+        size_t origin_len, target_len;
+        int is_orig_dt_contiguous   = 0;
+        int is_target_dt_contiguous = 0;
+        mpc_lowcomm_request_t *request;
+        lcp_task_h task;
+
+        is_orig_dt_contiguous = mpc_lowcomm_datatype_is_common(origin_dt) ||
+                mpc_mpi_cl_type_is_contiguous(origin_dt);
+        is_target_dt_contiguous = mpc_lowcomm_datatype_is_common(target_dt) ||
+                mpc_mpi_cl_type_is_contiguous(target_dt);
+
+        if (!is_orig_dt_contiguous) {
+                not_implemented();
+        }
+
+        if (!is_target_dt_contiguous) {
+                not_implemented();
+        }
+
+        rc = _mpc_cl_type_size(origin_dt, &origin_len);
+        if (rc != MPC_SUCCESS) {
+                goto err;
+        }
+
+        rc = _mpc_cl_type_size(target_dt, &target_len);
+        if (rc != MPC_SUCCESS) {
+                goto err;
+        }
+
+        task = lcp_context_task_get(win->ctx, mpc_common_get_task_rank());
+
+        if (is_orig_dt_contiguous && is_target_dt_contiguous) {
+               origin_len += origin_count;
+               target_len += target_count;
+
+               assert(target_len == origin_len);
+
+               if (win->eps[target] == NULL) {
+                       uint64_t target_uid = mpc_lowcomm_communicator_uid(win->comm, 
+                                                                          target);
+
+                       rc = lcp_ep_create(win->mngr, &win->eps[target], 
+                                          target_uid, 0);
+                       if (rc != 0) {
+                               mpc_common_debug_fatal("Could not create endpoint.");
+                       }
+                }
+
+               lcp_request_param_t req_param = {
+                       .ep  = win->eps[target],
+                       .datatype = LCP_DATATYPE_CONTIGUOUS,
+                       .field_mask = 0,
+               };
+
+               request = (mpc_lowcomm_request_t *)lcp_get_nb(win->eps[target], task, origin_addr,
+                                                             origin_len, target_disp, win->rkeys_data[target],
+                                                             &req_param);
+
+               *req = (MPI_internal_request_t *)(request + 1);
+        } else {
+                not_implemented();
+        }
+
+err:
+        return rc;
+
 }

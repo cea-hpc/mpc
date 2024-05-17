@@ -681,14 +681,15 @@ int lcp_atomic_op_nb(lcp_ep_h ep, lcp_task_h task, const void *buffer,
  * @ingroup lcp_mem
  * @brief lcp memory flags. 
  *
- * Specifies wether the memory should be allocated or not by lcp_mem_register.
+ * Flags that will defined the allocation, registration strategies.
  *
  */
 
 enum {
-        LCP_MEM_REGISTER_ALLOCATE = MPC_BIT(0),
-        LCP_MEM_REGISTER_DYNAMIC  = MPC_BIT(1),
-        LCP_MEM_REGISTER_STATIC   = MPC_BIT(2),
+        LCP_MEM_REGISTER_ALLOCATE = MPC_BIT(0), /**< Memory allocated and registered. */
+        LCP_MEM_REGISTER_CREATE   = MPC_BIT(1), /**< Memory only registered. */
+        LCP_MEM_REGISTER_DYNAMIC  = MPC_BIT(2), /**< Dynamic memory type, see \ref lcp_mem. */
+        LCP_MEM_REGISTER_STATIC   = MPC_BIT(3), /**< Static memory type, see \ref lcp_mem. */
 };
 
 /**
@@ -696,8 +697,8 @@ enum {
  * @brief lcp memory parameters. 
  *
  * Specifies a set of fields used to characterize how a memory should be
- * registered. for example, memory could be already allocated or, on the
- * contrary it should be allocated by lcp.
+ * registered. For example, memory could be already allocated or, on the
+ * contrary it could be allocated by LCP.
  *
  */
 
@@ -710,9 +711,15 @@ typedef struct lcp_mem_param {
 
 /**
  * @ingroup LCP_MEM
+<<<<<<< HEAD
  * @brief LCP register memory.
+=======
+ * @brief LCP provision memory. 
+>>>>>>> 2f7a4619a (WIP: OSC: implementing start, post, wait, complete.)
  *
- * Register memory to a NIC and get a memory handle from it.
+ * Provision memory by allocating if specified in the parameters and by
+ * registering to a transport and get a memory handle from it. This call be used
+ * for MPI 3 Windows allocation calls for example.
  *
  * @param [in] mngr  Manager handle.
  * @param [in] mem_p  Pointer handle to registered memory.
@@ -721,8 +728,8 @@ typedef struct lcp_mem_param {
  * @param [in] flags  Flags to specify kind of registration.
  * @return Error code returned.
  */
-int lcp_mem_register(lcp_manager_h mngr, lcp_mem_h *mem_p, 
-                     lcp_mem_param_t *params);
+int lcp_mem_provision(lcp_manager_h mngr, lcp_mem_h *mem_p, 
+                      lcp_mem_param_t *params);
 
 /**
  * @ingroup LCP_MEM
@@ -734,7 +741,7 @@ int lcp_mem_register(lcp_manager_h mngr, lcp_mem_h *mem_p,
  * @param [in] mem  Memory handle to be deregistered.
  * @return Error code returned.
  */
-int lcp_mem_deregister(lcp_manager_h mngr, lcp_mem_h mem);
+int lcp_mem_deprovision(lcp_manager_h mngr, lcp_mem_h mem);
 
 /**
  * @ingroup LCP_MEM
@@ -761,7 +768,7 @@ int lcp_mem_query(lcp_mem_h mem, lcp_mem_attr_t *mem_attr);
  * @param [in] mem  Memory handle to be packed.
  * @param [in] rkey_buf_p  Buffer where memory key data will be packed
  *                         (allocated by LCP).
- * @param [in] rkey_len  Length of packed memory key.
+ * @param [in] rkey_len  Length of packed memory key in bytes.
  * @return Error code returned.
  */
 int lcp_mem_pack(lcp_manager_h mngr, lcp_mem_h mem, 
@@ -778,7 +785,7 @@ int lcp_mem_pack(lcp_manager_h mngr, lcp_mem_h mem,
  * @param [in] mngr  Manager handle.
  * @param [in] mem_p  Pointer where memory key will be unpacked.
  * @param [in] src  Buffer where memory key data has been packed
- * @param [in] size  Size of the packed key.
+ * @param [in] size  Size of the packed key in bytes.
  * @return Error code returned.
  */
 int lcp_mem_unpack(lcp_manager_h mngr, lcp_mem_h *mem_p, 

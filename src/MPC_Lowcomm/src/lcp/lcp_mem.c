@@ -255,13 +255,6 @@ int lcp_pinning_entry_list_remove(struct lcp_pinning_entry_list * list, struct l
 }
 
 
-int lcp_mem_register_with_bitmap(lcp_manager_h mngr,
-                                lcp_mem_h *mem_p,
-                                bmap_t bitmap,
-                                const void *buffer,
-                                size_t length,
-                                unsigned flags);
-
 int lcp_pinning_entry_list_decimate_no_lock(struct lcp_pinning_entry_list * list, ssize_t size_to_decimate)
 {
         struct lcp_pinning_entry * last = list->entry;
@@ -321,10 +314,10 @@ struct lcp_pinning_entry * lcp_pinning_entry_list_push(struct lcp_pinning_entry_
 
                 int rc;
                 lcp_mem_h mem_p = NULL;
-                rc = lcp_mem_register_with_bitmap(mngr, &mem_p,
-                                                  bitmap,
-                                                  buffer,
-                                                  len, flags);
+                rc = lcp_mem_reg_from_map(mngr, mem_p,
+                                          bitmap,
+                                          buffer,
+                                          len, flags);
                 if (rc != MPC_LOWCOMM_SUCCESS) {
                         goto err;
                 }
@@ -392,6 +385,11 @@ int lcp_pinning_mmu_release(struct lcp_pinning_mmu *mmu)
 
 
 //NOTE: implements a FIFO like caching algorithm.
+//FIXME: It seems there is a bug whenever a cached memory has been found, then
+//       it gathers with it previous lower layer memory pins with their
+//       configurations which may not have the same base address or size. Since
+//       put/get operation are performed using the base address the remote key,
+//       it won't use the right base address to compute its offset.
 lcp_mem_h lcp_pinning_mmu_pin(lcp_manager_h mngr, const void *addr, 
                               size_t size, bmap_t bitmap, unsigned flags)
 {
@@ -422,16 +420,54 @@ int lcp_pinning_mmu_unpin(lcp_manager_h mngr, lcp_mem_h mem)
         return 0;
 }
 
-/**
- * @brief Pack data as rkey buffer.
- *
- * @param ctx lcp context
- * @param mem data to pack
- * @param dest packed rkey buffer
- * @return size_t length of output buffer
- */
+typedef enum {
+        LCP_MEM_ALLOC_MMAP = 0, /* Use Unix mmap. */
+        LCP_MEM_ALLOC_MALLOC,   /* Use malloc.    */
+        LCP_MEM_ALLOC_RD        /* Use resource domain, shmem for example. */
+} lcp_mem_alloc_method_t;
+
+static int lcp_mem_alloc(lcp_mem_h mem, size_t length, unsigned flags)
+{
+        UNUSED(flags);
+        int rc = MPC_LOWCOMM_SUCCESS;
+        lcp_mem_alloc_method_t method;
+
+        //NOTE: right now only malloc is supported, later support for shared
+        //      memory can be added.
+        method = LCP_MEM_ALLOC_MALLOC;
+
+        switch (method) {
+        case LCP_MEM_ALLOC_MALLOC:
+                mem->base_addr = (uint64_t)sctk_malloc(length);
+                if ((void *)mem->base_addr == NULL) {
+                        mpc_common_debug_error("LCP MEM: could not allocate "
+                                               "memory base address.");
+                        rc = MPC_LOWCOMM_ERROR;
+                }
+                mem->length = length;
+                break;
+        case LCP_MEM_ALLOC_RD:
+                //NOTE: implement Resource Domain allocation to allocate shared
+                //      memory for example. 
+                not_implemented();
+                break;
+        case LCP_MEM_ALLOC_MMAP:
+                //NOTE: use MMAP with MAP_FIXED to implement symmetric
+                //      allocation with a unique address. This could avoid
+                //      overloading translation table of the NIC for example
+                //      when a lot of windows need to be created. 
+                not_implemented();
+                break;
+        default:
+                mpc_common_debug_error("LCP MEM: unknown allocation method.");
+                rc = MPC_LOWCOMM_ERROR;
+        }
+
+        return rc;
+}
+
 //FIXME: A memory range described by lcp_mem_h is unique (same address, same
-//       length. As a consequence, transport memory key will be identical for
+//       length). As a consequence, transport memory key will be identical for
 //       homogenous tranports, so no need to pack it for all rail in case of
 //       multirail.
 size_t lcp_mem_rkey_pack(lcp_manager_h mngr, lcp_mem_h mem, void *dest)
@@ -456,19 +492,10 @@ size_t lcp_mem_rkey_pack(lcp_manager_h mngr, lcp_mem_h mem, void *dest)
         return packed_size;
 }
 
-/**
- * @brief Pack data as rkey and return buffer size.
- *
- * @param ctx lcp context
- * @param mem memory to pack
- * @param rkey_buf_p output rkey buffer
- * @param rkey_len output rkey buffer length
- * @return int MPC_LOWCOMM_SUCCESS in case of success
- */
 int lcp_mem_pack(lcp_manager_h mngr, lcp_mem_h mem, 
                  void **rkey_buf_p, int *rkey_len)
 {
-        int i;
+        int i, rc = MPC_LOWCOMM_SUCCESS;
         size_t packed_size = 0;
         lcr_rail_attr_t attr;
         void *rkey_buf;
@@ -485,13 +512,20 @@ int lcp_mem_pack(lcp_manager_h mngr, lcp_mem_h mem,
         }
 
         rkey_buf = sctk_malloc(packed_size);
+        if (rkey_buf == NULL) {
+                mpc_common_debug_error("LCP MEM: could not allocate packed key "
+                                       "buffer.");
+                rc = MPC_LOWCOMM_ERROR;
+                goto err;
+        }
 
         lcp_mem_rkey_pack(mngr, mem, rkey_buf);
 
         *rkey_buf_p = rkey_buf;
         *rkey_len   = packed_size;
 
-        return MPC_LOWCOMM_SUCCESS;
+err:
+        return rc;
 }
 
 void lcp_mem_release_rkey_buf(void *rkey_buffer)
@@ -604,43 +638,12 @@ err:
         return rc;
 }
 
-int lcp_mem_register_with_bitmap(lcp_manager_h mngr,
-                                 lcp_mem_h *mem_p,
-                                 bmap_t bitmap,
-                                 const void *buffer,
-                                 size_t length,
-                                 unsigned flags)
-{
-        lcp_mem_h mem;
-        int rc = lcp_mem_create(mngr, &mem);
-
-        if (rc != MPC_LOWCOMM_SUCCESS) {
-                goto err;
-        }
-
-        mem->length = length;
-        mem->base_addr = (uint64_t)buffer;
-        mem->bm = bitmap;
-
-        rc = lcp_mem_reg_from_map(mngr, mem, bitmap, 
-                                  buffer, length, flags); 
-        if (rc != MPC_LOWCOMM_SUCCESS) {
-                goto err;
-        }
-
-        *mem_p = mem;
-
-err:
-        return rc;
-}
-
-
 //FIXME: what append if a memory could not get registered ? Miss error handling:
 //       if a subset could not be registered, perform the communication on the
 //       successful memory pins ?
-int lcp_mem_register(lcp_manager_h mngr,
-                     lcp_mem_h *mem_p,
-                     lcp_mem_param_t *param)
+int lcp_mem_provision(lcp_manager_h mngr,
+                      lcp_mem_h *mem_p,
+                      lcp_mem_param_t *param)
 {
         int rc = MPC_LOWCOMM_SUCCESS;
         int i;
@@ -664,19 +667,26 @@ int lcp_mem_register(lcp_manager_h mngr,
                 return MPC_LOWCOMM_ERROR;
         }
 
-        if (param->address == NULL && !(param->flags & LCP_MEM_REGISTER_ALLOCATE)) {
-                mpc_common_debug_error("LCP MEM: must specify address field.");
+        if (param->address == NULL && param->flags & LCP_MEM_REGISTER_CREATE) {
+                mpc_common_debug_error("LCP MEM: address must not be null "
+                                       "when creating a memory.");
                 return MPC_LOWCOMM_ERROR;
         }
 
         if (!(param->flags & (LCP_MEM_REGISTER_STATIC |
                               LCP_MEM_REGISTER_DYNAMIC))) {
-                mpc_common_debug_error("LCP MEM: must specify regisration flags.");
+                mpc_common_debug_error("LCP MEM: must specify memory type flags.");
                 return MPC_LOWCOMM_ERROR;
         }
 
         if (param->flags & LCP_MEM_REGISTER_ALLOCATE && param->address != NULL) {
-                mpc_common_debug_warning("LCP MEM: provided address not null.");
+                mpc_common_debug_warning("LCP MEM: provided address not null, will "
+                                         "be overwritten.");
+        }
+
+        rc = lcp_mem_create(mngr, &mem);
+        if (rc != MPC_LOWCOMM_SUCCESS) {
+                goto err;
         }
 
         /* Compute bitmap registration. Strategy is to register on all
@@ -684,16 +694,28 @@ int lcp_mem_register(lcp_manager_h mngr,
         for (i = 0; i < mngr->num_ifaces; i++) {
 		mngr->ifaces[i]->iface_get_attr(mngr->ifaces[i], &attr);
                 
+                //FIXME: CAP_RMA should not be the only reason to set the
+                //       bitmap, for example SHMEM.
                 if (attr.iface.cap.flags & LCR_IFACE_CAP_RMA) {
                         MPC_BITMAP_SET(bm, i);
                 }
         }
 
+        if (param->flags & LCP_MEM_REGISTER_ALLOCATE) {
+                rc = lcp_mem_alloc(mem, param->size, 0);
+                if (rc != MPC_LOWCOMM_SUCCESS) {
+                        goto err;
+                }
+        } else {
+                mem->base_addr = (uint64_t)param->address;
+                mem->length    = param->size;
+        }
+
         flags = param->flags & LCP_MEM_REGISTER_DYNAMIC ?
                 LCR_IFACE_REGISTER_MEM_DYN : LCR_IFACE_REGISTER_MEM_STAT;
 
-        mem = lcp_pinning_mmu_pin(mngr, param->address, param->size, 
-                                  bm, flags);
+        rc = lcp_mem_reg_from_map(mngr, mem, bm, param->address, param->size, 
+                                  flags);
         if (rc != MPC_LOWCOMM_SUCCESS) {
                 goto err;
         }
@@ -821,7 +843,7 @@ err:
         return rc;
 }
 
-int lcp_mem_deregister(lcp_manager_h mngr, lcp_mem_h mem)
+int lcp_mem_deprovision(lcp_manager_h mngr, lcp_mem_h mem)
 {
         int i;
         int rc = MPC_LOWCOMM_SUCCESS;

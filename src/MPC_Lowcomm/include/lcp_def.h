@@ -76,8 +76,10 @@ typedef void (*lcp_request_init_callback_func_t)(void *request);
  */
 
 enum {
-        LCP_MEM_SIZE_FIELD = MPC_BIT(0),
-        LCP_MEM_ADDR_FIELD = MPC_BIT(1),
+        LCP_MEM_SIZE_FIELD     = MPC_BIT(0),
+        LCP_MEM_ADDR_FIELD     = MPC_BIT(1),
+        LCP_MEM_PACK_KEY_SIZE  = MPC_BIT(2),
+        LCP_MEM_PACK_KEY_ALLOC = MPC_BIT(3),
 };
 
 /**

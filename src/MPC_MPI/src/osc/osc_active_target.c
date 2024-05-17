@@ -33,7 +33,8 @@
 
 #include "mpc_thread_accessor.h"
 
-int osc_flush_complete(int status, void *data) {
+int osc_flush_complete(int status, void *data, size_t length) {
+        UNUSED(length);
         mpc_lowcomm_request_t *req = (mpc_lowcomm_request_t *)data;
 
         if (status != MPC_LOWCOMM_SUCCESS) {
@@ -84,4 +85,11 @@ barrier:
         PMPI_Barrier(win->comm);
 err:
         return rc;
+}
+
+int mpc_osc_start(mpc_lowcomm_group_t *group, 
+                  int mpi_assert, 
+                  mpc_win_t *win)
+{
+
 }

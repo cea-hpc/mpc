@@ -39,14 +39,18 @@ static int _win_setup(mpc_win_t *win, void **base, size_t size,
         UNUSED(info);
         int rc = MPC_LOWCOMM_SUCCESS;
         long values[2];
-        lcp_mem_h w_mem;
+        lcp_mem_h w_mem_data, w_mem_state;
         lcp_mem_attr_t attr;
-        void *key_buf;
-        int key_len;
-        int *rkey_lengths;
-        int *disp_rkeys;
-        int total_rkey_lengths;
-        char *rkeys_buf;
+        void *win_info = NULL;
+        size_t win_info_len = 0;
+        int win_info_offset = 0;
+        void *key_data_buf = NULL, *key_state_buf = NULL;
+        int key_data_len, key_state_len;
+        size_t rkey_data_len, rkey_state_len;
+        int *win_info_lengths = NULL;
+        int *win_info_disps = NULL;
+        int total_win_info_lengths;
+        char *win_info_buf = NULL;
 
         if (flavor == MPI_WIN_FLAVOR_SHARED) {
                 rc = -1;
@@ -83,19 +87,20 @@ static int _win_setup(mpc_win_t *win, void **base, size_t size,
                 lcp_mem_param_t param = {
                         .field_mask = LCP_MEM_ADDR_FIELD |
                                 LCP_MEM_SIZE_FIELD,
-                        .flags   = LCP_MEM_REGISTER_STATIC,
+                        .flags   = LCP_MEM_REGISTER_CREATE |
+                                LCP_MEM_REGISTER_STATIC,
                         .address = *base,
                         .size    = size
                 };
 
-                rc = lcp_mem_register(win->mngr, &w_mem, &param); 
+                rc = lcp_mem_provision(win->mngr, &w_mem_data, &param); 
                 if (rc != LCP_SUCCESS) {
                         goto err;
                 }
                 
                 attr.field_mask = LCP_MEM_ADDR_FIELD |
                         LCP_MEM_SIZE_FIELD;
-                rc = lcp_mem_query(w_mem, &attr);
+                rc = lcp_mem_query(w_mem_data, &attr);
 
                 assert(attr.size >= size && attr.address == *base);
         } else if (flavor == MPI_WIN_FLAVOR_ALLOCATE) {
@@ -109,14 +114,14 @@ static int _win_setup(mpc_win_t *win, void **base, size_t size,
                         .size    = size
                 };
 
-                rc = lcp_mem_register(win->mngr, &w_mem, &param); 
+                rc = lcp_mem_provision(win->mngr, &w_mem_data, &param); 
                 if (rc != LCP_SUCCESS) {
                         goto err;
                 }
                 
                 attr.field_mask = LCP_MEM_ADDR_FIELD |
                         LCP_MEM_SIZE_FIELD;
-                rc = lcp_mem_query(w_mem, &attr);
+                rc = lcp_mem_query(w_mem_data, &attr);
 
                 assert(attr.size >= size && attr.address != NULL);
         } else {
@@ -124,64 +129,145 @@ static int _win_setup(mpc_win_t *win, void **base, size_t size,
                 goto err;
         }
 
-        win->lkey_data = w_mem;
+        win->lkey_data = w_mem_data;
+        
+        /* Allocate state for remote synchronization. */
+        win->win_module.state = sctk_malloc(sizeof(mpc_osc_module_state_t) + 
+                                            win->comm_size * sizeof(uint64_t));
+        if (win->win_module.state == NULL) {
+                mpc_common_debug_error("MPI OSC: could not allocate module "
+                                       "state.");
+                rc = MPC_LOWCOMM_ERROR;
+                goto unmap_mem_data;
+        }
+        memset(win->win_module.state, 0, sizeof(mpc_osc_module_state_t) +
+               win->comm_size * sizeof(uint64_t));
 
-        /* Exchange the memory key with every other process. */
-        rc = lcp_mem_pack(win->mngr, w_mem, &key_buf, &key_len);
+        lcp_mem_param_t mem_state_param = {
+                .field_mask = LCP_MEM_ADDR_FIELD |
+                        LCP_MEM_SIZE_FIELD,
+                .flags   = LCP_MEM_REGISTER_CREATE |
+                        LCP_MEM_REGISTER_STATIC,
+                .address = *base,
+                .size    = size
+        };
+
+        rc = lcp_mem_provision(win->mngr, &w_mem_state, &mem_state_param); 
         if (rc != LCP_SUCCESS) {
-                goto unmap_mem;
+                goto unmap_mem_data;
         }
 
+        win->lkey_state = w_mem_state;
+
+        /* Exchange the memory key with every other process. 
+         * First, pack state memory key. */
+        rc = lcp_mem_pack(win->mngr, w_mem_state, &key_data_buf, &key_data_len);
+        if (rc != MPC_LOWCOMM_SUCCESS) {
+                goto unmap_mem_state;
+        }
+
+        /* Second, pack state memory key. */
+        rc = lcp_mem_pack(win->mngr, win->lkey_state, &key_state_buf, &key_state_len);
+        if (rc != MPC_LOWCOMM_SUCCESS) {
+                goto release_key;
+        }
+
+        win_info_len += 2 * sizeof(size_t);
+        win_info_len += key_data_len + key_state_len;
+        win_info = sctk_malloc(win_info_len);
+        if (win_info == NULL) {
+                mpc_common_debug_error("MPC OSC: could not allocate buffer for both "
+                                       "memory keys.");
+                rc = MPC_LOWCOMM_ERROR;
+                goto release_key;
+        }
+        memcpy(win_info, &key_data_len, sizeof(size_t)); 
+        win_info_offset += sizeof(size_t);
+        memcpy((char *)win_info + win_info_offset, &key_data_len, sizeof(size_t)); 
+        win_info_offset += sizeof(size_t);
+        memcpy((char *)win_info + win_info_offset, key_data_buf, key_data_len);
+        win_info_offset += key_data_len;
+        memcpy((char *)win_info + win_info_offset, key_state_buf, key_state_len);
+
+        lcp_mem_release_rkey_buf(key_data_buf);
+        lcp_mem_release_rkey_buf(key_state_buf);
+
         /* First send size of local key to all others. */
-        rkey_lengths = sctk_malloc(win->comm_size * sizeof(int));
-        disp_rkeys   = sctk_malloc(win->comm_size * sizeof(int));
-        if (rkey_lengths == NULL && disp_rkeys == NULL) {
+        win_info_lengths = sctk_malloc(win->comm_size * sizeof(int));
+        win_info_disps   = sctk_malloc(win->comm_size * sizeof(int));
+        if (win_info_lengths == NULL && win_info_disps == NULL) {
                 mpc_common_debug_error("WIN: could not allocate remote keys "
                                        "size table");
                 goto release_key;
         }
 
-        PMPI_Allgather(&key_len, 1, MPI_INT, rkey_lengths, 1, MPI_INT, comm);
+        PMPI_Allgather(&win_info_len, 1, MPI_INT, win_info_lengths, 1, MPI_INT, comm);
 
-        total_rkey_lengths = 0;
+        total_win_info_lengths = 0;
         for (int i = 0; i < win->comm_size; i++) {
-                disp_rkeys[i]       = total_rkey_lengths; 
-                total_rkey_lengths += rkey_lengths[i];
+                win_info_disps[i]       = total_win_info_lengths; 
+                total_win_info_lengths += win_info_lengths[i];
         }
 
-        rkeys_buf = sctk_malloc(total_rkey_lengths);
-        if (rkeys_buf == NULL) {
+        win_info_buf = sctk_malloc(total_win_info_lengths);
+        if (win_info_buf == NULL) {
                 mpc_common_debug_error("WIN: could not allocate memory for "
                                        "rkeys buffer.");
                 goto release_key;
         }
-        PMPI_Allgatherv(key_buf, key_len, MPI_BYTE, (void *)rkeys_buf,
-                        rkey_lengths, disp_rkeys, MPI_BYTE, comm);
+        PMPI_Allgatherv(win_info, win_info_len, MPI_BYTE, (void *)win_info_buf,
+                        win_info_lengths, win_info_disps, MPI_BYTE, comm);
 
         
-        win->rkeys_data = sctk_malloc(win->comm_size * sizeof(lcp_mem_h));
-        if (win->rkeys_data == NULL) {
+        win->rkeys_data  = sctk_malloc(win->comm_size * sizeof(lcp_mem_h));
+        win->rkeys_state = sctk_malloc(win->comm_size * sizeof(lcp_mem_h));
+        if (win->rkeys_data == NULL || win->rkeys_state == NULL) {
                 mpc_common_debug_error("WIN: could not allocate memory for "
                                        "remote memory keys.");
                 goto release_key;
         }
+
+        win_info_offset = 0;
         for (int i = 0; i < win->comm_size; i++) {
-                lcp_mem_unpack(win->mngr, &win->rkeys_data[i], 
-                               (void *)(rkeys_buf + disp_rkeys[i]),
-                               rkey_lengths[i]);
+                memcpy(&rkey_data_len, win_info_buf + win_info_disps[i], sizeof(size_t));
+                win_info_offset += sizeof(size_t);
+                memcpy(&rkey_state_len, win_info_buf + win_info_disps[i] + win_info_offset, sizeof(size_t));
+                win_info_offset += sizeof(size_t);
+
+                rc = lcp_mem_unpack(win->mngr, &win->rkeys_data[i], 
+                               (void *)(win_info_buf + win_info_disps[i] + win_info_offset),
+                               rkey_data_len);
+                if (rc != MPC_LOWCOMM_SUCCESS) {
+                        goto release_key;
+                }
+                win_info_offset += rkey_data_len;
+                rc = lcp_mem_unpack(win->mngr, &win->rkeys_state[i], 
+                                    (void *)(win_info_buf + win_info_disps[i] + win_info_offset),
+                                    rkey_state_len);
+                if (rc != MPC_LOWCOMM_SUCCESS) {
+                        goto release_key;
+                }
         }
-        sctk_free(rkey_lengths);
-        sctk_free(rkeys_buf);
-        sctk_free(disp_rkeys);
 
         /* Finally, synchronize with everyone. */
 	PMPI_Barrier(comm);
 
+        sctk_free(win_info_lengths);
+        sctk_free(win_info_buf);
+        sctk_free(win_info_disps);
+
         return rc;
 release_key:
-        lcp_mem_release_rkey_buf(key_buf); 
-unmap_mem:
-        lcp_mem_deregister(win->mngr, w_mem);
+        if (key_data_buf)          lcp_mem_release_rkey_buf(key_data_buf); 
+        if (key_state_buf)         lcp_mem_release_rkey_buf(key_state_buf); 
+        if (win_info_buf)          sctk_free(win_info_buf);
+        if (win_info_disps)        sctk_free(win_info_disps);
+        if (win_info_lengths)      sctk_free(win_info_lengths);
+unmap_mem_state:
+        lcp_mem_deprovision(win->mngr, w_mem_state);
+unmap_mem_data:
+        if (win->win_module.state) sctk_free(win->win_module.state);
+        lcp_mem_deprovision(win->mngr, w_mem_data);
 err:
         return rc;
 }
@@ -246,9 +332,9 @@ int mpc_win_create(void *base, size_t size,
 
         rc = lcp_task_associate(task, win->mngr);
 
-        win->flavor = MPI_WIN_FLAVOR_CREATE;
-        win->model  = MPI_WIN_SEPARATE;
-        win->size   = size;
+        win->flavor    = MPI_WIN_FLAVOR_CREATE;
+        win->model     = MPI_WIN_SEPARATE;
+        win->size      = size;
         win->disp_unit = disp_unit;
         win->info = info;
         strcpy(win->win_name, "MPI_WIN_LCP");
@@ -278,6 +364,84 @@ err:
         return rc;
 }
 
+int mpc_win_allocate(void *base, size_t size, 
+                     int disp_unit, MPI_Info info,
+                     mpc_lowcomm_communicator_t comm, 
+                     mpc_win_t **win_p)
+{
+        int rc = MPC_LOWCOMM_SUCCESS;
+        static mpc_common_spinlock_t win_lock = MPC_COMMON_SPINLOCK_INITIALIZER;
+        mpc_win_t *win;
+        lcp_task_h task;
+        int tid;
+
+        /* Allocate the window and initialize fields. */
+        win = sctk_malloc(sizeof(mpc_win_t));
+        if (win == NULL) {
+                rc = -1;
+                goto err;
+        }
+        memset(win, 0, sizeof(mpc_win_t));
+
+        win->comm_size = mpc_lowcomm_communicator_size(comm);
+        win->ctx       = lcp_ctx_loc;
+
+        tid = mpc_common_get_task_rank();
+        task = lcp_context_task_get(win->ctx, tid);
+
+        mpc_common_spinlock_lock(&win_lock);
+        if (osc_mngr == NULL) {
+                lcp_manager_param_t mngr_param = {
+                        .estimated_eps = win->comm_size,
+                        .num_tasks     = win->comm_size,
+                        .flags         = LCP_MANAGER_OSC_MODEL,
+                        .field_mask    = LCP_MANAGER_ESTIMATED_EPS |
+                                LCP_MANAGER_NUM_TASKS              |
+                                LCP_MANAGER_COMM_MODEL,
+                };
+                rc = lcp_manager_create(win->ctx, &osc_mngr, &mngr_param);
+                if (rc != MPC_LOWCOMM_SUCCESS) {
+                        goto err;
+                }
+        }
+        mpc_common_spinlock_unlock(&win_lock);
+
+        win->mngr = osc_mngr;
+
+        rc = lcp_task_associate(task, win->mngr);
+
+        win->flavor    = MPI_WIN_FLAVOR_CREATE;
+        win->model     = MPI_WIN_SEPARATE;
+        win->size      = size;
+        win->disp_unit = disp_unit;
+        win->info = info;
+        strcpy(win->win_name, "MPI_WIN_LCP");
+
+        win->comm = comm;
+        win->group = mpc_lowcomm_communicator_group(comm);
+        win->eps = sctk_malloc(win->comm_size * sizeof(lcp_ep_h));
+        if (win->eps == NULL) {
+                mpc_common_debug_error("WIN: could not allocate window endpoint "
+                                       "table.");
+                rc = MPC_LOWCOMM_ERROR;
+                goto err;
+        }
+        memset(win->eps, 0, win->comm_size * sizeof(lcp_ep_h));
+
+        /* Exchange windows information with other processes. */ 
+        _win_setup(win, &base, size, disp_unit, 
+                   comm, info, MPI_WIN_FLAVOR_ALLOCATE);
+
+        /* Set windows attributes. */
+        _win_config(base, size, disp_unit, MPI_WIN_FLAVOR_CREATE, 
+                       MPI_WIN_MODEL, win);
+
+        *win_p = win;
+
+err:
+        return rc;
+}
+
 int mpc_win_free(mpc_win_t *win)
 {
         int rc;
@@ -289,7 +453,7 @@ int mpc_win_free(mpc_win_t *win)
         }
 
         /* Deregister local key */
-        rc = lcp_mem_deregister(win->mngr, win->lkey_data);
+        rc = lcp_mem_deprovision(win->mngr, win->lkey_data);
         if (rc != LCP_SUCCESS) {
                 mpc_common_debug_error("WIN: could not deregister local memory.");
                 goto err;

@@ -205,12 +205,18 @@ int lcp_rndv_register_buffer(lcp_request_t *rndv_req)
 
         mpc_common_debug("LCP RNDV: register recv buffer. Conn map=%x", 
                          rndv_req->send.ep->conn_map);
+
+        rc = lcp_mem_create(rndv_req->mngr, &rndv_req->state.lmem);
+        if (rc != MPC_LOWCOMM_SUCCESS) {
+                goto err;
+        }
+
         /* Register memory. */
-        rc = lcp_mem_register_with_bitmap(rndv_req->mngr, &rndv_req->state.lmem,
-                                          rndv_req->send.ep->conn_map,
-                                          rndv_req->send.buffer, 
-                                          rndv_req->send.length,
-                                          LCR_IFACE_REGISTER_MEM_DYN);
+        rc = lcp_mem_reg_from_map(rndv_req->mngr, rndv_req->state.lmem,
+                                  rndv_req->send.ep->conn_map,
+                                  rndv_req->send.buffer, 
+                                  rndv_req->send.length,
+                                  LCR_IFACE_REGISTER_MEM_DYN);
         if (rc != MPC_LOWCOMM_SUCCESS) {
                 goto err;
         }
@@ -250,7 +256,7 @@ void lcp_rndv_complete(lcr_completion_t *comp)
 
                 /* For both PUT and GET, when receiving a FIN message, we have to
                  * unregister the memory */
-                payload = lcp_mem_deregister(rndv_req->mngr, rndv_req->state.lmem);
+                payload = lcp_mem_deprovision(rndv_req->mngr, rndv_req->state.lmem);
                 if (payload != MPC_LOWCOMM_SUCCESS) {
                         mpc_common_debug_error("LCP RNDV: count not unpin memory.");
                         return;
