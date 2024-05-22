@@ -168,6 +168,66 @@ lcp_eager_tag_handler, 0);` defines the handler that processes eager message
 for the TAG API. It will be executed by the underlying network transport, see
 `tcp.c` in function `lcr_tcp_invoke_am`.
 
+Such tags are defined in `lcp_types.h`. These tags are registered in the 
+adequate protocol file (C.F. `lcp_tag.c`, `lcp_rndv.c`) using `LCP_DEFINE_AM`.
+This macro require a callback symbol which prototype is defined in 
+`lcr_defs.h` as `lcr_am_callback`. The specified callback is always called on
+request receive. However it is not called back if it has been called once. 
+
+If a request has triggered its associated active message callback but is not expected as a MPI receive, it is not being inserted into unexpected matching lists and must be explicitly inserted into such lists. The standard procedure that should be pasted into any callback is the following : 
+
+```c
+
+static int your_message_handler(void *arg, void *data,
+                                 size_t length,
+                                 __UNUSED__ unsigned flags)
+{
+        int rc = LCP_SUCCESS;
+        lcp_context_h ctx = arg;
+        lcp_unexp_ctnr_t *ctnr;
+        lcp_request_t *req;
+        lcp_tag_hdr_t *hdr = data;
+        lcp_task_h task = NULL;
+
+        task = lcp_context_task_get(ctx, hdr->dest_tid);  
+        if (task == NULL) {
+                mpc_common_errorpoint_fmt("LCP: could not find task with tid=%d", hdr->dest_tid);
+                rc = LCP_ERROR;
+                goto err;
+        }
+
+	LCP_TASK_LOCK(task);
+	/* Try to match it with a posted message */
+        req = lcp_match_prqueue(task->prqs, 
+                                hdr->comm, 
+                                hdr->tag,
+                                hdr->src_tid);
+	/* if request is not matched */
+	if (req == NULL) {
+                mpc_common_debug_info("LCP: recv unexp tag src=%d, tag=%d, dest=%d, "
+                                      "length=%d, sequence=%d", hdr->src_tid, 
+                                      hdr->tag, hdr->dest_tid, length - sizeof(lcp_tag_hdr_t), 
+                                      hdr->seqn);
+		rc = lcp_request_init_unexp_ctnr(task, &ctnr, hdr, length, 
+                                                 LCP_RECV_CONTAINER_UNEXP_EAGER_TAG);
+		if (rc != LCP_SUCCESS) {
+			goto err;
+		}
+		// add the request to the unexpected messages
+		lcp_append_umqueue(task->umqs, &ctnr->elem, 
+			       hdr->comm);
+
+		LCP_TASK_UNLOCK(task);
+		return LCP_SUCCESS;
+	}
+	LCP_TASK_UNLOCK(task);
+
+	[further message handling]
+}
+```
+
+The said MPI receive call does not trigger the adequate active message callback so any code that is after the aforementioned procedure is to be repeated in the `lcp_recv.c:lcp_tag_recv_nb` function. 
+ 
 ##### Data layout
 
 Before being sent to the network, data is successively encapsulated by the two
