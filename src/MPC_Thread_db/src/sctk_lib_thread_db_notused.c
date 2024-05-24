@@ -21,6 +21,9 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
+
+// NOLINTBEGIN
+
 #include "sctk_lib_thread_db.h"
 
 /** ***************************************************************************** **/
@@ -84,7 +87,7 @@ td_err_e td_thr_setsigpending (const td_thrhandle_t *th,
                                       unsigned char n, const sigset_t *ss)
 #else
 td_err_e td_thr_setsigpending (const td_thrhandle_t *th,
-                                      unsigned char n, const sigset_t ss)
+                                      unsigned char n, const sigset_t *ss)
 #endif
 {
   tdb_log("td_thr_setsigpending");
@@ -98,7 +101,7 @@ td_err_e td_thr_sigsetmask (const td_thrhandle_t *th,
                                    const sigset_t *ss)
 #else
 td_err_e td_thr_sigsetmask (const td_thrhandle_t *th,
-                                   const sigset_t ss)
+                                   const sigset_t *ss)
 #endif
 {
   tdb_log("td_thr_sigsetmask");
@@ -252,3 +255,5 @@ td_err_e td_thr_sleepinfo(const td_thrhandle_t *th, td_synchandle_t *sh_p) {
 }
 
 #endif /*SunOS*/
+
+// NOLINTEND
