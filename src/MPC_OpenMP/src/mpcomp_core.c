@@ -1194,6 +1194,7 @@ void mpc_omp_init( void )
 	icvs.modifier_sched_var = __omp_conf.OMP_MODIFIER_SCHEDULE;
 	icvs.active_levels_var = 0;
 	icvs.levels_var = 0;
+	icvs.def_allocator_var = omp_null_allocator;
 
     mpc_omp_init_seq_region();
 
