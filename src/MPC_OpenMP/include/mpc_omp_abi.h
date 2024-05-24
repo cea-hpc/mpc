@@ -45,6 +45,7 @@
    following functions can be used directly.
  */
 
+#include "ompt.h"
 #ifdef __cplusplus
 extern "C"
 {

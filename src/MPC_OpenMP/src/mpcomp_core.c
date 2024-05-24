@@ -52,11 +52,9 @@
 #include "mpc_topology.h"
 
 #include <sys/time.h>
-#include <ctype.h>
 #include <string.h>
 
 #include "mpc_thread.h"
-#include "mpc_launch.h"
 #include "mpcomp_task.h"
 #include "mpcomp_sync.h"
 #include "mpcomp_core.h"
@@ -74,6 +72,7 @@
 #include "mpcompt_init.h"
 #include "mpcompt_thread.h"
 #include "mpcompt_frame.h"
+#include "omp.h"
 
 /*************************
  * MPC_OMP CONFIGURATION *
