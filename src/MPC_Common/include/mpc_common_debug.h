@@ -196,7 +196,7 @@ void mpc_common_debug_log_file(FILE *file, const char *fmt, ...);
 
 
 
-void mpc_common_debug_assert_print(FILE *stream, int line,
+__attribute__((__noreturn__)) void mpc_common_debug_assert_print(FILE *stream, int line,
                                    const char *file, const char *func,
                                    const char *fmt, ...);
 
