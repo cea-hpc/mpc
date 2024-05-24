@@ -1066,7 +1066,6 @@ static inline mpc_conf_config_type_t *__init_workshare_conf(void)
 						fprintf(stderr, "Warning: Incorrect chunk size within WS_SCHEDULE "
 						                "variable: <%s>\n",
 						        tmp);
-						chunk_size = 0;
 					}
 					else
 					{
@@ -1132,7 +1131,6 @@ static inline mpc_conf_config_type_t *__init_workshare_conf(void)
 						fprintf(stderr, "Warning: Incorrect chunk size within WS_STEAL_SCHEDULE "
 						                "variable: <%s>\n",
 						        tmp);
-						chunk_size = 0;
 					}
 					else
 					{
