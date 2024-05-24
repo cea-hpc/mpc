@@ -37,7 +37,7 @@
 
 /*****************************************************************
 *    THIS DEFINES THE PROTOCOL INSIDE THE MONITOR INTERFACE.    *
-* MESSAGES ARE WRAPPED INSIDE THE WRAP STRCUTURE AND PEELED OUT *
+* MESSAGES ARE WRAPPED INSIDE THE WRAP STRUCTURE AND PEELED OUT *
 *               TO RECOVER THE INTERNAL COMMAND.                *
 *****************************************************************/
 
@@ -66,10 +66,15 @@ _mpc_lowcomm_monitor_wrap_t *_mpc_lowcomm_monitor_wrap_new(mpc_lowcomm_monitor_c
                                                            uint64_t match_key,
                                                            size_t size);
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-function"
+
 static inline size_t _mpc_lowcomm_monitor_wrap_total_size(_mpc_lowcomm_monitor_wrap_t *wr)
 {
 	return sizeof(_mpc_lowcomm_monitor_wrap_t) + wr->size;
 }
+
+#pragma clang diagnostic pop
 
 int _mpc_lowcomm_monitor_wrap_free(_mpc_lowcomm_monitor_wrap_t *wr);
 char * _mpc_lowcomm_monitor_wrap_debug(_mpc_lowcomm_monitor_wrap_t * wrap, char *state, char * buffer, int len);
