@@ -105,8 +105,8 @@ int _mpc_ofi_context_init(struct _mpc_ofi_context_t *ctx,
    }
 
    /* Flag for Memory Registration */
-
-   if(!strcmp(provider, "tcp"))
+   // FIXME: Is that the behavior we want if provider == NULL?
+   if(provider && !strcmp(provider, "tcp"))
    {
       /* TCP does not like VIRT address offsetting and needs to be reset here */
       ctx->config->domain_attr->mr_mode = FI_MR_LOCAL | FI_MR_PROV_KEY | FI_MR_ALLOCATED;
