@@ -344,7 +344,7 @@ __convert_topology_to_tree_shape( hwloc_topology_t topology, int *shape_depth )
 		int cur_stage_num = hwloc_get_nbobjs_by_depth( topology, i );
 		const int last_stage_num = reverse_shape[reverse_shape_depth - 1];
 
-		if ( cur_stage_num == 1 )
+		if ( cur_stage_num <= 1 ) // TODO: @JB check fix (division by zero)
 		{
 			break;
 		}
@@ -381,7 +381,7 @@ __convert_topology_to_tree_shape( hwloc_topology_t topology, int *shape_depth )
 			}
 		}
 
-		if ( real_stage_num == 1 )
+		if ( real_stage_num <= 1 )
 		{
 			break;
 		}
@@ -391,7 +391,7 @@ __convert_topology_to_tree_shape( hwloc_topology_t topology, int *shape_depth )
 			continue;
 		}
 
-		if ( real_stage_num == last_stage_num || last_stage_num % real_stage_num )
+		if ( real_stage_num == last_stage_num || last_stage_num % real_stage_num ) // TODO: @JB check fix (division by zero)
 		{
 			continue;
 		}
@@ -427,7 +427,7 @@ __restrict_topology_for_mpc_omp( hwloc_topology_t *restrictedTopology, const int
 	const int __UNUSED__ npus = hwloc_get_nbobjs_by_type( topology, HWLOC_OBJ_PU );
 	const int __UNUSED__ ncores = hwloc_get_nbobjs_by_type( topology, HWLOC_OBJ_CORE );
 	// Every core must have the same number of PU
-	assert( npus % ncores == 0 );
+	assert( ncores == 0 || npus % ncores == 0 );
 
 	if ( omp_threads_expected > 0 && num_mvps > omp_threads_expected )
 	{
