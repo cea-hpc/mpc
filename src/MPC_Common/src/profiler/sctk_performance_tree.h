@@ -22,6 +22,7 @@
 #ifndef SCTK_PERFORMANCE_TREE
 #define SCTK_PERFORMANCE_TREE
 
+#ifdef MPC_Profiler
 
 #include "sctk_profiler_array.h"
 
@@ -48,5 +49,6 @@ void  sctk_performance_tree_init( struct sctk_performance_tree *tr, struct sctk_
 void  sctk_performance_tree_release( struct sctk_performance_tree *tr );
 
 
+#endif /* MPC_Profiler */
 
 #endif /* SCTK_PERFORMANCE_TREE */

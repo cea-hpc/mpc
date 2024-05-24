@@ -22,6 +22,7 @@
 #ifndef SCTK_PROFILER_ARRAY
 #define SCTK_PROFILER_ARRAY
 
+#ifdef MPC_Profiler
 #include <mpc_common_types.h>
 #include <mpc_common_spinlock.h>
 #include <mpc_common_profiler.h>
@@ -89,5 +90,6 @@ char * sctk_profiler_array_get_name( int id );
 
 /* ******** */
 
+#endif /* MPC_Profiler */
 
 #endif

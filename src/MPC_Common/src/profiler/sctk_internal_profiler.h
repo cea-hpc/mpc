@@ -23,6 +23,10 @@
 #define SCTK_INTERNAL_PROFILER
 
 #include <mpc_common_types.h>
+
+#ifdef MPC_Profiler
+
+#include <mpc_common_profiler.h>
 #include "mpc_common_debug.h"
 #include "sctk_profiler_array.h"
 #include "sctk_profile_meta.h"
@@ -50,5 +54,6 @@ static inline void sctk_profiler_set_finalize_time()
   	array->run_time = ( (double)mpc_arch_get_timestamp() - (double)array->initialize_time);
 }
 
+#endif /* MPC_Profiler */
 
 #endif /* SCTK_INTERNAL_PROFILER */

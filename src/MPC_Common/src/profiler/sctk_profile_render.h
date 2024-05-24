@@ -23,8 +23,11 @@
 #ifndef SCTK_PROFILE_RENDER
 #define SCTK_PROFILE_RENDER
 
+#ifdef MPC_Profiler
+
 #include <stdio.h>
 #include <time.h>
+#include <mpc_common_profiler.h>
 
 #include "sctk_performance_tree.h"
 #include "sctk_profile_meta.h"
@@ -139,5 +142,7 @@ const struct mpc_common_profiler_config * sctk_profile_get_config();
 void sctk_profile_render_filename( char *output_file, char *ext );
 
 char * sctk_profile_render_sanitize_string( char *string );
+
+#endif /* MPC_Profiler */
 
 #endif /* SCTK_PROFILE_RENDER */
