@@ -27,7 +27,9 @@ extern "C"
 {
 #endif
 
-sctk_thread_data_t *;
+typedef struct sctk_thread_data_s sctk_thread_data_t;
+typedef struct sctk_thread_status_s sctk_thread_status_t;
+
 
 void sctk_thread_add(sctk_thread_data_t *item, void *tid);
 void sctk_thread_remove(sctk_thread_data_t *item);
