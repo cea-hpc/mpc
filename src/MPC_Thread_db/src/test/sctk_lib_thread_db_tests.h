@@ -19,8 +19,7 @@
 #define TD_CONTINUE ((td_err_e)(-123456))
 
 #include <thread_db.h>
-#include "sctk_lib_thread_db.h"
-#include "tdb_remote.h"
+#include "../sctk_lib_thread_db.h"
 
 struct test_td_data {
   int inside_tester ;
