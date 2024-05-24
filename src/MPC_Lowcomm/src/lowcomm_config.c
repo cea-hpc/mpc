@@ -635,14 +635,14 @@ mpc_conf_config_type_t *__new_rail_conf_instance(
 	memset(ret, 0, sizeof(struct _mpc_lowcomm_config_struct_net_rail) );
 
 	/* For unfolded retrieval */
-	snprintf(ret->name, MPC_CONF_STRING_SIZE, name);
+	snprintf(ret->name, MPC_CONF_STRING_SIZE, "%s", name);
 	ret->priority = priority;
-	snprintf(ret->device, MPC_CONF_STRING_SIZE, device);
+	snprintf(ret->device, MPC_CONF_STRING_SIZE, "%s", device);
 	ret->ondemand   = ondemand;
 	ret->rdma       = rdma;
 	ret->offload    = offload;
 	ret->max_ifaces = max_ifaces;
-	snprintf(ret->config, MPC_CONF_STRING_SIZE, config);
+	snprintf(ret->config, MPC_CONF_STRING_SIZE, "%s", config);
 
 	/* This fills in a rail definition */
 	mpc_conf_config_type_t *rail = mpc_conf_config_type_init(name,
@@ -794,11 +794,11 @@ static mpc_conf_config_type_t *___mpc_lowcomm_cli_conf_option_init(char *name, c
 	{
 		char *ar2 = malloc(sizeof(char) * MPC_CONF_STRING_SIZE);
 		assume(ar2);
-		snprintf(ar2, MPC_CONF_STRING_SIZE, rail2);
+		snprintf(ar2, MPC_CONF_STRING_SIZE, "%s", rail2);
 
 		char *ar3 = malloc(sizeof(char) * MPC_CONF_STRING_SIZE);
 		assume(ar3);
-		snprintf(ar3, MPC_CONF_STRING_SIZE, rail3);
+		snprintf(ar3, MPC_CONF_STRING_SIZE, "%s", rail3);
 
 		rails = mpc_conf_config_type_init(name,
 		                                  PARAM("first", ar1, MPC_CONF_STRING, "First rail to pick"),
