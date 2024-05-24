@@ -12,6 +12,12 @@ repos:
     -   id: trailing-whitespace
         args: [--markdown-linebreak-ext=md]
         exclude: .gitlab/issue_templates/bugreport.md
+-   repo: https://github.com/pocc/pre-commit-hooks.git
+    rev: v1.3.5
+    hooks:
+      - id: clang-tidy
+        # Mute linker warning on unused flags "-Wl,-rpath=<mpc-install>/lib64"
+        args: [--extra-arg=-Wnounused-command-line-argument]
 -   repo: git@gitlab.paratools.com:cea/mpc-pre-commit-hooks.git
     rev: 90dac57b3624db79877f93a59d218255463d708f
     hooks:
