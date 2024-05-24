@@ -20,13 +20,12 @@
 /* #                                                                      # */
 /* ######################################################################## */
 #include <stdio.h>
-#include <stdlib.h>
 #include <mpc.h>
 #include <assert.h>
 
 
 int
-main (int argc, char **argv)
+main ()
 {
 
   assert (MPC_check_compatibility () == 0);
