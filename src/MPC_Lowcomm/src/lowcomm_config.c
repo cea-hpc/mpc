@@ -616,7 +616,6 @@ mpc_conf_config_type_t *__new_rail_conf_instance(
 	char *device,
 	int ondemand,
 	int rdma,
-	int self,
 	int offload,
 	int max_ifaces,
 	char *config)
@@ -667,18 +666,18 @@ static inline mpc_conf_config_type_t *__mpc_lowcomm_rail_conf_init()
 	__mpc_lowcomm_rail_conf_default();
 
 	/* Here we instanciate default rails */
-	mpc_conf_config_type_t *shm_mpi = __new_rail_conf_instance("shmmpi", 99, "any", 0, 1, 0, 0, 1, "shmconfigmpi");
-	mpc_conf_config_type_t *tcp_mpi = __new_rail_conf_instance("tcpmpi", 1, "any", 1, 0, 0, 0, 1, "tcpconfigmpi");
-   mpc_conf_config_type_t *tbsm_mpi = __new_rail_conf_instance("tbsmmpi", 100, "any", 1, 0, 1, 0, 1, "tbsmconfigmpi");
+	mpc_conf_config_type_t *shm_mpi = __new_rail_conf_instance("shmmpi", 99, "any", 0, 1, 0, 1, "shmconfigmpi");
+	mpc_conf_config_type_t *tcp_mpi = __new_rail_conf_instance("tcpmpi", 1, "any", 1, 0, 0, 1, "tcpconfigmpi");
+   mpc_conf_config_type_t *tbsm_mpi = __new_rail_conf_instance("tbsmmpi", 100, "any", 1, 0, 0, 1, "tbsmconfigmpi");
 
 #ifdef MPC_USE_PORTALS
-	mpc_conf_config_type_t *portals_mpi = __new_rail_conf_instance("portalsmpi", 21, "any", 1, 1, 0, 1, 1, "portalsconfigmpi");
+	mpc_conf_config_type_t *portals_mpi = __new_rail_conf_instance("portalsmpi", 21, "any", 1, 1, 1, 1, "portalsconfigmpi");
 #endif
 
 #ifdef MPC_USE_OFI
-	mpc_conf_config_type_t *shm_ofi = __new_rail_conf_instance("shmofirail", 98, "any", 1, 1, 0, 0, 1, "shmofi");
-	mpc_conf_config_type_t *verbs_ofi = __new_rail_conf_instance("verbsofirail", 21, "any", 1, 1, 0, 0, 1, "verbsofi");
-	mpc_conf_config_type_t *tcp_ofi = __new_rail_conf_instance("tcpofirail", 20, "any", 1, 1, 0, 0, 1, "tcpofi");
+	mpc_conf_config_type_t *shm_ofi = __new_rail_conf_instance("shmofirail", 98, "any", 1, 1, 0, 1, "shmofi");
+	mpc_conf_config_type_t *verbs_ofi = __new_rail_conf_instance("verbsofirail", 21, "any", 1, 1, 0, 1, "verbsofi");
+	mpc_conf_config_type_t *tcp_ofi = __new_rail_conf_instance("tcpofirail", 20, "any", 1, 1, 0, 1, "tcpofi");
 #endif
 
 	mpc_conf_config_type_t *rails = mpc_conf_config_type_init("rails",
@@ -706,7 +705,6 @@ mpc_conf_config_type_t *___new_default_rail(char *name)
 	                                "any",
 	                                1,
 	                                0,
-									0,
 	                                0,
 	                                1,
 	                                "tcpconfigmpi");
