@@ -1,0 +1,6 @@
+# clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling:
+# fprintf_s, snprintf_s & other variants are not supported by GCC
+Checks: '-clang-analyzer-optin.mpi.MPI-Checker,-clang-diagnostic-#warnings,-clang-diagnostic-#pragma-messages,-clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling,-clang-diagnostic-unused-command-line-argument'
+WarningsAsErrors: ''
+HeaderFilterRegex: ''
+FormatStyle: none
