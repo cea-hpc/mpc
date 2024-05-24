@@ -414,7 +414,7 @@ __convert_topology_to_tree_shape( hwloc_topology_t topology, int *shape_depth )
 static int
 __restrict_topology_for_mpc_omp( hwloc_topology_t *restrictedTopology, const int omp_threads_expected, const int *cpulist )
 {
-	int i, err, num_mvps;
+	int i, num_mvps;
 	hwloc_topology_t topology;
 	hwloc_bitmap_t final_cpuset;
 	hwloc_obj_t core_obj, pu_obj;
@@ -474,12 +474,12 @@ __restrict_topology_for_mpc_omp( hwloc_topology_t *restrictedTopology, const int
 
 	assert( num_mvps == hwloc_bitmap_weight( final_cpuset ) );
 
-	if ( ( err = hwloc_topology_init( restrictedTopology ) ) )
+	if ( hwloc_topology_init( restrictedTopology ) )
 	{
 		return -1;
 	}
 
-	if ( ( err = hwloc_topology_dup( restrictedTopology, topology ) ) )
+	if ( hwloc_topology_dup( restrictedTopology, topology ) )
 	{
 		return -1;
 	}
@@ -487,7 +487,7 @@ __restrict_topology_for_mpc_omp( hwloc_topology_t *restrictedTopology, const int
 #if (HWLOC_API_VERSION < 0x00020000)
 	if ( ( err = hwloc_topology_restrict( *restrictedTopology, final_cpuset, HWLOC_RESTRICT_FLAG_ADAPT_DISTANCES ) ) )
 #else
-	if ( ( err = hwloc_topology_restrict( *restrictedTopology, final_cpuset, 0 ) ) )
+	if ( hwloc_topology_restrict( *restrictedTopology, final_cpuset, 0 ) )
 #endif
 	{
 		return -1;
@@ -816,7 +816,6 @@ static inline void __read_env_variables()
 						mpc_common_debug_warning("Incorrect chunk size within OMP_SCHEDULE "
 						         "variable: <%s>\n",
 						         env );
-						chunk_size = 0;
 					}
 					else
 					{
