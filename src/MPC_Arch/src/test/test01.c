@@ -5,7 +5,7 @@ void test(int a){
   fprintf(stderr,"%d\n", a);
 }
 
-int main(int argc, char** argv){
+int main(){
 	printf("OK\n");
 	return 0;
 }
