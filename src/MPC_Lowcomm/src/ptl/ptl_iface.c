@@ -89,11 +89,6 @@ static inline int lcr_ptl_invoke_am(sctk_rail_info_t *rail,
 int lcr_ptl_complete_op(lcr_ptl_op_t *op) 
 {
         int rc = MPC_LOWCOMM_SUCCESS;
-        mpc_common_debug("LCR PTL: complete op. id=%llu, op=%p, size=%llu, "
-                         "nid=%lu, pid=%lu, pti=%d, type=%s, hdr=0x%08x.",
-                         op->id, op, op->size, op->addr.phys.nid,
-                         op->addr.phys.pid, op->pti, lcr_ptl_op_decode(op),
-                         op->hdr);
 
         switch (op->type) {
         case LCR_PTL_OP_AM_BCOPY:
@@ -132,6 +127,12 @@ int lcr_ptl_complete_op(lcr_ptl_op_t *op)
                 rc = MPC_LOWCOMM_ERROR;
                 break;
         }
+
+        mpc_common_debug("LCR PTL: complete op. id=%llu, op=%p, size=%llu, "
+                         "nid=%lu, pid=%lu, pti=%d, type=%s, hdr=0x%08x.",
+                         op->id, op, op->size, op->addr.phys.nid,
+                         op->addr.phys.pid, op->pti, lcr_ptl_op_decode(op),
+                         op->hdr);
 
         mpc_mpool_push(op);
 out:
@@ -811,6 +812,7 @@ int lcr_ptl_mem_activate(lcr_ptl_rail_info_t *srail,
                                 &mem->meh
                                ));
 
+        mem->start = (uint64_t)start;
         mem->lifetime = lt;
         mpc_queue_init_head(&mem->pending_flush);
         mem->op_count = 0;
@@ -915,6 +917,8 @@ err:
 
 static int _lcr_ptl_iface_fini_rma(lcr_ptl_rail_info_t *srail) 
 {
+        lcr_ptl_mem_deactivate(srail->net.rma.dynamic_mem);
+
         lcr_ptl_chk(PtlPTFree(srail->net.nih, srail->net.rma.pti));
 
         //TODO: ongoing request management.

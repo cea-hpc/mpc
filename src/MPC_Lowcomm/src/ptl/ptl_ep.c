@@ -263,7 +263,7 @@ ssize_t lcr_ptl_send_tag_bcopy(_mpc_lowcomm_endpoint_t *ep,
                                __UNUSED__ unsigned cflags)
 {
         void* start                = NULL;
-        ssize_t size                = 0;
+        ssize_t size               = 0;
         lcr_ptl_rail_info_t* srail = &ep->rail->network.ptl;
         lcr_ptl_ep_info_t  *ptl_ep = &ep->data.ptl;
 
@@ -444,7 +444,7 @@ err:
 int lcr_ptl_send_put_bcopy(_mpc_lowcomm_endpoint_t *ep,
                            lcr_pack_callback_t pack,
                            void *arg,
-                           uint64_t remote_offset,
+                           uint64_t remote_addr,
                            lcr_memp_t *local_key,
                            lcr_memp_t *remote_key)
 {
@@ -490,8 +490,9 @@ int lcr_ptl_send_put_bcopy(_mpc_lowcomm_endpoint_t *ep,
 
         op->rma.lkey          = lctx->mem;
         op->rma.rkey          = rctx->mem;
-        op->rma.local_offset  = 0;
-        op->rma.remote_offset = remote_offset;
+        //FIXME: use a macro to convert from address to offset, might be clearer.
+        op->rma.local_offset  = (uint64_t)start - lctx->mem->start;
+        op->rma.remote_offset = remote_addr - (uint64_t)rctx->start;
 
         /* Increment operation counts. */
         mpc_common_spinlock_lock(&lctx->mem->lock);
@@ -518,7 +519,7 @@ err:
 int lcr_ptl_send_get_bcopy(_mpc_lowcomm_endpoint_t *ep,
                            lcr_pack_callback_t pack,
                            void *arg,
-                           uint64_t remote_offset,
+                           uint64_t remote_addr,
                            lcr_memp_t *local_key,
                            lcr_memp_t *remote_key)
 {
@@ -563,8 +564,9 @@ int lcr_ptl_send_get_bcopy(_mpc_lowcomm_endpoint_t *ep,
 
         op->rma.lkey          = lctx->mem;
         op->rma.rkey          = rctx->mem;
-        op->rma.local_offset  = 0;
-        op->rma.remote_offset = remote_offset;
+        //FIXME: use a macro to convert from address to offset, might be clearer.
+        op->rma.local_offset  = (uint64_t)start - lctx->mem->start;
+        op->rma.remote_offset = remote_addr - (uint64_t)rctx->start;
 
         /* Increment operation counts. */
         mpc_common_spinlock_lock(&lctx->mem->lock);
@@ -589,8 +591,8 @@ err:
 }
 
 int lcr_ptl_send_put_zcopy(_mpc_lowcomm_endpoint_t *ep,
-                           uint64_t local_offset,
-                           uint64_t remote_offset,
+                           uint64_t local_addr,
+                           uint64_t remote_addr,
                            lcr_memp_t *local_key,
                            lcr_memp_t *remote_key,
                            size_t size,
@@ -622,14 +624,9 @@ int lcr_ptl_send_put_zcopy(_mpc_lowcomm_endpoint_t *ep,
         op->rma.lkey          = lctx->mem;
         op->rma.rkey          = rctx->mem;
         op->rma.match         = rctx->match;
-        op->rma.local_offset  = local_offset;
-        if (lctx->flags & LCR_IFACE_REGISTER_MEM_DYN) {
-                op->rma.local_offset += (uint64_t)lctx->start;
-        } 
-        op->rma.remote_offset = remote_offset;
-        if (rctx->flags & LCR_IFACE_REGISTER_MEM_DYN) {
-                op->rma.remote_offset += (uint64_t)rctx->start;
-        }
+        //FIXME: use a macro to convert from address to offset, might be clearer.
+        op->rma.local_offset  = local_addr - lctx->mem->start;
+        op->rma.remote_offset = remote_addr - (uint64_t)rctx->start;
 
         /* Increment operation counts. */
         mpc_common_spinlock_lock(&lctx->mem->lock);
@@ -639,7 +636,7 @@ int lcr_ptl_send_put_zcopy(_mpc_lowcomm_endpoint_t *ep,
         op->id = lctx->mem->op_count++;
 
         //NOTE: op must be pushed to TX Queue for completion AFTER the operation
-        //      id is set, otherwise 
+        //      id is set, otherwise it can get completed too early.
         mpc_common_spinlock_lock(&txq->lock);
         mpc_queue_push(&txq->ops, &op->elem);
         mpc_common_spinlock_unlock(&txq->lock);
@@ -662,8 +659,8 @@ err:
 }
 
 int lcr_ptl_send_get_zcopy(_mpc_lowcomm_endpoint_t *ep,
-                           uint64_t local_offset,
-                           uint64_t remote_offset,
+                           uint64_t local_addr,
+                           uint64_t remote_addr,
                            lcr_memp_t *local_key,
                            lcr_memp_t *remote_key,
                            size_t size,
@@ -695,14 +692,9 @@ int lcr_ptl_send_get_zcopy(_mpc_lowcomm_endpoint_t *ep,
         op->rma.lkey          = lctx->mem;
         op->rma.rkey          = rctx->mem;
         op->rma.match         = rctx->match;
-        op->rma.local_offset  = local_offset;
-        if (lctx->flags & LCR_IFACE_REGISTER_MEM_DYN) {
-                op->rma.local_offset += (uint64_t)lctx->start;
-        } 
-        op->rma.remote_offset = remote_offset;
-        if (rctx->flags & LCR_IFACE_REGISTER_MEM_DYN) {
-                op->rma.remote_offset += (uint64_t)rctx->start;
-        }
+        //FIXME: use a macro to convert from address to offset, might be clearer.
+        op->rma.local_offset  = local_addr - lctx->mem->start;
+        op->rma.remote_offset = remote_addr - (uint64_t)rctx->start;
 
         mpc_common_spinlock_lock(&lctx->mem->lock);
         //NOTE: Operation identifier and Put must be done atomically to make
@@ -733,7 +725,7 @@ int lcr_ptl_get_tag_zcopy(_mpc_lowcomm_endpoint_t *ep,
 
         mpc_common_debug("PTL: get tag remote key. "
                          "iface=%p, remote nid=%lu, pid=%lu, remote off=%llu, pte idx=%d, "
-                         "local addr=%p", ep->rail, ptl_ep->addr.id.phys.nid, 
+                         "local off=%p", ep->rail, ptl_ep->addr.id.phys.nid, 
                          ptl_ep->addr.id.phys.pid, remote_offset, 
                          srail->net.tag.pti, local_offset);
 
@@ -774,25 +766,25 @@ static ptl_op_t lcr_ptl_atomic_op_table[] = {
 
 
 int lcr_ptl_atomic_post(_mpc_lowcomm_endpoint_t *ep,
-                        uint64_t local_offset,
-                        uint64_t remote_offset,
+                        uint64_t value,
+                        uint64_t remote_addr,
                         lcr_atomic_op_t op_type,
-                        lcr_memp_t *local_key,
                         lcr_memp_t *remote_key,
                         size_t size,
                         lcr_completion_t *comp) 
 {
         int rc = MPC_LOWCOMM_SUCCESS;
-        lcr_ptl_ep_info_t *ptl_ep = &ep->data.ptl;
-        lcr_ptl_mem_ctx_t *lctx   = &local_key->pin.ptl;
-        lcr_ptl_mem_ctx_t *rctx   = &remote_key->pin.ptl;
-        lcr_ptl_txq_t     *txq    = NULL;
-        lcr_ptl_op_t      *op     = NULL;
+        lcr_ptl_ep_info_t *ptl_ep  = &ep->data.ptl;
+        lcr_ptl_rail_info_t *srail = &ep->rail->network.ptl;
+        lcr_ptl_mem_ctx_t *rctx    = &remote_key->pin.ptl;
+        lcr_ptl_mem_t *lkey        = srail->net.rma.dynamic_mem;
+        lcr_ptl_txq_t     *txq     = NULL;
+        lcr_ptl_op_t      *op      = NULL;
 
         assert(size == sizeof(uint64_t));
         
         /* Link memory to endpoint if not already done. */
-        txq = &lctx->mem->txqt[ptl_ep->idx];
+        txq = &lkey->txqt[ptl_ep->idx];
 
         op = mpc_mpool_pop(ptl_ep->ops_pool);
         if (op == NULL) {
@@ -801,59 +793,64 @@ int lcr_ptl_atomic_post(_mpc_lowcomm_endpoint_t *ep,
                 size = MPC_LOWCOMM_NO_RESOURCE;
                 goto err;
         }
-        _lcr_ptl_init_op_common(op, 0, lctx->mem->mdh, 
+        _lcr_ptl_init_op_common(op, 0, lkey->mdh, 
                                 ptl_ep->addr.id, 
                                 ptl_ep->addr.pte.rma, 
                                 LCR_PTL_OP_ATOMIC_POST, 
                                 size, comp, 
                                 txq);
 
-        op->ato.lkey               = lctx->mem;
-        op->ato.rkey               = rctx->mem;
-        op->ato.match              = rctx->match;
-        op->ato.remote_offset      = remote_offset;
-        op->ato.op                 = lcr_ptl_atomic_op_table[op_type];
-        op->ato.dt                 = PTL_UINT64_T;
-        op->ato.post.local_offset  = local_offset;
+        op->ato.lkey          = lkey;
+        op->ato.rkey          = rctx->mem;
+        op->ato.match         = rctx->match;
+        op->ato.remote_offset = remote_addr - (uint64_t)rctx->start;
+        op->ato.op            = lcr_ptl_atomic_op_table[op_type];
+        op->ato.dt            = PTL_UINT64_T;
+        op->ato.post.value    = value;
 
-        mpc_common_spinlock_lock(&lctx->mem->lock);
-        mpc_common_debug("LCR PTL: atomic post operation. type=%s, lkey "
-                         "size=%llu, addr=%p, local offset=%llu, "
-                         "remote offset=%llu, cth=%llu, mdh=%llu, "
-                         "match=%llu.", 
-                         lcr_ptl_decode_atomic_op(lcr_ptl_atomic_op_table[op->ato.op]),
-                         lctx->size, lctx->start, op->ato.post.local_offset,
+        mpc_common_spinlock_lock(&lkey->lock);
+        op->id = lkey->op_count++;
+
+        //NOTE: op must be pushed to TX Queue for completion AFTER the operation
+        //      id is set, otherwise it can get completed too early.
+        mpc_common_spinlock_lock(&txq->lock);
+        mpc_queue_push(&txq->ops, &op->elem);
+        mpc_common_spinlock_unlock(&txq->lock);
+        mpc_common_debug("LCR PTL: atomic post operation. type=%s, lkey=%p"
+                         "op size=%llu, value=%llu, remote offset=%llu, cth=%llu, "
+                         "mdh=%llu, match=%llu.", 
+                         lcr_ptl_decode_atomic_op(op->ato.op),
+                         lkey, size, op->ato.post.value,
                          op->ato.remote_offset, op->ato.lkey->cth,
                          op->ato.lkey->mdh, (uint64_t)op->ato.match);
-        op->id = lctx->mem->op_count++;
         rc = lcr_ptl_do_op(op);
-        mpc_common_spinlock_unlock(&lctx->mem->lock);
+        mpc_common_spinlock_unlock(&lkey->lock);
         
 err:
         return rc;
 }
 
 int lcr_ptl_atomic_fetch(_mpc_lowcomm_endpoint_t *ep,
-                         uint64_t get_local_offset,
-                         uint64_t put_local_offset,
-                         uint64_t remote_offset,
+                         uint64_t result,
+                         uint64_t value,
+                         uint64_t remote_addr,
                          lcr_atomic_op_t op_type,
-                         lcr_memp_t *local_key,
                          lcr_memp_t *remote_key,
                          size_t size,
                          lcr_completion_t *comp) 
 {
         int rc = MPC_LOWCOMM_SUCCESS;
-        lcr_ptl_ep_info_t *ptl_ep = &ep->data.ptl;
-        lcr_ptl_mem_ctx_t *lctx   = &local_key->pin.ptl;
-        lcr_ptl_mem_ctx_t *rctx   = &remote_key->pin.ptl;
-        lcr_ptl_txq_t     *txq    = NULL;
-        lcr_ptl_op_t      *op     = NULL;
+        lcr_ptl_ep_info_t *ptl_ep  = &ep->data.ptl;
+        lcr_ptl_rail_info_t *srail = &ep->rail->network.ptl;
+        lcr_ptl_mem_ctx_t *rctx    = &remote_key->pin.ptl;
+        lcr_ptl_mem_t *lkey        = srail->net.rma.dynamic_mem;
+        lcr_ptl_txq_t     *txq     = NULL;
+        lcr_ptl_op_t      *op      = NULL;
 
         assert(size == sizeof(uint64_t));
 
         /* Link memory to endpoint if not already done. */
-        txq = &lctx->mem->txqt[ptl_ep->idx];
+        txq = &lkey->txqt[ptl_ep->idx];
 
         op = mpc_mpool_pop(ptl_ep->ops_pool);
         if (op == NULL) {
@@ -862,61 +859,67 @@ int lcr_ptl_atomic_fetch(_mpc_lowcomm_endpoint_t *ep,
                 size = MPC_LOWCOMM_NO_RESOURCE;
                 goto err;
         }
-        _lcr_ptl_init_op_common(op, 0, lctx->mem->mdh, 
+        _lcr_ptl_init_op_common(op, 0, lkey->mdh, 
                                 ptl_ep->addr.id, 
                                 ptl_ep->addr.pte.rma, 
                                 LCR_PTL_OP_ATOMIC_FETCH, 
                                 size, comp, 
                                 txq);
 
-        op->ato.lkey                   = lctx->mem;
-        op->ato.rkey                   = rctx->mem;
-        op->ato.match                  = rctx->match;
-        op->ato.remote_offset          = remote_offset;
-        op->ato.op                     = lcr_ptl_atomic_op_table[op_type];
-        op->ato.dt                     = PTL_UINT64_T;
-        op->ato.fetch.get_local_offset = get_local_offset;
-        op->ato.fetch.put_local_offset = put_local_offset;
+        op->ato.lkey          = lkey;
+        op->ato.rkey          = rctx->mem;
+        op->ato.match         = rctx->match;
+        op->ato.remote_offset = remote_addr - (uint64_t)rctx->start;
+        op->ato.op            = lcr_ptl_atomic_op_table[op_type];
+        op->ato.dt            = PTL_UINT64_T;
+        op->ato.fetch.result  = result;
+        op->ato.fetch.value   = value;
 
-        mpc_common_spinlock_lock(&lctx->mem->lock);
-        mpc_common_debug("LCR PTL: atomic fetch operation. type=%s, lkey "
-                         "size=%llu, addr=%p, get local offset=%llu, "
-                         "put local offset=%llu, remote offset=%llu, cth=%llu, "
+        mpc_common_spinlock_lock(&lkey->lock);
+        op->id = lkey->op_count++;
+
+        //NOTE: op must be pushed to TX Queue for completion AFTER the operation
+        //      id is set, otherwise it can get completed too early.
+        mpc_common_spinlock_lock(&txq->lock);
+        mpc_queue_push(&txq->ops, &op->elem);
+        mpc_common_spinlock_unlock(&txq->lock);
+
+        mpc_common_debug("LCR PTL: atomic fetch operation. type=%s, lkey=%p, "
+                         "op size=%llu, result=%p, "
+                         "value=%llu, remote offset=%llu, cth=%llu, "
                          "mdh=%llu, match=%llu.", 
-                         lcr_ptl_decode_atomic_op(lcr_ptl_atomic_op_table[op->ato.op]),
-                         lctx->size, lctx->start, 
-                         op->ato.fetch.get_local_offset, op->ato.fetch.put_local_offset,
+                         lcr_ptl_decode_atomic_op(op->ato.op),
+                         lkey, size, op->ato.fetch.result, op->ato.fetch.value,
                          op->ato.remote_offset, op->ato.lkey->cth,
                          op->ato.lkey->mdh, (uint64_t)op->ato.match);
-        op->id = lctx->mem->op_count++;
         rc = lcr_ptl_do_op(op);
-        mpc_common_spinlock_unlock(&lctx->mem->lock);
+        mpc_common_spinlock_unlock(&lkey->lock);
         
 err:
         return rc;
 }
 
 int lcr_ptl_atomic_cswap(_mpc_lowcomm_endpoint_t *ep,
-                         uint64_t get_local_offset,
-                         uint64_t put_local_offset,
-                         uint64_t remote_offset,
+                         uint64_t result,
+                         uint64_t value,
+                         uint64_t remote_addr,
                          lcr_atomic_op_t op_type,
-                         lcr_memp_t *local_key,
                          lcr_memp_t *remote_key,
                          uint64_t compare,
                          size_t size,
                          lcr_completion_t *comp) 
 {
         int rc = MPC_LOWCOMM_SUCCESS;
-        lcr_ptl_ep_info_t *ptl_ep = &ep->data.ptl;
-        lcr_ptl_mem_ctx_t *lctx   = &local_key->pin.ptl;
-        lcr_ptl_mem_ctx_t *rctx   = &remote_key->pin.ptl;
-        lcr_ptl_txq_t     *txq    = NULL;
-        lcr_ptl_op_t      *op     = NULL;
+        lcr_ptl_ep_info_t *ptl_ep  = &ep->data.ptl;
+        lcr_ptl_rail_info_t *srail = &ep->rail->network.ptl;
+        lcr_ptl_mem_ctx_t *rctx    = &remote_key->pin.ptl;
+        lcr_ptl_mem_t     *lkey    = srail->net.rma.dynamic_mem;
+        lcr_ptl_txq_t     *txq     = NULL;
+        lcr_ptl_op_t      *op      = NULL;
 
         assert(size == sizeof(uint64_t));
 
-        txq = &lctx->mem->txqt[ptl_ep->idx];
+        txq = &lkey->txqt[ptl_ep->idx];
 
         op = mpc_mpool_pop(ptl_ep->ops_pool);
         if (op == NULL) {
@@ -925,37 +928,43 @@ int lcr_ptl_atomic_cswap(_mpc_lowcomm_endpoint_t *ep,
                 size = MPC_LOWCOMM_NO_RESOURCE;
                 goto err;
         }
-        _lcr_ptl_init_op_common(op, 0, lctx->mem->mdh, 
+        _lcr_ptl_init_op_common(op, 0, lkey->mdh, 
                                 ptl_ep->addr.id, 
                                 ptl_ep->addr.pte.rma, 
-                                LCR_PTL_OP_ATOMIC_FETCH, 
+                                LCR_PTL_OP_ATOMIC_CSWAP, 
                                 size, comp, 
                                 txq);
 
-        op->ato.lkey                   = lctx->mem;
-        op->ato.rkey                   = rctx->mem;
-        op->ato.match                  = rctx->match;
-        op->ato.remote_offset          = remote_offset;
-        op->ato.op                     = lcr_ptl_atomic_op_table[op_type];
-        op->ato.dt                     = PTL_UINT64_T;
-        op->ato.cswap.get_local_offset = get_local_offset;
-        op->ato.cswap.put_local_offset = put_local_offset;
-        op->ato.cswap.operand          = &compare;
+        op->ato.lkey          = lkey;
+        op->ato.rkey          = rctx->mem;
+        op->ato.match         = rctx->match;
+        op->ato.remote_offset = remote_addr - (uint64_t)rctx->start;
+        op->ato.op            = lcr_ptl_atomic_op_table[op_type];
+        op->ato.dt            = PTL_UINT64_T;
+        op->ato.cswap.result  = result;
+        op->ato.cswap.value   = value;
+        op->ato.cswap.operand = &compare;
 
         //FIXME: put this in a function.
-        mpc_common_spinlock_lock(&lctx->mem->lock);
-        mpc_common_debug("LCR PTL: atomic cswap operation. type=%s, lkey "
-                         "size=%llu, addr=%p, get local offset=%llu, "
-                         "put local offset=%llu, remote offset=%llu, cth=%llu, "
+        mpc_common_spinlock_lock(&lkey->lock);
+        op->id = lkey->op_count++;
+
+        //NOTE: op must be pushed to TX Queue for completion AFTER the operation
+        //      id is set, otherwise it can get completed too early.
+        mpc_common_spinlock_lock(&txq->lock);
+        mpc_queue_push(&txq->ops, &op->elem);
+        mpc_common_spinlock_unlock(&txq->lock);
+
+        mpc_common_debug("LCR PTL: atomic cswap operation. type=%s, lkey=%p, "
+                         "op size=%llu, result=%p, "
+                         "value=%llu, remote offset=%llu, cth=%llu, "
                          "mdh=%llu, match=%llu.", 
-                         lcr_ptl_decode_atomic_op(lcr_ptl_atomic_op_table[op->ato.op]),
-                         lctx->size, lctx->start, 
-                         op->ato.cswap.get_local_offset, op->ato.cswap.put_local_offset,
+                         lcr_ptl_decode_atomic_op(op->ato.op),
+                         lkey, size, op->ato.fetch.result, op->ato.fetch.value,
                          op->ato.remote_offset, op->ato.lkey->cth,
                          op->ato.lkey->mdh, (uint64_t)op->ato.match);
-        op->id = lctx->mem->op_count++;
         rc = lcr_ptl_do_op(op);
-        mpc_common_spinlock_unlock(&lctx->mem->lock);
+        mpc_common_spinlock_unlock(&lkey->lock);
 err:
         return rc;
 }

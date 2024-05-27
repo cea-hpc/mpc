@@ -88,11 +88,13 @@ void lcp_rma_request_complete(lcr_completion_t *comp)
 
         req->state.remaining -= comp->sent;
         if (req->state.remaining == 0) {
-                req->task->tcct[req->mngr->id]->rma.outstandings--;
-                lcp_mem_deregister(req->mngr, req->state.lmem);
+                lcp_mem_deprovision(req->mngr, req->state.lmem);
 
-                lcp_request_complete(req, send.send_cb, MPC_LOWCOMM_SUCCESS, 
-                                     0);
+                req->flags |= LCP_REQUEST_REMOTE_COMPLETED | 
+                        LCP_REQUEST_LOCAL_COMPLETED;
+                req->status = MPC_LOWCOMM_SUCCESS;
+
+                lcp_request_complete(req, send.send_cb, req->status, 0);
         } 
 }
 
@@ -102,8 +104,10 @@ void lcp_flush_request_complete(lcr_completion_t *comp)
                                               state.comp);
 
         if (--req->state.comp.count == 0) {
-                lcp_request_complete(req, send.send_cb, MPC_LOWCOMM_SUCCESS,
-                                     0);
+                req->flags |= LCP_REQUEST_REMOTE_COMPLETED | 
+                        LCP_REQUEST_LOCAL_COMPLETED;
+                req->status = MPC_LOWCOMM_SUCCESS;
+                lcp_request_complete(req, send.send_cb, req->status, 0);
         }
 }
 
@@ -123,19 +127,19 @@ int lcp_rma_progress_bcopy(lcp_request_t *req)
 
         not_implemented();
 	mpc_common_debug_info("LCP: send put bcopy remote addr=%p, dest=%d",
-			      req->send.rma.remote_disp, ep->uid);
+			      req->send.rma.remote_addr, ep->uid);
         if (req->send.rma.is_get) {
                 //FIXME: not implemented
                 payload_size = lcp_send_do_get_bcopy(ep->lct_eps[cc], 
                                                      lcp_rma_unpack, req, 
-                                                     req->send.rma.remote_disp,
+                                                     req->send.rma.remote_addr,
                                                      &req->state.lmem->mems[cc],
                                                      &req->send.rma.rkey->mems[cc]);
 
         } else {
                 payload_size = lcp_send_do_put_bcopy(ep->lct_eps[cc], 
                                                      lcp_rma_pack, req, 
-                                                     req->send.rma.remote_disp,
+                                                     req->send.rma.remote_addr,
                                                      &req->state.lmem->mems[cc],
                                                      &req->send.rma.rkey->mems[cc]);
         }
@@ -192,16 +196,16 @@ int lcp_rma_progress_zcopy(lcp_request_t *req)
 
                 if (req->send.rma.is_get) {
                         rc = lcp_send_do_get_zcopy(lcr_ep,
-                                                   offset,
-                                                   offset,
+                                                   (uint64_t)req->send.buffer + offset,
+                                                   req->send.rma.remote_addr  + offset,
                                                    &(req->state.lmem->mems[cc]),
                                                    &(req->send.rma.rkey->mems[cc]),
                                                    length,
                                                    &(req->state.comp));
                 } else {
                         rc = lcp_send_do_put_zcopy(lcr_ep,
-                                                   offset,
-                                                   offset,
+                                                   (uint64_t)req->send.buffer + offset,
+                                                   req->send.rma.remote_addr  + offset,
                                                    &(req->state.lmem->mems[cc]),
                                                    &(req->send.rma.rkey->mems[cc]),
                                                    length,
@@ -248,24 +252,25 @@ static inline int lcp_rma_start(lcp_ep_h ep, lcp_request_t *req)
         }
 
         if (!(req->flags & LCP_REQUEST_USER_PROVIDED_MEMH)) {
-                rc = lcp_mem_register_with_bitmap(req->mngr, &req->state.lmem, 
-                                                  ep->conn_map, req->send.buffer, 
-                                                  req->send.length, 
-                                                  LCR_IFACE_REGISTER_MEM_DYN);
 
+                rc = lcp_mem_create(req->mngr, &req->state.lmem);
                 if (rc != MPC_LOWCOMM_SUCCESS) {
-                        //FIXME: something is off with this error handling
-                        rc = MPC_LOWCOMM_ERROR;
+                        goto err;
                 }
+
+                rc = lcp_mem_reg_from_map(req->mngr, req->state.lmem, 
+                                          ep->conn_map, req->send.buffer, 
+                                          req->send.length, 
+                                          LCR_IFACE_REGISTER_MEM_DYN);
         } else {
                 //TODO: check memory and rma call validity.
         } 
-
+err:
         return rc;
 }
 
 lcp_status_ptr_t lcp_put_nb(lcp_ep_h ep, lcp_task_h task, const void *buffer, size_t length,
-                            uint64_t remote_disp, lcp_mem_h rkey,
+                            uint64_t remote_addr, lcp_mem_h rkey,
                             const lcp_request_param_t *param) 
 {
         lcp_status_ptr_t status = NULL;
@@ -280,12 +285,15 @@ lcp_status_ptr_t lcp_put_nb(lcp_ep_h ep, lcp_task_h task, const void *buffer, si
         }
         LCP_REQUEST_INIT_RMA_PUT(req, ep->mngr, task, length, param->request, ep, buffer, 
                                   0 /* no ordering for rma */, 0, param->datatype, 
-                                  rkey, remote_disp);
+                                  rkey, remote_addr);
 
-        task->tcct[ep->mngr->id]->rma.outstandings++;
+        if (param->field_mask & LCP_REQUEST_NO_COMPLETE) {
+                req->flags |= LCP_REQUEST_USER_ALLOCATED;
+        }
 
-        if (param->field_mask & LCP_REQUEST_RMA_CALLBACK) {
+        if (param->field_mask & LCP_REQUEST_SEND_CALLBACK) {
                 assert(param->field_mask & LCP_REQUEST_USER_REQUEST);
+                req->flags       |= LCP_REQUEST_USER_CALLBACK;
                 req->send.send_cb = param->send_cb;
         }
 
@@ -300,10 +308,11 @@ lcp_status_ptr_t lcp_put_nb(lcp_ep_h ep, lcp_task_h task, const void *buffer, si
         }
 
         rc = lcp_request_send(req);
-        if (rc != MPC_LOWCOMM_SUCCESS) {
-                status = (lcp_status_ptr_t)(uint64_t)rc;
+
+        if (req->flags & LCP_REQUEST_USER_ALLOCATED) {
+                return (lcp_status_ptr_t)(req + 1);
         } else {
-                status = (lcp_status_ptr_t)(req + 1);
+                return (lcp_status_ptr_t)(uint64_t)rc;
         }
 err:
         return status;
@@ -335,8 +344,13 @@ lcp_status_ptr_t lcp_get_nb(lcp_ep_h ep, lcp_task_h task, void *buffer,
                                  0 /* no ordering for rma */, 0, param->datatype, 
                                  rkey, remote_addr);
 
-        if (param->field_mask & LCP_REQUEST_RMA_CALLBACK) {
+        if (param->field_mask & LCP_REQUEST_NO_COMPLETE) {
+                req->flags |= LCP_REQUEST_USER_ALLOCATED;
+        }
+
+        if (param->field_mask & LCP_REQUEST_SEND_CALLBACK) {
                 assert(param->field_mask & LCP_REQUEST_USER_REQUEST);
+                req->flags       |= LCP_REQUEST_USER_CALLBACK;
                 req->send.send_cb = param->send_cb;
         }
 
@@ -351,10 +365,11 @@ lcp_status_ptr_t lcp_get_nb(lcp_ep_h ep, lcp_task_h task, void *buffer,
         }
 
         rc = lcp_request_send(req);
-        if (rc != MPC_LOWCOMM_SUCCESS) {
-                status = (lcp_status_ptr_t)(uint64_t)rc;
+
+        if (req->flags & LCP_REQUEST_USER_ALLOCATED) {
+                return (lcp_status_ptr_t)(req + 1);
         } else {
-                status = (lcp_status_ptr_t)(req + 1);
+                return (lcp_status_ptr_t)(uint64_t)rc;
         }
 err:
         return status;
@@ -441,14 +456,13 @@ err:
 
 int lcp_flush_mem_ep_nb(lcp_request_t *req)
 {
-
         int i, rc = MPC_LOWCOMM_SUCCESS;
         lcp_ep_h ep = req->send.ep;
         lcp_mem_h mem = req->state.lmem;
         sctk_rail_info_t *iface;
         lcr_rail_attr_t attr;
 
-        //NOTE: at least on channel must support RMA flush.
+        //NOTE: at least one channel must support RMA flush.
         assert(req->send.ep->cap & LCR_IFACE_CAP_RMA);
 
         for (i = 0; i < req->mngr->num_ifaces; i++) {
@@ -475,11 +489,13 @@ err:
         return rc;
 }
 
-int lcp_flush_nb(lcp_manager_h mngr, lcp_task_h task,
-                 const lcp_request_param_t *param)
+lcp_status_ptr_t lcp_flush_nb(lcp_manager_h mngr, lcp_task_h task,
+                              const lcp_request_param_t *param)
 {
         int rc = MPC_LOWCOMM_SUCCESS;
         lcp_request_t *req;
+
+        //TODO: add check request param macro.
 
         req = lcp_request_get_param(task, param);
         if (req == NULL) {
@@ -494,6 +510,10 @@ int lcp_flush_nb(lcp_manager_h mngr, lcp_task_h task,
         req->state.comp.comp_cb = lcp_flush_request_complete;
         req->send.flush.flush   = task->tcct[mngr->id]->rma.flush_counter++;
 
+        if (param->field_mask & LCP_REQUEST_NO_COMPLETE) {
+                req->flags |= LCP_REQUEST_USER_ALLOCATED;
+        }
+
         if (param->field_mask & LCP_REQUEST_USER_MEMH) {
                 req->flags     |= LCP_REQUEST_USER_PROVIDED_MEMH;
                 req->state.lmem = param->mem;
@@ -504,8 +524,7 @@ int lcp_flush_nb(lcp_manager_h mngr, lcp_task_h task,
                 req->send.ep = param->ep;
         }
 
-        if (param->field_mask & LCP_REQUEST_RMA_CALLBACK) {
-                req->flags       |= LCP_REQUEST_RMA_COMPLETE;
+        if (param->field_mask & LCP_REQUEST_SEND_CALLBACK) {
                 req->send.send_cb = param->send_cb;
         }
 
@@ -527,6 +546,14 @@ int lcp_flush_nb(lcp_manager_h mngr, lcp_task_h task,
                 rc = MPC_LOWCOMM_ERROR;
                 break;
         }
+        if (rc == MPC_LOWCOMM_ERROR) {
+                mpc_common_debug_error("LCP RMA: error flushing.");
+        }
+
 err:
-        return rc;
+        if (req->flags & LCP_REQUEST_USER_ALLOCATED) {
+                return (lcp_status_ptr_t)(req + 1);
+        } else {
+                return (lcp_status_ptr_t)(uint64_t)rc;
+        }
 }

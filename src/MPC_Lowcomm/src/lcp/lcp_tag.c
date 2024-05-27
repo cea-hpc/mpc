@@ -199,6 +199,7 @@ static void lcp_tag_send_complete(lcr_completion_t *comp) {
 
         if ((req->flags & LCP_REQUEST_REMOTE_COMPLETED) && 
             (req->flags & LCP_REQUEST_LOCAL_COMPLETED)) {
+                req->status = MPC_LOWCOMM_SUCCESS;
                 lcp_request_complete(req, send.send_cb, req->status, req->send.length);
         }
 }
@@ -574,6 +575,7 @@ err:
 /* Receive                                        */
 /* ============================================== */
 
+//FIXME: set truncate setting the status of the request is not adequate.
 static inline size_t lcp_recv_set_truncate(lcp_request_t *req) {
         size_t length = req->recv.send_length;
         /* Check for truncation. */
@@ -581,11 +583,14 @@ static inline size_t lcp_recv_set_truncate(lcp_request_t *req) {
                 length = req->recv.length;
                 req->status = MPC_LOWCOMM_ERR_TRUNCATE;
                 mpc_common_debug_warning("LCP TAG: request truncated.");
-        } 
+        } else {
+                req->status = MPC_LOWCOMM_SUCCESS;
+        }
 
         return length;
 }
 
+//FIXME: tag data reception should be factorized between task, rndv, and eager.
 int lcp_recv_eager_tag_data(lcp_request_t *req, void *data)
 {
         int rc = MPC_LOWCOMM_SUCCESS;

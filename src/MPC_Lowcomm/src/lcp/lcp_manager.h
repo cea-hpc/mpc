@@ -89,6 +89,7 @@ struct lcp_manager {
 	lcp_pending_table_t  *match_ht;      /* ht of matching request */
 
 	mpc_common_spinlock_t mngr_lock;      /* Manager lock */
+        mpc_common_spinlock_t atomic_lock;
 
 	lcp_task_h           *tasks;         /* LCP tasks (per thread data) */
         int                   num_tasks;     /* Number of tasks */

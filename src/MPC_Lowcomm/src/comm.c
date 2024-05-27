@@ -50,6 +50,7 @@
 
 #include "mpc_lowcomm_types.h"
 #include <mpc_lowcomm_datatypes.h>
+#include <mpc_common_progress.h>
 
 #include <lcp.h>
 
@@ -57,6 +58,9 @@
 #include "lowcomm_config.h"
 #include "monitor.h"
 #include "pset.h"
+
+/* Forward declaration. */
+static int mpc_comm_progress();
 
 /********************************************************************/
 /*Structures                                                        */
@@ -68,6 +72,7 @@ typedef struct
 	int                           rank;
 } mpc_comm_dest_key_t;
 
+#if 0
 static inline void _mpc_comm_dest_key_init(mpc_comm_dest_key_t *key, mpc_lowcomm_communicator_id_t comm, int rank)
 {
 	key->rank    = rank;
@@ -110,6 +115,7 @@ static inline void __mpc_comm_request_init(mpc_lowcomm_request_t *request,
 		//request->dt_magic = 0;
 	}
 }
+#endif
 
 /********************************************************************/
 /*Functions                                                         */
@@ -193,6 +199,7 @@ int mpc_lowcomm_commit_status_from_request(mpc_lowcomm_request_t *request,
 	return MPC_LOWCOMM_SUCCESS;
 }
 
+#if 0
 /*
  * Initialize the 'incoming' list.
  */
@@ -210,6 +217,7 @@ static inline void __mpc_comm_ptp_list_pending_init(mpc_lowcomm_ptp_list_pending
 {
 	list->list = NULL;
 }
+
 
 /*
  * Initialize a PTP the 'incoming' and 'pending' message lists.
@@ -306,7 +314,6 @@ static inline void __mpc_comm_ptp_message_list_add_incoming_send(mpc_comm_ptp_t 
 /*Data structure accessors                                              */
 /************************************************************************/
 
-#if 0
 static mpc_comm_ptp_t ***sctk_ptp_array = NULL;
 static int sctk_ptp_array_start         = 0;
 static int sctk_ptp_array_end           = 0;
@@ -1034,7 +1041,6 @@ static inline void __mpc_comm_copy_buffer_pack_pack(unsigned long *restrict in_b
 		}
 	}
 }
-#endif
 
 static inline void __mpc_comm_copy_buffer_absolute_pack(long *restrict in_begins,
                                                         long *restrict in_ends, size_t in_sizes,
@@ -1306,7 +1312,6 @@ static inline void __mpc_comm_copy_buffer_absolute_absolute(
 	}
 }
 
-#if 0
 /*
  * Function without description
  */
@@ -1707,6 +1712,7 @@ void mpc_lowcomm_ptp_message_set_contiguous_addr(mpc_lowcomm_ptp_message_t *rest
 #endif
 }
 
+#if 0
 static inline void __mpc_comm_fill_request(mpc_lowcomm_request_t *request,
                                            mpc_lowcomm_communicator_t comm,
                                            int completion,
@@ -1727,6 +1733,7 @@ static inline void __mpc_comm_fill_request(mpc_lowcomm_request_t *request,
 	request->status_error            = MPC_LOWCOMM_SUCCESS;
 	request->ptr_to_pin_ctx          = NULL;
 }
+#endif
 
 __attribute__((deprecated("Legacy function that should be removed once PTP messages are fully unused (deprecated by the LCP rework)")))
 void mpc_lowcomm_ptp_message_header_init(mpc_lowcomm_ptp_message_t *msg,
@@ -2544,6 +2551,7 @@ struct mpi_request_info mpi_req_info = {0};
 lcp_manager_h lcp_mngr_loc = NULL;
 int mpc_lowcomm_request_complete(mpc_lowcomm_request_t *request);
 
+#if 0
 /*
  *  Function called when the message to receive is already completed
  */
@@ -2578,6 +2586,7 @@ static inline void __mpc_comm_ptp_msg_done(struct mpc_lowcomm_ptp_msg_progress_s
 		->pointer_to_source_request = NULL;
 	}
 }
+#endif
 
 //static inline void __mpc_comm_ptp_msg_wait(struct mpc_lowcomm_ptp_msg_progress_s *wait);
 
@@ -2587,7 +2596,7 @@ static void __mpc_comm_perform_req_wfv(void *a)
 
 	if( ( volatile int )req->completion_flag != MPC_LOWCOMM_MESSAGE_DONE)
 	{
-		lcp_progress(lcp_mngr_loc);
+		mpc_common_progress();
 		MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL();
 	}
 }
@@ -2690,7 +2699,7 @@ int mpc_lowcomm_request_wait(mpc_lowcomm_request_t *request)
 		int trials = 0;
 		do
 		{
-                        lcp_progress(lcp_mngr_loc);
+                        mpc_common_progress();
 			trials++;
 		} while( (request->completion_flag != MPC_LOWCOMM_MESSAGE_DONE) && (trials < 16) );
 
@@ -3712,7 +3721,7 @@ int _mpc_lowcomm_isend(int dest, const void *data, size_t size, int tag,
 	lcp_request_param_t param =
 	{
 		.field_mask = (synchronized ? LCP_REQUEST_TAG_SYNC : 0) |
-                        LCP_REQUEST_TAG_CALLBACK,
+                        LCP_REQUEST_SEND_CALLBACK,
 		// NOLINTNEXTLINE(clang-analyzer-core.UndefinedBinaryOperatorResult)
                 .datatype   = req->dt_magic == (int)0xDDDDDDDD ?
 		             LCP_DATATYPE_DERIVED : LCP_DATATYPE_CONTIGUOUS,
@@ -3783,7 +3792,7 @@ int mpc_lowcomm_irecv(int src, void *data, size_t size, int tag,
         mpc_lowcomm_request_init(req, comm, REQUEST_RECV);
 
 	lcp_request_param_t param = {
-                .field_mask   = LCP_REQUEST_TAG_CALLBACK,
+                .field_mask   = LCP_REQUEST_RECV_CALLBACK,
                 .datatype     = req->dt_magic == (int)0xDDDDDDDD ?
 		             LCP_DATATYPE_DERIVED : LCP_DATATYPE_CONTIGUOUS,
                 .request      = req,
@@ -3849,7 +3858,7 @@ int mpc_lowcomm_test(mpc_lowcomm_request_t *request, int *completed, mpc_lowcomm
 		return MPC_LOWCOMM_SUCCESS;
 	}
 
-        rc = lcp_progress(lcp_mngr_loc);
+        rc = mpc_common_progress();
         if (rc != MPC_LOWCOMM_SUCCESS) {
                 goto err;
         }
@@ -3957,7 +3966,7 @@ int mpc_lowcomm_iprobe_src_dest(const int world_source, const int world_destinat
 	                      comm_id, &recv_info);
 
 	/* Progress communications to check if event has been raised. */
-	lcp_progress(lcp_mngr_loc);
+	mpc_common_progress();
 
 	if( (*flag = recv_info.found) )
 	{
@@ -4404,6 +4413,11 @@ void mpc_lowcomm_request_initialize(void *request) {
         mpi_req_info.request_init_func(req + 1);
 }
 
+static int mpc_comm_progress()
+{
+      return lcp_progress(lcp_mngr_loc);
+}
+
 static void __initialize_drivers()
 {
 
@@ -4455,6 +4469,8 @@ static void __initialize_drivers()
         if (rc != MPC_LOWCOMM_SUCCESS) {
                 mpc_common_debug_fatal("COMM: manager creation failed.");
         }
+
+        mpc_common_progress_register(mpc_comm_progress);
 
 	__init_request_null();
 

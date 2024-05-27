@@ -134,7 +134,7 @@ int lcp_tag_send_nb(lcp_ep_h ep, lcp_task_h task, const void *buffer,
                 return LCP_ERROR;
         }
 
-        if (param->field_mask & LCP_REQUEST_TAG_CALLBACK) {
+        if (param->field_mask & LCP_REQUEST_SEND_CALLBACK) {
                 req->flags       |= LCP_REQUEST_USER_CALLBACK;
                 req->send.send_cb = param->send_cb;
         }

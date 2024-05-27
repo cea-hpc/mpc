@@ -178,7 +178,7 @@ typedef enum lcr_ptl_mem_lifetime {
 } lcr_ptl_mem_lifetime_t;
 
 typedef struct lcr_ptl_mem {
-        int                    is_active;
+        uint64_t               start;
         uint32_t               uid;            /* Memory Unique Idendifier (for RMA matching). */
         lcr_ptl_mem_lifetime_t lifetime;
         ptl_match_bits_t       match;
@@ -266,21 +266,23 @@ typedef struct lcr_ptl_op {
                         ptl_datatype_t   dt;
                         union {
                                 struct {
-                                        uint64_t  local_offset;
+                                        uint64_t value;
                                 } post;
                                 struct {
-                                        uint64_t    get_local_offset;
-                                        uint64_t    put_local_offset;
+                                        uint64_t    result;
+                                        uint64_t    value;
                                 } fetch;
                                 struct {
-                                        uint64_t    get_local_offset;
-                                        uint64_t    put_local_offset;
+                                        uint64_t    result;
+                                        uint64_t    value;
                                         const void *operand;
                                 } cswap;
                         };
                 } ato;
 
                 //FIXME: add union for flush type (ep, mem, iface)
+                //FIXME: forget about such granularity, just count the total
+                //       number of op count on all memory. 
                 struct {
                         int             outstandings;
                         mpc_list_elem_t mem_head;
@@ -475,6 +477,9 @@ static inline const char * lcr_ptl_op_decode(lcr_ptl_op_t *op)
         case LCR_PTL_OP_TAG_ZCOPY: return "LCR_PTL_OP_TAG_ZCOPY"; break;
         case LCR_PTL_OP_TAG_BCOPY: return "LCR_PTL_OP_TAG_BCOPY"; break;
         case LCR_PTL_OP_TAG_SEARCH: return "LCR_PTL_OP_TAG_SEARCH"; break;
+        case LCR_PTL_OP_ATOMIC_POST: return "LCR_PTL_OP_ATOMIC_POST"; break;
+        case LCR_PTL_OP_ATOMIC_FETCH: return "LCR_PTL_OP_ATOMIC_FETCH"; break;
+        case LCR_PTL_OP_ATOMIC_CSWAP: return "LCR_PTL_OP_ATOMIC_CSWAP"; break;
 #if defined (MPC_USE_PORTALS_CONTROL_FLOW)
         case LCR_PTL_OP_TK_INIT: return "LCR_PTL_OP_TK_INIT"; break;
         case LCR_PTL_OP_TK_REQUEST: return "LCR_PTL_OP_TK_REQUEST"; break;
@@ -683,7 +688,7 @@ static inline int lcr_ptl_do_op(lcr_ptl_op_t *op) {
                 break;
         case LCR_PTL_OP_ATOMIC_POST:
                 lcr_ptl_chk(PtlAtomic(op->mdh, 
-                                      op->ato.post.local_offset, 
+                                      (uint64_t)&op->ato.post.value, 
                                       op->size, 
                                       PTL_ACK_REQ, 
                                       op->addr, 
@@ -697,9 +702,9 @@ static inline int lcr_ptl_do_op(lcr_ptl_op_t *op) {
                 break;
         case LCR_PTL_OP_ATOMIC_FETCH:
                 lcr_ptl_chk(PtlFetchAtomic(op->mdh, 
-                                           op->ato.fetch.get_local_offset, 
+                                           op->ato.fetch.result, 
                                            op->mdh, 
-                                           op->ato.fetch.put_local_offset,
+                                           (uint64_t)&op->ato.fetch.value,
                                            op->size, 
                                            op->addr, 
                                            op->pti, 
@@ -712,9 +717,9 @@ static inline int lcr_ptl_do_op(lcr_ptl_op_t *op) {
                 break;
         case LCR_PTL_OP_ATOMIC_CSWAP:
                 lcr_ptl_chk(PtlSwap(op->mdh, 
-                                    op->ato.cswap.get_local_offset, 
+                                    op->ato.cswap.result, 
                                     op->mdh, 
-                                    op->ato.cswap.put_local_offset,
+                                    (uint64_t)&op->ato.cswap.value,
                                     op->size, 
                                     op->addr, 
                                     op->pti, 
@@ -897,13 +902,13 @@ int lcr_ptl_send_put_bcopy(_mpc_lowcomm_endpoint_t *ep,
 int lcr_ptl_send_get_bcopy(_mpc_lowcomm_endpoint_t *ep,
                            lcr_pack_callback_t pack,
                            void *arg,
-                           uint64_t remote_offset,
+                           uint64_t remote_addr,
                            lcr_memp_t *local_key,
                            lcr_memp_t *remote_key);
 
 int lcr_ptl_send_put_zcopy(_mpc_lowcomm_endpoint_t *ep,
                            uint64_t local_addr,
-                           uint64_t remote_offset,
+                           uint64_t remote_addr,
                            lcr_memp_t *local_key,
                            lcr_memp_t *remote_key,
                            size_t size,
@@ -911,7 +916,7 @@ int lcr_ptl_send_put_zcopy(_mpc_lowcomm_endpoint_t *ep,
 
 int lcr_ptl_send_get_zcopy(_mpc_lowcomm_endpoint_t *ep,
                            uint64_t local_addr,
-                           uint64_t remote_offset,
+                           uint64_t remote_addr,
                            lcr_memp_t *local_key,
                            lcr_memp_t *remote_key,
                            size_t size,
@@ -919,36 +924,33 @@ int lcr_ptl_send_get_zcopy(_mpc_lowcomm_endpoint_t *ep,
 
 int lcr_ptl_get_tag_zcopy(_mpc_lowcomm_endpoint_t *ep,
                           lcr_tag_t tag,
-                          uint64_t local_offset,
-                          uint64_t remote_offset,
+                          uint64_t local_addr,
+                          uint64_t remote_addr,
                           size_t size,
                           lcr_completion_t *ctx);
 
 int lcr_ptl_atomic_post(_mpc_lowcomm_endpoint_t *ep,
-                        uint64_t local_offset,
-                        uint64_t remote_offset,
+                        uint64_t value,
+                        uint64_t remote_addr,
                         lcr_atomic_op_t op_type,
-                        lcr_memp_t *local_key,
                         lcr_memp_t *remote_key,
                         size_t size,
                         lcr_completion_t *comp);
 
 int lcr_ptl_atomic_fetch(_mpc_lowcomm_endpoint_t *ep,
-                         uint64_t get_local_offset,
-                         uint64_t put_local_offset,
-                         uint64_t remote_offset,
+                         uint64_t result,
+                         uint64_t value,
+                         uint64_t remote_addr,
                          lcr_atomic_op_t op_type,
-                         lcr_memp_t *local_key,
                          lcr_memp_t *remote_key,
                          size_t size,
                          lcr_completion_t *comp);
 
 int lcr_ptl_atomic_cswap(_mpc_lowcomm_endpoint_t *ep,
-                         uint64_t get_local_offset,
-                         uint64_t put_local_offset,
-                         uint64_t remote_offset,
+                         uint64_t result,
+                         uint64_t value,
+                         uint64_t remote_addr,
                          lcr_atomic_op_t op_type,
-                         lcr_memp_t *local_key,
                          lcr_memp_t *remote_key,
                          uint64_t compare,
                          size_t size,

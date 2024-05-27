@@ -9608,6 +9608,14 @@ int PMPI_Psend_init(const void *buf, int partitions, int count,
 {
 	MPI_internal_request_t *req;
 	UNUSED(info);
+        UNUSED(req);
+        UNUSED(buf);
+        UNUSED(partitions);
+        UNUSED(count);
+        UNUSED(datatype);
+        UNUSED(dest);
+        UNUSED(tag);
+        UNUSED(comm);
 
         req = *request = mpc_lowcomm_request_alloc();
         not_implemented();
@@ -9666,6 +9674,16 @@ int PMPI_Precv_init(void *buf, int partitions, int count,
 	MPI_internal_request_t *req;
 	UNUSED(info);
         UNUSED(req);
+        UNUSED(request);
+	UNUSED(info);
+        UNUSED(req);
+        UNUSED(buf);
+        UNUSED(partitions);
+        UNUSED(count);
+        UNUSED(datatype);
+        UNUSED(source);
+        UNUSED(tag);
+        UNUSED(comm);
 
         //req = *request = mpc_lowcomm_request_alloc();
 	//req = __sctk_new_mpc_request_internal(request,
@@ -14666,6 +14684,7 @@ int PMPI_Finalize(void)
 
 	PMPI_Barrier(MPI_COMM_WORLD);
 
+        osc_module_fini();
 #if defined (MPC_USE_PORTALS_CONTROL_FLOW)
         //NOTE: Because Portals uses control flow, it may "lie" to the upper
         //      layer by saying that the message was sent while it actually
@@ -15786,6 +15805,7 @@ int PMPI_Win_create(void *base, MPI_Aint size, int disp_unit, MPI_Info info,
 int PMPI_Win_allocate(MPI_Aint size, int disp_unit, MPI_Info info,
                       MPI_Comm comm, void *base, MPI_Win *win)
 {
+        return mpc_win_allocate(base, size, disp_unit, info, comm, win);
 	/* MPI Windows need more progress
 	 * we must give up on agressive collectives */
 	__do_yield |= 1;
@@ -15816,7 +15836,7 @@ int PMPI_Win_free(MPI_Win *win)
 {
         return mpc_win_free(*win);
 
-	return mpc_MPI_Win_free(win);
+	//return mpc_MPI_Win_free(win);
 }
 
 /* RDMA Operations */
@@ -15870,39 +15890,46 @@ int PMPI_Win_fence(int assert, MPI_Win win)
 
 int PMPI_Win_start(MPI_Group group, int assert, MPI_Win win)
 {
-	return mpc_MPI_Win_start(group, assert, win);
+        return mpc_osc_start(group, assert, win);
+	//return mpc_MPI_Win_start(group, assert, win);
 }
 
 int PMPI_Win_complete(MPI_Win win)
 {
-	return mpc_MPI_Win_complete(win);
+        return mpc_osc_complete(win);
+	//return mpc_MPI_Win_complete(win);
 }
 
 int PMPI_Win_post(MPI_Group group, int assert, MPI_Win win)
 {
-	return mpc_MPI_Win_post(group, assert, win);
+        return mpc_osc_post(group, assert, win);
+	//return mpc_MPI_Win_post(group, assert, win);
 }
 
 int PMPI_Win_wait(MPI_Win win)
 {
-	return mpc_MPI_Win_wait(win);
+        return mpc_osc_wait(win);
+	//return mpc_MPI_Win_wait(win);
 }
 
 int PMPI_Win_test(MPI_Win win, int *flag)
 {
-	return mpc_MPI_Win_test(win, flag);
+        return mpc_osc_test(win, flag);
+	//return mpc_MPI_Win_test(win, flag);
 }
 
 /* Passive Target Sync */
 
 int PMPI_Win_lock(int lock_type, int rank, int assert, MPI_Win win)
 {
-	return mpc_MPI_Win_lock(lock_type, rank, assert, win);
+        return mpc_osc_lock(lock_type, rank, assert, win);
+	//return mpc_MPI_Win_lock(lock_type, rank, assert, win);
 }
 
 int PMPI_Win_unlock(int rank, MPI_Win win)
 {
-	return mpc_MPI_Win_unlock(rank, win);
+        return mpc_osc_unlock(rank, win);
+	//return mpc_MPI_Win_unlock(rank, win);
 }
 
 int PMPI_Win_lock_all(int assert, MPI_Win win)
@@ -15947,22 +15974,26 @@ int PMPI_Win_sync(MPI_Win win)
 
 int PMPI_Win_flush(int rank, MPI_Win win)
 {
-	return mpc_MPI_Win_flush(rank, win);
+        return mpc_osc_flush(rank, win);
+	//return mpc_MPI_Win_flush(rank, win);
 }
 
 int PMPI_Win_flush_local(int rank, MPI_Win win)
 {
-	return mpc_MPI_Win_flush_local(rank, win);
+        return mpc_osc_flush_local(rank, win);
+	//return mpc_MPI_Win_flush_local(rank, win);
 }
 
 int PMPI_Win_flush_all(MPI_Win win)
 {
-	return mpc_MPI_Win_flush_all(win);
+        return mpc_osc_flush_all(win);
+	//return mpc_MPI_Win_flush_all(win);
 }
 
 int PMPI_Win_flush_local_all(MPI_Win win)
 {
-	return mpc_MPI_Win_flush_local_all(win);
+        return mpc_osc_flush_local_all(win);
+	//return mpc_MPI_Win_flush_local_all(win);
 }
 
 int PMPI_Win_get_group(MPI_Win win, MPI_Group *group)

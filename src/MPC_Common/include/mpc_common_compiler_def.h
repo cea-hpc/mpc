@@ -20,4 +20,15 @@
 	 (type *)( (char *)__mptr - offsetof(type,member) ); \
 	 })
 
+#define mpc_buffer_offset(_buf, _offset) \
+        ((uint64_t) ((uintptr_t)_buf + _offset))
+
+void rand_seed_init(void);
+uint64_t lcp_rand_uint64(void);
+
+static inline uint64_t lcp_get_process_uid(uint64_t pid, int32_t tid) {
+        pid &= 0xFFFFFFFF00000000ull; /* first reset least significant bits to 0 */
+        return pid | tid;
+}
+
 #endif

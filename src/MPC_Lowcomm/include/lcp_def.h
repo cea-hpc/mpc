@@ -97,6 +97,7 @@ typedef struct lcp_mem_attr {
 } lcp_mem_attr_t;
 
 /* LCP return code */
+//FIXME: not consistent with MPC_LOWCOMM_* error codes.
 typedef enum {
         LCP_SUCCESS         =  0,
         LCP_ERR_NO_RESOURCE = -1,
@@ -107,7 +108,7 @@ typedef enum {
 
 typedef void *lcp_status_ptr_t;
 
-#define LCP_PTR_IS_PTR (_ptr)      (((uintptr_t)(_ptr) - 1) < ((uintptr_t)LCP_ERROR_LAST - 1))
+#define LCP_PTR_IS_PTR(_ptr)       (((uintptr_t)(_ptr) - 1) < ((uintptr_t)LCP_ERROR_LAST - 1))
 #define LCP_PTR_IS_ERR(_ptr)       (((uintptr_t)(_ptr)) >= ((uintptr_t)LCP_ERROR_LAST))
 #define LCP_PTR_RAW_STATUS(_ptr)   ((lcp_status_t)(intptr_t)(_ptr))
 #define LCP_PTR_STATUS(_ptr)       (LCP_PTR_IS_PTR(_ptr) ? LCP_INPROGRESS : LCP_PTR_RAW_STATUS(_ptr))

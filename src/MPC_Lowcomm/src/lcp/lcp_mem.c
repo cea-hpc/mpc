@@ -370,7 +370,7 @@ err:
 
 int __unpin(struct lcp_pinning_entry *entry)
 {
-        return lcp_mem_deregister(entry->mngr, entry->mem_entry);
+        return lcp_mem_deprovision(entry->mngr, entry->mem_entry);
 }
 
 int lcp_pinning_mmu_release(struct lcp_pinning_mmu *mmu)
@@ -648,7 +648,6 @@ int lcp_mem_provision(lcp_manager_h mngr,
         int rc = MPC_LOWCOMM_SUCCESS;
         int i;
         lcp_mem_h mem;
-        bmap_t bm = MPC_BITMAP_INIT;
         lcr_rail_attr_t attr;
         unsigned flags = 0;
 
@@ -691,13 +690,14 @@ int lcp_mem_provision(lcp_manager_h mngr,
 
         /* Compute bitmap registration. Strategy is to register on all
          * interfaces that have the capability. */
+        mem->bm = (bmap_t) MPC_BITMAP_INIT;
         for (i = 0; i < mngr->num_ifaces; i++) {
 		mngr->ifaces[i]->iface_get_attr(mngr->ifaces[i], &attr);
                 
                 //FIXME: CAP_RMA should not be the only reason to set the
                 //       bitmap, for example SHMEM.
                 if (attr.iface.cap.flags & LCR_IFACE_CAP_RMA) {
-                        MPC_BITMAP_SET(bm, i);
+                        MPC_BITMAP_SET(mem->bm, i);
                 }
         }
 
@@ -714,7 +714,7 @@ int lcp_mem_provision(lcp_manager_h mngr,
         flags = param->flags & LCP_MEM_REGISTER_DYNAMIC ?
                 LCR_IFACE_REGISTER_MEM_DYN : LCR_IFACE_REGISTER_MEM_STAT;
 
-        rc = lcp_mem_reg_from_map(mngr, mem, bm, param->address, param->size, 
+        rc = lcp_mem_reg_from_map(mngr, mem, mem->bm, param->address, param->size, 
                                   flags);
         if (rc != MPC_LOWCOMM_SUCCESS) {
                 goto err;

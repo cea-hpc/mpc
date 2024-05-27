@@ -27,17 +27,10 @@
 #include <mpc_lowcomm_communicator.h> //NOTE: for lowcomm_communicator_t
 #include <lcp.h>
 
+#include "osc_module.h"
+
 #define MAX_WIN_NAME 64
 
-typedef struct mpc_osc_module_state {
-        volatile uint64_t completion_counter;
-        volatile uint64_t post_state[0]; /* Depends on the group size. */
-} mpc_osc_module_state_t;
-
-typedef struct mpc_osc_module {
-        mpc_osc_module_state_t *state;
-
-} mpc_osc_module_t;
 
 typedef struct MPI_ABI_Win {
         int comm_size;
@@ -48,20 +41,11 @@ typedef struct MPI_ABI_Win {
 
         char win_name[MAX_WIN_NAME];
 
-        lcp_manager_h mngr;
-        lcp_context_h ctx;
-        lcp_ep_h     *eps;
-
         int flavor; 
         int model;
         size_t size;
         int disp_unit;
         int *disp_units;
-
-        lcp_mem_h  lkey_state;
-        lcp_mem_h  lkey_data;
-        lcp_mem_h *rkeys_data;
-        lcp_mem_h *rkeys_state;
 
         mpc_osc_module_t win_module;
 } mpc_win_t;
@@ -73,6 +57,10 @@ int mpc_win_create(void *base, size_t size,
                    int disp_unit, MPI_Info info,
                    mpc_lowcomm_communicator_t comm, 
                    mpc_win_t **win_p);
+int mpc_win_allocate(void *base, size_t size, 
+                     int disp_unit, MPI_Info info,
+                     mpc_lowcomm_communicator_t comm, 
+                     mpc_win_t **win_p);
 
 int mpc_win_free(mpc_win_t *win);
 
@@ -152,5 +140,5 @@ int mpc_osc_post(mpc_lowcomm_group_t *group, int mpi_assert, mpc_win_t *win);
 int mpc_osc_wait(mpc_win_t *win);
 int mpc_osc_test(mpc_win_t *win, int *flag);
 
-
+int osc_module_fini();
 #endif

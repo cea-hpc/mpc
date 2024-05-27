@@ -127,8 +127,6 @@ int lcr_ptl_mem_unregister(struct sctk_rail_info_s *rail,
                 mpc_list_del(&ctx->mem->elem);
                 mpc_common_spinlock_unlock(&srail->net.rma.lock);
 
-                ctx->mem->is_active = 0;
-
                 mpc_mpool_push(ctx->mem);
         } 
 
@@ -191,6 +189,7 @@ int lcr_ptl_flush_txq(lcr_ptl_mem_t *mem, lcr_ptl_txq_t *txq, int64_t completed)
         
         mpc_common_spinlock_unlock(&txq->lock);
 
+        return MPC_LOWCOMM_SUCCESS;
 }
 
 int lcr_ptl_exec_flush_mem_ep(lcr_ptl_mem_t *mem, lcr_ptl_ep_info_t *ep, 
@@ -209,6 +208,8 @@ int lcr_ptl_exec_flush_mem_ep(lcr_ptl_mem_t *mem, lcr_ptl_ep_info_t *ep,
         if (outstandings > 0) {
                 mpc_queue_push(&mem->pending_flush, &flush_op->elem);
                 rc = MPC_LOWCOMM_IN_PROGRESS;
+        } else {
+                lcr_ptl_complete_op(flush_op);
         }
 
         return rc;
@@ -272,13 +273,11 @@ static int lcr_ptl_exec_flush_ep(lcr_ptl_rail_info_t *srail,
 {
         int rc = MPC_LOWCOMM_SUCCESS, i = 0;
         int64_t completed = 0, outstandings = 0;
+        int is_pushed = 0;
         lcr_ptl_mem_t   *mem;
 
         /* First, load the number of oustanding operation. */
         mpc_list_for_each(mem, &srail->net.rma.poll_list, lcr_ptl_mem_t, elem) {
-                if (mpc_queue_is_empty(&mem->txqt[ep->idx].ops))
-                        continue;
-
                 /* Poll memory. */
                 completed = lcr_ptl_poll_mem(mem);
 
@@ -287,9 +286,12 @@ static int lcr_ptl_exec_flush_ep(lcr_ptl_rail_info_t *srail,
 
                 lcr_ptl_flush_txq(mem, &mem->txqt[ep->idx], completed);
 
-                if (outstandings > 0) {
+                if (outstandings > 0 && !is_pushed) {
                         mpc_queue_push(&mem->pending_flush, &flush_op->elem);
                         rc = MPC_LOWCOMM_IN_PROGRESS;
+                        is_pushed = 1;
+                } else {
+                        lcr_ptl_complete_op(flush_op);
                 }
                 i++; /* Iterate over op count in flush operation. */
         }
@@ -367,6 +369,8 @@ static int lcr_ptl_exec_flush_mem(lcr_ptl_rail_info_t *srail,
         if (outstandings > 0) {
                 mpc_queue_push(&mem->pending_flush, &flush_op->elem);
                 rc = MPC_LOWCOMM_IN_PROGRESS;
+        } else {
+                lcr_ptl_complete_op(flush_op);
         }
 
         return rc;

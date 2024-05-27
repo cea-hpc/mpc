@@ -327,19 +327,19 @@ int lcp_ep_get_or_create(lcp_manager_h mngr,
 enum {
 //FIXME: Some flags does not specify any field within lcp_request_param_t but
 //       just a functionality (eg LCP_REQUEST_TRY_OFFLOAD or
-//       LCP_REQUEST_TAG_SYNC). Maybe this should be divided in two enum for
-//       clarity.
+//       LCP_REQUEST_TAG_SYNC).
+//TODO: add a flags field in lcp_request_param_t
         LCP_REQUEST_TRY_OFFLOAD   = MPC_BIT(0), /**< Try offload send mask */
         LCP_REQUEST_USER_DATA     = MPC_BIT(1), /**< User data mask */
         LCP_REQUEST_USER_REQUEST  = MPC_BIT(2), /**< User request mask */
-        LCP_REQUEST_TAG_SYNC      = MPC_BIT(3), /**< Sync request mask */
-        LCP_REQUEST_AM_SYNC       = MPC_BIT(4), /**< AM sync request mask */
-        LCP_REQUEST_AM_CALLBACK   = MPC_BIT(5), /**< AM callback mask */ 
-        LCP_REQUEST_RMA_CALLBACK  = MPC_BIT(6), /**< Atomic callback mask */ 
-        LCP_REQUEST_REPLY_BUFFER  = MPC_BIT(7), /**< Result buffer for Atomics */
-        LCP_REQUEST_USER_MEMH     = MPC_BIT(8), /**< User-provided local Memory handle */
-        LCP_REQUEST_USER_EPH      = MPC_BIT(9), /**< User-provided Endpoint handle */
-        LCP_REQUEST_TAG_CALLBACK  = MPC_BIT(10), /**< TAG callback mask */ 
+        LCP_REQUEST_NO_COMPLETE   = MPC_BIT(3), /**< Do not complete lower layer request. */
+        LCP_REQUEST_TAG_SYNC      = MPC_BIT(4), /**< Sync request mask */
+        LCP_REQUEST_AM_SYNC       = MPC_BIT(5), /**< AM sync request mask */
+        LCP_REQUEST_SEND_CALLBACK = MPC_BIT(6), /**< Send callback mask */ 
+        LCP_REQUEST_RECV_CALLBACK = MPC_BIT(7), /**< Recv callback mask */ 
+        LCP_REQUEST_REPLY_BUFFER  = MPC_BIT(8), /**< Result buffer for Atomics */
+        LCP_REQUEST_USER_MEMH     = MPC_BIT(9), /**< User-provided local Memory handle */
+        LCP_REQUEST_USER_EPH      = MPC_BIT(10), /**< User-provided Endpoint handle */
 };
 
 /**
@@ -403,7 +403,6 @@ typedef struct lcp_request_param {
         uint32_t                     field_mask; /**< Flags to indicate which parameter is used */
         lcp_send_callback_func_t     send_cb; /**< Completion callback for send requests */
         lcp_tag_recv_callback_func_t recv_cb; /**< Completion callback for recv requests */
-        lcp_send_callback_func_t     am_cb; /**< Completion callback for recv AM requests */
         void                        *reply_buffer; /**< Location for returned value with atomic operations */
         lcp_datatype_t               datatype; /**< Contiguous or non-contiguous data */
         void                        *request; /**< Pointer to upper layer request for completion */
@@ -432,10 +431,22 @@ void *lcp_request_alloc(lcp_task_h task);
  *
  * Free a previously allocated request from \ref lcp_request_alloc
  *
- * @param [int] request Request handle to be freed.
+ * @param [in] request Request handle to be freed.
  * @return Error code returned.
  */
 void lcp_request_free(void *request);
+
+/**
+ * @ingroup LCP_COMM
+ * @brief Check request status.
+ *
+ * Check the status of an LCP request.
+ *
+ * @param [in] request Request handle to be checked.
+ * @return Error code returned.
+ */
+int lcp_request_check_status(void *request);
+
 /**
  * @ingroup LCP_COMM
  * @brief LCP send tag communication. 
@@ -611,15 +622,14 @@ int lcp_am_recv_nb(lcp_manager_h mngr, lcp_task_h task, void *data_ctnr,
  * @param [in] task  Task handle of the source task.
  * @param [in] buffer  Buffer from which data will be sent.
  * @param [in] length  Length of data in buffer.
- * @param [in] remote_disp  displacement from start of the target buffer
- *                          described by \ref rkey.
+ * @param [in] remote_addr  remote address to put the data.
  * @param [in] rkey  Remote memory key handle.
  * @param [in] param  Request parameters \ref lcp_request_param_t.
  * @return Pointer to upper layer request.
  */
-lcp_status_ptr_t lcp_put_nb(lcp_ep_h ep, lcp_task_h task, const void *buffer,
-                            size_t length, uint64_t remote_disp, lcp_mem_h rkey,
-                            const lcp_request_param_t *param);
+lcp_status_ptr_t lcp_put_nb(lcp_ep_h ep, lcp_task_h task, const void *buffer, 
+                            size_t length, uint64_t remote_addr, lcp_mem_h rkey,
+                            const lcp_request_param_t *param); 
 
 /**
  * @ingroup LCP_COMM
@@ -636,10 +646,10 @@ lcp_status_ptr_t lcp_put_nb(lcp_ep_h ep, lcp_task_h task, const void *buffer,
  * @param [in] task  Task handle of the source task.
  * @param [in] buffer  Buffer from which data will be sent.
  * @param [in] length  Length of data in buffer.
- * @param [in] remote_addr  Remote address where data is written.
+ * @param [in] remote_addr  Remote address from which data is read.
  * @param [in] rkey  Remote memory key handle.
  * @param [in] param  Request parameters \ref lcp_request_param_t.
- * @return Error code returned.
+ * @return Error code returned or pointer to pending request.
  */
 lcp_status_ptr_t lcp_get_nb(lcp_ep_h ep, lcp_task_h task, void *buffer, 
                             size_t length, uint64_t remote_addr, lcp_mem_h rkey,
@@ -659,10 +669,10 @@ lcp_status_ptr_t lcp_get_nb(lcp_ep_h ep, lcp_task_h task, void *buffer,
  * @param [in] mngr  Communication manager.
  * @param [in] task  Task handle of the source task.
  * @param [in] param  Request parameters \ref lcp_request_param_t.
- * @return Error code returned.
+ * @return Error code returned or pointer to pending request.
  */
-int lcp_flush_nb(lcp_manager_h mngr, lcp_task_h task, 
-                 const lcp_request_param_t *param);
+lcp_status_ptr_t lcp_flush_nb(lcp_manager_h mngr, lcp_task_h task, 
+                              const lcp_request_param_t *param);
 
 typedef enum {
         LCP_ATOMIC_OP_ADD,
@@ -673,9 +683,9 @@ typedef enum {
         LCP_ATOMIC_OP_CSWAP,
 } lcp_atomic_op_t;
 
-int lcp_atomic_op_nb(lcp_ep_h ep, lcp_task_h task, const void *buffer,
-                     size_t length, uint64_t remote_addr, lcp_mem_h rkey,
-                     lcp_atomic_op_t op_type, const lcp_request_param_t *param);
+lcp_status_ptr_t lcp_atomic_op_nb(lcp_ep_h ep, lcp_task_h task, const void *buffer,
+                                  size_t length, uint64_t remote_addr, lcp_mem_h rkey,
+                                  lcp_atomic_op_t op_type, const lcp_request_param_t *param);
 
 /**
  * @ingroup lcp_mem
@@ -711,11 +721,7 @@ typedef struct lcp_mem_param {
 
 /**
  * @ingroup LCP_MEM
-<<<<<<< HEAD
- * @brief LCP register memory.
-=======
  * @brief LCP provision memory. 
->>>>>>> 2f7a4619a (WIP: OSC: implementing start, post, wait, complete.)
  *
  * Provision memory by allocating if specified in the parameters and by
  * registering to a transport and get a memory handle from it. This call be used

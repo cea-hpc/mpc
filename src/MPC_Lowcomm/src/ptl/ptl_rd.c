@@ -145,8 +145,8 @@ int lcr_ptl_iface_open(int mngr_id, const char *device_name, int id,
         iface->pmi_tag = lcr_rail_build_pmi_tag(mngr_id, iface->rail_number);
 
         /* Init capabilities */
-        iface->cap = LCR_IFACE_CAP_RMA | 
-                LCR_IFACE_CAP_LOOPBACK |
+        iface->cap = LCR_IFACE_CAP_RMA    | 
+                LCR_IFACE_CAP_LOOPBACK    |
                 LCR_IFACE_CAP_REMOTE;
 
         if (flags & LCR_FEATURE_TS) {
@@ -161,8 +161,12 @@ int lcr_ptl_iface_open(int mngr_id, const char *device_name, int id,
 
         /* If RMA was requested through flags, then this means it should be used
          * alone thus remove AM feature. */
-        if (flags & LCR_FEATURE_OS) 
+        if (flags & LCR_FEATURE_OS) {
                 init_flags |= LCR_PTL_FEATURE_RMA;
+                if (!(iface->cap & LCR_IFACE_CAP_ATOMICS)) {
+                        init_flags |= LCR_PTL_FEATURE_AM;
+                }
+        }
 
 
         rc = lcr_ptl_iface_init(iface, init_flags);

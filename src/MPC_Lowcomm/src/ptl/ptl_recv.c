@@ -157,6 +157,7 @@ int lcr_ptl_recv_block_disable(mpc_list_elem_t *head)
 
         mpc_list_for_each_safe(block, tmp, head, lcr_ptl_recv_block_t, elem) {
                lcr_ptl_recv_block_free(block);
+               mpc_list_del(&tmp->elem);
         }
 
         return MPC_LOWCOMM_SUCCESS;

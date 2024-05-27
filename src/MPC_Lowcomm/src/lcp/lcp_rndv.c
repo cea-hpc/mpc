@@ -64,6 +64,8 @@ static ssize_t lcp_rndv_rtr_pack(void *dest, void *data)
         lcp_request_t *rndv_req = data;
 
         hdr->msg_id = rndv_req->msg_id;
+        hdr->remote_addr = (uint64_t)rndv_req->send.buffer;
+
         packed_size = lcp_mem_rkey_pack(rndv_req->mngr, 
                                         rndv_req->state.lmem,
                                         hdr + 1);
@@ -86,8 +88,9 @@ ssize_t lcp_rndv_rts_pack(lcp_request_t *super, void *dest)
         lcp_rndv_hdr_t *hdr = (lcp_rndv_hdr_t *)dest;
         size_t packed_size = 0;
 
-        hdr->size   = rndv_req->send.length;
-        hdr->msg_id = rndv_req->msg_id;
+        hdr->size        = rndv_req->send.length;
+        hdr->msg_id      = rndv_req->msg_id;
+        hdr->remote_addr = (uint64_t)rndv_req->send.buffer;
 
         if (rndv_req->mngr->ctx->config.rndv_mode == LCP_RNDV_GET) {
                 /* Pack remote key from super request */
@@ -166,16 +169,16 @@ int lcp_rndv_rma_progress(lcp_request_t *rndv_req)
                 if (rndv_req->mngr->ctx->config.rndv_mode == LCP_RNDV_GET) {
                         /* Get source address */
                         rc = lcp_send_do_get_zcopy(ep->lct_eps[cc],
-                                                   offset, 
-                                                   offset, 
+                                                   mpc_buffer_offset(rndv_req->send.buffer, offset), 
+                                                   mpc_buffer_offset(rndv_req->send.rma.remote_addr, offset), 
                                                    &(rndv_req->state.lmem->mems[cc]),
                                                    &(rkey->mems[cc]),
                                                    length,
                                                    &(rndv_req->state.comp));
                 } else {
                         rc = lcp_send_do_put_zcopy(ep->lct_eps[cc],
-                                                   offset,
-                                                   offset,
+                                                   mpc_buffer_offset(rndv_req->send.buffer, offset), 
+                                                   mpc_buffer_offset(rndv_req->send.rma.remote_addr, offset), 
                                                    &(rndv_req->state.lmem->mems[cc]),
                                                    &(rkey->mems[cc]),
                                                    length,
@@ -416,7 +419,8 @@ int lcp_rndv_process_rts(lcp_request_t *rreq,
         /* Set message identifiers from incoming message */
         //NOTE: on receive side, msg_id is set to hdr->msg_id which corresponds
         //      to the sender's rndv_req address.
-        rndv_req->msg_id = hdr->msg_id;
+        rndv_req->msg_id               = hdr->msg_id;
+        rndv_req->send.rma.remote_addr = hdr->remote_addr;
 
         /* Get endpoint */
         if (!(rndv_req->send.ep = lcp_ep_get(rndv_req->mngr, hdr->src_uid))) {
@@ -540,7 +544,7 @@ static int lcp_rndv_fin_handler(void *arg, void *data,
 
         /* For both PUT and GET, when receiving a FIN message, we have to
          * unregister the memory */
-        rc = lcp_mem_deregister(rndv_req->mngr, rndv_req->state.lmem);
+        rc = lcp_mem_deprovision(rndv_req->mngr, rndv_req->state.lmem);
         if (rc != MPC_LOWCOMM_SUCCESS) {
                 goto err;
         }

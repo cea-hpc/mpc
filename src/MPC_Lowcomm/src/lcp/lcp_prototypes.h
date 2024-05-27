@@ -152,52 +152,49 @@ static inline int lcp_send_do_get_zcopy(_mpc_lowcomm_endpoint_t *lcr_ep,
 }
 
 static inline int lcp_atomic_do_post(_mpc_lowcomm_endpoint_t *lcr_ep,
-                                     uint64_t *value,
+                                     uint64_t value,
                                      uint64_t remote_offset,
                                      lcr_atomic_op_t op_type,
-                                     lcr_memp_t *local_key,
                                      lcr_memp_t *remote_key,
                                      size_t size,
                                      lcr_completion_t *comp)
 {
-        return lcr_ep->rail->atomic_post(lcr_ep, (uint64_t)value, 
+        return lcr_ep->rail->atomic_post(lcr_ep, value, 
                                          remote_offset, op_type,
-                                         local_key, remote_key,
+                                         remote_key,
                                          size, comp);
 }
 
 static inline int lcp_atomic_do_fetch(_mpc_lowcomm_endpoint_t *lcr_ep,
                                       uint64_t *result,
-                                      uint64_t *value,
+                                      uint64_t value,
                                       uint64_t remote_offset,
                                       lcr_atomic_op_t op_type,
-                                      lcr_memp_t *local_key,
                                       lcr_memp_t *remote_key,
                                       size_t size,
                                       lcr_completion_t *comp)
 {
         return lcr_ep->rail->atomic_fetch(lcr_ep, (uint64_t)result, 
-                                          (uint64_t)value,
+                                          value,
                                           remote_offset, op_type,
-                                          local_key, remote_key,
+                                          remote_key,
                                           size, comp);
 }
 
 static inline int lcp_atomic_do_cswap(_mpc_lowcomm_endpoint_t *lcr_ep,
                                       uint64_t *result,
-                                      uint64_t *value,
+                                      uint64_t value,
                                       uint64_t compare,
                                       uint64_t remote_offset,
                                       lcr_atomic_op_t op_type,
-                                      lcr_memp_t *local_key,
                                       lcr_memp_t *remote_key,
                                       size_t size,
                                       lcr_completion_t *comp) 
 {
         return lcr_ep->rail->atomic_cswap(lcr_ep, (uint64_t)result,
-                                          (uint64_t)value,
+                                          value,
                                           remote_offset, op_type,
-                                          local_key, remote_key,
+                                          remote_key,
                                           compare, size, comp);
 }
 

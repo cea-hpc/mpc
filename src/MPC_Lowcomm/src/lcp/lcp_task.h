@@ -72,6 +72,7 @@ typedef struct lcp_task_comm_context {
 
 struct lcp_task {
         int tid; /* task identifier */
+        uint64_t uid;
 
         lcp_context_h ctx; /* global context. */
 

@@ -77,6 +77,18 @@ void lcp_request_storage_release()
 	__request_mempool_count = 0;
 }
 
+int lcp_request_check_status(void *request)
+{
+        lcp_request_t *req = (lcp_request_t *)(request) - 1;
+
+        if (req->flags & LCP_REQUEST_REMOTE_COMPLETED &&
+            req->flags & LCP_REQUEST_LOCAL_COMPLETED) {
+                return req->status;
+        }
+
+        return MPC_LOWCOMM_IN_PROGRESS;
+}
+
 void *lcp_request_alloc(lcp_task_h task)
 {
         lcp_request_t *req = NULL;

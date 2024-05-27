@@ -202,6 +202,7 @@ int lcp_task_create(lcp_context_h ctx, int tid, lcp_task_h *task_p)
 
         /* Set task unique identifier */
         task->tid = tid;
+        task->uid = ctx->process_uid;
         task->ctx = ctx;
 
         /* Allocate table of communication context. */

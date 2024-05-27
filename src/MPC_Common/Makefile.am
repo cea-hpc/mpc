@@ -26,6 +26,6 @@ mpc_headerdir=$(pkgincludedir)
 
 mpc_header_HEADERS= $(abs_builddir)/include/mpc_common_types.h  $(abs_srcdir)/include/mpc_common_debugger.h   $(abs_srcdir)/include/mpc_common_aio.h $(abs_srcdir)/include/mpc_common_recycler.h $(abs_srcdir)/include/mpc_common_bit.h
 
-mpc_header_HEADERS+=$(abs_srcdir)/include/uthash.h
+mpc_header_HEADERS+=$(abs_srcdir)/include/uthash.h $(abs_srcdir)/include/mpc_common_progress.h
 
 SUBDIRS=src

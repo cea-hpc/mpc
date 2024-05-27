@@ -78,7 +78,7 @@ int lcp_ep_get_next_cc(lcp_ep_h ep)
 
 int lcp_ep_create_base(lcp_manager_h mngr, lcp_ep_h *ep_p)
 {
-	int      rc     = LCP_SUCCESS;
+	int      rc     = MPC_LOWCOMM_SUCCESS;
 	bmap_t   ep_map = MPC_BITMAP_INIT;
         lcp_context_h ctx = mngr->ctx;
 	lcp_ep_h ep;
@@ -87,7 +87,7 @@ int lcp_ep_create_base(lcp_manager_h mngr, lcp_ep_h *ep_p)
 	if(ep == NULL)
 	{
 		mpc_common_debug_error("LCP: failed to allocate endpoint");
-		rc = LCP_ERROR;
+		rc = MPC_LOWCOMM_ERROR;
 		goto err;
 	}
 	memset(ep, 0, sizeof(struct lcp_ep) );
@@ -97,7 +97,7 @@ int lcp_ep_create_base(lcp_manager_h mngr, lcp_ep_h *ep_p)
 	if(ep->lct_eps == NULL)
 	{
 		mpc_common_debug_error("LCP: could not allocate endpoint rails.");
-		rc = LCP_ERROR;
+		rc = MPC_LOWCOMM_ERROR;
 		goto err_alloc_eps;
 	}
 	memset(ep->lct_eps, 0, ctx->num_resources * sizeof(_mpc_lowcomm_endpoint_t *) );
@@ -142,6 +142,7 @@ int lcp_ep_init_config(lcp_manager_h mngr, lcp_ep_h ep)
 	ep->config.rma.max_get_zcopy  = SIZE_MAX;
 	ep->config.offload            = 0;
         ep->cap                       = 0;
+        ep->tag_chnl = ep->ato_chnl   = LCP_NULL_CHANNEL;
 
         //FIXME: endpoint configuration would need some refacto. It currently
         //       does not handle well heterogenous interfaces.
@@ -176,6 +177,12 @@ int lcp_ep_init_config(lcp_manager_h mngr, lcp_ep_h ep)
 			                                      attr.iface.cap.tag.max_zcopy);
 			ep->config.tag.max_iovecs = mpc_common_min(ep->config.tag.max_iovecs,
 			                                       attr.iface.cap.tag.max_iovecs);
+
+                        //NOTE: first interface is taken. Define a better
+                        //      strategy.
+                        if (ep->tag_chnl == LCP_NULL_CHANNEL) {
+                                ep->tag_chnl = i;
+                        }
 		}
 
                 if (attr.iface.cap.flags & LCR_IFACE_CAP_ATOMICS) {
@@ -184,6 +191,12 @@ int lcp_ep_init_config(lcp_manager_h mngr, lcp_ep_h ep)
                                                                        attr.iface.cap.ato.max_fetch_size);
                         ep->config.ato.max_fetch_size = mpc_common_min(ep->config.ato.max_post_size,
                                                                        attr.iface.cap.ato.max_post_size);
+
+                        //NOTE: first interface is taken. Define a better
+                        //      strategy.
+                        if (ep->ato_chnl == LCP_NULL_CHANNEL) {
+                                ep->ato_chnl = i;
+                        }
                 }
 
 		//NOTE: if tbsm + portals for example, eager and rndv frag
@@ -214,22 +227,12 @@ int lcp_ep_init_config(lcp_manager_h mngr, lcp_ep_h ep)
 		}
 	}
 
-	//FIXME: should it be two distinct threshold? One for tag, one for am?
+	//FIXME: should it be two distinct thresholds? One for tag, one for am?
 	ep->config.rndv_threshold = ep->config.am.max_zcopy;
 
 	ep->cc = ep->next_cc = prio_idx;
 
-        //NOTE: performing this kind of operations is either not supported
-        //      (offload) or does not make sense (atomics), thus only the priority
-        //      interface will be used.
-	if(ep->cap & (LCR_IFACE_CAP_TAG_OFFLOAD |
-                      LCR_IFACE_CAP_ATOMICS))
-	{
-		ep->tag_chnl = prio_idx;
-                ep->ato_chnl = prio_idx;
-	}
-
-	return LCP_SUCCESS;
+	return MPC_LOWCOMM_SUCCESS;
 }
 
 /**
@@ -250,7 +253,7 @@ int lcp_ep_insert(lcp_manager_h mngr, lcp_ep_h ep)
         if(elem == NULL)
         {
                 mpc_common_debug_error("LCP: could not allocate endpoint table entry.");
-                rc = LCP_ERROR;
+                rc = MPC_LOWCOMM_ERROR;
                 goto err;
         }
         memset(elem, 0, sizeof(lcp_ep_ctx_t) );
@@ -264,7 +267,7 @@ int lcp_ep_insert(lcp_manager_h mngr, lcp_ep_h ep)
 	/* Update context */
 	mngr->num_eps++;
 
-	rc = LCP_SUCCESS;
+	rc = MPC_LOWCOMM_SUCCESS;
 err:
 	return rc;
 }
@@ -350,7 +353,6 @@ int lcp_ep_init_channels(lcp_manager_h mngr, lcp_ep_h ep)
 
 		/* Add endpoint to list and set bitmap entry */
 		ep->lct_eps[i] = lcr_ep;
-		ep->num_chnls++;
 
 		/* Transport endpoint is connected */
 		MPC_BITMAP_SET(ep->conn_map, i);
@@ -360,6 +362,11 @@ int lcp_ep_init_channels(lcp_manager_h mngr, lcp_ep_h ep)
 	 * and all are connected */
 	int equal = !mpc_bitmap_is_zero(ep->avail_map) &&
 	            MPC_BITMAP_AND(ep->conn_map, ep->avail_map);
+
+        //FIXME: num_chnls is set to num_iface since in many places a loop need
+        //       to be done on such range, channel are used depending on the
+        //       connection bitmap. Should be adapted...
+        ep->num_chnls = mngr->num_ifaces;
 
 	if(!equal)
 	{
@@ -371,7 +378,7 @@ int lcp_ep_init_channels(lcp_manager_h mngr, lcp_ep_h ep)
 	}
 	mpc_common_debug("LCP: ep state=%s.", ep->state ? "CONNECTING" : "CONNECTED");
 
-	rc = LCP_SUCCESS;
+	rc = MPC_LOWCOMM_SUCCESS;
 
 	return rc;
 }
@@ -446,7 +453,7 @@ int lcp_context_ep_create(lcp_manager_h mngr, lcp_ep_h *ep_p,
 
 	/* Allocation endpoint */
 	rc = lcp_ep_create_base(mngr, &ep);
-	if(rc != LCP_SUCCESS)
+	if(rc != MPC_LOWCOMM_SUCCESS)
 	{
 		goto err;
 	}
@@ -456,7 +463,7 @@ int lcp_context_ep_create(lcp_manager_h mngr, lcp_ep_h *ep_p,
 
 	/* Create all transport endpoints */
 	rc = lcp_ep_init_channels(mngr, ep);
-	if(rc != LCP_SUCCESS)
+	if(rc != MPC_LOWCOMM_SUCCESS)
 	{
 		goto err_unalloc;
 	}
@@ -468,7 +475,7 @@ int lcp_context_ep_create(lcp_manager_h mngr, lcp_ep_h *ep_p,
 	if(!lcp_ep_check_if_valid(ep) )
 	{
 		mpc_common_debug_error("LCP: endpoint not valid.");
-		rc = LCP_ERROR;
+		rc = MPC_LOWCOMM_ERROR;
 		goto err_unalloc;
 	}
 
@@ -488,7 +495,7 @@ int lcp_ep_create(lcp_manager_h mngr, lcp_ep_h *ep_p,
                   mpc_lowcomm_peer_uid_t uid, unsigned flags)
 {
 	lcp_ep_h ep = NULL;
-	int      rc = LCP_SUCCESS;
+	int      rc = MPC_LOWCOMM_SUCCESS;
 
 	LCP_MANAGER_LOCK(mngr);
 
@@ -501,7 +508,7 @@ int lcp_ep_create(lcp_manager_h mngr, lcp_ep_h *ep_p,
 
 	/* Create and connect endpoint */
 	rc = lcp_context_ep_create(mngr, &ep, uid, flags);
-	if(rc != LCP_SUCCESS)
+	if(rc != MPC_LOWCOMM_SUCCESS)
 	{
 		mpc_common_debug_error("LCP: could not create endpoint. "
 		                       "uid=%llu.", uid);
@@ -510,7 +517,7 @@ int lcp_ep_create(lcp_manager_h mngr, lcp_ep_h *ep_p,
 
 	/* Insert endpoint in the context table, only once */
 	rc = lcp_ep_insert(mngr, ep);
-	if(rc != LCP_SUCCESS)
+	if(rc != MPC_LOWCOMM_SUCCESS)
 	{
 		goto unlock;
 	}
@@ -560,7 +567,7 @@ int lcp_ep_get_or_create(lcp_manager_h mngr, uint64_t uid,
 	{
 		return lcp_ep_create(mngr, ep_p, uid, flags);
 	}
-	return LCP_SUCCESS;
+	return MPC_LOWCOMM_SUCCESS;
 }
 
 //FIXME: add lcp_ep_close

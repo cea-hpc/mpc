@@ -29,45 +29,77 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#ifndef LCP_TYPES_H
-#define LCP_TYPES_H
+#include "mpc_common_debug.h"
+#include <mpc_common_progress.h>
+#include <mpc_common_spinlock.h>
 
-#include <stdint.h>
-#include <sys/uio.h> //iovec
+#define COMMON_PROGRESS_CALLBACK_MAX 32
+#define COMMON_PROGRESS_FUNC_NOTFOUND -1
 
-/* Config */
-#define LCP_CONF_STRING_SIZE 512
+static mpc_common_spinlock_t progress_lock = MPC_COMMON_SPINLOCK_INITIALIZER;
 
-/* Chanel */
-#define LCP_MAX_CHANNELS 6
-#define LCP_NULL_CHANNEL ((lcp_chnl_idx_t)-1)
-typedef uint8_t lcp_chnl_idx_t; /* Communication channel index */
+static int num_callbacks = 0;
+static progress_callback_func_t callbacks[COMMON_PROGRESS_CALLBACK_MAX];
 
-/* Active Message */
-enum {
-        LCP_AM_ID_EAGER_TAG = 0,  /* Eager Tag                             */
-        LCP_AM_ID_EAGER_TAG_SYNC, /* Eager Tag Synchronize                 */
-        LCP_AM_ID_EAGER_AM,       /* Eager Active message                  */
-        LCP_AM_ID_EAGER_AM_SYNC,  /* Eager Active message                  */
-        LCP_AM_ID_ACK_SYNC,       /* Ack synchronize                       */
-        LCP_AM_ID_ACK_AM_SYNC,    /* Ack synchronize                       */
-        LCP_AM_ID_RTS_AM,         /* Ready To Send (RTS) Active Message    */
-        LCP_AM_ID_RTS_TAG,        /* Ready To Send (RTS) Tag               */
-        LCP_AM_ID_RTR,            /* Ready To Receive (RTR) Rendez-vous    */
-        LCP_AM_ID_RTR_TM,         /* Ready To Receive (RTR) TM Rendez-vous */
-        LCP_AM_ID_RFIN,           /* Rendez-vous FIN (RFIN)                */
-        LCP_AM_ID_RFIN_TM,        /* Rendez-vous FIN (RFIN) TM             */
-        LCP_AM_ID_ATOMIC,
-        LCP_AM_ID_ATOMIC_REPLY,
-        LCP_AM_ID_LAST
-};
 
-#define LCP_AM_ID_USER_MAX 64
+static int _mpc_common_find_callback(progress_callback_func_t func) 
+{
+        int i;
+        for (i = 0; i < num_callbacks; i++) {
+                if (callbacks[i] == func) {
+                        return i;
+                }
+        }
+        return COMMON_PROGRESS_FUNC_NOTFOUND;
+}
 
-typedef enum {
-	LCP_RNDV_GET = 1,
-	LCP_RNDV_PUT,
-	LCP_RNDV_SEND
-} lcp_rndv_mode_t;
+int mpc_common_progress_register(progress_callback_func_t func) 
+{
+        mpc_common_spinlock_lock(&progress_lock);
+        if (_mpc_common_find_callback(func) != COMMON_PROGRESS_FUNC_NOTFOUND) {
+                goto unlock;
+        }
 
-#endif
+        if (num_callbacks >= COMMON_PROGRESS_CALLBACK_MAX) {
+                mpc_common_debug_fatal("COMMON PROGRESS: reach progress "
+                                       "callback limit.");
+                goto unlock;
+        }
+
+        callbacks[num_callbacks++] = func;
+
+unlock:
+        mpc_common_spinlock_unlock(&progress_lock);
+
+        return 0;
+}
+
+int mpc_common_progress_unregister(progress_callback_func_t func)
+{
+        int i, callback_idx;
+        
+        callback_idx = _mpc_common_find_callback(func);
+        if (callback_idx == COMMON_PROGRESS_FUNC_NOTFOUND) {
+                mpc_common_debug_error("COMMON PROGRESS: unregister unknown callback");
+                return 1;
+        }
+
+        mpc_common_spinlock_lock(&progress_lock);
+
+        for (i = callback_idx; i < num_callbacks - 1; i++) {
+                callbacks[i] = callbacks[i + 1];
+        }
+
+        return 0;
+}
+
+int mpc_common_progress()
+{
+        int i, rc = 0;
+
+        for (i = 0; i < num_callbacks; i++) {
+                rc |= callbacks[i]();
+        }
+
+        return rc; 
+}

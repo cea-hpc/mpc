@@ -58,7 +58,7 @@ int lcp_tag_recv_nb(lcp_manager_h mngr, lcp_task_h task, void *buffer,
                 return LCP_ERROR;
         }
 
-        if (param->field_mask & LCP_REQUEST_TAG_CALLBACK) {
+        if (param->field_mask & LCP_REQUEST_RECV_CALLBACK) {
                 req->flags           |= LCP_REQUEST_USER_CALLBACK;
                 req->recv.tag.recv_cb = param->recv_cb;
         }

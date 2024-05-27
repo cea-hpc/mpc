@@ -99,7 +99,7 @@ INITIALIZATION/FINALIZE
         } else if ( (retcode) != PMI_SUCCESS )\
 	{\
 		(void)fprintf( stderr, "FAILURE (mpc_launch_pmi): %s: %d\n", ctx, retcode );\
-		mpc_launch_pmi_abort();\
+		/*mpc_launch_pmi_abort();\*/ \
 	}\
 }while(0)
 

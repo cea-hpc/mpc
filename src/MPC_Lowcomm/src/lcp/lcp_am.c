@@ -388,7 +388,7 @@ int lcp_am_send_nb(lcp_ep_h ep, lcp_task_h task, int32_t dest_tid,
         }
         memcpy(req->send.am.hdr, hdr, hdr_size);
 
-        if (param->field_mask & LCP_REQUEST_AM_CALLBACK) {
+        if (param->field_mask & LCP_REQUEST_SEND_CALLBACK) {
                 req->flags          |= LCP_REQUEST_USER_CALLBACK;
                 req->send.send_cb    = param->send_cb;
         }
@@ -441,10 +441,10 @@ int lcp_am_recv_nb(lcp_manager_h mngr, lcp_task_h task, void *data_ctnr, void *b
         LCP_REQUEST_INIT_AM_RECV(req, mngr, task, count, param->request, 
                                  buffer, param->datatype);
 
-        if (param->field_mask & LCP_REQUEST_AM_CALLBACK) {
+        if (param->field_mask & LCP_REQUEST_SEND_CALLBACK) {
                 req->flags          |= LCP_REQUEST_USER_CALLBACK;
                 req->request = param->request;
-                req->recv.am.cb      = param->am_cb;
+                req->recv.am.cb      = param->send_cb;
         }
 
         /* Set header */

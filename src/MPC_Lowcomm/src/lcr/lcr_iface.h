@@ -120,31 +120,28 @@ typedef int (*lcr_get_zcopy_func_t)(_mpc_lowcomm_endpoint_t *ep,
                                     lcr_completion_t *ctx);
 
 typedef int (*lcr_atomic_post_func_t)(_mpc_lowcomm_endpoint_t *ep,
-                                      uint64_t local_offset,
+                                      uint64_t value,
                                       uint64_t remote_offset,
                                       lcr_atomic_op_t op_type,
-                                      lcr_memp_t *local_key,
                                       lcr_memp_t *remote_key,
                                       size_t size,
                                       lcr_completion_t *ctx);
 
 
 typedef int (*lcr_atomic_fetch_func_t)(_mpc_lowcomm_endpoint_t *ep,
-                                       uint64_t get_local_offset,
-                                       uint64_t put_local_offset,
+                                       uint64_t result,
+                                       uint64_t value,
                                        uint64_t remote_offset,
                                        lcr_atomic_op_t op_type,
-                                       lcr_memp_t *local_key,
                                        lcr_memp_t *remote_key,
                                        size_t size,
                                        lcr_completion_t *ctx);
 
 typedef int (*lcr_atomic_cswap_func_t)(_mpc_lowcomm_endpoint_t *ep,
-                                       uint64_t get_local_offset,
-                                       uint64_t put_local_offset,
+                                       uint64_t result,
+                                       uint64_t value,
                                        uint64_t remote_offset,
                                        lcr_atomic_op_t op_type,
-                                       lcr_memp_t *local_key,
                                        lcr_memp_t *remote_key,
                                        uint64_t compare,
                                        size_t size,

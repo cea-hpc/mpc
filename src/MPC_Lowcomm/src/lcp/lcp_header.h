@@ -32,6 +32,7 @@
 #ifndef LCP_HEADER_H
 #define LCP_HEADER_H
 
+#include "lcp.h"
 #include <stdint.h>
 #include <stddef.h>
 
@@ -75,6 +76,7 @@ typedef struct lcp_rndv_hdr {
         };
         uint64_t msg_id;  /* message id   */
 	uint64_t src_uid; /* source uid   */
+        uint64_t remote_addr; /* remote address */
 	size_t   size;    /* message size */
 } lcp_rndv_hdr_t;
 
@@ -85,6 +87,22 @@ typedef struct lcp_rndv_hdr {
 typedef struct lcp_ack_hdr {
 	int32_t  src;
 	uint64_t msg_id;
+        uint64_t remote_addr;
 } lcp_ack_hdr_t;
+
+typedef struct lcp_ato_hdr {
+        int      dest_tid;
+	uint64_t src_uid; /* source uid   */
+        uint64_t msg_id;
+        lcp_atomic_op_t op;
+        uint64_t value;
+        uint64_t remote_addr;
+        uint64_t compare;
+} lcp_ato_hdr_t;
+
+typedef struct lcp_ato_reply_hdr {
+        uint64_t result;
+        uint64_t msg_id;
+} lcp_ato_reply_hdr_t;
 
 #endif
