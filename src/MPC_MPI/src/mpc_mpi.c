@@ -15823,10 +15823,11 @@ int PMPI_Win_allocate_shared(MPI_Aint size, int disp_unit, MPI_Info info,
 
 int PMPI_Win_create_dynamic(MPI_Info info, MPI_Comm comm, MPI_Win *win)
 {
+        return mpc_win_create(NULL, 0, 0, info, comm, win);
 	/* MPI Windows need more progress
 	 * we must give up on agressive collectives */
-	__do_yield |= 1;
-	return mpc_MPI_Win_create_dynamic(info, comm, win);
+	//__do_yield |= 1;
+	//return mpc_MPI_Win_create_dynamic(info, comm, win);
 }
 
 int PMPI_Win_attach(MPI_Win, void *, MPI_Aint);
@@ -15866,16 +15867,22 @@ int PMPI_Rput(const void *origin_addr, int origin_count,
               MPI_Aint target_disp, int target_count,
               MPI_Datatype target_datatype, MPI_Win win, MPI_Request *request)
 {
-	return mpc_MPI_Rput(origin_addr, origin_count, origin_datatype, target_rank,
-	                    target_disp, target_count, target_datatype, win, request);
+        return mpc_osc_rput(origin_addr, origin_count, origin_datatype,
+                            target_rank, target_disp, target_count,
+                            target_datatype, win, request);
+	//return mpc_MPI_Rput(origin_addr, origin_count, origin_datatype, target_rank,
+	//                    target_disp, target_count, target_datatype, win, request);
 }
 
 int PMPI_Rget(void *origin_addr, int origin_count, MPI_Datatype origin_datatype,
               int target_rank, MPI_Aint target_disp, int target_count,
               MPI_Datatype target_datatype, MPI_Win win, MPI_Request *request)
 {
-	return mpc_MPI_Rget(origin_addr, origin_count, origin_datatype, target_rank,
-	                    target_disp, target_count, target_datatype, win, request);
+        return mpc_osc_rget(origin_addr, origin_count, origin_datatype,
+                            target_rank, target_disp, target_count,
+                            target_datatype, win, request);
+	//return mpc_MPI_Rget(origin_addr, origin_count, origin_datatype, target_rank,
+	//                    target_disp, target_count, target_datatype, win, request);
 }
 
 /* Synchronization calls Epochs */
@@ -16006,9 +16013,12 @@ int PMPI_Accumulate(const void *origin_addr, int origin_count,
                     MPI_Aint target_disp, int target_count,
                     MPI_Datatype target_datatype, MPI_Op op, MPI_Win win)
 {
-	return mpc_MPI_Accumulate(origin_addr, origin_count, origin_datatype,
-	                          target_rank, target_disp, target_count,
-	                          target_datatype, op, win);
+        return mpc_osc_accumulate(origin_addr, origin_count, origin_datatype,
+                                  target_rank, target_disp, target_count,
+                                  target_datatype, op, win);
+	//return mpc_MPI_Accumulate(origin_addr, origin_count, origin_datatype,
+	//                          target_rank, target_disp, target_count,
+	//                          target_datatype, op, win);
 }
 
 int PMPI_Raccumulate(const void *origin_addr, int origin_count,
@@ -16017,9 +16027,12 @@ int PMPI_Raccumulate(const void *origin_addr, int origin_count,
                      MPI_Datatype target_datatype, MPI_Op op, MPI_Win win,
                      MPI_Request *request)
 {
-	return mpc_MPI_Raccumulate(origin_addr, origin_count, origin_datatype,
-	                           target_rank, target_disp, target_count,
-	                           target_datatype, op, win, request);
+        return mpc_osc_raccumulate(origin_addr, origin_count, origin_datatype,
+                                   target_rank, target_disp, target_count,
+                                   target_datatype, op, win, request);
+	//return mpc_MPI_Raccumulate(origin_addr, origin_count, origin_datatype,
+	//                           target_rank, target_disp, target_count,
+	//                           target_datatype, op, win, request);
 }
 
 int PMPI_Get_accumulate(const void *origin_addr, int origin_count,
@@ -16028,10 +16041,15 @@ int PMPI_Get_accumulate(const void *origin_addr, int origin_count,
                         int target_rank, MPI_Aint target_disp, int target_count,
                         MPI_Datatype target_datatype, MPI_Op op, MPI_Win win)
 {
-	return mpc_MPI_Get_accumulate(origin_addr, origin_count, origin_datatype,
-	                              result_addr, result_count, result_datatype,
-	                              target_rank, target_disp, target_count,
-	                              target_datatype, op, win);
+        return mpc_osc_get_accumulate(origin_addr, origin_count,
+                                      origin_datatype, result_addr,
+                                      result_count, result_datatype,
+                                      target_rank, target_disp, target_count,
+                                      target_datatype, op, win);
+	//return mpc_MPI_Get_accumulate(origin_addr, origin_count, origin_datatype,
+	//                              result_addr, result_count, result_datatype,
+	//                              target_rank, target_disp, target_count,
+	//                              target_datatype, op, win);
 }
 
 int PMPI_Rget_accumulate(const void *origin_addr, int origin_count,
@@ -16041,26 +16059,36 @@ int PMPI_Rget_accumulate(const void *origin_addr, int origin_count,
                          int target_count, MPI_Datatype target_datatype,
                          MPI_Op op, MPI_Win win, MPI_Request *request)
 {
-	return mpc_MPI_Rget_accumulate(origin_addr, origin_count, origin_datatype,
-	                               result_addr, result_count, result_datatype,
-	                               target_rank, target_disp, target_count,
-	                               target_datatype, op, win, request);
+        return mpc_osc_rget_accumulate(origin_addr, origin_count,
+                                       origin_datatype, result_addr,
+                                       result_count, result_datatype,
+                                       target_rank, target_disp, target_count,
+                                       target_datatype, op, win, request);
+	//return mpc_MPI_Rget_accumulate(origin_addr, origin_count, origin_datatype,
+	//                               result_addr, result_count, result_datatype,
+	//                               target_rank, target_disp, target_count,
+	//                               target_datatype, op, win, request);
 }
 
 int PMPI_Fetch_and_op(const void *origin_addr, void *result_addr,
                       MPI_Datatype datatype, int target_rank,
                       MPI_Aint target_disp, MPI_Op op, MPI_Win win)
 {
-	return mpc_MPI_Fetch_and_op(origin_addr, result_addr, datatype, target_rank,
-	                            target_disp, op, win);
+        return mpc_osc_fetch_and_op(origin_addr, result_addr, datatype,
+                                    target_rank, target_disp, op, win);
+	//return mpc_MPI_Fetch_and_op(origin_addr, result_addr, datatype, target_rank,
+	//                            target_disp, op, win);
 }
 
 int PMPI_Compare_and_swap(const void *origin_addr, const void *compare_addr,
                           void *result_addr, MPI_Datatype datatype,
                           int target_rank, MPI_Aint target_disp, MPI_Win win)
 {
-	return mpc_MPI_Compare_and_swap(origin_addr, compare_addr, result_addr,
-	                                datatype, target_rank, target_disp, win);
+        return mpc_osc_compare_and_swap(origin_addr, compare_addr, result_addr,
+                                        datatype, target_rank, target_disp,
+                                        win);
+	//return mpc_MPI_Compare_and_swap(origin_addr, compare_addr, result_addr,
+	//                                datatype, target_rank, target_disp, win);
 }
 
 /* ATTR handling */
@@ -16102,14 +16130,14 @@ int PMPI_Win_shared_query(MPI_Win win, int rank, MPI_Aint *size, int *disp_unit,
 	return mpc_MPI_Win_shared_query(win, rank, size, disp_unit, baseptr);
 }
 
-int PMPI_Win_attach(__UNUSED__ MPI_Win win, __UNUSED__ void *base, __UNUSED__ MPI_Aint size)
+int PMPI_Win_attach(MPI_Win win, void *base, MPI_Aint size)
 {
-	return MPI_SUCCESS;
+	return mpc_osc_win_attach(win, base, size);
 }
 
-int PMPI_Win_detach(__UNUSED__ MPI_Win win, __UNUSED__ const void *base)
+int PMPI_Win_detach(MPI_Win win, const void *base)
 {
-	return MPI_SUCCESS;
+	return mpc_osc_win_detach(win, base);
 }
 
 /* Checkpointing */

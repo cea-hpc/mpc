@@ -57,6 +57,15 @@
 #define MPC_LCP_MMU_MAX_ENTRIES 1024
 #define MPC_LCP_MMU_MAX_SIZE (size_t)(1024*1024*1024)
 
+static struct lcp_mem lcp_mem_dummy_handle = {
+        .base_addr  = 0,
+        .bm         = MPC_BITMAP_INIT,
+        .length     = 0,
+        .flags      = 0,
+        .num_ifaces = 0,
+        .mngr       = NULL
+};
+
 //FIXME: change doc from ctx to mngr
 
 struct lcp_pinning_entry
@@ -666,12 +675,6 @@ int lcp_mem_provision(lcp_manager_h mngr,
                 return MPC_LOWCOMM_ERROR;
         }
 
-        if (param->address == NULL && param->flags & LCP_MEM_REGISTER_CREATE) {
-                mpc_common_debug_error("LCP MEM: address must not be null "
-                                       "when creating a memory.");
-                return MPC_LOWCOMM_ERROR;
-        }
-
         if (!(param->flags & (LCP_MEM_REGISTER_STATIC |
                               LCP_MEM_REGISTER_DYNAMIC))) {
                 mpc_common_debug_error("LCP MEM: must specify memory type flags.");
@@ -681,6 +684,11 @@ int lcp_mem_provision(lcp_manager_h mngr,
         if (param->flags & LCP_MEM_REGISTER_ALLOCATE && param->address != NULL) {
                 mpc_common_debug_warning("LCP MEM: provided address not null, will "
                                          "be overwritten.");
+        }
+
+        if (param->size == 0) {
+                *mem_p = &lcp_mem_dummy_handle;
+                return MPC_LOWCOMM_SUCCESS;
         }
 
         rc = lcp_mem_create(mngr, &mem);
@@ -847,6 +855,10 @@ int lcp_mem_deprovision(lcp_manager_h mngr, lcp_mem_h mem)
 {
         int i;
         int rc = MPC_LOWCOMM_SUCCESS;
+
+        if (mem == &lcp_mem_dummy_handle) {
+                return MPC_LOWCOMM_SUCCESS;
+        }
 
         for (i=0; i<mngr->num_ifaces; i++) {
                 if (MPC_BITMAP_GET(mem->bm, i)) {

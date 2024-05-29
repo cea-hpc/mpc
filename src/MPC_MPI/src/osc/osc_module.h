@@ -33,11 +33,19 @@
 
 #define OSC_LOCK_EXCLUSIVE 0x0000000100000000ull
 
+#define OSC_GET_DISP(_module, _target) \
+        (_module)->disp_unit < 0 ? (_module)->disp_units[_target] : (_module)->disp_unit
+
+#define OCS_LCP_RKEY_BUF_SIZE_MAX 1024
+#define OSC_DYNAMIC_WIN_ATTACH_MAX 32
+
 #define OSC_STATE_COMPLETION_COUNTER_OFFSET 0 
 #define OSC_STATE_POST_COUNTER_OFFSET sizeof(uint64_t)
 #define OSC_STATE_POST_OFFSET OSC_STATE_POST_COUNTER_OFFSET + sizeof(uint64_t)
-#define OSC_STATE_LOCAL_LOCK_OFFSET OSC_STATE_POST_OFFSET + OSC_POST_PEER_MAX * sizeof(uint64_t)
-#define OSC_STATE_GLOBAL_LOCK_OFFSET OSC_STATE_LOCAL_LOCK_OFFSET + sizeof(uint64_t)
+#define OSC_STATE_ACC_LOCK_OFFSET OSC_STATE_POST_OFFSET + OSC_POST_PEER_MAX * sizeof(uint64_t)
+#define OSC_STATE_GLOBAL_LOCK_OFFSET OSC_STATE_ACC_LOCK_OFFSET + sizeof(uint64_t)
+#define OSC_STATE_DYNAMIC_WIN_COUNT_OFFSET OSC_STATE_GLOBAL_LOCK_OFFSET + sizeof(uint64_t)
+#define OSC_STATE_DYNAMIC_WIN_OFFSET OSC_STATE_DYNAMIC_WIN_COUNT_OFFSET + sizeof(uint64_t)
 
 typedef enum mpc_osc_epoch {
         NONE_EPOCH,
@@ -47,6 +55,12 @@ typedef enum mpc_osc_epoch {
         PASSIVE_EPOCH,
         PASSIVE_ALL_EPOCH,
 } mpc_osc_epoch_t;
+
+typedef struct mpc_osc_win_info {
+        uint64_t addr;
+        lcp_mem_h rkey;
+        int rkey_init;
+} mpc_osc_win_info_t;
 
 typedef struct mpc_osc_epoch_type {
         mpc_osc_epoch_t access;
@@ -58,12 +72,26 @@ typedef struct mpc_osc_pending_post {
         mpc_list_elem_t elem;
 } mpc_osc_pending_post_t;
 
+typedef struct mpc_osc_local_dynamic_win_info {
+        lcp_mem_h memh;
+        int refcnt;
+} mpc_osc_local_dynamic_win_info_t;
+
+typedef struct mpc_osc_dynamic_win {
+        uint64_t base;
+        size_t size;
+        size_t rkey_len;
+        char rkey_buf[OCS_LCP_RKEY_BUF_SIZE_MAX];
+} mpc_osc_dynamic_win_t;
+
 typedef struct mpc_osc_module_state {
         volatile uint64_t completion_counter;
         volatile uint64_t post_counter;
         volatile uint64_t post_state[OSC_POST_PEER_MAX]; /* Depends on the group size. */
-        volatile uint64_t local_lock;
+        volatile uint64_t acc_lock;
         volatile uint64_t global_lock;
+        volatile uint64_t dynamic_win_count;
+        volatile mpc_osc_dynamic_win_t dynamic_wins[OSC_DYNAMIC_WIN_ATTACH_MAX];
 } mpc_osc_module_state_t;
 
 typedef enum {
@@ -86,10 +114,8 @@ typedef struct mpc_osc_module {
         void                        *base_state;
         lcp_mem_h                    lkey_state;
         lcp_mem_h                    lkey_data;
-        void                       **base_rdata;
-        void                       **base_rstate;
-        lcp_mem_h                   *rkeys_data;
-        lcp_mem_h                   *rkeys_state;
+        mpc_osc_win_info_t          *rdata_win_info;
+        mpc_osc_win_info_t          *rstate_win_info;
 
         mpc_osc_module_state_t      *state;
         mpc_osc_epoch_type_t         epoch;
@@ -102,6 +128,11 @@ typedef struct mpc_osc_module {
         struct mpc_common_hashtable  outstanding_locks;
         int                          lock_all_is_no_check;
         int                          leader;
+        mpc_osc_local_dynamic_win_info_t local_dynamic_win_infos[OSC_DYNAMIC_WIN_ATTACH_MAX];
+
+        int disp_unit;
+        int *disp_units;
+
 } mpc_osc_module_t;
 
 static inline int mpc_osc_perform_atomic_op(mpc_osc_module_t *mod, lcp_ep_h ep,
@@ -167,5 +198,9 @@ static inline int mpc_osc_perform_flush_op(mpc_osc_module_t *mod, lcp_task_h tas
 err:
         return rc;
 }
+
+int mpc_osc_find_attached_region_position(mpc_osc_dynamic_win_t *regions,
+                                          int min_idx, int max_idx, uint64_t base,
+                                          size_t len, int *insert_idx);
 
 #endif

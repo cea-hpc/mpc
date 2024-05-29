@@ -24,13 +24,13 @@
 #define MPI_WIN_H 
 
 #include <mpc_mpi.h>
+#include <mpc_mpi_comm_lib.h>
 #include <mpc_lowcomm_communicator.h> //NOTE: for lowcomm_communicator_t
 #include <lcp.h>
 
 #include "osc_module.h"
 
 #define MAX_WIN_NAME 64
-
 
 typedef struct MPI_ABI_Win {
         int comm_size;
@@ -44,14 +44,9 @@ typedef struct MPI_ABI_Win {
         int flavor; 
         int model;
         size_t size;
-        int disp_unit;
-        int *disp_units;
 
         mpc_osc_module_t win_module;
 } mpc_win_t;
-
-#define OSC_MPI_GET_DISP(_win, _target) \
-        ( ((_win)->disp_unit < 0) ? (_win)->disp_units[_target] : (_win)->disp_unit )
 
 int mpc_win_create(void *base, size_t size, 
                    int disp_unit, MPI_Info info,

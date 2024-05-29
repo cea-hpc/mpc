@@ -59,12 +59,14 @@ static int start_exclusive(mpc_win_t *win, lcp_task_h task,
                        }
                 }
 
-               base_rstate = (uint64_t)module->base_rstate[target];
+               base_rstate = (uint64_t)module->rstate_win_info[target].addr;
                 
-                rc = mpc_osc_perform_atomic_op(module, module->eps[target], 
-                                               task, zero, sizeof(uint64_t), &lock_state,
-                                               base_rstate + OSC_STATE_GLOBAL_LOCK_OFFSET, 
-                                               module->rkeys_state[target], LCP_ATOMIC_OP_CSWAP);
+                rc = mpc_osc_perform_atomic_op(module, module->eps[target],
+                                               task, zero, sizeof(uint64_t),
+                                               &lock_state, base_rstate
+                                               + OSC_STATE_GLOBAL_LOCK_OFFSET,
+                                               module->rstate_win_info[target].rkey,
+                                               LCP_ATOMIC_OP_CSWAP);
                 if (rc != MPC_LOWCOMM_SUCCESS) {
                         goto err;
                 }
@@ -90,12 +92,13 @@ static int end_exclusive(mpc_win_t *win, lcp_task_h task,
         mpc_osc_module_t *module = &win->win_module;
         int rc = MPC_LOWCOMM_SUCCESS;
         uint64_t value = -OSC_LOCK_EXCLUSIVE;
-        uint64_t base_rstate = (uint64_t)module->base_rstate[target];
+        uint64_t base_rstate = (uint64_t)module->rstate_win_info[target].addr;
 
-        rc = mpc_osc_perform_atomic_op(module, module->eps[target], 
-                                       task, value, sizeof(uint64_t), NULL,
-                                       base_rstate + OSC_STATE_GLOBAL_LOCK_OFFSET, 
-                                       module->rkeys_state[target], LCP_ATOMIC_OP_ADD);
+        rc = mpc_osc_perform_atomic_op(module, module->eps[target], task, value,
+                                       sizeof(uint64_t), NULL, base_rstate
+                                       + OSC_STATE_GLOBAL_LOCK_OFFSET,
+                                       module->rstate_win_info[target].rkey,
+                                       LCP_ATOMIC_OP_ADD);
         return rc;
 }
 
@@ -119,21 +122,27 @@ static int start_shared(mpc_win_t *win, lcp_task_h task,
                        }
                 }
                 
-               base_rstate = (uint64_t)module->base_rstate[target];
-                rc = mpc_osc_perform_atomic_op(module, module->eps[target], 
-                                               task, one, sizeof(uint64_t), &lock_state,
-                                               base_rstate + OSC_STATE_GLOBAL_LOCK_OFFSET, 
-                                               module->rkeys_state[target], LCP_ATOMIC_OP_ADD);
+               base_rstate = (uint64_t)module->rstate_win_info[target].addr; 
+               rc = mpc_osc_perform_atomic_op(module, module->eps[target],
+                                                   task, one, sizeof(uint64_t),
+                                                   &lock_state, base_rstate
+                                                   + OSC_STATE_GLOBAL_LOCK_OFFSET,
+                                                   module->rstate_win_info[target].rkey,
+                                                   LCP_ATOMIC_OP_ADD);
                 if (rc != MPC_LOWCOMM_SUCCESS) {
                         goto err;
                 }
 
                 if (lock_state >= OSC_LOCK_EXCLUSIVE) {
                         /* back off. */
-                        rc = mpc_osc_perform_atomic_op(module, module->eps[target], 
-                                                       task, minusone, sizeof(uint64_t), NULL,
-                                                       base_rstate + OSC_STATE_GLOBAL_LOCK_OFFSET, 
-                                                       module->rkeys_state[target], LCP_ATOMIC_OP_ADD);
+                        rc = mpc_osc_perform_atomic_op(module,
+                                                       module->eps[target],
+                                                       task, minusone,
+                                                       sizeof(uint64_t), NULL,
+                                                       base_rstate
+                                                       + OSC_STATE_GLOBAL_LOCK_OFFSET,
+                                                       module->rstate_win_info[target].rkey,
+                                                       LCP_ATOMIC_OP_ADD);
                         if (rc != MPC_LOWCOMM_SUCCESS) {
                                 goto err;
                         }
@@ -151,12 +160,14 @@ static int end_shared(mpc_win_t *win, lcp_task_h task,
 {
         mpc_osc_module_t *module = &win->win_module;
         int rc = MPC_LOWCOMM_SUCCESS;
-        uint64_t base_rstate = (uint64_t)module->base_rstate[target];
+        uint64_t base_rstate = (uint64_t)module->rstate_win_info[target].addr;
 
-        rc = mpc_osc_perform_atomic_op(module, module->eps[target], 
-                                       task, minusone, sizeof(uint64_t), NULL,
-                                       base_rstate + OSC_STATE_GLOBAL_LOCK_OFFSET, 
-                                       module->rkeys_state[target], LCP_ATOMIC_OP_ADD);
+        rc = mpc_osc_perform_atomic_op(module, module->eps[target], task,
+                                       minusone, sizeof(uint64_t), NULL,
+                                       base_rstate
+                                       + OSC_STATE_GLOBAL_LOCK_OFFSET,
+                                       module->rstate_win_info[target].rkey,
+                                       LCP_ATOMIC_OP_ADD);
         return rc;
 
 }
