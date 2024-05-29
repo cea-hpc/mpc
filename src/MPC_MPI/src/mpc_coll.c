@@ -11038,7 +11038,7 @@ int ___collectives_exscan_switch (const void *sendbuf, void *recvbuf, int count,
       res = ___collectives_exscan_linear(sendbuf, recvbuf, count, datatype, op, comm, coll_type, schedule, info);
       break;
     case NBC_EXSCAN_ALLGATHER:
-      res = ___collectives_exscan_linear(sendbuf, recvbuf, count, datatype, op, comm, coll_type, schedule, info);
+      res = ___collectives_exscan_allgather(sendbuf, recvbuf, count, datatype, op, comm, coll_type, schedule, info);
       break;
   }
 
