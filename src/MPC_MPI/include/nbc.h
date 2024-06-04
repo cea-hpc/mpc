@@ -177,31 +177,31 @@ typedef enum
 typedef struct
 {
 	void *       buf;
-	char         tmpbuf;
 	void *       buf1;
-	char         tmpbuf1;
 	void *       buf2;
-	char         tmpbuf2;
 	void *       buf3;
-	char         tmpbuf3;
-	MPI_Op       op;
-	int          count;
 	MPI_Datatype datatype;
-	int          dest;
-	int          source;
 	void *       src;
-	char         tmpsrc;
-	int          srccount;
 	MPI_Datatype srctype;
 	void *       tgt;
-	char         tmptgt;
-	int          tgtcount;
 	MPI_Datatype tgttype;
 	void *       inbuf;
-	char         tmpinbuf;
 	void *       outbuf;
-	char         tmpoutbuf;
 	MPI_Comm     comm;
+	MPI_Op       op;
+	int          count;
+	int          dest;
+	int          source;
+	int          srccount;
+	int          tgtcount;
+	char         tmpbuf;
+	char         tmpbuf1;
+	char         tmpbuf2;
+	char         tmpbuf3;
+	char         tmpsrc;
+	char         tmptgt;
+	char         tmpinbuf;
+	char         tmpoutbuf;
 } NBC_Args;
 
 /* internal function prototypes */
