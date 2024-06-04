@@ -55,14 +55,14 @@ void _mpc_dt_release();
 /************************************************************************/
 
 /** \brief Create a new data-type keyval
- *  \param copy Copy func
- *  \param delete Delete func
+ *  \param copy_func Copy func
+ *  \param delete_func Delete func
  *  \param type_keyval (OUT) ID of the newly create keyval
  *  \param extra_state Extra pointer to be stored in the keyval
  *  \return MPI_SUCCESS if ok
  */
-int _mpc_dt_keyval_create(MPC_Type_copy_attr_function * copy,
-                          MPC_Type_delete_attr_function * delete,
+int _mpc_dt_keyval_create(MPC_Type_copy_attr_function * copy_func,
+                          MPC_Type_delete_attr_function * delete_func,
                           int *type_keyval, void *extra_state);
 
 /** \brief Delete a keyval

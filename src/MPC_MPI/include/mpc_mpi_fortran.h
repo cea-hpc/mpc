@@ -8,7 +8,8 @@
 * Fortran MPI_Status related constants *
 ****************************************/
 
-typedef struct {} MPI_F08_status;
+struct MPI_F08_status_s;
+typedef struct MPI_F08_status_s MPI_F08_status;
 
 #define MPI_F_STATUS_SIZE          8
 #define MPI_F_SOURCE               0

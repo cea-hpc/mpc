@@ -109,11 +109,11 @@ static inline void mpc_common_debug(const char *fmt, ...)
 
 const char * mpc_common_debug_get_basename(const char * path);
 
-#define mpc_common_tracepoint(FMT) mpc_common_debug("[%s] %s:%d  : "FMT, __FUNCTION__, mpc_common_debug_get_basename(__FILE__), __LINE__)
-#define mpc_common_tracepoint_fmt(FMT, ...) mpc_common_debug("[%s] %s:%d : "FMT, __FUNCTION__, mpc_common_debug_get_basename(__FILE__),__LINE__, __VA_ARGS__)
+#define mpc_common_tracepoint(FMT) mpc_common_debug("[%s] %s:%d  : " FMT, __FUNCTION__, mpc_common_debug_get_basename(__FILE__), __LINE__)
+#define mpc_common_tracepoint_fmt(FMT, ...) mpc_common_debug("[%s] %s:%d : " FMT, __FUNCTION__, mpc_common_debug_get_basename(__FILE__),__LINE__, __VA_ARGS__)
 
-#define mpc_common_errorpoint(FMT) mpc_common_debug_error("[%s] %s:%d : "FMT, __FUNCTION__, mpc_common_debug_get_basename(__FILE__), __LINE__)
-#define mpc_common_errorpoint_fmt(FMT, ...) mpc_common_debug_error("[%s] %s:%d : "FMT, __FUNCTION__, mpc_common_debug_get_basename(__FILE__), __LINE__, __VA_ARGS__)
+#define mpc_common_errorpoint(FMT) mpc_common_debug_error("[%s] %s:%d : " FMT, __FUNCTION__, mpc_common_debug_get_basename(__FILE__), __LINE__)
+#define mpc_common_errorpoint_fmt(FMT, ...) mpc_common_debug_error("[%s] %s:%d : " FMT, __FUNCTION__, mpc_common_debug_get_basename(__FILE__), __LINE__, __VA_ARGS__)
 
 
 #if defined(__GNUC__) || defined(__INTEL_COMPILER)
