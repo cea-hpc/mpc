@@ -2547,6 +2547,7 @@ struct mpi_request_info {
         void (*request_init_func)(void *request);
 };
 struct mpi_request_info mpi_req_info = {0};
+static __thread lcp_task_h lcp_task = NULL;
 
 lcp_manager_h lcp_mngr_loc = NULL;
 int mpc_lowcomm_request_complete(mpc_lowcomm_request_t *request);
@@ -3660,6 +3661,23 @@ mpc_lowcomm_request_t * mpc_lowcomm_request_null(void)
 	return &__request_null;
 }
 
+static inline void _mpc_lowcomm_build_send_tag_info(lcp_tag_info_t *tag_info, 
+                                                    mpc_lowcomm_communicator_t comm,
+                                                    int dest, int tag)
+{
+        tag_info->tag = tag;
+	tag_info->src = mpc_lowcomm_communicator_rank_fast(comm);
+        tag_info->src_uid = mpc_lowcomm_monitor_get_uid();
+        tag_info->dest    = mpc_lowcomm_communicator_world_rank_of(comm, dest);
+        tag_info->comm_id = (uint16_t)mpc_lowcomm_communicator_id(comm);
+
+        if (mpc_lowcomm_communicator_is_intercomm(comm)) {
+                tag_info->dest_uid = mpc_lowcomm_communicator_remote_uid(comm, dest);
+        } else {
+                tag_info->dest_uid = mpc_lowcomm_communicator_uid(comm, dest);
+        }
+}
+
 static int _mpc_lowcomm_request_send_complete(int status, void *request, size_t length)
 {
         mpc_lowcomm_request_t *req = (mpc_lowcomm_request_t *)request;
@@ -3683,36 +3701,20 @@ static int _mpc_lowcomm_request_send_complete(int status, void *request, size_t 
 int _mpc_lowcomm_isend(int dest, const void *data, size_t size, int tag,
                        mpc_lowcomm_communicator_t comm, mpc_lowcomm_request_t *req, int synchronized)
 {
-	int tid = mpc_common_get_task_rank();
-	int src;
-	lcp_ep_h ep = NULL; 
-        lcp_task_h task;
         lcp_tag_info_t tag_info;
+        lcp_ep_h ep;
 
-        /* First allocate a request. */
+        _mpc_lowcomm_build_send_tag_info(&tag_info, comm, dest, tag);
         
-	//FIXME: how to handle task rank? Using only get_task_rank for now.
-	src = mpc_lowcomm_communicator_rank_of(comm, tid);
-        mpc_lowcomm_map_comm_info(comm, src, dest, REQUEST_SEND, 
-                                  &tag_info.src, &tag_info.dest, 
-                                  &tag_info.src_uid, &tag_info.dest_uid);
-        tag_info.tag = tag;
-        tag_info.comm_id = (uint16_t)mpc_lowcomm_communicator_id(comm);
-        
-	ep = lcp_ep_get(lcp_mngr_loc, tag_info.dest_uid);
+	ep = mpc_lowcomm_communicator_lookup(comm, dest);
 	if(ep == NULL)
 	{
-                int rc = lcp_ep_create(lcp_mngr_loc, &ep, tag_info.dest_uid, 0);
+                int rc = lcp_ep_get_or_create(lcp_mngr_loc, tag_info.dest_uid,
+                                              &ep, 0);
                 if (rc != 0) {
                         mpc_common_debug_fatal("Could not create endpoint.");
                 }
-	}
-
-	task = lcp_context_task_get(lcp_ctx_loc, tid);
-	if(task == NULL)
-	{
-		mpc_common_debug_fatal("LCP: Could not find task with tid %d.",
-		                       tid);
+                mpc_lowcomm_communicator_add_ep(comm, dest, ep);
 	}
 
         mpc_lowcomm_request_init(req, comm, REQUEST_SEND);
@@ -3732,7 +3734,7 @@ int _mpc_lowcomm_isend(int dest, const void *data, size_t size, int tag,
                 param.field_mask |= LCP_REQUEST_USER_REQUEST;
         }
                 
-	return lcp_tag_send_nb(ep, task, data, size, &tag_info, &param);
+	return lcp_tag_send_nb(ep, lcp_task, data, size, &tag_info, &param);
 }
 
 int mpc_lowcomm_ssend(int dest, const void *data, size_t size, int tag,
@@ -3764,30 +3766,23 @@ static int _mpc_lowcomm_request_recv_complete(int status, void *request,
         return MPC_LOWCOMM_SUCCESS;
 }
 
+static inline void _mpc_lowcomm_build_recv_tag_info(lcp_tag_info_t *tag_info, 
+                                                    mpc_lowcomm_communicator_t comm,
+                                                    int src, int tag)
+{
+        tag_info->tag = tag;
+	tag_info->src = src;
+        tag_info->comm_id = (uint16_t)mpc_lowcomm_communicator_id(comm);
+}
+
 int mpc_lowcomm_irecv(int src, void *data, size_t size, int tag,
                       mpc_lowcomm_communicator_t comm, mpc_lowcomm_request_t *req)
 {
         int rc = MPC_LOWCOMM_SUCCESS;
-	int        dest, tid = mpc_common_get_task_rank();
-	lcp_task_h task = NULL;
         lcp_tag_info_t tag_info;
 
         /* First allocate a request. */
-        
-	//FIXME: how to handle task rank? Using only get_task_rank for now.
-        dest = mpc_lowcomm_communicator_rank_of(comm, tid);
-        mpc_lowcomm_map_comm_info(comm, src, dest, REQUEST_RECV, 
-                                  &tag_info.src, &tag_info.dest, 
-                                  &tag_info.src_uid, &tag_info.dest_uid);
-        tag_info.tag = tag;
-        tag_info.comm_id = mpc_lowcomm_communicator_id(comm);
-
-	task = lcp_context_task_get(lcp_ctx_loc, tid);
-	if(task == NULL)
-	{
-		mpc_common_debug_fatal("LCP: Could not find task with tid %d.",
-		                       tid);
-	}
+        _mpc_lowcomm_build_recv_tag_info(&tag_info, comm, src, tag);
 
         mpc_lowcomm_request_init(req, comm, REQUEST_RECV);
 
@@ -3802,7 +3797,7 @@ int mpc_lowcomm_irecv(int src, void *data, size_t size, int tag,
                 param.field_mask |= LCP_REQUEST_USER_REQUEST;
         }
 	
-        rc = lcp_tag_recv_nb(lcp_mngr_loc, task, data, size, &tag_info, 
+        rc = lcp_tag_recv_nb(lcp_mngr_loc, lcp_task, data, size, &tag_info, 
                              src == MPC_ANY_SOURCE ? 0 : ~0,
                              tag == MPC_ANY_TAG ? 0 : ~0, 
                              &param);
@@ -4322,20 +4317,20 @@ static void __lowcomm_init_per_task()
 
                 _mpc_lowcomm_datatype_init_common();
 
-		lcp_task_h task;
-		int rc = lcp_task_create(lcp_ctx_loc, task_rank, &task);
+		int rc = lcp_task_create(lcp_ctx_loc, task_rank, &lcp_task);
 		if (rc != MPC_LOWCOMM_SUCCESS)
 		{
 			mpc_common_debug_fatal("LCP: could not create task "
 			                       "tid=%d", task_rank);
 		}
 
-                rc = lcp_task_associate(task, lcp_mngr_loc);
+                rc = lcp_task_associate(lcp_task, lcp_mngr_loc);
                 if (rc != MPC_LOWCOMM_SUCCESS) {
                         mpc_common_debug_fatal("LCP: could not associate "
                                                "task. tid=%d.", task_rank);
                 }
 
+                _mpc_lowcomm_communicator_init_task(task_rank);
 		mpc_lowcomm_terminaison_barrier();
 
 		_mpc_lowcomm_pset_bootstrap();
@@ -4356,8 +4351,7 @@ static void __lowcomm_release_per_task()
 		_mpc_lowcomm_release_psets();
 		//mpc_lowcomm_release_per_task(task_rank);
 
-                lcp_task_h task = lcp_context_task_get(lcp_ctx_loc, task_rank);
-                lcp_task_dissociate(task, lcp_mngr_loc);
+                lcp_task_dissociate(lcp_task, lcp_mngr_loc);
 
 		mpc_common_nodebug("mpc_lowcomm_terminaison_barrier done");
 		_mpc_lowcomm_monitor_teardown_per_task();

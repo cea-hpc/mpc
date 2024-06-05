@@ -38,7 +38,6 @@
 #include "lcp_ep.h"
 #include "lcp_header.h"
 #include "lcp_request.h"
-#include "lcp_context.h"
 #include "lcp_task.h"
 #include "lcp_datatype.h"
 #include "lcp_eager.h"
@@ -413,13 +412,14 @@ int lcp_send_eager_tag_zcopy(lcp_request_t *req)
 
 	int rc;
         uint8_t am_id;
-        void *hdr;
-        size_t hdr_size;
         size_t iovcnt     = 0;
 	lcp_ep_h ep       = req->send.ep;
         size_t max_iovec  = ep->config.am.max_iovecs;
+        size_t hdr_size;
 	struct iovec *iov = alloca(max_iovec*sizeof(struct iovec));
-
+        void *hdr = alloca(mpc_common_max(sizeof(lcp_tag_hdr_t),
+                                          sizeof(lcp_tag_sync_hdr_t)));
+	
 	req->state.comp = (lcr_completion_t) {
                 .comp_cb = lcp_tag_send_complete
         };
@@ -436,43 +436,29 @@ int lcp_send_eager_tag_zcopy(lcp_request_t *req)
         iovcnt++;
 
         if(req->is_sync) {
-                lcp_tag_sync_hdr_t *hdr_sync;
+                *(lcp_tag_sync_hdr_t *)hdr = (lcp_tag_sync_hdr_t) {
+                        .base.comm = req->send.tag.comm,
+                        .base.src_tid  = req->send.tag.src_tid,
+                        .base.dest_tid = req->send.tag.dest_tid,
+                        .base.tag      = req->send.tag.tag,
+                        .base.seqn     = req->seqn,
+                        .msg_id        = req->msg_id,
+                        .src_uid       = req->send.tag.src_uid,
+                };
+
                 hdr_size = sizeof(lcp_tag_sync_hdr_t);
-                //FIXME: hdr never freed, how should it be initialized?
-                hdr_sync = hdr = sctk_malloc(sizeof(lcp_tag_sync_hdr_t));
-                if (hdr == NULL) {
-                        mpc_common_debug_error("LCP TAG: could not allocate tag header.");
-                        rc = MPC_LOWCOMM_ERROR;
-                        goto err;
-                }
-
-                req->msg_id = (uint64_t)req;
-
-                hdr_sync->base.comm     = req->send.tag.comm;
-                hdr_sync->base.src_tid  = req->send.tag.src_tid;
-                hdr_sync->base.dest_tid = req->send.tag.dest_tid;
-                hdr_sync->base.tag      = req->send.tag.tag;
-                hdr_sync->base.seqn     = req->seqn;
-                hdr_sync->msg_id        = req->msg_id;
-                hdr_sync->src_uid       = req->send.tag.src_uid;
 
                 am_id = LCP_AM_ID_EAGER_TAG_SYNC;
         } else {
-                lcp_tag_hdr_t *hdr_tag;
-                hdr_size = sizeof(lcp_tag_hdr_t);
-                //FIXME: hdr never freed, how should it be initialized?
-                hdr_tag = hdr = sctk_malloc(sizeof(lcp_tag_hdr_t));
-                if (hdr == NULL) {
-                        mpc_common_debug_error("LCP TAG: could not allocate tag header.");
-                        rc = MPC_LOWCOMM_ERROR;
-                        goto err;
-                }
+                *(lcp_tag_hdr_t *)hdr = (lcp_tag_hdr_t) {
+                        .comm     = req->send.tag.comm,
+                        .src_tid  = req->send.tag.src_tid,
+                        .dest_tid = req->send.tag.dest_tid,
+                        .tag      = req->send.tag.tag,
+                        .seqn     = req->seqn,
+                };
 
-                hdr_tag->comm     = req->send.tag.comm;
-                hdr_tag->src_tid  = req->send.tag.src_tid;
-                hdr_tag->dest_tid = req->send.tag.dest_tid;
-                hdr_tag->tag      = req->send.tag.tag;
-                hdr_tag->seqn     = req->seqn;
+                hdr_size = sizeof(lcp_tag_hdr_t);
 
                 am_id       = LCP_AM_ID_EAGER_TAG;
                 req->flags |= LCP_REQUEST_REMOTE_COMPLETED;
@@ -482,7 +468,6 @@ int lcp_send_eager_tag_zcopy(lcp_request_t *req)
                                   hdr, hdr_size,
                                   iov, iovcnt,
                                   &(req->state.comp));
-err:
 	return rc;
 }
 
@@ -645,6 +630,22 @@ void lcp_recv_rndv_tag_data(lcp_request_t *req, void *data)
 /* ============================================== */
 /* Handlers                                       */
 /* ============================================== */
+static inline void build_eager_tag_handler_iov(void *data, size_t length, size_t hdr_size,
+                                               unsigned flags, struct iovec *iov, size_t *iovcnt)
+{
+        if (flags & LCR_IFACE_AM_LAYOUT_BUFFER) {
+                iov[0].iov_base = data;
+                iov[0].iov_len  = hdr_size;
+                iov[1].iov_base = (char *)data + hdr_size;
+                iov[1].iov_len  = length - hdr_size;
+                *iovcnt         = 2;
+
+        } else {
+                memcpy(iov, data, length * sizeof(struct iovec));
+                *iovcnt = length;
+        }
+}
+
 /**
  * @brief Handler for receiving an active tag message
  *
@@ -656,22 +657,31 @@ void lcp_recv_rndv_tag_data(lcp_request_t *req, void *data)
  */
 static int lcp_eager_tag_sync_handler(void *arg, void *data,
                                       size_t length,
-                                      __UNUSED__ unsigned flags)
+                                      unsigned flags)
 {
 	int rc = MPC_LOWCOMM_SUCCESS;
 	lcp_manager_h mngr = arg;
 	lcp_unexp_ctnr_t *ctnr;
 	lcp_request_t *req;
-	lcp_tag_sync_hdr_t *hdr = data;
+	lcp_tag_sync_hdr_t *hdr;
         lcp_task_h task = NULL;
+        size_t iovcnt;
+        struct iovec *data_iov = alloca(2 * sizeof(struct iovec));
+
+        build_eager_tag_handler_iov(data, length, sizeof(lcp_tag_sync_hdr_t),
+                                    flags, data_iov, &iovcnt);
+        assert(iovcnt == 2);
+
+        /* Header is first place in the iovec. */
+        hdr = data_iov[0].iov_base;
 
         task = lcp_context_task_get(mngr->ctx, hdr->base.dest_tid);  
         if (task == NULL) {
-                mpc_common_errorpoint_fmt("LCP TAG: could not find task with tid=%d", hdr->base.dest_tid);
+                mpc_common_errorpoint_fmt("LCP TAG: could not find task with "
+                                          "tid=%d", hdr->base.dest_tid);
                 rc = MPC_LOWCOMM_ERROR;
                 goto err;
         }
-
 
 	LCP_TASK_LOCK(task);
 	/* Try to match it with a posted message */
@@ -682,8 +692,8 @@ static int lcp_eager_tag_sync_handler(void *arg, void *data,
 	/* if request is not matched */
 	if (req == NULL) {
                 mpc_common_debug("LCP TAG: recv unexp tag sync src=%d, length=%d, sequence=%d",
-                                 hdr->base.src_tid, length, hdr->base.seqn);
-		rc = lcp_request_init_unexp_ctnr(task, &ctnr, hdr, length,
+                                 hdr->base.src_tid, data_iov[1].iov_len, hdr->base.seqn);
+		rc = lcp_request_init_unexp_ctnr(task, &ctnr, data_iov, iovcnt, 
                                                  LCP_RECV_CONTAINER_UNEXP_EAGER_TAG_SYNC);
 		if (rc != MPC_LOWCOMM_SUCCESS) {
 			goto err;
@@ -706,29 +716,38 @@ static int lcp_eager_tag_sync_handler(void *arg, void *data,
         req->recv.tag.src_tid  = hdr->base.src_tid;
         req->seqn              = hdr->base.seqn;
         req->recv.tag.tag      = hdr->base.tag;
-        req->recv.send_length  = length - sizeof(lcp_tag_sync_hdr_t);
+        req->recv.send_length  = data_iov[1].iov_len;
 
         /* Complete request */
-        lcp_recv_eager_tag_data(req, hdr + 1);
+        lcp_recv_eager_tag_data(req, data_iov[1].iov_base);
 err:
 	return rc;
 }
 
 static int lcp_eager_tag_handler(void *arg, void *data,
                                  size_t length,
-                                 __UNUSED__ unsigned flags)
+                                 unsigned flags)
 {
         int rc = MPC_LOWCOMM_SUCCESS;
         lcp_manager_h mngr = arg;
         lcp_unexp_ctnr_t *ctnr;
         lcp_request_t *req;
-        lcp_tag_hdr_t *hdr = data;
+        size_t iovcnt;
+	lcp_tag_hdr_t *hdr;
         lcp_task_h task = NULL;
+        struct iovec *data_iov = alloca(2 * sizeof(struct iovec));
+
+        build_eager_tag_handler_iov(data, length, sizeof(lcp_tag_hdr_t),
+                                    flags, data_iov, &iovcnt);
+        assert(iovcnt == 2);
+
+        /* Header is first place in the iovec. */
+        hdr = data_iov[0].iov_base;
 
         task = lcp_context_task_get(mngr->ctx, hdr->dest_tid);  
         if (task == NULL) {
-                mpc_common_errorpoint_fmt("LCP TAG: could not find task with tid=%d", hdr->dest_tid);
-
+                mpc_common_errorpoint_fmt("LCP TAG: could not find task with "
+                                          "tid=%d", hdr->dest_tid);
                 rc = MPC_LOWCOMM_ERROR;
                 goto err;
         }
@@ -742,12 +761,13 @@ static int lcp_eager_tag_handler(void *arg, void *data,
                                 hdr->src_tid);
 	/* if request is not matched */
 	if (req == NULL) {
-                mpc_common_debug_info("LCP TAG: recv unexp tag src=%d, tag=%d, dest=%d, "
-                                      "length=%d, sequence=%d", hdr->src_tid, 
-                                      hdr->tag, hdr->dest_tid, length - sizeof(lcp_tag_hdr_t), 
-                                      hdr->seqn);
-		rc = lcp_request_init_unexp_ctnr(task, &ctnr, hdr, length,
-                                                 LCP_RECV_CONTAINER_UNEXP_EAGER_TAG);
+                mpc_common_debug_info("LCP TAG: recv unexp tag src=%d, tag=%d, "
+                                      "dest=%d, length=%d, sequence=%d",
+                                      hdr->src_tid, hdr->tag, hdr->dest_tid,
+                                      data_iov[1].iov_len,
+                                      hdr->seqn); 
+                rc = lcp_request_init_unexp_ctnr(task, &ctnr, data_iov, iovcnt,
+                                                      LCP_RECV_CONTAINER_UNEXP_EAGER_TAG);
 		if (rc != MPC_LOWCOMM_SUCCESS) {
 			goto err;
 		}
@@ -764,10 +784,10 @@ static int lcp_eager_tag_handler(void *arg, void *data,
         req->recv.tag.src_tid  = hdr->src_tid;
         req->seqn              = hdr->seqn;
         req->recv.tag.tag      = hdr->tag;
-        req->recv.send_length  = length - sizeof(lcp_tag_hdr_t);
+        req->recv.send_length  = data_iov[1].iov_len;
 
         /* Complete request */
-        lcp_recv_eager_tag_data(req, hdr + 1);
+        lcp_recv_eager_tag_data(req, data_iov[1].iov_base);
 err:
 	return rc;
 }
@@ -777,12 +797,18 @@ static int lcp_eager_tag_sync_ack_handler(void *arg, void *data,
                                           unsigned flags)
 {
         UNUSED(arg);
-        UNUSED(length);
-        UNUSED(flags);
+        size_t iovcnt;
+        lcp_ack_hdr_t *hdr = NULL;
 	int rc = MPC_LOWCOMM_SUCCESS;
+        struct iovec *data_iov = alloca(2 * sizeof(struct iovec));
 	
 	lcp_request_t *req;
-	lcp_ack_hdr_t *hdr = (lcp_ack_hdr_t *)data;
+
+        build_eager_tag_handler_iov(data, length, sizeof(lcp_ack_hdr_t),
+                                    flags, data_iov, &iovcnt);
+        assert(iovcnt == 2);
+
+        hdr = data_iov[0].iov_base;
 
         mpc_common_debug_info("LCP TAG: recv ack header src=%d, msg_id=%lu",
                               hdr->src, hdr->msg_id);
@@ -807,17 +833,26 @@ err:
 static int lcp_rndv_tag_handler(void *arg, void *data,
                                 size_t length, unsigned flags)
 {
-        UNUSED(flags);
 	int rc = MPC_LOWCOMM_SUCCESS;
 	lcp_manager_h mngr = arg;
 	lcp_request_t *req;
 	lcp_unexp_ctnr_t *ctnr;
-	lcp_rndv_hdr_t *hdr = data;
+        size_t iovcnt;
+	lcp_rndv_hdr_t *hdr = NULL;
         lcp_task_h task = NULL;
+        struct iovec *data_iov = alloca(2 * sizeof(struct iovec));
+
+        assert(flags & LCR_IFACE_AM_LAYOUT_BUFFER);
+        build_eager_tag_handler_iov(data, length, sizeof(lcp_rndv_hdr_t),
+                                    flags, data_iov, &iovcnt);
+        assert(iovcnt == 2);
+
+        hdr = data_iov[0].iov_base;
 
         task = lcp_context_task_get(mngr->ctx, hdr->tag.dest_tid);
         if (task == NULL) {
-                mpc_common_errorpoint_fmt("LCP TAG: could not find task with tid=%d", hdr->tag.dest_tid);
+                mpc_common_errorpoint_fmt("LCP TAG: could not find task with "
+                                          "tid=%d", hdr->tag.dest_tid);
                 rc = MPC_LOWCOMM_ERROR;
                 goto err;
         }
@@ -831,8 +866,8 @@ static int lcp_rndv_tag_handler(void *arg, void *data,
                 mpc_common_debug("LCP TAG: recv unexp rndv tag src=%d, comm=%d, tag=%d, "
                                  "length=%d, seqn=%d", hdr->tag.src_tid, hdr->tag.comm, 
                                  hdr->tag.tag, hdr->size, hdr->tag.seqn);
-		rc = lcp_request_init_unexp_ctnr(task, &ctnr, hdr, length,
-						 LCP_RECV_CONTAINER_UNEXP_RNDV_TAG);
+                rc = lcp_request_init_unexp_ctnr(task, &ctnr, data_iov, iovcnt,
+                                                 LCP_RECV_CONTAINER_UNEXP_RNDV_TAG);
 		if (rc != MPC_LOWCOMM_SUCCESS) {
                         LCP_TASK_UNLOCK(task);
 			goto err;
@@ -850,9 +885,11 @@ static int lcp_rndv_tag_handler(void *arg, void *data,
                          hdr->tag.tag, hdr->size, hdr->tag.seqn);
 
         /* Fill up receive request */
-        lcp_recv_rndv_tag_data(req, hdr);
+        lcp_recv_rndv_tag_data(req, data_iov[0].iov_base);
         assert(req->recv.tag.comm == hdr->tag.comm);
 
+        //NOTE: rendez-vous always comes as a buffer layout, so pass directly
+        //      the data.
         rc = lcp_rndv_process_rts(req, hdr, length - sizeof(*hdr));
 err:
         return rc;

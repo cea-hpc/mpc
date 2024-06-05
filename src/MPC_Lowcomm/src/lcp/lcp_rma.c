@@ -261,7 +261,10 @@ static inline int lcp_rma_start(lcp_ep_h ep, lcp_request_t *req)
                 rc = lcp_mem_reg_from_map(req->mngr, req->state.lmem, 
                                           ep->conn_map, req->send.buffer, 
                                           req->send.length, 
-                                          LCR_IFACE_REGISTER_MEM_DYN);
+                                          LCR_IFACE_REGISTER_MEM_DYN,
+                                          &req->state.lmem->bm);
+
+                assert(mpc_bitmap_equal(ep->conn_map, req->state.lmem->bm));
         } else {
                 //TODO: check memory and rma call validity.
         } 

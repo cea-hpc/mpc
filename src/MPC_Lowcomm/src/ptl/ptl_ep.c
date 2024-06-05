@@ -62,7 +62,6 @@ ssize_t lcr_ptl_send_am_bcopy(_mpc_lowcomm_endpoint_t *ep,
 
         assert(ptl_ep->addr.pte.am != LCR_PTL_PT_NULL);
 
-        //FIXME: use a memory pool.
         start = mpc_mpool_pop(srail->buf_mp);
         if (start == NULL) {
                 //FIXME: Should be MPC_LOWCOMM_NO_RESOURCE but LCP does not

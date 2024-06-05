@@ -272,7 +272,7 @@ static int _lcp_context_load_ctx_config(lcp_context_h ctx, lcp_context_param_t *
         int i, j, net_found;
         int rc = MPC_LOWCOMM_SUCCESS; 
         lcr_rail_config_t **rail_configs = NULL;
-        int num_configs, tmp_num_configs; 
+        int num_configs; 
         lcr_component_h *components = NULL;
         int num_components;
 
@@ -316,26 +316,6 @@ static int _lcp_context_load_ctx_config(lcp_context_h ctx, lcp_context_param_t *
                 }
         }
 
-        /* Filter CLI rails configs based on process/task layout. */
-        tmp_num_configs = num_configs;
-        if( (mpc_common_get_process_count() == 1) && 
-            (mpc_common_get_task_count() > 1) ) {
-                for(i=0; i < num_configs; i++) {
-                        if( strcmp(rail_configs[i]->name, "tbsm") != 0) {
-                                rail_configs[i]   = NULL;
-                                tmp_num_configs--;
-                        }
-                }
-        }
-
-        assert(tmp_num_configs >= 0);
-        if (tmp_num_configs == 0) {
-                mpc_common_debug_error("LCP CTX: no rail asked from the CLI "
-                                       "satisfies the requirements.");
-                rc = MPC_LOWCOMM_ERROR;
-                goto err_free;
-        }
-
         /* Check offload capabilities. */
         int has_offload = 0;
         ctx->config.offload = 0;
@@ -349,7 +329,6 @@ static int _lcp_context_load_ctx_config(lcp_context_h ctx, lcp_context_param_t *
         /* Count the number of non-composable rail for multirail checks. */
         int non_composable_count = 0;
         for (i = 0; i < num_configs; i++) {
-                if (rail_configs[i] == NULL) break;
                 if (!rail_configs[i]->composable) {
                         non_composable_count++;
                 } else { /* There can be only one interface for composable rail. */
@@ -357,7 +336,7 @@ static int _lcp_context_load_ctx_config(lcp_context_h ctx, lcp_context_param_t *
                 }
         }
 
-        /* In case multirail is enable and multiple configs are available, make
+        /* In case multirail is enabled and multiple configs are available, make
          * sure that there is at most one non-composable rail. */
         if (non_composable_count > 1 && ctx->config.multirail_enabled) {
                 mpc_common_debug_error("LCP CTX: heterogeous non-composable"
@@ -377,7 +356,6 @@ static int _lcp_context_load_ctx_config(lcp_context_h ctx, lcp_context_param_t *
 
         /* Throw warning for multirail and max_iface incoherences. */
         for (i = 0; i < num_configs; i++) {
-                if (rail_configs[i] == NULL) break;
                 if (!ctx->config.multirail_enabled && 
                     rail_configs[i]->max_ifaces > 1) {
                         mpc_common_debug_warning("LCP CTX: multirail not enabled "
@@ -390,6 +368,9 @@ static int _lcp_context_load_ctx_config(lcp_context_h ctx, lcp_context_param_t *
         /* Check offload configuration. */
         if (ctx->config.offload && 
             mpc_common_get_process_count() != (int)mpc_common_get_task_count()) {
+                //NOTE: this could be supported by implementing post
+                //      cancellation on the offload interface in case a message
+                //      has been sent eagerly.
                 mpc_common_debug_error("LCP CTX: offload must be run in "
                                        "process mode.");
                 rc = MPC_LOWCOMM_ERROR;

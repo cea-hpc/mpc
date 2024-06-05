@@ -36,6 +36,7 @@ extern "C" {
 #include <mpc_lowcomm_group.h>
 #include <mpc_common_types.h>
 #include <mpc_lowcomm_monitor.h>
+#include <lcp.h>
 
 /*********************************
 * PUBLIC TYPE FOR COMMUNICATORS *
@@ -55,6 +56,7 @@ typedef uint64_t              mpc_lowcomm_communicator_id_t;
 #define MPC_LOWCOMM_COMM_WORLD_NUMERIC_ID    2
 
 /* Expose communicator init needed for unit test */
+void _mpc_lowcomm_communicator_init_task(int my_rank);
 void _mpc_lowcomm_communicator_init(void);
 void _mpc_lowcomm_communicator_release(void);
 
@@ -326,6 +328,9 @@ int mpc_lowcomm_communicator_free(mpc_lowcomm_communicator_t *pcomm);
 int mpc_lowcomm_communicator_contains(const mpc_lowcomm_communicator_t comm,
                                       const mpc_lowcomm_peer_uid_t uid);
 
+lcp_ep_h mpc_lowcomm_communicator_lookup(mpc_lowcomm_communicator_t comm, int rank);
+void mpc_lowcomm_communicator_add_ep(mpc_lowcomm_communicator_t comm, int rank,
+                                     lcp_ep_h ep);
 /**
  * @brief Get rank in communicator for current process
  *
@@ -333,6 +338,7 @@ int mpc_lowcomm_communicator_contains(const mpc_lowcomm_communicator_t comm,
  * @return int rank in given communicator
  */
 int mpc_lowcomm_communicator_rank(const mpc_lowcomm_communicator_t comm);
+int mpc_lowcomm_communicator_rank_fast(const mpc_lowcomm_communicator_t comm);
 
 /**
  * @brief Get size of a given communicator

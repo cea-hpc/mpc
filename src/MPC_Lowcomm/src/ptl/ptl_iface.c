@@ -75,12 +75,12 @@ static inline int lcr_ptl_invoke_am(sctk_rail_info_t *rail,
 
 	lcr_am_handler_t handler = rail->am[am_id];
 	if (handler.cb == NULL) {
-		mpc_common_debug_fatal("LCP: handler id %d not supported.", am_id);
+		mpc_common_debug_fatal("LCR PTL: handler id %d not supported.", am_id);
 	}
 
 	rc = handler.cb(handler.arg, data, length, 0);
 	if (rc != MPC_LOWCOMM_SUCCESS) {
-		mpc_common_debug_error("LCP: handler id %d failed.", am_id);
+		mpc_common_debug_error("LCR PTL: handler id %d failed.", am_id);
 	}
 
 	return rc;

@@ -31,16 +31,11 @@
 
 #include "lcp.h"
 #include "lcp_ep.h"
-#include "lcp_context.h"
 #include "lcp_request.h"
 #include "lcp_tag.h"
 #include "lcp_tag_offload.h"
-#include "lcp_task.h"
 
 #include "mpc_common_debug.h"
-
-#define LCP_SEND_TAG_IS_TASK(_req) \
-        ((_req)->send.tag.dest_uid == (_req)->mngr->ctx->process_uid) 
 
 /**
  * @brief Switch between protocols. Available protocols are :
@@ -78,21 +73,7 @@ int lcp_tag_send_start(lcp_ep_h ep, lcp_request_t *req,
                 } else {
                         rc = lcp_send_rndv_offload_start(req);
                 }
-        } else if (LCP_SEND_TAG_IS_TASK(req)){ /* Thread-based send */
-                req->state.offloaded = 0;
-
-                /* Get the total payload size */
-                size = lcp_send_get_total_tag_payload(req->send.length);
-
-                //NOTE: there are no rendez-vous for thread-based send.
-                if ((size <= ep->config.am.max_bcopy) || 
-                    (param->datatype & LCP_DATATYPE_DERIVED)) {
-                        req->send.func = lcp_send_task_tag_bcopy;
-                } else {
-                       assume(size <= ep->config.am.max_zcopy); 
-                       req->send.func = lcp_send_task_tag_zcopy;
-                }
-        } else { /* Process-based send */
+        } else { /* Not offload path. */
                 //NOTE: multiplexing might not always be efficient (IO NUMA
                 //      effects). A specific scheduling policy should be
                 //      implemented to decide

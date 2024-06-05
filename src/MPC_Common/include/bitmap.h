@@ -22,6 +22,11 @@ enum {
         .bits = { 0 } \
 }
 
+#define MPC_BITMAP_INIT_ONE \
+{ \
+        .bits = { -1 } \
+}
+
 #define _MPC_BITMAP_BITS_TO_WORDS(_length) \
         ((((_length) + (BITS_PER_WORD - 1)) / BITS_PER_WORD))
 
@@ -58,6 +63,26 @@ enum {
                 result; \
         })
 
+#define MPC_BITMAP_SET_FIRST_N(_bitmap, _n) \
+        do { \
+                size_t _word_index; \
+                size_t _bits_to_set = (_n); \
+                memset(_bitmap.bits, 0, sizeof(_bitmap.bits)); \
+                _MPC_BITMAP_FOR_EACH_WORD(_bitmap, _word_index) {\
+                        if (_bits_to_set >= BITS_PER_WORD) { \
+                                _bitmap.bits[_word_index] = (word_t)-1; /* Set all bits in this word */ \
+                                _bits_to_set -= BITS_PER_WORD; \
+                        } else { \
+                                _bitmap.bits[_word_index] = (1ULL << _bits_to_set) - 1; /* Set the first _bits_to_set bits in this word */ \
+                                _bits_to_set = 0; \
+                        } \
+                } \
+        } while(0)
+
+#define MPC_BITMAP_COPY(_dest_bitmap, _src_bitmap) \
+        do { \
+                memcpy((_dest_bitmap).bits, (_src_bitmap).bits, sizeof((_src_bitmap).bits)); \
+        } while (0)
 
 typedef struct bmap {
        word_t bits[_MPC_BITMAP_BITS_TO_WORDS(64)];
@@ -80,6 +105,4 @@ static inline int mpc_bitmap_equal(bmap_t a, bmap_t b) {
 }
 /* NOLINTEND(clang-diagnostic-unused-function) */
 
-
-
-#endif
+#endif 

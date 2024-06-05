@@ -76,6 +76,7 @@ typedef union
 #ifdef MPC_USE_OFI
 struct _mpc_ofi_pinning_context ofipin;
 #endif
+        mpc_lowcomm_tbsm_rma_ctx_t  tbsm;
 	_mpc_lowcomm_shm_pinning_ctx_t shm;
 }sctk_rail_pin_ctx_internal_t;
 
@@ -126,6 +127,8 @@ enum {
 	LCR_IFACE_TM_PERSISTANT_MEM = MPC_BIT(2),
 	LCR_IFACE_TM_SEARCH         = MPC_BIT(3),
 	LCR_IFACE_TM_ERROR          = MPC_BIT(4),
+        LCR_IFACE_AM_LAYOUT_BUFFER  = MPC_BIT(5),
+        LCR_IFACE_AM_LAYOUT_IOV     = MPC_BIT(6),
 };
 
 //TODO: doc to doxygen.

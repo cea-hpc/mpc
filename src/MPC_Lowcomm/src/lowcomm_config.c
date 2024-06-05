@@ -270,6 +270,7 @@ static inline mpc_conf_config_type_t *__init_driver_tbsm(struct _mpc_lowcomm_con
 
 	struct _mpc_lowcomm_config_struct_net_driver_tbsm *tbsm = &driver->value.tbsm;
 
+        tbsm->max_iov        = 6;
         tbsm->eager_limit    = 8192;
         tbsm->max_msg_size   = INT_MAX;
         tbsm->bcopy_buf_size = 8192;
@@ -280,9 +281,13 @@ static inline mpc_conf_config_type_t *__init_driver_tbsm(struct _mpc_lowcomm_con
 
 	mpc_conf_config_type_t *ret =
                 mpc_conf_config_type_init("tbsm",
-                                          PARAM("eagerlimit",
-                                                &tbsm->eager_limit,
-                                                MPC_CONF_INT,
+                                          PARAM("maxiov", 
+                                                &tbsm->max_iov, 
+                                                MPC_CONF_LONG_INT, 
+                                                "Max iovec."),
+                                          PARAM("eagerlimit", 
+                                                &tbsm->eager_limit, 
+                                                MPC_CONF_INT, 
                                                 "Eager limit."),
                                           PARAM("maxmsgsize",
                                                 &tbsm->max_msg_size,
@@ -734,14 +739,14 @@ static inline mpc_conf_config_type_t *__mpc_lowcomm_rail_conf_init()
         mpc_conf_config_type_t *tbsm_mpi = __new_rail_conf_instance("tbsmmpi", 100, "any", 1, 1, 1, 1, 0, "tbsmconfigmpi");
 
 #ifdef MPC_USE_PORTALS
-	mpc_conf_config_type_t *portals_mpi = __new_rail_conf_instance("portalsmpi", 21, "any", 1, 0, 1, 1, 0, "portalsconfigmpi");
-	mpc_conf_config_type_t *mportals_mpi = __new_rail_conf_instance("mportalsmpi", 21, "any", 1, 0, 1, 1, 1, "mportalsconfigmpi");
+	mpc_conf_config_type_t *portals_mpi = __new_rail_conf_instance("portalsmpi", 21, "any", 1, 0, 1, 0, 0, "portalsconfigmpi");
+	mpc_conf_config_type_t *mportals_mpi = __new_rail_conf_instance("mportalsmpi", 21, "any", 1, 0, 1, 0, 1, "mportalsconfigmpi");
 #endif
 
 #ifdef MPC_USE_OFI
 	mpc_conf_config_type_t *shm_ofi = __new_rail_conf_instance("shmofirail", 98, "any", 1, 0, 1, 1, 0, "shmofi");
-	mpc_conf_config_type_t *verbs_ofi = __new_rail_conf_instance("verbsofirail", 21, "any", 1, 0, 1, 1, 0, "verbsofi");
-	mpc_conf_config_type_t *tcp_ofi = __new_rail_conf_instance("tcpofirail", 20, "any", 1, 0, 1, 1, 0, "tcpofi");
+	mpc_conf_config_type_t *verbs_ofi = __new_rail_conf_instance("verbsofirail", 21, "any", 1, 0, 1, 0, 0, "verbsofi");
+	mpc_conf_config_type_t *tcp_ofi = __new_rail_conf_instance("tcpofirail", 20, "any", 1, 0, 1, 0, 0, "tcpofi");
 #endif
 
 	mpc_conf_config_type_t *rails = mpc_conf_config_type_init("rails",

@@ -122,30 +122,35 @@ void lcp_request_free(void *request)
  * @param ctnr_p message data (out)
  * @param data message data (in)
  * @param length length of message
- * @param flags flag of the message
+ * @param flags flag of the unexpected message
  * @return int LCP_SUCCESS in case of success
  */
-int lcp_request_init_unexp_ctnr(lcp_task_h task, lcp_unexp_ctnr_t **ctnr_p, void *data,
-				size_t length, unsigned flags)
+int lcp_request_init_unexp_ctnr(lcp_task_h task, lcp_unexp_ctnr_t **ctnr_p,
+                                struct iovec *iov, size_t iovcnt, unsigned flags)
 {
 	lcp_unexp_ctnr_t *ctnr;
+        int i;
 
 	ctnr = lcp_container_get(task);
 	if (ctnr == NULL) {
 		mpc_common_debug_error("LCP: could not allocate recv container.");
-		return LCP_ERROR;
+		return MPC_LOWCOMM_ERROR;
 	}
 
         size_t elem_size = mpc_mpool_get_elem_size(&task->unexp_mp);
-        assert(sizeof(lcp_unexp_ctnr_t) + length < elem_size);
+        ptrdiff_t offset = 0;
 
-	ctnr->length = length;
-	ctnr->flags = flags;
+        for (i = 0; i < (int)iovcnt; i++) {
+                assert(iov[i].iov_len + offset < elem_size);
+                memcpy((char *)(ctnr + 1) + offset, iov[i].iov_base, iov[i].iov_len);
+                offset += iov[i].iov_len;
+        }
 
-        mpc_common_debug_log("LCP: received unexpected message of length=%lu", length);
-        //NOTE: check the standard but data could be NULL and length equal to 0.
-        memcpy(ctnr + 1, data, length);
+	ctnr->flags  = 0;
+	ctnr->flags |= flags;
+        ctnr->length = offset;
 
 	*ctnr_p = ctnr;
-	return LCP_SUCCESS;
+
+	return MPC_LOWCOMM_SUCCESS;
 }

@@ -168,6 +168,7 @@ typedef int (*lcr_flush_iface_func_t)(sctk_rail_info_t *rail,
                                       unsigned flags);
 
 // Interface functions
+//FIXME: change get_attr to void since it cannot fail.
 typedef int (*lcr_iface_get_attr_func_t)(sctk_rail_info_t *rail,
                                          lcr_rail_attr_t *attr);
 typedef int (*lcr_iface_progress_func_t)(sctk_rail_info_t *rail);
@@ -194,4 +195,5 @@ typedef int (*lcr_iface_is_reachable_func_t)(sctk_rail_info_t *rail,
 // Interface Sync functions
 typedef int (*lcr_iface_fence_func_t)(sctk_rail_info_t *rail,
                                       unsigned flags);
+
 #endif

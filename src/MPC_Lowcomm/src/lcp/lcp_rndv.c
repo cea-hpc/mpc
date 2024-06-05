@@ -206,9 +206,6 @@ int lcp_rndv_register_buffer(lcp_request_t *rndv_req)
 {
         int rc;
 
-        mpc_common_debug("LCP RNDV: register recv buffer. Conn map=%x", 
-                         rndv_req->send.ep->conn_map);
-
         rc = lcp_mem_create(rndv_req->mngr, &rndv_req->state.lmem);
         if (rc != MPC_LOWCOMM_SUCCESS) {
                 goto err;
@@ -219,13 +216,14 @@ int lcp_rndv_register_buffer(lcp_request_t *rndv_req)
                                   rndv_req->send.ep->conn_map,
                                   rndv_req->send.buffer, 
                                   rndv_req->send.length,
-                                  LCR_IFACE_REGISTER_MEM_DYN);
+                                  LCR_IFACE_REGISTER_MEM_DYN,
+                                  &rndv_req->state.lmem->bm);
         if (rc != MPC_LOWCOMM_SUCCESS) {
                 goto err;
         }
+        assert(mpc_bitmap_equal(rndv_req->send.ep->conn_map, 
+                                rndv_req->state.lmem->bm));
 
-        rndv_req->state.offset = (size_t)(rndv_req->send.buffer - 
-                                     rndv_req->state.lmem->base_addr);
         assume(rndv_req->state.offset == 0);
 
 err:
@@ -299,6 +297,7 @@ int lcp_send_rndv_start(lcp_request_t *req)
         //FIXME2: could be factorized. Code similar for send/recv and
         //        onload/offload datapaths.
         if (req->datatype & LCP_DATATYPE_DERIVED) {
+                not_implemented();
                 req->state.pack_buf = sctk_malloc(req->send.length);
                 if (req->state.pack_buf == NULL) {
                         mpc_common_debug_error("LCP RNDV: could not allocate pack "

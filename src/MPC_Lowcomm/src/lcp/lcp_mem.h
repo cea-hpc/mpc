@@ -59,13 +59,22 @@ struct lcp_pinning_mmu
         /* In case we want to improve in the future */
 };
 
+enum {
+        LCP_MEM_FLAG_RELEASE = MPC_BIT(0),
+};
+
+typedef enum {
+        LCP_MEM_ALLOC_MMAP = 0, /* Use Unix mmap. */
+        LCP_MEM_ALLOC_MALLOC,   /* Use malloc.    */
+        LCP_MEM_ALLOC_RD        /* Use resource domain, shmem for example. */
+} lcp_mem_alloc_method_t;
+
 struct lcp_mem {
-        lcp_manager_h mngr;
         uint64_t base_addr;
         size_t length;
-        int num_ifaces;
         bmap_t bm;
         unsigned flags;
+        lcp_mem_alloc_method_t method;
         void * pointer_to_mmu_ctx; /* When handled by the MMU this 
                                       points to the management slot */
         mpc_list_elem_t elem; /* Element in list of active memories. */
@@ -88,7 +97,8 @@ int lcp_mem_reg_from_map(lcp_manager_h mngr,
                          bmap_t mem_map,
                          const void *buffer,
                          size_t length,
-                         unsigned flags);
+                         unsigned flags,
+                         bmap_t *reg_bm_p);
 
 int lcp_mem_unpost(lcp_manager_h mngr, lcp_mem_h mem, lcr_tag_t tag);
 

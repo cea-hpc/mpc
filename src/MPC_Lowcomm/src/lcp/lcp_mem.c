@@ -35,7 +35,6 @@
 #include <mpc_common_debug.h>
 #include <mpc_common_spinlock.h>
 
-#include "lcp_context.h"
 #include "lcp_manager.h"
 #include "lcp_def.h"
 #include "lcp_prototypes.h"
@@ -62,8 +61,6 @@ static struct lcp_mem lcp_mem_dummy_handle = {
         .bm         = MPC_BITMAP_INIT,
         .length     = 0,
         .flags      = 0,
-        .num_ifaces = 0,
-        .mngr       = NULL
 };
 
 //FIXME: change doc from ctx to mngr
@@ -326,7 +323,8 @@ struct lcp_pinning_entry * lcp_pinning_entry_list_push(struct lcp_pinning_entry_
                 rc = lcp_mem_reg_from_map(mngr, mem_p,
                                           bitmap,
                                           buffer,
-                                          len, flags);
+                                          len, flags, 
+                                          &mem_p->bm);
                 if (rc != MPC_LOWCOMM_SUCCESS) {
                         goto err;
                 }
@@ -429,12 +427,6 @@ int lcp_pinning_mmu_unpin(lcp_manager_h mngr, lcp_mem_h mem)
         return 0;
 }
 
-typedef enum {
-        LCP_MEM_ALLOC_MMAP = 0, /* Use Unix mmap. */
-        LCP_MEM_ALLOC_MALLOC,   /* Use malloc.    */
-        LCP_MEM_ALLOC_RD        /* Use resource domain, shmem for example. */
-} lcp_mem_alloc_method_t;
-
 static int lcp_mem_alloc(lcp_mem_h mem, size_t length, unsigned flags)
 {
         UNUSED(flags);
@@ -452,6 +444,7 @@ static int lcp_mem_alloc(lcp_mem_h mem, size_t length, unsigned flags)
                         mpc_common_debug_error("LCP MEM: could not allocate "
                                                "memory base address.");
                         rc = MPC_LOWCOMM_ERROR;
+                        goto err;
                 }
                 mem->length = length;
                 break;
@@ -472,7 +465,32 @@ static int lcp_mem_alloc(lcp_mem_h mem, size_t length, unsigned flags)
                 rc = MPC_LOWCOMM_ERROR;
         }
 
+        mem->flags |= LCP_MEM_FLAG_RELEASE;
+err:
         return rc;
+}
+
+static void lcp_mem_free(lcp_mem_h mem) 
+{
+        switch(mem->method) {
+        case LCP_MEM_ALLOC_MALLOC:
+                sctk_free((void *)mem->base_addr);
+                break;
+        case LCP_MEM_ALLOC_RD:
+                //NOTE: implement Resource Domain allocation to allocate shared
+                //      memory for example. 
+                not_implemented();
+                break;
+        case LCP_MEM_ALLOC_MMAP:
+                //NOTE: use MMAP with MAP_FIXED to implement symmetric
+                //      allocation with a unique address. This could avoid
+                //      overloading translation table of the NIC for example
+                //      when a lot of windows need to be created. 
+                not_implemented();
+                break;
+        default:
+                mpc_common_debug_error("LCP MEM: unknown allocation method.");
+        }
 }
 
 //FIXME: A memory range described by lcp_mem_h is unique (same address, same
@@ -566,7 +584,9 @@ int lcp_mem_unpack(lcp_manager_h mngr, lcp_mem_h *mem_p,
                         unpacked_size += iface->iface_unpack_memp(iface, 
                                                                   &mem->mems[i], 
                                                                   p + unpacked_size);
-                        mem->num_ifaces++;
+                        //FIXME: following as no intended purpose instead of
+                        //       breaking to end the loop sooner. Maybe remove
+                        //       it for clarity?
                         if (unpacked_size == size) {
                                 break;
                         }
@@ -592,10 +612,10 @@ int lcp_mem_create(lcp_manager_h mngr, lcp_mem_h *mem_p)
                 rc = MPC_LOWCOMM_ERROR;
                 goto err;
         }
+        mem->flags = 0;
 
         //NOTE: allocation on the number of interfaces even though the memories
         //      depend on the bitmap. Fits better with the bitmap.
-        mem->num_ifaces = 0; // num_iface is set later based on bitmap.
         mem->pointer_to_mmu_ctx = NULL;
         memset(mem->mems, 0, mngr->num_ifaces * sizeof(lcr_memp_t));
 
@@ -609,28 +629,27 @@ void lcp_mem_delete(lcp_mem_h mem)
         mpc_mpool_push(mem);
 }
 
-//FIXME: fonction not useful, much redundancy with lcp_mem_register_with_bitmap
 int lcp_mem_reg_from_map(lcp_manager_h mngr,
                          lcp_mem_h mem,
                          bmap_t bm,
                          const void *buffer,
                          size_t length,
-                         unsigned flags)
+                         unsigned flags,
+                         bmap_t *reg_bm_p)
 {
         int i, rc = MPC_LOWCOMM_SUCCESS;
         sctk_rail_info_t *iface = NULL;
+        lcr_rail_attr_t attr;
+        bmap_t reg_bm = MPC_BITMAP_INIT; 
 
         /* Pin the memory and create memory handles */
         for (i=0; i<mngr->num_ifaces; i++) {
                 if (MPC_BITMAP_GET(bm, i)) {
                         iface = mngr->ifaces[i];
+                        iface->iface_get_attr(iface, &attr);
 
-                        if (!(iface->cap & LCR_IFACE_CAP_RMA)) {
-                                mpc_common_debug_error("LCP MEM: iface %s does "
-                                                       "not have RMA capabilities",
-                                                       iface->network_name);
-                                rc = MPC_LOWCOMM_ERROR;
-                                goto err;
+                        if (!(attr.iface.cap.flags & LCR_IFACE_CAP_RMA)) {
+                               continue; 
                         }
 
                         rc = lcp_iface_do_register_mem(iface, &mem->mems[i], 
@@ -639,9 +658,11 @@ int lcp_mem_reg_from_map(lcp_manager_h mngr,
                         if (rc != MPC_LOWCOMM_SUCCESS) {
                                 goto err;
                         }
-                        mem->num_ifaces++;
+                        MPC_BITMAP_SET(reg_bm, i);
                 }
         }
+
+        MPC_BITMAP_COPY(*reg_bm_p, reg_bm);
 
 err:
         return rc;
@@ -655,9 +676,8 @@ int lcp_mem_provision(lcp_manager_h mngr,
                       lcp_mem_param_t *param)
 {
         int rc = MPC_LOWCOMM_SUCCESS;
-        int i;
         lcp_mem_h mem;
-        lcr_rail_attr_t attr;
+        bmap_t reg_bm;
         unsigned flags = 0;
 
         if (param == NULL) {
@@ -696,19 +716,6 @@ int lcp_mem_provision(lcp_manager_h mngr,
                 goto err;
         }
 
-        /* Compute bitmap registration. Strategy is to register on all
-         * interfaces that have the capability. */
-        mem->bm = (bmap_t) MPC_BITMAP_INIT;
-        for (i = 0; i < mngr->num_ifaces; i++) {
-		mngr->ifaces[i]->iface_get_attr(mngr->ifaces[i], &attr);
-                
-                //FIXME: CAP_RMA should not be the only reason to set the
-                //       bitmap, for example SHMEM.
-                if (attr.iface.cap.flags & LCR_IFACE_CAP_RMA) {
-                        MPC_BITMAP_SET(mem->bm, i);
-                }
-        }
-
         if (param->flags & LCP_MEM_REGISTER_ALLOCATE) {
                 rc = lcp_mem_alloc(mem, param->size, 0);
                 if (rc != MPC_LOWCOMM_SUCCESS) {
@@ -722,15 +729,29 @@ int lcp_mem_provision(lcp_manager_h mngr,
         flags = param->flags & LCP_MEM_REGISTER_DYNAMIC ?
                 LCR_IFACE_REGISTER_MEM_DYN : LCR_IFACE_REGISTER_MEM_STAT;
 
-        rc = lcp_mem_reg_from_map(mngr, mem, mem->bm, param->address, param->size, 
-                                  flags);
+        /* Compute bitmap registration. Strategy is to register on all
+         * interfaces that have the capability. */
+        MPC_BITMAP_SET_FIRST_N(reg_bm, mngr->num_ifaces);
+
+        rc = lcp_mem_reg_from_map(mngr, mem, reg_bm, (void *)mem->base_addr,
+                                  mem->length, flags, &mem->bm);
         if (rc != MPC_LOWCOMM_SUCCESS) {
+                goto err;
+        }
+
+        if (mpc_bitmap_is_zero(mem->bm)) {
+                mpc_common_debug_error("LCP MEM: no interface found for memory "
+                                       "registration.");
+                rc = MPC_LOWCOMM_ERROR;
                 goto err;
         }
 
         *mem_p = mem;
 
+        return rc;
+
 err:
+
         return rc;
 }
 
@@ -868,6 +889,10 @@ int lcp_mem_deprovision(lcp_manager_h mngr, lcp_mem_h mem)
                                 goto err;
                         }
                 }
+        }
+
+        if (mem->flags & LCP_MEM_FLAG_RELEASE) {
+                lcp_mem_free(mem);
         }
 
         lcp_mem_delete(mem);

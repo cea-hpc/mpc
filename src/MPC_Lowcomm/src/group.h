@@ -68,6 +68,7 @@ typedef struct MPI_ABI_Group
 
 	unsigned int                          size;
 	_mpc_lowcomm_group_rank_descriptor_t *ranks;
+        lcp_ep_h                             *eps;
 
 	int *                                 global_to_local;
 
@@ -75,6 +76,7 @@ typedef struct MPI_ABI_Group
 	int                                   process_count;
 	int *                                 process_list;
 	int                                   tasks_count_in_process;
+        int                                  *my_rank;
 
 	int                                   local_leader;
 

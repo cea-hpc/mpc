@@ -985,6 +985,10 @@ mpc_lowcomm_group_t *_mpc_lowcomm_group_create(unsigned int size, _mpc_lowcomm_g
 
 	/* As we create we set refcounter to 1 */
 	OPA_store_int(&ret->refcount, 1);
+        
+        //TODO: add memory check
+        ret->eps = sctk_malloc(size * sizeof(lcp_ep_h));
+        ret->my_rank = sctk_malloc(mpc_common_get_local_task_count() * sizeof(int));
 
 	/* Force compute of local leader */
 	ret->local_leader = mpc_lowcomm_group_get_local_leader(ret);

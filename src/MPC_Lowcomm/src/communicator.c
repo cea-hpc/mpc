@@ -1421,6 +1421,8 @@ static inline mpc_lowcomm_communicator_t __new_communicator(mpc_lowcomm_communic
 		}
 	}
 
+        group->my_rank[mpc_common_get_local_task_rank()] = mpc_lowcomm_group_rank(group);
+
 	/* Do a barrier when done to ensure dup do not interleave */
 	mpc_lowcomm_barrier(comm);
 
@@ -1559,6 +1561,10 @@ mpc_lowcomm_communicator_id_t mpc_lowcomm_get_comm_self_id(void)
 	return (gid << 32) | MPC_LOWCOMM_COMM_SELF_NUMERIC_ID;
 }
 
+void _mpc_lowcomm_communicator_init_task(int my_rank)
+{
+        __comm_world->group->my_rank[mpc_common_get_local_task_rank()] = my_rank;
+}
 void _mpc_lowcomm_communicator_init(void)
 {
 	__communicator_id_factory_init();
@@ -1592,6 +1598,20 @@ void _mpc_lowcomm_communicator_release(void)
 /*************
 * ACCESSORS *
 *************/
+
+lcp_ep_h mpc_lowcomm_communicator_lookup(mpc_lowcomm_communicator_t comm, int rank)
+{
+        mpc_lowcomm_communicator_t local_comm = __mpc_lowcomm_communicator_from_predefined(comm);
+        return local_comm->group->eps[rank];
+}
+
+void mpc_lowcomm_communicator_add_ep(mpc_lowcomm_communicator_t comm, int rank, lcp_ep_h ep) 
+{
+        assert(rank >= 0 && rank < (int)mpc_lowcomm_group_size(comm->group));        
+
+        mpc_lowcomm_communicator_t local_comm = __mpc_lowcomm_communicator_from_predefined(comm);
+        local_comm->group->eps[rank] = ep;
+}
 
 int mpc_lowcomm_communicator_local_lead(mpc_lowcomm_communicator_t comm)
 {
@@ -1675,6 +1695,12 @@ int mpc_lowcomm_communicator_rank_of(const mpc_lowcomm_communicator_t comm,
                                      const int comm_world_rank)
 {
 	return mpc_lowcomm_communicator_rank_of_as(comm, comm_world_rank, mpc_lowcomm_get_rank(), mpc_lowcomm_monitor_get_uid() );
+}
+
+int mpc_lowcomm_communicator_rank_fast(const mpc_lowcomm_communicator_t comm)
+{
+        const mpc_lowcomm_communicator_t local_comm = __mpc_lowcomm_communicator_from_predefined(comm);
+        return local_comm->group->my_rank[mpc_common_get_local_task_rank()];
 }
 
 int mpc_lowcomm_communicator_rank(const mpc_lowcomm_communicator_t comm)

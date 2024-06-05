@@ -118,7 +118,6 @@ struct lcp_request {
 				struct {
 					uint16_t comm;
 					uint64_t src_uid;
-					uint64_t dest_uid;
                                         int32_t  src_tid;
                                         int32_t  dest_tid;
 					int32_t  tag;
@@ -179,10 +178,10 @@ struct lcp_request {
                                 struct {
                                         uint16_t comm;
                                         uint64_t src_uid;
-                                        uint64_t dest_uid;
+                                        uint64_t dest_uid; //FIXME: needed?
                                         int32_t  src_tid;
                                         int32_t  smask;
-                                        int32_t  dest_tid;
+                                        int32_t  dest_tid; //FIXME: needed?
                                         int32_t  tag;
                                         int32_t  tmask;
                                         lcp_tag_recv_callback_func_t recv_cb;
@@ -230,7 +229,6 @@ struct lcp_request {
 	(_req)->status            = MPC_LOWCOMM_IN_PROGRESS;                 \
         (_req)->send.tag.src_tid  = (_tag_info)->src;                        \
         (_req)->send.tag.dest_tid = (_tag_info)->dest;                       \
-        (_req)->send.tag.dest_uid = (_tag_info)->dest_uid;                   \
         (_req)->send.tag.src_uid  = (_tag_info)->src_uid;                    \
         (_req)->send.tag.tag      = (_tag_info)->tag;                        \
         (_req)->send.tag.comm     = (_tag_info)->comm_id;                    \
@@ -509,7 +507,7 @@ void lcp_request_storage_init();
 //FIXME: remove?
 void lcp_request_storage_release();
 
-int lcp_request_init_unexp_ctnr(lcp_task_h task, lcp_unexp_ctnr_t **ctnr_p, void *data, 
-				size_t length, unsigned flags);
+int lcp_request_init_unexp_ctnr(lcp_task_h task, lcp_unexp_ctnr_t **ctnr_p, struct iovec *iov, 
+				size_t iovcnt, unsigned flags);
 
 #endif

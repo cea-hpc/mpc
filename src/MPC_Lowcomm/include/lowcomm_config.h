@@ -149,6 +149,7 @@ struct _mpc_lowcomm_config_struct_net_driver_tcp
 /**Thread-based Shared Memory (TBSM) driver**/
 struct _mpc_lowcomm_config_struct_net_driver_tbsm
 {
+        size_t max_iov;
         size_t eager_limit;
         size_t max_msg_size;
         int    bcopy_buf_size;

@@ -305,6 +305,9 @@ int lcp_ep_init_channels(lcp_manager_h mngr, lcp_ep_h ep)
                 sctk_rail_info_t        *iface = mngr->ifaces[i];
 
 		/* If uid cannot be reached through this interface, continue */
+                //FIXME: note that is is only useful for TBSM, for now any other
+                //       driver will return true but it does not mean that the
+                //       connection will be successful.
 		if(!iface->iface_is_reachable(iface, ep->uid) )
 		{
 			continue;
@@ -330,6 +333,9 @@ int lcp_ep_init_channels(lcp_manager_h mngr, lcp_ep_h ep)
 		mpc_common_debug("Route to %llu using %s", ep->uid, iface->network_name);
 
 		/* Check transport endpoint availability */
+                //NOTE: For connection-oriented transport (TCP for example), low
+                //      level endpoint could have already been added during the
+                //      connection protocol. Thus, check first if it exists.
 		lcr_ep = sctk_rail_get_any_route_to_process(iface, ep->uid);
 		/* If endpoint does not exist yet, connect on demand */
 		if(lcr_ep == NULL)
