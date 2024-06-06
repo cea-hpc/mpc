@@ -1179,16 +1179,6 @@ int _mpc_cl_type_get_name(mpc_lowcomm_datatype_t datatype, char *name, int *resu
 		retname = _mpc_dt_name_get(datatype);
 	}
 
-
-	if(datatype == MPC_UB)
-	{
-		retname = "MPI_UB";
-	}
-	else if(datatype == MPC_LB)
-	{
-		retname = "MPI_LB";
-	}
-
 	if(!retname)
 	{
 		/* Return an empty string */
