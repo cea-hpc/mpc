@@ -51,7 +51,7 @@ int lcp_am_set_handler_callback(lcp_manager_h mngr, lcp_task_h task, uint8_t am_
         user_handler->user_arg = user_arg;
         user_handler->flags    = flags;
 
-        return LCP_SUCCESS;
+        return MPC_LOWCOMM_SUCCESS;
 }
 
 void lcp_task_request_init(mpc_mempool_t *mp, void *request) {
@@ -66,7 +66,7 @@ void lcp_task_request_init(mpc_mempool_t *mp, void *request) {
 
 int lcp_task_create(lcp_context_h ctx, int tid, lcp_task_h *task_p)
 {
-        int rc = LCP_SUCCESS;
+        int rc = MPC_LOWCOMM_SUCCESS;
         lcp_task_h task;
 
         assert(ctx); assert(tid >= 0);
@@ -77,7 +77,7 @@ int lcp_task_create(lcp_context_h ctx, int tid, lcp_task_h *task_p)
         task = sctk_malloc(sizeof(struct lcp_task));
         if (task == NULL) {
                 mpc_common_debug_error("LCP: could not allocate task");
-                rc = LCP_ERROR;
+                rc = MPC_LOWCOMM_ERROR;
                 goto err;
         }
         memset(task, 0, sizeof(struct lcp_task));
@@ -115,7 +115,7 @@ int lcp_task_create(lcp_context_h ctx, int tid, lcp_task_h *task_p)
         };
                 
         rc = mpc_mpool_init(&task->req_mp, &mp_req_params);
-        if (rc != LCP_SUCCESS) {
+        if (rc != MPC_LOWCOMM_SUCCESS) {
                 goto err;
         }
 
@@ -133,7 +133,7 @@ int lcp_task_create(lcp_context_h ctx, int tid, lcp_task_h *task_p)
         };
                 
         rc = mpc_mpool_init(&task->unexp_mp, &mp_unexp_params);
-        if (rc != LCP_SUCCESS) {
+        if (rc != MPC_LOWCOMM_SUCCESS) {
                 goto err;
         }
 
@@ -170,13 +170,13 @@ int lcp_task_associate(lcp_task_h task, lcp_manager_h mngr)
                 tcc->tag.num_queues = UINT16_MAX + 1;
                 tcc->tag.umqs = sctk_malloc(tcc->tag.num_queues * sizeof(mpc_queue_head_t));
                 if (tcc->tag.umqs == NULL) {
-                        rc = LCP_ERROR;
+                        rc = MPC_LOWCOMM_ERROR;
                         goto err;
                 }
 
                 tcc->tag.prqs = sctk_malloc(tcc->tag.num_queues * sizeof(mpc_queue_head_t));
                 if (tcc->tag.prqs == NULL) {
-                        rc = LCP_ERROR;
+                        rc = MPC_LOWCOMM_ERROR;
                         goto err;
                 }
 
@@ -191,7 +191,7 @@ int lcp_task_associate(lcp_task_h task, lcp_manager_h mngr)
                 if (tcc->am.handlers == NULL) {
                         mpc_common_debug_error("LCP TASK: Could not allocate "
                                                "user AM handlers");
-                        rc = LCP_ERROR;
+                        rc = MPC_LOWCOMM_ERROR;
                         goto err;
                 }
                 memset(tcc->am.handlers, 0, LCP_AM_ID_USER_MAX * 
@@ -231,5 +231,5 @@ int lcp_task_fini(lcp_task_h task) {
         sctk_free(task);
         task = NULL;
 
-        return LCP_SUCCESS;
+        return MPC_LOWCOMM_SUCCESS;
 }

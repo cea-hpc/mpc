@@ -34,7 +34,6 @@
 #include "lcp_def.h"
 #include "lcp_ep.h"
 #include "lcp_prototypes.h"
-#include "lcp_task.h"
 #include "lcp_mem.h"
 #include "lcp_context.h"
 #include "lcp_datatype.h"
@@ -129,11 +128,11 @@ static ssize_t lcp_rndv_fin_pack(void *dest, void *data)
  *
  * @param super request to send
  * @param rmem // TODO ?
- * @return int LCP_SUCCESS in case of success
+ * @return int MPC_LOWCOMM_SUCCESS in case of success
  */
 int lcp_rndv_rma_progress(lcp_request_t *rndv_req)
 {
-        int rc = LCP_SUCCESS;
+        int rc = MPC_LOWCOMM_SUCCESS;
         lcp_chnl_idx_t cc;
         size_t remaining, offset;
         size_t frag_length, length;
@@ -170,7 +169,7 @@ int lcp_rndv_rma_progress(lcp_request_t *rndv_req)
                         /* Get source address */
                         rc = lcp_send_do_get_zcopy(ep->lct_eps[cc],
                                                    mpc_buffer_offset(rndv_req->send.buffer, offset), 
-                                                   mpc_buffer_offset(rndv_req->send.rma.remote_addr, offset), 
+                                                   mpc_buffer_offset(rndv_req->send.rndv.addr, offset), 
                                                    &(rndv_req->state.lmem->mems[cc]),
                                                    &(rkey->mems[cc]),
                                                    length,
@@ -178,7 +177,7 @@ int lcp_rndv_rma_progress(lcp_request_t *rndv_req)
                 } else {
                         rc = lcp_send_do_put_zcopy(ep->lct_eps[cc],
                                                    mpc_buffer_offset(rndv_req->send.buffer, offset), 
-                                                   mpc_buffer_offset(rndv_req->send.rma.remote_addr, offset), 
+                                                   mpc_buffer_offset(rndv_req->send.rndv.addr, offset), 
                                                    &(rndv_req->state.lmem->mems[cc]),
                                                    &(rkey->mems[cc]),
                                                    length,
@@ -211,6 +210,8 @@ int lcp_rndv_register_buffer(lcp_request_t *rndv_req)
                 goto err;
         }
 
+        mpc_common_debug("LCP RNDV: register buffer. rndv_req=%p",
+                         rndv_req);
         /* Register memory. */
         rc = lcp_mem_reg_from_map(rndv_req->mngr, rndv_req->state.lmem,
                                   rndv_req->send.ep->conn_map,
@@ -246,6 +247,8 @@ void lcp_rndv_complete(lcr_completion_t *comp)
                 lcp_request_t *super = rndv_req->super;
                 lcp_chnl_idx_t cc = lcp_ep_get_next_cc(ep);
 
+                mpc_common_debug("LCP RNDV: send fin. uid=%llu, rndv req=%p",
+                                 ep->uid, rndv_req);
                 payload = lcp_send_do_am_bcopy(ep->lct_eps[cc],
                                                LCP_AM_ID_RFIN,
                                                lcp_rndv_fin_pack,
@@ -284,11 +287,11 @@ void lcp_rndv_complete(lcr_completion_t *comp)
  * @brief Start an rndv protocol with active message
  *
  * @param req request
- * @return int LCP_SUCCESS In case of success
+ * @return int MPC_LOWCOMM_SUCCESS In case of success
  */
 int lcp_send_rndv_start(lcp_request_t *req)
 {
-        int rc = LCP_SUCCESS;
+        int rc = MPC_LOWCOMM_SUCCESS;
         lcp_request_t *rndv_req;
 
         /* If data is derived, buffer must be allocated and data packed to make
@@ -302,7 +305,7 @@ int lcp_send_rndv_start(lcp_request_t *req)
                 if (req->state.pack_buf == NULL) {
                         mpc_common_debug_error("LCP RNDV: could not allocate pack "
                                                "buffer");
-                        rc = LCP_ERROR;
+                        rc = MPC_LOWCOMM_ERROR;
                         goto err;
                 }
 
@@ -319,7 +322,7 @@ int lcp_send_rndv_start(lcp_request_t *req)
         rndv_req = lcp_request_get(req->task);
         if (rndv_req == NULL) {
                 mpc_common_debug_error("LCP RNDV: could not create request.");
-                return LCP_ERROR;
+                return MPC_LOWCOMM_ERROR;
         }
         rndv_req->super = req;
 
@@ -368,10 +371,10 @@ static int lcp_rndv_progress_rtr(lcp_request_t *rndv_req)
                                        rndv_req);
         if (payload < 0) {
                 mpc_common_debug_error("LCP RNDV: error sending ack rdv message");
-                rc = LCP_ERROR;
+                rc = MPC_LOWCOMM_ERROR;
                 goto err;
         }
-        rc = LCP_SUCCESS;
+        rc = MPC_LOWCOMM_SUCCESS;
 err:
         return rc;
 }
@@ -394,7 +397,7 @@ int lcp_rndv_process_rts(lcp_request_t *rreq,
                 if (rreq->state.pack_buf == NULL) {
                         mpc_common_debug_error("LCP RNDV: could not allocate pack "
                                                "buffer");
-                        return LCP_ERROR;
+                        return MPC_LOWCOMM_ERROR;
                 }
         }
 
@@ -402,7 +405,7 @@ int lcp_rndv_process_rts(lcp_request_t *rreq,
         rndv_req = lcp_request_get(rreq->task);
         if (rndv_req == NULL) {
                 mpc_common_debug_error("LCP RNDV: could not create request.");
-                return LCP_ERROR;
+                return MPC_LOWCOMM_ERROR;
         }
         rndv_req->super = rreq;
 
@@ -418,14 +421,14 @@ int lcp_rndv_process_rts(lcp_request_t *rreq,
         /* Set message identifiers from incoming message */
         //NOTE: on receive side, msg_id is set to hdr->msg_id which corresponds
         //      to the sender's rndv_req address.
-        rndv_req->msg_id               = hdr->msg_id;
-        rndv_req->send.rma.remote_addr = hdr->remote_addr;
+        rndv_req->msg_id         = hdr->msg_id;
+        rndv_req->send.rndv.addr = hdr->remote_addr;
 
         /* Get endpoint */
         if (!(rndv_req->send.ep = lcp_ep_get(rndv_req->mngr, hdr->src_uid))) {
                 rc = lcp_ep_create(rndv_req->mngr, &(rndv_req->send.ep), 
                                    hdr->src_uid, 0);
-                if (rc != LCP_SUCCESS) {
+                if (rc != MPC_LOWCOMM_SUCCESS) {
                         mpc_common_debug_error("LCP RNDV: could not create ep "
                                                "after match.");
                         goto err;
@@ -434,7 +437,7 @@ int lcp_rndv_process_rts(lcp_request_t *rreq,
 
         /* Register memory through rndv request. */
         rc = lcp_rndv_register_buffer(rndv_req);
-        if (rc != LCP_SUCCESS) {
+        if (rc != MPC_LOWCOMM_SUCCESS) {
                 goto err;
         }
 
@@ -461,7 +464,7 @@ int lcp_rndv_process_rts(lcp_request_t *rreq,
                 break;
         default:
                 mpc_common_debug_fatal("LCP RNDV: unknown protocol in recv.");
-                rc = LCP_ERROR;
+                rc = MPC_LOWCOMM_ERROR;
                 break;
         }
 
@@ -480,7 +483,7 @@ static int lcp_rndv_rtr_handler(void *arg, void *data,
                                 unsigned flags)
 {
         UNUSED(flags);
-        int rc = LCP_SUCCESS;
+        int rc = MPC_LOWCOMM_SUCCESS;
         lcp_manager_h mngr = arg;
         lcp_ack_hdr_t *hdr = data;
         lcp_request_t *rndv_req;
@@ -513,7 +516,7 @@ err:
  * @param data rendez-vous header
  * @param length header length
  * @param flags message flags
- * @return int LCP_SUCCESS in case of success
+ * @return int MPC_LOWCOMM_SUCCESS in case of success
  */
 static int lcp_rndv_fin_handler(void *arg, void *data,
                                 size_t length,
@@ -522,7 +525,7 @@ static int lcp_rndv_fin_handler(void *arg, void *data,
         UNUSED(length);
         UNUSED(flags);
         UNUSED(arg);
-        int rc = LCP_SUCCESS;
+        int rc = MPC_LOWCOMM_SUCCESS;
         lcp_ack_hdr_t *hdr = data;
         lcp_request_t *rndv_req, *req;
 

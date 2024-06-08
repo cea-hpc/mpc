@@ -180,7 +180,7 @@ static void lcp_am_recv_complete(lcr_completion_t *comp)
 
 static int lcp_send_rndv_am_rts_progress(lcp_request_t *req)
 {
-        int rc = LCP_SUCCESS;
+        int rc = MPC_LOWCOMM_SUCCESS;
         ssize_t payload_size;
         lcp_ep_h ep = req->send.ep;
         lcp_chnl_idx_t cc = lcp_ep_get_next_cc(ep);
@@ -193,7 +193,7 @@ static int lcp_send_rndv_am_rts_progress(lcp_request_t *req)
                                             LCP_AM_ID_RTS_AM,
                                             lcp_send_am_rndv_pack, req);
         if (payload_size < 0) {
-                rc = LCP_ERROR;
+                rc = MPC_LOWCOMM_ERROR;
         }
 
         return rc;
@@ -212,7 +212,7 @@ int lcp_send_rndv_am_start(lcp_request_t *req)
         };
 
         rc = lcp_send_rndv_start(req);
-        if (rc != LCP_SUCCESS) {
+        if (rc != MPC_LOWCOMM_SUCCESS) {
                 goto err;
         }
 
@@ -227,7 +227,7 @@ int lcp_send_eager_am_bcopy(lcp_request_t *req)
         uint8_t am_id;
         lcr_pack_callback_t pack_cb;
         ssize_t payload;
-	int rc = LCP_SUCCESS;
+	int rc = MPC_LOWCOMM_SUCCESS;
 
 	mpc_common_debug_info("LCP: send eager am bcopy comm=%d, src=%d, "
                               "dest=%d, length=%d, tag=%d", req->send.tag.comm,
@@ -248,7 +248,7 @@ int lcp_send_eager_am_bcopy(lcp_request_t *req)
 
         payload = lcp_send_eager_bcopy(req, pack_cb, am_id);
         if (payload < 0) {
-                rc = LCP_ERROR;
+                rc = MPC_LOWCOMM_ERROR;
                 goto err;
         }
 
@@ -273,7 +273,7 @@ int lcp_send_eager_am_zcopy(lcp_request_t *req)
 	lcp_am_hdr_t *hdr = sctk_malloc(sizeof(lcp_am_hdr_t));
         if (hdr == NULL) {
                 mpc_common_debug_error("LCP: could not allocate tag header.");
-                rc = LCP_ERROR;
+                rc = MPC_LOWCOMM_ERROR;
                 goto err;
         }
 
@@ -319,7 +319,7 @@ err:
 int lcp_am_send_start(lcp_ep_h ep, lcp_request_t *req,
                       const lcp_request_param_t *param)
 {
-        int rc = LCP_SUCCESS;
+        int rc = MPC_LOWCOMM_SUCCESS;
         size_t size;
 
         if (param->field_mask & LCP_REQUEST_AM_SYNC) {
@@ -362,7 +362,7 @@ int lcp_am_send_nb(lcp_ep_h ep, lcp_task_h task, int32_t dest_tid,
         req = lcp_request_get_param(task, param);
         if (req == NULL) {
                 mpc_common_debug_error("LCP: could not create request.");
-                return LCP_ERROR;
+                return MPC_LOWCOMM_ERROR;
         }
 
         // initialize request
@@ -384,7 +384,7 @@ int lcp_am_send_nb(lcp_ep_h ep, lcp_task_h task, int32_t dest_tid,
         if (req->send.am.hdr == NULL) {
                 mpc_common_debug_error("LCP AM: could not allocated user header "
                                        "for copy");
-                return LCP_ERROR;
+                return MPC_LOWCOMM_ERROR;
         }
         memcpy(req->send.am.hdr, hdr, hdr_size);
 
@@ -395,9 +395,9 @@ int lcp_am_send_nb(lcp_ep_h ep, lcp_task_h task, int32_t dest_tid,
 
         /* Prepare request depending on its type */
         rc = lcp_am_send_start(ep, req, param);
-        if (rc != LCP_SUCCESS) {
+        if (rc != MPC_LOWCOMM_SUCCESS) {
                 mpc_common_debug_error("LCP: could not prepare send request.");
-                return LCP_ERROR;
+                return MPC_LOWCOMM_ERROR;
         }
 
 #ifdef MPC_ENABLE_TOPOLOGY_SIMULATION
@@ -434,7 +434,7 @@ int lcp_am_recv_nb(lcp_manager_h mngr, lcp_task_h task, void *data_ctnr, void *b
         req = lcp_request_get_param(task, param);
         if (req == NULL) {
                 mpc_common_debug_error("LCP: could not create request.");
-                return LCP_ERROR;
+                return MPC_LOWCOMM_ERROR;
         }
 
         // initialize request
@@ -470,7 +470,7 @@ static int lcp_eager_am_handler(void *arg, void *data,
         UNUSED(flags);
         lcp_ep_h ep;
         lcp_am_recv_param_t param = {};
-        int rc             = LCP_SUCCESS;
+        int rc             = MPC_LOWCOMM_SUCCESS;
         lcp_task_h task    = NULL;
         lcp_manager_h mngr  = arg;
         lcp_am_hdr_t *hdr  = data;
@@ -481,7 +481,7 @@ static int lcp_eager_am_handler(void *arg, void *data,
         task = lcp_context_task_get(mngr->ctx, hdr->dest_tid);  
         if (task == NULL) {
                 mpc_common_errorpoint_fmt("LCP: could not find task with tid=%d length=%ld", hdr->dest_tid, hdr->hdr_size);
-                rc = LCP_ERROR;
+                rc = MPC_LOWCOMM_ERROR;
                 goto err;
         }
 
@@ -489,7 +489,7 @@ static int lcp_eager_am_handler(void *arg, void *data,
 
         //FIXME: what happen when ep is in CONNECTING state ?
         rc = lcp_ep_get_or_create(mngr, hdr->src_uid, &ep, 0);
-        if (rc != LCP_SUCCESS) {
+        if (rc != MPC_LOWCOMM_SUCCESS) {
                 goto err;
         }
 
@@ -504,6 +504,23 @@ err:
         return rc;
 }
 
+static inline void build_eager_am_handler_iov(void *data, size_t length, size_t hdr_size,
+                                              unsigned flags, struct iovec *iov, size_t *iovcnt)
+{
+        assert(flags != 0);
+        if (flags & LCR_IFACE_AM_LAYOUT_BUFFER) {
+                iov[0].iov_base = data;
+                iov[0].iov_len  = hdr_size;
+                iov[1].iov_base = (char *)data + hdr_size;
+                iov[1].iov_len  = length - hdr_size;
+                *iovcnt         = 2;
+
+        } else {
+                memcpy(iov, data, length * sizeof(struct iovec));
+                *iovcnt = length;
+        }
+}
+
 static int lcp_eager_am_sync_handler(void *arg, void *data,
                                      size_t length, unsigned flags)
 {
@@ -514,7 +531,7 @@ static int lcp_eager_am_sync_handler(void *arg, void *data,
 
         not_implemented();
 
-        return LCP_SUCCESS;
+        return MPC_LOWCOMM_SUCCESS;
 }
 
 static int lcp_eager_am_sync_ack_handler(void *arg, void *data,
@@ -527,7 +544,7 @@ static int lcp_eager_am_sync_ack_handler(void *arg, void *data,
 
         not_implemented();
 
-        return LCP_SUCCESS;
+        return MPC_LOWCOMM_SUCCESS;
 }
 
 static int lcp_rndv_am_handler(void *arg, void *data,
@@ -542,29 +559,36 @@ static int lcp_rndv_am_handler(void *arg, void *data,
 	lcp_unexp_ctnr_t *ctnr;
         lcp_am_recv_param_t param;
         lcp_task_h task ;
-        int rc              = LCP_SUCCESS;
+        int rc              = MPC_LOWCOMM_SUCCESS;
         lcp_manager_h mngr  = arg;
         lcp_rndv_hdr_t *hdr = data;
-        lcp_am_user_handler_t handler;
+        lcp_am_user_handler_t handler; 
+        struct iovec *data_iov = alloca(2 * sizeof(struct iovec));
+        size_t iovcnt;
+
+        assert(flags & LCR_IFACE_AM_LAYOUT_BUFFER);
+        build_eager_am_handler_iov(data, length, sizeof(lcp_rndv_hdr_t),
+                                   flags, data_iov, &iovcnt);
+        assert(iovcnt == 2);
 
         task = lcp_context_task_get(mngr->ctx, hdr->am.dest_tid);  
         if (task == NULL) {
                 mpc_common_errorpoint_fmt("LCP: could not find task with tid=%d length=%ld", hdr->am.dest_tid, hdr->am.hdr_size);
 
-                rc = LCP_ERROR;
+                rc = MPC_LOWCOMM_ERROR;
                 goto err;
         }
         handler = task->tcct[mngr->id]->am.handlers[hdr->am.am_id];
 
         //FIXME: what happen when ep is in CONNECTING state ?
         rc = lcp_ep_get_or_create(mngr, hdr->am.src_uid, &ep, 0);
-        if (rc != LCP_SUCCESS) {
+        if (rc != MPC_LOWCOMM_SUCCESS) {
                 goto err;
         }
 
-        rc = lcp_request_init_unexp_ctnr(task, &ctnr, hdr, length,
+        rc = lcp_request_init_unexp_ctnr(task, &ctnr, data_iov, iovcnt,
                                          LCP_RECV_CONTAINER_UNEXP_RNDV_AM);
-        if (rc != LCP_SUCCESS) {
+        if (rc != MPC_LOWCOMM_SUCCESS) {
                 goto err;
         }
 

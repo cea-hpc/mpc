@@ -184,7 +184,9 @@ struct _mpc_ofi_domain_conn *_mpc_ofi_domain_conntrack_get_by_remote(struct _mpc
 
 struct _mpc_ofi_domain_t
 {
-	mpc_common_spinlock_t                             lock;
+	mpc_common_spinlock_t                             poll_lock;
+	mpc_common_spinlock_t                             mr_lock;
+	mpc_common_spinlock_t                             send_lock;
 	/* Pointer to config and fabric */
 	struct _mpc_ofi_context_t *                        ctx;
 	/* The OFI domain */
@@ -256,6 +258,7 @@ int _mpc_ofi_domain_sendv(struct _mpc_ofi_domain_t *domain,
 int _mpc_ofi_domain_get(struct _mpc_ofi_domain_t *domain,
                        void *buf,
                        size_t len,
+                       struct fid_mr *local_mr,
                        uint64_t dest,
                        uint64_t remote_addr,
                        uint64_t key,
@@ -266,6 +269,7 @@ int _mpc_ofi_domain_get(struct _mpc_ofi_domain_t *domain,
 int _mpc_ofi_domain_put(struct _mpc_ofi_domain_t *domain,
                        void *buf,
                        size_t len,
+                       struct fid_mr *local_mr,
                        uint64_t dest,
                        uint64_t remote_addr,
                        uint64_t key,

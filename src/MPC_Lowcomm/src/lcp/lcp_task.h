@@ -89,9 +89,6 @@ struct lcp_task {
 };
 
 /* Function for sending data between two tasks */
-int lcp_send_task_bcopy(lcp_request_t *req, lcr_pack_callback_t pack_cb,
-                        unsigned flags, lcp_task_completion_t *comp);
-int lcp_send_task_zcopy(lcp_request_t *req, lcp_task_completion_t *comp);
 int lcp_task_fini(lcp_task_h task);
 
 #endif

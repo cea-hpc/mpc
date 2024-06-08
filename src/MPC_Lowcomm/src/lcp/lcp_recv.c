@@ -44,7 +44,7 @@ int lcp_tag_recv_nb(lcp_manager_h mngr, lcp_task_h task, void *buffer,
                     size_t count, lcp_tag_info_t *tag_info, int32_t src_mask,
                     int32_t tag_mask, lcp_request_param_t *param)
 {
-	int rc = LCP_SUCCESS;
+	int rc = MPC_LOWCOMM_SUCCESS;
 	lcp_unexp_ctnr_t *match;
 	lcp_request_t *req;
         lcp_context_h ctx  = mngr->ctx;
@@ -55,7 +55,7 @@ int lcp_tag_recv_nb(lcp_manager_h mngr, lcp_task_h task, void *buffer,
         if (req == NULL) {
                 mpc_common_debug_error("LCP TAG: could not create receive "
                                        "tag request.");
-                return LCP_ERROR;
+                return MPC_LOWCOMM_ERROR;
         }
 
         if (param->field_mask & LCP_REQUEST_RECV_CALLBACK) {
@@ -77,9 +77,9 @@ int lcp_tag_recv_nb(lcp_manager_h mngr, lcp_task_h task, void *buffer,
 		return rc;
 	}
 
-        mpc_common_debug_info("LCP: post recv tag comm=%d, src=%d, tag=%d, "
-                              "length=%d, buf=%p, req=%p",
-                              req->recv.tag.comm, req->recv.tag.src_tid, 
+        mpc_common_debug_info("LCP: post recv tag task=%p, comm=%d, src=%d, "
+                              "tag=%d, length=%d, buf=%p, req=%p",
+                              task, req->recv.tag.comm, req->recv.tag.src_tid,
                               req->recv.tag.tag, count, buffer, req);
 
         req->state.offloaded = 0;
@@ -96,33 +96,32 @@ int lcp_tag_recv_nb(lcp_manager_h mngr, lcp_task_h task, void *buffer,
                                    req->recv.tag.comm);
 
                 LCP_TASK_UNLOCK(task);
-		return LCP_SUCCESS;
+		return MPC_LOWCOMM_SUCCESS;
 	}
 
 	LCP_TASK_UNLOCK(task);
 
         /* Get pointer to payload */
 	if (match->flags & LCP_RECV_CONTAINER_UNEXP_RNDV_TAG) {
-		mpc_common_debug_info("LCP: matched rndv unexp req=%p, flags=%x", 
-				      req, match->flags);
+                mpc_common_debug_info("LCP TAG: matched rndv unexp req=%p, "
+                                      "flags=%x", req, match->flags);
 
                 lcp_recv_rndv_tag_data(req, match + 1);
                 rc = lcp_rndv_process_rts(req, match + 1,
                                           match->length - sizeof(lcp_rndv_hdr_t));
 
-                if (rc != LCP_SUCCESS) {
-                        mpc_common_debug_error("LCP: could not process rts.");
+                if (rc != MPC_LOWCOMM_SUCCESS) {
+                        mpc_common_debug_error("LCP TAG: could not process rts.");
                 }
 
                 /* Data has been copied out, so container can be released */
                 lcp_container_put(match);
 
 	} else if (match->flags & (LCP_RECV_CONTAINER_UNEXP_EAGER_TAG |
-                                   LCP_RECV_CONTAINER_UNEXP_TASK_TAG_BCOPY |
                                    LCP_RECV_CONTAINER_UNEXP_EAGER_TAG_SYNC )) {
                 intptr_t data_offset;
-		mpc_common_debug_info("LCP: matched eager bcopy unexp req=%p, flags=%x",
-				      req, match->flags);
+                mpc_common_debug_info("LCP TAG: matched eager bcopy unexp "
+                                      "req=%p, flags=%x", req, match->flags);
 
                 if (match->flags & LCP_RECV_CONTAINER_UNEXP_EAGER_TAG_SYNC) {
                         lcp_send_eager_sync_ack(req, match + 1);
@@ -143,26 +142,17 @@ int lcp_tag_recv_nb(lcp_manager_h mngr, lcp_task_h task, void *buffer,
 
                 rc = lcp_recv_eager_tag_data(req, (char *)hdr + data_offset);
 
-                if (rc != LCP_SUCCESS) {
-                        mpc_common_debug_error("LCP: could not unpack unexpected "
-                                               "bcopy eager data.");
+                if (rc != MPC_LOWCOMM_SUCCESS) {
+                        mpc_common_debug_error("LCP TAG: could not unpack "
+                                               "unexpected bcopy eager data.");
                 }
 
                 /* Data has been copied out, so container can be released */
                 lcp_container_put(match);
-
-	} else if (match->flags & LCP_RECV_CONTAINER_UNEXP_TASK_TAG_ZCOPY) {
-
-		mpc_common_debug_info("LCP: matched eager bcopy sync unexp req=%p, flags=%x",
-				      match, match->flags);
-
-                lcp_task_completion_t *tcomp = (lcp_task_completion_t *)match;
-
-                tcomp->mreq = req;
-                tcomp->comp_cb(tcomp);
 	} else {
-		mpc_common_debug_error("LCP: unknown match flag=%x.", match->flags);
-		rc = LCP_ERROR;
+                mpc_common_debug_error("LCP TAG: unkown match flag=%x.",
+                                       match->flags);
+		rc = MPC_LOWCOMM_ERROR;
 	}
 
 	return rc;

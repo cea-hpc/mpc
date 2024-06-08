@@ -169,7 +169,7 @@ static ssize_t lcp_send_tag_offload_pack(void *dest, void *data)
  */
 int lcp_rndv_offload_rma_progress(lcp_request_t *rndv_req)
 {
-        int rc = LCP_SUCCESS;
+        int rc = MPC_LOWCOMM_SUCCESS;
         lcp_chnl_idx_t cc;
         size_t remaining, offset;
         size_t frag_length, length;
@@ -240,13 +240,13 @@ int lcp_rndv_offload_rma_progress(lcp_request_t *rndv_req)
 
 int lcp_rndv_offload_reg_send_buffer(lcp_request_t *rndv_req)
 {
-        int rc = LCP_SUCCESS;
+        int rc = MPC_LOWCOMM_SUCCESS;
         uint64_t muid = 0;
         lcp_request_t *req = rndv_req->super;
 
         if (req->mngr->ctx->config.rndv_mode == LCP_RNDV_GET) {
                 rc = lcp_mem_create(req->mngr, &(req->state.lmem));
-                if (rc != LCP_SUCCESS) {
+                if (rc != MPC_LOWCOMM_SUCCESS) {
                         goto err;
                 }
 
@@ -303,7 +303,7 @@ void lcp_tag_offload_recv_complete(lcr_completion_t *comp)
 /* ============================================== */
 void lcp_rndv_offload_send_complete(lcr_completion_t *comp)
 {
-        int rc = LCP_SUCCESS;
+        int rc = MPC_LOWCOMM_SUCCESS;
         lcp_request_t *rndv_req = mpc_container_of(comp, lcp_request_t,
                                               send.t_ctx.comp);
 
@@ -314,7 +314,7 @@ void lcp_rndv_offload_send_complete(lcr_completion_t *comp)
                 if (super->mngr->ctx->config.rndv_mode == LCP_RNDV_GET) {
                         rc = lcp_mem_unpost(super->mngr, super->state.lmem, 
                                             super->tm.imm);
-                        if (rc != LCP_SUCCESS) {
+                        if (rc != MPC_LOWCOMM_SUCCESS) {
                                 mpc_common_debug_error("LCP OFFLOAD: could "
                                                        "not unpost");
                                 return;
@@ -331,7 +331,7 @@ void lcp_rndv_offload_send_complete(lcr_completion_t *comp)
 
 void lcp_rndv_offload_recv_complete(lcr_completion_t *comp)
 {
-        int rc = LCP_SUCCESS;
+        int rc = MPC_LOWCOMM_SUCCESS;
         lcp_request_t *rndv_req = mpc_container_of(comp, lcp_request_t,
                                                    state.comp);
 
@@ -368,7 +368,7 @@ void lcp_rndv_offload_recv_complete(lcr_completion_t *comp)
 /* ============================================== */
 static int lcp_send_rndv_tag_rts_progress(lcp_request_t *req)
 {
-        int rc = LCP_SUCCESS;
+        int rc = MPC_LOWCOMM_SUCCESS;
         ssize_t payload_size;
         lcp_ep_h ep = req->send.ep;
         lcp_chnl_idx_t cc = ep->tag_chnl;
@@ -393,7 +393,7 @@ static int lcp_send_rndv_tag_rts_progress(lcp_request_t *req)
                                              tag, req->tm.imm.t,
                                              lcp_rts_offload_dummy_pack, req);
         if (payload_size < 0) {
-                rc = LCP_ERROR;
+                rc = MPC_LOWCOMM_ERROR;
         }
 
         return rc;
@@ -403,11 +403,11 @@ static int lcp_send_rndv_tag_rts_progress(lcp_request_t *req)
  * @brief Start a rendez-vous send.
  *
  * @param req request
- * @return int LCP_SUCCESS in case of success
+ * @return int MPC_LOWCOMM_SUCCESS in case of success
  */
 int lcp_send_rndv_offload_start(lcp_request_t *req)
 {
-        int rc = LCP_SUCCESS;
+        int rc = MPC_LOWCOMM_SUCCESS;
 
         req->state.offloaded = 1;
 
@@ -426,7 +426,7 @@ int lcp_send_rndv_offload_start(lcp_request_t *req)
                 if (req->state.pack_buf == NULL) {
                         mpc_common_debug_error("LCP: could not allocate pack "
                                                "buffer");
-                        return LCP_ERROR;
+                        return MPC_LOWCOMM_ERROR;
                 }
 
                 lcp_datatype_pack(req->mngr->ctx, req, req->datatype,
@@ -438,7 +438,7 @@ int lcp_send_rndv_offload_start(lcp_request_t *req)
         /* Create rendez-vous request */
         rndv_req = lcp_request_get(req->task);
         if (rndv_req == NULL) {
-                rc = LCP_ERROR;
+                rc = MPC_LOWCOMM_ERROR;
                 mpc_common_debug_error("LCP OFFLOAD: could not allocate "
                                        "rndv request.");
                 goto err;
@@ -464,7 +464,7 @@ int lcp_send_rndv_offload_start(lcp_request_t *req)
 
         /* Register memory (for RGET) */
         rc = lcp_rndv_offload_reg_send_buffer(rndv_req);
-        if (rc != LCP_SUCCESS) {
+        if (rc != MPC_LOWCOMM_SUCCESS) {
                 goto err;
         }
 
@@ -483,11 +483,11 @@ err:
  * @brief Send a tag eager message using buffer copy
  *
  * @param req request
- * @return int LCP_SUCCESS in case of success
+ * @return int MPC_LOWCOMM_SUCCESS in case of success
  */
 int lcp_send_tag_offload_eager_bcopy(lcp_request_t *req)
 {
-        int rc = LCP_SUCCESS;
+        int rc = MPC_LOWCOMM_SUCCESS;
         ssize_t payload;
         lcp_ep_h ep = req->send.ep;
         _mpc_lowcomm_endpoint_t *lcr_ep = ep->lct_eps[ep->tag_chnl];
@@ -508,7 +508,7 @@ int lcp_send_tag_offload_eager_bcopy(lcp_request_t *req)
 
 	if (payload < 0) {
 		mpc_common_debug_error("LCP: error packing bcopy.");
-		rc = LCP_ERROR;
+		rc = MPC_LOWCOMM_ERROR;
                 goto err;
 	}
         
@@ -521,7 +521,7 @@ err:
  * @brief Send a tag eager message using zero copy
  *
  * @param req request
- * @return int LCP_SUCCESS in case of success
+ * @return int MPC_LOWCOMM_SUCCESS in case of success
  */
 int lcp_send_tag_offload_eager_zcopy(lcp_request_t *req)
 {
@@ -565,7 +565,7 @@ int lcp_rndv_offload_process_rts(lcp_request_t *rreq)
         /* Rendez-vous request used for RTR (PUT) or RMA (GET) */
         rndv_req = lcp_request_get(rreq->task);
         if (rndv_req == NULL) {
-                rc = LCP_ERROR;
+                rc = MPC_LOWCOMM_ERROR;
                 mpc_common_debug_error("LCP OFFLOAD: could not allocate "
                                        "rndv request.");
                 goto err;
@@ -590,7 +590,7 @@ int lcp_rndv_offload_process_rts(lcp_request_t *rreq)
 
         if (!(rndv_req->send.ep = lcp_ep_get(rndv_req->mngr, puid))) {
                 rc = lcp_ep_create(rndv_req->mngr, &(rndv_req->send.ep), puid, 0);
-                if (rc != LCP_SUCCESS) {
+                if (rc != MPC_LOWCOMM_SUCCESS) {
                         mpc_common_debug_error("LCP: could not create ep after match.");
                         goto err;
                 }
@@ -606,7 +606,7 @@ int lcp_rndv_offload_process_rts(lcp_request_t *rreq)
                 break;
         default:
                 mpc_common_debug_fatal("LCP: unknown protocol in recv");
-                rc = LCP_ERROR;
+                rc = MPC_LOWCOMM_ERROR;
                 break;
         }
 
@@ -622,7 +622,7 @@ err:
 int lcp_recv_eager_tag_offload_data(lcp_request_t *req, void *data,
                                     size_t length)
 {
-        int rc = LCP_SUCCESS;
+        int rc = MPC_LOWCOMM_SUCCESS;
         ssize_t unpacked_len = 0;
 
         mpc_common_debug("LCP: recv tag offload data req=%p, src=%d, "
@@ -636,7 +636,7 @@ int lcp_recv_eager_tag_offload_data(lcp_request_t *req, void *data,
                 unpacked_len = lcp_datatype_unpack(req->mngr->ctx, req, req->datatype, 
                                                    req->recv.buffer, data, length);
                 if (unpacked_len < 0) {
-                        rc = LCP_ERROR;
+                        rc = MPC_LOWCOMM_ERROR;
                         goto err;
                 }
 
@@ -734,7 +734,7 @@ void lcp_recv_tag_probe_callback(lcr_completion_t *comp)
  *
  * @param rreq received request
  * @param iface interface to do the copy through
- * @return int LCP_SUCCESS in case of success
+ * @return int MPC_LOWCOMM_SUCCESS in case of success
  */
 int lcp_recv_tag_zcopy(lcp_request_t *rreq, sctk_rail_info_t *iface)
 {
@@ -768,7 +768,7 @@ int lcp_recv_tag_zcopy(lcp_request_t *rreq, sctk_rail_info_t *iface)
                 if (rreq->state.pack_buf == NULL) {
                         mpc_common_debug_error("LCP OFFLOAD: could not "
                                                "allocate off pack buf");
-                        rc = LCP_ERROR;
+                        rc = MPC_LOWCOMM_ERROR;
                         goto err;
                 }
                 start = rreq->state.pack_buf;
@@ -803,7 +803,7 @@ err:
 int lcp_recv_tag_probe(lcp_task_h task, sctk_rail_info_t *rail, const int src, const int tag,
                        const uint64_t comm, lcp_tag_recv_info_t *recv_info) 
 {
-        int rc = LCP_SUCCESS;
+        int rc = MPC_LOWCOMM_SUCCESS;
         unsigned flags = 0;
         lcp_request_t *probe_req;
         struct iovec iov[1]; int iovcnt = 1;
@@ -823,7 +823,7 @@ int lcp_recv_tag_probe(lcp_task_h task, sctk_rail_info_t *rail, const int src, c
 
         probe_req = lcp_request_get(task);
         if (probe_req == NULL) {
-                rc = LCP_ERROR;
+                rc = MPC_LOWCOMM_ERROR;
                 mpc_common_debug_error("LCP OFFLOAD: could not allocate "
                                        "rndv request.");
                 goto err;
@@ -839,7 +839,7 @@ int lcp_recv_tag_probe(lcp_task_h task, sctk_rail_info_t *rail, const int src, c
         rc = lcp_post_do_tag_zcopy(rail, utag, ign_tag, iov,
                                    iovcnt, flags,
                                    &(probe_req->recv.t_ctx));
-        if (rc != LCP_SUCCESS) {
+        if (rc != MPC_LOWCOMM_SUCCESS) {
                 goto err;
         }
 
@@ -861,13 +861,13 @@ err:
  * @param data rendez-vous header
  * @param length length of header
  * @param flags flags of message
- * @return int LCP_SUCCESS in case of success
+ * @return int MPC_LOWCOMM_SUCCESS in case of success
  */
 __UNUSED__ static int lcp_rndv_tag_rtr_handler(void *arg, void *data,
                                     size_t length,
                                     __UNUSED__ unsigned flags)
 {
-        int rc = LCP_SUCCESS;
+        int rc = MPC_LOWCOMM_SUCCESS;
         lcp_manager_h mngr = arg;
         lcp_ack_hdr_t *hdr = data;
         lcp_mem_h rmem = NULL;
@@ -881,7 +881,7 @@ __UNUSED__ static int lcp_rndv_tag_rtr_handler(void *arg, void *data,
         LCP_OFFLOAD_SET_MUID(muid, hdr->src, hdr->msg_id);
         if ((req = lcp_pending_get_request(mngr->match_ht, muid)) == NULL) {
                 mpc_common_debug_error("LCP OFFLOAD: could not find request");
-                rc = LCP_ERROR;
+                rc = MPC_LOWCOMM_ERROR;
                 goto err;
         }
 
@@ -904,13 +904,13 @@ err:
  * @param data message header
  * @param length header length
  * @param flags message flags
- * @return int LCP_SUCCESS in case of success
+ * @return int MPC_LOWCOMM_SUCCESS in case of success
  */
 __UNUSED__ static int lcp_rndv_tag_fin_handler(void *arg, void *data,
                                     __UNUSED__ size_t length,
                                     __UNUSED__ unsigned flags)
 {
-        int rc = LCP_SUCCESS;
+        int rc = MPC_LOWCOMM_SUCCESS;
         lcp_manager_h mngr = arg;
         lcp_ack_hdr_t *hdr = data;
         uint64_t muid = 0;
@@ -923,7 +923,7 @@ __UNUSED__ static int lcp_rndv_tag_fin_handler(void *arg, void *data,
         LCP_OFFLOAD_SET_MUID(muid, hdr->src, hdr->msg_id);
         if ((req = lcp_pending_get_request(mngr->match_ht, muid)) == NULL) {
                 mpc_common_debug_error("LCP OFFLOAD: could not find request");
-                rc = LCP_ERROR;
+                rc = MPC_LOWCOMM_ERROR;
                 goto err;
         }
         

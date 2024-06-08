@@ -15794,22 +15794,13 @@ int PMPI_Win_create(void *base, MPI_Aint size, int disp_unit, MPI_Info info,
                     MPI_Comm comm, MPI_Win *win)
 {
 
-        return mpc_win_create(base, size, disp_unit, info, comm, win);
-
-	/* MPI Windows need more progress
-	 * we must give up on agressive collectives */
-	__do_yield |= 1;
-	return mpc_MPI_Win_create(base, size, disp_unit, info, comm, win);
+        return mpc_win_create((void **)base, size, disp_unit, info, comm, win);
 }
 
 int PMPI_Win_allocate(MPI_Aint size, int disp_unit, MPI_Info info,
                       MPI_Comm comm, void *base, MPI_Win *win)
 {
-        return mpc_win_allocate(base, size, disp_unit, info, comm, win);
-	/* MPI Windows need more progress
-	 * we must give up on agressive collectives */
-	__do_yield |= 1;
-	return mpc_MPI_Win_allocate(size, disp_unit, info, comm, base, win);
+        return mpc_win_allocate((void **)base, size, disp_unit, info, comm, win);
 }
 
 int PMPI_Win_allocate_shared(MPI_Aint size, int disp_unit, MPI_Info info,
@@ -15818,16 +15809,13 @@ int PMPI_Win_allocate_shared(MPI_Aint size, int disp_unit, MPI_Info info,
 	/* MPI Windows need more progress
 	 * we must give up on agressive collectives */
 	__do_yield |= 1;
+        not_implemented();
 	return mpc_MPI_Win_allocate_shared(size, disp_unit, info, comm, base, win);
 }
 
 int PMPI_Win_create_dynamic(MPI_Info info, MPI_Comm comm, MPI_Win *win)
 {
         return mpc_win_create(NULL, 0, 0, info, comm, win);
-	/* MPI Windows need more progress
-	 * we must give up on agressive collectives */
-	//__do_yield |= 1;
-	//return mpc_MPI_Win_create_dynamic(info, comm, win);
 }
 
 int PMPI_Win_attach(MPI_Win, void *, MPI_Aint);
@@ -15836,8 +15824,6 @@ int PMPI_Win_detach(MPI_Win, const void *);
 int PMPI_Win_free(MPI_Win *win)
 {
         return mpc_win_free(*win);
-
-	//return mpc_MPI_Win_free(win);
 }
 
 /* RDMA Operations */
@@ -15858,8 +15844,6 @@ int PMPI_Put(const void *origin_addr, int origin_count,
         return mpc_osc_put(origin_addr, origin_count, origin_datatype, 
                            target_rank, target_disp, target_count, 
                            target_datatype, win);
-//	return mpc_MPI_Put(origin_addr, origin_count, origin_datatype, target_rank,
-//	                   target_disp, target_count, target_datatype, win);
 }
 
 int PMPI_Rput(const void *origin_addr, int origin_count,
@@ -15870,8 +15854,6 @@ int PMPI_Rput(const void *origin_addr, int origin_count,
         return mpc_osc_rput(origin_addr, origin_count, origin_datatype,
                             target_rank, target_disp, target_count,
                             target_datatype, win, request);
-	//return mpc_MPI_Rput(origin_addr, origin_count, origin_datatype, target_rank,
-	//                    target_disp, target_count, target_datatype, win, request);
 }
 
 int PMPI_Rget(void *origin_addr, int origin_count, MPI_Datatype origin_datatype,
@@ -15881,8 +15863,6 @@ int PMPI_Rget(void *origin_addr, int origin_count, MPI_Datatype origin_datatype,
         return mpc_osc_rget(origin_addr, origin_count, origin_datatype,
                             target_rank, target_disp, target_count,
                             target_datatype, win, request);
-	//return mpc_MPI_Rget(origin_addr, origin_count, origin_datatype, target_rank,
-	//                    target_disp, target_count, target_datatype, win, request);
 }
 
 /* Synchronization calls Epochs */
@@ -15890,7 +15870,6 @@ int PMPI_Rget(void *origin_addr, int origin_count, MPI_Datatype origin_datatype,
 int PMPI_Win_fence(int assert, MPI_Win win)
 {
         return mpc_osc_fence(assert, win);
-	//return mpc_MPI_Win_fence(assert, win);
 }
 
 /* Active target sync */
@@ -15898,31 +15877,26 @@ int PMPI_Win_fence(int assert, MPI_Win win)
 int PMPI_Win_start(MPI_Group group, int assert, MPI_Win win)
 {
         return mpc_osc_start(group, assert, win);
-	//return mpc_MPI_Win_start(group, assert, win);
 }
 
 int PMPI_Win_complete(MPI_Win win)
 {
         return mpc_osc_complete(win);
-	//return mpc_MPI_Win_complete(win);
 }
 
 int PMPI_Win_post(MPI_Group group, int assert, MPI_Win win)
 {
         return mpc_osc_post(group, assert, win);
-	//return mpc_MPI_Win_post(group, assert, win);
 }
 
 int PMPI_Win_wait(MPI_Win win)
 {
         return mpc_osc_wait(win);
-	//return mpc_MPI_Win_wait(win);
 }
 
 int PMPI_Win_test(MPI_Win win, int *flag)
 {
         return mpc_osc_test(win, flag);
-	//return mpc_MPI_Win_test(win, flag);
 }
 
 /* Passive Target Sync */
@@ -15930,13 +15904,11 @@ int PMPI_Win_test(MPI_Win win, int *flag)
 int PMPI_Win_lock(int lock_type, int rank, int assert, MPI_Win win)
 {
         return mpc_osc_lock(lock_type, rank, assert, win);
-	//return mpc_MPI_Win_lock(lock_type, rank, assert, win);
 }
 
 int PMPI_Win_unlock(int rank, MPI_Win win)
 {
         return mpc_osc_unlock(rank, win);
-	//return mpc_MPI_Win_unlock(rank, win);
 }
 
 int PMPI_Win_lock_all(int assert, MPI_Win win)
@@ -15982,25 +15954,21 @@ int PMPI_Win_sync(MPI_Win win)
 int PMPI_Win_flush(int rank, MPI_Win win)
 {
         return mpc_osc_flush(rank, win);
-	//return mpc_MPI_Win_flush(rank, win);
 }
 
 int PMPI_Win_flush_local(int rank, MPI_Win win)
 {
         return mpc_osc_flush_local(rank, win);
-	//return mpc_MPI_Win_flush_local(rank, win);
 }
 
 int PMPI_Win_flush_all(MPI_Win win)
 {
         return mpc_osc_flush_all(win);
-	//return mpc_MPI_Win_flush_all(win);
 }
 
 int PMPI_Win_flush_local_all(MPI_Win win)
 {
         return mpc_osc_flush_local_all(win);
-	//return mpc_MPI_Win_flush_local_all(win);
 }
 
 int PMPI_Win_get_group(MPI_Win win, MPI_Group *group)
@@ -16016,9 +15984,6 @@ int PMPI_Accumulate(const void *origin_addr, int origin_count,
         return mpc_osc_accumulate(origin_addr, origin_count, origin_datatype,
                                   target_rank, target_disp, target_count,
                                   target_datatype, op, win);
-	//return mpc_MPI_Accumulate(origin_addr, origin_count, origin_datatype,
-	//                          target_rank, target_disp, target_count,
-	//                          target_datatype, op, win);
 }
 
 int PMPI_Raccumulate(const void *origin_addr, int origin_count,
@@ -16030,9 +15995,6 @@ int PMPI_Raccumulate(const void *origin_addr, int origin_count,
         return mpc_osc_raccumulate(origin_addr, origin_count, origin_datatype,
                                    target_rank, target_disp, target_count,
                                    target_datatype, op, win, request);
-	//return mpc_MPI_Raccumulate(origin_addr, origin_count, origin_datatype,
-	//                           target_rank, target_disp, target_count,
-	//                           target_datatype, op, win, request);
 }
 
 int PMPI_Get_accumulate(const void *origin_addr, int origin_count,
@@ -16046,10 +16008,6 @@ int PMPI_Get_accumulate(const void *origin_addr, int origin_count,
                                       result_count, result_datatype,
                                       target_rank, target_disp, target_count,
                                       target_datatype, op, win);
-	//return mpc_MPI_Get_accumulate(origin_addr, origin_count, origin_datatype,
-	//                              result_addr, result_count, result_datatype,
-	//                              target_rank, target_disp, target_count,
-	//                              target_datatype, op, win);
 }
 
 int PMPI_Rget_accumulate(const void *origin_addr, int origin_count,
@@ -16064,10 +16022,6 @@ int PMPI_Rget_accumulate(const void *origin_addr, int origin_count,
                                        result_count, result_datatype,
                                        target_rank, target_disp, target_count,
                                        target_datatype, op, win, request);
-	//return mpc_MPI_Rget_accumulate(origin_addr, origin_count, origin_datatype,
-	//                               result_addr, result_count, result_datatype,
-	//                               target_rank, target_disp, target_count,
-	//                               target_datatype, op, win, request);
 }
 
 int PMPI_Fetch_and_op(const void *origin_addr, void *result_addr,
@@ -16076,8 +16030,6 @@ int PMPI_Fetch_and_op(const void *origin_addr, void *result_addr,
 {
         return mpc_osc_fetch_and_op(origin_addr, result_addr, datatype,
                                     target_rank, target_disp, op, win);
-	//return mpc_MPI_Fetch_and_op(origin_addr, result_addr, datatype, target_rank,
-	//                            target_disp, op, win);
 }
 
 int PMPI_Compare_and_swap(const void *origin_addr, const void *compare_addr,
@@ -16087,39 +16039,36 @@ int PMPI_Compare_and_swap(const void *origin_addr, const void *compare_addr,
         return mpc_osc_compare_and_swap(origin_addr, compare_addr, result_addr,
                                         datatype, target_rank, target_disp,
                                         win);
-	//return mpc_MPI_Compare_and_swap(origin_addr, compare_addr, result_addr,
-	//                                datatype, target_rank, target_disp, win);
 }
 
 /* ATTR handling */
 
 int PMPI_Win_set_attr(MPI_Win win, int win_keyval, void *attribute_val)
 {
-	return mpc_MPI_Win_set_attr(win, win_keyval, attribute_val);
+        return mpc_osc_win_set_attr(win, win_keyval, attribute_val);
 }
 
-int PMPI_Win_get_attr(MPI_Win win, int win_keyval, void *attribute_val,
+int PMPI_Win_get_attr(MPI_Win win, int keyval, void *attr_val,
                       int *flag)
 {
-	return mpc_MPI_Win_get_attr(win, win_keyval, attribute_val, flag);
+        return mpc_osc_win_get_attr(win, keyval, attr_val, flag);
 }
 
 int PMPI_Win_free_keyval(int *win_keyval)
 {
-	return mpc_MPI_Win_free_keyval(win_keyval);
+        return mpc_osc_win_free_keyval(win_keyval);
 }
 
 int PMPI_Win_delete_attr(MPI_Win win, int win_keyval)
 {
-	return mpc_MPI_Win_delete_attr(win, win_keyval);
+        return mpc_osc_win_delete_attr(win, win_keyval);
 }
 
 int PMPI_Win_create_keyval(MPI_Win_copy_attr_function *win_copy_attr_fn,
                            MPI_Win_delete_attr_function *win_delete_attr_fn,
                            int *win_keyval, void *extra_state)
 {
-	return mpc_MPI_Win_create_keyval(win_copy_attr_fn, win_delete_attr_fn,
-	                                 win_keyval, extra_state);
+        return mpc_osc_win_create_keyval(win_copy_attr_fn, win_delete_attr_fn, win_keyval, extra_state);
 }
 
 /* Win shared */

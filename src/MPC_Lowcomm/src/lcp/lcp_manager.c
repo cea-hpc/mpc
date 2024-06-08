@@ -199,13 +199,6 @@ err:
 	return rc;
 }
 
-static inline int _lcp_manager_get_next_id(lcp_context_h ctx)
-{
-        int i = 0;
-        while (ctx->mngrt[i] != NULL) i++;
-        return i;
-}
-
 int lcp_manager_create(lcp_context_h ctx, 
                        lcp_manager_h *mngr_p, 
                        lcp_manager_param_t *params)

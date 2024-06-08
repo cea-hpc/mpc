@@ -370,7 +370,9 @@ int _mpc_ofi_domain_buffer_entry_release(struct _mpc_ofi_domain_t * domain)
 
 int _mpc_ofi_domain_init(struct _mpc_ofi_domain_t * domain, struct _mpc_ofi_context_t *ctx, struct _mpc_lowcomm_config_struct_net_driver_ofi * config)
 {
-   mpc_common_spinlock_init(&domain->lock, 0);
+   mpc_common_spinlock_init(&domain->poll_lock, 0);
+   mpc_common_spinlock_init(&domain->send_lock, 0);
+   mpc_common_spinlock_init(&domain->mr_lock, 0);
    mpc_common_spinlock_init(&domain->buffer_lock, 0);
 
    domain->ctx = ctx;
@@ -597,6 +599,7 @@ static inline int _ofi_domain_cq_process_event(struct _mpc_ofi_domain_t * domain
    {
       struct _mpc_ofi_request_t *request = (struct _mpc_ofi_request_t *)evt->op_context;
       /* This is a Send */
+
       _mpc_ofi_request_done(request);
 
       return 0;
@@ -667,7 +670,6 @@ static inline int _ofi_domain_cq_poll(struct _mpc_ofi_domain_t * domain, struct 
 
    {
       /* We process events unlocked */
-      mpc_common_spinlock_unlock(&domain->lock);
 
       for( i = 0 ; i < rd; i++)
       {
@@ -683,7 +685,6 @@ static inline int _ofi_domain_cq_poll(struct _mpc_ofi_domain_t * domain, struct 
    }
 
 unlock_cq_poll:
-   mpc_common_spinlock_unlock(&domain->lock);
 	return return_code;
 }
 
@@ -820,14 +821,13 @@ static inline int __mpc_ofi_domain_eq_poll(struct _mpc_ofi_domain_t * domain)
 
 
 unlock_eq_poll:
-   mpc_common_spinlock_unlock(&domain->lock);
    return return_code;
 }
 
 
 int _mpc_ofi_domain_poll(struct _mpc_ofi_domain_t * domain, int type)
 {
-   if(mpc_common_spinlock_trylock(&domain->lock))
+   if(mpc_common_spinlock_trylock(&domain->poll_lock))
    {
       return 0;
    }
@@ -861,7 +861,7 @@ int _mpc_ofi_domain_poll(struct _mpc_ofi_domain_t * domain, int type)
 		   mpc_common_errorpoint("CQ reported an error");
 	   }
    }
-
+   mpc_common_spinlock_unlock(&domain->poll_lock);
    return !!err;
 }
 
@@ -881,7 +881,6 @@ int _mpc_ofi_domain_memory_register_no_lock(struct _mpc_ofi_domain_t * domain,
                               0,
                               mr,
                               NULL);
-
    MPC_OFI_CHECK_RET(ret);
 
    return ret;
@@ -896,11 +895,11 @@ int _mpc_ofi_domain_memory_register(struct _mpc_ofi_domain_t * domain,
                                   struct fid_mr **mr)
 {
 
-   mpc_common_spinlock_lock(&domain->lock);
+   mpc_common_spinlock_lock(&domain->mr_lock);
 
    int ret = _mpc_ofi_domain_memory_register_no_lock(domain, buff, size, acs, mr);
 
-   mpc_common_spinlock_unlock(&domain->lock);
+   mpc_common_spinlock_unlock(&domain->mr_lock);
 
    return ret;
 }
@@ -914,11 +913,11 @@ int _mpc_ofi_domain_memory_unregister_no_lock(struct fid_mr *mr)
 
 int _mpc_ofi_domain_memory_unregister(struct _mpc_ofi_domain_t * domain, struct fid_mr *mr)
 {
-   mpc_common_spinlock_lock(&domain->lock);
+   mpc_common_spinlock_lock(&domain->mr_lock);
 
    int ret = _mpc_ofi_domain_memory_unregister_no_lock(mr);
 
-   mpc_common_spinlock_unlock(&domain->lock);
+   mpc_common_spinlock_unlock(&domain->mr_lock);
 
    return ret;
 }
@@ -1002,17 +1001,18 @@ int _mpc_ofi_domain_send(struct _mpc_ofi_domain_t * domain,
       req = &__req;
    }
 
-   mpc_common_spinlock_lock(&domain->lock);
 
    *req = __acquire_request(domain, __mpc_ofi_domain_request_complete, NULL, completion_cb_ext, arg_ext);
 
-   if( _mpc_ofi_domain_memory_register_no_lock(domain, buff, size, FI_SEND, &(*req)->mr[0]) )
+   if( _mpc_ofi_domain_memory_register(domain, buff, size, FI_SEND, &(*req)->mr[0]) )
    {
+
       mpc_common_errorpoint("Failed to register send buffer");
       retcode = -1;
       goto send_unlock;
    }
 
+   mpc_common_spinlock_lock(&domain->send_lock);
    (*req)->mr_count = 1;
 
    fi_addr_t addr = 0;
@@ -1046,7 +1046,7 @@ int _mpc_ofi_domain_send(struct _mpc_ofi_domain_t * domain,
    }
 
 send_unlock:
-   mpc_common_spinlock_unlock(&domain->lock);
+   mpc_common_spinlock_unlock(&domain->send_lock);
 
    return retcode;
 }
@@ -1069,7 +1069,7 @@ int _mpc_ofi_domain_sendv(struct _mpc_ofi_domain_t * domain,
    }
 
    assume(iovcnt<MPC_OFI_IOVEC_SIZE);
-   mpc_common_spinlock_lock(&domain->lock);
+   mpc_common_spinlock_lock(&domain->send_lock);
 
 
    *req = __acquire_request(domain, __mpc_ofi_domain_request_complete, NULL, comptetion_cb_ext, arg_ext);
@@ -1078,7 +1078,7 @@ int _mpc_ofi_domain_sendv(struct _mpc_ofi_domain_t * domain,
 
    for(i=0 ; i < iovcnt; i++)
    {
-      if( _mpc_ofi_domain_memory_register_no_lock(domain, iov[i].iov_base, iov[i].iov_len, FI_SEND, &(*req)->mr[i]) )
+      if( _mpc_ofi_domain_memory_register(domain, iov[i].iov_base, iov[i].iov_len, FI_SEND, &(*req)->mr[i]) )
       {
          mpc_common_errorpoint("Failed to register send buffer");
          retcode = -1;
@@ -1126,7 +1126,7 @@ int _mpc_ofi_domain_sendv(struct _mpc_ofi_domain_t * domain,
    }
 
 sendv_unlock:
-   mpc_common_spinlock_unlock(&domain->lock);
+   mpc_common_spinlock_unlock(&domain->send_lock);
    return retcode;
 }
 
@@ -1135,6 +1135,7 @@ sendv_unlock:
 int _mpc_ofi_domain_get(struct _mpc_ofi_domain_t *domain,
                        void *buf,
                        size_t len,
+                       struct fid_mr *local_mr,
                        uint64_t dest,
                        uint64_t remote_addr,
                        uint64_t key,
@@ -1151,18 +1152,12 @@ int _mpc_ofi_domain_get(struct _mpc_ofi_domain_t *domain,
       req = &__req;
    }
 
-   mpc_common_spinlock_lock(&domain->lock);
+   mpc_common_spinlock_lock(&domain->send_lock);
 
    *req = __acquire_request(domain, __mpc_ofi_domain_request_complete, NULL, comptetion_cb_ext, arg_ext);
 
-   if( _mpc_ofi_domain_memory_register_no_lock(domain, buf, len, FI_READ, &(*req)->mr[0]) )
-   {
-      mpc_common_errorpoint("Failed to register send buffer");
-      retcode = -1;
-      goto get_unlock;
-   }
-
-   (*req)->mr_count = 1;
+   (*req)->mr_count = 0;
+   (*req)->mr[0]    = NULL;
 
    fi_addr_t target_addr = 0;
 
@@ -1184,7 +1179,7 @@ int _mpc_ofi_domain_get(struct _mpc_ofi_domain_t *domain,
    riov.len = len;
    riov.key = key;
 
-   void * mr_desc = fi_mr_desc((*req)->mr[0]);
+   void * mr_desc = fi_mr_desc(local_mr);
 
    struct fi_msg_rma rma_msg = { .msg_iov = &iov,
                                  .desc = &mr_desc,
@@ -1204,7 +1199,7 @@ int _mpc_ofi_domain_get(struct _mpc_ofi_domain_t *domain,
       {
          continue;
       }
-
+        
       if(ret < 0)
       {
          MPC_OFI_DUMP_ERROR(ret);
@@ -1234,7 +1229,7 @@ int _mpc_ofi_domain_get(struct _mpc_ofi_domain_t *domain,
 #endif
 
 get_unlock:
-   mpc_common_spinlock_unlock(&domain->lock);
+   mpc_common_spinlock_unlock(&domain->send_lock);
 
    return retcode;
 }
@@ -1243,6 +1238,7 @@ get_unlock:
 int _mpc_ofi_domain_put(struct _mpc_ofi_domain_t *domain,
                        void *buf,
                        size_t len,
+                       struct fid_mr *local_mr,
                        uint64_t dest,
                        uint64_t remote_addr,
                        uint64_t key,
@@ -1259,7 +1255,7 @@ int _mpc_ofi_domain_put(struct _mpc_ofi_domain_t *domain,
       req = &__req;
    }
 
-   mpc_common_spinlock_lock(&domain->lock);
+   mpc_common_spinlock_lock(&domain->send_lock);
 
    *req = __acquire_request(domain, __mpc_ofi_domain_request_complete, NULL, comptetion_cb_ext, arg_ext);
 
@@ -1292,7 +1288,7 @@ int _mpc_ofi_domain_put(struct _mpc_ofi_domain_t *domain,
    riov.len = len;
    riov.key = key;
 
-   void * mr_desc = fi_mr_desc((*req)->mr[0]);
+   void * mr_desc = fi_mr_desc(local_mr);
 
    struct fi_msg_rma rma_msg = { .msg_iov = &iov,
                                  .desc = &mr_desc,
@@ -1323,7 +1319,7 @@ int _mpc_ofi_domain_put(struct _mpc_ofi_domain_t *domain,
    }
 
 get_unlock:
-   mpc_common_spinlock_unlock(&domain->lock);
+   mpc_common_spinlock_unlock(&domain->send_lock);
 
    return retcode;
 }

@@ -1421,7 +1421,10 @@ static inline mpc_lowcomm_communicator_t __new_communicator(mpc_lowcomm_communic
 		}
 	}
 
-        group->my_rank[mpc_common_get_local_task_rank()] = mpc_lowcomm_group_rank(group);
+        //FIXME: might be NULL when creating intercomm.
+        if (group != NULL) {
+                group->my_rank[mpc_common_get_local_task_rank()] = mpc_lowcomm_group_rank(group);
+        }
 
 	/* Do a barrier when done to ensure dup do not interleave */
 	mpc_lowcomm_barrier(comm);
@@ -1601,16 +1604,26 @@ void _mpc_lowcomm_communicator_release(void)
 
 lcp_ep_h mpc_lowcomm_communicator_lookup(mpc_lowcomm_communicator_t comm, int rank)
 {
-        mpc_lowcomm_communicator_t local_comm = __mpc_lowcomm_communicator_from_predefined(comm);
-        return local_comm->group->eps[rank];
+        mpc_lowcomm_communicator_t tcomm = __mpc_lowcomm_communicator_from_predefined(comm);
+
+        if (mpc_lowcomm_communicator_is_intercomm(comm)) {
+                return tcomm->left_comm->group->eps[rank];
+        } else {
+                return tcomm->group->eps[rank];
+        }
 }
 
 void mpc_lowcomm_communicator_add_ep(mpc_lowcomm_communicator_t comm, int rank, lcp_ep_h ep) 
 {
-        assert(rank >= 0 && rank < (int)mpc_lowcomm_group_size(comm->group));        
+        mpc_lowcomm_communicator_t tcomm = __mpc_lowcomm_communicator_from_predefined(comm);
 
-        mpc_lowcomm_communicator_t local_comm = __mpc_lowcomm_communicator_from_predefined(comm);
-        local_comm->group->eps[rank] = ep;
+        if (mpc_lowcomm_communicator_is_intercomm(tcomm)) {
+                assert(rank >= 0 && rank < (int)mpc_lowcomm_group_size(tcomm->left_comm->group));        
+                tcomm->left_comm->group->eps[rank] = ep;
+        } else {
+                assert(rank >= 0 && rank < (int)mpc_lowcomm_group_size(tcomm->group));        
+                tcomm->group->eps[rank] = ep;
+        }
 }
 
 int mpc_lowcomm_communicator_local_lead(mpc_lowcomm_communicator_t comm)

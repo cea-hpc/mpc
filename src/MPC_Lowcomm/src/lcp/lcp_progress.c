@@ -60,5 +60,5 @@ int lcp_progress(lcp_manager_h mngr)
         //        nb_pending--;
         //}
 
-	return LCP_SUCCESS;
+	return MPC_LOWCOMM_SUCCESS;
 }

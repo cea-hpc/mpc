@@ -138,7 +138,7 @@ lcp_status_ptr_t lcp_atomic_op_nb(lcp_ep_h ep, lcp_task_h task, const void *buff
                                   lcp_atomic_op_t op_type, const lcp_request_param_t *param)
 {
         lcp_status_ptr_t status = MPC_LOWCOMM_SUCCESS;
-        int rc = LCP_SUCCESS;
+        int rc = MPC_LOWCOMM_SUCCESS;
         lcp_request_t *req;
         lcp_atomic_proto_t *atomic_proto;
 
@@ -152,7 +152,7 @@ lcp_status_ptr_t lcp_atomic_op_nb(lcp_ep_h ep, lcp_task_h task, const void *buff
 
         req = lcp_request_get_param(task, param);
         if (req == NULL) {
-                rc = LCP_ERROR;
+                rc = MPC_LOWCOMM_ERROR;
                 goto err;
         }
 

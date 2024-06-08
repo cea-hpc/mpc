@@ -45,14 +45,19 @@ typedef struct MPI_ABI_Win {
         int model;
         size_t size;
 
+        struct mpc_common_hashtable attrs;
+
         mpc_osc_module_t win_module;
 } mpc_win_t;
 
-int mpc_win_create(void *base, size_t size, 
+void mpc_win_get_attr(mpc_win_t *win, int win_keyval, void *attr_val, 
+                      int *flag);
+
+int mpc_win_create(void **base, size_t size, 
                    int disp_unit, MPI_Info info,
                    mpc_lowcomm_communicator_t comm, 
                    mpc_win_t **win_p);
-int mpc_win_allocate(void *base, size_t size, 
+int mpc_win_allocate(void **base, size_t size, 
                      int disp_unit, MPI_Info info,
                      mpc_lowcomm_communicator_t comm, 
                      mpc_win_t **win_p);
@@ -136,4 +141,22 @@ int mpc_osc_wait(mpc_win_t *win);
 int mpc_osc_test(mpc_win_t *win, int *flag);
 
 int osc_module_fini();
+
+
+//Attributes
+struct mpc_osc_win_keyval *
+mpc_osc_win_keyval_init(MPI_Win_copy_attr_function *copy_fn,
+                        MPI_Win_delete_attr_function *delete_fn,
+                        void *extra_state);
+struct mpc_osc_win_attr *
+mpc_osc_win_attr_init(int keyval, void *value,
+                      struct mpc_osc_win_keyval *keyval_pl, mpc_win_t * win);
+int mpc_osc_win_set_attr(MPI_Win win, int keyval, void *attr_val);
+int mpc_osc_win_get_attr(MPI_Win win, int keyval, void *attr_val, int *flag);
+int mpc_osc_win_delete_attr(MPI_Win win, int keyval);
+int mpc_osc_win_create_keyval(MPI_Win_copy_attr_function *copy_fn,
+                              MPI_Win_delete_attr_function *delete_fn,
+                              int *keyval, void *extra_state);
+int mpc_osc_win_free_keyval(int *keyval);
+
 #endif

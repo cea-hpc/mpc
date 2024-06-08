@@ -988,6 +988,7 @@ mpc_lowcomm_group_t *_mpc_lowcomm_group_create(unsigned int size, _mpc_lowcomm_g
         
         //TODO: add memory check
         ret->eps = sctk_malloc(size * sizeof(lcp_ep_h));
+        memset(ret->eps, 0, size * sizeof(lcp_ep_h));
         ret->my_rank = sctk_malloc(mpc_common_get_local_task_count() * sizeof(int));
 
 	/* Force compute of local leader */

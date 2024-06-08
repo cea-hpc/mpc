@@ -68,6 +68,7 @@ int _mpc_ofi_context_init(struct _mpc_ofi_context_t *ctx,
    }
 
    mpc_common_spinlock_init(&ctx->lock, 0);
+   mpc_common_spinlock_init(&ctx->lock, 0);
 
    ctx->recv_callback = recv_callback;
    ctx->callback_arg = callback_arg;

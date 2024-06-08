@@ -42,7 +42,7 @@ int lcp_tag_probe_nb(lcp_manager_h mngr, lcp_task_h task, const int src,
                      const int tag, const uint64_t comm,
                      lcp_tag_recv_info_t *recv_info)
 {
-        int rc = LCP_SUCCESS;
+        int rc = MPC_LOWCOMM_SUCCESS;
 	lcp_unexp_ctnr_t *match = NULL;
 
         int tmask = tag == MPC_ANY_TAG ? 0 : ~0;
@@ -58,17 +58,14 @@ int lcp_tag_probe_nb(lcp_manager_h mngr, lcp_task_h task, const int src,
         LCP_TASK_LOCK(task);
         match = lcp_search_umqueue(task->tcct[mngr->id]->tag.umqs, (uint16_t)comm, tag, tmask, src, smask);
         if (match != NULL) {
-                if (match->flags & (LCP_RECV_CONTAINER_UNEXP_EAGER_TAG |
-                                    LCP_RECV_CONTAINER_UNEXP_TASK_TAG_BCOPY)) {
+                if (match->flags & LCP_RECV_CONTAINER_UNEXP_EAGER_TAG) {
                         lcp_tag_hdr_t *hdr = (lcp_tag_hdr_t *)(match + 1);
 
                         recv_info->tag    = hdr->tag;
                         recv_info->length = match->length - sizeof(lcp_tag_hdr_t);
                         recv_info->src    = hdr->src_tid;
 
-                } else if (match->flags & (LCP_RECV_CONTAINER_UNEXP_EAGER_TAG_SYNC |
-                                           LCP_RECV_CONTAINER_UNEXP_TASK_TAG_ZCOPY |
-                                           LCP_RECV_CONTAINER_UNEXP_TASK_TAG_SYNC) ) {
+                } else if (match->flags & LCP_RECV_CONTAINER_UNEXP_EAGER_TAG_SYNC ) {
                         lcp_tag_sync_hdr_t *hdr = (lcp_tag_sync_hdr_t *)(match + 1);
 
                         recv_info->tag    = hdr->base.tag;

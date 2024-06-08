@@ -435,7 +435,9 @@ static inline size_t lcp_recv_set_truncate(lcp_request_t *req) {
         if (req->recv.send_length > req->recv.length) {
                 length = req->recv.length;
                 req->status = MPC_LOWCOMM_ERR_TRUNCATE;
-                mpc_common_debug_warning("LCP TAG: request truncated.");
+                mpc_common_debug_warning("LCP TAG: request truncated. req=%p, send length=%d, "
+                                         "recv length=%d", req, req->recv.send_length, 
+                                         req->recv.length);
         } else {
                 req->status = MPC_LOWCOMM_SUCCESS;
         }
@@ -501,6 +503,7 @@ void lcp_recv_rndv_tag_data(lcp_request_t *req, void *data)
 static inline void build_eager_tag_handler_iov(void *data, size_t length, size_t hdr_size,
                                                unsigned flags, struct iovec *iov, size_t *iovcnt)
 {
+        assert(flags != 0);
         if (flags & LCR_IFACE_AM_LAYOUT_BUFFER) {
                 iov[0].iov_base = data;
                 iov[0].iov_len  = hdr_size;
@@ -584,6 +587,7 @@ static int lcp_eager_tag_sync_handler(void *arg, void *data,
         req->recv.tag.src_tid  = hdr->base.src_tid;
         req->seqn              = hdr->base.seqn;
         req->recv.tag.tag      = hdr->base.tag;
+        req->recv.tag.dest_tid = hdr->base.dest_tid;
         req->recv.send_length  = data_iov[1].iov_len;
 
         /* Complete request */
@@ -648,10 +652,15 @@ static int lcp_eager_tag_handler(void *arg, void *data,
 	}
 	LCP_TASK_UNLOCK(task);
 
+        mpc_common_debug("LCP TAG: recv exp eager tag req=%p, src=%d, comm=%d, "
+                         "tag=%d, length=%d, seqn=%d", req, hdr->src_tid,
+                         hdr->comm, hdr->tag, data_iov[1].iov_len, hdr->seqn);
+		
         /* Set variables for MPI status */
         req->recv.tag.src_tid  = hdr->src_tid;
         req->seqn              = hdr->seqn;
         req->recv.tag.tag      = hdr->tag;
+        req->recv.tag.dest_tid = hdr->dest_tid;
         req->recv.send_length  = data_iov[1].iov_len;
 
         /* Complete request */
@@ -748,8 +757,8 @@ static int lcp_rndv_tag_handler(void *arg, void *data,
 	}
 	LCP_TASK_UNLOCK(task);
 
-        mpc_common_debug("LCP TAG: recv exp rndv tag src=%d, comm=%d, tag=%d, "
-                         "length=%d, seqn=%d", hdr->tag.src_tid, hdr->tag.comm, 
+        mpc_common_debug("LCP TAG: recv exp rndv tag req=%p, src=%d, comm=%d, tag=%d, "
+                         "length=%d, seqn=%d", req, hdr->tag.src_tid, hdr->tag.comm, 
                          hdr->tag.tag, hdr->size, hdr->tag.seqn);
 
         /* Fill up receive request */

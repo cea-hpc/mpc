@@ -102,6 +102,7 @@ void *lcp_request_alloc(lcp_task_h task)
                 return NULL;
         }
         req->flags |= LCP_REQUEST_USER_ALLOCATED;
+        mpc_common_debug("LCP REQ: alloc request. req=%p", req);
 
         return req + 1;
 }
@@ -111,6 +112,7 @@ void lcp_request_free(void *request)
         lcp_request_t *req = (lcp_request_t *)(request) - 1;
 
         assert(req->flags & LCP_REQUEST_USER_ALLOCATED);
+        mpc_common_debug("LCP REQ: free request. req=%p", req);
 
         lcp_request_put(req);
 }
@@ -123,7 +125,7 @@ void lcp_request_free(void *request)
  * @param data message data (in)
  * @param length length of message
  * @param flags flag of the unexpected message
- * @return int LCP_SUCCESS in case of success
+ * @return int MPC_LOWCOMM_SUCCESS in case of success
  */
 int lcp_request_init_unexp_ctnr(lcp_task_h task, lcp_unexp_ctnr_t **ctnr_p,
                                 struct iovec *iov, size_t iovcnt, unsigned flags)

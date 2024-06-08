@@ -431,13 +431,12 @@ static int lcp_mem_alloc(lcp_mem_h mem, size_t length, unsigned flags)
 {
         UNUSED(flags);
         int rc = MPC_LOWCOMM_SUCCESS;
-        lcp_mem_alloc_method_t method;
 
         //NOTE: right now only malloc is supported, later support for shared
         //      memory can be added.
-        method = LCP_MEM_ALLOC_MALLOC;
+        mem->method = LCP_MEM_ALLOC_MALLOC;
 
-        switch (method) {
+        switch (mem->method) {
         case LCP_MEM_ALLOC_MALLOC:
                 mem->base_addr = (uint64_t)sctk_malloc(length);
                 if ((void *)mem->base_addr == NULL) {
@@ -765,7 +764,7 @@ int lcp_mem_query(lcp_mem_h mem, lcp_mem_attr_t *attr)
                attr->size = mem->length;
        }
 
-       return LCP_SUCCESS;
+       return MPC_LOWCOMM_SUCCESS;
 }
 
 /**

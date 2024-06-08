@@ -558,6 +558,8 @@ int _mpc_ofi_unpack_rkey(sctk_rail_info_t *rail,
         return sizeof(struct _mpc_ofi_shared_pinning_context);
 }
 
+//FIXME: handling of FI_MR_VIRT_ADDR has not been tested with current API
+//       modification.
 uint64_t __convert_rma_offset(struct _mpc_ofi_domain_t *domain, void * buff_base_addr, uint64_t remote_offset)
 {
    //_mpc_ofi_decode_mr_mode(domain->ctx->config->domain_attr->mr_mode);
@@ -565,17 +567,17 @@ uint64_t __convert_rma_offset(struct _mpc_ofi_domain_t *domain, void * buff_base
    if(domain->ctx->config->domain_attr->mr_mode & FI_MR_VIRT_ADDR)
    {
       mpc_common_tracepoint_fmt("returning converted %lu %lu %lu", buff_base_addr, remote_offset, buff_base_addr + remote_offset);
-      return (uint64_t)buff_base_addr + remote_offset;
+      return remote_offset;
    }
 
-   mpc_common_tracepoint_fmt("returning offset %lu", remote_offset);
-   return remote_offset;
+   //mpc_common_tracepoint_fmt("returning offset %lu", remote_offset - (uint64_t)buff_base_addr);
+   return remote_offset - (uint64_t)buff_base_addr;
 }
 
 
 int _mpc_ofi_get_zcopy(_mpc_lowcomm_endpoint_t *ep,
                            uint64_t local_addr,
-                           uint64_t remote_offset,
+                           uint64_t remote_addr,
                            lcr_memp_t *local_key,
                            lcr_memp_t *remote_key,
                            size_t size,
@@ -590,11 +592,15 @@ int _mpc_ofi_get_zcopy(_mpc_lowcomm_endpoint_t *ep,
    comp->sent = size;
    completion->comp = comp;
 
-   uint64_t network_offset = __convert_rma_offset(ep->rail->network.ofi.ctx.domain, remote_key->pin.ofipin.shared.addr, remote_offset);
+   uint64_t network_offset
+           = __convert_rma_offset(ep->rail->network.ofi.ctx.domain,
+                                  remote_key->pin.ofipin.shared.addr,
+                                  remote_addr);
 
    if(_mpc_ofi_domain_get(ep->rail->network.ofi.ctx.domain,
                      (void *)local_addr,
                      size,
+                     local_key->pin.ofipin.ofi,
                      ep->dest,
                      network_offset,
                      remote_key->pin.ofipin.shared.ofi_remote_mr_key,
@@ -614,7 +620,7 @@ int _mpc_ofi_get_zcopy(_mpc_lowcomm_endpoint_t *ep,
 
 int _mpc_ofi_send_put_zcopy(_mpc_lowcomm_endpoint_t *ep,
                            uint64_t local_addr,
-                           uint64_t remote_offset,
+                           uint64_t remote_addr,
                            lcr_memp_t *local_key,
                            lcr_memp_t *remote_key,
                            size_t size,
@@ -629,12 +635,15 @@ int _mpc_ofi_send_put_zcopy(_mpc_lowcomm_endpoint_t *ep,
    comp->sent = size;
    completion->comp = comp;
 
-   uint64_t network_offset = __convert_rma_offset(ep->rail->network.ofi.ctx.domain, remote_key->pin.ofipin.shared.addr, remote_offset);
-
+   uint64_t network_offset
+           = __convert_rma_offset(ep->rail->network.ofi.ctx.domain,
+                                  remote_key->pin.ofipin.shared.addr,
+                                  remote_addr);
 
    if(_mpc_ofi_domain_put(ep->rail->network.ofi.ctx.domain,
                      (void*)local_addr,
                      size,
+                     local_key->pin.ofipin.ofi,
                      ep->dest,
                      network_offset,
                      remote_key->pin.ofipin.shared.ofi_remote_mr_key,
@@ -684,6 +693,8 @@ int _mpc_ofi_get_attr(sctk_rail_info_t *rail,
 	attr->iface.cap.rndv.max_get_zcopy = INT_MAX;
 
         attr->mem.size_packed_mkey = sizeof(struct _mpc_ofi_shared_pinning_context);
+
+        attr->iface.cap.flags = rail->cap;
 
 	return MPC_LOWCOMM_SUCCESS;
 }
@@ -785,15 +796,15 @@ static int ___mpc_ofi_context_recv_callback_t(void *buffer, __UNUSED__ size_t le
 
 	lcr_am_handler_t handler = rail->am[hdr->am_id];
 	if (handler.cb == NULL) {
-		mpc_common_debug_fatal("LCP: handler id %d not supported.", hdr->am_id);
+		mpc_common_debug_fatal("OFI: handler id %d not supported.", hdr->am_id);
 	}
 
    mpc_common_tracepoint_fmt("[OFI] callback for a payload of %lu", len);
 
-	rc = handler.cb(handler.arg, hdr->data, hdr->length, 0);
+	rc = handler.cb(handler.arg, hdr->data, hdr->length, LCR_IFACE_AM_LAYOUT_BUFFER);
 
 	if (rc != MPC_LOWCOMM_SUCCESS) {
-		mpc_common_debug_error("LCP: handler id %d failed.", hdr->am_id);
+		mpc_common_debug_error("OFI: handler id %d failed.", hdr->am_id);
 	}
 
    /* Complete the recv request */

@@ -70,9 +70,6 @@ enum {
 	LCP_RECV_CONTAINER_UNEXP_EAGER_TAG      = MPC_BIT(1),
 	LCP_RECV_CONTAINER_UNEXP_EAGER_TAG_SYNC = MPC_BIT(2),
 	LCP_RECV_CONTAINER_UNEXP_RNDV_AM        = MPC_BIT(3),
-	LCP_RECV_CONTAINER_UNEXP_TASK_TAG_BCOPY = MPC_BIT(4),
-	LCP_RECV_CONTAINER_UNEXP_TASK_TAG_SYNC  = MPC_BIT(5),
-	LCP_RECV_CONTAINER_UNEXP_TASK_TAG_ZCOPY = MPC_BIT(6),
 };
 
 /* Store data for unexpected am messages
@@ -82,19 +79,6 @@ struct lcp_unexp_ctnr {
 	ssize_t length;
 	unsigned flags;
         mpc_queue_elem_t elem; /* element in the list of unexpected list */
-};
-
-typedef struct lcp_task_completion lcp_task_completion_t;
-typedef void (*lcp_task_completion_callback_t)(lcp_task_completion_t *self);
-
-//NOTE: ctnr member must be first;
-struct lcp_task_completion {
-        struct lcp_unexp_ctnr ctnr;
-        lcp_tag_hdr_t  hdr;
-        lcp_request_t *sreq; /* Send request */
-        lcp_request_t *mreq; /* Matched request */
-        void *buffer;        /* Address in case of bcopy */
-        lcp_task_completion_callback_t comp_cb;
 };
 
 /* Generatic send function */
@@ -217,7 +201,6 @@ struct lcp_request {
                 size_t                offset;
                 size_t                remaining;
                 lcr_completion_t      comp;  /* Completion for rail send */
-                lcp_task_completion_t tcomp; /* Completion for task send */
                 lcp_mem_h             lmem;
                 int                   offloaded;
 	} state;
@@ -479,18 +462,18 @@ static inline int lcp_request_send(lcp_request_t *req)
                 lcp_ep_progress_conn(req->mngr, req->send.ep);
                 if (req->send.ep->state == LCP_EP_FLAG_CONNECTING) {
                         mpc_queue_push(&req->mngr->pending_queue, &req->queue);
-                        return LCP_SUCCESS;
+                        return MPC_LOWCOMM_SUCCESS;
                 }
         }
 
         switch((rc = req->send.func(req))) {
-        case LCP_SUCCESS:
+        case MPC_LOWCOMM_SUCCESS:
                 break;
         case MPC_LOWCOMM_NO_RESOURCE:
                 //TODO: implement thread-safe pending queue
                 mpc_queue_push(&req->mngr->pending_queue, &req->queue);
                 break;
-        case LCP_ERROR:
+        case MPC_LOWCOMM_ERROR:
                 mpc_common_debug_error("LCP: could not send request.");
                 break;
         default:

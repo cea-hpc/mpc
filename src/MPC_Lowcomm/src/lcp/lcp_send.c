@@ -51,7 +51,7 @@
 int lcp_tag_send_start(lcp_ep_h ep, lcp_request_t *req,
                        const lcp_request_param_t *param)
 {
-        int rc = LCP_SUCCESS;
+        int rc = MPC_LOWCOMM_SUCCESS;
         size_t size;
 
         /* First check offload */
@@ -112,7 +112,7 @@ int lcp_tag_send_nb(lcp_ep_h ep, lcp_task_h task, const void *buffer,
         req = lcp_request_get_param(task, param);
         if (req == NULL) {
                 mpc_common_debug_error("LCP: could not create request.");
-                return LCP_ERROR;
+                return MPC_LOWCOMM_ERROR;
         }
 
         if (param->field_mask & LCP_REQUEST_SEND_CALLBACK) {
@@ -127,9 +127,9 @@ int lcp_tag_send_nb(lcp_ep_h ep, lcp_task_h task, const void *buffer,
 
         /* prepare request depending on its type */
         rc = lcp_tag_send_start(ep, req, param);
-        if (rc != LCP_SUCCESS) {
+        if (rc != MPC_LOWCOMM_SUCCESS) {
                 mpc_common_debug_error("LCP: could not prepare send request.");
-                return LCP_ERROR;
+                return MPC_LOWCOMM_ERROR;
         }
 
 #ifdef MPC_ENABLE_TOPOLOGY_SIMULATION

@@ -104,6 +104,8 @@ int lcr_tbsm_send_am_zcopy(_mpc_lowcomm_endpoint_t *ep,
         size_t tbsm_iov_cnt    = 0;
         size_t send_length     = 0;
 
+        mpc_common_debug("LCR TBSM: send zcopy. ep=%p", ep);
+
         if (iovcnt > rail->network.tbsm.max_iov) {
                 mpc_common_debug_error("LCR TBSM: exceeded maximal number if iov");
                 rc = MPC_LOWCOMM_ERROR;
@@ -278,6 +280,8 @@ int lcr_tbsm_get_attr(sctk_rail_info_t *rail,
         attr->iface.cap.rndv.max_put_zcopy = tbsm_iface->max_msg_size; /* No rendez-vous for tbsm comm */
         attr->iface.cap.rndv.max_get_zcopy = tbsm_iface->max_msg_size; /* No rendez-vous for tbsm comm */
         attr->iface.cap.rndv.min_frag_size = 0; /* No rendez-vous for tbsm comm */
+
+        attr->mem.size_packed_mkey = 0;
 
         attr->iface.cap.flags = rail->cap;
 

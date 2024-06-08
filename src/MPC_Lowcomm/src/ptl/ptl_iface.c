@@ -78,7 +78,7 @@ static inline int lcr_ptl_invoke_am(sctk_rail_info_t *rail,
 		mpc_common_debug_fatal("LCR PTL: handler id %d not supported.", am_id);
 	}
 
-	rc = handler.cb(handler.arg, data, length, 0);
+	rc = handler.cb(handler.arg, data, length, LCR_IFACE_AM_LAYOUT_BUFFER);
 	if (rc != MPC_LOWCOMM_SUCCESS) {
 		mpc_common_debug_error("LCR PTL: handler id %d failed.", am_id);
 	}
