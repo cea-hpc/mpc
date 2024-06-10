@@ -55,6 +55,7 @@ _mpc_omp_ompt_callback_implicit_task( ompt_scope_endpoint_t endpoint,
                                   unsigned int index,
                                   int flags );
 
+
 static inline ompt_task_flag_t
 __mpc_omp_ompt_get_task_flags( mpc_omp_thread_t * thread, mpc_omp_task_t *new_task ) {
     ompt_task_flag_t flags = ompt_task_explicit;
@@ -77,59 +78,6 @@ __mpc_omp_ompt_get_task_flags( mpc_omp_thread_t * thread, mpc_omp_task_t *new_ta
      */
 
     return flags;
-}
-
-/* Only used when one thread with a task with dependencies.
- */
-static inline ompt_dependence_t*
-__mpc_omp_ompt_task_process_deps( void **depend ) {
-    assert(depend);
-
-    size_t i, j;
-    const size_t tot_deps_num = (uintptr_t)depend[0];
-    const size_t out_deps_num = (uintptr_t)depend[1];
-    assert(tot_deps_num);
-
-    // Filter redundant value
-    uintptr_t task_already_process_num = 0;
-
-    ompt_dependence_t* task_deps =
-      (ompt_dependence_t*) sctk_malloc( sizeof( ompt_dependence_t) * tot_deps_num );
-    assert( task_deps );
-    memset( task_deps, 0, sizeof( ompt_dependence_t) * tot_deps_num );
-
-    for (i = 0; i < tot_deps_num; i++) {
-        int redundant = 0;
-        ompt_dependence_type_t ompt_type = (i < out_deps_num) ?
-          ompt_dependence_type_out : ompt_dependence_type_in;
-
-        const uintptr_t addr = (uintptr_t)depend[2 + i];
-
-        for (j = 0; j < task_already_process_num; j++) {
-            if( (uintptr_t)task_deps[j].variable.ptr == addr ) {
-                if( task_deps[j].dependence_type != ompt_dependence_type_inout
-                    && ompt_type != task_deps[j].dependence_type )
-                    task_deps[j].dependence_type = ompt_dependence_type_inout;
-
-                redundant = 1;
-                break;
-            }
-        }
-
-        mpc_common_nodebug("dep on %p redundant : %d \n", addr, redundant);
-
-        /** Process next deps */
-        if (redundant)
-            continue;
-
-        task_deps[task_already_process_num].variable.ptr = (void*) addr;
-        task_deps[task_already_process_num].dependence_type = ompt_type;
-        task_already_process_num++;
-    }
-
-    depend[0] = (void*) task_already_process_num;
-
-    return task_deps;
 }
 
 #endif /* OMPT_SUPPORT */
