@@ -763,7 +763,7 @@ void _mpc_comm_ptp_message_commit_request(mpc_lowcomm_ptp_message_t *send,
 	if(send->tail.request)
 	{
 		/* Recopy error if present */
-		if(send->tail.request->status_error != MPC_LOWCOMM_SUCCESS)
+		if(send->tail.request->status_error != MPC_LOWCOMM_SUCCESS && recv->tail.request)
 		{
 			recv->tail.request->status_error = send->tail.request->status_error;
 		}
