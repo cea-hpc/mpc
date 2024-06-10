@@ -136,8 +136,7 @@ int _mpc_lowcomm_monitor_command_register_peer_info(mpc_lowcomm_monitor_args_t *
 _mpc_lowcomm_monitor_wrap_t *_mpc_lowcomm_monitor_command_request_peer_info(mpc_lowcomm_peer_uid_t dest);
 
 _mpc_lowcomm_monitor_wrap_t *_mpc_lowcomm_monitor_command_return_peer_info(mpc_lowcomm_peer_uid_t dest,
-                                                                           uint64_t response_index,
-                                                                           mpc_lowcomm_peer_uid_t requested_peer);
+                                                                           uint64_t response_index);
 
 /********
 * PING *

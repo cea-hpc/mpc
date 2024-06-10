@@ -344,8 +344,6 @@ static inline mpc_lowcomm_monitor_retcode_t __bootstrap_ring(void)
 
 	int cnt = 0;
 
-	mpc_lowcomm_peer_uid_t me = mpc_lowcomm_monitor_get_uid();
-
     int shift = 2;
 
     if(512 < process_count)
@@ -372,13 +370,13 @@ static inline mpc_lowcomm_monitor_retcode_t __bootstrap_ring(void)
 		                                &retcode);
 		if(retcode != MPC_LOWCOMM_MONITOR_RET_SUCCESS)
 		{
-			mpc_lowcomm_monitor_retcode_print(retcode, "Bootstraping ring");
+			mpc_lowcomm_monitor_retcode_print(retcode, "Bootstrapping ring");
 			mpc_common_debug_fatal("Could not bootstrap ring");
 		}
 
-		char b1[128], b2[128];
-
 #ifdef MONITOR_DEBUG
+		mpc_lowcomm_peer_uid_t me = mpc_lowcomm_monitor_get_uid();
+		char b1[128], b2[128];
 		mpc_common_debug_error("RING == %lu %s to %lu %s", me, mpc_lowcomm_peer_format_r(me, b1, 128) , to, mpc_lowcomm_peer_format_r(to, b2, 128) );
 #endif
 
@@ -394,7 +392,7 @@ static inline mpc_lowcomm_monitor_retcode_t __bootstrap_ring(void)
 
 
 
-static inline int __exchange_peer_info(void)
+__UNUSED__ static inline int __exchange_peer_info(void)
 {
 	/* Here each rank != 0 in the process set requests infos from 0
 	 * this has the effect of registering in 0 and pre retrieving 0's infos */
@@ -546,8 +544,10 @@ int _mpc_lowcomm_monitor_setup()
 	return 0;
 }
 
-static inline int __remove_uid(mpc_lowcomm_monitor_set_t pset, void *arg)
+static inline int __remove_uid(mpc_lowcomm_monitor_set_t pset,  void *arg)
 {
+	UNUSED(arg);
+
 	_mpc_lowcomm_set_t *set = (_mpc_lowcomm_set_t*)pset;
 
 	/* Only the lead process proceeds to clear */
@@ -695,8 +695,6 @@ _mpc_lowcomm_client_ctx_t *__accept_incoming(struct _mpc_lowcomm_monitor_s *moni
 	mpc_common_debug_error("[IN] %s INCOMING from %s", mpc_lowcomm_peer_format_r(mpc_lowcomm_monitor_get_uid(), bx, 128), mpc_lowcomm_peer_format(uid));
 #endif
 
-	int already_present = 0;
-
 	/* Set UID is non-zero if we receive 0 we skip the
 	 * already connected set check as we have a temporary
 	 * client */
@@ -715,7 +713,6 @@ _mpc_lowcomm_client_ctx_t *__accept_incoming(struct _mpc_lowcomm_monitor_s *moni
 				mpc_common_debug_error("[REJECT] %s UID %s is already connected, closing",mpc_lowcomm_peer_format_r(mpc_lowcomm_monitor_get_uid(), b1, 128), mpc_lowcomm_peer_format(uid));
 #endif
 				/* Notify remote end of our refusal */
-				already_present = 1;
 				shutdown(new_fd, SHUT_RDWR);
 				close(new_fd);
 				mpc_common_spinlock_unlock(&monitor->connect_accept_lock);
@@ -738,6 +735,7 @@ static inline int __handle_query(_mpc_lowcomm_client_ctx_t *ctx, _mpc_lowcomm_mo
 {
 	assume(data != NULL);
 	//assume(ctx != NULL);
+	UNUSED(ctx);
 
 
 	mpc_lowcomm_monitor_command_t cmd      = data->command;
@@ -774,8 +772,7 @@ static inline int __handle_query(_mpc_lowcomm_client_ctx_t *ctx, _mpc_lowcomm_mo
 			_mpc_lowcomm_monitor_command_register_peer_info(cmd_data);
 
 			resp = _mpc_lowcomm_monitor_command_return_peer_info(data->from,
-			                                                     data->match_key,
-			                                                     cmd_data->peer.requested_peer);
+			                                                     data->match_key);
 			break;
 
 		case MPC_LOWCOMM_MONITOR_PING:
@@ -822,11 +819,6 @@ static inline int __handle_query(_mpc_lowcomm_client_ctx_t *ctx, _mpc_lowcomm_mo
 }
 
 static inline void __notify_new_client(void)
-{
-
-}
-
-static inline void __ack_new_client(void)
 {
 
 }
@@ -1577,7 +1569,6 @@ mpc_lowcomm_monitor_retcode_t _mpc_lowcomm_monitor_disconnect(struct _mpc_lowcom
 	_mpc_lowcomm_client_ctx_t *client = NULL;
 
 	int did_delete = 0;
-	uint64_t to_delete = 0;
 
 	do
 	{
@@ -2053,7 +2044,7 @@ _mpc_lowcomm_monitor_wrap_t *_mpc_lowcomm_monitor_command_return_ping_info(mpc_l
  * NAMING COMMAND *
  ******************/
 
-static inline _mpc_lowcomm_monitor_wrap_t * __generate_naming_cmd(mpc_lowcomm_peer_uid_t dest, size_t extra_size, int is_response)
+static inline _mpc_lowcomm_monitor_wrap_t * __generate_naming_cmd(mpc_lowcomm_peer_uid_t dest, int is_response)
 {
 	_mpc_lowcomm_monitor_wrap_t * cmd = NULL;
 	_mpc_lowcomm_peer_t * rpeer = __gen_wrap_for_peer(dest, MPC_LOWCOMM_MONITOR_NAMING, is_response, &cmd);
@@ -2074,7 +2065,7 @@ mpc_lowcomm_monitor_response_t mpc_lowcomm_monitor_naming(mpc_lowcomm_peer_uid_t
 														  const char * port_name,
 														  mpc_lowcomm_monitor_retcode_t *ret)
 {
-	_mpc_lowcomm_monitor_wrap_t * cmd = __generate_naming_cmd(dest, 0, 0);
+	_mpc_lowcomm_monitor_wrap_t * cmd = __generate_naming_cmd(dest, 0);
 
 	cmd->content->naming.operation = operation;
 	cmd->content->naming.hosting_peer = hosting_peer;
@@ -2511,7 +2502,6 @@ int _mpc_lowcomm_monitor_command_register_peer_info(mpc_lowcomm_monitor_args_t *
 }
 
 static inline _mpc_lowcomm_monitor_wrap_t *__generate_peer_decription(mpc_lowcomm_peer_uid_t dest,
-                                                                      mpc_lowcomm_peer_uid_t requested_peer,
                                                                       int is_response)
 {
 	_mpc_lowcomm_monitor_wrap_t * cmd = NULL;
@@ -2520,6 +2510,7 @@ static inline _mpc_lowcomm_monitor_wrap_t *__generate_peer_decription(mpc_lowcom
 	if(!rpeer)
 	{
 		cmd->content->peer.retcode = MPC_LOWCOMM_MONITOR_RET_INVALID_UID;
+		return cmd;
 	}
 
 	cmd->content->peer.retcode = MPC_LOWCOMM_MONITOR_RET_SUCCESS;
@@ -2529,12 +2520,9 @@ static inline _mpc_lowcomm_monitor_wrap_t *__generate_peer_decription(mpc_lowcom
 }
 
 _mpc_lowcomm_monitor_wrap_t *_mpc_lowcomm_monitor_command_return_peer_info(mpc_lowcomm_peer_uid_t dest,
-                                                                           uint64_t response_index,
-                                                                           mpc_lowcomm_peer_uid_t requested_peer)
+                                                                           uint64_t response_index)
 {
-	_mpc_lowcomm_monitor_wrap_t *resp = __generate_peer_decription(dest,
-	                                                               requested_peer,
-	                                                               1);
+	_mpc_lowcomm_monitor_wrap_t *resp = __generate_peer_decription(dest, 1);
 
 	resp->match_key = response_index;
 
@@ -2546,9 +2534,7 @@ mpc_lowcomm_monitor_response_t mpc_lowcomm_monitor_command_get_peer_info(mpc_low
                                                                          mpc_lowcomm_monitor_retcode_t *ret)
 {
 	/* Add ourselves in peer content */
-	_mpc_lowcomm_monitor_wrap_t *peer_cmd = __generate_peer_decription(dest,
-	                                                                   __monitor.process_uid,
-	                                                                   0);
+	_mpc_lowcomm_monitor_wrap_t *peer_cmd = __generate_peer_decription(dest, 0);
 
 	/* Request for remote */
 	peer_cmd->content->peer.requested_peer = requested_peer;
@@ -2812,9 +2798,6 @@ void mpc_lowcomm_monitor_synchronous_radix_dump(void)
 	/* We need the network */
 	int rank = mpc_common_get_task_rank();
 	assume(0 <= rank);
-
-	int size = mpc_common_get_task_count();
-
 
 			mpc_lowcomm_peer_uid_t me = mpc_lowcomm_monitor_get_uid();
 			pthread_mutex_lock(&__monitor.client_lock);
