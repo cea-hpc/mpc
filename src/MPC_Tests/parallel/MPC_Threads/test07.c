@@ -22,12 +22,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <mpcthread.h>
+#include <mpc_thread.h>
 
 void *print_message_function (void *ptr);
 
 int
-main (int argc, char **argv)
+main ()
 {
   mpc_thread_t thread1, thread2;
   mpc_thread_attr_t attr;
@@ -40,18 +40,18 @@ main (int argc, char **argv)
   /* Create independent threads each of which will execute function */
 
   mpc_thread_attr_init (&attr);
-  mpc_thread_attr_setscope (&attr, MPC_THREAD_SCOPE_SYSTEM);
+  mpc_thread_attr_setscope (&attr, SCTK_THREAD_SCOPE_SYSTEM);
 
   fprintf (stderr, "Start thread creation \n");
 
   iret1 =
-    mpc_thread_create (&thread1, &attr, print_message_function,
+    mpc_thread_core_thread_create (&thread1, &attr, print_message_function,
 		       (void *) message1);
   mpc_thread_attr_getscope (&attr, &scope);
   fprintf (stderr, "Thread 1 created %d\n", scope);
 
   iret2 =
-    mpc_thread_create (&thread2, &attr, print_message_function,
+    mpc_thread_core_thread_create (&thread2, &attr, print_message_function,
 		       (void *) message2);
   mpc_thread_attr_getscope (&attr, &scope);
   fprintf (stderr, "Thread 2 created %d\n", scope);
@@ -69,18 +69,18 @@ main (int argc, char **argv)
   /* Create independent threads each of which will execute function */
 
   mpc_thread_attr_init (&attr);
-  mpc_thread_attr_setscope (&attr, MPC_THREAD_SCOPE_SYSTEM);
+  mpc_thread_attr_setscope (&attr, SCTK_THREAD_SCOPE_SYSTEM);
 
   fprintf (stderr, "Start thread creation \n");
 
   iret1 =
-    mpc_thread_create (&thread1, &attr, print_message_function,
+    mpc_thread_core_thread_create (&thread1, &attr, print_message_function,
 		       (void *) message1);
   mpc_thread_attr_getscope (&attr, &scope);
   fprintf (stderr, "Thread 1 created %d\n", scope);
 
   iret2 =
-    mpc_thread_create (&thread2, &attr, print_message_function,
+    mpc_thread_core_thread_create (&thread2, &attr, print_message_function,
 		       (void *) message2);
   mpc_thread_attr_getscope (&attr, &scope);
   fprintf (stderr, "Thread 2 created %d\n", scope);

@@ -21,11 +21,11 @@
 /* ######################################################################## */
 #include <stdio.h>
 #include <stdlib.h>
-#include <mpcthread.h>
+#include <mpc_thread.h>
 
-mpc_thread_mutex_t count_mutex = MPC_THREAD_MUTEX_INITIALIZER;
-mpc_thread_mutex_t condition_mutex = MPC_THREAD_MUTEX_INITIALIZER;
-mpc_thread_cond_t condition_cond = MPC_THREAD_COND_INITIALIZER;
+mpc_thread_mutex_t count_mutex = SCTK_THREAD_MUTEX_INITIALIZER;
+mpc_thread_mutex_t condition_mutex = SCTK_THREAD_MUTEX_INITIALIZER;
+mpc_thread_cond_t condition_cond = SCTK_THREAD_COND_INITIALIZER;
 
 void *functionCount1 ();
 void *functionCount2 ();
@@ -39,8 +39,8 @@ main (int argc, char **argv)
 {
   mpc_thread_t thread1, thread2;
 
-  mpc_thread_create (&thread1, NULL, &functionCount1, NULL);
-  mpc_thread_create (&thread2, NULL, &functionCount2, NULL);
+  mpc_thread_core_thread_create (&thread1, NULL, &functionCount1, NULL);
+  mpc_thread_core_thread_create (&thread2, NULL, &functionCount2, NULL);
   mpc_thread_join (thread1, NULL);
   mpc_thread_join (thread2, NULL);
 

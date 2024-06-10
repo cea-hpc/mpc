@@ -21,10 +21,12 @@
 /* ######################################################################## */
 #include <stdio.h>
 #include "mpc.h"
+#include "mpc_thread_accessor.h"
+#include "mpc_threads_config.h"
 
 #define TH_NB 10
 
-mpc_thread_mutex_t lock = MPC_THREAD_MUTEX_INITIALIZER;
+mpc_thread_mutex_t lock = SCTK_THREAD_MUTEX_INITIALIZER;
 int pos = 0;
 
 void *
@@ -38,14 +40,14 @@ run (void *arg)
 }
 
 int
-main (int argc, char **argv)
+main ()
 {
   long i;
   void *res;
   mpc_thread_t pids[TH_NB];
   for (i = 0; i < TH_NB; i++)
     {
-      mpc_thread_create (&pids[i], NULL, run, (void *) i);
+      mpc_thread_core_thread_create (&pids[i], NULL, run, (void *) i);
 
     }
   for (i = 0; i < TH_NB; i++)

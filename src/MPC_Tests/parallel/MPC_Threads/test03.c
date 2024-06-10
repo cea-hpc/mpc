@@ -21,12 +21,12 @@
 /* ######################################################################## */
 #include <stdio.h>
 #include <stdlib.h>
-#include <mpcthread.h>
+#include <mpc_thread.h>
 
 void *print_message_function (void *ptr);
 
 int
-main (int argc, char **argv)
+main ()
 {
   mpc_thread_t thread1, thread2;
   char *message1 = "Thread 1";
@@ -36,10 +36,10 @@ main (int argc, char **argv)
   /* Create independent threads each of which will execute function */
 
   iret1 =
-    mpc_thread_create (&thread1, NULL, print_message_function,
+    mpc_thread_core_thread_create (&thread1, NULL, print_message_function,
 		       (void *) message1);
   iret2 =
-    mpc_thread_create (&thread2, NULL, print_message_function,
+    mpc_thread_core_thread_create (&thread2, NULL, print_message_function,
 		       (void *) message2);
 
   /* Wait till threads are complete before main continues. Unless we  */

@@ -20,22 +20,22 @@
 /* #                                                                      # */
 /* ######################################################################## */
 #include <stdio.h>
-#include <mpcthread.h>
+#include <mpc_thread.h>
 
 #define NTHREADS 10
 void *thread_function ();
-mpc_thread_mutex_t mutex1 = MPC_THREAD_MUTEX_INITIALIZER;
+mpc_thread_mutex_t mutex1 = SCTK_THREAD_MUTEX_INITIALIZER;
 int counter = 0;
 
 int
-main (int argc, char **argv)
+main ()
 {
   mpc_thread_t thread_id[NTHREADS];
   int i, j;
 
   for (i = 0; i < NTHREADS; i++)
     {
-      mpc_thread_create (&thread_id[i], NULL, &thread_function, NULL);
+      mpc_thread_core_thread_create (&thread_id[i], NULL, &thread_function, NULL);
     }
 
   for (j = 0; j < NTHREADS; j++)
@@ -54,7 +54,7 @@ main (int argc, char **argv)
 void *
 thread_function ()
 {
-  printf ("Thread number %ld\n", mpc_thread_self ());
+  printf ("Thread number %d\n", mpc_thread_get_thread_id());
   mpc_thread_mutex_lock (&mutex1);
   counter++;
   mpc_thread_mutex_unlock (&mutex1);
