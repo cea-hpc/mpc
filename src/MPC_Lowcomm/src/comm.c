@@ -1804,7 +1804,7 @@ void mpc_lowcomm_ptp_message_header_init(mpc_lowcomm_ptp_message_t *msg,
 			/* Is in another set set */
 			(mpc_lowcomm_peer_get_set(SCTK_MSG_DEST_PROCESS_UID(msg) ) != mpc_lowcomm_monitor_get_uid() ) ||
 			/* or does overflows task count */
-			( (source_task < mpc_common_get_task_count() ) && (dest_task < mpc_common_get_task_count() ) )
+			( ((unsigned int) source_task < mpc_common_get_task_count() ) && ((unsigned int) dest_task < mpc_common_get_task_count() ) )
 			);
 
 
