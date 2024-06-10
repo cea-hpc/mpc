@@ -417,7 +417,7 @@ void _mpc_comm_ptp_message_reinit_comm(mpc_lowcomm_ptp_message_t *msg)
 
 /*
  * Insert a new entry to the PTP table. The function checks if the entry is
- * already prensent
+ * already present
  * and fail in this case
  */
 static inline void __mpc_comm_ptp_array_insert(mpc_comm_ptp_t *tmp)
@@ -748,7 +748,7 @@ void _mpc_comm_ptp_message_commit_request(mpc_lowcomm_ptp_message_t *send,
 		}
 		else
 		{
-			/* This is a ctrl msg do not attemp to resolve */
+			/* This is a ctrl msg do not attempt to resolve */
 			recv->tail.request->header.source_task = SCTK_MSG_SRC_TASK(send);
 		}
 
@@ -1697,7 +1697,7 @@ void mpc_lowcomm_ptp_message_header_init(mpc_lowcomm_ptp_message_t *msg,
                                          mpc_lowcomm_request_type_t request_type)
 {
 	/* This function can fill the header for both process-based messages
-	 * and regular MPI messages this is the reason why desitnation and source
+	 * and regular MPI messages this is the reason why destination and source
 	 * are UIDs. In the case of regular messages this is downcasted to an int */
 
 	msg->tail.request = request;
@@ -1728,7 +1728,7 @@ void mpc_lowcomm_ptp_message_header_init(mpc_lowcomm_ptp_message_t *msg,
 
 		int source_task = -1;
 		int dest_task   = -1;
-		/* Fill in Source and Dest Process Informations (convert from task) */
+		/* Fill in Source and Dest Process Information (convert from task) */
 
 		/* SOURCE */
 		int isource = mpc_lowcomm_peer_get_rank(source);
