@@ -2649,10 +2649,6 @@ static inline void __mpc_comm_ptp_msg_wait(struct mpc_lowcomm_ptp_msg_progress_s
 	const mpc_lowcomm_request_t *request        = wait->request;
 	mpc_comm_ptp_t *recv_ptp                    = wait->recv_ptp;
 	mpc_comm_ptp_t *send_ptp                    = wait->send_ptp;
-	const mpc_lowcomm_peer_uid_t remote_process = wait->remote_process;
-	const int source_task_id                    = wait->source_task_id;
-	const int polling_task_id                   = wait->polling_task_id;
-	const int blocking = wait->blocking;
 
 	if(request->completion_flag != MPC_LOWCOMM_MESSAGE_DONE)
 	{
@@ -3330,7 +3326,6 @@ static int mpc_lowcomm_init_request_header(const int tag,
                                            const int src,
                                            const int dest,
                                            const size_t count,
-                                           mpc_lowcomm_datatype_t dt,
                                            mpc_lowcomm_request_type_t request_type,
                                            mpc_lowcomm_request_t *req)
 {
@@ -3447,8 +3442,7 @@ int _mpc_lowcomm_isend(int dest, const void *data, size_t size, int tag,
 	//FIXME: how to handle task rank? Using only get_task_rank for now.
 	src = mpc_lowcomm_communicator_rank_of(comm, tid);
 	mpc_lowcomm_init_request_header(tag, comm, src, dest,
-	                                size, MPC_DATATYPE_IGNORE,
-	                                REQUEST_SEND, req);
+	                                size, REQUEST_SEND, req);
 
 	ep = lcp_ep_get(lcp_ctx_loc, req->header.destination);
 	if(ep == NULL)
@@ -3500,8 +3494,7 @@ int mpc_lowcomm_irecv(int src, void *data, size_t size, int tag,
 	dest = mpc_lowcomm_communicator_rank_of(comm, tid);
 
 	mpc_lowcomm_init_request_header(tag, comm, src, dest,
-	                                size, MPC_DATATYPE_IGNORE,
-	                                REQUEST_RECV, req);
+	                                size, REQUEST_RECV, req);
 
 
 	task = lcp_context_task_get(lcp_ctx_loc, tid);
@@ -4167,18 +4160,6 @@ static void __lowcomm_release_per_task()
 /********************************************************************/
 
 #ifdef MPC_Allocator
-
-static inline size_t __align_allocation_to_ib_and_page(size_t size)
-{
-	if(size > (256ull * 1024ull)) /* RDMA threshold */
-	{
-		/* Page size */
-		return (size + ((4096ull) - 1) ) & (~((4096ull) - 1) );
-	}
-
-	return 0;
-}
-
 
 static size_t __mpc_memory_allocation_hook(size_t size_origin)
 {
