@@ -17,4 +17,3 @@
 #define sctk_register_thread(a) not_implemented();
 #define sctk_net_migration(a,b) not_implemented()
 #define sctk_net_get_pages(a,b,c) not_implemented()
-

@@ -2,7 +2,7 @@
 #ifndef LCP_DEF_H
 #define LCP_DEF_H
 
-#include <stdint.h> 
+#include <stdint.h>
 #include <stddef.h>
 
 /* Handles */

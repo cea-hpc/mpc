@@ -24,6 +24,3 @@ LABEL \
 	builddate = "20171214" \
 	maintainer.project = "Marc Perache <marc.perache@cea.fr>" \
 	maintainer.docker = "Julien Adam <adamj@paratools.com>"
-
-
-

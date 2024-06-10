@@ -423,7 +423,7 @@ ssize_t _mpc_ofi_send_am_bcopy(_mpc_lowcomm_endpoint_t *ep,
    memset(hdr, 0, sizeof(lcr_ofi_am_hdr_t));
 
 	hdr->am_id = id;
-	hdr->length = payload_length = pack(hdr->data, arg);
+	hdr->length = pack(hdr->data, arg);
    payload_length = hdr->length;
 
    if( _mpc_ofi_domain_send(rail->network.ofi.ctx.domain, ep->dest, hdr, hdr->length + sizeof(lcr_ofi_am_hdr_t), NULL, __free_bsend_buffer_mempool, hdr) )

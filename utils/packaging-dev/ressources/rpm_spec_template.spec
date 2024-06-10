@@ -8,18 +8,18 @@
 
 Summary:
 #project name (package name)
-Name: 
-Version: 
-Release: 
-License: 
+Name:
+Version:
+Release:
+License:
 Group: Applications
-Source: 
+Source:
 URL:
-Distribution: 
+Distribution:
 # Name <mail>
-Packager: 
+Packager:
 #if need, add new dependencies to build
-BuildRequires: 
+BuildRequires:
 #if nedd add new dependencies to execution
 Requires:
 #patchs declarations (if needed)
@@ -45,13 +45,13 @@ Requires:
 #Two lines required
 %prep
 %setup
-#patchs building (if needed). -p1 option means the patch is located in an adjacent folder to the current 
+#patchs building (if needed). -p1 option means the patch is located in an adjacent folder to the current
 #%patch${i} -p1
 
 #build directives
 %build
-./configure 
-make 
+./configure
+make
 
 #install directives
 %install

@@ -274,7 +274,7 @@ MPC_PROTOTYPES_IMPL(BAND)
  * e.g. MPC_DEFINED_FUNCS_C_INTEGER(mpi_type, c_type):
  * mpi_type would be expanded to its value prior to the calls
  * to MPC_DEFINED_FUNCS_*, for instance as (mpc_lowcomm_datatype_t) 7 ).
- * 
+ *
  * Since mpi_type must be used as is to generate function names,
  * we do not want macros to be expanded here.
  *
@@ -760,4 +760,3 @@ MPC_DEFINED_FUNCS_SUM_PROD_NOIMPL(MPC_LONG_DOUBLE_INT, mpc_long_double_int)
 MPC_DEFINED_FUNCS_LOGICAL_OP_NOIMPL(MPC_LONG_DOUBLE_INT, mpc_long_double_int)
 MPC_DEFINED_FUNCS_BINARY_OP_NOIMPL(MPC_LONG_DOUBLE_INT, mpc_long_double_int)
 MPC_DEFINED_FUNCS_MIN_MAX_LOC_IMPL(MPC_LONG_DOUBLE_INT, mpc_long_double_int)
-

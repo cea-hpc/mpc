@@ -111,8 +111,8 @@ int mpc_lowcomm_request_cancel(mpc_lowcomm_request_t *request);
  * @param request_type request type
  */
 void mpc_lowcomm_request_init(mpc_lowcomm_request_t *request, mpc_lowcomm_communicator_t comm, int request_type);
-void mpc_lowcomm_request_init_struct(mpc_lowcomm_request_t *request, 
-                                     mpc_lowcomm_communicator_t comm, 
+void mpc_lowcomm_request_init_struct(mpc_lowcomm_request_t *request,
+                                     mpc_lowcomm_communicator_t comm,
                                      int request_type, int src, int dest,
                                      int tag, lcp_rma_completion_func_t cb);
 
@@ -259,7 +259,7 @@ int mpc_lowcomm_isend(int dest, const void *data, size_t size, int tag, mpc_lowc
 
 /**
  * @brief wrapper for sending a rendez-vous message. The "i" is here for consistency with mpc_lowcomm_isend, even though the message is synchronous.
- * 
+ *
  * @param dest Destination rank
  * @param data Data to be sent
  * @param size Size if the data to be received
@@ -272,7 +272,7 @@ int mpc_lowcomm_ssend(int dest, const void *data, size_t size, int tag, mpc_lowc
 
 /**
  * @brief wrapped isend function. Send an "asynchronous" message (that is synchronous if it comes from `mpc_lowcomm_issend`).
- * 
+ *
  * @param dest Destination rank
  * @param data Data to be sent
  * @param size Size if the data to be received

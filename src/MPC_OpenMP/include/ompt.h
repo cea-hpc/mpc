@@ -37,7 +37,7 @@
 #include <stdlib.h>
 
 /*****
- * Iterator lookup function 
+ * Iterator lookup function
  */
 
 typedef void (*ompt_callback_t) ( void );
@@ -117,7 +117,7 @@ typedef enum ompt_set_result_e {
 #undef ompt_set_result_macro
 } ompt_set_result_t;
 
-/** 
+/**
  * OMPT_CALLBACK
  */
 
@@ -314,7 +314,7 @@ typedef enum ompt_frame_flag_e
     ompt_frame_application  = 0x01,
     ompt_frame_cfa          = 0x10,
     ompt_frame_framepointer = 0x20,
-    ompt_frame_stackaddress = 0x30 
+    ompt_frame_stackaddress = 0x30
 } ompt_frame_flag_t;
 
 /***

@@ -23,7 +23,7 @@
 /* ######################################################################## */
 
 #include <mpc_common_debug.h>
-#include <sctk_alloc.h> 
+#include <sctk_alloc.h>
 
 
 #include "lcp_pending.h"
@@ -32,7 +32,7 @@
 
 /**
  * @brief Create a pending request.
- * 
+ *
  * @param table table to register the request into
  * @param req request to register
  * @param msg_key key of message
@@ -51,13 +51,13 @@ lcp_pending_entry_t *lcp_pending_create(lcp_pending_table_t *table,
         if (entry == NULL) {
                 entry = mpc_mempool_alloc(&table->pending_pool);
                 if (entry == NULL) {
-                        mpc_common_debug_error("LCP: could not allocate pending request.");	
+                        mpc_common_debug_error("LCP: could not allocate pending request.");
                         return entry;
                 }
 
                 entry->msg_key = msg_key;
                 entry->req = req;
-                HASH_ADD(hh, table->table, msg_key, sizeof(uint64_t), entry);	
+                HASH_ADD(hh, table->table, msg_key, sizeof(uint64_t), entry);
                 mpc_common_debug("LCP: add pending req=%p, msg_id=%llu.", req, msg_key);
         } else {
                 mpc_common_debug_warning("LCP: req=%p is already in pending list.");
@@ -71,11 +71,11 @@ lcp_pending_entry_t *lcp_pending_create(lcp_pending_table_t *table,
 //TODO: add return call
 /**
  * @brief Delete a pending request.
- * 
+ *
  * @param table table to delete the request from
  * @param msg_key key of the deleted message
  */
-void lcp_pending_delete(lcp_pending_table_t *table, 
+void lcp_pending_delete(lcp_pending_table_t *table,
                         uint64_t msg_key)
 {
         lcp_pending_entry_t *entry;
@@ -90,7 +90,7 @@ void lcp_pending_delete(lcp_pending_table_t *table,
 
         HASH_DELETE(hh, table->table, entry);
         mpc_mempool_free(NULL, entry);
-        mpc_common_debug_info("LCP: del pending request msg_id=%llu", 
+        mpc_common_debug_info("LCP: del pending request msg_id=%llu",
                               msg_key);
         mpc_common_spinlock_unlock(&(table->table_lock));
 }
@@ -111,12 +111,12 @@ lcp_request_t *lcp_pending_get_request(lcp_pending_table_t *table,
 }
 
 /*******************************************************
- * Data manager initiator 
+ * Data manager initiator
  ******************************************************/
 
 /**
  * @brief Init pending list.
- * 
+ *
  */
 lcp_pending_table_t * lcp_pending_init()
 {
@@ -132,7 +132,7 @@ lcp_pending_table_t * lcp_pending_init()
 
 /**
  * @brief Terminate pending list.
- * 
+ *
  * @param ctx lcp context
  */
 void lcp_pending_fini(lcp_pending_table_t *table)

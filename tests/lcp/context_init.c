@@ -18,7 +18,7 @@ int main(int argc, char** argv) {
 
         param = (lcp_context_param_t) {
                 .flags = LCP_CONTEXT_PROCESS_UID,
-                .process_uid = 0 
+                .process_uid = 0
         };
 	rc = lcp_context_create(&ctx, &param);
 	if (rc != 0) {

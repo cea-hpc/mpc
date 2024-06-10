@@ -18,4 +18,3 @@ class MPI(Plugin):
             return True
         else:
             return False
-

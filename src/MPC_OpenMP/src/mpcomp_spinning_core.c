@@ -301,7 +301,7 @@ static inline mpc_omp_node_t *__scatter_wakeup_intermediate_node( mpc_omp_node_t
 	assert( num_children >= num_vchildren );
 	const int node_first_mvp = node->mvp_first_id;
 	assert( node->children.node );
-	
+
 #ifdef MPC_OMP_USE_INTEL_ABI
     struct common_table * th_pri_common;
 #endif

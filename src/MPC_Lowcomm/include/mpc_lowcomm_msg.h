@@ -312,7 +312,7 @@ typedef struct
 
 /**
  * @brief Get Message Lists for a given MPI process
- * 
+ *
  * @param rank rank to query for (in CW)
  * @param lists output array to hold list (number of local processes)
  * @param list_count IN max number of processes OUT actual number of processes

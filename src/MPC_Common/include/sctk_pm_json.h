@@ -31,7 +31,7 @@ extern "C"
 
 
 /*
-	TYPES 
+	TYPES
 */
 
 typedef enum json_type_e
@@ -282,21 +282,21 @@ static inline void json_object_iterator_init( json_object_iterator *it, json_t *
 		it->current_elem = NULL;
 		return;
 	}
-	
+
 	json_object_t *o = json_to_object( json );
-	
+
 	it->ht = &o->ht;
 	it->current_bucket = 0;
 	it->current_elem = NULL;
-	
-	
+
+
 }
 
 static inline int json_object_iterator_next( json_object_iterator *it )
 {
 	if( !it->ht )
 		return 0;
-	
+
 	if( !it->current_elem )
 	{
 		it->current_elem = it->ht->entries[ it->current_bucket ];
@@ -305,11 +305,11 @@ static inline int json_object_iterator_next( json_object_iterator *it )
 	{
 		it->current_elem = it->current_elem->prev;
 	}
-	
+
 	if( !it->current_elem )
 	{
 		it->current_bucket++;
-		
+
 		if( it->ht->size <= it->current_bucket )
 		{
 			return 0;
@@ -318,33 +318,33 @@ static inline int json_object_iterator_next( json_object_iterator *it )
 		{
 			return json_object_iterator_next( it );
 		}
-		
+
 	}
 	else
 	{
 		return 1;
 	}
-	
+
 }
 
 static inline char * json_object_iterator_key( json_object_iterator *it )
 {
-	
+
 	if( it->current_elem )
 	{
 		return it->current_elem->key;
 	}
-	
+
 	return NULL;
 }
-	
+
 static inline json_t * json_object_iterator_elem( json_object_iterator *it )
 {
 	if( it->current_elem )
 	{
 		return it->current_elem->elem;
 	}
-	
+
 	return NULL;
 }
 

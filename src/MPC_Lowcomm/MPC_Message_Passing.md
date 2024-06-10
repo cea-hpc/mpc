@@ -16,7 +16,7 @@ CONTENTS:
 * **sctk_driver_portals/**    : Driver sources to handle Portals network layer
 * **sctk_driver_shm/**        : Driver sources to handle SHMEM as a network layer
 * **sctk_inter_thread_comm/** : Defines communication interface between threads
-    
+
 
 COMPONENTS:
 -----------
@@ -141,7 +141,7 @@ The Portals driver is built as follows:
    PUT is emitted to the target (with the data in eager, without in rdv).
 5. When a message has to be received, an ME-PUT is set, the match_bits provided
    will identify this unique message (messages are sent in-order by Portals and
-   two Put() requests cannot overtake each other). 
+   two Put() requests cannot overtake each other).
 6. Considering two-sided messaging, when the local RECV will be posted, the
    Portals API will handle the matching by itself. When an event is polled, data
    has already been copied into the targeted buffer. In case of eager, an
@@ -206,7 +206,7 @@ mpcrun will support two options:
 A new MPI function: MPIX_Checkpoint(MPIX_Checkpoint_state). The argument will
 contain the application state after the call, which can be CHECKPOINT,RESTART or
 IGNORED (disabled C/R). This high-level call is in charge of calling this FT
-module only once per process. The FT module exposes 7 functions to checkpoint : 
+module only once per process. The FT module exposes 7 functions to checkpoint :
 
 1. `sctk_ft_init`: called once, it will configure DMTCP callbacks
 2. `sctk_ft_checkpoint_init`: initialize a new checkpoint procedure. This will

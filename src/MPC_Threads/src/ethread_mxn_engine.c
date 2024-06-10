@@ -902,7 +902,7 @@ int _mpc_thread_ethread_mxn_engine_setaffinity_np(_mpc_thread_ethread_t thread, 
 	_mpc_thread_ethread_per_thread_t *       current = NULL;
 	_mpc_thread_ethread_virtual_processor_t *current_vp = NULL;
 	cpu_set_t *_cpuset = NULL;
-	
+
 	if (thread != 0)
 	{
 		//mpc_common_debug_warning("setaffinity_np not supported");

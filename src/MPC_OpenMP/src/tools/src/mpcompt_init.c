@@ -54,7 +54,7 @@ __get_start_tool_result ( unsigned int omp_version,
 
     ret = ompt_start_tool( omp_version, runtime_version );
 
-    /* Otherwise, try to find ompt_start_tool routine in one of candidate tools 
+    /* Otherwise, try to find ompt_start_tool routine in one of candidate tools
      * provided by user OMP_TOOL_LIBRARIES environment variable */
     tool_libraries = mpcomp_global_icvs.tool_libraries;
     if( !ret && tool_libraries ) {
@@ -91,7 +91,7 @@ __get_start_tool_result ( unsigned int omp_version,
             sctk_free( tool_libraries );
     }
 
-    return ret;  
+    return ret;
 }
 
 void

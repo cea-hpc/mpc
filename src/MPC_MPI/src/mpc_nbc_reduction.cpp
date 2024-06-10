@@ -49,6 +49,6 @@ int __mpc_mpi_reduce_cpp_type(void *buf3, void *buf1, void *buf2, MPI_Op op, MPI
 	{
 		return NBC_DATATYPE_NOT_SUPPORTED;
 	}
-	
+
 	return NBC_OK;
 }

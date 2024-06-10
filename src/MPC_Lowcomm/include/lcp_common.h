@@ -16,7 +16,7 @@
 #define MPC_CTOR __attribute__((constructor))
 
 #define MPC_STATIC_INIT \
-	static void MPC_CTOR MPC_APPEND_UNIQUE_ID(mpc_init_ctor)() 
+	static void MPC_CTOR MPC_APPEND_UNIQUE_ID(mpc_init_ctor)()
 
 #define mpc_container_of(ptr, type, member) \
 	({ \

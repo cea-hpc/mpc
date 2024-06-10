@@ -82,7 +82,7 @@ const char *mpc_topology_device_type_to_char( mpc_topology_device_type_t type );
 
 /**
  * @brief Convert an HWLOC type to an MPC type
- * 
+ *
  * @param type hwloc type to be converted
  * @return mpc_topology_device_type_t MPC handled type
  */

@@ -22,7 +22,7 @@
    modified by Kevin Pouget (07-29-2009) to handle correctly user-threads
    and communication with the Remote Thread_DB (RTDB) library
    ** **
-   
+
    */
 
 
@@ -240,7 +240,7 @@ thread_db_err_str (td_err_e err)
       return buf;
     }
 }
-
+
 /* Return 1 if any threads have been registered.  There may be none if
    the threading library is not fully initialized yet.  */
 
@@ -340,7 +340,7 @@ thread_db_map_id2thr (struct thread_info *thread_info, int fatal)
   else
     thread_info->private->th_valid = 1;
 }
-
+
 /* Convert between user-level thread ids and LWP ids.  */
 
 static ptid_t
@@ -410,23 +410,23 @@ thread_db_load (void)
 {
   void *handle;
   td_err_e err;
-  
+
   /** ** **/
   char *dlopen_path, *env ;
-  
+
   /* patch from NGPT */
   dlopen_path = LIBTHREAD_DB_SO;
   if ((env = getenv("GDB_LIBTHREAD_DB")) != NULL) {
     if (env != NULL) {
       dlopen_path = env;
-    } 
+    }
   } else {
     tdb_debug = 0 ;
     warning ("No GDB_LIBTHREAD_DB specified, taking system libthread_db");
   }
-  
+
   handle = dlopen (dlopen_path, RTLD_NOW);
-  
+
   if (handle == NULL)
     {
       tdb_debug = 0 ;
@@ -455,24 +455,24 @@ thread_db_load (void)
 
     td_thr_setgregs_p = verbose_dlsym (handle, "td_thr_setgregs");
     tdb_debug &= (td_thr_setgregs_p != NULL) ;
-    
+
     td_thr_getfpregs_p = verbose_dlsym (handle, "td_thr_getfpregs");
     tdb_debug &= (td_thr_getfpregs_p != NULL) ;
-    
+
     td_thr_setfpregs_p = verbose_dlsym (handle, "td_thr_setfpregs");
     tdb_debug &= (td_thr_setfpregs_p != NULL) ;
 
     /*optional TDB functions*/
     td_set_tdb_verbosity_p = dlsym(handle, "td_set_tdb_verbosity");
     td_get_tdb_verbosity_p = dlsym(handle, "td_get_tdb_verbosity");
-    
+
     if (!tdb_debug) {
       warning ("Cannot initialize TDB libthread_db: cannot lookup required functions");
       warning ("Switching back to system's libthread_db");
-      
+
       dlopen_path = LIBTHREAD_DB_SO ;
       handle = dlopen (dlopen_path, RTLD_NOW);
-      
+
       if (handle == NULL)
       {
 	fprintf_filtered (gdb_stderr, "\n\ndlopen failed on '%s' - %s\n",
@@ -933,11 +933,11 @@ check_event (ptid_t ptid)
 
 	case TD_DEATH:
 
-	  if (!in_thread_list (ptid)) 
+	  if (!in_thread_list (ptid))
 	    error (_("Spurious thread death event."));
-	    
+
 	  detach_thread (ptid, print_thread_events);
-	  
+
 	  break;
 
 	default:
@@ -1216,7 +1216,7 @@ static int info_cb (const td_thrhandle_t *th, void *arg)
   td_err_e ret;
   td_thrinfo_t ti;
   int *no = (int *) arg ;
-  
+
   ret = td_thr_get_info_p (th, &ti);
   if (ret == TD_OK)
   {
@@ -1250,7 +1250,7 @@ static int info_cb (const td_thrhandle_t *th, void *arg)
     }
 
     printf_filtered ("   id: %p", th->th_unique);
-    
+
     /* Print thr_create start function.  */
     if (ti.ti_startfunc != 0)
     {
@@ -1304,7 +1304,7 @@ static void info_tdbthreads (char *args, int from_tty)
 
 int tdb_remove_dead_threads (struct thread_info *thread, void *data) {
   ptid_t *target = (ptid_t *) data ;
-  
+
   if (ptid_equal (thread->ptid, *target)) {
     thread->ptid = pid_to_ptid (-1);	/* Mark it as dead */
     return 1 ;
@@ -1323,7 +1323,7 @@ tdb_thread_fetch_registers (struct regcache *regcache, int regnum)
   prfpregset_t fpregset;
   gdb_gregset_t *gregset_p = &gregset;
   gdb_fpregset_t *fpregset_p = &fpregset;
-  
+
   if (!is_thread (inferior_ptid))
     {
       /* It's an LWP; pass the request on to procfs.  */
@@ -1331,7 +1331,7 @@ tdb_thread_fetch_registers (struct regcache *regcache, int regnum)
 	target_beneath->to_fetch_registers (regcache, regnum);
       else
 	error("TDB_Thread_db is currently unable to debug core files ...") ;
-      
+
       return;
     }
 
@@ -1357,17 +1357,17 @@ tdb_thread_fetch_registers (struct regcache *regcache, int regnum)
     if (val != TD_OK && val != TD_PARTIALREG)
       error ("tdb_thread_fetch_registers: td_thr_getgregs %s",
 	     thread_db_err_str (val));
-    
+
     /* For SPARC, TD_PARTIALREG means that only %i0...%i7, %l0..%l7, %pc
        and %sp are saved (by a thread context switch).  */
-    
+
     /* And, now the floating-point registers.  */
-    
+
     val = td_thr_getfpregs_p (&thandle, &fpregset);
     if (val != TD_OK && val != TD_NOFPREGS)
       error ("tdb_thread_fetch_registers: td_thr_getfpregs %s",
 	     thread_db_err_str (val));
-    
+
   }
   /* Note that we must call supply_gregset and supply_fpregset *after*
      calling the td routines because the td routines call ps_lget*
@@ -1408,7 +1408,7 @@ tdb_thread_store_registers (struct regcache *regcache, int regnum)
   td_err_e val;
   prgregset_t gregset;
   prfpregset_t fpregset;
-  
+
   if (!is_thread (inferior_ptid))
     {
       /* It's an LWP; pass the request on to procfs.c.  */
@@ -1514,7 +1514,7 @@ _initialize_thread_db (void)
 {
   /* Only initialize the module if we can load libthread_db.  */
   if (thread_db_load ())
-    {      
+    {
       init_thread_db_ops ();
       add_target (&thread_db_ops);
 
@@ -1524,7 +1524,7 @@ _initialize_thread_db (void)
       if(tdb_debug) {
 	add_cmd ("tdb-threads", class_info, info_tdbthreads,
 		 "Show info on TDB user threads.", &infolist);
-	
+
 	add_setshow_uinteger_cmd("tdb-verbose", class_maintenance,
 				 &tdb_verbosity_level,
 				 "Set the level if verbosity  TDB libthread_db",

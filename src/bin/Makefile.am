@@ -75,7 +75,7 @@ mpcrun_plugin_SCRIPTS += mpcrun_opt/mpcrun_srun
 endif
 
 if HYDRA_LAUNCHER_ENABLED
-mpcrun_plugin_SCRIPTS += mpcrun_opt/mpcrun_hydra mpcrun_opt/mpcrun_salloc_hydra 
+mpcrun_plugin_SCRIPTS += mpcrun_opt/mpcrun_hydra mpcrun_opt/mpcrun_salloc_hydra
 endif
 
 if PRRTE_LAUNCHER_ENABLED

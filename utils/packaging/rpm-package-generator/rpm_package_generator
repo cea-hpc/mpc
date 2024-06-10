@@ -30,7 +30,7 @@ AVAILABLES_DISTRIBUTIONS="RedHat Fedora CentOS Suse OpenSuse Mandriva"
 PATCHS_LIST=""
 OUTPUT_DIR="${ROOT_TARBALL}"
 ##################################
-# READ_PARAM_VALUE: 
+# READ_PARAM_VALUE:
 # Formatting output to use values of arguments
 # - $1 : arguments (example: --source=mpc-framework.tar.gz)
 # - $2 : pattern to remove to the argument (example: --source)
@@ -129,7 +129,7 @@ gen_source_archive_from_git()
 gen_source_archive_from_sources()
 {
 	extract_version_from_sources
-	
+
 	#avoid to use this if git is present as we may export non distributed files due to lack of
 	#export blacklist used by git. With ditributed sources their is no issue as the filter was
 	#already applied
@@ -204,9 +204,9 @@ do
 		;;
 		*)
 			print_error "Unknown Argument --> $arg"
-		
+
 		;;
-			
+
 	esac
 done
 

@@ -199,7 +199,7 @@ ompt_get_parallel_info ( int ancestor_level,
         thread = (mpc_omp_thread_t*) mpc_omp_tls;
         assert( thread );
 
-        while( 0 < ancestor_level 
+        while( 0 < ancestor_level
                && thread
                && thread->instance ) {
             thread = thread->instance->thread_ancestor;

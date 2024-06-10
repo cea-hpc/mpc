@@ -282,7 +282,7 @@ int _mpc_ofi_domain_create_passive_endpoint(struct _mpc_ofi_domain_t * domain)
    MPC_OFI_CHECK_RET(fi_passive_ep(domain->ctx->fabric, domain->ctx->config, &domain->pep, domain));
 
    MPC_OFI_CHECK_RET(fi_pep_bind(domain->pep, &domain->eq->fid, 0));
- 
+
    MPC_OFI_CHECK_RET(fi_listen(domain->pep));
 
    /* Retrieve the local address */
@@ -1511,7 +1511,7 @@ struct _mpc_ofi_domain_conn * _mpc_ofi_domain_conntrack_add(struct _mpc_ofi_doma
    {
       ret = previous;
       *is_first = 0;
-      goto unlock; 
+      goto unlock;
    }
    else
    {
@@ -1524,7 +1524,7 @@ struct _mpc_ofi_domain_conn * _mpc_ofi_domain_conntrack_add(struct _mpc_ofi_doma
    /* Insert in List */
    ret->next = tracker->connections;
    tracker->connections = ret;
-	
+
 
 unlock:
    mpc_common_spinlock_unlock(&tracker->lock);
@@ -1609,4 +1609,3 @@ struct fid_ep * _mpc_ofi_domain_connect(struct _mpc_ofi_domain_t *domain, mpc_lo
    return new_ep;
 
 }
-

@@ -273,9 +273,9 @@ struct mpc_MPI_Win *mpc_MPI_Win_init(int flavor, int model, MPI_Comm comm,
 		{
 			break;
 		}
-		
+
 		mpc_thread_yield();
-	
+
 	}
 
 	mpc_thread_yield();
@@ -938,7 +938,7 @@ int mpc_MPI_Win_shared_query(MPI_Win win, int rank, MPI_Aint *size,
 		*( (void **)baseptr) = NULL;
 		return MPI_SUCCESS;
 	}
-	
+
 	low_win = sctk_win_translate(remote_win);
 
 

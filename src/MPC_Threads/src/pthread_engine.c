@@ -240,7 +240,7 @@ static int _mpc_thread_pthread_engine_user_create(pthread_t *thread, pthread_att
 		pthread_attr_destroy(&tmp_attr);
 		return res;
 	}
-	
+
 		int res = 0;
 
 	if(attr == NULL)
@@ -352,7 +352,7 @@ static int _mpc_thread_pthread_engine_create(pthread_t *restrict thread,
 		pthread_attr_destroy(&tmp_attr);
 		return res;
 	}
-	
+
 	int res = 0;
 	res = mpc_thread_kthread_pthread_create(thread, attr, start_routine, arg);
 
@@ -361,7 +361,7 @@ static int _mpc_thread_pthread_engine_create(pthread_t *restrict thread,
 		perror("pthread_create: ");
 		assume(res == 0);
 	}
-	
+
 	return res;
 
 }

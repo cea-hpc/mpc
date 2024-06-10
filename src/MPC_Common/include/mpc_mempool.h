@@ -17,7 +17,7 @@ typedef struct ck_stack        ck_stack_t;
 //FIXME: CK implementation is based on the fact that ck_stack_entry_t has the
 //       same structure has mpc_mempool_elem_t (first elem is a next pointer).
 //       As a consequence, a simple cast works fine but it does not seems like
-//       a good solution. 
+//       a good solution.
 //       On the plus side, this allows to have all implementations working with
 //       the same data structures.
 struct mpc_mempool_elem {
@@ -46,8 +46,8 @@ struct mpc_mempool_data {
     size_t             alignment;      /* Data alignment */
     size_t             elem_size;      /* Total element size */
     int                elem_per_chunk; /* Allocated on each grow */
-    int                min_elems;      
-    int                max_elems;       
+    int                min_elems;
+    int                max_elems;
     int                num_elems;      /* Current number of allocated elements */
     int                num_chunks;
     mpc_mempool_chunk_t *chunks;       /* Pointer to first chunk */
@@ -71,14 +71,14 @@ struct mpc_mempool {
 
 /**
  * @brief Add a buffer to the available buffers stack.
- * 
+ *
  * @param buf buffer to stack
  */
 void _mpc_mempool_t_stack(void * buf);
 
 /**
  * @brief Initialize a mempool.
- * 
+ *
  * @param mp pointer to mempool to be initialized. Must be allocated to `sizeof(mpc_mempool)`
  * @param min minimum number of used or available buffers (do not free under this number)
  * @param max maximum number of available buffers (systematically free over this number)
@@ -87,16 +87,16 @@ void _mpc_mempool_t_stack(void * buf);
  * @param free_func function used to free buffers. Must be `int func(void *buffer)`
  * @return int MPC_SUCCESS in case of success
  */
-int mpc_mempool_init(mpc_mempool_t *mp, 
-    int min, 
-    int max, 
-    size_t size, 
-    void *(*malloc_func)(size_t), 
+int mpc_mempool_init(mpc_mempool_t *mp,
+    int min,
+    int max,
+    size_t size,
+    void *(*malloc_func)(size_t),
     void (*free_func)(void *));
 
 /**
  * @brief Allocate a fixed size buffer.
- * 
+ *
  * @param mempool mempool used to allocate the buffer
  * @return void* allocated buffer
  */
@@ -104,7 +104,7 @@ void *mpc_mempool_alloc(mpc_mempool_t *mempool);
 
 /**
  * @brief Free a buffer allocated with a mpc_mempool.
- * 
+ *
  * @param mempool mempool used to allocate the buffer
  * @param buffer buffer to be freed
  */
@@ -112,7 +112,7 @@ void mpc_mempool_free(mpc_mempool_t *mempool, void *buffer);
 
 /**
  * @brief Empty a mempool.
- * 
+ *
  * @param mp mempool to be emptied
  * @return int MPC_SUCCESS in case of success
  */
@@ -120,7 +120,7 @@ int mpc_mempool_empty(mpc_mempool_t *mp);
 
 /**
  * @brief Allocate a buffer. Initialize the mempool if it is not initialized.
- * 
+ *
  * @param mp mempool used to allocate the buffer
  * @param min minimum number of used or available buffers (do not free under this number)
  * @param max maximum number of available buffers (systematically free over this number)
@@ -129,12 +129,12 @@ int mpc_mempool_empty(mpc_mempool_t *mp);
  * @param free_func function used to free buffers. Must be `int func(void *buffer)`
  * @return void* allocated buffer
  */
-void *mpc_mempool_alloc_and_init(mpc_mempool_t *mp, 
-                                 int min, 
-                                 int max, 
-                                 int size, 
-                                 void *(*malloc_func)(size_t), 
-                                 void (*free_func)(void *)); 
+void *mpc_mempool_alloc_and_init(mpc_mempool_t *mp,
+                                 int min,
+                                 int max,
+                                 int size,
+                                 void *(*malloc_func)(size_t),
+                                 void (*free_func)(void *));
 
 int mpc_mpool_init(mpc_mempool_t *mp, mpc_mempool_param_t *params);
 size_t mpc_mpool_get_elem_size(mpc_mempool_t *mp);

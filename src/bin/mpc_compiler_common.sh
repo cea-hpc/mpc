@@ -17,7 +17,7 @@ info()
 }
 
 check_rc()
-{			
+{
 	if test "x$1" != "x0" ; then
 		exit "$1"
 	fi
@@ -114,17 +114,17 @@ SHOW_COMMAND="no"
 
 handle_show_args()
 {
-	if test "x$SHOW_ARGS" = "xyes" ; then 
-		if test "x$SHOW_COMPILE" = "xyes"; then 
+	if test "x$SHOW_ARGS" = "xyes" ; then
+		if test "x$SHOW_COMPILE" = "xyes"; then
 			echo "$CFLAGS"
-		fi 
-		if test "x$SHOW_LINK" = "xyes"; then 
+		fi
+		if test "x$SHOW_LINK" = "xyes"; then
 			echo "$LDFLAGS"
-		fi 
-		if test "x$SHOW_COMMAND" = "xyes"; then 
+		fi
+		if test "x$SHOW_COMMAND" = "xyes"; then
 			echo "$COMPILER"
-		fi 
-	
+		fi
+
 		exit 0
 	fi
 }
@@ -244,7 +244,7 @@ fi
 #  - SHOW_LINK: show link flags before running the command
 #  - SHOW_COMPILE: show compilation flags before running the command
 #  - SHOW_COMMAND: display the compiler to be used
-#  - 
+#  -
 #
 parse_cli_args()
 {
@@ -362,7 +362,7 @@ parse_cli_args()
 	mpc_disable_header_privarization "$COMPILER"
 
 	if test "x${IS_FORTRAN}" = "xno"; then
-		if test "$MPC_DOING_PREPROC" = "yes"; then 
+		if test "$MPC_DOING_PREPROC" = "yes"; then
 			MPC_HEADER_INCLUDE=""
 		fi
 
@@ -376,7 +376,7 @@ parse_cli_args()
 # Run the final compiler command
 #
 # Input Args (from env mostly parse_cli_args):
-#  - MPC_COMMAND_WRAPPER: wrapping command 
+#  - MPC_COMMAND_WRAPPER: wrapping command
 #  - COMPILER: the command to compile
 #  - CFLAGS: compilation flags
 #  - LDFLAGS: linker flags
@@ -392,10 +392,10 @@ run_compiler()
 		if test "$USE_COMMAND" = "1"; then
 			LDFLAGS=""
 			CFLAGS=""
-		fi 
+		fi
 
 		# Append LDFLAGS to COMPILATION arguments
-		FINAL_LDFLAGS="$LDFLAGS" 
+		FINAL_LDFLAGS="$LDFLAGS"
 	fi
 
 	#shellcheck disable=SC2086
@@ -419,7 +419,7 @@ has_symbol ()
 	if test -f "${1}"; then
 		# nm -P -> Posix formating (start w/ symbol name)
 		nb=$(nm -P "${1}" | grep -cE "^${2} ")
-		
+
 		if test "x${nb}" = "x1"; then
 			HAS_SYMBOL="yes"
 		fi

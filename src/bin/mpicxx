@@ -72,4 +72,3 @@ fi
 
 # Now invoke the compiler
 mpc_cxx $MPI_PRIV_ARG "$@"
-

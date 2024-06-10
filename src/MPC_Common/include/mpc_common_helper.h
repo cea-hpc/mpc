@@ -111,7 +111,7 @@
         ( ((_alignment) - ((_n) % (_alignment))) % (_alignment) )
 
 #define mpc_common_align_down_pow2(_n, _alignment) \
-        ( (_n) & ~((_alignment) - 1) ) 
+        ( (_n) & ~((_alignment) - 1) )
 
 #define mpc_common_align_up_pow2(_n, _alignment) \
         mpc_common_align_down_pow2( (_n) + (_alignment) - 1, _alignment)

@@ -13,7 +13,7 @@ extern "C" {
 
 /**
  * @brief These are the types supported in RPCs
- * 
+ *
  */
 typedef enum
 {

@@ -55,7 +55,7 @@ int lcp_umq_match_table_init(lcp_umq_match_table_t *umq);
 
 void lcp_append_prq(lcp_prq_match_table_t *prq, lcp_request_t *req,
 		    uint16_t comm_id, int tag, uint64_t src);
-lcp_request_t *lcp_match_prq(lcp_prq_match_table_t *prq, 
+lcp_request_t *lcp_match_prq(lcp_prq_match_table_t *prq,
 		    uint16_t comm_id, int tag, uint64_t src);
 
 void lcp_append_umq(lcp_umq_match_table_t *umq, void *req,
@@ -65,6 +65,6 @@ void *lcp_match_umq(lcp_umq_match_table_t *umq,
 void *lcp_search_umq(lcp_umq_match_table_t *umq,
                      uint16_t comm_id, int tag, uint64_t src);
 
-void lcp_fini_matching_engine(lcp_umq_match_table_t *umq, 
+void lcp_fini_matching_engine(lcp_umq_match_table_t *umq,
 			      lcp_prq_match_table_t *prq);
 #endif

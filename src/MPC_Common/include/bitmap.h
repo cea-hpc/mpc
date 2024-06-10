@@ -9,8 +9,8 @@
 
 typedef uint64_t word_t;
 
-enum { 
-        BITS_PER_WORD = sizeof(word_t) * CHAR_BIT 
+enum {
+        BITS_PER_WORD = sizeof(word_t) * CHAR_BIT
 };
 
 #define MPC_BITMAP_MASK(i) (LCP_BIT(i) -1)
@@ -78,4 +78,4 @@ static inline int mpc_bitmap_equal(bmap_t a, bmap_t b) {
 
 
 
-#endif 
+#endif

@@ -205,7 +205,7 @@ create_tmp_file()
 
 # Convert and patch all source files to .o files
 # Once called all source files are now .o files
-# 
+#
 # Args (from ENV):
 #  - MPC_COMMAND_WRAPPER: command wrapper for display (for scan_and_patch_o_file)
 #  - COMPILER: the command to compile
@@ -233,9 +233,9 @@ compile_and_patch_source_files()
 
 			# Compile source file
 			$MPC_COMMAND_WRAPPER $COMPILER $CFLAGS ${ARGS_NO_SOURCES} "${source_file}" $LDFLAGS -c -o "${TMP_OBJ_FILE}"
-			
+
 			check_rc "$?"
-					
+
 			# Check if patching is needed
 			scan_and_patch_o_file "${TMP_OBJ_FILE}"
 			# Append to object file list
@@ -247,7 +247,7 @@ compile_and_patch_source_files()
 clean_tmp_obj_files()
 {
 	if test -n "${FAKE_OBJECT_FILE_LIST}"; then
-		$MPC_COMMAND_WRAPPER rm -f ${FAKE_OBJECT_FILE_LIST} > /dev/null 2>&1 
+		$MPC_COMMAND_WRAPPER rm -f ${FAKE_OBJECT_FILE_LIST} > /dev/null 2>&1
 	fi
 }
 
@@ -260,7 +260,7 @@ clean_tmp_obj_files()
 # Compile the main object file
 #
 # Input Args (from env mostly parse_cli_args):
-#  - MPC_COMMAND_WRAPPER: wrapping command 
+#  - MPC_COMMAND_WRAPPER: wrapping command
 #  - COMPILER: the command to compile
 #
 DID_GENERATE_MAIN="no"
@@ -290,7 +290,7 @@ THIS_EOF
 	$MPC_COMMAND_WRAPPER $COMPILER $CFLAGS_FORTRAN_MAIN -c $FORTRAN_MAIN -o $FORTRAN_MAIN_OBJ
 
 	rc=$?
-	if test "x$rc" != "x0" ; then 
+	if test "x$rc" != "x0" ; then
 		exit $rc
 	fi
 }
@@ -298,7 +298,7 @@ THIS_EOF
 clean_fortran_main()
 {
 	if test "x${DID_GENERATE_MAIN}" = "xyes"; then
-		$MPC_COMMAND_WRAPPER rm -f "$FORTRAN_MAIN" "$FORTRAN_MAIN_OBJ" > /dev/null 2>&1 
+		$MPC_COMMAND_WRAPPER rm -f "$FORTRAN_MAIN" "$FORTRAN_MAIN_OBJ" > /dev/null 2>&1
 	fi
 }
 

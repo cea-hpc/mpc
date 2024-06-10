@@ -26,4 +26,3 @@
 
 
 #endif /* ifndef __SCTK_FT_TYPES_H */
-

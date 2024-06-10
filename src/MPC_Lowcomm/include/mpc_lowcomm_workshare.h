@@ -72,7 +72,7 @@ typedef struct mpc_workshare{
   float inv_threshold_size;
   int nowait;
   int is_allowed_to_steal;
-  void (*func) (void*, long long, long long); 
+  void (*func) (void*, long long, long long);
 } mpc_workshare;
 
 void mpc_lowcomm_workshare_start(void(*) (void*, long long, long long) , void* ,long long, long long, long long , int, int, int, int);

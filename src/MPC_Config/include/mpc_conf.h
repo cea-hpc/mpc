@@ -90,8 +90,8 @@ mpc_conf_config_type_elem_t *mpc_conf_config_type_append(mpc_conf_config_type_t 
 														 char *ename,
 														 void *eptr,
 														 mpc_conf_type_t etype,
-														 char *edoc, 
-                             mpc_conf_enum_keyval_t * eekv, 
+														 char *edoc,
+                             mpc_conf_enum_keyval_t * eekv,
                              int eekv_length);
 
 mpc_conf_config_type_t * mpc_conf_config_type_elem_update(mpc_conf_config_type_t * ref, mpc_conf_config_type_t * updater, int force_content);

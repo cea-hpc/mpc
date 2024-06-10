@@ -104,7 +104,7 @@ int _mpc_lowcomm_datatype_init_common()
 	mpc_lowcomm_datatype_init(MPC_LOWCOMM_PACKED, MPI_PACKED);
 
 	/* FORTRAN Types */
-	
+
 	mpc_lowcomm_datatype_init(MPC_LOWCOMM_INTEGER, MPI_INTEGER);
 	mpc_lowcomm_datatype_init(MPC_LOWCOMM_REAL, MPI_REAL);
 	mpc_lowcomm_datatype_init(MPC_LOWCOMM_DOUBLE_PRECISION, MPI_DOUBLE_PRECISION);

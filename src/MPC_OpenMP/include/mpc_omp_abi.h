@@ -73,8 +73,8 @@ extern "C"
 /** Barrier construct */
   void mpc_omp_barrier( ompt_sync_region_t kind);
 
-/* 
- * SECTIONS/SECTION construct 
+/*
+ * SECTIONS/SECTION construct
  * --------------------------
  *  pragma omp sections
  *  {
@@ -150,13 +150,13 @@ extern "C"
 /* STATIC schedule */
 
 
-/* 
-   Automatic chunk size 
+/*
+   Automatic chunk size
    --------------------
    pragma omp for schedule(static)
-   for ( ... ) { A; } 
+   for ( ... ) { A; }
    ->
-   mpc_omp_static_schedule_get_single_chunk( ... ) ; 
+   mpc_omp_static_schedule_get_single_chunk( ... ) ;
    for ( ... ) { A; }
    mpc_omp_barrier() ;
  */
@@ -272,7 +272,7 @@ extern "C"
      do {
        for ( ... ) {
 	 A ;
-       } 
+       }
      } while ( mpc_omp_runtime_loop_next( ... ) ) ;
    }
    mpc_omp_runtime_loop_end() ;
@@ -294,8 +294,8 @@ extern "C"
  */
 /*
    pragma omp for schedule(XX) ordered
-   for ( i=lb ; i COND b ; i+=incr ) { 
-      A ; 
+   for ( i=lb ; i COND b ; i+=incr ) {
+      A ;
 #pragma omp ordered
       {
          B ;
@@ -310,7 +310,7 @@ extern "C"
 	 B ;
 	 mpc_omp_ordered_end() ;
 
-       } 
+       }
      } while ( _mpc_omp_ordered_XX_loop_next( ... ) ) ;
    }
    _mpc_omp_ordered_XX_loop_end() ;
@@ -372,7 +372,7 @@ void mpc_omp_ordered_runtime_loop_end_nowait () ;
 /*
    If the application uses the OpenMP ABI (or API), the checkpoint/restart
    mechanism has to be called through the function 'mpc_omp_checkpoint()'.
-   
+
    This function will take care of saving everything related to OpenMP and the
    MPC tasks (message-passing interface).
  */

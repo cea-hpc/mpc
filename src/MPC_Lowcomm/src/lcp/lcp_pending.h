@@ -29,8 +29,8 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#ifndef LCP_PENDING_H 
-#define LCP_PENDING_H 
+#ifndef LCP_PENDING_H
+#define LCP_PENDING_H
 
 #include <uthash.h>
 #include <mpc_mempool.h>
@@ -41,14 +41,14 @@
 /*******************************************************
  * Data structures - Control message
  ******************************************************/
-typedef struct 
+typedef struct
 {
 	uint64_t               msg_key;
 	lcp_request_t         *req;
 	UT_hash_handle         hh;
 } lcp_pending_entry_t;
 
-typedef struct 
+typedef struct
 {
 	mpc_common_spinlock_t  table_lock;
 	mpc_mempool_t pending_pool;
@@ -75,4 +75,4 @@ void lcp_pending_delete(lcp_pending_table_t *table,
 
 lcp_request_t *lcp_pending_get_request(lcp_pending_table_t *table,
                                        uint64_t msg_key);
-#endif 
+#endif

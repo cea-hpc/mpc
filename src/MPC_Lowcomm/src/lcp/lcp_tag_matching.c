@@ -57,11 +57,11 @@ err:
 
 /**
  * @brief Finalize the matching engine by deleting the posted/receive and unexpected queues.
- * 
+ *
  * @param umq unexpected messages queue (to destroy)
  * @param prq posted/receive queue (to destroy)
  */
-void lcp_fini_matching_engine(lcp_umq_match_table_t *umq, 
+void lcp_fini_matching_engine(lcp_umq_match_table_t *umq,
 			      lcp_prq_match_table_t *prq)
 {
         for (int i = 0; i < LCP_MATCH_MAX_NUM_COMM; i++) {
@@ -94,10 +94,10 @@ lcp_mtch_prq_list_t *_prq_match_create_entry(lcp_prq_match_table_t *prq, uint16_
 
 /**
  * @brief Get a posted receive matching queue
- * 
+ *
  * @param table hash table containing queues
  * @param comm communicator linked to the prq
- * @return lcp_prq_match_entry_t* 
+ * @return lcp_prq_match_entry_t*
  */
 lcp_mtch_prq_list_t *lcp_get_prq_entry(
 		 lcp_prq_match_table_t *table,
@@ -121,10 +121,10 @@ void* _umq_match_create_entry(lcp_umq_match_table_t *umq, uint16_t comm_id)
 
 /**
  * @brief Get an unexpected message queue
- * 
+ *
  * @param table hash table containing queues
  * @param comm communicator linked to the umq
- * @return lcp_prq_match_entry_t* 
+ * @return lcp_prq_match_entry_t*
  */
 lcp_mtch_umq_list_t *lcp_get_umq_entry(
 		 lcp_umq_match_table_t *table,
@@ -135,7 +135,7 @@ lcp_mtch_umq_list_t *lcp_get_umq_entry(
 
 /**
  * @brief Add a request to a posted receive queue
- * 
+ *
  * @param prq hash table containing PRQs
  * @param req request to add
  * @param comm comm corresponding to the target prq
@@ -155,22 +155,22 @@ void lcp_append_prq(lcp_prq_match_table_t *prq, lcp_request_t *req,
 
 	lcp_prq_append(prq_list, req, tag, src);
 	mpc_common_debug("LCP: prq added req=%p, msg_n=%lu, "
-			 "comm_id=%llu, tag=%d, src=%llu.", 
+			 "comm_id=%llu, tag=%d, src=%llu.",
 			 req, req->seqn, comm_id, tag, src);
 }
 
 
 /**
  * @brief Dequeue a posted receive request from a prq list matched with a tag
- * 
+ *
  * @param prq prq list
  * @param comm_id comm corresponding to the request to be dequeued
  * @param tag tag to be dequeued
  * @param src source of the request to be dequeued
  * @return lcp_request_t* dequeued request
  */
-lcp_request_t *lcp_match_prq(lcp_prq_match_table_t *prq, 
-			     uint16_t comm_id, int tag, 
+lcp_request_t *lcp_match_prq(lcp_prq_match_table_t *prq,
+			     uint16_t comm_id, int tag,
 			     uint64_t src)
 {
 	lcp_mtch_prq_list_t *prq_list;
@@ -182,7 +182,7 @@ lcp_request_t *lcp_match_prq(lcp_prq_match_table_t *prq,
         }
 	found =	lcp_prq_find_dequeue(prq_list, tag, src);
 	mpc_common_debug("LCP: prq tag matching FOUND=%p, "
-			 "comm_id=%lu, tag=%d, src=%llu.", 
+			 "comm_id=%lu, tag=%d, src=%llu.",
 			 found, comm_id, tag, src);
 
 	return found;
@@ -192,7 +192,7 @@ lcp_request_t *lcp_match_prq(lcp_prq_match_table_t *prq,
 //TODO: add return value because we have heap allocation
 /**
  * @brief Add a request to an unexpected message queue
- * 
+ *
  * @param umq hash table containing UMQs
  * @param req request to add
  * @param comm comm corresponding to the target umq
@@ -232,15 +232,15 @@ err:
 
 /**
  * @brief Dequeue an unexpected message request from a umq list matched with a tag
- * 
+ *
  * @param umq umq list
  * @param comm_id comm corresponding to the request to be dequeued
  * @param tag tag to be dequeued
  * @param src source of the request to be dequeued
  * @return lcp_request_t* dequeued request
  */
-void *lcp_match_umq(lcp_umq_match_table_t *umq, 
-		    uint16_t comm_id, int tag, 
+void *lcp_match_umq(lcp_umq_match_table_t *umq,
+		    uint16_t comm_id, int tag,
 		    uint64_t src)
 {
 	lcp_mtch_umq_list_t *umq_list;

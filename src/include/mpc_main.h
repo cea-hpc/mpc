@@ -28,7 +28,7 @@
 	/* atexit forward declaration is needed by mpc.h.
 	stdlib is not included since it would prevent it
 	from recognizing _GNU_SOURCE when defined by users.
-	This is due to mpc.h being included with -include 
+	This is due to mpc.h being included with -include
 	and thus included before any other file and especially
 	 user sources containing _GNU_SOURCE definitions.*/
 
