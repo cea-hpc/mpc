@@ -52,6 +52,7 @@
 #include "communicator.h"
 #include "lowcomm_thread.h"
 
+#include "mpc_keywords.h"
 #include "uid.h"
 #include "monitor.h"
 #include "name.h"

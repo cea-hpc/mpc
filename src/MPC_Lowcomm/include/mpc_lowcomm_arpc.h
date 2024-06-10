@@ -28,6 +28,8 @@
 extern "C" {
 #endif
 
+#include <stdlib.h>
+
 struct sctk_arpc_context_s;
 struct sctk_ptl_am_msg_s;
 

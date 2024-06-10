@@ -24,5 +24,8 @@
 #ifndef ARPC_WEAK_H
 #define ARPC_WEAK_H
 
+#include <mpc_lowcomm_arpc.h>
+
 int arpc_c_to_cxx_converter( struct sctk_arpc_context_s* ctx,  const void * request,  size_t req_size,  void** response,  size_t* resp_size);
+
 #endif
