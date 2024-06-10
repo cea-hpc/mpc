@@ -20,13 +20,6 @@ static pthread_mutex_t mpi_ranks_mutex = PTHREAD_MUTEX_INITIALIZER;
 static OPA_int_t callback_saved = { 0 };
 
 static int
-comm_to_int(MPI_Comm comm)
-{
-    // TODO
-    return 0;
-}
-
-static int
 __trace_communicators_rank(void * unused)
 {
     (void) unused;
@@ -36,7 +29,7 @@ __trace_communicators_rank(void * unused)
         mpi_rank_t * mpi_rank, * tmp;
         HASH_ITER(hh, mpi_ranks, mpi_rank, tmp)
         {
-            MPC_OMP_TASK_TRACE_RANK(comm_to_int(mpi_rank->comm), mpi_rank->rank);
+            MPC_OMP_TASK_TRACE_RANK(mpc_lowcomm_get_comm_gid(mpi_rank->comm), mpi_rank->rank);
             HASH_DEL(mpi_ranks, mpi_rank);
         }
     }
