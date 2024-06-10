@@ -1,7 +1,9 @@
 # include <assert.h>
 # include <pthread.h>
 # include <mpi.h>
+# include <mpc_omp.h>
 # include <mpc_omp_task_trace.h>
+# include <mpc_common_asm.h>
 
 # include "uthash.h"
 
