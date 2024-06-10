@@ -243,7 +243,6 @@ int _mpc_egreq_progress_list_poll( struct _mpc_egreq_progress_list *pl )
 		}
 		else if ( ret == PWU_WORK_DONE )
 		{
-			did_work |= 1;
 			pl->no_work_count--;
 
 			mpc_common_spinlock_lock( &pl->list_lock );
