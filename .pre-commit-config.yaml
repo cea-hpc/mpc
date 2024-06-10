@@ -22,4 +22,7 @@ repos:
     rev: 90dac57b3624db79877f93a59d218255463d708f
     hooks:
     -   id: git-blame-ignore-revs
-exclude: (.m4|.in|.3in|.f90|src/MPC_IO/src/romio)
+exclude: |
+  (?x)
+    src/MPC_IO/src/romio|
+    \.(m4|in|3in|f90)$
