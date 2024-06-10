@@ -22,6 +22,8 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
+#ifdef MPC_USE_PORTALS
+
 #include "endpoint.h"
 #include "msg_cpy.h"
 #include "mpc_common_helper.h" /* for MPC_COMMON_MAX_STRING_SIZE */
@@ -819,3 +821,5 @@ void sctk_ptl_fini_interface(sctk_rail_info_t* rail)
 #endif
 	sctk_ptl_hardware_fini(srail);
 }
+
+#endif /* MPC_USE_PORTALS */

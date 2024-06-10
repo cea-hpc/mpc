@@ -24,9 +24,11 @@
 
 #ifndef __SCTK_PTL_EAGER_H_
 #define __SCTK_PTL_EAGER_H_
+#ifdef MPC_USE_PORTALS
 void sctk_ptl_eager_event_me(sctk_rail_info_t* rail, sctk_ptl_event_t ev);
 void sctk_ptl_eager_event_md(sctk_rail_info_t* rail, sctk_ptl_event_t ev);
 
 void sctk_ptl_eager_notify_recv(mpc_lowcomm_ptp_message_t* msg, sctk_ptl_rail_info_t* srail);
 void sctk_ptl_eager_send_message(mpc_lowcomm_ptp_message_t* msg, _mpc_lowcomm_endpoint_t* endpoint);
+#endif /* MPC_USE_PORTALS */
 #endif /* ifndef __SCTK_PTL_EAGER_H_ */

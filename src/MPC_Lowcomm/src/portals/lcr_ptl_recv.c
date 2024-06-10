@@ -29,11 +29,11 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#include "lcr_ptl_recv.h"
-
-#include "sctk_ptl_iface.h"
+#ifdef MPC_USE_PORTALS
 
 #include <utlist.h>
+#include "sctk_ptl_iface.h"
+#include "lcr_ptl_recv.h"
 
 int lcr_ptl_recv_block_init(sctk_ptl_rail_info_t *srail, lcr_ptl_recv_block_t **block_p)
 {
@@ -166,3 +166,5 @@ int lcr_ptl_recv_block_disable(lcr_ptl_block_list_t *list)
 
         return MPC_LOWCOMM_SUCCESS;
 }
+
+#endif /* MPC_USE_PORTALS */

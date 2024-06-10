@@ -29,8 +29,11 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
+
 #ifndef LCR_PTL_RECV_H
 #define LCR_PTL_RECV_H
+
+#ifdef MPC_USE_PORTALS
 
 #include "sctk_ptl_types.h"
 
@@ -49,4 +52,5 @@ int lcr_ptl_recv_block_activate(lcr_ptl_recv_block_t *block, sctk_ptl_pte_id_t p
 int lcr_ptl_recv_block_enable(sctk_ptl_rail_info_t *srail, sctk_ptl_pte_id_t pte, sctk_ptl_list_t list);
 int lcr_ptl_recv_block_disable(lcr_ptl_block_list_t *list);
 
+#endif /* MPC_USE_PORTALS */
 #endif

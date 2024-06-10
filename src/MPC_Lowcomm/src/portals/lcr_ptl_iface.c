@@ -29,6 +29,9 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
+
+#ifdef MPC_USE_PORTALS
+
 #include "lcr_ptl.h"
 
 #include "lcp_common.h"
@@ -370,3 +373,5 @@ void lcr_ptl_software_fini(sctk_ptl_rail_info_t* srail)
 	if(sctk_ptl_offcoll_enabled(srail))
 		sctk_ptl_offcoll_fini(srail);
 }
+
+#endif /* MPC_USE_PORTALS */

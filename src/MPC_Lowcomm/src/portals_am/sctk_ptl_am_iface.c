@@ -22,6 +22,7 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
+#ifdef MPC_USE_PORTALS
 
 #include <limits.h>
 #include <mpc_lowcomm.h>
@@ -1215,3 +1216,5 @@ sctk_ptl_id_t sctk_ptl_am_map_id( __UNUSED__ sctk_ptl_am_rail_info_t *srail, int
 	);
 	return id;
 }
+
+#endif /* MPC_USE_PORTALS */

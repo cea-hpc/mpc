@@ -24,7 +24,7 @@
 
 #ifndef SCTK_PTL_OFFCOLL_H_
 #define SCTK_PTL_OFFCOLL_H_
-
+#ifdef MPC_USE_PORTALS
 #include "sctk_ptl_types.h"
 #include "rail.h"
 
@@ -54,4 +54,5 @@ int ptl_offcoll_barrier(int, int, int);
 int ptl_offcoll_bcast(int comm_idx, int rank, int size, void* buf, size_t bytes, int root);
 int ptl_offcoll_enabled();
 
+#endif /* MPC_USE_PORTALS */
 #endif /* SCTK_PTL_OFFCOLL_H_ */

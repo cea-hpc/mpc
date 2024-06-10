@@ -22,6 +22,8 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
+#ifdef MPC_USE_PORTALS
+
 #include "endpoint.h"
 #include "sctk_ptl_rdv.h"
 #include "sctk_ptl_iface.h"
@@ -512,3 +514,5 @@ void sctk_ptl_rdv_event_md(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 			break;
 	}
 }
+
+#endif /* MPC_USE_PORTALS */

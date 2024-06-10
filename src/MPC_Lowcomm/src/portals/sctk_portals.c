@@ -22,6 +22,8 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
+#ifdef MPC_USE_PORTALS
+
 #include <mpc_common_debug.h>
 #include "rail.h"
 #include "sctk_ptl_toolkit.h"
@@ -447,3 +449,5 @@ lcr_component_t ptl_component = {
         .next = NULL
 };
 LCR_COMPONENT_REGISTER(&ptl_component)
+
+#endif /* MPC_USE_PORTALS */

@@ -29,6 +29,8 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
+#ifdef MPC_USE_PORTALS
+
 #include "lcr_ptl.h"
 
 #include "sctk_ptl_iface.h"
@@ -601,3 +603,5 @@ int lcr_ptl_unpack_rkey(sctk_rail_info_t *rail,
 
         return sizeof(uint64_t);
 }
+
+#endif /* MPC_USE_PORTALS */

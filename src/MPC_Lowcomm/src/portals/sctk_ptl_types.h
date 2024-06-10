@@ -25,6 +25,7 @@
 #ifndef SCTK_PTL_TYPES_H_
 #define SCTK_PTL_TYPES_H_
 
+#ifdef MPC_USE_PORTALS
 #include <portals4.h>
 #include <stddef.h>
 #include <mpc_keywords.h>
@@ -491,5 +492,5 @@ typedef struct sctk_ptl_rail_info_s
 	char connection_infos[MPC_COMMON_MAX_STRING_SIZE]; /**< string identifying this rail over the PMI */
 } sctk_ptl_rail_info_t;
 
-
+#endif /* MPC_USE_PORTALS */
 #endif

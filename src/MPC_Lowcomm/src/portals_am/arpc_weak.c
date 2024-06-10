@@ -21,9 +21,13 @@
 /* #   - BESNARD Jean-Baptiste jean-baptiste.besnard@paratools.com        # */
 /* #                                                                      # */
 /* ######################################################################## */
+
+#ifdef MPC_USE_PORTALS
+
 #include "sctk_ptl_am_types.h"
 #include <mpc_lowcomm.h>
 #include <mpc_keywords.h>
+
 
 #pragma weak arpc_c_to_cxx_converter
 int arpc_c_to_cxx_converter( __UNUSED__ sctk_arpc_context_t *ctx,
@@ -34,3 +38,5 @@ int arpc_c_to_cxx_converter( __UNUSED__ sctk_arpc_context_t *ctx,
 {
 	return 0;
 }
+
+#endif /* MPC_USE_PORTALS */

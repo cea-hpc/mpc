@@ -25,6 +25,8 @@
 #ifndef SCTK_PTL_AM_IFACE_H_
 #define SCTK_PTL_AM_IFACE_H_
 
+#ifdef MPC_USE_PORTALS
+
 #include <portals4.h>
 #include <stddef.h>
 #include <mpc_common_types.h>
@@ -356,5 +358,5 @@ static inline const char * __sctk_ptl_am_ign_str(char*buf, size_t s, ptl_match_b
 	return buf;
 }
 
-
+#endif /* MPC_USE_PORTALS */
 #endif

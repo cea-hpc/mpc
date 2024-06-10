@@ -24,6 +24,7 @@
 
 #ifndef __SCTK_PTL_RDMA_H_
 #define __SCTK_PTL_RDMA_H_
+#ifdef MPC_USE_PORTALS
 
 #include "rail.h"
 
@@ -62,4 +63,5 @@ void sctk_ptl_rdma_event_me(sctk_rail_info_t* rail, sctk_ptl_event_t ev);
 void sctk_ptl_rdma_event_md(sctk_rail_info_t* rail, sctk_ptl_event_t ev);
 void lcr_ptl_handle_rdma_ev_md(sctk_rail_info_t *rail, sctk_ptl_event_t *ev);
 void lcr_ptl_handle_rdma_ev_me(sctk_rail_info_t *rail, sctk_ptl_event_t *ev);
+#endif /* MPC_USE_PORTALS */
 #endif /* ifndef __SCTK_PTL_RDMA_H_ */

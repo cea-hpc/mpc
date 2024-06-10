@@ -22,6 +22,8 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
+#ifdef MPC_USE_PORTALS
+
 #include <limits.h>
 #include "mpc_common_debug.h"
 #include "sctk_alloc.h"
@@ -1171,3 +1173,5 @@ int sctk_ptl_emit_trig_cnt_set(sctk_ptl_cnth_t target_cnt, size_t val, sctk_ptl_
 
 	return PTL_OK;
 }
+
+#endif /* MPC_USE_PORTALS */

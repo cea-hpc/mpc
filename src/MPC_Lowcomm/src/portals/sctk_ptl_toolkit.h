@@ -26,9 +26,11 @@
 #ifndef SCTK_PTL_TOOLKIT_H_
 #define SCTK_PTL_TOOLKIT_H_
 
-#include "endpoint.h"
+#ifdef MPC_USE_PORTALS
+
 #include <mpc_lowcomm_types.h>
 #include <mpc_lowcomm_monitor.h>
+#include "endpoint.h"
 
 sctk_ptl_id_t sctk_ptl_map_id(sctk_rail_info_t* rail, mpc_lowcomm_peer_uid_t dest);
 void sctk_ptl_add_route(mpc_lowcomm_peer_uid_t dest, sctk_ptl_id_t id, sctk_rail_info_t* rail, _mpc_lowcomm_endpoint_type_t origin, _mpc_lowcomm_endpoint_state_t state);
@@ -49,5 +51,6 @@ static inline sctk_rail_info_t* sctk_ptl_promote_to_rail(sctk_ptl_rail_info_t* s
 {
         return (sctk_rail_info_t*)(container_of(srail, sctk_rail_info_t, network.ptl));
 }
+#endif /* MPC_USE_PORTALS */
 
 #endif

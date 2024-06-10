@@ -25,6 +25,7 @@
 #ifndef SCTK_PTL_IFACE_H_
 #define SCTK_PTL_IFACE_H_
 
+#ifdef MPC_USE_PORTALS
 #include <portals4.h>
 #include <mpc_common_types.h>
 #include <stdlib.h>
@@ -469,4 +470,5 @@ static inline void sctk_ptl_compute_chunks(sctk_ptl_rail_info_t* srail, size_t d
 	*nb_out   = nb;
 	*rest_out = (total > 0) ? total % size : 0; /* special care (very rare) where data_sz equals to zero */
 }
+#endif /* MPC_USE_PORTALS */
 #endif

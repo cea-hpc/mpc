@@ -29,6 +29,8 @@ extern "C"
 {
 #endif
 
+#ifdef MPC_USE_PORTALS
+
 #include <mpc_common_helper.h>
 #include <mpc_lowcomm_types.h>
 #include "sctk_ptl_types.h"
@@ -36,6 +38,8 @@ extern "C"
 struct sctk_rail_info_s;
 void sctk_network_init_ptl ( struct sctk_rail_info_s *rail);
 void sctk_network_finalize_ptl ( struct sctk_rail_info_s *rail);
+
+#endif /* MPC_USE_PORTALS */
 
 #ifdef __cplusplus
 }

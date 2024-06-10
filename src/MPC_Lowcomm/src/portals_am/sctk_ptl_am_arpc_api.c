@@ -22,6 +22,8 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
+#ifdef MPC_USE_PORTALS
+
 #include "mpc_lowcomm.h"
 #include "sctk_ptl_am_iface.h"
 #include "mpc_config.h"
@@ -122,3 +124,5 @@ int mpc_arpc_free_response_ptl(void* resp_addr)
 	sctk_ptl_am_free_response(resp_addr);
 	return 0;
 }
+
+#endif /* MPC_USE_PORTALS */

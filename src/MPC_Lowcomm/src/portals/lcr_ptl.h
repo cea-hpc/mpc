@@ -36,6 +36,8 @@
 
 #include "rail.h"
 
+#ifdef MPC_USE_PORTALS
+
 ssize_t lcr_ptl_send_am_bcopy(_mpc_lowcomm_endpoint_t *ep,
                               uint8_t id,
                               lcr_pack_callback_t pack,
@@ -116,5 +118,7 @@ int lcr_ptl_unpack_rkey(sctk_rail_info_t *rail,
 
 int lcr_ptl_iface_mprogress(sctk_rail_info_t *rail);
 int lcr_ptl_iface_progress(sctk_rail_info_t *rail);
+
+#endif /* MPC_USE_PORTALS */
 
 #endif
