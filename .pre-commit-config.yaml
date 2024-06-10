@@ -17,7 +17,7 @@ repos:
     hooks:
       - id: clang-tidy
         # Mute linker warning on unused flags "-Wl,-rpath=<mpc-install>/lib64"
-        args: [--extra-arg=-Wnounused-command-line-argument]
+        args: [--system-headers, --header-filter='.*', --extra-arg=-Wnounused-command-line-argument]
 -   repo: git@gitlab.paratools.com:cea/mpc-pre-commit-hooks.git
     rev: 90dac57b3624db79877f93a59d218255463d708f
     hooks:
