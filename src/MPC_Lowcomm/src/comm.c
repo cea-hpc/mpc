@@ -415,12 +415,15 @@ void _mpc_comm_ptp_message_reinit_comm(mpc_lowcomm_ptp_message_t *msg)
 	SCTK_MSG_COMMUNICATOR_SET(msg, comm);
 }
 
-/*
+/**
  * Insert a new entry to the PTP table. The function checks if the entry is
  * already present
  * and fail in this case
+ *
+ * FIXME: This function is currently unused: the corresponding call in
+ * mpc_lowcomm_init_per_task was commented out in dc52abdf8b.
  */
-static inline void __mpc_comm_ptp_array_insert(mpc_comm_ptp_t *tmp)
+__UNUSED__ static inline void __mpc_comm_ptp_array_insert(mpc_comm_ptp_t *tmp)
 {
 	static mpc_common_spinlock_t lock = MPC_COMMON_SPINLOCK_INITIALIZER;
 	static volatile int          done = 0;
