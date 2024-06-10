@@ -36,10 +36,8 @@ extern "C"
 #include <mpc_config.h>
 #include <stdarg.h>
 #include <stdio.h>
-#include <string.h>
 #include <unistd.h>
 
-#include "mpc_common_types.h"
 #include "mpc_keywords.h"
 
 void mpc_common_debug_init();
@@ -169,6 +167,7 @@ void mpc_common_debug_log_file(FILE *file, const char *fmt, ...);
 	} while(0)
 
 /* Some Debug Helpers */
+// NOLINTBEGIN(clang-analyzer-core.CallAndMessage)
 #define MPC_CRASH()                                                                                              \
 	do                                                                                                       \
 	{                                                                                                        \
@@ -182,7 +181,7 @@ void mpc_common_debug_log_file(FILE *file, const char *fmt, ...);
 			( (void (*)() ) 0x0)();                                                                  \
 		}                                                                                                \
 	} while(0)
-
+// NOLINTEND(clang-analyzer-core.CallAndMessage)
 
 //If inline is not supported, disable assertions
 
