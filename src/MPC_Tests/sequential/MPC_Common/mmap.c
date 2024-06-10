@@ -19,12 +19,13 @@
 /* #   - PERACHE Marc marc.perache@cea.fr                                 # */
 /* #                                                                      # */
 /* ######################################################################## */
+#include <stddef.h>
 #include <mpc.h>
 #include <sys/mman.h>
 #include <assert.h>
 
 int
-main (int argc, char **argv)
+main ()
 {
 
   void *tmp;

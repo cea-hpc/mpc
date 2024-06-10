@@ -44,7 +44,7 @@ tst_profil ()
 
 
 int
-main (int argc, char **argv)
+main ()
 {
 #if defined(MPC_Profiler) || defined(MPC_MODULE_MPC_Profiler)
   mpc_profiling_init ();
