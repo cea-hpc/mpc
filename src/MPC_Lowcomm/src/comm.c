@@ -34,6 +34,7 @@
 #include <mpc_common_asm.h>
 #include <checksum.h>
 #include <reorder.h>
+#include "mpc_keywords.h"
 #include "rail.h"
 #include <mpc_launch.h>
 #include <sctk_window.h>
