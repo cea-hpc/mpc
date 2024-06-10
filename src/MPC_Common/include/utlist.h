@@ -28,6 +28,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <assert.h>
 
+// NOLINTBEGIN
+
 /*
  * This file contains macros to manipulate singly and doubly-linked lists.
  *
@@ -948,5 +950,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define CDL_APPEND_ELEM(head, el, add)                                         \
   CDL_APPEND_ELEM2(head, el, add, prev, next)
+
+// NOLINTEND
 
 #endif /* UTLIST_H */
