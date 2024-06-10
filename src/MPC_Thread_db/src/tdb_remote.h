@@ -46,7 +46,7 @@
 
 //#define THREAD_DB_COMPLIANT
 
-/* import of system-specific constantes */
+/* import of system-specific constants */
 
 
 #include <sys/ucontext.h>
