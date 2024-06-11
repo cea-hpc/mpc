@@ -27,7 +27,6 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <assert.h>
-#include <math.h>
 #include <string.h>
 
 
@@ -104,21 +103,10 @@ typedef NBC_Handle NBC_Request;
 
 
 /* external function prototypes */
-int NBC_Icart_shift_xchg(void *sbuf, int scount, MPI_Datatype stype, void *rbuf, int rcount, MPI_Datatype rtype, int direction, int disp, MPI_Comm comm, NBC_Handle *handle);
-int NBC_Ineighbor_xchg(void *sbuf, int scount, MPI_Datatype stype, void *rbuf, int rcount, MPI_Datatype rtype, MPI_Comm comm, NBC_Handle *handle);
-int NBC_Ineighbor_xchgv(void *sbuf, int *scounts, int *sdispls, MPI_Datatype stype, void *rbuf, int *rcounts, int *rdispls, MPI_Datatype rtype, MPI_Comm comm, NBC_Handle *handle);
-
-int NBC_Comm_neighbors(MPI_Comm comm, int maxindegree, int sources[], int sourceweights[], int maxoutdegree, int destinations[], int destweights[]);
-int NBC_Comm_neighbors_count(MPI_Comm comm, int *indegree, int *outdegree, int *weighted);
 extern int NBC_Wait(NBC_Handle *handle, MPI_Status *status);
-int NBC_Testold(NBC_Handle *handle);
 int NBC_Test(NBC_Handle *handle, int *flag, MPI_Status *status);
 
 /* TODO: some hacks */
-
-
-void NBC_Reset_times();
-void NBC_Print_times(double div);
 
 
 
@@ -238,39 +226,6 @@ int NBC_Init_handle(NBC_Handle *handle, MPI_Comm comm, int tag);
 		size = *(int *)schedule; \
 	}
 
-/* increase the size of a schedule by size bytes */
-#define NBC_INC_SIZE(schedule, size)      \
-	{                                 \
-		*(int *)schedule += size; \
-	}
-
-/* increments the number of operations in the last round */
-#define NBC_INC_NUM_ROUND(schedule)                                                                        \
-	{                                                                                                  \
-		int   total_size;                                                                          \
-		long  round_size;                                                                          \
-		char *ptr, *lastround;                                                                     \
-                                                                                                           \
-		NBC_GET_SIZE(schedule, total_size);                                                        \
-                                                                                                           \
-		/* ptr begins at first round (first int is overall size) */                                \
-		ptr       = (char *)( (char *)schedule + sizeof(int) );                                    \
-		lastround = ptr;                                                                           \
-		while( (long)ptr - (long)schedule < total_size){                                           \
-			NBC_GET_ROUND_SIZE(ptr, round_size);                                               \
-			/*printf("got round size %i\n", round_size);*/                                     \
-			lastround = ptr;                                                                   \
-			/* add round size */                                                               \
-			ptr = ptr + round_size;                                                            \
-			/* add sizeof(char) as barrier delimiter */                                        \
-			ptr = ptr + sizeof(char);                                                          \
-			/*printf("(int)ptr-(int)schedule=%i, size=%i\n", (int)ptr-(int)schedule, size); */ \
-		}                                                                                          \
-		/*printf("lastround count is at offset: %i\n", (int)lastround-(int)schedule);*/            \
-		/* this is the count in the last round of the schedule */                                  \
-		(*(int *)lastround)++;                                                                     \
-	}
-
 /* NBC_PRINT_ROUND prints a round in a schedule. A round has the format:
  * [num]{[op][op-data]} types: [int]{[enum][op-type]}
  * e.g. [2][SEND][SEND-ARGS][RECV][RECV-ARGS] */
@@ -331,29 +286,6 @@ int NBC_Init_handle(NBC_Handle *handle, MPI_Comm comm, int tag);
 			typeptr = (NBC_Fn_type *)( (NBC_Fn_type *)typeptr + 1);                                                                                                                                                                                                                            \
 		}                                                                                                                                                                                                                                                                                          \
 		printf("\n");                                                                                                                                                                                                                                                                              \
-	}
-
-#define NBC_PRINT_SCHED(schedule)                                                                                     \
-	{                                                                                                             \
-		int   size, myrank;                                                                                   \
-		long  round_size;                                                                                     \
-		char *ptr;                                                                                            \
-                                                                                                                      \
-		NBC_GET_SIZE(schedule, size);                                                                         \
-		MPI_Comm_rank(MPI_COMM_WORLD, &myrank);                                                               \
-		printf("[%i] printing schedule of size %i\n", myrank, size);                                          \
-                                                                                                                      \
-		/* ptr begins at first round (first int is overall size) */                                           \
-		ptr = (char *)( (char *)schedule + sizeof(int) );                                                     \
-		while( (long)ptr - (long)schedule < size){                                                            \
-			NBC_GET_ROUND_SIZE(ptr, round_size);                                                          \
-			printf("[%i] Round at byte %li (size %li) ", myrank, (long)ptr - (long)schedule, round_size); \
-			NBC_PRINT_ROUND(ptr);                                                                         \
-			/* add round size */                                                                          \
-			ptr = ptr + round_size;                                                                       \
-			/* add sizeof(char) as barrier delimiter */                                                   \
-			ptr = ptr + sizeof(char);                                                                     \
-		}                                                                                                     \
 	}
 
 #define NBC_CHECK_NULL(ptr)          \
@@ -511,78 +443,6 @@ static inline int NBC_Move(const void *src, int srccount, MPI_Datatype srctype, 
 	return NBC_OK;
 }
 
-/* NBC prototypes */
-
-int NBC_Ialltoallw(const void *sendbuf, const int *sendcounts, const int *sdispls,
-                   const MPI_Datatype *sendtypes, void *recvbuf, const int *recvcounts, const int *rdispls,
-                   const MPI_Datatype *recvtypes, MPI_Comm comm, NBC_Handle *handle);
-int NBC_Iallgather(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount,
-                   MPI_Datatype recvtype, MPI_Comm comm, NBC_Handle *handle);
-int NBC_Iallgatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts,
-                    const int *displs, MPI_Datatype recvtype, MPI_Comm comm, NBC_Handle *handle);
-int NBC_Iallreduce(const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm,
-                   NBC_Handle *handle);
-int NBC_Ialltoall(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount,
-                  MPI_Datatype recvtype, MPI_Comm comm, NBC_Handle *handle);
-int NBC_Ialltoallv(const void *sendbuf, const int *sendcounts, const int *sdispls,
-                   MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *rdispls,
-                   MPI_Datatype recvtype, MPI_Comm comm, NBC_Handle *handle);
-int NBC_Ibcast(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, NBC_Handle *handle);
-int NBC_Igather(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount,
-                MPI_Datatype recvtype, int root, MPI_Comm comm, NBC_Handle *handle);
-int NBC_Igatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts,
-                 const int *displs, MPI_Datatype recvtype, int root, MPI_Comm comm, NBC_Handle *handle);
-int NBC_Ireduce(const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int root,
-                MPI_Comm comm, NBC_Handle *handle);
-int NBC_Ireduce_scatter(const void *sendbuf, void *recvbuf, const int *recvcounts, MPI_Datatype datatype,
-                        MPI_Op op, MPI_Comm comm, NBC_Handle *handle);
-int NBC_Iscan(const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm,
-              NBC_Handle *handle);
-int NBC_Iscatter(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount,
-                 MPI_Datatype recvtype, int root, MPI_Comm comm, NBC_Handle *handle);
-int NBC_Iscatterv(const void *sendbuf, const int *sendcounts, const int *displs, MPI_Datatype sendtype,
-                  void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, NBC_Handle *handle);
-int NBC_Ireduce_scatter_block(const void *sendbuf, void *recvbuf, int recvcount, MPI_Datatype datatype,
-                              MPI_Op op, MPI_Comm comm, NBC_Handle *handle);
-int NBC_Iexscan(const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm,
-                NBC_Handle *handle);
-
-/* NBC persitent prototypes */
-
-int NBC_Iallgather_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount,
-                        MPI_Datatype recvtype, MPI_Comm comm, NBC_Handle *handle);
-int NBC_Iallgatherv_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts,
-                         const int *displs, MPI_Datatype recvtype, MPI_Comm comm, NBC_Handle *handle);
-int NBC_Iallreduce_init(const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm,
-                        NBC_Handle *handle);
-int NBC_Ialltoall_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount,
-                       MPI_Datatype recvtype, MPI_Comm comm, NBC_Handle *handle);
-int NBC_Ialltoallv_init(const void *sendbuf, const int *sendcounts, const int *sdispls,
-                        MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *rdispls,
-                        MPI_Datatype recvtype, MPI_Comm comm, NBC_Handle *handle);
-int NBC_Ibcast_init(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, NBC_Handle *handle);
-int NBC_Igather_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf,
-                     int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, NBC_Handle *handle);
-int NBC_Igatherv_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts,
-                      const int *displs, MPI_Datatype recvtype, int root, MPI_Comm comm, NBC_Handle *handle);
-int NBC_Ireduce_init(const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int root,
-                     MPI_Comm comm, NBC_Handle *handle);
-int NBC_Ireduce_scatter_init(const void *sendbuf, void *recvbuf, const int *recvcounts, MPI_Datatype datatype,
-                             MPI_Op op, MPI_Comm comm, NBC_Handle *handle);
-int NBC_Iscan_init(const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm,
-                   NBC_Handle *handle);
-int NBC_Iscatter_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount,
-                      MPI_Datatype recvtype, int root, MPI_Comm comm, NBC_Handle *handle);
-int NBC_Iscatterv_init(const void *sendbuf, const int *sendcounts, const int *displs, MPI_Datatype sendtype,
-                       void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, NBC_Handle *handle);
-int NBC_Ialltoallw_init(const void *sendbuf, const int *sendcounts, const int *sdispls,
-                        const MPI_Datatype *sendtypes, void *recvbuf, const int *recvcounts, const int *rdispls,
-                        const MPI_Datatype *recvtypes, MPI_Comm comm, NBC_Handle *handle);
-int NBC_Ireduce_scatter_block_init(const void *sendbuf, void *recvbuf, int recvcount, MPI_Datatype datatype, MPI_Op op,
-                                   MPI_Comm comm, NBC_Handle *handle);
-int NBC_Iexscan_init(const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm,
-                     NBC_Handle *handle);
-
 static inline int NBC_Unpack(void *src, int srccount, MPI_Datatype srctype, void *tgt, MPI_Comm comm)
 {
 	int      size, pos, res;
@@ -618,34 +478,8 @@ static inline int NBC_Unpack(void *src, int srccount, MPI_Datatype srctype, void
 	return NBC_OK;
 }
 
-#define NBC_IN_PLACE(sendbuf, recvbuf, inplace)    \
-	{                                          \
-		(inplace) = 0;                       \
-		if((recvbuf) == (sendbuf)){            \
-			(inplace) = 1;               \
-		} else                             \
-		if((sendbuf) == MPI_IN_PLACE){       \
-			(sendbuf) = recvbuf;         \
-			(inplace) = 1;               \
-		} else                             \
-		if((recvbuf) == MPI_IN_PLACE){       \
-			(recvbuf) = (void *)(sendbuf); \
-			(inplace) = 1;               \
-		}                                  \
-	}
-
 #ifdef __cplusplus
 }
 #endif
-
-#define NBC_F77_ALLFUNC_(lower, upper, args) \
-	void upper args;                     \
-	void P ## upper       args;          \
-	void lower            args;          \
-	void p ## lower       args;          \
-	void lower ## _       args;          \
-	void p ## lower ## _  args;          \
-	void lower ## __      args;          \
-	void p ## lower ## __ args;
 
 #endif
