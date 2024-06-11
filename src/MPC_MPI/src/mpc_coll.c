@@ -1363,7 +1363,7 @@ static inline int ___collectives_ibcast( void *buffer, int count, MPI_Datatype d
   res = ___collectives_sched_commit(schedule, &info);
   if (NBC_OK != res)
   {
-    printf("Error in NBC_Sched_commit() (%i)\n", res);
+    printf("Error in ___collectives_sched_commit() (%i)\n", res);
     return res;
   }
 
@@ -1453,7 +1453,7 @@ static inline int ___collectives_bcast_init(void *buffer, int count, MPI_Datatyp
   res = ___collectives_sched_commit(schedule, &info);
   if (res != MPI_SUCCESS)
   {
-    printf("Error in NBC_Sched_commit() (%i)\n", res);
+    printf("Error in ___collectives_sched_commit() (%i)\n", res);
     return res;
   }
 
@@ -1880,7 +1880,7 @@ static inline int ___collectives_ireduce(const void *sendbuf, void* recvbuf, int
   res = ___collectives_sched_commit(schedule, &info);
   if (NBC_OK != res)
   {
-    printf("Error in NBC_Sched_commit() (%i)\n", res);
+    printf("Error in ___collectives_sched_commit() (%i)\n", res);
     return res;
   }
 
@@ -1976,7 +1976,7 @@ static inline int ___collectives_reduce_init(const void *sendbuf, void* recvbuf,
   res = ___collectives_sched_commit(schedule, &info);
   if (res != MPI_SUCCESS)
   {
-    printf("Error in NBC_Sched_commit() (%i)\n", res);
+    printf("Error in ___collectives_sched_commit() (%i)\n", res);
     return res;
   }
 
@@ -2619,7 +2619,7 @@ static inline int ___collectives_iallreduce(const void *sendbuf, void* recvbuf, 
   res = ___collectives_sched_commit(schedule, &info);
   if (NBC_OK != res)
   {
-    printf("Error in NBC_Sched_commit() (%i)\n", res);
+    printf("Error in ___collectives_sched_commit() (%i)\n", res);
     return res;
   }
 
@@ -2709,7 +2709,7 @@ static inline int ___collectives_allreduce_init(const void *sendbuf, void* recvb
   res = ___collectives_sched_commit(schedule, &info);
   if (res != MPI_SUCCESS)
   {
-    printf("Error in NBC_Sched_commit() (%i)\n", res);
+    printf("Error in ___collectives_sched_commit() (%i)\n", res);
     return res;
   }
 
@@ -3710,7 +3710,7 @@ static inline int ___collectives_iscatter(const void *sendbuf, int sendcount, MP
   res = ___collectives_sched_commit(schedule, &info);
   if (NBC_OK != res)
   {
-    printf("Error in NBC_Sched_commit() (%i)\n", res);
+    printf("Error in ___collectives_sched_commit() (%i)\n", res);
     return res;
   }
 
@@ -3808,7 +3808,7 @@ static inline int ___collectives_scatter_init(const void *sendbuf, int sendcount
   res = ___collectives_sched_commit(schedule, &info);
   if (res != MPI_SUCCESS)
   {
-    printf("Error in NBC_Sched_commit() (%i)\n", res);
+    printf("Error in ___collectives_sched_commit() (%i)\n", res);
     return res;
   }
 
@@ -4392,7 +4392,7 @@ static inline int ___collectives_iscatterv(const void *sendbuf, const int *sendc
   res = ___collectives_sched_commit(schedule, &info);
   if (NBC_OK != res)
   {
-    printf("Error in NBC_Sched_commit() (%i)\n", res);
+    printf("Error in ___collectives_sched_commit() (%i)\n", res);
     return res;
   }
 
@@ -4504,7 +4504,7 @@ static inline int ___collectives_scatterv_init(const void *sendbuf, const int *s
   res = ___collectives_sched_commit(schedule, &info);
   if (res != MPI_SUCCESS)
   {
-    printf("Error in NBC_Sched_commit() (%i)\n", res);
+    printf("Error in ___collectives_sched_commit() (%i)\n", res);
     return res;
   }
 
@@ -4776,7 +4776,7 @@ static inline int ___collectives_igather(const void *sendbuf, int sendcount, MPI
   res = ___collectives_sched_commit(schedule, &info);
   if (NBC_OK != res)
   {
-    printf("Error in NBC_Sched_commit() (%i)\n", res);
+    printf("Error in ___collectives_sched_commit() (%i)\n", res);
     return res;
   }
 
@@ -4877,7 +4877,7 @@ static inline int ___collectives_gather_init(const void *sendbuf, int sendcount,
   res = ___collectives_sched_commit(schedule, &info);
   if (res != MPI_SUCCESS)
   {
-    printf("Error in NBC_Sched_commit() (%i)\n", res);
+    printf("Error in ___collectives_sched_commit() (%i)\n", res);
     return res;
   }
 
@@ -5451,7 +5451,7 @@ static inline int ___collectives_igatherv(const void *sendbuf, int sendcount, MP
   res = ___collectives_sched_commit(schedule, &info);
   if (NBC_OK != res)
   {
-    printf("Error in NBC_Sched_commit() (%i)\n", res);
+    printf("Error in ___collectives_sched_commit() (%i)\n", res);
     return res;
   }
 
@@ -5560,7 +5560,7 @@ static inline int ___collectives_gatherv_init(const void *sendbuf, int sendcount
   res = ___collectives_sched_commit(schedule, &info);
   if (res != MPI_SUCCESS)
   {
-    printf("Error in NBC_Sched_commit() (%i)\n", res);
+    printf("Error in ___collectives_sched_commit() (%i)\n", res);
     return res;
   }
 
@@ -5828,7 +5828,7 @@ static inline int ___collectives_ireduce_scatter_block (const void *sendbuf, voi
   res = ___collectives_sched_commit(schedule, &info);
   if (NBC_OK != res)
   {
-    printf("Error in NBC_Sched_commit() (%i)\n", res);
+    printf("Error in ___collectives_sched_commit() (%i)\n", res);
     return res;
   }
 
@@ -5917,7 +5917,7 @@ static inline int ___collectives_reduce_scatter_block_init(const void *sendbuf, 
   res = ___collectives_sched_commit(schedule, &info);
   if (res != MPI_SUCCESS)
   {
-    printf("Error in NBC_Sched_commit() (%i)\n", res);
+    printf("Error in ___collectives_sched_commit() (%i)\n", res);
     return res;
   }
 
@@ -6300,7 +6300,7 @@ static inline int ___collectives_ireduce_scatter (const void *sendbuf, void* rec
   res = ___collectives_sched_commit(schedule, &info);
   if (NBC_OK != res)
   {
-    printf("Error in NBC_Sched_commit() (%i)\n", res);
+    printf("Error in ___collectives_sched_commit() (%i)\n", res);
     return res;
   }
 
@@ -6396,7 +6396,7 @@ static inline int ___collectives_reduce_scatter_init(const void *sendbuf, void* 
   res = ___collectives_sched_commit(schedule, &info);
   if (res != MPI_SUCCESS)
   {
-    printf("Error in NBC_Sched_commit() (%i)\n", res);
+    printf("Error in ___collectives_sched_commit() (%i)\n", res);
     return res;
   }
 
@@ -6714,7 +6714,7 @@ static inline int ___collectives_iallgather(const void *sendbuf, int sendcount, 
   res = ___collectives_sched_commit(schedule, &info);
   if (NBC_OK != res)
   {
-    printf("Error in NBC_Sched_commit() (%i)\n", res);
+    printf("Error in ___collectives_sched_commit() (%i)\n", res);
     return res;
   }
 
@@ -6812,7 +6812,7 @@ static inline int ___collectives_allgather_init(const void *sendbuf, int sendcou
   res = ___collectives_sched_commit(schedule, &info);
   if (res != MPI_SUCCESS)
   {
-    printf("Error in NBC_Sched_commit() (%i)\n", res);
+    printf("Error in ___collectives_sched_commit() (%i)\n", res);
     return res;
   }
 
@@ -7396,7 +7396,7 @@ static inline int ___collectives_iallgatherv(const void *sendbuf, int sendcount,
   res = ___collectives_sched_commit(schedule, &info);
   if (NBC_OK != res)
   {
-    printf("Error in NBC_Sched_commit() (%i)\n", res);
+    printf("Error in ___collectives_sched_commit() (%i)\n", res);
     return res;
   }
 
@@ -7507,7 +7507,7 @@ static inline int ___collectives_allgatherv_init(const void *sendbuf, int sendco
   res = ___collectives_sched_commit(schedule, &info);
   if (res != MPI_SUCCESS)
   {
-    printf("Error in NBC_Sched_commit() (%i)\n", res);
+    printf("Error in ___collectives_sched_commit() (%i)\n", res);
     return res;
   }
 
@@ -7791,7 +7791,7 @@ static inline int ___collectives_ialltoall(const void *sendbuf, int sendcount, M
   res = ___collectives_sched_commit(schedule, &info);
   if (NBC_OK != res)
   {
-    printf("Error in NBC_Sched_commit() (%i)\n", res);
+    printf("Error in ___collectives_sched_commit() (%i)\n", res);
     return res;
   }
 
@@ -7888,7 +7888,7 @@ static inline int ___collectives_alltoall_init(const void *sendbuf, int sendcoun
   res = ___collectives_sched_commit(schedule, &info);
   if (res != MPI_SUCCESS)
   {
-    printf("Error in NBC_Sched_commit() (%i)\n", res);
+    printf("Error in ___collectives_sched_commit() (%i)\n", res);
     return res;
   }
 
@@ -9374,7 +9374,7 @@ static inline int ___collectives_ialltoallv(const void *sendbuf, const int *send
   res = ___collectives_sched_commit(schedule, &info);
   if (NBC_OK != res)
   {
-    printf("Error in NBC_Sched_commit() (%i)\n", res);
+    printf("Error in ___collectives_sched_commit() (%i)\n", res);
     return res;
   }
 
@@ -9485,7 +9485,7 @@ static inline int ___collectives_alltoallv_init(const void *sendbuf, const int *
   res = ___collectives_sched_commit(schedule, &info);
   if (res != MPI_SUCCESS)
   {
-    printf("Error in NBC_Sched_commit() (%i)\n", res);
+    printf("Error in ___collectives_sched_commit() (%i)\n", res);
     return res;
   }
 
@@ -9934,7 +9934,7 @@ static inline int ___collectives_ialltoallw(const void *sendbuf, const int *send
   res = ___collectives_sched_commit(schedule, &info);
   if (NBC_OK != res)
   {
-    printf("Error in NBC_Sched_commit() (%i)\n", res);
+    printf("Error in ___collectives_sched_commit() (%i)\n", res);
     return res;
   }
 
@@ -10046,7 +10046,7 @@ static inline int ___collectives_alltoallw_init(const void *sendbuf, const int *
   res = ___collectives_sched_commit(schedule, &info);
   if (res != MPI_SUCCESS)
   {
-    printf("Error in NBC_Sched_commit() (%i)\n", res);
+    printf("Error in ___collectives_sched_commit() (%i)\n", res);
     return res;
   }
 
@@ -10467,7 +10467,7 @@ static inline int ___collectives_iscan (const void *sendbuf, void *recvbuf, int 
   res = ___collectives_sched_commit(schedule, &info);
   if (NBC_OK != res)
   {
-    printf("Error in NBC_Sched_commit() (%i)\n", res);
+    printf("Error in ___collectives_sched_commit() (%i)\n", res);
     return res;
   }
 
@@ -10561,7 +10561,7 @@ static inline int ___collectives_scan_init (const void *sendbuf, void *recvbuf, 
   res = ___collectives_sched_commit(schedule, &info);
   if (res != MPI_SUCCESS)
   {
-    printf("Error in NBC_Sched_commit() (%i)\n", res);
+    printf("Error in ___collectives_sched_commit() (%i)\n", res);
     return res;
   }
 
@@ -10869,7 +10869,7 @@ static inline int ___collectives_iexscan (const void *sendbuf, void *recvbuf, in
   res = ___collectives_sched_commit(schedule, &info);
   if (NBC_OK != res)
   {
-    printf("Error in NBC_Sched_commit() (%i)\n", res);
+    printf("Error in ___collectives_sched_commit() (%i)\n", res);
     return res;
   }
 
@@ -10963,7 +10963,7 @@ static inline int ___collectives_exscan_init (const void *sendbuf, void *recvbuf
   res = ___collectives_sched_commit(schedule, &info);
   if (res != MPI_SUCCESS)
   {
-    printf("Error in NBC_Sched_commit() (%i)\n", res);
+    printf("Error in ___collectives_sched_commit() (%i)\n", res);
     return res;
   }
 
@@ -11267,7 +11267,7 @@ static inline int ___collectives_ibarrier (MPI_Comm comm, NBC_Handle *handle) {
   res = ___collectives_sched_commit(schedule, &info);
   if (NBC_OK != res)
   {
-    printf("Error in NBC_Sched_commit() (%i)\n", res);
+    printf("Error in ___collectives_sched_commit() (%i)\n", res);
     return res;
   }
 
@@ -11343,7 +11343,7 @@ static inline int ___collectives_barrier_init (MPI_Comm comm, NBC_Handle* handle
   res = ___collectives_sched_commit(schedule, &info);
   if (res != MPI_SUCCESS)
   {
-    printf("Error in NBC_Sched_commit() (%i)\n", res);
+    printf("Error in ___collectives_sched_commit() (%i)\n", res);
     return res;
   }
 
