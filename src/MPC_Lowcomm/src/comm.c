@@ -1815,6 +1815,9 @@ void mpc_lowcomm_ptp_message_header_init(mpc_lowcomm_ptp_message_t *msg,
 			( (SCTK_MSG_DEST_PROCESS(msg) < mpc_common_get_process_count() ) && (SCTK_MSG_SRC_PROCESS(msg) < mpc_common_get_process_count() ) )
 			);
 
+		/* Avoid buffer overflow in mpc_lowcomm_ptp_message_class_name */
+		assert(message_class < MPC_LOWCOMM_MESSAGE_CLASS_COUNT);
+
 		mpc_common_debug("%s [T(%d -> %d) P(%lu -> %lu) C %llu CL %s TA %d REQ %p]",
 		                 mpc_lowcomm_request_type_name[request_type],
 		                 source_task,
