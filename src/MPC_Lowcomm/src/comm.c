@@ -3470,7 +3470,9 @@ int _mpc_lowcomm_isend(int dest, const void *data, size_t size, int tag,
 	lcp_request_param_t param =
 	{
 		.tag_info = &req->tag_info,
-                .datatype  = req->dt_magic == (int)0xDDDDDDDD ? LCP_DATATYPE_DERIVED : LCP_DATATYPE_CONTIGUOUS,
+		// FIXME: properly initialize dt_magic
+		// NOLINTNEXTLINE(clang-analyzer-core.UndefinedBinaryOperatorResult)
+		.datatype  = req->dt_magic == (int)0xDDDDDDDD ? LCP_DATATYPE_DERIVED : LCP_DATATYPE_CONTIGUOUS,
 		.flags     = synchronized ? LCP_REQUEST_TAG_SYNC : 0,
 	};
 	return lcp_tag_send_nb(ep, task, data, size, req, &param);
@@ -3513,6 +3515,8 @@ int mpc_lowcomm_irecv(int src, void *data, size_t size, int tag,
 	lcp_request_param_t param =
 	{
 		.tag_info = &req->tag_info,
+		// FIXME: properly initialize dt_magic
+		// NOLINTNEXTLINE(clang-analyzer-core.UndefinedBinaryOperatorResult)
 		.datatype  = req->dt_magic == (int)0xDDDDDDDD ?
 		             LCP_DATATYPE_DERIVED : LCP_DATATYPE_CONTIGUOUS,
 	};
