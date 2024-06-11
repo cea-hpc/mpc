@@ -1361,14 +1361,14 @@ static inline int ___collectives_ibcast( void *buffer, int count, MPI_Datatype d
   _mpc_mpi_config()->coll_algorithm_intracomm.bcast(buffer, count, datatype, root, comm, MPC_COLL_TYPE_NONBLOCKING, schedule, &info);
 
   res = ___collectives_sched_commit(schedule, &info);
-  if (NBC_OK != res)
+  if (MPI_SUCCESS != res)
   {
     printf("Error in ___collectives_sched_commit() (%i)\n", res);
     return res;
   }
 
   res = NBC_Start(handle, schedule);
-  if (NBC_OK != res)
+  if (MPI_SUCCESS != res)
   {
     printf("Error in NBC_Start() (%i)\n", res);
     return res;
@@ -1878,14 +1878,14 @@ static inline int ___collectives_ireduce(const void *sendbuf, void* recvbuf, int
   _mpc_mpi_config()->coll_algorithm_intracomm.reduce(sendbuf, recvbuf, count, datatype, op, root, comm, MPC_COLL_TYPE_NONBLOCKING, schedule, &info);
 
   res = ___collectives_sched_commit(schedule, &info);
-  if (NBC_OK != res)
+  if (MPI_SUCCESS != res)
   {
     printf("Error in ___collectives_sched_commit() (%i)\n", res);
     return res;
   }
 
   res = NBC_Start(handle, schedule);
-  if (NBC_OK != res)
+  if (MPI_SUCCESS != res)
   {
     printf("Error in NBC_Start() (%i)\n", res);
     return res;
@@ -2617,14 +2617,14 @@ static inline int ___collectives_iallreduce(const void *sendbuf, void* recvbuf, 
   _mpc_mpi_config()->coll_algorithm_intracomm.allreduce(sendbuf, recvbuf, count, datatype, op, comm, MPC_COLL_TYPE_NONBLOCKING, schedule, &info);
 
   res = ___collectives_sched_commit(schedule, &info);
-  if (NBC_OK != res)
+  if (MPI_SUCCESS != res)
   {
     printf("Error in ___collectives_sched_commit() (%i)\n", res);
     return res;
   }
 
   res = NBC_Start(handle, schedule);
-  if (NBC_OK != res)
+  if (MPI_SUCCESS != res)
   {
     printf("Error in NBC_Start() (%i)\n", res);
     return res;
@@ -3708,14 +3708,14 @@ static inline int ___collectives_iscatter(const void *sendbuf, int sendcount, MP
   _mpc_mpi_config()->coll_algorithm_intracomm.scatter(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm, MPC_COLL_TYPE_NONBLOCKING, schedule, &info);
 
   res = ___collectives_sched_commit(schedule, &info);
-  if (NBC_OK != res)
+  if (MPI_SUCCESS != res)
   {
     printf("Error in ___collectives_sched_commit() (%i)\n", res);
     return res;
   }
 
   res = NBC_Start(handle, schedule);
-  if (NBC_OK != res)
+  if (MPI_SUCCESS != res)
   {
     printf("Error in NBC_Start() (%i)\n", res);
     return res;
@@ -4390,14 +4390,14 @@ static inline int ___collectives_iscatterv(const void *sendbuf, const int *sendc
   _mpc_mpi_config()->coll_algorithm_intracomm.scatterv(sendbuf, sendcounts, displs, sendtype, recvbuf, recvcount, recvtype, root, comm, MPC_COLL_TYPE_NONBLOCKING, schedule, &info);
 
   res = ___collectives_sched_commit(schedule, &info);
-  if (NBC_OK != res)
+  if (MPI_SUCCESS != res)
   {
     printf("Error in ___collectives_sched_commit() (%i)\n", res);
     return res;
   }
 
   res = NBC_Start(handle, schedule);
-  if (NBC_OK != res)
+  if (MPI_SUCCESS != res)
   {
     printf("Error in NBC_Start() (%i)\n", res);
     return res;
@@ -4774,14 +4774,14 @@ static inline int ___collectives_igather(const void *sendbuf, int sendcount, MPI
   _mpc_mpi_config()->coll_algorithm_intracomm.gather(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm, MPC_COLL_TYPE_NONBLOCKING, schedule, &info);
 
   res = ___collectives_sched_commit(schedule, &info);
-  if (NBC_OK != res)
+  if (MPI_SUCCESS != res)
   {
     printf("Error in ___collectives_sched_commit() (%i)\n", res);
     return res;
   }
 
   res = NBC_Start(handle, schedule);
-  if (NBC_OK != res)
+  if (MPI_SUCCESS != res)
   {
     printf("Error in NBC_Start() (%i)\n", res);
     return res;
@@ -5449,14 +5449,14 @@ static inline int ___collectives_igatherv(const void *sendbuf, int sendcount, MP
   _mpc_mpi_config()->coll_algorithm_intracomm.gatherv(sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype, root, comm, MPC_COLL_TYPE_NONBLOCKING, schedule, &info);
 
   res = ___collectives_sched_commit(schedule, &info);
-  if (NBC_OK != res)
+  if (MPI_SUCCESS != res)
   {
     printf("Error in ___collectives_sched_commit() (%i)\n", res);
     return res;
   }
 
   res = NBC_Start(handle, schedule);
-  if (NBC_OK != res)
+  if (MPI_SUCCESS != res)
   {
     printf("Error in NBC_Start() (%i)\n", res);
     return res;
@@ -5826,14 +5826,14 @@ static inline int ___collectives_ireduce_scatter_block (const void *sendbuf, voi
   _mpc_mpi_config()->coll_algorithm_intracomm.reduce_scatter_block(sendbuf, recvbuf, count, datatype, op, comm, MPC_COLL_TYPE_NONBLOCKING, schedule, &info);
 
   res = ___collectives_sched_commit(schedule, &info);
-  if (NBC_OK != res)
+  if (MPI_SUCCESS != res)
   {
     printf("Error in ___collectives_sched_commit() (%i)\n", res);
     return res;
   }
 
   res = NBC_Start(handle, schedule);
-  if (NBC_OK != res)
+  if (MPI_SUCCESS != res)
   {
     printf("Error in NBC_Start() (%i)\n", res);
     return res;
@@ -6298,14 +6298,14 @@ static inline int ___collectives_ireduce_scatter (const void *sendbuf, void* rec
   _mpc_mpi_config()->coll_algorithm_intracomm.reduce_scatter(sendbuf, recvbuf, recvcounts, datatype, op, comm, MPC_COLL_TYPE_NONBLOCKING, schedule, &info);
 
   res = ___collectives_sched_commit(schedule, &info);
-  if (NBC_OK != res)
+  if (MPI_SUCCESS != res)
   {
     printf("Error in ___collectives_sched_commit() (%i)\n", res);
     return res;
   }
 
   res = NBC_Start(handle, schedule);
-  if (NBC_OK != res)
+  if (MPI_SUCCESS != res)
   {
     printf("Error in NBC_Start() (%i)\n", res);
     return res;
@@ -6712,14 +6712,14 @@ static inline int ___collectives_iallgather(const void *sendbuf, int sendcount, 
   _mpc_mpi_config()->coll_algorithm_intracomm.allgather(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, MPC_COLL_TYPE_NONBLOCKING, schedule, &info);
 
   res = ___collectives_sched_commit(schedule, &info);
-  if (NBC_OK != res)
+  if (MPI_SUCCESS != res)
   {
     printf("Error in ___collectives_sched_commit() (%i)\n", res);
     return res;
   }
 
   res = NBC_Start(handle, schedule);
-  if (NBC_OK != res)
+  if (MPI_SUCCESS != res)
   {
     printf("Error in NBC_Start() (%i)\n", res);
     return res;
@@ -7394,14 +7394,14 @@ static inline int ___collectives_iallgatherv(const void *sendbuf, int sendcount,
   _mpc_mpi_config()->coll_algorithm_intracomm.allgatherv(sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype, comm, MPC_COLL_TYPE_NONBLOCKING, schedule, &info);
 
   res = ___collectives_sched_commit(schedule, &info);
-  if (NBC_OK != res)
+  if (MPI_SUCCESS != res)
   {
     printf("Error in ___collectives_sched_commit() (%i)\n", res);
     return res;
   }
 
   res = NBC_Start(handle, schedule);
-  if (NBC_OK != res)
+  if (MPI_SUCCESS != res)
   {
     printf("Error in NBC_Start() (%i)\n", res);
     return res;
@@ -7789,14 +7789,14 @@ static inline int ___collectives_ialltoall(const void *sendbuf, int sendcount, M
   _mpc_mpi_config()->coll_algorithm_intracomm.alltoall(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, MPC_COLL_TYPE_NONBLOCKING, schedule, &info);
 
   res = ___collectives_sched_commit(schedule, &info);
-  if (NBC_OK != res)
+  if (MPI_SUCCESS != res)
   {
     printf("Error in ___collectives_sched_commit() (%i)\n", res);
     return res;
   }
 
   res = NBC_Start(handle, schedule);
-  if (NBC_OK != res)
+  if (MPI_SUCCESS != res)
   {
     printf("Error in NBC_Start() (%i)\n", res);
     return res;
@@ -9372,14 +9372,14 @@ static inline int ___collectives_ialltoallv(const void *sendbuf, const int *send
   _mpc_mpi_config()->coll_algorithm_intracomm.alltoallv(sendbuf, sendcounts, sdispls, sendtype, recvbuf, recvcounts, rdispls, recvtype, comm, MPC_COLL_TYPE_NONBLOCKING, schedule, &info);
 
   res = ___collectives_sched_commit(schedule, &info);
-  if (NBC_OK != res)
+  if (MPI_SUCCESS != res)
   {
     printf("Error in ___collectives_sched_commit() (%i)\n", res);
     return res;
   }
 
   res = NBC_Start(handle, schedule);
-  if (NBC_OK != res)
+  if (MPI_SUCCESS != res)
   {
     printf("Error in NBC_Start() (%i)\n", res);
     return res;
@@ -9932,14 +9932,14 @@ static inline int ___collectives_ialltoallw(const void *sendbuf, const int *send
   _mpc_mpi_config()->coll_algorithm_intracomm.alltoallw(sendbuf, sendcounts, sdispls, sendtypes, recvbuf, recvcounts, rdispls, recvtypes, comm, MPC_COLL_TYPE_NONBLOCKING, schedule, &info);
 
   res = ___collectives_sched_commit(schedule, &info);
-  if (NBC_OK != res)
+  if (MPI_SUCCESS != res)
   {
     printf("Error in ___collectives_sched_commit() (%i)\n", res);
     return res;
   }
 
   res = NBC_Start(handle, schedule);
-  if (NBC_OK != res)
+  if (MPI_SUCCESS != res)
   {
     printf("Error in NBC_Start() (%i)\n", res);
     return res;
@@ -10465,14 +10465,14 @@ static inline int ___collectives_iscan (const void *sendbuf, void *recvbuf, int 
   _mpc_mpi_config()->coll_algorithm_intracomm.scan(sendbuf, recvbuf, count, datatype, op, comm, MPC_COLL_TYPE_NONBLOCKING, schedule, &info);
 
   res = ___collectives_sched_commit(schedule, &info);
-  if (NBC_OK != res)
+  if (MPI_SUCCESS != res)
   {
     printf("Error in ___collectives_sched_commit() (%i)\n", res);
     return res;
   }
 
   res = NBC_Start(handle, schedule);
-  if (NBC_OK != res)
+  if (MPI_SUCCESS != res)
   {
     printf("Error in NBC_Start() (%i)\n", res);
     return res;
@@ -10867,14 +10867,14 @@ static inline int ___collectives_iexscan (const void *sendbuf, void *recvbuf, in
   _mpc_mpi_config()->coll_algorithm_intracomm.exscan(sendbuf, recvbuf, count, datatype, op, comm, MPC_COLL_TYPE_NONBLOCKING, schedule, &info);
 
   res = ___collectives_sched_commit(schedule, &info);
-  if (NBC_OK != res)
+  if (MPI_SUCCESS != res)
   {
     printf("Error in ___collectives_sched_commit() (%i)\n", res);
     return res;
   }
 
   res = NBC_Start(handle, schedule);
-  if (NBC_OK != res)
+  if (MPI_SUCCESS != res)
   {
     printf("Error in NBC_Start() (%i)\n", res);
     return res;
@@ -11265,14 +11265,14 @@ static inline int ___collectives_ibarrier (MPI_Comm comm, NBC_Handle *handle) {
   _mpc_mpi_config()->coll_algorithm_intracomm.barrier(comm, MPC_COLL_TYPE_NONBLOCKING, schedule, &info);
 
   res = ___collectives_sched_commit(schedule, &info);
-  if (NBC_OK != res)
+  if (MPI_SUCCESS != res)
   {
     printf("Error in ___collectives_sched_commit() (%i)\n", res);
     return res;
   }
 
   res = NBC_Start(handle, schedule);
-  if (NBC_OK != res)
+  if (MPI_SUCCESS != res)
   {
     printf("Error in NBC_Start() (%i)\n", res);
     return res;
