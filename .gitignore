@@ -7,6 +7,8 @@ autom4te.cache/*
 *.swo
 **/.pcvs-build/
 **/.pcvs/
+*~
+
 tags
 cscope.*
 compile_commands.json
