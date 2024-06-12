@@ -1,6 +1,7 @@
 #ifndef PEER_H_
 #define PEER_H_
 
+#include "mpc_keywords.h"
 #include <mpc_common_types.h>
 #include <mpc_lowcomm_monitor.h>
 
@@ -22,7 +23,7 @@ int _mpc_lowcomm_peer_teardown();
 * REGISTRATION *
 ****************/
 
-static inline mpc_lowcomm_peer_uid_t _mpc_lowcomm_set_root(uint32_t set_uid)
+__UNUSED__ static inline mpc_lowcomm_peer_uid_t _mpc_lowcomm_set_root(uint32_t set_uid)
 {
 	return mpc_lowcomm_monitor_uid_of(set_uid, 0);
 }
