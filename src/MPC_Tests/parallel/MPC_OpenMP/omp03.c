@@ -20,41 +20,43 @@
 /* #   - CARRIBAULT Patrick patrick.carribault@cea.fr                     # */
 /* #                                                                      # */
 /* ######################################################################## */
+#include "mpc_keywords.h"
+#include "mpcomp_parallel_region.h"
 #include <stdio.h>
-#include <mpcomp_abi.h>
+#include <mpc_omp.h>
+#include <mpc_omp_abi.h>
 #include <assert.h>
 
 int num_threads;
 
-void *
-run (void *arg)
+void
+run (__UNUSED__ void* arg)
 {
-  assert (mpcomp_in_parallel ());
-  assert (mpcomp_get_num_threads () == num_threads);
-  fprintf (stderr, "I am %d out of %d\n", mpcomp_get_thread_num (),
-	   mpcomp_get_num_threads ());
-  return NULL;
+  assert (omp_in_parallel ());
+  assert (mpc_omp_get_num_threads () == num_threads);
+  fprintf (stderr, "I am %d out of %d\n", omp_get_thread_num (),
+	   omp_get_num_threads ());
 }
 
 int
-main (int argc, char **argv)
+main ()
 {
   num_threads = 5;
 
-  mpcomp_set_num_threads (num_threads);
+  omp_set_num_threads (num_threads);
 
-  assert (mpcomp_get_thread_num () == 0);
-  assert (mpcomp_get_num_threads () == 1);
-  assert (mpcomp_in_parallel () == 0);
+  assert (omp_get_thread_num () == 0);
+  assert (omp_get_num_threads () == 1);
+  assert (omp_in_parallel () == 0);
 
   fprintf (stderr, "I am %d out of %d max %d cpus %d\n",
-	   mpcomp_get_thread_num (),
-	   mpcomp_get_num_threads (),
-	   mpcomp_get_max_threads (), mpcomp_get_num_procs ());
+	   omp_get_thread_num (),
+	   omp_get_num_threads (),
+	   omp_get_max_threads (), omp_get_num_procs ());
 
   {
     int shared;
-    __mpcomp_start_parallel_region (-1, run, (void *) &shared);
+    _mpc_omp_start_parallel_region (run, (void *) &shared, -1);
   }
   return 0;
 }

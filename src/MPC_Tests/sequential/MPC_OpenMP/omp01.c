@@ -20,21 +20,22 @@
 /* #   - CARRIBAULT Patrick patrick.carribault@cea.fr                     # */
 /* #                                                                      # */
 /* ######################################################################## */
-#include <mpcomp_abi.h>
+#include "mpc_keywords.h"
+#include "mpcomp_parallel_region.h"
+#include <mpc_omp_abi.h>
 
-void *
-run (void *arg)
+void
+run (__UNUSED__ void *arg)
 {
   int shared = *(int *) arg;
-  printf ("Thread# %d -> shared value = %d\n", mpcomp_get_thread_num (),
+  printf ("Thread# %d -> shared value = %d\n", omp_get_thread_num (),
 	  shared);
-  return NULL;
 }
 
 int
-main (int argc, char **argv)
+main ()
 {
   int shared = 4;
-  __mpcomp_start_parallel_region (-1, run, (void *) &shared);
+  _mpc_omp_start_parallel_region (run, (void *) &shared, -1);
   return 0;
 }

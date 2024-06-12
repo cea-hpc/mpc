@@ -20,46 +20,48 @@
 /* #   - CARRIBAULT Patrick patrick.carribault@cea.fr                     # */
 /* #                                                                      # */
 /* ######################################################################## */
+#include "mpc_keywords.h"
+#include "mpcomp_parallel_region.h"
 #include <stdio.h>
-#include <mpcomp_abi.h>
+#include <mpc_omp_abi.h>
 #include <assert.h>
+#include <unistd.h>
 
 
-void *
-run (void *arg)
+void
+run (__UNUSED__ void *arg)
 {
-  mpc_omp_lock_t *lock;
+  omp_lock_t *lock;
 
-  assert (mpcomp_in_parallel ());
+  assert (omp_in_parallel ());
 
-  lock = (mpc_omp_lock_t *) arg;
+  lock = (omp_lock_t *) arg;
 
-  mpcomp_set_lock (lock);
+  omp_set_lock (lock);
   usleep (30);
-  mpcomp_unset_lock (lock);
-  return NULL;
+  omp_unset_lock (lock);
 }
 
 int
-main (int argc, char **argv)
+main ()
 {
-  assert (mpcomp_get_thread_num () == 0);
-  assert (mpcomp_get_num_threads () == 1);
-  assert (mpcomp_in_parallel () == 0);
+  assert (omp_get_thread_num () == 0);
+  assert (omp_get_num_threads () == 1);
+  assert (omp_in_parallel () == 0);
 
-  __mpcomp_barrier ();
+  mpc_omp_barrier (ompt_sync_region_barrier_implementation);
 
   fprintf (stderr, "I am %d on %d max %d cpus %d\n",
-	   mpcomp_get_thread_num (),
-	   mpcomp_get_num_threads (),
-	   mpcomp_get_max_threads (), mpcomp_get_num_procs ());
+	   omp_get_thread_num (),
+	   omp_get_num_threads (),
+	   omp_get_max_threads (), omp_get_num_procs ());
 
 
   {
-    mpc_omp_lock_t lock;
-    mpcomp_init_lock (&lock);
-    __mpcomp_start_parallel_region (10, run, (void *) &lock);
-    mpcomp_destroy_lock (&lock);
+    omp_lock_t lock;
+    omp_init_lock (&lock);
+    _mpc_omp_start_parallel_region (run, (void *) &lock, 10);
+    omp_destroy_lock (&lock);
   }
 
   fprintf (stderr, "ALL DONE\n");

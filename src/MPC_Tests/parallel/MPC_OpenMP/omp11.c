@@ -20,10 +20,12 @@
 /* #   - CARRIBAULT Patrick patrick.carribault@cea.fr                     # */
 /* #                                                                      # */
 /* ######################################################################## */
+#include "mpc_keywords.h"
+#include "mpcomp_parallel_region.h"
 #include <stdio.h>
 #include <assert.h>
 
-#include <mpcomp_abi.h>
+#include <mpc_omp_abi.h>
 
 /*
    Test of the non-nested static-schedule automatic-chunk-size single 'for'
@@ -35,38 +37,36 @@
 
 #define STRIDE 2
 
-void *
-run (void *arg)
+void
+run (__UNUSED__ void *arg)
 {
-  int from, to;
+  long from, to;
   int i;
 
-  __mpcomp_static_schedule_get_single_chunk (0, 50, STRIDE, &from, &to);
+  mpc_omp_static_schedule_get_single_chunk (0, 50, STRIDE, &from, &to);
 
   for (i = from; i < to; i += STRIDE)
     {
       fprintf (stdout, "(%d) Hello from iteration %d\n",
-	       mpcomp_get_thread_num (), i);
+	       omp_get_thread_num (), i);
     }
-
-  return NULL;
 }
 
 int
-main (int argc, char **argv)
+main ()
 {
-  assert (mpcomp_get_thread_num () == 0);
-  assert (mpcomp_get_num_threads () == 1);
-  assert (mpcomp_in_parallel () == 0);
+  assert (omp_get_thread_num () == 0);
+  assert (omp_get_num_threads () == 1);
+  assert (omp_in_parallel () == 0);
 
   fprintf (stdout, "I am %d on %d max %d cpus %d\n",
-	   mpcomp_get_thread_num (),
-	   mpcomp_get_num_threads (),
-	   mpcomp_get_max_threads (), mpcomp_get_num_procs ());
+	   omp_get_thread_num (),
+	   omp_get_num_threads (),
+	   omp_get_max_threads (), omp_get_num_procs ());
 
 
   {
-    __mpcomp_start_parallel_region (10, run, NULL);
+    _mpc_omp_start_parallel_region (run, NULL, 10);
   }
 
   fprintf (stdout, "ALL DONE\n");

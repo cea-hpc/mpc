@@ -20,56 +20,56 @@
 /* #   - CARRIBAULT Patrick patrick.carribault@cea.fr                     # */
 /* #                                                                      # */
 /* ######################################################################## */
+#include "mpc_keywords.h"
+#include "mpcomp_parallel_region.h"
 #include <stdio.h>
-#include <mpcomp_abi.h>
+#include <mpc_omp_abi.h>
 #include <assert.h>
 
 int num_threads;
 
-void *
-run2 (void *arg)
+void
+run2 (__UNUSED__ void *arg)
 {
-  assert (mpcomp_in_parallel ());
+  assert (omp_in_parallel ());
   fprintf (stderr, "\tI am %d on %d = %d\n",
-	   mpcomp_get_thread_num (), mpcomp_get_num_threads (),
-	   mpcomp_get_num_procs ());
-  return NULL;
+	   omp_get_thread_num (), omp_get_num_threads (),
+	   omp_get_num_procs ());
 }
 
-void *
-run (void *arg)
+void
+run (__UNUSED__ void *arg)
 {
-  assert (mpcomp_in_parallel ());
-  assert (mpcomp_get_num_threads () == num_threads);
-  fprintf (stderr, "I am %d on %d = %d\n", mpcomp_get_thread_num (),
-	   mpcomp_get_num_threads (), mpcomp_get_num_procs ());
+  assert (omp_in_parallel ());
+  assert (omp_get_num_threads () == num_threads);
+  fprintf (stderr, "I am %d on %d = %d\n", omp_get_thread_num (),
+	   omp_get_num_threads (), omp_get_num_procs ());
 
   {
     int shared;
-    __mpcomp_start_parallel_region (-1, run2, (void *) &shared);
+    _mpc_omp_start_parallel_region (run2, (void *) &shared, -1);
   }
-  return NULL;
 }
 
 int
-main (int argc, char **argv)
+main ()
 {
   num_threads = 2;
 
-  mpcomp_set_num_threads (num_threads);
+  omp_set_num_threads (num_threads);
 
-  assert (mpcomp_get_thread_num () == 0);
-  assert (mpcomp_get_num_threads () == 1);
-  assert (mpcomp_in_parallel () == 0);
+  assert (omp_get_thread_num () == 0);
+  assert (omp_get_num_threads () == 1);
+  assert (omp_in_parallel () == 0);
 
   fprintf (stderr, "(S) I am %d on %d max %d cpus %d\n",
-	   mpcomp_get_thread_num (),
-	   mpcomp_get_num_threads (),
-	   mpcomp_get_max_threads (), mpcomp_get_num_procs ());
+	   omp_get_thread_num (),
+	   omp_get_num_threads (),
+	   omp_get_max_threads (), omp_get_num_procs ());
 
   {
     int shared;
-    __mpcomp_start_parallel_region (-1, run, (void *) &shared);
+    _mpc_omp_start_parallel_region (run, (void *) &shared, -1);
   }
   return 0;
 }

@@ -20,43 +20,44 @@
 /* #   - CARRIBAULT Patrick patrick.carribault@cea.fr                     # */
 /* #                                                                      # */
 /* ######################################################################## */
+#include "mpc_keywords.h"
+#include "mpcomp_parallel_region.h"
 #include <stdio.h>
-#include <mpcomp_abi.h>
+#include <mpc_omp_abi.h>
 #include <assert.h>
 
-void *
-run (void *arg)
+void
+run (__UNUSED__ void *arg)
 {
 
   fprintf (stderr, "IN\n");
 
-  assert (mpcomp_in_parallel ());
-  assert (mpcomp_get_num_threads () == 8);
-  fprintf (stderr, "(PAR) I am %d on %d\n", mpcomp_get_thread_num (),
-	   mpcomp_get_num_threads ());
-  __mpcomp_barrier ();
+  assert (omp_in_parallel ());
+  assert (omp_get_num_threads () == 8);
+  fprintf (stderr, "(PAR) I am %d on %d\n", omp_get_thread_num (),
+	   omp_get_num_threads ());
+  mpc_omp_barrier (ompt_sync_region_barrier_implementation);
 
-  fprintf (stderr, "OUT %d\n", mpcomp_get_thread_num ());
-  return NULL;
+  fprintf (stderr, "OUT %d\n", omp_get_thread_num ());
 }
 
 int
-main (int argc, char **argv)
+main ()
 {
-  assert (mpcomp_get_thread_num () == 0);
-  assert (mpcomp_get_num_threads () == 1);
-  assert (mpcomp_in_parallel () == 0);
+  assert (omp_get_thread_num () == 0);
+  assert (omp_get_num_threads () == 1);
+  assert (omp_in_parallel () == 0);
 
-  __mpcomp_barrier ();
+  mpc_omp_barrier (ompt_sync_region_barrier_implementation);
 
   fprintf (stderr, "(SEQ) I am %d on %d max %d cpus %d\n",
-	   mpcomp_get_thread_num (),
-	   mpcomp_get_num_threads (),
-	   mpcomp_get_max_threads (), mpcomp_get_num_procs ());
+	   omp_get_thread_num (),
+	   omp_get_num_threads (),
+	   omp_get_max_threads (), omp_get_num_procs ());
 
   {
     int shared;
-    __mpcomp_start_parallel_region (8, run, (void *) &shared);
+    _mpc_omp_start_parallel_region (run, (void *) &shared, 8);
   }
   fprintf (stderr, "ALL DONE\n");
   return 0;
