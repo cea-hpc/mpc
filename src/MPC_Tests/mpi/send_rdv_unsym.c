@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <mpi.h>
+#include <time.h>
 
 int main(int argc, char** argv) {
 	int process_Rank, size_Of_Cluster;
@@ -16,11 +17,11 @@ int main(int argc, char** argv) {
 	int recv_size = 16388;
 	int *array_to_send = (int *)malloc(send_size*sizeof(int));
 	int *array_to_recv = (int *)malloc(recv_size*sizeof(int));
-	/* Intializes random number generator */
+	/* Initializes random number generator */
 	time_t t;
 	srand((unsigned) time(&t));
 
-	/* Intialize arrays */
+	/* Initialize arrays */
 	for(int i=0; i<send_size; i++) {
 		array_to_send[i] = rand();
 	}
