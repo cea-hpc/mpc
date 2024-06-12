@@ -5,6 +5,8 @@ autom4te.cache/*
 /mpc_config.h.in~
 *.swp
 *.swo
+**/.pcvs-build/
+**/.pcvs/
 tags
 cscope.*
 compile_commands.json
