@@ -1082,6 +1082,7 @@ static inline int __read_environ(mpc_conf_env_manager_t *envm)
 	if(!fprocenv)
 	{
 		perror("fopen");
+		free(envdat);
 		return 1;
 	}
 
@@ -1700,6 +1701,7 @@ static inline mpc_conf_config_type_t *__create_container(char *name, char *separ
 	{
 		/* In this case we refer to the root elem
 		 * as there was no following tokens */
+		free(to_search);
 		return type;
 	}
 
