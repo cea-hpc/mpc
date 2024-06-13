@@ -25,4 +25,5 @@ repos:
 exclude: |
   (?x)
     src/MPC_IO/src/romio|
+    src/MPC_Common/include/mpc_common_profiler_keys.h|
     \.(m4|in|3in|f90)$
