@@ -596,7 +596,7 @@ int lcp_rndv_offload_process_rts(lcp_request_t *rreq)
                 break;
         }
 
-        lcp_request_send(rndv_req);
+        rc = lcp_request_send(rndv_req);
 err:
         return rc;
 }
