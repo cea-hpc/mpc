@@ -31,7 +31,7 @@ rrrmpc_arch_get_timestamp_gettimeofday ()
 
 
 int
-main(int argc, char *argv[])
+main()
 {
     char func1_stack[16384];
 
@@ -42,14 +42,14 @@ main(int argc, char *argv[])
 
     while(i < MAX_ITER){
     i++;
-    if (getcontext(&uctx_func1) == -1)
+    if (mpc__getcontext(&uctx_func1) == -1)
         handle_error("getcontext");
     uctx_func1.uc_stack.ss_sp = func1_stack;
     uctx_func1.uc_stack.ss_size = sizeof(func1_stack);
     uctx_func1.uc_link = &uctx_main;
-    makecontext(&uctx_func1, func1, 0);
+    mpc__makecontext(&uctx_func1, func1, 0);
 
-    if (swapcontext(&uctx_main, &uctx_func1) == -1)
+    if (mpc__swapcontext(&uctx_main, &uctx_func1) == -1)
         handle_error("swapcontext");
     }
     end = rrrmpc_arch_get_timestamp_gettimeofday();
