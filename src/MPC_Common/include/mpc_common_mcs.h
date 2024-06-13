@@ -42,6 +42,8 @@ typedef struct
 	OPA_ptr_t next;
 } sctk_mcslock_ticket_t;
 
+// NOLINTBEGIN(clang-diagnostic-unused-function)
+
 static inline void sctk_mcslock_init_ticket( sctk_mcslock_ticket_t *ticket )
 {
 	OPA_store_ptr( &( ticket->next ), NULL );
@@ -129,6 +131,8 @@ static inline void sctk_mcslock_init( sctk_mcslock_t *lock )
 {
 	OPA_store_ptr( lock, NULL );
 }
+
+// NOLINTEND(clang-diagnostic-unused-function)
 
 
 #ifdef __cplusplus
