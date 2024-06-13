@@ -70,6 +70,7 @@ struct mpc_lowcomm_rdma_window
 /* Window Counters                                                      */
 /************************************************************************/
 
+// NOLINTBEGIN(clang-diagnostic-unused-function)
 static inline void mpc_lowcomm_rdma_window_inc_outgoing(struct mpc_lowcomm_rdma_window *win)
 {
 	OPA_incr_int(&win->outgoing_emulated_rma);
@@ -250,6 +251,9 @@ static inline void mpc_lowcomm_rdma_window_emulated_CAS_RDMA_init(struct mpc_low
 	memcpy(fcas->comp, cmp, fcas->rdma.size);
 	memcpy(fcas->new, new, fcas->rdma.size);
 }
+
+// NOLINTEND(clang-diagnostic-unused-function)
+
 
 /************************************************************************/
 /* Control Messages Handlers                                            */
