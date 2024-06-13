@@ -1,3 +1,4 @@
+#include "mpc_keywords.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
@@ -34,7 +35,7 @@ typedef struct gateway {
         request_t     request;
 } gateway_t;
 
-int recv_completion(size_t sent, void *user_data) {
+int recv_completion(__UNUSED__ size_t sent, void *user_data) {
         struct request *req = (struct request *)user_data;
 
         printf("req=%p\n", req);
@@ -44,8 +45,8 @@ int recv_completion(size_t sent, void *user_data) {
 }
 
 #define AM_ID 1
-int am_handler(void *arg, void *user_hdr, size_t hdr_size,
-               void *data, size_t length,
+int am_handler(void *arg, const void *user_hdr, __UNUSED__ const size_t hdr_size,
+               void *data, const size_t length,
                lcp_am_recv_param_t *am_param)
 {
         int rc = 0;
@@ -90,8 +91,8 @@ int main(int argc, char** argv) {
         gateway_t gateway;
         hdr_request_t hdr;
 	mpc_lowcomm_set_uid_t suid;
-        int src_tid, dest_tid, my_tid;
-	mpc_lowcomm_peer_uid_t src_uid, dest_uid, my_uid;
+        int dest_tid, my_tid;
+	mpc_lowcomm_peer_uid_t dest_uid;
 	int check = 1;
 
 	if (argc != 2) {
@@ -125,13 +126,9 @@ int main(int argc, char** argv) {
         my_tid = mpc_lowcomm_get_rank();
 
         if (my_tid == 0) {
-                src_tid  = mpc_lowcomm_get_rank();
-                src_uid  = mpc_lowcomm_monitor_get_uid();
                 dest_tid = 1;
                 dest_uid = mpc_lowcomm_monitor_uid_of(suid, 0);
         } else {
-                src_tid = 0;
-                src_uid = mpc_lowcomm_monitor_uid_of(suid, 0);
                 dest_uid = mpc_lowcomm_monitor_get_uid();
                 dest_tid  = mpc_lowcomm_get_rank();
         }
