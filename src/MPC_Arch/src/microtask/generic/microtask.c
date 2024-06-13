@@ -128,4 +128,4 @@ double     __kmp_test_then_add_real32( __UNUSED__ kmp_real32 *a, __UNUSED__ kmp_
 double     __kmp_test_then_add_real64( __UNUSED__ kmp_real64 *a, __UNUSED__ kmp_real64 b){assert(0);}
 
 extern  void __sctk_cpu_relax ();
-int __kmp_x86_pause(){sctk_cpu_relax(); return 0;}
+int __kmp_x86_pause(){__sctk_cpu_relax(); return 0;}
