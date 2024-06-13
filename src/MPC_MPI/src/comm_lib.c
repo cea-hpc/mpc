@@ -2605,6 +2605,16 @@ int _mpc_cl_waitallp(mpc_lowcomm_msg_count_t count, mpc_lowcomm_request_t *parra
 
 		if(flag == 1)
 		{
+			// Initialize statuses before returning
+			for(int i = 0; i < count; i++)
+			{
+				if(array_of_statuses != NULL)
+				{
+					mpc_lowcomm_request_t *request = parray_of_requests[i];
+					mpc_lowcomm_status_t *status = &(array_of_statuses[i]);
+					mpc_lowcomm_commit_status_from_request(request, status);
+				}
+			}
 			MPC_ERROR_SUCCESS();
 		}
 
