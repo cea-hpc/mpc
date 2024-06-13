@@ -19,7 +19,8 @@
 /* #   - PERACHE Marc marc.perache@cea.fr                                 # */
 /* #                                                                      # */
 /* ######################################################################## */
-#include "mpc.h"
+#include "mpc_lowcomm.h"
+#include <mpi.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -30,7 +31,7 @@ int is_printing = 1;
 #define mprintf if(is_printing) fprintf
 
 void
-run (void *arg)
+run ()
 {
   MPI_Comm my_com;
   int my_rank;
@@ -55,7 +56,7 @@ run (void *arg)
       mpc_mpi_cl_add_pack (msg, 1, &deb, &fin, MPI_CHAR, &req);
       mpc_mpi_cl_isend_pack ((my_size - 1), 0, my_com, &req);
 
-      mpc_mpi_cl_wait_pending (my_com);
+      mpc_lowcomm_wait (&req, NULL);
       mprintf (stderr, "Send msg = |%s|\n", msg);
     }
   else
@@ -68,7 +69,7 @@ run (void *arg)
 	  mpc_mpi_cl_add_pack (msg, 1, &deb, &fin, MPI_CHAR, &req);
 	  mpc_mpi_cl_irecv_pack (0, 0, my_com, &req);
 
-	  mpc_mpi_cl_wait_pending (my_com);
+	  mpc_lowcomm_wait (&req, NULL);
 	  mprintf (stderr, "Recv msg = |%s|\n", msg);
 	  assert (strcmp (msg, "it works") == 0);
 	}
@@ -88,7 +89,7 @@ run (void *arg)
       mpc_mpi_cl_add_pack (msg, 1, beg, end, MPI_CHAR, &req);
       mpc_mpi_cl_isend_pack ((my_size - 1), 0, my_com, &req);
 
-      mpc_mpi_cl_wait_pending (my_com);
+      mpc_lowcomm_wait (&req, NULL);
       mprintf (stderr, "All done %d\n", my_rank);
     }
   else
@@ -107,7 +108,7 @@ run (void *arg)
 	  mpc_mpi_cl_add_pack (msg, 2, beg, end, MPI_CHAR, &req);
 	  mpc_mpi_cl_irecv_pack (0, 0, my_com, &req);
 
-	  mpc_mpi_cl_wait_pending (my_com);
+	  mpc_lowcomm_wait (&req, NULL);
 	  mprintf (stderr, "msg = %s\n", msg);
 	  assert (strcmp (msg, "orksit w") == 0);
 	  mprintf (stderr, "All done %d\n", my_rank);
@@ -126,7 +127,7 @@ main (int argc, char **argv)
   if (printing != NULL)
     is_printing = 0;
 
-  run (NULL);
+  run ();
   MPI_Finalize();
   return 0;
 }

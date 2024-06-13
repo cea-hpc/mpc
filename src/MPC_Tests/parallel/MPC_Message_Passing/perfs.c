@@ -19,7 +19,7 @@
 /* #   - PERACHE Marc marc.perache@cea.fr                                 # */
 /* #                                                                      # */
 /* ######################################################################## */
-#include "mpc.h"
+#include <mpi.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -71,13 +71,13 @@ main (int argc, char **argv)
   char *msg;
   int *sendbuf;
   int *recvbuf;
-  struct sigaction sigparam;
 
   msg = malloc (max_tab_size);
   sendbuf = malloc (max_tab_size * sizeof (int));
   recvbuf = malloc (max_tab_size * sizeof (int));
 
-#ifdef __mpc__H
+#ifdef MPC_MPI_MPC_CL_H
+  struct sigaction sigparam;
   sigparam.sa_flags = SA_SIGINFO;
   sigparam.sa_sigaction = sctk_require_page_handler;
   sigemptyset (&sigparam.sa_mask);

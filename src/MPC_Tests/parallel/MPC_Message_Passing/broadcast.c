@@ -19,7 +19,7 @@
 /* #   - PERACHE Marc marc.perache@cea.fr                                 # */
 /* #                                                                      # */
 /* ######################################################################## */
-#include "mpc.h"
+#include <mpi.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -30,15 +30,14 @@ int is_printing = 1;
 #define mprintf if(is_printing) fprintf
 
 void
-run (void *arg)
+run ()
 {
-  int i;
   mpc_lowcomm_communicator_t my_com;
   int my_rank;
   char msg[50];
   sprintf (msg, "nothing");
-  my_com = MPC_COMM_WORLD;
-  MPC_Comm_rank (my_com, &my_rank);
+  my_com = MPI_COMM_WORLD;
+  MPI_Comm_rank (my_com, &my_rank);
 
 
   if (my_rank == 0)
@@ -46,57 +45,57 @@ run (void *arg)
       sprintf (msg, "it works");
     }
 
-  mprintf (stderr, "Avant broadcast %d\n", my_rank);
-  MPC_Bcast (msg, 40, MPC_CHAR, 0, my_com);
-  mprintf (stderr, "Apres broadcast %d\n", my_rank);
-  mprintf (stderr, "RECVED %d msg = %s\n", my_rank, msg);
+  mprintf (stderr, "Before broadcast %d\n", my_rank);
+  MPI_Bcast (msg, 40, MPI_CHAR, 0, my_com);
+  mprintf (stderr, "After broadcast %d\n", my_rank);
+  mprintf (stderr, "RECEIVED %d msg = %s\n", my_rank, msg);
   assert (strcmp (msg, "it works") == 0);
 
   msg[1] = 't';
-  MPC_Bcast (msg, 40, MPC_CHAR, 0, my_com);
+  MPI_Bcast (msg, 40, MPI_CHAR, 0, my_com);
   msg[1] = 't';
-  MPC_Bcast (msg, 40, MPC_CHAR, 0, my_com);
+  MPI_Bcast (msg, 40, MPI_CHAR, 0, my_com);
   msg[1] = 't';
-  MPC_Bcast (msg, 40, MPC_CHAR, 0, my_com);
+  MPI_Bcast (msg, 40, MPI_CHAR, 0, my_com);
   msg[1] = 't';
-  MPC_Bcast (msg, 40, MPC_CHAR, 0, my_com);
+  MPI_Bcast (msg, 40, MPI_CHAR, 0, my_com);
   msg[1] = 't';
-  MPC_Bcast (msg, 40, MPC_CHAR, 0, my_com);
+  MPI_Bcast (msg, 40, MPI_CHAR, 0, my_com);
   msg[1] = 't';
-  MPC_Bcast (msg, 40, MPC_CHAR, 0, my_com);
+  MPI_Bcast (msg, 40, MPI_CHAR, 0, my_com);
   msg[1] = 't';
-  MPC_Bcast (msg, 40, MPC_CHAR, 0, my_com);
+  MPI_Bcast (msg, 40, MPI_CHAR, 0, my_com);
   msg[1] = 't';
-  MPC_Bcast (msg, 40, MPC_CHAR, 0, my_com);
+  MPI_Bcast (msg, 40, MPI_CHAR, 0, my_com);
   msg[1] = 't';
-  MPC_Bcast (msg, 40, MPC_CHAR, 0, my_com);
+  MPI_Bcast (msg, 40, MPI_CHAR, 0, my_com);
   msg[1] = 't';
-  MPC_Bcast (msg, 40, MPC_CHAR, 0, my_com);
+  MPI_Bcast (msg, 40, MPI_CHAR, 0, my_com);
   msg[1] = 't';
-  MPC_Bcast (msg, 40, MPC_CHAR, 0, my_com);
+  MPI_Bcast (msg, 40, MPI_CHAR, 0, my_com);
   msg[1] = 't';
-  MPC_Bcast (msg, 40, MPC_CHAR, 0, my_com);
+  MPI_Bcast (msg, 40, MPI_CHAR, 0, my_com);
   msg[1] = 't';
-  MPC_Bcast (msg, 40, MPC_CHAR, 0, my_com);
+  MPI_Bcast (msg, 40, MPI_CHAR, 0, my_com);
   msg[1] = 't';
-  MPC_Bcast (msg, 40, MPC_CHAR, 0, my_com);
+  MPI_Bcast (msg, 40, MPI_CHAR, 0, my_com);
   msg[1] = 't';
-  MPC_Bcast (msg, 40, MPC_CHAR, 0, my_com);
+  MPI_Bcast (msg, 40, MPI_CHAR, 0, my_com);
 
   sprintf (msg, "nothing");
   if (my_rank == 0)
     {
       sprintf (msg, "it works");
     }
-  MPC_Bcast (msg, 40, MPC_CHAR, 0, my_com);
+  MPI_Bcast (msg, 40, MPI_CHAR, 0, my_com);
 
   mprintf (stderr, "%d msg = %s\n", my_rank, msg);
   assert (strcmp (msg, "it works") == 0);
   sprintf (msg, "nothing");
 
   sprintf (msg, "nothing");
-  my_com = MPC_COMM_WORLD;
-  MPC_Comm_rank (my_com, &my_rank);
+  my_com = MPI_COMM_WORLD;
+  MPI_Comm_rank (my_com, &my_rank);
 
 
   if (my_rank == 1)
@@ -104,16 +103,16 @@ run (void *arg)
       sprintf (msg, "it works");
     }
 
-  mprintf (stderr, "Avant broadcast %d\n", my_rank);
-  MPC_Bcast (msg, 40, MPC_CHAR, 1, my_com);
-  mprintf (stderr, "Apres broadcast %d\n", my_rank);
-  mprintf (stderr, "RECVED %d msg = %s\n", my_rank, msg);
+  mprintf (stderr, "Before broadcast %d\n", my_rank);
+  MPI_Bcast (msg, 40, MPI_CHAR, 1, my_com);
+  mprintf (stderr, "After broadcast %d\n", my_rank);
+  mprintf (stderr, "RECEIVED %d msg = %s\n", my_rank, msg);
   assert (strcmp (msg, "it works") == 0);
 
 }
 
 int
-main (int argc, char **argv)
+main ()
 {
   char *printing;
 
@@ -121,6 +120,6 @@ main (int argc, char **argv)
   if (printing != NULL)
     is_printing = 0;
 
-  run (NULL);
+  run ();
   return 0;
 }

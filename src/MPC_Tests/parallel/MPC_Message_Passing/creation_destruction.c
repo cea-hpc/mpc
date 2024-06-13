@@ -19,16 +19,17 @@
 /* #   - PERACHE Marc marc.perache@cea.fr                                 # */
 /* #                                                                      # */
 /* ######################################################################## */
-#include "mpc.h"
+#include <mpi.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <unistd.h>
 
 int is_printing = 1;
 
 #define mprintf if(is_printing) fprintf
 
 void
-run (void *arg)
+run ()
 {
   mpc_lowcomm_communicator_t my_com;
   int my_rank;
@@ -36,11 +37,11 @@ run (void *arg)
   my_com = MPC_COMM_WORLD;
   MPI_Comm_rank (my_com, &my_rank);
   gethostname (name, 4095);
-  mprintf (stderr, "coucou from %d %s\n", my_rank, name);
+  mprintf (stderr, "Rank: %d, name: %s\n", my_rank, name);
 }
 
 int
-main (int argc, char **argv)
+main ()
 {
   char *printing;
 
@@ -48,6 +49,6 @@ main (int argc, char **argv)
   if (printing != NULL)
     is_printing = 0;
 
-  run (NULL);
+  run ();
   return 0;
 }

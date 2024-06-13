@@ -19,9 +19,11 @@
 /* #   - PERACHE Marc marc.perache@cea.fr                                 # */
 /* #                                                                      # */
 /* ######################################################################## */
-#include "mpc.h"
+#include <mpi.h>
+#include "mpc_lowcomm_communicator.h"
 #include <stdlib.h>
 #include <stdio.h>
+#include <sys/time.h>
 
 int is_printing = 1;
 
@@ -42,7 +44,7 @@ rrrmpc_arch_get_timestamp_gettimeofday ()
 #define NB_BARRIER 100
 
 int
-main (int argc, char **argv)
+main ()
 {
   char *printing;
   int my_rank;
@@ -55,19 +57,19 @@ main (int argc, char **argv)
     is_printing = 0;
 
   my_com = MPC_COMM_WORLD;
-  MPC_Comm_rank (my_com, &my_rank);
-  MPC_Barrier (my_com);
-  mprintf (stderr, "Avant barrier init %d\n", my_rank);
-  MPC_Barrier (my_com);
-  mprintf (stderr, "Avant barriers %d\n", my_rank);
+  MPI_Comm_rank (my_com, &my_rank);
+  MPI_Barrier (my_com);
+  mprintf (stderr, "Before barrier init %d\n", my_rank);
+  MPI_Barrier (my_com);
+  mprintf (stderr, "Before barriers %d\n", my_rank);
 
   begin = rrrmpc_arch_get_timestamp_gettimeofday();
   for (i=0; i<NB_BARRIER; ++i)
   {
-    MPC_Barrier (my_com);
+    MPI_Barrier (my_com);
   }
   end = rrrmpc_arch_get_timestamp_gettimeofday();
-  mprintf (stderr, "Apres barriers %d\n", my_rank);
+  mprintf (stderr, "After barriers %d\n", my_rank);
 
   if (my_rank == 0)
     mprintf (stderr, "Barrier total time %f. Mean time %f\n", end-begin, (end-begin) / NB_BARRIER);

@@ -19,7 +19,7 @@
 /* #   - PERACHE Marc marc.perache@cea.fr                                 # */
 /* #                                                                      # */
 /* ######################################################################## */
-#include "mpc.h"
+#include <mpi.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -47,7 +47,7 @@ rrrmpc_arch_get_timestamp_gettimeofday ()
 void
 message (int my_rank, int my_size, char *msg, size_t size, size_t iters)
 {
-  int i;
+  size_t i;
   double start;
   double end;
   double t;
@@ -136,7 +136,7 @@ sctk_require_page_handler (int signo, siginfo_t * info, void *context)
 {
   static mpc_thread_mutex_t lock = MPI_THREAD_MUTEX_INITIALIZER;
   mpc_thread_mutex_lock (&lock);
-  fprintf (stderr, "Erreure de segmentation\n");
+  fprintf (stderr, "Handler caught segmentation fault\n");
   mpc_common_debug_abort ();
   mpc_thread_mutex_unlock (&lock);
 }
@@ -145,20 +145,17 @@ sctk_require_page_handler (int signo, siginfo_t * info, void *context)
 int
 main (int argc, char **argv)
 {
-  int i;
-  double start, end;
   int my_rank;
   int my_size;
   char *msg;
-  size_t size;
-  struct sigaction sigparam;
 
   msg = malloc (max_tab_size);
   memset (msg, 0, max_tab_size);
 
 /*   sleep(150); */
 
-#ifdef __mpc__H
+#ifdef MPC_MPI_MPC_CL_H
+  struct sigaction sigparam;
   sigparam.sa_flags = SA_SIGINFO;
   sigparam.sa_sigaction = sctk_require_page_handler;
   sigemptyset (&sigparam.sa_mask);
@@ -174,7 +171,7 @@ main (int argc, char **argv)
   message (my_rank, my_size, msg, 1, 100);
   return 0;
 #else
-  for (size = 1; size < 1024 * 1024; size *= 2)
+  for (size_t size = 1; size < 1024 * 1024; size *= 2)
     {
       message (my_rank, my_size, msg, size, 10000);
     }

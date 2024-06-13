@@ -19,7 +19,7 @@
 /* #   - PERACHE Marc marc.perache@cea.fr                                 # */
 /* #                                                                      # */
 /* ######################################################################## */
-#include "mpc.h"
+#include <mpi.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -28,12 +28,13 @@
 int is_printing = 1;
 
 #define mprintf if(is_printing) fprintf
+#define REQUEST_COUNT 2
 
 void
-run (void *arg)
+run ()
 {
   MPI_Comm my_com;
-  MPI_Request req, req2;
+  MPI_Request reqs[2];
   int my_rank;
   char msg[50];
   char msg2[50];
@@ -48,17 +49,17 @@ run (void *arg)
     {
       sprintf (msg, "it works 1");
       sprintf (msg2, "it works 2");
-      MPI_Isend (msg, 40, MPI_CHAR, 1, 0, my_com, &req);
-      MPI_Isend (msg2, 40, MPI_CHAR, 1, 1, my_com, &req2);
-      mpc_mpi_cl_wait_pending (my_com);
+      MPI_Isend (msg, 40, MPI_CHAR, 1, 0, my_com, &reqs[0]);
+      MPI_Isend (msg2, 40, MPI_CHAR, 1, 1, my_com, &reqs[1]);
+      MPI_Waitall (REQUEST_COUNT, reqs, NULL);
     }
   else
     {
       if (my_rank == 1)
 	{
-	  MPI_Irecv (msg, 40, MPI_CHAR, 0, 0, my_com, &req);
-	  MPI_Irecv (msg2, 40, MPI_CHAR, 0, 1, my_com, &req2);
-	  mpc_mpi_cl_wait_pending (my_com);
+	  MPI_Irecv (msg, 40, MPI_CHAR, 0, 0, my_com, &reqs[0]);
+	  MPI_Irecv (msg2, 40, MPI_CHAR, 0, 1, my_com, &reqs[1]);
+      MPI_Waitall (REQUEST_COUNT, reqs, NULL);
 	  mprintf (stderr, "msg = %s\n", msg);
 	  assert (strcmp (msg2, "it works 2") == 0);
 	  mprintf (stderr, "msg2 = %s\n", msg2);
@@ -78,7 +79,7 @@ main (int argc, char **argv)
   if (printing != NULL)
     is_printing = 0;
 
-  run (NULL);
+  run ();
   MPI_Finalize();
   return 0;
 }

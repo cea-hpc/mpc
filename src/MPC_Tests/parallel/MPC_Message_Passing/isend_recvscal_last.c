@@ -19,18 +19,19 @@
 /* #   - PERACHE Marc marc.perache@cea.fr                                 # */
 /* #                                                                      # */
 /* ######################################################################## */
-#include "mpc.h"
+#include <mpi.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
+#include <unistd.h>
 
 int is_printing = 1;
 
 #define mprintf if(is_printing) fprintf
 
 void
-run (void *arg)
+run ()
 {
   MPI_Comm my_com;
   MPI_Request req, req2;
@@ -53,7 +54,7 @@ run (void *arg)
       mprintf (stderr, "init msg = %s\n", msg);
       MPI_Isend (msg, 40, MPI_CHAR, (my_size - 1), 0, my_com, &req);
       mprintf (stderr, "init msg = %s %p\n", msg, msg);
-      mpc_mpi_cl_wait_pending (my_com);
+      MPI_Wait (&req, NULL);
       mprintf (stderr, "init msg wait done = %s done \n", msg);
     }
   else
@@ -64,7 +65,7 @@ run (void *arg)
 	  mprintf (stderr, "recv %d to %d\n", 0, (my_size - 1));
 	  mprintf (stderr, "msg = %s\n", msg);
 	  MPI_Irecv (msg, 40, MPI_CHAR, 0, 0, my_com, &req);
-	  mpc_mpi_cl_wait_pending (my_com);
+      MPI_Wait (&req, NULL);
 	  mprintf (stderr, "msg recv done = %s\n", msg);
 	  assert (strcmp (msg, "it works") == 0);
 	}
@@ -79,7 +80,7 @@ run (void *arg)
       mprintf (stderr, "init msg = %s\n", msg);
       MPI_Isend (msg, 40, MPI_CHAR, (my_size - 1), 1, my_com, &req2);
       mprintf (stderr, "init msg = %s\n", msg);
-      mpc_mpi_cl_wait_pending (my_com);
+      MPI_Wait (&req2, NULL);
       mprintf (stderr, "init msg wait done 2 = %s done \n", msg);
     }
   else
@@ -89,7 +90,7 @@ run (void *arg)
 	  mprintf (stderr, "recv %d to %d 2\n", 0, (my_size - 1));
 	  mprintf (stderr, "msg = %s\n", msg);
 	  MPI_Irecv (msg, 40, MPI_CHAR, 0, 1, my_com, &req2);
-	  mpc_mpi_cl_wait_pending (my_com);
+      MPI_Wait (&req2, NULL);
 	  mprintf (stderr, "msg recv done = %s\n", msg);
 	  assert (strcmp (msg, "it works2") == 0);
 	}
@@ -107,7 +108,7 @@ main (int argc, char **argv)
   if (printing != NULL)
     is_printing = 0;
 
-  run (NULL);
+  run ();
   mprintf (stderr, "ALL DONE\n");
   MPI_Finalize();
   return 0;

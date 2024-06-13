@@ -19,8 +19,12 @@
 /* #   - PERACHE Marc marc.perache@cea.fr                                 # */
 /* #                                                                      # */
 /* ######################################################################## */
+#include "mpc_common_rank.h"
+#include "mpc_thread_accessor.h"
+#include "mpc_threads_config.h"
 #include <stdio.h>
 #include <mpc.h>
+#include <mpi.h>
 
 
 static int *_is_Master;
@@ -38,30 +42,30 @@ init ()
 
 
   int size;
-  MPC_Comm_size (MPC_COMM_WORLD, &size);
+  MPI_Comm_size (MPI_COMM_WORLD, &size);
   mpc_thread_mutex_lock (&lock);
   if (done == 0)
     {
       done = 1;
       is_master = 1;
-      MPC_Comm_rank (MPC_COMM_WORLD, &root);
+      MPI_Comm_rank (MPI_COMM_WORLD, &root);
       _is_Master = (int *) calloc (size, sizeof (int));
       temp = (int *) calloc (size, sizeof (int));
       printf (" root = %d\n", root);
     }
   mpc_thread_mutex_unlock (&lock);
 
-  MPC_Comm_rank (MPC_COMM_WORLD, &RANK);
-  MPC_Process_rank (&process_rank);
+  MPI_Comm_rank (MPI_COMM_WORLD, &RANK);
+  process_rank = mpc_common_get_process_rank();
   printf (" RANK = %d process_rank = %d\n", RANK, process_rank);
-  MPC_Comm_split (MPC_COMM_WORLD, is_master, process_rank, &comm);
-  printf ("fin de MPC_Comm_split %d \n", RANK);
+  MPI_Comm_split (MPI_COMM_WORLD, is_master, process_rank, &comm);
+  printf ("end of MPI_Comm_split %d \n", RANK);
 
   if (is_master == 1)
     {
       int rank;
 
-      MPC_Comm_rank (comm, &rank);
+      MPI_Comm_rank (comm, &rank);
       if (rank == 0)
 	{
 	  if (rank == 0)
@@ -70,9 +74,9 @@ init ()
 	    temp[RANK] = 1;
 	}
     }
-  MPC_Reduce (temp, _is_Master, size, MPC_INT, MPC_SUM, 0, MPC_COMM_WORLD);
-  MPC_Bcast (_is_Master, size, MPC_INT, 0, MPC_COMM_WORLD);
-  MPC_Barrier (MPC_COMM_WORLD);
+  MPI_Reduce (temp, _is_Master, size, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+  MPI_Bcast (_is_Master, size, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Barrier (MPI_COMM_WORLD);
   if (RANK == 0)
     {
       for (i = 0; i < size; i++)
@@ -80,19 +84,19 @@ init ()
       printf ("\n");
     }
 
-  MPC_Comm_free (&comm);
+  MPI_Comm_free (&comm);
 }
 
 int
 main (int argc, char **argv)
 {
 
-  MPC_Init (&argc, &argv);
+  MPI_Init (&argc, &argv);
 
 
 
   init ();
 
-  MPC_Finalize ();
+  MPI_Finalize ();
   return 0;
 }

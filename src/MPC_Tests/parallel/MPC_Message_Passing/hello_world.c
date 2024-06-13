@@ -21,7 +21,10 @@
 /* #                                                                      # */
 /* ######################################################################## */
 #include <stdio.h>
+#include <mpi.h>
 #include <mpc.h>
+#include <unistd.h>
+
 
 int
 main (int argc, char **argv)

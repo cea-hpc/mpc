@@ -20,6 +20,8 @@
 /* #                                                                      # */
 /* ######################################################################## */
 #include "mpc.h"
+#include "mpc_keywords.h"
+#include <mpi.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -37,7 +39,7 @@ sctk_require_page_handler (int signo, siginfo_t * info, void *context)
 {
   static mpc_thread_mutex_t lock = MPI_THREAD_MUTEX_INITIALIZER;
   mpc_thread_mutex_lock (&lock);
-  fprintf (stderr, "Erreure de segmentation\n");
+  fprintf (stderr, "Handler caught segmentation fault\n");
   mpc_common_debug_abort ();
   mpc_thread_mutex_unlock (&lock);
 }
@@ -62,7 +64,7 @@ rrrmpc_arch_get_timestamp_gettimeofday ()
 void
 message (int my_rank, int my_size, char *msg, size_t size, size_t iters)
 {
-  int i;
+  size_t i;
   double start;
   double end;
   MPI_Barrier (MPC_COMM_WORLD);
@@ -112,15 +114,14 @@ message (int my_rank, int my_size, char *msg, size_t size, size_t iters)
 int
 main (int argc, char **argv)
 {
-  int i;
-  double start, end;
   int my_rank;
   int my_size;
   char *msg;
   size_t size;
+
+#ifdef MPC_MPI_MPC_CL_H
   struct sigaction sigparam;
 
-#ifdef __mpc__H
   sigparam.sa_flags = SA_SIGINFO;
   sigparam.sa_sigaction = sctk_require_page_handler;
   sigemptyset (&sigparam.sa_mask);

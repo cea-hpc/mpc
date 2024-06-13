@@ -19,7 +19,7 @@
 /* #   - PERACHE Marc marc.perache@cea.fr                                 # */
 /* #                                                                      # */
 /* ######################################################################## */
-#include "mpc.h"
+#include <mpi.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -30,7 +30,7 @@ int is_printing = 1;
 #define mprintf if(is_printing) fprintf
 
 void
-run (void *arg)
+run ()
 {
   mpc_lowcomm_communicator_t my_com;
   int my_rank;
@@ -91,7 +91,7 @@ main (int argc, char **argv)
   if (printing != NULL)
     is_printing = 0;
 
-  run (NULL);
+  run ();
 
   MPI_Finalize();
 
