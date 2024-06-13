@@ -162,7 +162,7 @@ int mpc_lowcomm_commit_status_from_request(mpc_lowcomm_request_t *request,
 	{
 		mpc_lowcomm_status_t static_status;
 
-		/* You must provide a valid status to the querry function */
+		/* You must provide a valid status to the query function */
 		if(status == MPC_LOWCOMM_STATUS_NULL)
 		{
 			status = &static_status;
