@@ -39,6 +39,8 @@ int recv_completion(size_t sent, void *user_data) {
 
         printf("req=%p\n", req);
         req->completion_flag = 1;
+
+		return 0;
 }
 
 #define AM_ID 1
