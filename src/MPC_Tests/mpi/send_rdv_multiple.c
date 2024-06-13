@@ -16,11 +16,11 @@ int main(int argc, char** argv) {
 	int size = 32776;
 	int *array_to_send = (int *)malloc(size*sizeof(int));
 	int *array_to_recv = (int *)malloc(size*sizeof(int));
-	/* Intializes random number generator */
+	/* Initializes random number generator */
 	time_t t;
 	srand((unsigned) time(&t));
 
-	/* Intialize arrays */
+	/* Initialize arrays */
 	for(int i=0; i<size; i++) {
 		array_to_send[i] = rand();
 		array_to_recv[i] = 0;
@@ -32,10 +32,10 @@ int main(int argc, char** argv) {
 				if (j != i)
 					MPI_Send(array_to_send, size, MPI_INT, j, 1, MPI_COMM_WORLD);
 			}
-			printf("Process %d send %d to others\n", process_Rank, size);
+			printf("Process %d sent %d to others\n", process_Rank, size);
 		} else {
 			MPI_Recv(array_to_recv, size, MPI_INT, i, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-			printf("Process %d recved %d to others\n", process_Rank, size);
+			printf("Process %d received %d to others\n", process_Rank, size);
 		}
 	}
 
