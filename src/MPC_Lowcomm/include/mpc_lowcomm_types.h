@@ -143,7 +143,10 @@ typedef struct
 } mpc_lowcomm_status_t;
 
 #define MPC_LOWCOMM_STATUS_NULL    NULL
-#define MPC_LOWCOMM_STATUS_INIT    { MPC_ANY_SOURCE, MPC_ANY_TAG, MPC_LOWCOMM_SUCCESS, 0, 0 }
+#define MPC_LOWCOMM_STATUS_INIT\
+	/* NOLINTNEXTLINE(clang-diagnostic-missing-field-initializers) */\
+	{ MPC_ANY_SOURCE, MPC_ANY_TAG, MPC_LOWCOMM_SUCCESS, 0, 0 }
+
 
 /************
 * REQUESTS *
