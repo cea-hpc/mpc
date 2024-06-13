@@ -351,6 +351,8 @@ struct lcp_request {
 #define lcp_container_put(_ctnr) \
         mpc_mpool_push(_ctnr);
 
+// NOLINTBEGIN(clang-diagnostic-unused-function)
+
 static inline void lcp_request_reset(lcp_request_t *req)
 {
         req->flags = 0;
@@ -400,6 +402,8 @@ static inline int lcp_request_send(lcp_request_t *req)
         }
         return rc;
 }
+
+// NOLINTEND(clang-diagnostic-unused-function)
 
 void lcp_request_storage_init();
 void lcp_request_storage_release();
