@@ -2728,21 +2728,6 @@ PROBE(MPC_Open_pack,MPC_PACK,MPC_Open_pack)
 
 PROBE(MPC_RANK,MPC,MPC rank and context)
 
-PROBE(MPC_Node_number,MPC_RANK,MPC_Node_number)
-
-PROBE(MPC_Node_rank,MPC_RANK,MPC_Node_rank)
-
-PROBE(MPC_Process_number,MPC_RANK,MPC_Process_number)
-
-
-PROBE(MPC_Process_rank,MPC_RANK,MPC_Process_rank)
-
-PROBE(MPC_Processor_number,MPC_RANK,MPC_Processor_number)
-
-
-PROBE(MPC_Processor_rank,MPC_RANK,MPC_Processor_rank)
-
-
 PROBE(MPC_Comm_rank,MPC_RANK,MPC_Comm_rank)
 
 PROBE(MPC_Comm_size,MPC_RANK,MPC_Comm_size)
