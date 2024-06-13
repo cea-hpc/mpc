@@ -176,6 +176,13 @@ extern "C"
 
   void rtdb_unknown_start_function(void) ;
 
+  /*
+   * NOLINTBEGIN(clang-diagnostic-unused-function):
+   * Clang wrongly reports static inline functions defined
+   * in header files as unused, even if they are actually
+   * used through includes.
+   */
+
   static inline tdb_err_e rtdb_set_thread_startfunc (
     volatile tdb_thread_debug_t *thread, void *fct){
 
@@ -468,6 +475,8 @@ extern "C"
     rtdb_lock.lock = RTDB_NOLOCK ;
     return TDB_OK ;
   }
+
+  // NOLINTEND(clang-diagnostic-unused-function)
 
 #define rtdb_remove_thread_tid(a) rtdb_remove_thread (rtdb_get_thread(a))
 #define rtdb_report_creation_event_tid(a) rtdb_report_creation_event (rtdb_get_thread(a))

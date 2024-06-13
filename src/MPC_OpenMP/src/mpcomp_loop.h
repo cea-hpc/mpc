@@ -48,6 +48,14 @@
  * LOOP CORE TYPES *
  *******************/
 
+
+/*
+ * NOLINTBEGIN(clang-diagnostic-unused-function):
+ * Clang wrongly reports static inline functions defined
+ * in header files as unused, even if they are actually
+ * used through includes.
+ */
+
 static inline void
 _mpc_omp_loop_gen_infos_init( mpc_omp_loop_gen_info_t *loop_infos, long lb,
                               long b, long incr, long chunk_size )
@@ -94,6 +102,8 @@ _mpc_omp_loop_gen_loop_infos_reset( mpc_omp_loop_gen_info_t *loop )
 {
 	memset( loop, 0, sizeof( mpc_omp_loop_gen_info_t ) );
 }
+
+// NOLINTEND(clang-diagnostic-unused-function)
 
 /***************
  * LOOP STATIC *

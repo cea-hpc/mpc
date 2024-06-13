@@ -41,6 +41,7 @@ static inline mpc_omp_thread_t *mpc_omp_get_thread_tls(void) {
   return thread;
 }
 
+// NOLINTBEGIN(clang-diagnostic-unused-function)
 static inline mpc_omp_thread_t *mpc_omp_tree_array_ancestor_get_thread_tls(int level) {
   int i;
   mpc_omp_thread_t *thread = mpc_omp_get_thread_tls();
@@ -99,5 +100,7 @@ static inline mpc_omp_thread_t *mpc_omp_thread_tls_swap_father(void) {
   mpc_omp_tls = (void *)father;
   return thread;
 }
+
+// NOLINTEND(clang-diagnostic-unused-function)
 
 #endif /* __MPC_OMP_OPENMP_THREAD_TLS_H__ */
