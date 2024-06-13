@@ -106,28 +106,6 @@ static inline int sctk_mcslock_cancel_ticket( sctk_mcslock_ticket_t *ticket )
 	return 0;
 }
 
-static inline void sctk_mcslock_trash_ticket( sctk_mcslock_t *lock,
-					      sctk_mcslock_ticket_t *ticket )
-{
-	sctk_mcslock_ticket_t *succ;
-	succ = (sctk_mcslock_ticket_t *) OPA_load_ptr( &( ticket->next ) );
-
-	if ( !succ )
-	{
-		if ( OPA_cas_ptr( lock, ticket, NULL ) == ticket )
-			return;
-
-		while ( !( succ = (sctk_mcslock_ticket_t *) OPA_load_ptr( &( ticket->next ) ) ) )
-			sctk_cpu_relax();
-	}
-
-	if ( OPA_cas_int( &( succ->lock ), 0, 1 ) == 0 )
-		return;
-
-	/* cur thread become next ticket */
-	sctk_mcslock_trash_ticket( lock, succ );
-}
-
 static inline void sctk_mcslock_init( sctk_mcslock_t *lock )
 {
 	OPA_store_ptr( lock, NULL );
