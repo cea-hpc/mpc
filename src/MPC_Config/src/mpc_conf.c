@@ -390,11 +390,7 @@ int mpc_conf_config_type_elem_set_from_string(mpc_conf_config_type_elem_t *elem,
 	if(type != elem->type)
 	{
 		/* Allow LONG_INT to INT */
-		if((elem->type == MPC_CONF_LONG_INT) || (elem->type == MPC_CONF_INT) )
-		{
-			type = elem->type;
-		}
-		else
+		if (elem->type != MPC_CONF_LONG_INT && elem->type != MPC_CONF_INT)
 		{
 			_utils_verbose_output(3, "ELEM: mismatching types %s != %s  when setting '%s' to %s\n", mpc_conf_type_name(type) , mpc_conf_type_name(elem->type), elem->name, string);
 			return -1;
