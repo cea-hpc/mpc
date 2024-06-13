@@ -88,10 +88,17 @@ mpc_conf_config_type_elem_t *mpc_conf_config_type_elem_init(char *name, void *ad
 	ret->is_locked       = 0;
 	ret->name            = __stringtolower(strdup(name));
 	ret->parent          = NULL;
-  ret->ekv_length      = ekv_length;
-  ret->ekv             = malloc(ekv_length * sizeof(mpc_conf_enum_keyval_t));
+	ret->ekv_length      = ekv_length;
 
-  memcpy(ret->ekv, ekv, ekv_length * sizeof(mpc_conf_enum_keyval_t));
+	if (ekv_length > 0)
+	{
+		ret->ekv             = malloc(ekv_length * sizeof(mpc_conf_enum_keyval_t));
+		memcpy(ret->ekv, ekv, ekv_length * sizeof(mpc_conf_enum_keyval_t));
+	}
+	else
+	{
+		ret->ekv = NULL;
+	}
 
 	if(strchr(name, '_'))
 	{
