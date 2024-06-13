@@ -219,6 +219,8 @@ static inline int ___mpc_thread_ethread_sched_proceed_signals(_mpc_thread_ethrea
 #endif
 }
 
+
+// NOLINTBEGIN(clang-diagnostic-unused-function)
 static inline int ___mpc_thread_ethread_sigpending(_mpc_thread_ethread_per_thread_t *
                                                    cur, sigset_t *set)
 {
@@ -1904,6 +1906,8 @@ ___mpc_thread_ethread_wake_thread_on_vp(_mpc_thread_ethread_virtual_processor_t 
 	}
 	vp->ready_queue_tail = list->queue_tail;
 }
+
+// NOLINTEND(clang-diagnostic-unused-function)
 
 #ifdef __cplusplus
 }
