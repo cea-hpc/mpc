@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <mpi.h>
+#include <time.h>
 
 int main(int argc, char** argv) {
 	int process_Rank, size_Of_Cluster;
