@@ -561,7 +561,7 @@ int PMPI_Irecv_internal(void *buf, int count, MPI_Datatype datatype, int source,
 
 #define mpi_check_type_commited(datatype, comm)                                                     \
 	if( (!mpc_dt_is_commited(datatype) ) && ( (datatype != MPI_UB) && (datatype != MPI_LB) ) ){ \
-		MPI_ERROR_REPORT(comm, MPI_ERR_TYPE, "Uncommited datatype provided!"); }
+		MPI_ERROR_REPORT(comm, MPI_ERR_TYPE, "Uncommitted datatype provided!"); }
 
 int _mpc_mpi_init_counter(int *counter);
 

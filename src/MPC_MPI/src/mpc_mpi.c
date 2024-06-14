@@ -2010,34 +2010,72 @@ int sctk_Type_create_subarray(int ndims,
                               MPI_Datatype *newtype)
 {
 	MPI_Aint     extent, disps[3], size;
-	int          i, blklens[3];
+	int          i, blklens[3], rc;
 	MPI_Datatype tmp1, tmp2, types[3];
 
-	PMPI_Type_extent(oldtype, &extent);
+	rc = PMPI_Type_extent(oldtype, &extent);
+	if (rc)
+	{
+		mpc_common_debug_fatal("%s: PMPI_Type_extent failed", __func__);
+	}
 
 	if(order == MPI_ORDER_FORTRAN)
 	{
 		/* dimension 0 changes fastest */
 		if(ndims == 1)
 		{
-			PMPI_Type_contiguous(array_of_subsizes[0], oldtype, &tmp1);
-			PMPI_Type_commit(&tmp1);
+			rc = PMPI_Type_contiguous(array_of_subsizes[0], oldtype, &tmp1);
+			if (rc)
+			{
+				mpc_common_debug_fatal("%s: PMPI_Type_contiguous failed", __func__);
+			}
+
+			rc = PMPI_Type_commit(&tmp1);
+			if (rc)
+			{
+				mpc_common_debug_fatal("%s: PMPI_Type_commit failed", __func__);
+			}
 		}
 		else
 		{
-			PMPI_Type_vector(array_of_subsizes[1],
+			rc = PMPI_Type_vector(array_of_subsizes[1],
 			                 array_of_subsizes[0],
 			                 array_of_sizes[0], oldtype, &tmp1);
-			PMPI_Type_commit(&tmp1);
+			if (rc)
+			{
+				mpc_common_debug_fatal("%s: PMPI_Type_vector failed", __func__);
+			}
+
+			rc = PMPI_Type_commit(&tmp1);
+			if (rc)
+			{
+				mpc_common_debug_fatal("%s: PMPI_Type_commit failed", __func__);
+			}
 
 			size = (MPI_Aint)array_of_sizes[0] * extent;
 			for(i = 2; i < ndims; i++)
 			{
 				size *= (MPI_Aint)array_of_sizes[i - 1];
-				PMPI_Type_hvector(array_of_subsizes[i], 1, size, tmp1, &tmp2);
-				PMPI_Type_free(&tmp1);
+
+				rc = PMPI_Type_hvector(array_of_subsizes[i], 1, size, tmp1, &tmp2);
+				if (rc)
+				{
+					mpc_common_debug_fatal("%s: PMPI_Type_hvector failed", __func__);
+				}
+
+				rc = PMPI_Type_free(&tmp1);
+				if (rc)
+				{
+					mpc_common_debug_fatal("%s: PMPI_Type_free failed", __func__);
+				}
+
 				tmp1 = tmp2;
-				PMPI_Type_commit(&tmp1);
+
+				rc = PMPI_Type_commit(&tmp1);
+				if (rc)
+				{
+					mpc_common_debug_fatal("%s: PMPI_Type_commit failed", __func__);
+				}
 			}
 		}
 
@@ -2057,24 +2095,57 @@ int sctk_Type_create_subarray(int ndims,
 		/* dimension ndims-1 changes fastest */
 		if(ndims == 1)
 		{
-			PMPI_Type_contiguous(array_of_subsizes[0], oldtype, &tmp1);
-			PMPI_Type_commit(&tmp1);
+			rc = PMPI_Type_contiguous(array_of_subsizes[0], oldtype, &tmp1);
+			if (rc)
+			{
+				mpc_common_debug_fatal("%s: PMPI_Type_contiguous failed", __func__);
+			}
+
+			rc = PMPI_Type_commit(&tmp1);
+			if (rc)
+			{
+				mpc_common_debug_fatal("%s: PMPI_Type_commit failed", __func__);
+			}
 		}
 		else
 		{
-			PMPI_Type_vector(array_of_subsizes[ndims - 2],
+			int rc = PMPI_Type_vector(array_of_subsizes[ndims - 2],
 			                 array_of_subsizes[ndims - 1],
 			                 array_of_sizes[ndims - 1], oldtype, &tmp1);
-			PMPI_Type_commit(&tmp1);
+			if (rc)
+			{
+				mpc_common_debug_fatal("%s: PMPI_Type_vector failed", __func__);
+			}
+
+			rc = PMPI_Type_commit(&tmp1);
+			if (rc)
+			{
+				mpc_common_debug_fatal("%s: PMPI_Type_commit failed", __func__);
+			}
 
 			size = (MPI_Aint)array_of_sizes[ndims - 1] * extent;
 			for(i = ndims - 3; i >= 0; i--)
 			{
 				size *= (MPI_Aint)array_of_sizes[i + 1];
-				PMPI_Type_hvector(array_of_subsizes[i], 1, size, tmp1, &tmp2);
-				PMPI_Type_free(&tmp1);
+				rc = PMPI_Type_hvector(array_of_subsizes[i], 1, size, tmp1, &tmp2);
+				if (rc)
+				{
+					mpc_common_debug_fatal("%s: PMPI_Type_hvector failed", __func__);
+				}
+
+				rc = PMPI_Type_free(&tmp1);
+				if (rc)
+				{
+					mpc_common_debug_fatal("%s: PMPI_Type_free failed", __func__);
+				}
+
 				tmp1 = tmp2;
-				PMPI_Type_commit(&tmp1);
+
+				rc = PMPI_Type_commit(&tmp1);
+				if (rc)
+				{
+					mpc_common_debug_fatal("%s: PMPI_Type_commit failed", __func__);
+				}
 			}
 		}
 
@@ -2102,9 +2173,17 @@ int sctk_Type_create_subarray(int ndims,
 	types[1]   = tmp1;
 	types[2]   = MPI_UB;
 
-	PMPI_Type_struct(3, blklens, disps, types, newtype);
+	rc = PMPI_Type_struct(3, blklens, disps, types, newtype);
+	if (rc)
+	{
+		mpc_common_debug_fatal("%s: PMPI_Type_struct failed", __func__);
+	}
 
-	PMPI_Type_free(&tmp1);
+	rc = PMPI_Type_free(&tmp1);
+	if (rc)
+	{
+		mpc_common_debug_fatal("%s: PMPI_Type_free failed", __func__);
+	}
 
 	return MPI_SUCCESS;
 }
