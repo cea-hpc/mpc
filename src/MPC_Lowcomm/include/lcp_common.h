@@ -27,9 +27,12 @@
 void rand_seed_init(void);
 uint64_t lcp_rand_uint64(void);
 
+// NOLINTBEGIN(clang-diagnostic-unused-function)
 static inline uint64_t lcp_get_process_uid(uint64_t pid, int32_t tid) {
         pid &= 0xFFFFFFFF00000000ull; /* first reset least significant bits to 0 */
         return pid | tid;
 }
+// NOLINTEND(clang-diagnostic-unused-function)
+
 
 #endif
