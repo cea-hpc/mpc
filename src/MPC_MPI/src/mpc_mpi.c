@@ -666,6 +666,10 @@ MPI_internal_request_t *__sctk_new_mpc_request_internal(MPI_Request *req,
 
 			assume(requests->tab != NULL);
 
+			/* Ensure at least one loop iteration is performed,
+			   otherwise tmp is NULL and dereferenced later. */
+			assume(old_size < requests->max_size);
+
 			/* Fill in the new array slots */
 			for(i = old_size; i < requests->max_size; i++)
 			{
