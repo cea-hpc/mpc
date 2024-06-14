@@ -137,6 +137,7 @@ void _mpc_lowcomm_endpoint_init(_mpc_lowcomm_endpoint_t *edp,
  */
 char _mpc_lowcomm_endpoint_is_initiator(_mpc_lowcomm_endpoint_t *edp);
 
+// NOLINTBEGIN(clang-diagnostic-unused-function)
 
 /**
  * @brief Set the state of a given endpoint
@@ -293,5 +294,8 @@ static inline void _mpc_lowcomm_endpoint_table_walk(_mpc_lowcomm_endpoint_table_
 	_mpc_lowcomm_endpoint_table_walk_static(table, func, arg);
 	_mpc_lowcomm_endpoint_table_walk_dynamic(table, func, arg);
 }
+
+// NOLINTEND(clang-diagnostic-unused-function)
+
 
 #endif /* _MPC_LOWCOMM_ENDPOINT_H_ */
