@@ -517,7 +517,14 @@ void _mpc_shm_storage_send_cell_local_rank(struct _mpc_shm_storage * storage,
       }
 
       cnt++;
+
+	  /*
+	   * NOLINTBEGIN(clang-analyzer-deadcode.DeadStores):
+	   * FIXME: This deadstore is a bug, but fixing it is non-trivial.
+	   * More info in MR !211, as well as issues #185 and #186.
+	   */
       target_list = (size_t)target_rank * storage->process_arity +  ((my_rank + cnt) % storage->process_arity);
+	  // NOLINTEND(clang-analyzer-deadcode.DeadStores)
    }
 }
 
