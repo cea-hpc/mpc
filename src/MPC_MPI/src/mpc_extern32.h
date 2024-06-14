@@ -63,6 +63,8 @@
 
 #define BITSIZE_OF(type)    (sizeof(type) * CHAR_BIT)
 
+// NOLINTBEGIN(clang-diagnostic-unused-function)
+
 #if (MANUAL_BYTESWAPS == 1)
 static void  BASIC_convert32(char *src, char *dest)
 {
@@ -423,6 +425,8 @@ static inline int MPC_Unsigned_type(mpc_lowcomm_datatype_t common_type)
 
 	return 0;
 }
+
+// NOLINTEND(clang-diagnostic-unused-function)
 
 void MPC_Extern32_convert(mpc_lowcomm_datatype_t *typevector,
                           int type_vector_size,
