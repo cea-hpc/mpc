@@ -1288,10 +1288,10 @@ restart:
 				 c->file_list[file_nb].file, file_nb, val );
 #endif
 
-		val = read_leb128( (unsigned char *) data, &bytes_read, 0 );
+		read_leb128( (unsigned char *) data, &bytes_read, 0 );
 		inc_line( data, bytes_read, c );
 
-		val = read_leb128( (unsigned char *) data, &bytes_read, 0 );
+		read_leb128( (unsigned char *) data, &bytes_read, 0 );
 		inc_line( data, bytes_read, c );
 		file_nb++;
 	}
@@ -1299,7 +1299,6 @@ restart:
 	fprintf( stderr, "\n" );
 #endif
 	data++;
-	file = c->file_list[0];
 
 	line = 1;
 	file = c->file_list[0];
