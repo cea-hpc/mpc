@@ -27,6 +27,7 @@
 /* # - Jean-Baptiste Besnard <jbbesnard@paratools.com>                    # */
 /* #                                                                      # */
 /* ######################################################################## */
+#include "mpc_keywords.h"
 #include <mpc_config.h>
 #ifdef MPC_USE_CMA
 #define _GNU_SOURCE
@@ -616,7 +617,7 @@ ssize_t mpc_shm_send_am_bcopy(_mpc_lowcomm_endpoint_t *ep,
 
    hdr->op = MPC_SHM_AM_EAGER;
    hdr->am_id = id;
-   hdr->length = payload_length = pack(hdr->data, arg);
+   hdr->length = pack(hdr->data, arg);
    payload_length = hdr->length;
 
    _mpc_shm_storage_send_cell(&rail->network.shm.storage,
@@ -740,12 +741,12 @@ int mpc_shm_get_zcopy(_mpc_lowcomm_endpoint_t *ep,
 
 
 
-int mpc_shm_put_zcopy(_mpc_lowcomm_endpoint_t *ep,
-                        uint64_t local_addr,
-                        uint64_t remote_offset,
-                        lcr_memp_t *remote_key,
-                        size_t size,
-                        lcr_completion_t *comp)
+int mpc_shm_put_zcopy(__UNUSED__ _mpc_lowcomm_endpoint_t *ep,
+                        __UNUSED__ uint64_t local_addr,
+                        __UNUSED__ uint64_t remote_offset,
+                        __UNUSED__ lcr_memp_t *remote_key,
+                        __UNUSED__ size_t size,
+                        __UNUSED__ lcr_completion_t *comp)
 {
  #if MPC_USE_CMA
 
