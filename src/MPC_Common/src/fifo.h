@@ -87,6 +87,8 @@ void *mpc_common_fifo_chunk_push( struct mpc_common_fifo_chunk *ch, void *elem )
  */
 void *mpc_common_fifo_chunk_pop( struct mpc_common_fifo_chunk *ch, void *dest );
 
+// NOLINTBEGIN(clang-diagnostic-unused-function)
+
 /**
  * @brief Thread-safely sets the previous chunk (ch->prev)
  * @param ch the chunk where to set the previous chunk
@@ -113,6 +115,8 @@ static inline struct mpc_common_fifo_chunk *mpc_common_fifo_chunk_prev( struct m
 
 	return ret;
 }
+
+// NOLINTEND(clang-diagnostic-unused-function)
 
 /**
  * @}
