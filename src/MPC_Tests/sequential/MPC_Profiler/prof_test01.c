@@ -19,6 +19,7 @@
 /* #   - PERACHE Marc marc.perache@cea.fr                                 # */
 /* #                                                                      # */
 /* ######################################################################## */
+#include "mpc_keywords.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <mpc.h>
@@ -41,8 +42,12 @@ tst_profil ()
 }
 #endif
 
+/*
+ * NOLINTBEGIN(clang-analyzer-unix.Malloc):
+ * This test contains memory leaks, but that seems to be intentional.
+ */
 int
-main (int argc, char **argv)
+main (__UNUSED__ int argc, __UNUSED__ char **argv)
 {
 
   malloc (50);
@@ -103,3 +108,5 @@ main (int argc, char **argv)
 #endif
   return 0;
 }
+
+// NOLINTEND(clang-analyzer-unix.Malloc)
