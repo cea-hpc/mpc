@@ -18,12 +18,12 @@ repos:
       - id: clang-tidy
         # Mute linker warning on unused flags "-Wl,-rpath=<mpc-install>/lib64"
         args: [--system-headers, --header-filter='.*', --extra-arg=-Wnounused-command-line-argument]
+        exclude: |
+          (?x)
+            src/MPC_IO/src/romio|
+            src/MPC_Common/include/mpc_common_profiler_keys\.h|
+            \.(m4|in|3in|f90)$
 -   repo: git@gitlab.paratools.com:cea/mpc-pre-commit-hooks.git
     rev: 90dac57b3624db79877f93a59d218255463d708f
     hooks:
     -   id: git-blame-ignore-revs
-exclude: |
-  (?x)
-    src/MPC_IO/src/romio|
-    src/MPC_Common/include/mpc_common_profiler_keys.h|
-    \.(m4|in|3in|f90)$
