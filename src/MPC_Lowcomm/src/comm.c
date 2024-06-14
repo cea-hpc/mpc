@@ -4047,15 +4047,15 @@ int mpc_lowcomm_lookup_name(const char *service_name,
 		                                                                 service_name,
 		                                                                 "",
 		                                                                 &mret);
-	
-		if (mret != MPC_LOWCOMM_MONITOR_RET_SUCCESS) 
+
+		if (mret != MPC_LOWCOMM_MONITOR_RET_SUCCESS)
 		{
 			continue;
 		}
 
 		mpc_lowcomm_monitor_args_t *content = mpc_lowcomm_monitor_response_get_content(resp);
 
-		if (content->naming.retcode != MPC_LOWCOMM_MONITOR_RET_SUCCESS) 
+		if (content->naming.retcode != MPC_LOWCOMM_MONITOR_RET_SUCCESS)
 		{
 			mret = content->naming.retcode;
 			continue;

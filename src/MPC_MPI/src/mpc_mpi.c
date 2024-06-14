@@ -7776,7 +7776,7 @@ static void __sctk_init_mpi_topo()
   mpc_lowcomm_allgather(MPI_IN_PLACE, tab_cpuid, 2*sizeof(int), MPC_COMM_WORLD);
 
   mpc_topology_init_distance_simulation_factors(tab_cpuid, size);
-  
+
   sctk_free(tab_cpuid);
 }
 #endif
@@ -13230,7 +13230,7 @@ int PMPI_Comm_free(MPI_Comm *comm)
 	{
 		return res;
 	}
-  
+
   mpc_common_nodebug("Reaching barrier on %p...", comm);
 	PMPI_Barrier(*comm);
   mpc_common_nodebug("Barrier completed");
@@ -13243,7 +13243,7 @@ int PMPI_Comm_free(MPI_Comm *comm)
 
 
 	res = _mpc_cl_comm_free(comm);
-  
+
   mpc_common_nodebug("Exit %s", __func__);
 
 	MPI_HANDLE_RETURN_VAL(res, *comm);
@@ -16626,7 +16626,7 @@ int PMPI_Comm_accept(const char *port_name,
 	if(newcomm == NULL)
 	{
 		// Returning MPI_ERR_ARG rather than MPI_ERR_COMM since newcomm is not an input param:
-		// a newcomm == NULL is not a communicator error, just a wrong argument 
+		// a newcomm == NULL is not a communicator error, just a wrong argument
 		MPI_ERROR_REPORT(comm, MPI_ERR_ARG, "Comm_accept was provided a NULL newcomm");
 	}
 
@@ -16681,7 +16681,7 @@ int PMPI_Comm_connect(const char *port_name,
 	if(newcomm == NULL)
 	{
 		// Returning MPI_ERR_ARG rather than MPI_ERR_COMM since newcomm is not an input param:
-		// a newcomm == NULL is not a communicator error, just a wrong argument 
+		// a newcomm == NULL is not a communicator error, just a wrong argument
 		MPI_ERROR_REPORT(comm, MPI_ERR_ARG, "Comm_connect was provided a NULL newcomm");
 	}
 
@@ -16949,7 +16949,7 @@ int PMPI_Barrier(MPI_Comm comm)
 
 	/* Profiling */
 	SCTK_PROFIL_END(MPI_Barrier);
-  
+
   mpc_common_nodebug("Exit %s", __func__);
 
 	MPI_HANDLE_RETURN_VAL(res, comm);

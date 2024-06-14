@@ -66,5 +66,3 @@ MPIR_ERR_COMM_INTER  (no intercommunicator. (from MPICH)
 
 MPI_ERR_UNSUPPORTED_DATAREP
     MPIR_ERR_NOT_NATIVE_DATAREP "Only native data representation currently supported"
-
-

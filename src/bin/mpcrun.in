@@ -239,7 +239,7 @@ load_mpc_configuration()
 	# Load config files options
 	CONF_VALID=false
 
-	# ASAN SPECIFIC as we do not want asan to 
+	# ASAN SPECIFIC as we do not want asan to
 	# tamper with our return code when getting config
 	# so we force asan_exitcode=0 as param
 	SAVED_ASAN=""
@@ -873,7 +873,7 @@ add_arg "--profiling" "$CONFIG_PROFILING"
 ##############################
 
 if test -n "${DEBUG}"; then
-	
+
 	# Activate custom MPC_THREAD_DB only for user-level threads
 	echo "$MPC_ARG_THREAD_TYPE" | grep "pthread" > /dev/null 2>&1
 
@@ -886,7 +886,7 @@ if test -n "${DEBUG}"; then
 	DEBUGGER_LIST=""
 
 	if test "${DEBUG}" = "mpc-gdb"; then
-		if test "$DEBUGGER_LIST" = "" ; then 
+		if test "$DEBUGGER_LIST" = "" ; then
 			DEBUG=gdb
 		else
 			DEBUG="${MPC_BIN_DIR}/../mpc-gdb-${DEBUGGER_LIST}/bin/mpc-gdb"

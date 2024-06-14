@@ -1817,4 +1817,3 @@ void mpc_topology_simulate_distance(int src_rank, int dest_rank, int size) {
     usleep(sleep_time);
 }
 #endif /* MPC_ENABLE_TOPOLOGY_SIMULATION */
-

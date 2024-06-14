@@ -4,13 +4,13 @@
 #     See COPYRIGHT in top-level directory.
 #
 
-noinst_HEADERS = 
+noinst_HEADERS =
 
 AM_CPPFLAGS = -I$(top_builddir)/src/include -I$(top_builddir)/src/MPI_IO/src/ -I$(top_srcdir)/src/MPI_IO/src/ -I$(top_builddir)/src/MPC_IO/include
 AM_CPPFLAGS += -I$(top_builddir)/src/MPC_IO/src/ -I$(top_srcdir)/src/MPC_IO/src/ -I$(top_srcdir)/src/MPC_IO/src/romio/mpi-io/ -I$(top_srcdir)/src/MPC_IO/include/
 AM_CPPFLAGS += -I$(top_srcdir)/src/MPC_MPI/include/ -I$(top_srcdir)/src/include/ -I$(top_srcdir)/src/MPC_Arch/include/ -I$(abs_top_builddir)/src/MPC_Common/include/
 AM_CPPFLAGS += -I$(top_srcdir)/src/MPC_Lowcomm/include/ -I$(top_srcdir)/src/MPC_Common/include/ -I$(top_builddir)/src/MPC_Arch/include/
-AM_CPPFLAGS += -I$(top_builddir)/adio/include  -I$(top_srcdir)/src/MPC_IO/src/romio/adio/include -I$(top_srcdir)/src/MPC_Threads/include/ 
+AM_CPPFLAGS += -I$(top_builddir)/adio/include  -I$(top_srcdir)/src/MPC_IO/src/romio/adio/include -I$(top_srcdir)/src/MPC_Threads/include/
 
 
 # ------------------------------------------------------------------------
@@ -20,7 +20,7 @@ AM_CPPFLAGS += -I$(top_builddir)/adio/include  -I$(top_srcdir)/src/MPC_IO/src/ro
 # In MPICH these will have an MPI_ and a PMPI_ version.  Other implementations
 # (like OMPI) only want these to be MPI_ routines, possibly with some
 # name-shifting prefix.
-romio_mpi_sources = 
+romio_mpi_sources =
 
 # regular old source files that implement ROMIO, such as ADIO code
 romio_other_sources =
@@ -277,7 +277,7 @@ noinst_HEADERS +=                                                    \
 
 romio_other_sources +=                                               \
     adio/ad_gpfs/bg/ad_bg_aggrs.c                                         \
-    adio/ad_gpfs/bg/ad_bg_pset.c 
+    adio/ad_gpfs/bg/ad_bg_pset.c
 
 endif BUILD_AD_BG
 
@@ -534,5 +534,4 @@ libromio_la_SOURCES = $(romio_mpi_sources) $(romio_other_sources) $(mpio_extra_s
 noinst_LTLIBRARIES += libpromio.la
 
 libpromio_la_SOURCES = $(romio_mpi_sources)
-libpromio_la_CPPFLAGS = $(AM_CPPFLAGS) -DMPIO_BUILD_PROFILING 
-
+libpromio_la_CPPFLAGS = $(AM_CPPFLAGS) -DMPIO_BUILD_PROFILING

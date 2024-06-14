@@ -96,7 +96,7 @@ void __kmp_x86_cpuid( int mode, int mode2, void *cpuid_buffer );
 #endif
 
 int __kmp_invoke_microtask(
-    void (*pkfn) (int * global_tid, int * bound_tid, ...), 
+    void (*pkfn) (int * global_tid, int * bound_tid, ...),
     int gtid, int npr, int argc, void *argv[] );
 
 
@@ -138,5 +138,3 @@ double     __kmp_test_then_add_real64( kmp_real64 *, kmp_real64 );
 int __kmp_x86_pause();
 
 #endif /* MPC_ARCHITECTURE_H_ */
-
-

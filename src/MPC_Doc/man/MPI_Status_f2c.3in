@@ -26,5 +26,3 @@ When using MPI_Status_c2f, the opposite conversion is applied. If \fIc_status\fP
 .sp
 The C status has the same source, tag and error code values as the Fortran status, and returns the same answers when queried for count, elements, and cancellation. The conversion function may be called with a Fortran status argument that has an undefined error field, in which case the value of the error field in the C status argument is undefined.
 .sp
-
-

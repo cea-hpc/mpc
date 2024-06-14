@@ -1,4 +1,4 @@
-        
+
         subroutine mpc_fortran08_init_predefined_constants()
           use mpi_f08
           call mpc_predef08_init_inplace(MPI_IN_PLACE)
