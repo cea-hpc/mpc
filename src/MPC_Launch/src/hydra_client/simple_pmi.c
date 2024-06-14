@@ -597,6 +597,10 @@ int PMI_Spawn_multiple(int count,
 		}
                 argcnt++;
 		rc = PMIU_writeline( PMI_fd, buf );
+		if (rc != 0) {
+			return PMI_FAIL;
+		}
+
 		buf[0] = 0;
 
             }
@@ -1115,10 +1119,22 @@ static int PMII_singinit(void)
     sin.sin_port	= htons(0);    /* anonymous port */
     singinit_listen_sock = socket(AF_INET, SOCK_STREAM, 0);
     rc = bind(singinit_listen_sock, (struct sockaddr *)&sin ,sizeof(sin));
+    if (rc)	{
+		perror("PMII_singinit: bind failed");
+		exit(-1);
+    }
     len = sizeof(struct sockaddr_in);
     rc = getsockname( singinit_listen_sock, (struct sockaddr *) &sin, &len );
+    if (rc)	{
+		perror("PMII_singinit: getsockname failed");
+		exit(-1);
+    }
     MPIU_Snprintf(port_c, sizeof(port_c), "%d",ntohs(sin.sin_port));
     rc = listen(singinit_listen_sock, 5);
+    if (rc)	{
+		perror("PMII_singinit: listen failed");
+		exit(-1);
+    }
 
     PMIU_printf( PMI_debug_init, "Starting mpiexec with %s\n", port_c );
 
@@ -1138,8 +1154,8 @@ static int PMII_singinit(void)
 	MPIU_Snprintf(charpid, sizeof(charpid), "%d",getpid());
 	newargv[5] = charpid;
 	newargv[6] = NULL;
-	rc = execvp(newargv[0], (char **)newargv);
-	perror("PMII_singinit: execv failed");
+	execvp(newargv[0], (char **)newargv);
+	perror("PMII_singinit: execvp failed");
 	PMIU_printf(1, "  This singleton init program attempted to access some feature\n");
 	PMIU_printf(1, "  for which process manager support was required, e.g. spawn or universe_size.\n");
 	PMIU_printf(1, "  But the necessary mpiexec is not in your path.\n");
@@ -1159,6 +1175,11 @@ static int PMII_singinit(void)
 	}
 	/* Execute the singleton init protocol */
 	rc = PMIU_readline( PMI_fd, buf, PMIU_MAXLINE );
+    if (rc)	{
+		perror("PMII_singinit: PMIU_readline failed");
+		exit(-1);
+    }
+
 	PMIU_printf( PMI_debug_init, "Singinit: read %s\n", buf );
 
 	PMIU_parse_keyvals( buf );
@@ -1194,12 +1215,21 @@ static int PMII_singinit(void)
 	    return PMI_FAIL;
 	}
 	p = PMIU_getval( "stdio", cmd, PMIU_MAXLINE );
+
 	if (p && strcmp( cmd, "yes" ) == 0) {
 	    PMIU_printf( PMI_debug_init, "PM agreed to connect stdio\n" );
 	    connectStdio = 1;
 	}
-	p = PMIU_getval( "kvsname", singinit_kvsname, sizeof(singinit_kvsname) );
-	PMIU_printf( PMI_debug_init, "kvsname to use is %s\n",
+
+	char key[] = "kvsname";
+	p = PMIU_getval( key, singinit_kvsname, sizeof(singinit_kvsname) );
+	if (p == NULL) {
+	    PMIU_printf( 1, "PMIU_getval failed on key %s\n", key );
+	    return PMI_FAIL;
+	}
+
+	PMIU_printf( PMI_debug_init, "%s to use is %s\n",
+			 key,
 		     singinit_kvsname );
 
 	if (connectStdio) {
