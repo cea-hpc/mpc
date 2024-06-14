@@ -112,7 +112,6 @@ static inline int __barrier(void *pcomm)
 static inline int __rank(void *pcomm)
 {
 	mpc_lowcomm_communicator_t comm = (mpc_lowcomm_communicator_t)pcomm;
-	int ret;
 
 	return mpc_lowcomm_communicator_rank(comm);
 }
@@ -182,10 +181,9 @@ static void __accumulate_op_lock_init_shared()
 
 static void __accumulate_op_lock_init(mpc_lowcomm_communicator_t per_node_comm)
 {
-	int my_node_level_rank, my_node_size;
+	int my_node_level_rank;
 
 	my_node_level_rank = mpc_lowcomm_communicator_rank(per_node_comm);
-	my_node_size       = mpc_lowcomm_communicator_size(per_node_comm);
 
 	void * p        = NULL;
 	size_t rel_addr = 0;
