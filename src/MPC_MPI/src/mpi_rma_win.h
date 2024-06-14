@@ -142,6 +142,7 @@ struct mpc_MPI_Win {
                                   (see pool code) */
 };
 
+// NOLINTBEGIN(clang-diagnostic-unused-function)
 static inline int mpc_MPI_win_can_write_directly(struct mpc_MPI_Win *desc,
                                                  void *ptr, int target_rank) {
   /* Is a shared win */
@@ -173,6 +174,8 @@ static inline int mpc_MPI_win_get_remote_win(struct mpc_MPI_Win *desc, int rank,
     desc->tainted_wins[rank] |= 4;
   return desc->remote_wins[rank];
 }
+
+// NOLINTEND(clang-diagnostic-unused-function)
 
 struct mpc_MPI_Win *mpc_MPI_Win_init(int flavor, int model, MPI_Comm comm,
                                      int rank, size_t size, size_t disp,
