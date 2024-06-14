@@ -23,6 +23,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <mpc.h>
+#include <mpi.h>
 
 #if defined(MPC_Profiler) || defined(MPC_MODULE_MPC_Profiler)
 MPC_PROFIL_KEY (tst_profil);
@@ -82,8 +83,8 @@ main (__UNUSED__ int argc, __UNUSED__ char **argv)
 
 
 #if defined(MPC_Lowcomm) || defined(MPC_MODULE_MPC_Lowcomm)
-  MPC_Init (&argc, &argv);
-  MPC_Finalize ();
+  MPI_Init (&argc, &argv);
+  MPI_Finalize ();
 #endif
 
 #if defined(MPC_Threads) || defined(MPC_MODULE_MPC_Threads)
