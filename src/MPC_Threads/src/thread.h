@@ -135,9 +135,33 @@ typedef struct sctk_thread_data_s
 
 } sctk_thread_data_t;
 
-#define SCTK_THREAD_DATA_INIT    { NULL, NULL, NULL, {-1, -1}, -1, -1, NULL,           \
+#define SCTK_THREAD_DATA_INIT_STRUCT_START    { NULL, NULL, NULL, {-1, -1}, -1, -1, NULL,           \
 		                   NULL, -1, (void *)NULL, sctk_thread_undef_status, \
-		                   NULL, NULL, -1, NULL, {NULL, NULL},0,0 }
+		                   NULL, NULL, -1, NULL, {NULL, NULL}
+#define SCTK_THREAD_DATA_INIT_STRUCT_END }
+
+
+#ifdef MPC_Lowcomm
+#ifdef MPC_ENABLE_WORKSHARE
+/* Initialize workshare & is_in_collective */
+#define SCTK_THREAD_DATA_INIT\
+	SCTK_THREAD_DATA_INIT_STRUCT_START,\
+	NULL, /* workshare */\
+	0, /* is_in_collective */\
+	SCTK_THREAD_DATA_INIT_STRUCT_END
+#else /* is_in_collective */
+#define SCTK_THREAD_DATA_INIT\
+	SCTK_THREAD_DATA_INIT_STRUCT_START,\
+	0, /* is_in_collective */\
+	SCTK_THREAD_DATA_INIT_STRUCT_END
+#endif /* MPC_ENABLE_WORKSHARE */
+
+#else /* Neither workshare nor is_in_collective,
+		 only the base struct initialization */
+#define SCTK_THREAD_DATA_INIT\
+	SCTK_THREAD_DATA_INIT_STRUCT_START\
+	SCTK_THREAD_DATA_INIT_STRUCT_END
+#endif /* MPC_Lowcomm */
 
 void _mpc_thread_data_init(void);
 void _mpc_thread_data_set(sctk_thread_data_t *task_id);
