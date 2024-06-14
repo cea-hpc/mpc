@@ -1,3 +1,5 @@
+#include "lowcomm_config.h"
+#include "mpc_conf.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
