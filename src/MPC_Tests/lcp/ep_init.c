@@ -10,14 +10,14 @@
 #include <mpc_lowcomm_monitor.h>
 #include <mpc_lowcomm_communicator.h>
 
-int main(int argc, char** argv) {
+int main() {
 	int rc;
 	lcp_context_h ctx;
         lcp_context_param_t param;
 	lcp_ep_h ep;
 	mpc_lowcomm_set_uid_t suid;
-        int my_tid, src_tid, dest_tid;
-	mpc_lowcomm_peer_uid_t my_uid, dest_uid;
+        int my_tid;
+	mpc_lowcomm_peer_uid_t dest_uid;
 
 	/* load default config */
 	mpc_conf_root_config_init("mpcframework");
