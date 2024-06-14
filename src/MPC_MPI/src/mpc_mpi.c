@@ -126,7 +126,7 @@ static inline void fortran_check_binds_resolve()
 
 	if(!fortran08_init)
 	{
-		fortran_init =
+		fortran08_init =
 			(void (*)() )dlsym(handle, "mpc_fortran08_init_predefined_constants___");
 	}
 
