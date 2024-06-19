@@ -63,4 +63,35 @@ if MPC_FORTRAN_ENABLED
    libmpcmpi_la_SOURCES += fortran.c
 endif
 
+# MPITypes
+AM_CPPFLAGS += -I$(abs_top_srcdir)/src/MPC_MPI/src/dataloop/
+AM_CPPFLAGS += -I$(abs_top_srcdir)/src/MPC_MPI/src/mpitypes/
+
+libmpcmpi_la_SOURCES += dataloop/contents_support.c\
+			dataloop/darray_support.c\
+			dataloop/dataloop.c\
+			dataloop/dataloop.h\
+			dataloop/dataloop_create.c\
+			dataloop/dataloop_create.h\
+			dataloop/dataloop_create_blockindexed.c\
+			dataloop/dataloop_create_contig.c\
+			dataloop/dataloop_create_indexed.c\
+			dataloop/dataloop_create_pairtype.c\
+			dataloop/dataloop_create_struct.c\
+			dataloop/dataloop_create_vector.c\
+			dataloop/dataloop_parts.h\
+			dataloop/segment.c\
+			dataloop/segment_count.c\
+			dataloop/segment_flatten.c\
+			dataloop/segment_packunpack.c\
+			dataloop/subarray_support.c\
+			dataloop/typesize_support.c\
+			dataloop/typesize_support.h
+
+libmpcmpi_la_SOURCES += mpitypes/mpitypes.c\
+			mpitypes/mpitypes.h\
+			mpitypes/mpitypes_dataloop.c\
+			mpitypes/mpitypes_dataloop.h\
+			mpitypes/mpitypes_transpack_flatten.c
+
 libmpcmpi_la_LIBADD = ../../MPC_Lowcomm/src/libmpclowcomm.la -lrt
