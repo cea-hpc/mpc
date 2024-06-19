@@ -2830,7 +2830,16 @@ int __INTERNAL__PMPI_Bcast_intra_shared_node_impl(void *buffer, int count, MPI_D
 			{
 				/* Fill the buffer */
 				OPA_store_int( (OPA_int_t *)cdata.buffer_addr, coll->comm_size);
+				/*
+				 * NOLINTBEGIN(clang-analyzer-core.NonNullParamChecker):
+				 * False positive "Null pointer passed to 2nd parameter expecting 'nonnull'".
+				 * `buffer` is NULL iff `rank != root` in
+				 * __INTERNAL__PMPI_Scatter_intra_shared_node_impl.
+				 * The current section is only executed if `rank == root`,
+				 * therefore buffer is non-NULL.
+				 */
 				memcpy(cdata.buffer_addr + sizeof(OPA_int_t), buffer, to_bcast_size);
+				/* NOLINTEND(clang-analyzer-core.NonNullParamChecker) */
 				cdata.is_counter = 1;
 			}
 		}
