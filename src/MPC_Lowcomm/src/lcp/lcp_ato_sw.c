@@ -50,42 +50,80 @@ typedef struct lcp_atomic_reply {
         uint64_t result;
 } lcp_atomic_reply_t;
 
-static uint64_t lcp_ato_sw_add(uint64_t *orig_val, uint64_t *remote_val) {
+static uint32_t lcp_ato_sw_add32(uint32_t *orig_val, uint32_t *remote_val) {
+        uint32_t tmp = *orig_val;
+        *orig_val += *remote_val;
+        return tmp;
+}
+
+static uint64_t lcp_ato_sw_add64(uint64_t *orig_val, uint64_t *remote_val) {
         uint64_t tmp = *orig_val;
         *orig_val += *remote_val;
         return tmp;
 }
 
-static uint64_t lcp_ato_sw_or(uint64_t *orig_val, uint64_t *remote_val) {
+static uint32_t lcp_ato_sw_or32(uint32_t *orig_val, uint32_t *remote_val) {
+        uint32_t tmp = *orig_val;
+        *orig_val |= *remote_val;
+        return tmp;
+}
+
+static uint64_t lcp_ato_sw_or64(uint64_t *orig_val, uint64_t *remote_val) {
         uint64_t tmp = *orig_val;
         *orig_val |= *remote_val;
         return tmp;
 }
 
-static uint64_t lcp_ato_sw_xor(uint64_t *orig_val, uint64_t *remote_val) {
+static uint32_t lcp_ato_sw_xor32(uint32_t *orig_val, uint32_t *remote_val) {
+        uint32_t tmp = *orig_val;
+        *orig_val ^= *remote_val;
+        return tmp;
+}
+
+static uint64_t lcp_ato_sw_xor64(uint64_t *orig_val, uint64_t *remote_val) {
         uint64_t tmp = *orig_val;
         *orig_val ^= *remote_val;
         return tmp;
 }
 
-static uint64_t lcp_ato_sw_and(uint64_t *orig_val, uint64_t *remote_val) {
+static uint32_t lcp_ato_sw_and32(uint32_t *orig_val, uint32_t *remote_val) {
+        uint32_t tmp = *orig_val;
+        *orig_val &= *remote_val;
+        return tmp;
+}
+
+static uint64_t lcp_ato_sw_and64(uint64_t *orig_val, uint64_t *remote_val) {
         uint64_t tmp = *orig_val;
         *orig_val &= *remote_val;
         return tmp;
 }
 
-static uint64_t lcp_ato_sw_swap(uint64_t *orig_val, uint64_t *remote_val) {
+static uint32_t lcp_ato_sw_swap32(uint32_t *orig_val, uint32_t *remote_val) {
+        uint32_t tmp = *orig_val;
+        *orig_val = *remote_val;
+        return tmp;
+}
+
+static uint64_t lcp_ato_sw_swap64(uint64_t *orig_val, uint64_t *remote_val) {
         uint64_t tmp = *orig_val;
         *orig_val = *remote_val;
         return tmp;
 }
 
-static uint64_t lcp_ato_sw_cswap(uint64_t *orig_val, uint64_t compare, 
+static uint32_t lcp_ato_sw_cswap32(uint32_t *orig_val, uint32_t compare, 
+                                   uint32_t *remote_val) {
+        uint32_t tmp = *orig_val;
+        if (*orig_val == compare) {
+                *orig_val = *remote_val;
+        }
+        return tmp;
+}
+
+static uint64_t lcp_ato_sw_cswap64(uint64_t *orig_val, uint64_t compare, 
                                  uint64_t *remote_val) {
         uint64_t tmp = *orig_val;
         if (*orig_val == compare) {
                 *orig_val = *remote_val;
-                return tmp;
         }
         return tmp;
 }
@@ -101,11 +139,12 @@ ssize_t lcp_atomic_pack(void *dest, void *data) {
         hdr->dest_tid    = req->task->tid;
         hdr->src_uid     = req->task->uid;
         hdr->remote_addr = req->send.ato.remote_addr;
+        hdr->length      = req->send.length;
 
         if (req->flags & LCP_REQUEST_USER_PROVIDED_REPLY_BUF) {
             hdr->msg_id = (uint64_t)req;
             if (req->send.ato.op == LCP_ATOMIC_OP_CSWAP) { 
-                hdr->compare = *(uint64_t *)req->send.ato.reply_buffer;
+                hdr->compare = req->send.ato.compare;
             }
         } else {
                 hdr->msg_id = 0;
@@ -142,6 +181,13 @@ int lcp_atomic_sw(lcp_request_t *req)
         int rc = MPC_LOWCOMM_SUCCESS;
         ssize_t packed_size;
 
+        mpc_common_debug("LCP ATO SW: perform op. req=%p, task=%p, tid=%d, "
+                         "remote addr=%p, op=%s, compare=%llu, value=%llu", req,
+                         req->task, req->task->tid, req->send.ato.remote_addr,
+                         lcp_ato_sw_decode_op(req->send.ato.op), 
+                         req->send.ato.compare,
+                         req->send.ato.value);
+
         packed_size = lcp_send_eager_bcopy(req, lcp_atomic_pack, LCP_AM_ID_ATOMIC);
 
         if (packed_size < 0) {
@@ -174,6 +220,8 @@ int lcp_atomic_reply(lcp_manager_h mngr, lcp_task_h task,
 
         reply_req = lcp_request_get(task);
         if (reply_req == NULL) {
+                mpc_common_debug_error("LCP ATO SW: could not allocate "
+                                       "reply request.");
                 goto err;
         }
         reply_req->send.reply_ato.result = ato_reply->result;
@@ -227,23 +275,97 @@ static int lcp_atomic_handler(void *arg, void *data,
         mpc_common_spinlock_lock(&mngr->atomic_lock);
         switch (hdr->op) {
         case LCP_ATOMIC_OP_ADD:
-                reply.result = lcp_ato_sw_add((uint64_t *)hdr->remote_addr, &hdr->value);
+                switch(hdr->length) {
+                case sizeof(uint32_t):
+                        reply.result = lcp_ato_sw_add32((uint32_t *)hdr->remote_addr, 
+                                                        (uint32_t *)&hdr->value);
+                        break;
+                case sizeof(uint64_t):
+                        reply.result = lcp_ato_sw_add64((uint64_t *)hdr->remote_addr, 
+                                                        &hdr->value);
+                        break;
+                default:
+                        mpc_common_debug_fatal("LCP ATO SW: invalid atomic length: %d", hdr->length);
+                        break;
+                }
                 break;
         case LCP_ATOMIC_OP_AND:
-                reply.result = lcp_ato_sw_and((uint64_t *)hdr->remote_addr, &hdr->value);
+                switch(hdr->length) {
+                case sizeof(uint32_t):
+                        reply.result = lcp_ato_sw_and32((uint32_t *)hdr->remote_addr, 
+                                                        (uint32_t *)&hdr->value);
+                        break;
+                case sizeof(uint64_t):
+                        reply.result = lcp_ato_sw_and64((uint64_t *)hdr->remote_addr, 
+                                                        &hdr->value);
+                        break;
+                default:
+                        mpc_common_debug_fatal("LCP ATO SW: invalid atomic length: %d", hdr->length);
+                        break;
+                }
+                break;
                 break;
         case LCP_ATOMIC_OP_OR:
-                reply.result = lcp_ato_sw_or((uint64_t *)hdr->remote_addr, &hdr->value);
+                switch(hdr->length) {
+                case sizeof(uint32_t):
+                        reply.result = lcp_ato_sw_or32((uint32_t *)hdr->remote_addr, 
+                                                       (uint32_t *)&hdr->value);
+                        break;
+                case sizeof(uint64_t):
+                        reply.result = lcp_ato_sw_or64((uint64_t *)hdr->remote_addr, 
+                                                       &hdr->value);
+                        break;
+                default:
+                        mpc_common_debug_fatal("LCP ATO SW: invalid atomic length: %d", hdr->length);
+                        break;
+                }
                 break;
         case LCP_ATOMIC_OP_XOR:
-                reply.result = lcp_ato_sw_xor((uint64_t *)hdr->remote_addr, &hdr->value);
+                switch(hdr->length) {
+                case sizeof(uint32_t):
+                        reply.result = lcp_ato_sw_xor32((uint32_t *)hdr->remote_addr, 
+                                                        (uint32_t *)&hdr->value);
+                        break;
+                case sizeof(uint64_t):
+                        reply.result = lcp_ato_sw_xor64((uint64_t *)hdr->remote_addr, 
+                                                        &hdr->value);
+                        break;
+                default:
+                        mpc_common_debug_fatal("LCP ATO SW: invalid atomic length: %d", hdr->length);
+                        break;
+                }
                 break;
         case LCP_ATOMIC_OP_SWAP:
-                reply.result = lcp_ato_sw_swap((uint64_t *)hdr->remote_addr, &hdr->value);
+                switch(hdr->length) {
+                case sizeof(uint32_t):
+                        reply.result = lcp_ato_sw_swap32((uint32_t *)hdr->remote_addr, 
+                                                         (uint32_t *)&hdr->value);
+                        break;
+                case sizeof(uint64_t):
+                        reply.result = lcp_ato_sw_swap64((uint64_t *)hdr->remote_addr, 
+                                                         &hdr->value);
+                        break;
+                default:
+                        mpc_common_debug_fatal("LCP ATO SW: invalid atomic length: %d", hdr->length);
+                        break;
+                }
                 break;
         case LCP_ATOMIC_OP_CSWAP:
-                reply.result = lcp_ato_sw_cswap((uint64_t *)hdr->remote_addr, hdr->compare, 
-                                                &hdr->value);
+                switch(hdr->length) {
+                case sizeof(uint32_t):
+                        reply.result = lcp_ato_sw_cswap32((uint32_t *)hdr->remote_addr, 
+                                                          (uint32_t)hdr->compare, 
+                                                          (uint32_t *)&hdr->value);
+                        break;
+                case sizeof(uint64_t):
+                        reply.result = lcp_ato_sw_cswap64((uint64_t *)hdr->remote_addr, 
+                                                          (uint64_t)hdr->compare, 
+                                                          (uint64_t *)&hdr->value);
+                        break;
+                default:
+                        mpc_common_debug_fatal("LCP ATO SW: invalid atomic length: %d", hdr->length);
+                        break;
+                }
                 break;
         }
         mpc_common_spinlock_unlock(&mngr->atomic_lock);
@@ -281,12 +403,11 @@ static int lcp_atomic_reply_handler(void *arg, void *data,
 
         lcp_request_t *req = (lcp_request_t *)hdr->msg_id;
 
-        *(uint64_t *)req->send.ato.reply_buffer = hdr->result; 
+        memcpy(req->send.ato.reply_buffer, &hdr->result, req->send.length);
 
         req->flags |= LCP_REQUEST_REMOTE_COMPLETED;
-        req->status = MPC_LOWCOMM_SUCCESS;
 
-        lcp_request_complete(req, send.send_cb, req->status, req->send.length); 
+        lcp_atomic_complete(&req->state.comp);
 
         return MPC_LOWCOMM_SUCCESS;
 }
