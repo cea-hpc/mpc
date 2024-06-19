@@ -39,7 +39,7 @@ typedef struct MPI_ABI_Win {
         mpc_lowcomm_group_t *group;
         MPI_Info info;
 
-        char win_name[MAX_WIN_NAME];
+        char win_name[MPI_MAX_OBJECT_NAME];
 
         int flavor; 
         int model;
@@ -47,6 +47,7 @@ typedef struct MPI_ABI_Win {
 
         struct mpc_common_hashtable attrs;
 
+        //FIXME: move to pointer so that include "osc_module.h" can be removed.
         mpc_osc_module_t win_module;
 } mpc_win_t;
 
@@ -61,6 +62,10 @@ int mpc_win_allocate(void **base, size_t size,
                      int disp_unit, MPI_Info info,
                      mpc_lowcomm_communicator_t comm, 
                      mpc_win_t **win_p);
+int mpc_win_create_dynamic(void **base, size_t size, 
+                           int disp_unit, MPI_Info info,
+                           mpc_lowcomm_communicator_t comm, 
+                           mpc_win_t **win_p);
 
 int mpc_win_free(mpc_win_t *win);
 

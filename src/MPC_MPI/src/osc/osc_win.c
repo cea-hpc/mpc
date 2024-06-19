@@ -89,7 +89,7 @@ static int _win_setup(mpc_win_t *win, void **base, size_t size,
         lcp_mem_h w_mem_data, w_mem_state;
         lcp_mem_attr_t attr;
         void *win_info = NULL;
-        size_t win_info_len = 0;
+        size_t win_info_len;
         int win_info_offset = 0;
         void *key_data_buf = NULL, *key_state_buf = NULL;
         int key_data_len, key_state_len;
@@ -173,7 +173,7 @@ static int _win_setup(mpc_win_t *win, void **base, size_t size,
                         LCP_MEM_SIZE_FIELD;
                 rc = lcp_mem_query(w_mem_data, &attr);
 
-                assert(attr.size >= size && attr.address != NULL);
+                assert(attr.size >= size);
                 module->base_data = *base = attr.address;
         } else if (flavor == MPI_WIN_FLAVOR_DYNAMIC) {
                 //nothing to do.
@@ -233,7 +233,8 @@ static int _win_setup(mpc_win_t *win, void **base, size_t size,
                 goto release_key;
         }
 
-        win_info_len += win->comm_size * sizeof(void *);
+        win_info_len  = 0;
+        win_info_len += 2 * sizeof(void *);
         win_info_len += 2 * sizeof(int);
         win_info_len += key_data_len + key_state_len;
         win_info = sctk_malloc(win_info_len);
@@ -269,6 +270,8 @@ static int _win_setup(mpc_win_t *win, void **base, size_t size,
                                        "size table");
                 goto release_key;
         }
+        memset(win_info_lengths, 0, win->comm_size * sizeof(int));
+        memset(win_info_disps, 0, win->comm_size * sizeof(int));
 
         PMPI_Allgather(&win_info_len, 1, MPI_INT, win_info_lengths, 1, MPI_INT, comm);
 
@@ -312,7 +315,8 @@ static int _win_setup(mpc_win_t *win, void **base, size_t size,
                 if (rkey_data_len > 0 && (flavor == MPI_WIN_FLAVOR_CREATE ||
                                           flavor == MPI_WIN_FLAVOR_ALLOCATE)) {
                         rc = lcp_mem_unpack(module->mngr, &module->rdata_win_info[i].rkey, 
-                                            (void *)((char *)win_info_buf + win_info_disps[i] + win_info_offset),
+                                            (void *)((char *)win_info_buf + 
+                                                     win_info_disps[i] + win_info_offset),
                                             rkey_data_len);
                         if (rc != MPC_LOWCOMM_SUCCESS) {
                                 goto release_key;
@@ -322,7 +326,8 @@ static int _win_setup(mpc_win_t *win, void **base, size_t size,
                 }
                 
                 rc = lcp_mem_unpack(module->mngr, &module->rstate_win_info[i].rkey, 
-                                    (void *)((char *)win_info_buf + win_info_disps[i] + win_info_offset),
+                                    (void *)((char *)win_info_buf + win_info_disps[i] + 
+                                             win_info_offset),
                                     rkey_state_len);
                 if (rc != MPC_LOWCOMM_SUCCESS) {
                         goto release_key;
@@ -579,6 +584,26 @@ int mpc_osc_win_detach(mpc_win_t *win, const void *base)
         return rc;
 }
 
+int mpc_win_create_dynamic(void **base, size_t size, 
+                           int disp_unit, MPI_Info info,
+                           mpc_lowcomm_communicator_t comm, 
+                           mpc_win_t **win_p)
+{
+        int rc = MPC_LOWCOMM_SUCCESS;
+        mpc_win_t *win;
+
+        rc = _win_init(&win, MPI_WIN_FLAVOR_DYNAMIC, comm, base, disp_unit,
+                       size, info);
+        if (rc != MPC_LOWCOMM_SUCCESS) {
+                goto err;
+        }
+
+        *win_p = win;
+
+err:
+        return rc;
+}
+
 int mpc_win_create(void **base, size_t size, 
                    int disp_unit, MPI_Info info,
                    mpc_lowcomm_communicator_t comm, 
@@ -623,6 +648,17 @@ int mpc_win_free(mpc_win_t *win)
 {
         int rc;
         mpc_osc_module_t *module = &win->win_module;
+        lcp_task_h task = lcp_context_task_get(win->win_module.ctx, 
+                                               mpc_common_get_task_rank());
+
+        assert(module->lock_count == 0);
+
+        rc = mpc_osc_perform_flush_op(module, task, NULL, NULL);
+        if (rc != MPC_LOWCOMM_SUCCESS) {
+                goto err;
+        }
+
+        PMPI_Barrier(win->comm);
 
         /* Deallocate table of displacement units if not all processes had the
          * same. */
@@ -631,10 +667,12 @@ int mpc_win_free(mpc_win_t *win)
         }
 
         /* Deregister local key */
-        rc = lcp_mem_deprovision(win->win_module.mngr, win->win_module.lkey_data);
-        if (rc != MPC_LOWCOMM_SUCCESS) {
-                mpc_common_debug_error("WIN: could not deregister local data memory.");
-                goto err;
+        if (win->flavor == MPI_WIN_FLAVOR_CREATE || win->flavor == MPI_WIN_FLAVOR_ALLOCATE) {
+                rc = lcp_mem_deprovision(win->win_module.mngr, win->win_module.lkey_data);
+                if (rc != MPC_LOWCOMM_SUCCESS) {
+                        mpc_common_debug_error("WIN: could not deregister local data memory.");
+                        goto err;
+                }
         }
 
         rc = lcp_mem_deprovision(win->win_module.mngr, win->win_module.lkey_state);
@@ -645,8 +683,6 @@ int mpc_win_free(mpc_win_t *win)
         mpc_osc_win_attr_ht_release(&win->attrs);
 
         mpc_common_hashtable_release(&win->win_module.outstanding_locks);
-
-        if (win->win_module.start_grp_ranks) sctk_free(win->win_module.start_grp_ranks);
 
         sctk_free(win->win_module.rdata_win_info);
         sctk_free(win->win_module.rstate_win_info);
