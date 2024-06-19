@@ -2957,7 +2957,7 @@ int ___collectives_allreduce_distance_doubling(const void *sendbuf, void* recvbu
     peer = rank ^ 1;
 
     if(rank & 1) {
-      ___collectives_send_type(sendbuf, count, datatype, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
+      ___collectives_send_type(tmp_sendbuf, count, datatype, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
     } else {
       ___collectives_recv_type(tmp_recvbuf, count, datatype, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
       ___collectives_barrier_type(coll_type, schedule, info);
