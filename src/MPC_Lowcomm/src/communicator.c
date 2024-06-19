@@ -1352,7 +1352,6 @@ static inline mpc_lowcomm_communicator_t __new_communicator(mpc_lowcomm_communic
 			if(!mpc_lowcomm_group_includes(group, mpc_lowcomm_get_rank(), mpc_lowcomm_monitor_get_uid() ) )
 			{
 				current_rank_belongs = 0;
-				ret = MPC_COMM_NULL;
 			}
 		}
 
@@ -1371,7 +1370,6 @@ static inline mpc_lowcomm_communicator_t __new_communicator(mpc_lowcomm_communic
 				if(mpc_lowcomm_group_includes(group, mpc_lowcomm_group_world_rank(group, i), mpc_lowcomm_monitor_get_uid() ) )
 				{
 					at_least_one_local_rank_belongs = 1;
-					ret = MPC_COMM_NULL;
 				}
 			}
 		}
@@ -1419,11 +1417,9 @@ static inline mpc_lowcomm_communicator_t __new_communicator(mpc_lowcomm_communic
 			assume(ret != NULL);
 			assume(ret->id == new_id);
 		}
-	}
-
-        //FIXME: might be NULL when creating intercomm.
-        if (group != NULL) {
-                group->my_rank[mpc_common_get_local_task_rank()] = mpc_lowcomm_group_rank(group);
+	} else {
+                //FIXME: in the case where 
+                ret = MPC_COMM_NULL;
         }
 
 	/* Do a barrier when done to ensure dup do not interleave */
@@ -2817,7 +2813,7 @@ int mpc_lowcomm_communicator_create_group(mpc_lowcomm_communicator_t comm, mpc_l
 
 	mpc_lowcomm_group_free(&comm_group);
 
-	mpc_lowcomm_barrier(comm);
+	mpc_lowcomm_barrier(*newcomm);
 
 	*newcomm = __mpc_lowcomm_communicator_to_predefined(*newcomm);
 
