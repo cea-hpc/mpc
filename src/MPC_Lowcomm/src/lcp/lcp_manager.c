@@ -151,9 +151,9 @@ static int _lcp_manager_init_structures(lcp_manager_h mngr)
         }
         mpc_mempool_param_t mp_mem_params = {
                 .alignment = MPC_COMMON_SYS_CACHE_LINE_SIZE,
-                .elem_per_chunk = 16,
+                .elem_per_chunk = 1024,
                 .elem_size = key_size,
-                .max_elems = 1024,
+                .max_elems = 32768,
                 .malloc_func = sctk_malloc,
                 .free_func = sctk_free
         };
