@@ -61,6 +61,7 @@
 #endif
 
 #include "mpc_reduction.h"
+#include "mpitypes.h"
 
 #include "mpc_launch_pmi.h"
 #include "mpc_lowcomm_workshare.h"
@@ -267,6 +268,8 @@ struct _mpc_mpi_buffer;
 typedef struct _mpc_mpi_buffer      MPI_buffer_struct_t;
 struct sctk_mpi_ops_s;
 typedef struct sctk_mpi_ops_s       sctk_mpi_ops_t;
+
+MPI_internal_request_t *mpc_mpi_request_empty = MPI_REQUEST_NULL;
 
 //FIXME: change name
 void PMPI_internal_free_request(MPI_Request *request) {
@@ -7955,12 +7958,9 @@ int PMPI_Send_internal(const void *buf, int count, MPI_Datatype datatype, int de
 		mpi_check_buf(buf, comm);
 	}
 
-	if(_mpc_dt_is_contig_mem(datatype) || count == 0)
-	{
-		res = _mpc_cl_send(buf, count, datatype, dest, tag, comm);
-		MPI_HANDLE_ERROR(res, comm, "Low level contiguous send failed");
-		return res;
-	}
+        res = _mpc_cl_send(buf, count, datatype, dest, tag, comm);
+        MPI_HANDLE_ERROR(res, comm, "Low level contiguous send failed");
+        return res;
 
 	if(count > 1)
 	{
@@ -8058,12 +8058,9 @@ int PMPI_Recv_internal(void *buf, int count, MPI_Datatype datatype, int source, 
 
 
 
-	if(_mpc_dt_is_contig_mem(datatype) || count == 0)
-	{
-		res = _mpc_cl_recv(buf, count, datatype, source, tag, comm, status);
-		MPI_HANDLE_ERROR(res, comm, "Failed low-level contiguous recv");
-		return res;
-	}
+        res = _mpc_cl_recv(buf, count, datatype, source, tag, comm, status);
+        MPI_HANDLE_ERROR(res, comm, "Failed low-level contiguous recv");
+        return res;
 
 
 	if(count > 1)
@@ -8346,6 +8343,11 @@ int PMPI_Buffer_detach(void *buffer, int *size)
 	return MPI_SUCCESS;
 }
 
+MPI_internal_request_t *mpc_mpi_alloc_request()
+{
+        return mpc_lowcomm_request_alloc();
+}
+
 int PMPI_Isend_internal(const void *buf, int count, MPI_Datatype datatype, int dest, int tag,
                         MPI_Comm comm, MPI_Request *request)
 {
@@ -8373,7 +8375,10 @@ int PMPI_Isend_internal(const void *buf, int count, MPI_Datatype datatype, int d
 		mpi_check_buf(buf, comm);
 	}
 
-	res = __Isend_test_req(buf, count, datatype, dest, tag, comm, request, 0);
+        *request = mpc_mpi_alloc_request();
+
+        res = _mpc_cl_isend(buf, count, datatype, dest, tag, comm,
+                            _mpc_cl_get_lowcomm_request(*request));
 
 	MPI_HANDLE_RETURN_VAL(res, comm);
 }
@@ -8459,8 +8464,11 @@ int PMPI_Irecv_internal(void *buf, int count, MPI_Datatype datatype, int source,
 		}
 	}
 
-	res = __Irecv_test_req(buf, count, datatype, source, tag,
-	                       comm, request, 0);
+        *request = mpc_mpi_alloc_request();
+
+        res = _mpc_cl_irecv(buf, count, datatype, source, tag, comm,
+                            _mpc_cl_get_lowcomm_request(*request));
+
 
 	MPI_HANDLE_RETURN_VAL(res, comm);
 }
@@ -8492,8 +8500,8 @@ int PMPI_Wait(MPI_Request *request, MPI_Status *status)
 			status->MPC_TAG    = MPI_ANY_TAG;
 			status->MPC_ERROR  = MPI_SUCCESS;
 			status->size       = 0;
-			MPI_HANDLE_RETURN_VAL(res, comm);
 		}
+                MPI_HANDLE_RETURN_VAL(res, comm);
 	}
 
 	//MPI_request_struct_t *  requests;
@@ -11259,7 +11267,6 @@ int PMPI_Type_get_elements_x(MPI_Status *status, MPI_Datatype datatype, MPI_Coun
 		return res;
 	}
 
-	int  done                     = 0;
 	bool is_allocated             = false;
 
 
@@ -11272,7 +11279,6 @@ int PMPI_Type_get_elements_x(MPI_Status *status, MPI_Datatype datatype, MPI_Coun
 	size = status->size;
 
 	*count = 0;
-	done      = 0;
 
 	/* Test it is properly existing */
 	_mpc_cl_type_is_allocated(datatype, &is_allocated);
@@ -11506,6 +11512,11 @@ int PMPI_Pack(const
 
 	unsigned long copied = 0;
 
+        MPIT_Type_init(datatype);
+
+        return MPIT_Type_memcpy((void *)inbuf, incount, datatype, outbuf,
+                                MPIT_MEMCPY_FROM_USERBUF, *position, outsize);
+
 	if(!_mpc_dt_is_contig_mem(datatype) )
 	{
 		unsigned long i = 0;
@@ -11602,6 +11613,11 @@ int PMPI_Unpack(const void *inbuf,
 		MPI_ERROR_SUCCESS();
 	}
 	mpi_check_buf(outbuf, comm);
+
+        MPIT_Type_init(datatype);
+
+        return MPIT_Type_memcpy(outbuf, outcount, datatype, (void *)inbuf,
+                                MPIT_MEMCPY_TO_USERBUF, *position, insize);
 
 	unsigned int copied = 0;
 
@@ -12474,11 +12490,13 @@ int PMPI_Intercomm_create(MPI_Comm local_comm, int local_leader,
 	MPI_Comm comm = MPI_COMM_WORLD;
 	int      res  = MPI_ERR_INTERN;
 	int      size;
+        int rank;
 
 	mpi_check_comm(local_comm);
 	mpi_check_comm(peer_comm);
 
 	_mpc_cl_comm_size(local_comm, &size);
+	_mpc_cl_comm_rank(local_comm, &rank);
 
 	if(mpc_lowcomm_communicator_is_intercomm(local_comm) == 0)
 	{
@@ -12487,7 +12505,8 @@ int PMPI_Intercomm_create(MPI_Comm local_comm, int local_leader,
 
 	_mpc_cl_comm_size(peer_comm, &size);
 
-	if(mpc_lowcomm_communicator_is_intercomm(peer_comm) == 0)
+	if(mpc_lowcomm_communicator_is_intercomm(peer_comm) == 0 && 
+           rank == local_leader)
 	{
 		mpi_check_rank_send(remote_leader, size, comm);
 	}
@@ -15715,21 +15734,17 @@ int PMPI_Win_call_errhandler(MPI_Win win, int errorcode)
 *  MPI One-SIDED         *
 *************************/
 
-#include "mpi_rma.h"
-
 /* MPI Info storage in WIN                                              */
 
 int PMPI_Win_set_info(MPI_Win win, MPI_Info info)
 {
 	/* Retrieve the MPI Desc */
-	struct mpc_MPI_Win *desc = (struct mpc_MPI_Win *)mpc_lowcomm_rdma_window_get_payload(win);
-
-	if(!desc)
+	if(!win)
 	{
 		return MPI_ERR_ARG;
 	}
 
-	desc->info = info;
+	win->info = info;
 
 	return MPI_SUCCESS;
 }
@@ -15737,14 +15752,12 @@ int PMPI_Win_set_info(MPI_Win win, MPI_Info info)
 int PMPI_Win_get_info(MPI_Win win, MPI_Info *info)
 {
 	/* Retrieve the MPI Desc */
-	struct mpc_MPI_Win *desc = (struct mpc_MPI_Win *)mpc_lowcomm_rdma_window_get_payload(win);
-
-	if(!desc)
+	if(!win)
 	{
 		return MPI_ERR_ARG;
 	}
 
-	PMPI_Info_dup(desc->info, info);
+	PMPI_Info_dup(win->info, info);
 
 	return MPI_SUCCESS;
 }
@@ -15754,9 +15767,7 @@ int PMPI_Win_get_info(MPI_Win win, MPI_Info *info)
 int PMPI_Win_set_name(MPI_Win win, const char *name)
 {
 	/* Retrieve the MPI Desc */
-	struct mpc_MPI_Win *desc = (struct mpc_MPI_Win *)mpc_lowcomm_rdma_window_get_payload(win);
-
-	if(!desc)
+	if(!win)
 	{
 		return MPI_ERR_ARG;
 	}
@@ -15766,8 +15777,7 @@ int PMPI_Win_set_name(MPI_Win win, const char *name)
 		return MPI_ERR_ARG;
 	}
 
-	sctk_free(desc->win_name);
-	desc->win_name = strdup(name);
+	strcpy(win->win_name, name);
 
 	return MPI_SUCCESS;
 }
@@ -15775,15 +15785,8 @@ int PMPI_Win_set_name(MPI_Win win, const char *name)
 int PMPI_Win_get_name(MPI_Win win, char *name, int *len)
 {
 	/* Retrieve the MPI Desc */
-	struct mpc_MPI_Win *desc = (struct mpc_MPI_Win *)mpc_lowcomm_rdma_window_get_payload(win);
-
-	if(!desc)
-	{
-		return MPI_ERR_ARG;
-	}
-
-	sprintf(name, "%s", desc->win_name);
-	*len = strlen(desc->win_name);
+	sprintf(name, "%s", win->win_name);
+	*len = strlen(win->win_name);
 
 	return MPI_SUCCESS;
 }
@@ -15794,28 +15797,40 @@ int PMPI_Win_create(void *base, MPI_Aint size, int disp_unit, MPI_Info info,
                     MPI_Comm comm, MPI_Win *win)
 {
 
-        return mpc_win_create((void **)base, size, disp_unit, info, comm, win);
+        return mpc_win_create(&base, size, disp_unit, info, comm, win);
 }
 
 int PMPI_Win_allocate(MPI_Aint size, int disp_unit, MPI_Info info,
-                      MPI_Comm comm, void *base, MPI_Win *win)
+                      MPI_Comm comm, void *baseptr, MPI_Win *win)
 {
-        return mpc_win_allocate((void **)base, size, disp_unit, info, comm, win);
+        void *base;
+        int rc = mpc_win_allocate(&base, size, disp_unit, info, comm, win);
+
+        if (rc != MPI_SUCCESS) {
+                return rc;
+        }
+
+        *((void **)baseptr) = base;
+
+        return rc;
 }
 
 int PMPI_Win_allocate_shared(MPI_Aint size, int disp_unit, MPI_Info info,
                              MPI_Comm comm, void *base, MPI_Win *win)
 {
-	/* MPI Windows need more progress
-	 * we must give up on agressive collectives */
-	__do_yield |= 1;
+        UNUSED(size);
+        UNUSED(disp_unit);
+        UNUSED(info);
+        UNUSED(comm);
+        UNUSED(base);
+        UNUSED(win);
         not_implemented();
-	return mpc_MPI_Win_allocate_shared(size, disp_unit, info, comm, base, win);
+	return 0;
 }
 
 int PMPI_Win_create_dynamic(MPI_Info info, MPI_Comm comm, MPI_Win *win)
 {
-        return mpc_win_create(NULL, 0, 0, info, comm, win);
+        return mpc_win_create_dynamic(NULL, 0, 0, info, comm, win);
 }
 
 int PMPI_Win_attach(MPI_Win, void *, MPI_Aint);
@@ -15832,8 +15847,11 @@ int PMPI_Get(void *origin_addr, int origin_count, MPI_Datatype origin_datatype,
              int target_rank, MPI_Aint target_disp, int target_count,
              MPI_Datatype target_datatype, MPI_Win win)
 {
-	return mpc_MPI_Get(origin_addr, origin_count, origin_datatype, target_rank,
-	                   target_disp, target_count, target_datatype, win);
+        if (target_rank == MPI_PROC_NULL) return MPI_SUCCESS;
+
+        return mpc_osc_get(origin_addr, origin_count, origin_datatype,
+                           target_rank, target_disp, target_count,
+                           target_datatype, win);
 }
 
 int PMPI_Put(const void *origin_addr, int origin_count,
@@ -15841,6 +15859,8 @@ int PMPI_Put(const void *origin_addr, int origin_count,
              MPI_Aint target_disp, int target_count,
              MPI_Datatype target_datatype, MPI_Win win)
 {
+        if (target_rank == MPI_PROC_NULL) return MPI_SUCCESS;
+
         return mpc_osc_put(origin_addr, origin_count, origin_datatype, 
                            target_rank, target_disp, target_count, 
                            target_datatype, win);
@@ -15851,6 +15871,11 @@ int PMPI_Rput(const void *origin_addr, int origin_count,
               MPI_Aint target_disp, int target_count,
               MPI_Datatype target_datatype, MPI_Win win, MPI_Request *request)
 {
+        if (target_rank == MPI_PROC_NULL) {
+                *request = mpc_mpi_request_empty;
+                return MPI_SUCCESS;
+        }
+
         return mpc_osc_rput(origin_addr, origin_count, origin_datatype,
                             target_rank, target_disp, target_count,
                             target_datatype, win, request);
@@ -15860,6 +15885,11 @@ int PMPI_Rget(void *origin_addr, int origin_count, MPI_Datatype origin_datatype,
               int target_rank, MPI_Aint target_disp, int target_count,
               MPI_Datatype target_datatype, MPI_Win win, MPI_Request *request)
 {
+        if (target_rank == MPI_PROC_NULL) {
+                *request = mpc_mpi_request_empty;
+                return MPI_SUCCESS;
+        }
+
         return mpc_osc_rget(origin_addr, origin_count, origin_datatype,
                             target_rank, target_disp, target_count,
                             target_datatype, win, request);
@@ -15903,22 +15933,26 @@ int PMPI_Win_test(MPI_Win win, int *flag)
 
 int PMPI_Win_lock(int lock_type, int rank, int assert, MPI_Win win)
 {
+        if (rank == MPI_PROC_NULL) return MPI_SUCCESS;
+
         return mpc_osc_lock(lock_type, rank, assert, win);
 }
 
 int PMPI_Win_unlock(int rank, MPI_Win win)
 {
+        if (rank == MPI_PROC_NULL) return MPI_SUCCESS;
+
         return mpc_osc_unlock(rank, win);
 }
 
 int PMPI_Win_lock_all(int assert, MPI_Win win)
 {
-	return mpc_MPI_Win_lock_all(assert, win);
+        return mpc_osc_lock_all(assert, win);
 }
 
 int PMPI_Win_unlock_all(MPI_Win win)
 {
-	return mpc_MPI_Win_unlock_all(win);
+        return mpc_osc_unlock_all(win);
 }
 
 /* Error Handling */
@@ -15948,16 +15982,20 @@ int PMPI_Win_get_errhandler(MPI_Win win, MPI_Errhandler *errhandler)
 
 int PMPI_Win_sync(MPI_Win win)
 {
-	return mpc_MPI_Win_sync(win);
+        return mpc_osc_sync(win);
 }
 
 int PMPI_Win_flush(int rank, MPI_Win win)
 {
+        if (rank == MPI_PROC_NULL) return MPI_SUCCESS;
+
         return mpc_osc_flush(rank, win);
 }
 
 int PMPI_Win_flush_local(int rank, MPI_Win win)
 {
+        if (rank == MPI_PROC_NULL) return MPI_SUCCESS;
+
         return mpc_osc_flush_local(rank, win);
 }
 
@@ -15973,7 +16011,7 @@ int PMPI_Win_flush_local_all(MPI_Win win)
 
 int PMPI_Win_get_group(MPI_Win win, MPI_Group *group)
 {
-	return mpc_PMPI_Win_get_group(win, group);
+	return MPI_Comm_group(win->comm, group);
 }
 
 int PMPI_Accumulate(const void *origin_addr, int origin_count,
@@ -15981,6 +16019,8 @@ int PMPI_Accumulate(const void *origin_addr, int origin_count,
                     MPI_Aint target_disp, int target_count,
                     MPI_Datatype target_datatype, MPI_Op op, MPI_Win win)
 {
+        if (target_rank == MPI_PROC_NULL) return MPI_SUCCESS;
+
         return mpc_osc_accumulate(origin_addr, origin_count, origin_datatype,
                                   target_rank, target_disp, target_count,
                                   target_datatype, op, win);
@@ -15992,6 +16032,11 @@ int PMPI_Raccumulate(const void *origin_addr, int origin_count,
                      MPI_Datatype target_datatype, MPI_Op op, MPI_Win win,
                      MPI_Request *request)
 {
+        if (target_rank == MPI_PROC_NULL) {
+                *request = mpc_mpi_request_empty;
+                return MPI_SUCCESS;
+        }
+
         return mpc_osc_raccumulate(origin_addr, origin_count, origin_datatype,
                                    target_rank, target_disp, target_count,
                                    target_datatype, op, win, request);
@@ -16003,6 +16048,8 @@ int PMPI_Get_accumulate(const void *origin_addr, int origin_count,
                         int target_rank, MPI_Aint target_disp, int target_count,
                         MPI_Datatype target_datatype, MPI_Op op, MPI_Win win)
 {
+        if (target_rank == MPI_PROC_NULL) return MPI_SUCCESS;
+
         return mpc_osc_get_accumulate(origin_addr, origin_count,
                                       origin_datatype, result_addr,
                                       result_count, result_datatype,
@@ -16017,6 +16064,11 @@ int PMPI_Rget_accumulate(const void *origin_addr, int origin_count,
                          int target_count, MPI_Datatype target_datatype,
                          MPI_Op op, MPI_Win win, MPI_Request *request)
 {
+        if (target_rank == MPI_PROC_NULL) {
+                *request = mpc_mpi_request_empty;
+                return MPI_SUCCESS;
+        }
+
         return mpc_osc_rget_accumulate(origin_addr, origin_count,
                                        origin_datatype, result_addr,
                                        result_count, result_datatype,
@@ -16028,6 +16080,8 @@ int PMPI_Fetch_and_op(const void *origin_addr, void *result_addr,
                       MPI_Datatype datatype, int target_rank,
                       MPI_Aint target_disp, MPI_Op op, MPI_Win win)
 {
+        if (target_rank == MPI_PROC_NULL) return MPI_SUCCESS;
+
         return mpc_osc_fetch_and_op(origin_addr, result_addr, datatype,
                                     target_rank, target_disp, op, win);
 }
@@ -16036,6 +16090,8 @@ int PMPI_Compare_and_swap(const void *origin_addr, const void *compare_addr,
                           void *result_addr, MPI_Datatype datatype,
                           int target_rank, MPI_Aint target_disp, MPI_Win win)
 {
+        if (target_rank == MPI_PROC_NULL) return MPI_SUCCESS;
+
         return mpc_osc_compare_and_swap(origin_addr, compare_addr, result_addr,
                                         datatype, target_rank, target_disp,
                                         win);
@@ -16076,7 +16132,13 @@ int PMPI_Win_create_keyval(MPI_Win_copy_attr_function *win_copy_attr_fn,
 int PMPI_Win_shared_query(MPI_Win win, int rank, MPI_Aint *size, int *disp_unit,
                           void *baseptr)
 {
-	return mpc_MPI_Win_shared_query(win, rank, size, disp_unit, baseptr);
+        UNUSED(win);
+        UNUSED(rank);
+        UNUSED(size);
+        UNUSED(disp_unit);
+        UNUSED(baseptr);
+        not_implemented();
+	return 0;
 }
 
 int PMPI_Win_attach(MPI_Win win, void *base, MPI_Aint size)

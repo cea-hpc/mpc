@@ -40,9 +40,9 @@
 
 #include "mpc_common_debug.h"
 
-int lcp_tag_recv_nb(lcp_manager_h mngr, lcp_task_h task, void *buffer, 
-                    size_t count, lcp_tag_info_t *tag_info, int32_t src_mask,
-                    int32_t tag_mask, lcp_request_param_t *param)
+lcp_status_ptr_t lcp_tag_recv_nb(lcp_manager_h mngr, lcp_task_h task, void *buffer, 
+                                 size_t count, lcp_tag_info_t *tag_info, int32_t src_mask,
+                                 int32_t tag_mask, const lcp_request_param_t *param)
 {
 	int rc = MPC_LOWCOMM_SUCCESS;
 	lcp_unexp_ctnr_t *match;
@@ -55,7 +55,7 @@ int lcp_tag_recv_nb(lcp_manager_h mngr, lcp_task_h task, void *buffer,
         if (req == NULL) {
                 mpc_common_debug_error("LCP TAG: could not create receive "
                                        "tag request.");
-                return MPC_LOWCOMM_ERROR;
+                return (lcp_status_ptr_t)MPC_LOWCOMM_ERROR;
         }
 
         if (param->field_mask & LCP_REQUEST_RECV_CALLBACK) {
@@ -74,7 +74,7 @@ int lcp_tag_recv_nb(lcp_manager_h mngr, lcp_task_h task, void *buffer,
 		// try to receive using zero copy
 		rc = lcp_recv_tag_zcopy(req, iface);
 
-		return rc;
+		return (lcp_status_ptr_t)(int64_t)rc;
 	}
 
         mpc_common_debug_info("LCP: post recv tag task=%p, comm=%d, src=%d, "
@@ -96,7 +96,7 @@ int lcp_tag_recv_nb(lcp_manager_h mngr, lcp_task_h task, void *buffer,
                                    req->recv.tag.comm);
 
                 LCP_TASK_UNLOCK(task);
-		return MPC_LOWCOMM_SUCCESS;
+		return (lcp_status_ptr_t)MPC_LOWCOMM_SUCCESS;
 	}
 
 	LCP_TASK_UNLOCK(task);
@@ -155,5 +155,5 @@ int lcp_tag_recv_nb(lcp_manager_h mngr, lcp_task_h task, void *buffer,
 		rc = MPC_LOWCOMM_ERROR;
 	}
 
-	return rc;
+	return (lcp_status_ptr_t)(int64_t)rc;
 }

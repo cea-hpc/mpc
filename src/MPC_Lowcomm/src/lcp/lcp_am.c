@@ -350,19 +350,20 @@ int lcp_am_send_start(lcp_ep_h ep, lcp_request_t *req,
         return rc;
 }
 
-int lcp_am_send_nb(lcp_ep_h ep, lcp_task_h task, int32_t dest_tid,
-                   uint8_t am_id, void *hdr, size_t hdr_size,
-                   const void *buffer, size_t data_size,
-                   const lcp_request_param_t *param)
+lcp_status_ptr_t lcp_am_send_nb(lcp_ep_h ep, lcp_task_h task, int32_t dest_tid,
+                                uint8_t am_id, void *hdr, size_t hdr_size,
+                                const void *buffer, size_t data_size,
+                                const lcp_request_param_t *param)
 {
         int rc;
+        lcp_status_ptr_t ret;
         lcp_request_t *req;
 
         // create the request to send
         req = lcp_request_get_param(task, param);
         if (req == NULL) {
                 mpc_common_debug_error("LCP: could not create request.");
-                return MPC_LOWCOMM_ERROR;
+                return LCP_STATUS_PTR(MPC_LOWCOMM_ERROR);
         }
 
         // initialize request
@@ -384,7 +385,7 @@ int lcp_am_send_nb(lcp_ep_h ep, lcp_task_h task, int32_t dest_tid,
         if (req->send.am.hdr == NULL) {
                 mpc_common_debug_error("LCP AM: could not allocated user header "
                                        "for copy");
-                return MPC_LOWCOMM_ERROR;
+                return LCP_STATUS_PTR(MPC_LOWCOMM_ERROR);
         }
         memcpy(req->send.am.hdr, hdr, hdr_size);
 
@@ -397,7 +398,7 @@ int lcp_am_send_nb(lcp_ep_h ep, lcp_task_h task, int32_t dest_tid,
         rc = lcp_am_send_start(ep, req, param);
         if (rc != MPC_LOWCOMM_SUCCESS) {
                 mpc_common_debug_error("LCP: could not prepare send request.");
-                return MPC_LOWCOMM_ERROR;
+                return LCP_STATUS_PTR(MPC_LOWCOMM_ERROR);
         }
 
 #ifdef MPC_ENABLE_TOPOLOGY_SIMULATION
@@ -409,19 +410,20 @@ int lcp_am_send_nb(lcp_ep_h ep, lcp_task_h task, int32_t dest_tid,
 #endif
 
         /* send the request */
-        rc = lcp_request_send(req);
+        ret = lcp_request_send(req);
 
-        return rc;
-
+        return ret;
+                
 }
 
 /* ============================================== */
 /* Receive                                        */
 /* ============================================== */
 
-int lcp_am_recv_nb(lcp_manager_h mngr, lcp_task_h task, void *data_ctnr, void *buffer, 
-                   size_t count, lcp_request_param_t *param)
+lcp_status_ptr_t lcp_am_recv_nb(lcp_manager_h mngr, lcp_task_h task, void *data_ctnr, void *buffer, 
+                                size_t count, const lcp_request_param_t *param)
 {
+        int rc = MPC_LOWCOMM_SUCCESS;
         int packed_data_size;
         lcp_request_t *req;
         lcp_rndv_hdr_t *hdr;
@@ -434,7 +436,7 @@ int lcp_am_recv_nb(lcp_manager_h mngr, lcp_task_h task, void *data_ctnr, void *b
         req = lcp_request_get_param(task, param);
         if (req == NULL) {
                 mpc_common_debug_error("LCP: could not create request.");
-                return MPC_LOWCOMM_ERROR;
+                return LCP_STATUS_PTR(MPC_LOWCOMM_ERROR);
         }
 
         // initialize request
@@ -458,7 +460,13 @@ int lcp_am_recv_nb(lcp_manager_h mngr, lcp_task_h task, void *data_ctnr, void *b
         };
 
         packed_data_size = ctnr->length - sizeof(*hdr) - hdr->am.hdr_size;
-        return lcp_rndv_process_rts(req, hdr, packed_data_size);
+
+        rc = lcp_rndv_process_rts(req, hdr, packed_data_size);
+        if (rc == MPC_LOWCOMM_ERROR) {
+                return LCP_STATUS_PTR(rc);
+        }
+
+        return req + 1;
 }
 
 /* ============================================== */

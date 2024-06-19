@@ -182,7 +182,7 @@ int mpc_MPI_Win_request_array_init(struct mpc_MPI_Win_request_array *ra,
 
   for (i = 0; i < MAX_PENDING_RMA; i++) {
     memset(&ra->requests[i], 0, sizeof(mpc_lowcomm_request_t));
-    mpc_lowcomm_request_init(&ra->requests[i], comm, REQUEST_PICKED);
+    mpc_lowcomm_request_init(&ra->requests[i], comm, REQUEST_PICKED, 0, NULL, NULL, 0);
     /* Register the request counter */
     mpc_MPI_register_request_counter(&ra->requests[i], &ra->available_req);
   }
@@ -315,7 +315,7 @@ mpc_MPI_Win_request_array_pick(struct mpc_MPI_Win_request_array *ra) {
 
           memset(&ra->requests[i], 0, sizeof(mpc_lowcomm_request_t));
 
-          mpc_lowcomm_request_init(&ra->requests[i], ra->comm, REQUEST_PICKED);
+          mpc_lowcomm_request_init(&ra->requests[i], ra->comm, REQUEST_PICKED, 0, NULL, NULL, 0);
 
           mpc_common_spinlock_unlock(&ra->lock);
 

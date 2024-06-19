@@ -151,7 +151,7 @@ static inline int mpc_MPI_Get_RMA(struct mpc_MPI_Win *desc, void *origin_addr,
 		if(!can_write_rma && can_read_rma)
 		{
 			mpc_lowcomm_request_t req;
-			mpc_lowcomm_request_init(&req, desc->comm, REQUEST_SEND);
+			mpc_lowcomm_request_init(&req, desc->comm, REQUEST_SEND, 0, NULL, NULL, 0);
 			mpc_lowcomm_rdma_window_RDMA_read(target_win, tmp_buff, remote_size, target_disp,
 			                                  &req);
 			mpc_lowcomm_request_wait(&req);

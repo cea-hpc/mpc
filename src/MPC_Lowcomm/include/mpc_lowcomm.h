@@ -110,9 +110,15 @@ int mpc_lowcomm_request_cancel(mpc_lowcomm_request_t *request);
  * @param comm communicator to rely on
  * @param request_type request type
  */
-void mpc_lowcomm_request_init(mpc_lowcomm_request_t *request, mpc_lowcomm_communicator_t comm, int request_type);
-void mpc_lowcomm_request_init_struct(mpc_lowcomm_request_t *request,
-                                     mpc_lowcomm_communicator_t comm,
+
+typedef int (*mpc_lowcomm_complete_callback_func_t)(mpc_lowcomm_request_t *req);
+void mpc_lowcomm_request_init(mpc_lowcomm_request_t *request,
+                              mpc_lowcomm_communicator_t comm, int request_type,
+                              int count, mpc_lowcomm_datatype_t datatype,
+                              mpc_lowcomm_complete_callback_func_t cb,
+                              unsigned flags);
+void mpc_lowcomm_request_init_struct(mpc_lowcomm_request_t *request, 
+                                     mpc_lowcomm_communicator_t comm, 
                                      int request_type, int src, int dest,
                                      int tag, lcp_send_callback_func_t cb);
 
@@ -217,13 +223,14 @@ int mpc_lowcomm_lookup_name(const char *service_name,
 /************************************************************************/
 
 /** This is the MPC low-level point to point interface */
-
 /** Allocate a request from lower layer. */
 void *mpc_lowcomm_request_alloc();
 /** Free a request from lower layer. */
 void mpc_lowcomm_request_free(mpc_lowcomm_request_t *request);
 /** Pass to LCP layer the upper layer request information. */
 int mpc_lowcomm_pass_mpi_request_info(size_t request_size, void (*request_init_func)(void *));
+void mpc_lowcomm_set_packed_buf(mpc_lowcomm_request_t *request, void *buf,
+                                size_t packed_size);
 
 /** Wait for a communication completion
  * @warning All communications issuing a request in the low-level

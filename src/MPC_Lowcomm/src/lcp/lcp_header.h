@@ -92,6 +92,7 @@ typedef struct lcp_ack_hdr {
 
 typedef struct lcp_ato_hdr {
         int      dest_tid;
+        uint8_t  length;
 	uint64_t src_uid; /* source uid   */
         uint64_t msg_id;
         lcp_atomic_op_t op;

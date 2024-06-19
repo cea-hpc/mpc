@@ -150,6 +150,11 @@ typedef struct
 //FIXME: flag hack to identify a request that has been allocated by the LCP
 //       layer, see is_allocated field of mpc_lowcomm_request_t
 #define MPC_LOWCOMM_REQUEST_ALLOC  0xDEADBEEF 
+
+enum {
+        MPC_LOWCOMM_REQUEST_PACKED   = 1,
+        MPC_LOWCOMM_REQUEST_CALLBACK = 1 << 2,
+};
 /************
 * REQUESTS *
 ************/
@@ -190,6 +195,10 @@ typedef struct mpc_lowcomm_request_s
 	sctk_Grequest_poll_fn *           poll_fn;
 	sctk_Grequest_wait_fn *           wait_fn;
 
+        int count;
+        mpc_lowcomm_datatype_t datatype;
+        void *buffer;
+
 	/* MPI_Grequest_complete takes a copy of the struct
 	 * not a reference however we have to change a value
 	 * in the source struct which is being pulled therefore
@@ -205,9 +214,12 @@ typedef struct mpc_lowcomm_request_s
 	mpc_lowcomm_request_pack_t        dt;
 	mpc_lowcomm_rtype_t               dt_type;
         unsigned int                      is_allocated;
-	int                               dt_magic;
+        void *                            packed_buf;
+        size_t packed_size;
+        unsigned                          flags;
 	void *                            ptr_to_pin_ctx;
 	int (*request_completion_fn)(struct mpc_lowcomm_request_s *);
+        int (*request_complete)(struct mpc_lowcomm_request_s *);
 	// force protocol in lowcomm
 	int                               synchronized;
 }mpc_lowcomm_request_t;

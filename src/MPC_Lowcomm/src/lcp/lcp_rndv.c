@@ -294,36 +294,13 @@ int lcp_send_rndv_start(lcp_request_t *req)
         int rc = MPC_LOWCOMM_SUCCESS;
         lcp_request_t *rndv_req;
 
-        /* If data is derived, buffer must be allocated and data packed to make
-         * it contiguous and use zcopy and memory registration. */
-        //FIXME: this does not have to be handle by rndv layer.
-        //FIXME2: could be factorized. Code similar for send/recv and
-        //        onload/offload datapaths.
-        if (req->datatype & LCP_DATATYPE_DERIVED) {
-                not_implemented();
-                req->state.pack_buf = sctk_malloc(req->send.length);
-                if (req->state.pack_buf == NULL) {
-                        mpc_common_debug_error("LCP RNDV: could not allocate pack "
-                                               "buffer");
-                        rc = MPC_LOWCOMM_ERROR;
-                        goto err;
-                }
-
-                ssize_t packed_length;
-                packed_length = lcp_datatype_pack(req->mngr->ctx, req, req->datatype,
-                                                  req->state.pack_buf, NULL, 
-                                                  req->send.length);
-                if (packed_length < 0) {
-                        goto err;
-                }
-        }
-
         /* Create rendez-vous request */
         rndv_req = lcp_request_get(req->task);
         if (rndv_req == NULL) {
                 mpc_common_debug_error("LCP RNDV: could not create request.");
                 return MPC_LOWCOMM_ERROR;
         }
+        req->flags |= LCP_REQUEST_RELEASE_ON_COMPLETION;
         rndv_req->super = req;
 
         rndv_req->mngr            = req->mngr;
@@ -350,7 +327,6 @@ int lcp_send_rndv_start(lcp_request_t *req)
         /* Register memory if GET protocol */
         rc = lcp_rndv_register_buffer(rndv_req);
 
-err:
         return rc;
 }
 
@@ -389,30 +365,20 @@ int lcp_rndv_process_rts(lcp_request_t *rreq,
         lcp_request_t *rndv_req;
         lcp_rndv_hdr_t *hdr = data;
 
-        /* Buffer must be allocated and data packed to make it contiguous
-         * and use zcopy and memory registration. */
-        //FIXME: this does not have to be handle by rndv layer.
-        if (rreq->datatype & LCP_DATATYPE_DERIVED) {
-                rreq->state.pack_buf = sctk_malloc(rreq->recv.send_length);
-                if (rreq->state.pack_buf == NULL) {
-                        mpc_common_debug_error("LCP RNDV: could not allocate pack "
-                                               "buffer");
-                        return MPC_LOWCOMM_ERROR;
-                }
-        }
-
         /* Rendez-vous request used for RTR (PUT) or RMA (GET) */
         rndv_req = lcp_request_get(rreq->task);
         if (rndv_req == NULL) {
                 mpc_common_debug_error("LCP RNDV: could not create request.");
                 return MPC_LOWCOMM_ERROR;
         }
-        rndv_req->super = rreq;
+        rndv_req->super  = rreq;
 
         rndv_req->mngr            = rreq->mngr;
         rndv_req->datatype        = rreq->datatype;
         rndv_req->send.length     = rreq->recv.send_length;
         rndv_req->state.pack_buf  = rreq->state.pack_buf;
+
+        assert(rreq->datatype & LCP_DATATYPE_CONTIGUOUS);
         rndv_req->send.buffer     = rreq->datatype & LCP_DATATYPE_CONTIGUOUS ?
                 rreq->recv.buffer : rreq->state.pack_buf;
         rndv_req->state.remaining = rreq->recv.send_length;
@@ -503,7 +469,7 @@ static int lcp_rndv_rtr_handler(void *arg, void *data,
 
         rndv_req->send.func = lcp_rndv_rma_progress;
 
-        rc = lcp_request_send(rndv_req);
+        lcp_request_send(rndv_req);
 
 err:
         return rc;

@@ -48,6 +48,8 @@
 
 #include "mpc_reduction.h"
 
+#include "mpitypes.h"
+
 #include "egreq_progress.h"
 #include "errh.h"
 
@@ -2180,26 +2182,64 @@ int _mpc_cl_get_processor_name(char *name, int *resultlen)
 /* Point to point communications                                        */
 /************************************************************************/
 
+int _mpc_cl_request_send_complete(mpc_lowcomm_request_t *request) {
+        if (request->flags & MPC_LOWCOMM_REQUEST_PACKED) {
+                sctk_free(request->packed_buf);
+        }
+        return 0;
+}
+
+int _mpc_cl_request_recv_complete(mpc_lowcomm_request_t *request) {
+        if (request->flags & MPC_LOWCOMM_REQUEST_PACKED) {
+                MPIT_Type_memcpy(request->packed_buf, request->packed_size, request->datatype,
+                                 request->buffer, MPIT_MEMCPY_TO_USERBUF, 0, request->count);
+        }
+        return 0;
+}
+
 int _mpc_cl_pass_mpi_request_info(size_t request_size, void (*init_mpi_request)(void *request))
 {
         mpc_lowcomm_pass_mpi_request_info(request_size, init_mpi_request);
+        return 0;
 }
 
 int _mpc_cl_isend(const void *buf, mpc_lowcomm_msg_count_t count,
                   mpc_lowcomm_datatype_t datatype, int dest, int tag,
                   mpc_lowcomm_communicator_t comm, mpc_lowcomm_request_t *request)
 {
+        int rc;
+        void *tmp_buf = NULL;
 
+        mpc_lowcomm_request_init(request, comm, REQUEST_SEND, count,
+                                 datatype, _mpc_cl_request_send_complete,
+                                 MPC_LOWCOMM_REQUEST_CALLBACK);
 	if(dest == MPC_PROC_NULL)
 	{
-		mpc_lowcomm_request_init(request, comm, REQUEST_SEND);
 		MPC_ERROR_SUCCESS();
 	}
 
-	size_t d_size   = __mpc_cl_datatype_get_size(datatype);
-	size_t msg_size = count * d_size;
+        //FIXME: call at datatype creation
+        MPIT_Type_init(datatype);
 
-	mpc_lowcomm_isend(dest, buf, msg_size, tag, comm, request);
+        size_t msg_size = count * __mpc_cl_datatype_get_size(datatype);
+        if (!mpc_mpi_cl_type_is_contiguous(datatype)) {
+                tmp_buf = sctk_malloc(msg_size);
+                if (tmp_buf == NULL) {
+                        return MPC_ERR_INTERN;
+                }
+
+                rc = MPIT_Type_memcpy((void *)buf, count, datatype, tmp_buf,
+                                      MPIT_MEMCPY_FROM_USERBUF, 0, msg_size);
+                if (rc != MPC_SUCCESS) {
+                        return rc;
+                }
+                mpc_lowcomm_set_packed_buf(request, tmp_buf, msg_size);
+
+        } else {
+                tmp_buf = (void *)buf;
+        }
+
+	mpc_lowcomm_isend(dest, tmp_buf, msg_size, tag, comm, request);
 
 	MPC_ERROR_SUCCESS();
 }
@@ -2211,14 +2251,14 @@ int _mpc_cl_issend(const void *buf, mpc_lowcomm_msg_count_t count,
 	/* Issend is not buffered */
 	if(dest == MPC_PROC_NULL)
 	{
-		mpc_lowcomm_request_init(request, comm, REQUEST_SEND);
+                mpc_lowcomm_request_init(request, comm, REQUEST_SEND, count,
+                                         datatype, NULL, 0);
 		MPC_ERROR_SUCCESS();
 	}
 
-	size_t d_size   = __mpc_cl_datatype_get_size(datatype);
-	size_t msg_size = count * d_size;
+        //FIXME: check if really sync
+	mpc_lowcomm_isend(dest, buf, count, tag, comm, request);
 
-	mpc_lowcomm_isend(dest, buf, msg_size, tag, comm, request);
 	MPC_ERROR_SUCCESS();
 }
 
@@ -2238,16 +2278,32 @@ int _mpc_cl_irecv(void *buf, mpc_lowcomm_msg_count_t count,
                   mpc_lowcomm_datatype_t datatype, int source, int tag,
                   mpc_lowcomm_communicator_t comm, mpc_lowcomm_request_t *request)
 {
-
+        void *tmp_buf;
+        mpc_lowcomm_request_init(request, comm, REQUEST_RECV, count, datatype,
+                                 _mpc_cl_request_recv_complete, 
+                                 MPC_LOWCOMM_REQUEST_CALLBACK);
 	if(source == MPC_PROC_NULL)
 	{
-		mpc_lowcomm_request_init(request, comm, REQUEST_RECV);
 		MPC_ERROR_SUCCESS();
 	}
 
-	size_t d_size = __mpc_cl_datatype_get_size(datatype);
+        MPIT_Type_init(datatype);
 
-	mpc_lowcomm_irecv(source, buf, count * d_size, tag, comm, request);
+        size_t msg_size = count * __mpc_cl_datatype_get_size(datatype);
+
+        if (!mpc_mpi_cl_type_is_contiguous(datatype)) {
+                tmp_buf = sctk_malloc(msg_size);
+                if (tmp_buf == NULL) {
+                        return MPC_ERR_INTERN;
+                }
+                mpc_lowcomm_set_packed_buf(request, tmp_buf, msg_size);
+        } else {
+                tmp_buf = (void *)buf;
+        }
+
+
+	mpc_lowcomm_irecv(source, buf, msg_size, tag, comm, request);
+
 	MPC_ERROR_SUCCESS();
 }
 
@@ -2273,14 +2329,7 @@ int _mpc_cl_send(const void *buf, mpc_lowcomm_msg_count_t count,
 {
 	mpc_lowcomm_request_t request;
 
-	if(dest == MPC_PROC_NULL)
-	{
-		MPC_ERROR_SUCCESS();
-	}
-
-	size_t msg_size = count * __mpc_cl_datatype_get_size(datatype);
-
-	mpc_lowcomm_isend(dest, buf, msg_size, tag, comm, &request);
+        _mpc_cl_isend(buf, count, datatype, dest, tag, comm, &request);
 	mpc_lowcomm_request_wait(&request);
 
 	MPC_ERROR_SUCCESS();
@@ -2337,14 +2386,18 @@ int _mpc_cl_sendrecv(void *sendbuf, mpc_lowcomm_msg_count_t sendcount, mpc_lowco
 {
 	mpc_lowcomm_request_t reqs[2];
 
-        mpc_lowcomm_request_init(&reqs[0], comm, REQUEST_RECV);
-        mpc_lowcomm_request_init(&reqs[1], comm, REQUEST_SEND);
+        mpc_lowcomm_request_init(&reqs[0], comm, REQUEST_RECV, recvcount,
+                                 recvtype, NULL, 0);
+        mpc_lowcomm_request_init(&reqs[1], comm, REQUEST_SEND, sendcount,
+                                 recvtype, NULL, 0);
 
 	//mpc_common_debug_error("SEND %p CNT %d DEST %d TAG %d", sendbuf, sendcount, dest, sendtag);
 	//mpc_common_debug_error("RECV %p CNT %d SRC %d TAG %d", recvbuf, recvcount, source, recvtag);
 
-	_mpc_cl_irecv(recvbuf, recvcount, recvtype, source, recvtag, comm, &reqs[0]);
-	_mpc_cl_isend(sendbuf, sendcount, sendtype, dest, sendtag, comm, &reqs[1]);
+        _mpc_cl_irecv(recvbuf, recvcount, recvtype, source, recvtag, comm,
+                      &reqs[0]);
+        _mpc_cl_isend(sendbuf, sendcount, sendtype, dest, sendtag, comm,
+                      &reqs[1]);
 
 	MPI_Status st[2];
 
@@ -3394,7 +3447,7 @@ int mpc_mpi_cl_isend_pack(int dest, int tag, mpc_lowcomm_communicator_t comm, mp
 
 	if(dest == MPC_PROC_NULL)
 	{
-		mpc_lowcomm_request_init(request, comm, REQUEST_SEND);
+		mpc_lowcomm_request_init(request, comm, REQUEST_SEND, 0, NULL, NULL, 0);
 		MPC_ERROR_SUCCESS();
 	}
 
@@ -3415,7 +3468,7 @@ int mpc_mpi_cl_irecv_pack(int source, int tag, mpc_lowcomm_communicator_t comm, 
 
 	if(source == MPC_PROC_NULL)
 	{
-		mpc_lowcomm_request_init(request, comm, REQUEST_RECV);
+		mpc_lowcomm_request_init(request, comm, REQUEST_RECV, 0, NULL, NULL, 0);
 		MPC_ERROR_SUCCESS();
 	}
 

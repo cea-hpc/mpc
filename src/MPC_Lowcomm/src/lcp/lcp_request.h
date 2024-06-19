@@ -54,12 +54,13 @@ enum {
         LCP_REQUEST_OFFLOADED_RNDV          = MPC_BIT(4),
         LCP_REQUEST_LOCAL_COMPLETED         = MPC_BIT(5),
         LCP_REQUEST_REMOTE_COMPLETED        = MPC_BIT(6),
-        LCP_REQUEST_USER_CALLBACK           = MPC_BIT(7),
-        LCP_REQUEST_USER_PROVIDED_MEMH      = MPC_BIT(8),
-        LCP_REQUEST_USER_PROVIDED_EPH       = MPC_BIT(9),
-        LCP_REQUEST_USER_PROVIDED_REPLY_BUF = MPC_BIT(10),
-        LCP_REQUEST_USER_ALLOCATED          = MPC_BIT(11),
-        LCP_REQUEST_RELEASE_REMOTE_KEY      = MPC_BIT(12),
+        LCP_REQUEST_RELEASE_ON_COMPLETION   = MPC_BIT(7),
+        LCP_REQUEST_USER_CALLBACK           = MPC_BIT(8),
+        LCP_REQUEST_USER_PROVIDED_MEMH      = MPC_BIT(9),
+        LCP_REQUEST_USER_PROVIDED_EPH       = MPC_BIT(10),
+        LCP_REQUEST_USER_PROVIDED_REPLY_BUF = MPC_BIT(11),
+        LCP_REQUEST_USER_ALLOCATED          = MPC_BIT(12),
+        LCP_REQUEST_RELEASE_REMOTE_KEY      = MPC_BIT(13),
 };
 
 //TODO: rename "unexpected container" to "receive descriptor". It was initially
@@ -137,6 +138,7 @@ struct lcp_request {
                                         lcp_mem_h       rkey;
                                         void           *reply_buffer;
                                         uint64_t        value;
+                                        uint64_t        compare;
                                 } ato;
 
                                 struct {
@@ -379,7 +381,6 @@ struct lcp_request {
 	(_req)->send.length            = _length;                 \
 	(_req)->send.ato.rkey          = _rkey;                   \
 	(_req)->send.ato.remote_addr   = _remote_addr;            \
-	(_req)->send.ato.value         = *(uint64_t *)(_buf);     \
 	(_req)->send.ato.op            = _op;                     \
 	\
 	(_req)->state.remaining        = _length;                 \
@@ -390,18 +391,16 @@ struct lcp_request {
         _msg_id  = 0;                               \
         _msg_id |= (_tid & 0xffffffffull);          \
         _msg_id  = (_msg_id << 32);                 \
-        _msg_id |= (_seqn & 0xffffffffull);
+        _msg_id |= (_seqn & 0xffffffffull)
 
 #define lcp_request_get_param(_task, _param) \
         ({ \
                 lcp_request_t *__req; \
-                if ((_param)->field_mask & LCP_REQUEST_USER_REQUEST) {\
-                        __req = (lcp_request_t *)((_param)->request) - 1; \
+                if ((_param)->field_mask & LCP_REQUEST_USER_REQUEST) {       \
+                        __req = (lcp_request_t *)((_param)->request) - 1;    \
+                        assert((__req)->flags & LCP_REQUEST_USER_ALLOCATED); \
                 } else { \
-                        __req = mpc_mpool_pop(&(_task)->req_mp); \
-                        if (__req != NULL) { \
-                                lcp_request_reset(__req); \
-                        } \
+                        __req = lcp_request_get(_task); \
                 } \
                 __req; \
          }) 
@@ -412,20 +411,21 @@ struct lcp_request {
                 if (__req != NULL) { \
                         lcp_request_reset(__req); \
                 } \
+                (__req)->flags |= LCP_REQUEST_RELEASE_ON_COMPLETION; \
+                mpc_common_nodebug("LCP REQ: alloc request. req=%p", __req); \
                 __req; \
          })
 
 #define lcp_request_put(_req) \
-        mpc_mpool_push(_req);
+        mpc_common_nodebug("LCP REQ: release req=%p", _req); \
+        mpc_mpool_push(_req)
 
 #define lcp_request_complete(_req, _cb, _status, ...) \
-        mpc_common_debug("LCP: complete req=%p, msg_id=%llu, " \
-                         "seqn=%d", _req, (_req)->msg_id, \
-                         (_req)->seqn); \
+        mpc_common_nodebug("LCP REQ: complete req=%p", _req); \
         if ((_req)->flags & LCP_REQUEST_USER_CALLBACK) { \
                 (_req)->_cb(_status, (_req)->request, ## __VA_ARGS__); \
         }\
-        if (!((_req)->flags & LCP_REQUEST_USER_ALLOCATED)) {\
+        if ((_req)->flags & LCP_REQUEST_RELEASE_ON_COMPLETION) {\
                 lcp_request_put(_req); \
         }
 
@@ -453,9 +453,10 @@ static inline void lcp_container_reset(lcp_unexp_ctnr_t *ctnr)
         ctnr->flags = 0;
 }
 
-static inline int lcp_request_send(lcp_request_t *req)
+static inline lcp_status_ptr_t lcp_request_send(lcp_request_t *req)
 {
         int rc;
+        lcp_status_ptr_t ret;
 
         /* First, check endpoint availability */
         if (req->send.ep->state == LCP_EP_FLAG_CONNECTING) {
@@ -466,21 +467,30 @@ static inline int lcp_request_send(lcp_request_t *req)
                 }
         }
 
+        //FIXME: for now, no send mode enables MPC_LOWCOMM_IN_PROGRESS. Indeed,
+        //       in any case, the whole request will be sent, either with RMA or
+        //       with bcopy.
         switch((rc = req->send.func(req))) {
         case MPC_LOWCOMM_SUCCESS:
+                ret = req + 1;
                 break;
         case MPC_LOWCOMM_NO_RESOURCE:
                 //TODO: implement thread-safe pending queue
                 mpc_queue_push(&req->mngr->pending_queue, &req->queue);
+                ret = req + 1;
+                break;
+        case MPC_LOWCOMM_IN_PROGRESS:
+                ret = req + 1;
                 break;
         case MPC_LOWCOMM_ERROR:
                 mpc_common_debug_error("LCP: could not send request.");
+                ret = LCP_STATUS_PTR(rc);
                 break;
         default:
                 mpc_common_debug_fatal("LCP: unknown send error.");
                 break;
         }
-        return rc;
+        return ret;
 }
 
 // NOLINTEND(clang-diagnostic-unused-function)

@@ -339,6 +339,7 @@ void __sctk_add_in_mpc_request(MPI_Request *req, void *t,
 void __sctk_delete_mpc_request(MPI_Request *req,
                                MPI_request_struct_t *requests);
 #endif
+MPI_internal_request_t *mpc_mpi_alloc_request();
 
 mpc_lowcomm_datatype_t _mpc_cl_per_mpi_process_ctx_general_datatype_get(const size_t datatype);
 

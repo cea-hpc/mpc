@@ -775,7 +775,7 @@ static inline void __mpc_lowcomm_rdma_window_RDMA_write(mpc_lowcomm_rdma_window_
 {
 	struct mpc_lowcomm_rdma_window *win = sctk_win_translate(win_id);
 
-	mpc_lowcomm_request_init(req, win->communicator, REQUEST_RDMA);
+	mpc_lowcomm_request_init(req, win->communicator, REQUEST_RDMA, size, NULL, NULL, 0);
 
 	mpc_common_nodebug("RDMA WRITE");
 
@@ -955,7 +955,7 @@ void __mpc_lowcomm_rdma_window_RDMA_read(mpc_lowcomm_rdma_window_t win_id, sctk_
 {
 	struct mpc_lowcomm_rdma_window *win = sctk_win_translate(win_id);
 
-	mpc_lowcomm_request_init(req, win->communicator, REQUEST_RDMA);
+	mpc_lowcomm_request_init(req, win->communicator, REQUEST_RDMA, size, NULL, NULL, 0);
 
 	if(!win)
 	{
@@ -1470,7 +1470,7 @@ static inline void mpc_lowcomm_rdma_window_RDMA_fetch_and_op_local(
 	struct mpc_lowcomm_rdma_window *win = sctk_win_translate(remote_win_id);
 
 	// mpc_common_debug_error("Fetch and add");
-	mpc_lowcomm_request_init(req, win->communicator, REQUEST_RDMA);
+	mpc_lowcomm_request_init(req, win->communicator, REQUEST_RDMA, 0, NULL, NULL, 0);
 
 	if(!win)
 	{
@@ -1550,7 +1550,7 @@ static inline void __mpc_lowcomm_rdma_window_RDMA_fetch_and_op(
 {
 	struct mpc_lowcomm_rdma_window *win = sctk_win_translate(remote_win_id);
 
-	mpc_lowcomm_request_init(req, win->communicator, REQUEST_RDMA);
+	mpc_lowcomm_request_init(req, win->communicator, REQUEST_RDMA, 0, NULL, NULL, 0);
 
 	// mpc_common_debug_error("Fetch and add");
 
@@ -1848,7 +1848,7 @@ void __mpc_lowcomm_rdma_window_RDMA_CAS(mpc_lowcomm_rdma_window_t remote_win_id,
 		mpc_common_debug_fatal("No such window ID %d", remote_win_id);
 	}
 
-	mpc_lowcomm_request_init(req, win->communicator, REQUEST_RDMA);
+	mpc_lowcomm_request_init(req, win->communicator, REQUEST_RDMA, 0, NULL, NULL, 0);
 
 	/* Now try to see if we pass the RDMA rail gate function for fetch and
 	 * op */

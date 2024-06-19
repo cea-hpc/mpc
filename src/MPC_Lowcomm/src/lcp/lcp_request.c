@@ -102,7 +102,9 @@ void *lcp_request_alloc(lcp_task_h task)
                 return NULL;
         }
         req->flags |= LCP_REQUEST_USER_ALLOCATED;
-        mpc_common_debug("LCP REQ: alloc request. req=%p", req);
+        //NOTE: with lcp_request_get, completion is set automatically.
+        //      Unset it.
+        req->flags &= ~LCP_REQUEST_RELEASE_ON_COMPLETION;
 
         return req + 1;
 }
@@ -112,7 +114,6 @@ void lcp_request_free(void *request)
         lcp_request_t *req = (lcp_request_t *)(request) - 1;
 
         assert(req->flags & LCP_REQUEST_USER_ALLOCATED);
-        mpc_common_debug("LCP REQ: free request. req=%p", req);
 
         lcp_request_put(req);
 }

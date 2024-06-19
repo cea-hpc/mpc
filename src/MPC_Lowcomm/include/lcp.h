@@ -332,14 +332,13 @@ enum {
         LCP_REQUEST_TRY_OFFLOAD   = MPC_BIT(0), /**< Try offload send mask */
         LCP_REQUEST_USER_DATA     = MPC_BIT(1), /**< User data mask */
         LCP_REQUEST_USER_REQUEST  = MPC_BIT(2), /**< User request mask */
-        LCP_REQUEST_NO_COMPLETE   = MPC_BIT(3), /**< Do not complete lower layer request. */
-        LCP_REQUEST_TAG_SYNC      = MPC_BIT(4), /**< Sync request mask */
-        LCP_REQUEST_AM_SYNC       = MPC_BIT(5), /**< AM sync request mask */
-        LCP_REQUEST_SEND_CALLBACK = MPC_BIT(6), /**< Send callback mask */ 
-        LCP_REQUEST_RECV_CALLBACK = MPC_BIT(7), /**< Recv callback mask */ 
-        LCP_REQUEST_REPLY_BUFFER  = MPC_BIT(8), /**< Result buffer for Atomics */
-        LCP_REQUEST_USER_MEMH     = MPC_BIT(9), /**< User-provided local Memory handle */
-        LCP_REQUEST_USER_EPH      = MPC_BIT(10), /**< User-provided Endpoint handle */
+        LCP_REQUEST_TAG_SYNC      = MPC_BIT(3), /**< Sync request mask */
+        LCP_REQUEST_AM_SYNC       = MPC_BIT(4), /**< AM sync request mask */
+        LCP_REQUEST_SEND_CALLBACK = MPC_BIT(5), /**< Send callback mask */ 
+        LCP_REQUEST_RECV_CALLBACK = MPC_BIT(6), /**< Recv callback mask */ 
+        LCP_REQUEST_REPLY_BUFFER  = MPC_BIT(7), /**< Result buffer for Atomics */
+        LCP_REQUEST_USER_MEMH     = MPC_BIT(8), /**< User-provided local Memory handle */
+        LCP_REQUEST_USER_EPH      = MPC_BIT(9), /**< User-provided Endpoint handle */
 };
 
 /**
@@ -405,7 +404,7 @@ typedef struct lcp_request_param {
         lcp_tag_recv_callback_func_t recv_cb; /**< Completion callback for recv requests */
         void                        *reply_buffer; /**< Location for returned value with atomic operations */
         lcp_datatype_t               datatype; /**< Contiguous or non-contiguous data */
-        void                        *request; /**< Pointer to upper layer request for completion */
+        void                        *request; /**< Pointer to mpc_lowcomm_request for completion. */
         lcp_mem_h                    mem; /**< Memory handle for RMA requests */
         lcp_ep_h                     ep; /**< Endpoint to be flushed. */
 } lcp_request_param_t;
@@ -465,11 +464,12 @@ int lcp_request_check_status(void *request);
  * @param [in] count  Size of source buffer.
  * @param [in] request  Lowcomm request.
  * @param [in] param  Request parameters \ref lcp_request_param_t.
- * @return Error code returned.
+ * @return Error code returned or pointer to request. Use \ref
+ *         lcp_request_check_status to check completion.
  */
-int lcp_tag_send_nb(lcp_ep_h ep, lcp_task_h task, const void *buffer,
-                    size_t count, lcp_tag_info_t *tag_info, 
-                    const lcp_request_param_t *param);
+lcp_status_ptr_t lcp_tag_send_nb(lcp_ep_h ep, lcp_task_h task, const void *buffer,
+                                 size_t count, lcp_tag_info_t *tag_info, 
+                                 const lcp_request_param_t *param);
 
 /**
  * @ingroup LCP_COMM
@@ -487,11 +487,12 @@ int lcp_tag_send_nb(lcp_ep_h ep, lcp_task_h task, const void *buffer,
  * @param [in] count  Size of source buffer.
  * @param [in] request  Lowcomm request.
  * @param [in] param  Request parameters \ref lcp_request_param_t.
- * @return Error code returned.
+ * @return Error code returned or pointer to request. Use \ref
+ *         lcp_request_check_status to check completion.
  */
-int lcp_tag_recv_nb(lcp_manager_h mngr, lcp_task_h task, void *buffer, 
-                    size_t count, lcp_tag_info_t *tag_info, int32_t src_mask,
-                    int32_t tag_mask, lcp_request_param_t *param);
+lcp_status_ptr_t lcp_tag_recv_nb(lcp_manager_h mngr, lcp_task_h task, void *buffer, 
+                                 size_t count, lcp_tag_info_t *tag_info, int32_t src_mask,
+                                 int32_t tag_mask, const lcp_request_param_t *param);
 
 /**
  * @ingroup LCP_COMM
@@ -578,11 +579,13 @@ int lcp_am_set_handler_callback(lcp_manager_h mngr, lcp_task_h task, uint8_t am_
  * @param [in] buffer  Pointer to buffer.
  * @param [in] count Size of buffer.
  * @param [in] param  Request parameters \ref lcp_request_param_t.
- * @return Error code returned.
+ * @return Error code returned or pointer to request. Use \ref
+ *         lcp_request_check_status to check completion.
  */
-int lcp_am_send_nb(lcp_ep_h ep, lcp_task_h task, int32_t dest_tid,
-                   uint8_t am_id, void *hdr, size_t hdr_size, const void *buffer,
-                   size_t count, const lcp_request_param_t *param);
+lcp_status_ptr_t lcp_am_send_nb(lcp_ep_h ep, lcp_task_h task, int32_t dest_tid,
+                                uint8_t am_id, void *hdr, size_t hdr_size,
+                                const void *buffer, size_t count,
+                                const lcp_request_param_t *param);
 
 /**
  * @ingroup LCP_COMM
@@ -593,7 +596,7 @@ int lcp_am_send_nb(lcp_ep_h ep, lcp_task_h task, int32_t dest_tid,
  * routine may thus be used in conjunction with \ref LCP_AM_RNDV flags that
  * would have been set within the user callback through \ref
  * lcp_am_recv_param_t.
- * To be notified for completion, user must provide set the completion callback
+ * To be notified for completion, user must set the completion callback
  * in \ref lcp_request_param_t.
  *
  * @param [in] task  Task handle of the source task.
@@ -604,8 +607,9 @@ int lcp_am_send_nb(lcp_ep_h ep, lcp_task_h task, int32_t dest_tid,
  * @param [in] param  Request parameters \ref lcp_request_param_t.
  * @return Error code returned.
  */
-int lcp_am_recv_nb(lcp_manager_h mngr, lcp_task_h task, void *data_ctnr, 
-                   void *buffer, size_t count, lcp_request_param_t *param);
+lcp_status_ptr_t lcp_am_recv_nb(lcp_manager_h mngr, lcp_task_h task, void
+                                *data_ctnr, void *buffer, size_t count,
+                                const lcp_request_param_t *param);
 
 /**
  * @ingroup LCP_COMM

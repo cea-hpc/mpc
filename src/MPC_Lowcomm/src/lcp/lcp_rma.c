@@ -276,26 +276,20 @@ lcp_status_ptr_t lcp_put_nb(lcp_ep_h ep, lcp_task_h task, const void *buffer, si
                             uint64_t remote_addr, lcp_mem_h rkey,
                             const lcp_request_param_t *param) 
 {
-        lcp_status_ptr_t status = NULL;
         int rc = MPC_LOWCOMM_SUCCESS;
+        lcp_status_ptr_t ret;
         lcp_request_t *req;
 
         req = lcp_request_get_param(task, param);
         if (req == NULL) {
-                mpc_common_debug_error("LCP: could not create request.");
-                rc = MPC_LOWCOMM_ERROR;
-                goto err;
+                mpc_common_debug_error("LCP: could not allocate put request.");
+                return LCP_STATUS_PTR(MPC_LOWCOMM_ERROR);
         }
         LCP_REQUEST_INIT_RMA_PUT(req, ep->mngr, task, length, param->request, ep, buffer, 
                                   0 /* no ordering for rma */, 0, param->datatype, 
                                   rkey, remote_addr);
 
-        if (param->field_mask & LCP_REQUEST_NO_COMPLETE) {
-                req->flags |= LCP_REQUEST_USER_ALLOCATED;
-        }
-
         if (param->field_mask & LCP_REQUEST_SEND_CALLBACK) {
-                assert(param->field_mask & LCP_REQUEST_USER_REQUEST);
                 req->flags       |= LCP_REQUEST_USER_CALLBACK;
                 req->send.send_cb = param->send_cb;
         }
@@ -307,52 +301,37 @@ lcp_status_ptr_t lcp_put_nb(lcp_ep_h ep, lcp_task_h task, const void *buffer, si
 
         rc = lcp_rma_start(ep, req);
         if (rc != MPC_LOWCOMM_SUCCESS) {
-                goto err;
+                return LCP_STATUS_PTR(rc);
         }
+        
+        mpc_common_debug("LCP RMA: perform put. req=%p, task=%p, "
+                         "buffer=%p, length=%d, remote addr=%p.", 
+                         req, task, buffer, length, remote_addr);
 
-        rc = lcp_request_send(req);
+        ret = lcp_request_send(req);
 
-        if (req->flags & LCP_REQUEST_USER_ALLOCATED) {
-                return (lcp_status_ptr_t)(req + 1);
-        } else {
-                return (lcp_status_ptr_t)(uint64_t)rc;
-        }
-err:
-        return status;
+        return ret;
 }
 
 lcp_status_ptr_t lcp_get_nb(lcp_ep_h ep, lcp_task_h task, void *buffer, 
                             size_t length, uint64_t remote_addr, lcp_mem_h rkey,
                             const lcp_request_param_t *param) 
 {
-        lcp_status_ptr_t status = NULL;
         int rc = MPC_LOWCOMM_SUCCESS;
+        lcp_status_ptr_t ret;
         lcp_request_t *req;
-
-        if (!(param->field_mask & LCP_REQUEST_USER_MEMH)) {
-                mpc_common_debug_error("LCP RMA: rma get without "
-                                       "user-provided memory handle not "
-                                       "supported yet.");
-                rc = MPC_LOWCOMM_NOT_SUPPORTED;
-                goto err;
-        }
 
         req = lcp_request_get_param(task, param);
         if (req == NULL) {
-                rc = MPC_LOWCOMM_ERROR;
-                goto err;
+                mpc_common_debug_error("LCP: could not allocate get request.");
+                return LCP_STATUS_PTR(MPC_LOWCOMM_ERROR);
         }
         LCP_REQUEST_INIT_RMA_GET(req, ep->mngr, task, length, param->request, 
                                  ep, (void *)buffer, 
                                  0 /* no ordering for rma */, 0, param->datatype, 
                                  rkey, remote_addr);
 
-        if (param->field_mask & LCP_REQUEST_NO_COMPLETE) {
-                req->flags |= LCP_REQUEST_USER_ALLOCATED;
-        }
-
         if (param->field_mask & LCP_REQUEST_SEND_CALLBACK) {
-                assert(param->field_mask & LCP_REQUEST_USER_REQUEST);
                 req->flags       |= LCP_REQUEST_USER_CALLBACK;
                 req->send.send_cb = param->send_cb;
         }
@@ -364,18 +343,16 @@ lcp_status_ptr_t lcp_get_nb(lcp_ep_h ep, lcp_task_h task, void *buffer,
 
         rc = lcp_rma_start(ep, req);
         if (rc != MPC_LOWCOMM_SUCCESS) {
-                goto err;  
+                return LCP_STATUS_PTR(rc);
         }
 
-        rc = lcp_request_send(req);
+        mpc_common_debug("LCP RMA: perform get. req=%p, task=%p, "
+                         "buffer=%p, length=%d, remote addr=%p.", 
+                         req, task, buffer, length, remote_addr);
 
-        if (req->flags & LCP_REQUEST_USER_ALLOCATED) {
-                return (lcp_status_ptr_t)(req + 1);
-        } else {
-                return (lcp_status_ptr_t)(uint64_t)rc;
-        }
-err:
-        return status;
+        ret = lcp_request_send(req);
+
+        return ret;
 }
 
 int lcp_flush_manager_nb(lcp_request_t *req)
@@ -524,27 +501,23 @@ static lcp_status_ptr_t lcp_request_send_flush(lcp_request_t *req)
 lcp_status_ptr_t lcp_flush_nb(lcp_manager_h mngr, lcp_task_h task,
                               const lcp_request_param_t *param)
 {
-        int rc = MPC_LOWCOMM_SUCCESS;
+        int rc;
+        lcp_status_ptr_t ret;
         lcp_request_t *req;
 
         //TODO: add check request param macro.
 
         req = lcp_request_get_param(task, param);
         if (req == NULL) {
-                rc = MPC_LOWCOMM_ERROR;
-                goto err;
+                mpc_common_debug_error("LCP RMA: could not allocate flush "
+                                       "request.");
+                return LCP_STATUS_PTR(MPC_LOWCOMM_ERROR);
         }
 
-        LCP_REQUEST_INIT_RMA_FLUSH(req, mngr, task, 0, param->request, NULL, NULL, 
-                                   0 /* no ordering for rma */, 0, 
-                                   param->datatype);
+        LCP_REQUEST_INIT_RMA_FLUSH(req, mngr, task, 0, param->request, NULL,
+                                   NULL, 0 , 0, param->datatype);
 
         req->state.comp.comp_cb = lcp_flush_request_complete;
-        req->send.flush.flush   = task->tcct[mngr->id]->rma.flush_counter++;
-
-        if (param->field_mask & LCP_REQUEST_NO_COMPLETE) {
-                req->flags |= LCP_REQUEST_USER_ALLOCATED;
-        }
 
         if (param->field_mask & LCP_REQUEST_USER_MEMH) {
                 req->flags     |= LCP_REQUEST_USER_PROVIDED_MEMH;
@@ -557,35 +530,31 @@ lcp_status_ptr_t lcp_flush_nb(lcp_manager_h mngr, lcp_task_h task,
         }
 
         if (param->field_mask & LCP_REQUEST_SEND_CALLBACK) {
+                req->flags       |= LCP_REQUEST_USER_CALLBACK;
                 req->send.send_cb = param->send_cb;
         }
 
         switch (req->flags & LCP_RMA_FLUSH_MASK) {
         case LCP_FLUSH_SCOPE_EP:
-                rc = lcp_flush_ep_nb(req);
+                req->send.func = lcp_flush_ep_nb;
                 break;
         case LCP_FLUSH_SCOPE_MEM:
-                rc = lcp_flush_mem_nb(req);
+                req->send.func = lcp_flush_mem_nb;
                 break;
         case LCP_FLUSH_SCOPE_MEM_EP:
-                rc = lcp_flush_mem_ep_nb(req);
+                req->send.func = lcp_flush_mem_ep_nb;
                 break;
         case LCP_FLUSH_SCOPE_MANAGER:
-                rc = lcp_flush_manager_nb(req);
+                req->send.func = lcp_flush_manager_nb;
                 break;
         default:
                 mpc_common_debug_error("LCP RMA: unknown flush operation.");
                 rc = MPC_LOWCOMM_ERROR;
+                return LCP_STATUS_PTR(rc);
                 break;
         }
-        if (rc == MPC_LOWCOMM_ERROR) {
-                mpc_common_debug_error("LCP RMA: error flushing.");
-        }
 
-err:
-        if (req->flags & LCP_REQUEST_USER_ALLOCATED) {
-                return (lcp_status_ptr_t)(req + 1);
-        } else {
-                return (lcp_status_ptr_t)(uint64_t)rc;
-        }
+        ret = lcp_request_send_flush(req);
+
+        return ret;
 }

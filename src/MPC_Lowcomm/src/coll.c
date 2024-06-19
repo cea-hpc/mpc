@@ -283,6 +283,8 @@ static void _mpc_coll_message_send( const mpc_lowcomm_communicator_t communicato
         UNUSED(check_msg);
         UNUSED(myself);
         UNUSED(message_class);
+        mpc_lowcomm_request_init(&msg_req->request, communicator, REQUEST_SEND,
+                                 size, NULL, NULL, 0); 
         mpc_lowcomm_isend(dest, buffer, size, tag, communicator, &msg_req->request);
 }
 
@@ -292,6 +294,8 @@ static void _mpc_coll_message_recv( const mpc_lowcomm_communicator_t communicato
         UNUSED(check_msg);
         UNUSED(myself);
         UNUSED(message_class);
+        mpc_lowcomm_request_init(&msg_req->request, communicator, REQUEST_RECV,
+                                 size, NULL, NULL, 0); 
         mpc_lowcomm_irecv(src, buffer, size, tag, communicator, &msg_req->request);
 }
 
@@ -2372,7 +2376,9 @@ static inline int ___gather_intra(void *sendbuf, void *recvbuf, const size_t siz
 			if( rel_rank % 2 )
 			{
 				/* SEND */
-                                mpc_lowcomm_request_init(&round_exchange, comm, REQUEST_SEND);
+                                mpc_lowcomm_request_init(&round_exchange, comm,
+                                                         REQUEST_SEND, 0, NULL,
+                                                         NULL, 0);
 				int dest_this_round = (rank - (1<<round));
 
 				assume(0 <= dest_this_round);
@@ -2397,7 +2403,7 @@ static inline int ___gather_intra(void *sendbuf, void *recvbuf, const size_t siz
 			{
 				/* RECV */
 				int from_this_round = (rank + (1<<round));
-                                mpc_lowcomm_request_init(&round_exchange, comm, REQUEST_RECV);
+                                mpc_lowcomm_request_init(&round_exchange, comm, REQUEST_RECV, 0, NULL, NULL, 0);
 
 				if(from_this_round != rank )
 				{

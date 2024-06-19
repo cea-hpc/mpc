@@ -29,6 +29,9 @@ typedef struct MPI_ABI_Datatype
 	size_t                      size;  /**< Total size of the datatype */
 	size_t                      count; /**< Number of elements in the datatype */
 
+        /* MPITypes */
+        void *                      handle;
+
 	/* Content */
 	long *                      begins; /**< Begin offsets */
 	long *                      ends;   /**< End offsets */

@@ -607,7 +607,7 @@ int lcp_mem_create(lcp_manager_h mngr, lcp_mem_h *mem_p)
 
         mem = mpc_mpool_pop(mngr->mem_mp);
         if (mem == NULL) {
-                mpc_common_debug_error("LCP: could not allocate memory domain");
+                mpc_common_debug_error("LCP MEM: could not allocate memory domain.");
                 rc = MPC_LOWCOMM_ERROR;
                 goto err;
         }
@@ -746,8 +746,6 @@ int lcp_mem_provision(lcp_manager_h mngr,
         }
 
         *mem_p = mem;
-
-        return rc;
 
 err:
 

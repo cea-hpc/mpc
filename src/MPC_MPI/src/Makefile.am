@@ -54,7 +54,7 @@ AM_CPPFLAGS += -I$(abs_top_srcdir)/src/MPC_MPI/src/osc/
 
 lib_LTLIBRARIES = libmpcmpi.la
 
-libmpcmpi_la_SOURCES = ./osc/osc_win.c ./osc/osc_active_target.c ./osc/osc_comm.c ./osc/osc_module.c ./osc/osc_passive_target.c ./osc/osc_win_attr.c
+libmpcmpi_la_SOURCES = ./osc/osc_win.c ./osc/osc_active_target.c ./osc/osc_comm.c ./osc/osc_module.c ./osc/osc_passive_target.c ./osc/osc_win_attr.c ./osc/osc_common.c
 libmpcmpi_la_SOURCES += comm_lib.c egreq_nbc.c mpc_extern32.c mpc_mpi_halo.c mpc_reduction.c mpi_rma.c mpi_rma_win.c mpit.c
 libmpcmpi_la_SOURCES += datatype.c egreq_progress.c mpc_info.c mpc_nbc.c mpi_rma_ctrl_msg.c mpi_conf.c mpc_coll.c session.c errh.c mgroup.c
 libmpcmpi_la_SOURCES += egreq_classes.c mpc_cs.c mpc_mpi.c mpc_nbc_progress_thread_binding.c  mpi_rma_epoch.c mpc_nbc_reduction.cpp

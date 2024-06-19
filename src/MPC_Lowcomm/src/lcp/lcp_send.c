@@ -101,18 +101,19 @@ int lcp_tag_send_start(lcp_ep_h ep, lcp_request_t *req,
 //       bytes. For now, the actual length in bytes is given taking into account
 //       the datatypes and stuff...
 //FIXME: Handle loopback, ie, sending to myself.
-int lcp_tag_send_nb(lcp_ep_h ep, lcp_task_h task, const void *buffer, 
-                    size_t count, lcp_tag_info_t *tag_info,
-                    const lcp_request_param_t *param)
+lcp_status_ptr_t lcp_tag_send_nb(lcp_ep_h ep, lcp_task_h task, const void *buffer, 
+                                 size_t count, lcp_tag_info_t *tag_info,
+                                 const lcp_request_param_t *param)
 {
         int rc;
+        lcp_status_ptr_t ret;
         lcp_request_t *req = NULL;
 
         // create the request to send
         req = lcp_request_get_param(task, param);
         if (req == NULL) {
                 mpc_common_debug_error("LCP: could not create request.");
-                return MPC_LOWCOMM_ERROR;
+                return LCP_STATUS_PTR(MPC_LOWCOMM_ERROR);
         }
 
         if (param->field_mask & LCP_REQUEST_SEND_CALLBACK) {
@@ -129,7 +130,7 @@ int lcp_tag_send_nb(lcp_ep_h ep, lcp_task_h task, const void *buffer,
         rc = lcp_tag_send_start(ep, req, param);
         if (rc != MPC_LOWCOMM_SUCCESS) {
                 mpc_common_debug_error("LCP: could not prepare send request.");
-                return MPC_LOWCOMM_ERROR;
+                return LCP_STATUS_PTR(MPC_LOWCOMM_ERROR);
         }
 
 #ifdef MPC_ENABLE_TOPOLOGY_SIMULATION
@@ -141,7 +142,7 @@ int lcp_tag_send_nb(lcp_ep_h ep, lcp_task_h task, const void *buffer,
 #endif
 
         /* send the request */
-        rc = lcp_request_send(req);
+        ret = lcp_request_send(req);
 
-        return rc;
+        return ret;
 }

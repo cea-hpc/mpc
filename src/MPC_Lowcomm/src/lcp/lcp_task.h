@@ -33,7 +33,6 @@
 #define LCP_TASK_H
 
 #include "lcp_def.h"
-#include "lcr_def.h"
 
 #include "queue.h"
 #include "mpc_mempool.h"
