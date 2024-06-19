@@ -11284,23 +11284,20 @@ int PMPI_Type_get_elements_x(MPI_Status *status, MPI_Datatype datatype, MPI_Coun
 	/* Retrieve the number of block in the datatype */
 	size_t el_count = datatype->count;
 
-	while(!done)
-	{
-		/* Count the number of elements by substracting
-			* individual blocks from total size until reaching 0 */
-		for(i = 0; i < el_count; i++)
-		{
-			size -= datatype->ends[i] - datatype->begins[i] + 1;
+        /* Count the number of elements by substracting
+         * individual blocks from total size until reaching 0 */
+        for(i = 0; i < el_count; i++)
+        {
+                size -= datatype->ends[i] - datatype->begins[i] + 1;
 
-			(*count)++;
+                (*count)++;
 
-			if(size <= 0)
-			{
-				done = 1;
-			}
-		}
-	}
-
+                if(size <= 0)
+                {
+                        break;
+                }
+        }
+	
 
 	MPI_HANDLE_RETURN_VAL(res, comm);
 }
