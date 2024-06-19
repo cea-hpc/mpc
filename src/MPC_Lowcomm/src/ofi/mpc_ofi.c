@@ -661,6 +661,70 @@ int _mpc_ofi_send_put_zcopy(_mpc_lowcomm_endpoint_t *ep,
    return MPC_LOWCOMM_SUCCESS;
 }
 
+int _mpc_ofi_flush_mem_ep(sctk_rail_info_t *rail,
+                         _mpc_lowcomm_endpoint_t *ep,
+                         struct sctk_rail_pin_ctx_list *list,
+                         lcr_completion_t *comp,
+                         unsigned flags) 
+{
+       UNUSED(rail); 
+       UNUSED(ep); 
+       UNUSED(list); 
+       UNUSED(flags); 
+       UNUSED(comp); 
+       TODO("To be implemented.");
+
+       comp->comp_cb(comp);
+
+       return MPC_LOWCOMM_SUCCESS;
+}
+
+int _mpc_ofi_flush_ep(sctk_rail_info_t *rail,
+                      _mpc_lowcomm_endpoint_t *ep,
+                      lcr_completion_t *comp,
+                      unsigned flags) 
+{
+       UNUSED(rail); 
+       UNUSED(ep); 
+       UNUSED(flags); 
+       UNUSED(comp); 
+       TODO("To be implemented.");
+
+       comp->comp_cb(comp);
+
+       return MPC_LOWCOMM_SUCCESS;
+}
+
+int _mpc_ofi_flush_mem(sctk_rail_info_t *rail,
+                       struct sctk_rail_pin_ctx_list *list,
+                       lcr_completion_t *comp,
+                       unsigned flags) 
+{
+       UNUSED(rail); 
+       UNUSED(list); 
+       UNUSED(flags); 
+       UNUSED(comp); 
+       TODO("To be implemented.");
+
+       comp->comp_cb(comp);
+
+       return MPC_LOWCOMM_SUCCESS;
+}
+
+int _mpc_ofi_flush_iface(sctk_rail_info_t *rail,
+                         lcr_completion_t *comp,
+                         unsigned flags) 
+{
+       UNUSED(rail); 
+       UNUSED(flags); 
+       UNUSED(comp); 
+       TODO("To be implemented.");
+
+       comp->comp_cb(comp);
+
+       return MPC_LOWCOMM_SUCCESS;
+}
+
 int _mpc_ofi_iface_is_reachable(sctk_rail_info_t *rail, uint64_t uid) {
         //FIXME: check whether getting connection info should be done here. For
         //       now just return true.
@@ -850,6 +914,11 @@ int _mpc_ofi_iface_open(int mngr_id, __UNUSED__ const char *device_name, int id,
 	rail->iface_get_attr = _mpc_ofi_get_attr;
    rail->iface_progress = _mpc_ofi_progress;
    rail->driver_finalize = _mpc_ofi_release;
+
+   rail->flush_ep = _mpc_ofi_flush_ep;
+   rail->flush_mem = _mpc_ofi_flush_mem;
+   rail->flush_mem_ep = _mpc_ofi_flush_mem_ep;
+   rail->flush_iface = _mpc_ofi_flush_iface;
 
    rail->get_zcopy = _mpc_ofi_get_zcopy;
    rail->put_zcopy = _mpc_ofi_send_put_zcopy;
