@@ -419,6 +419,7 @@ static inline void __group_free(mpc_lowcomm_group_t *g)
 	g->process_list           = NULL;
 	g->local_leader           = MPC_PROC_NULL;
 	g->tasks_count_in_process = MPC_PROC_NULL;
+        sctk_free(g->my_rank);
 }
 
 static inline int __internal_group_free(mpc_lowcomm_group_t **group, int check_list)
@@ -974,6 +975,10 @@ mpc_lowcomm_group_t *_mpc_lowcomm_group_create(unsigned int size, _mpc_lowcomm_g
 	ret->extra_ctx_ptr          = MPC_LOWCOMM_HANDLE_CTX_NULL;
 	ret->is_a_copy              = 0;
 
+        //FIXME: groups seems to be local to each task. Thus maybe not required
+        //       to alloc with task_count size. Check world group special case.
+        ret->my_rank = sctk_malloc(mpc_common_get_local_task_count() * sizeof(int));
+
 	if(_mpc_lowcomm_group_rank_descriptor_all_from_local_set(size, ranks) )
 	{
 		__fill_global_to_local(ret);
@@ -989,15 +994,26 @@ mpc_lowcomm_group_t *_mpc_lowcomm_group_create(unsigned int size, _mpc_lowcomm_g
         //TODO: add memory check
         ret->eps = sctk_malloc(size * sizeof(lcp_ep_h));
         memset(ret->eps, 0, size * sizeof(lcp_ep_h));
-        ret->my_rank = sctk_malloc(mpc_common_get_local_task_count() * sizeof(int));
-
 	/* Force compute of local leader */
 	ret->local_leader = mpc_lowcomm_group_get_local_leader(ret);
 
 	if(deduplicate)
 	{
-		return _mpc_lowcomm_group_list_register(ret);
+		ret = _mpc_lowcomm_group_list_register(ret);
 	}
+
+        //FIXME: if is for special case of comm world which is created by proc
+        //       -1. Instead, _mpc_lowcomm_communicator_init_task is called at
+        //       task init to fill the my_rank table.
+        if (mpc_lowcomm_get_rank() >= 0) {
+                //NOTE: cache my rank in group for faster access in critical
+                //      path. It is set here because previous function can take
+                //      another group (but identical) which have not been
+                //      initialized.
+                ret->my_rank[mpc_common_get_local_task_rank()] = 
+                        mpc_lowcomm_group_rank(ret);
+        }
+
 
 	return ret;
 }
