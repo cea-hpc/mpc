@@ -37,14 +37,13 @@
 
 static uint64_t one       = 1;
 static uint64_t minusone  = -1;
-static uint64_t zero      = 0;
 
 static int start_exclusive(mpc_win_t *win, lcp_task_h task,
                                   int target)
 {
         mpc_osc_module_t *module = &win->win_module;
         int rc = MPC_LOWCOMM_SUCCESS;
-        uint64_t lock_state = 0;
+        uint64_t lock_state = OSC_LOCK_UNLOCK;
         uint64_t base_rstate;
 
         do {
@@ -62,7 +61,7 @@ static int start_exclusive(mpc_win_t *win, lcp_task_h task,
                base_rstate = (uint64_t)module->rstate_win_info[target].addr;
                 
                 rc = mpc_osc_perform_atomic_op(module, module->eps[target],
-                                               task, zero, sizeof(uint64_t),
+                                               task, OSC_LOCK_EXCLUSIVE, sizeof(uint64_t),
                                                &lock_state, base_rstate
                                                + OSC_STATE_GLOBAL_LOCK_OFFSET,
                                                module->rstate_win_info[target].rkey,
@@ -107,7 +106,7 @@ static int start_shared(mpc_win_t *win, lcp_task_h task,
 {
         mpc_osc_module_t *module = &win->win_module;
         int rc = MPC_LOWCOMM_SUCCESS;
-        uint64_t lock_state = 0;
+        uint64_t lock_state;
         uint64_t base_rstate;
 
         do {
@@ -124,11 +123,11 @@ static int start_shared(mpc_win_t *win, lcp_task_h task,
                 
                base_rstate = (uint64_t)module->rstate_win_info[target].addr; 
                rc = mpc_osc_perform_atomic_op(module, module->eps[target],
-                                                   task, one, sizeof(uint64_t),
-                                                   &lock_state, base_rstate
-                                                   + OSC_STATE_GLOBAL_LOCK_OFFSET,
-                                                   module->rstate_win_info[target].rkey,
-                                                   LCP_ATOMIC_OP_ADD);
+                                              task, one, sizeof(uint64_t),
+                                              &lock_state, base_rstate
+                                              + OSC_STATE_GLOBAL_LOCK_OFFSET,
+                                              module->rstate_win_info[target].rkey,
+                                              LCP_ATOMIC_OP_ADD);
                 if (rc != MPC_LOWCOMM_SUCCESS) {
                         goto err;
                 }
@@ -207,11 +206,13 @@ int mpc_osc_lock(int lock_type, int target, int mpi_assert, mpc_win_t *win)
 
         if ((mpi_assert & MPI_MODE_NOCHECK) == 0) {
                 if (lock_type == MPI_LOCK_EXCLUSIVE) {
+                        lock->type = LOCK_EXCLUSIVE;
                         rc = start_exclusive(win, task, target);
                         if (rc != MPC_LOWCOMM_SUCCESS) {
                                 goto err;
                         }
                 } else {
+                        lock->type = LOCK_SHARED;
                         rc = start_shared(win, task, target);
                         if (rc != MPC_LOWCOMM_SUCCESS) {
                                 goto err;
@@ -350,6 +351,24 @@ int mpc_osc_unlock_all(mpc_win_t *win)
         module->epoch.access = NONE_EPOCH;
 
 err:
+        return rc;
+}
+
+int mpc_osc_sync(mpc_win_t *win)
+{
+        int rc = MPC_LOWCOMM_SUCCESS;
+        mpc_osc_module_t *module = &win->win_module;
+        lcp_task_h task;
+
+        if (module->epoch.access != PASSIVE_EPOCH &&
+            module->epoch.access != PASSIVE_ALL_EPOCH) {
+                return MPC_LOWCOMM_ERROR;
+        }
+
+        task = lcp_context_task_get(module->ctx, mpc_common_get_task_rank());
+
+        rc = mpc_osc_perform_flush_op(module, task, NULL, module->lkey_data);
+
         return rc;
 }
 
