@@ -409,8 +409,8 @@ void PREPEND_PREFIX(Type_calc_footprint)(MPI_Datatype type,
   DLOOP_Type_calc_footprint_struct - calculate size, lb, ub, extent,
                                      and alignsize for a struct type
 */
-static void DLOOP_Type_calc_footprint_struct(MPI_Datatype UNUSED(type),
-					     int UNUSED(struct_combiner),
+static void DLOOP_Type_calc_footprint_struct(MPI_Datatype UNUSED_(type),
+					     int UNUSED_(struct_combiner),
 					     int *ints,
 					     MPI_Aint *aints,
 					     MPI_Datatype *types,

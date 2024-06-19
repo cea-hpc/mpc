@@ -82,7 +82,7 @@
 int PREPEND_PREFIX(Segment_contig_m2m)(DLOOP_Offset *blocks_p,
 				       DLOOP_Type    el_type,
 				       DLOOP_Offset  rel_off,
-				       DLOOP_Buffer  UNUSED(unused),
+				       DLOOP_Buffer  UNUSED_(unused),
 				       void         *v_paramp)
 {
     DLOOP_Offset el_size; /* DLOOP_Count? */
@@ -136,12 +136,12 @@ int PREPEND_PREFIX(Segment_contig_m2m)(DLOOP_Offset *blocks_p,
  * of a whole block in a vector type.
  */
 int PREPEND_PREFIX(Segment_vector_m2m)(DLOOP_Offset *blocks_p,
-				       DLOOP_Count   UNUSED(unused),
+				       DLOOP_Count   UNUSED_(unused),
 				       DLOOP_Count   blksz,
 				       DLOOP_Offset  stride,
 				       DLOOP_Type    el_type,
 				       DLOOP_Offset  rel_off, /* into buffer */
-				       DLOOP_Buffer  UNUSED(unused2),
+				       DLOOP_Buffer  UNUSED_(unused2),
 				       void         *v_paramp)
 {
     DLOOP_Count i, blocks_left, whole_count;
@@ -232,12 +232,12 @@ int PREPEND_PREFIX(Segment_vector_m2m)(DLOOP_Offset *blocks_p,
 /* MPID_Segment_blkidx_m2m
  */
 int PREPEND_PREFIX(Segment_blkidx_m2m)(DLOOP_Offset *blocks_p,
-				       DLOOP_Count   UNUSED(count),
+				       DLOOP_Count   UNUSED_(count),
 				       DLOOP_Count   blocklen,
 				       DLOOP_Offset *offsetarray,
 				       DLOOP_Type    el_type,
 				       DLOOP_Offset  rel_off,
-				       DLOOP_Buffer  UNUSED(unused),
+				       DLOOP_Buffer  UNUSED_(unused),
 				       void         *v_paramp)
 {
 #define OLDCODE 0
@@ -470,7 +470,7 @@ int PREPEND_PREFIX(Segment_index_m2m)(DLOOP_Offset *blocks_p,
 				      DLOOP_Offset *offsetarray,
 				      DLOOP_Type    el_type,
 				      DLOOP_Offset  rel_off,
-				      DLOOP_Buffer  UNUSED(unused),
+				      DLOOP_Buffer  UNUSED_(unused),
 				      void         *v_paramp)
 {
     int curblock = 0;

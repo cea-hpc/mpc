@@ -303,7 +303,7 @@ void MPIT_Datatype_get_el_type(MPI_Datatype type,
 /* dataloop-related functions used by dataloop code */
 void MPIT_Datatype_get_loopptr(MPI_Datatype type,
 			       MPIT_Dataloop **ptr_p,
-			       int UNUSED(flag))
+			       int UNUSED_(flag))
 {
     int mpi_errno, attrflag;
     MPIT_Datatype *dtp;
@@ -333,7 +333,7 @@ void MPIT_Datatype_get_loopptr(MPI_Datatype type,
     return;
 }
 
-void MPIT_Datatype_get_loopsize(MPI_Datatype type, int *size_p, int UNUSED(flag))
+void MPIT_Datatype_get_loopsize(MPI_Datatype type, int *size_p, int UNUSED_(flag))
 {
     int mpi_errno, attrflag;
     MPIT_Datatype *dtp;
@@ -353,7 +353,7 @@ void MPIT_Datatype_get_loopsize(MPI_Datatype type, int *size_p, int UNUSED(flag)
     return;
 }
 
-void MPIT_Datatype_get_loopdepth(MPI_Datatype type, int *depth_p, int UNUSED(flag))
+void MPIT_Datatype_get_loopdepth(MPI_Datatype type, int *depth_p, int UNUSED_(flag))
 {
     int mpi_errno, attrflag;
     MPIT_Datatype *dtp;
@@ -373,7 +373,7 @@ void MPIT_Datatype_get_loopdepth(MPI_Datatype type, int *depth_p, int UNUSED(fla
     return;
 }
 
-void MPIT_Datatype_set_loopptr(MPI_Datatype type, MPIT_Dataloop *ptr, int UNUSED(flag))
+void MPIT_Datatype_set_loopptr(MPI_Datatype type, MPIT_Dataloop *ptr, int UNUSED_(flag))
 {
     int mpi_errno, attrflag;
     MPIT_Datatype *dtp;
@@ -393,7 +393,7 @@ void MPIT_Datatype_set_loopptr(MPI_Datatype type, MPIT_Dataloop *ptr, int UNUSED
     return;
 }
 
-void MPIT_Datatype_set_loopsize(MPI_Datatype type, int size, int UNUSED(flag))
+void MPIT_Datatype_set_loopsize(MPI_Datatype type, int size, int UNUSED_(flag))
 {
     int mpi_errno, attrflag;
     MPIT_Datatype *dtp;
@@ -413,7 +413,7 @@ void MPIT_Datatype_set_loopsize(MPI_Datatype type, int size, int UNUSED(flag))
     return;
 }
 
-void MPIT_Datatype_set_loopdepth(MPI_Datatype type, int depth, int UNUSED(flag))
+void MPIT_Datatype_set_loopdepth(MPI_Datatype type, int depth, int UNUSED_(flag))
 {
     int mpi_errno, attrflag;
     MPIT_Datatype *dtp;
@@ -443,8 +443,6 @@ int MPIT_Datatype_is_nontrivial(MPI_Datatype type)
     int long_double_int = MPI_LONG_DOUBLE_INT;
     int combiner_name = MPI_COMBINER_NAMED;
     
-    printf("combiner name %d", combiner_name);
-
     PMPI_Type_get_envelope(type, &nr_ints, &nr_aints, &nr_types, &combiner);
     if (combiner != MPI_COMBINER_NAMED ||
 	type == MPI_FLOAT_INT ||
@@ -493,10 +491,10 @@ static int MPIT_Datatype_initialize(void)
 
 /* MPIT_Datatype_finalize()
  */
-static int MPIT_Datatype_finalize(MPI_Comm UNUSED(comm),
-				  int UNUSED(comm_keyval),
-				  void *UNUSED(attrval),
-				  void *UNUSED(extrastate))
+static int MPIT_Datatype_finalize(MPI_Comm UNUSED_(comm),
+				  int UNUSED_(comm_keyval),
+				  void *UNUSED_(attrval),
+				  void *UNUSED_(extrastate))
 {
     int mpi_errno;
 
@@ -578,9 +576,9 @@ static void MPIT_Datatype_set_szext(MPI_Datatype type, MPIT_Datatype *dtp)
     return;
 }
 
-static int MPIT_Datatype_copy_attr_function(MPI_Datatype UNUSED(type),
-					    int UNUSED(type_keyval),
-					    void *UNUSED(extra_state),
+static int MPIT_Datatype_copy_attr_function(MPI_Datatype UNUSED_(type),
+					    int UNUSED_(type_keyval),
+					    void *UNUSED_(extra_state),
 					    void *attribute_val_in,
 					    void *attribute_val_out,
 					    int *flag)
@@ -601,10 +599,10 @@ static int MPIT_Datatype_copy_attr_function(MPI_Datatype UNUSED(type),
     return MPI_SUCCESS;
 }
 
-static int MPIT_Datatype_delete_attr_function(MPI_Datatype UNUSED(type),
-					      int UNUSED(type_keyval),
+static int MPIT_Datatype_delete_attr_function(MPI_Datatype UNUSED_(type),
+					      int UNUSED_(type_keyval),
 					      void *attribute_val,
-					      void *UNUSED(extra_state))
+					      void *UNUSED_(extra_state))
 {
     MPIT_Datatype *dtp = (MPIT_Datatype *) attribute_val;
 

@@ -173,6 +173,6 @@ void MPIT_Type_release_contents(MPI_Datatype type,
 /* Marks a variable decl as unused.  Examples:
  *   int UNUSED(foo) = 3;
  *   void bar(int UNUSED(baz)) {} */
-#define UNUSED(x_) x_##__UNUSED ATTRIBUTE((unused))
+#define UNUSED_(x_) x_##__UNUSED ATTRIBUTE((unused))
 
 #endif

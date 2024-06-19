@@ -139,7 +139,7 @@ int MPIT_Type_xpack(void *inbuf, int incount, MPI_Datatype intype,
 static int MPIT_Leaf_contig_inxflatten(MPI_Aint    *blocksp,
 				       MPI_Datatype el_type,
 				       MPI_Aint     rel_off,
-				       void        *UNUSED(bufp),
+				       void        *UNUSED_(bufp),
 				       void        *v_paramp)
 {
     int el_size, sizebytes;
@@ -194,7 +194,7 @@ static int MPIT_Leaf_contig_inxflatten(MPI_Aint    *blocksp,
 static int MPIT_Leaf_contig_outxflatten(MPI_Aint    *blocksp,
 					MPI_Datatype el_type,
 					MPI_Aint     rel_off,
-					void        *UNUSED(bufp),
+					void        *UNUSED_(bufp),
 					void        *v_paramp)
 {
     int el_size, size, copysize;
