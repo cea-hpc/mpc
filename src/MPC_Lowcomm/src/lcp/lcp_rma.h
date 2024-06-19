@@ -45,6 +45,20 @@ typedef struct lcp_atomic_proto {
         lcp_send_func_t send_post;
 } lcp_atomic_proto_t;
 
+static inline const char *lcp_ato_sw_decode_op(lcp_atomic_op_t op_type) {
+        switch (op_type) {
+        case LCP_ATOMIC_OP_ADD: return "LCP_ATOMIC_OP_ADD"; break;
+        case LCP_ATOMIC_OP_OR: return "LCP_ATOMIC_OP_OR"; break;
+        case LCP_ATOMIC_OP_XOR: return "LCP_ATOMIC_OP_XOR"; break;
+        case LCP_ATOMIC_OP_AND: return "LCP_ATOMIC_OP_AND"; break;
+        case LCP_ATOMIC_OP_SWAP: return "LCP_ATOMIC_OP_SWAP"; break;
+        case LCP_ATOMIC_OP_CSWAP: return "LCP_ATOMIC_OP_CSWAP"; break;
+        default: return "Unknwon LCP atomic op."; break;
+        }
+
+        return NULL;
+}
+
 extern lcp_atomic_proto_t ato_sw_proto;
 extern lcp_atomic_proto_t ato_rma_proto;
 

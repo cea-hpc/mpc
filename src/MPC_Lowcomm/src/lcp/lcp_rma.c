@@ -51,7 +51,7 @@ enum {
 };
 
 #define LCP_RMA_FLUSH_MASK ( LCP_REQUEST_USER_PROVIDED_EPH | \
-                             LCP_REQUEST_USER_PROVIDED_EPH )
+                             LCP_REQUEST_USER_PROVIDED_MEMH )
 
 /**
  * @brief Copy buffer from argument request to destination
@@ -440,7 +440,7 @@ int lcp_flush_mem_nb(lcp_request_t *req)
         int i, rc = MPC_LOWCOMM_SUCCESS;
         lcp_mem_h mem = req->state.lmem;
 
-        for (i = 0; req->mngr->num_ifaces; i++) {
+        for (i = 0; i < req->mngr->num_ifaces; i++) {
                 if (!MPC_BITMAP_GET(mem->bm, i)) {
                         continue;
                 }
@@ -490,6 +490,35 @@ int lcp_flush_mem_ep_nb(lcp_request_t *req)
 
 err:
         return rc;
+}
+
+static lcp_status_ptr_t lcp_request_send_flush(lcp_request_t *req)
+{
+        int rc;
+        lcp_status_ptr_t ret;
+
+        switch((rc = req->send.func(req))) {
+        case MPC_LOWCOMM_SUCCESS:
+                ret = req + 1;
+                break;
+        case MPC_LOWCOMM_NO_RESOURCE:
+                //TODO: implement thread-safe pending queue
+                mpc_queue_push(&req->mngr->pending_queue, &req->queue);
+                ret = req + 1;
+                break;
+        case MPC_LOWCOMM_IN_PROGRESS:
+                ret = req + 1;
+                break;
+        case MPC_LOWCOMM_ERROR:
+                mpc_common_debug_error("LCP: could not send request.");
+                ret = LCP_STATUS_PTR(rc);
+                break;
+        default:
+                mpc_common_debug_fatal("LCP: unknown send error.");
+                break;
+        }
+        return ret;
+
 }
 
 lcp_status_ptr_t lcp_flush_nb(lcp_manager_h mngr, lcp_task_h task,
