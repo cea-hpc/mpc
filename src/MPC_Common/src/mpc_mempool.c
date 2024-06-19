@@ -356,6 +356,7 @@ void *mpc_mpool_pop(mpc_mempool_t *mp)
                 mpc_mpool_grow(mp);
                 elem = mp->free_list;
                 if (elem == NULL) {
+                        mpc_common_spinlock_unlock(&mp->data->lock);
                         return NULL;
                 }
 #endif
