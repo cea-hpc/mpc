@@ -108,9 +108,9 @@ int mpc_osc_start(mpc_lowcomm_group_t *group,
         }
 
         win->win_module.epoch.access = START_COMPLETE_EPOCH;
-        win->win_module.start_group  = group;
+        win->win_module.start_group  = mpc_lowcomm_group_dup(group);
         
-        grp_size = mpc_lowcomm_group_size(group);
+        grp_size = mpc_lowcomm_group_size(win->win_module.start_group);
         ranks_in_grp = sctk_malloc(grp_size * sizeof(int));
         if (ranks_in_grp == NULL) {
                 mpc_common_debug_error("MPC OSC: could not allocate start "
@@ -163,10 +163,16 @@ int mpc_osc_start(mpc_lowcomm_group_t *group,
                                                              ranks_in_grp_win, grp_size);
                         }
 
-                        rc = lcp_progress(win->win_module.mngr);
+                        lcp_progress(win->win_module.mngr);
                         if (rc != MPC_LOWCOMM_SUCCESS) {
                                 goto err;
                         }
+
+                        mpc_thread_yield();
+
+                        //mpc_osc_schedule_progress(win->win_module.mngr,
+                        //                          &win->win_module.post_count,
+                        //                          grp_size);
                 }
 
                 win->win_module.post_count = 0;
@@ -194,15 +200,14 @@ int mpc_osc_post(mpc_lowcomm_group_t *group, int mpi_assert, mpc_win_t *win)
         int *ranks_in_grp, *ranks_in_grp_win;
         lcp_task_h task;
 
-        if (module->epoch.access != NONE_EPOCH && 
-            module->epoch.access != FENCE_EPOCH) {
+        if (module->epoch.exposure != NONE_EPOCH) {
                 mpc_common_debug_error("MPC OSC: access epoch already active.");
                 return MPC_LOWCOMM_ERROR;
         }
 
-        module->post_group = group;
+        module->post_group = mpc_lowcomm_group_dup(group);
         
-        grp_size = mpc_lowcomm_group_size(group);
+        grp_size = mpc_lowcomm_group_size(module->post_group);
         ranks_in_grp = sctk_malloc(grp_size * sizeof(int));
         if (ranks_in_grp == NULL) {
                 mpc_common_debug_error("MPC OSC: could not allocate start "
@@ -256,9 +261,9 @@ int mpc_osc_post(mpc_lowcomm_group_t *group, int mpi_assert, mpc_win_t *win)
                         goto err;
                 }
 
-                result = 0;
                 cur_idx = result & (OSC_POST_PEER_MAX - 1);
 
+                result = 0;
                 do {
                         rc = mpc_osc_perform_atomic_op(module,
                                                        module->eps[ranks_in_grp_win[i]],
@@ -267,7 +272,7 @@ int mpc_osc_post(mpc_lowcomm_group_t *group, int mpi_assert, mpc_win_t *win)
                                                        &result,
                                                        (uint64_t)(base_rstate
                                                                   + OSC_STATE_POST_OFFSET
-                                                                  + cur_idx),
+                                                                  + cur_idx*sizeof(uint64_t)),
                                                        module->rstate_win_info[ranks_in_grp_win[i]].rkey,
                                                        LCP_ATOMIC_OP_CSWAP);
 
@@ -347,8 +352,8 @@ int mpc_osc_complete(mpc_win_t *win)
 
 
         sctk_free(win->win_module.start_grp_ranks);
+        mpc_lowcomm_group_free(&win->win_module.start_group);
         win->win_module.start_group = NULL;
-
 err:
         return rc;
 }
@@ -361,12 +366,17 @@ int mpc_osc_wait(mpc_win_t *win)
         if (win->win_module.epoch.exposure != POST_WAIT_EPOCH) {
                 return MPC_LOWCOMM_ERROR;
         }
-
         while(win->win_module.state->completion_counter != (uint64_t) grp_size) {
                 lcp_progress(module->mngr);
+                mpc_thread_yield();
         }
 
+        //mpc_osc_schedule_progress(module->mngr,
+        //                          (int *)&module->state->completion_counter,
+        //                          grp_size);
+
         win->win_module.state->completion_counter = 0;
+        mpc_lowcomm_group_free(&win->win_module.post_group);
         win->win_module.post_group = NULL;
 
         win->win_module.epoch.exposure = NONE_EPOCH;
