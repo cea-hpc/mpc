@@ -2851,8 +2851,15 @@ int __INTERNAL__PMPI_Bcast_intra_shared_node_impl(void *buffer, int count, MPI_D
 
 	__INTERNAL__PMPI_Bcast_intra(&cdata.buffer_addr, sizeof(struct shared_node_coll_data), MPI_CHAR, root, comm);
 
+	/*
+	 * NOLINTBEGIN(clang-analyzer-core.UndefinedBinaryOperatorResult):
+	 * `cdata.buffer_addr` is necessarily non-garbage:
+	 * - If `rank == root`, initialization occurs prior to Bcast.
+	 * - If `rank != root`, initialization occurs within Bcast.
+	 */
 	if(cdata.buffer_addr != NULL)
 	{
+		/* NOLINTEND(clang-analyzer-core.UndefinedBinaryOperatorResult) */
 		if(rank != root)
 		{
 			if(cdata.is_counter)
