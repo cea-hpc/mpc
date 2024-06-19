@@ -163,7 +163,7 @@ int lcr_tbsm_send_put_zcopy(_mpc_lowcomm_endpoint_t *ep,
         UNUSED(ep);
         UNUSED(local_key);
         UNUSED(remote_key);
-        memcpy((void *)local_addr, (void *)remote_addr, size);
+        memcpy((void *)remote_addr, (void *)local_addr, size);
 
         comp->sent = size;
         comp->comp_cb(comp);
@@ -186,6 +186,58 @@ int lcr_tbsm_send_get_zcopy(_mpc_lowcomm_endpoint_t *ep,
         comp->sent = size;
         comp->comp_cb(comp);
         return MPC_LOWCOMM_SUCCESS;
+}
+
+int lcr_tbsm_flush_mem_ep(sctk_rail_info_t *rail,
+                         _mpc_lowcomm_endpoint_t *ep,
+                         struct sctk_rail_pin_ctx_list *list,
+                         lcr_completion_t *comp,
+                         unsigned flags) 
+{
+       UNUSED(rail); 
+       UNUSED(ep); 
+       UNUSED(list); 
+       UNUSED(flags); 
+
+       comp->comp_cb(comp);
+       return MPC_LOWCOMM_SUCCESS;
+}
+
+int lcr_tbsm_flush_ep(sctk_rail_info_t *rail,
+                      _mpc_lowcomm_endpoint_t *ep,
+                      lcr_completion_t *comp,
+                      unsigned flags) 
+{
+       UNUSED(rail); 
+       UNUSED(ep); 
+       UNUSED(flags); 
+
+       comp->comp_cb(comp);
+       return MPC_LOWCOMM_SUCCESS;
+}
+
+int lcr_tbsm_flush_mem(sctk_rail_info_t *rail,
+                       struct sctk_rail_pin_ctx_list *list,
+                       lcr_completion_t *comp,
+                       unsigned flags) 
+{
+       UNUSED(rail); 
+       UNUSED(list); 
+       UNUSED(flags); 
+
+       comp->comp_cb(comp);
+       return MPC_LOWCOMM_SUCCESS;
+}
+
+int lcr_tbsm_flush_iface(sctk_rail_info_t *rail,
+                         lcr_completion_t *comp,
+                         unsigned flags) 
+{
+       UNUSED(rail); 
+       UNUSED(flags); 
+
+       comp->comp_cb(comp);
+       return MPC_LOWCOMM_SUCCESS;
 }
 
 int lcr_tbsm_mem_register(struct sctk_rail_info_s *rail, 
@@ -281,6 +333,11 @@ int lcr_tbsm_get_attr(sctk_rail_info_t *rail,
         attr->iface.cap.rndv.max_get_zcopy = tbsm_iface->max_msg_size; /* No rendez-vous for tbsm comm */
         attr->iface.cap.rndv.min_frag_size = 0; /* No rendez-vous for tbsm comm */
 
+        attr->iface.cap.rma.max_get_bcopy = 0;
+        attr->iface.cap.rma.max_put_bcopy = 0;
+        attr->iface.cap.rma.max_get_zcopy = tbsm_iface->max_msg_size;
+        attr->iface.cap.rma.max_put_zcopy = tbsm_iface->max_msg_size;
+
         attr->mem.size_packed_mkey = 0;
 
         attr->iface.cap.flags = rail->cap;
@@ -324,6 +381,11 @@ int lcr_tbsm_iface_init(sctk_rail_info_t *iface)
         iface->iface_unregister_mem = lcr_tbsm_mem_unregister;
         iface->iface_pack_memp      = lcr_tbsm_pack_rkey;
         iface->iface_unpack_memp    = lcr_tbsm_unpack_rkey;
+
+        iface->flush_iface          = lcr_tbsm_flush_iface;
+        iface->flush_ep             = lcr_tbsm_flush_ep;
+        iface->flush_mem            = lcr_tbsm_flush_mem;
+        iface->flush_mem_ep         = lcr_tbsm_flush_mem_ep;
 
         iface->iface_progress     = NULL;
         iface->connect_on_demand  = lcr_tbsm_connect_on_demand;
