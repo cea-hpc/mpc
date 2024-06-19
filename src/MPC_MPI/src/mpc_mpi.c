@@ -14328,6 +14328,9 @@ int PMPI_Errhandler_free(MPI_Errhandler *errhandler)
 		MPI_ERROR_REPORT(MPI_COMM_WORLD, MPI_ERR_ARG, "Null to pointer to an errhandler");
 	}
 
+        if (*errhandler == 0) {
+                MPI_ERROR_SUCCESS();
+        }
 	mpi_check_errhandler(*errhandler, MPI_COMM_WORLD);
 
 	int ierr = _mpc_mpi_errhandler_free(*errhandler);

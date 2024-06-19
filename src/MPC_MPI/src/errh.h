@@ -30,7 +30,7 @@
 /* Error Handler                                                        */
 /************************************************************************/
 
-#define MAX_ERROR_HANDLERS    12 /**< 4 predefined + 8 user */
+#define MAX_ERROR_HANDLERS    32 /**< 4 predefined + 8 user */
 
 typedef void (*_mpc_mpi_generic_errhandler_func_t)(void *phandle, int *error_code, ...);
 typedef struct MPI_ABI_Errhandler
