@@ -592,10 +592,12 @@ mpc_lowcomm_datatype_t _mpc_cl_general_type_deserialize(void *buff, size_t size,
                                                         size_t header_pad);
 
 /** \brief This function gets the basic type constituing a general type for RMA
+ *         and the number of basic type in it.
  *  \param type general type to be checked
  *  \return -1 if types are differing, the type if not
  */
-mpc_lowcomm_datatype_t _mpc_cl_type_get_inner(mpc_lowcomm_datatype_t type);
+mpc_lowcomm_datatype_t _mpc_cl_type_get_inner(mpc_lowcomm_datatype_t type, 
+                                              int *dt_count_p);
 
 
 /* Types Keyval handling */

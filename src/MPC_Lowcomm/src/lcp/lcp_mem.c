@@ -557,6 +557,7 @@ err:
 void lcp_mem_release_rkey_buf(void *rkey_buffer)
 {
         sctk_free(rkey_buffer);
+        rkey_buffer = NULL;
 }
 
 int lcp_mem_unpack(lcp_manager_h mngr, lcp_mem_h *mem_p, 
@@ -574,7 +575,6 @@ int lcp_mem_unpack(lcp_manager_h mngr, lcp_mem_h *mem_p,
                 rc = MPC_LOWCOMM_ERROR;
                 goto err;
         }
-        memset(mem->mems, 0, mngr->num_ifaces * sizeof(lcr_memp_t));
 
         mem->bm = *(bmap_t *)p; unpacked_size += sizeof(bmap_t);
         for (i=0; i<mngr->num_ifaces; i++) {
@@ -583,12 +583,6 @@ int lcp_mem_unpack(lcp_manager_h mngr, lcp_mem_h *mem_p,
                         unpacked_size += iface->iface_unpack_memp(iface, 
                                                                   &mem->mems[i], 
                                                                   p + unpacked_size);
-                        //FIXME: following as no intended purpose instead of
-                        //       breaking to end the loop sooner. Maybe remove
-                        //       it for clarity?
-                        if (unpacked_size == size) {
-                                break;
-                        }
                 }
         }
 

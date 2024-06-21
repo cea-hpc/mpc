@@ -164,10 +164,11 @@ err:
         return rc;
 }
 
-int mpc_osc_put(const void *origin_addr, int origin_count,
-                _mpc_lowcomm_general_datatype_t *origin_dt,
-                int target, ptrdiff_t target_disp, int target_count,
-                _mpc_lowcomm_general_datatype_t *target_dt, mpc_win_t *win) 
+static lcp_status_ptr_t mpc_osc_put_common(const void *origin_addr, int origin_count,
+                                           _mpc_lowcomm_general_datatype_t *origin_dt,
+                                           int target, ptrdiff_t target_disp, int target_count,
+                                           _mpc_lowcomm_general_datatype_t *target_dt, mpc_win_t *win,
+                                           MPI_internal_request_t *request) 
 {
         int rc = MPC_SUCCESS;
         mpc_osc_module_t *module = &win->win_module;
@@ -177,7 +178,7 @@ int mpc_osc_put(const void *origin_addr, int origin_count,
         int is_orig_dt_contiguous   = 0;
         int is_target_dt_contiguous = 0;
         lcp_task_h task;
-        lcp_status_ptr_t status;
+        lcp_status_ptr_t status = LCP_STATUS_PTR(rc);
 
         //TODO: add a macro.
         if (module->eps[target] == NULL) {
@@ -203,7 +204,7 @@ int mpc_osc_put(const void *origin_addr, int origin_count,
 
         //TODO: add rkey checking
         if (!target_count) {
-                return MPI_SUCCESS;
+                return LCP_STATUS_PTR(MPI_SUCCESS);
         }
 
         is_orig_dt_contiguous = mpc_lowcomm_datatype_is_common(origin_dt) ||
@@ -235,45 +236,45 @@ int mpc_osc_put(const void *origin_addr, int origin_count,
 
                assert(target_len == origin_len);
 
-
                lcp_request_param_t req_param = {
                        .ep  = module->eps[target],
                        .datatype = LCP_DATATYPE_CONTIGUOUS,
-                       .field_mask = 0,
+                       .send_cb  = _mpc_osc_request_send_complete,
+                       .request  = _mpc_cl_get_lowcomm_request(request),
+                       .field_mask = request == MPI_REQUEST_NULL ? 0 :
+                               (LCP_REQUEST_USER_REQUEST | 
+                                LCP_REQUEST_SEND_CALLBACK),
                };
 
                status = lcp_put_nb(module->eps[target], task, origin_addr,
-                               origin_len, remote_addr,
-                               module->rdata_win_info[target].rkey,
-                               &req_param);
+                                   origin_len, remote_addr,
+                                   module->rdata_win_info[target].rkey,
+                                   &req_param);
                if (LCP_PTR_IS_ERR(status)) {
                        mpc_common_debug_error("OSC: put. rc=%d", status);
                }
         }
 
 err:
-        return rc;
+        return status;
+
 }
 
-int mpc_osc_rput(const void *origin_addr,
-                 int origin_count,
-                 _mpc_lowcomm_general_datatype_t *origin_dt,
-                 int target,
-                 ptrdiff_t target_disp,
-                 int target_count,
-                 _mpc_lowcomm_general_datatype_t *target_dt,
-                 mpc_win_t *win,
-                 MPI_Request *request)
+static lcp_status_ptr_t mpc_osc_get_common(void *origin_addr, int origin_count, 
+                                           _mpc_lowcomm_general_datatype_t *origin_dt,
+                                           int target, ptrdiff_t target_disp, int target_count,
+                                           _mpc_lowcomm_general_datatype_t *target_dt, mpc_win_t *win,
+                                           MPI_internal_request_t *request) 
 {
         int rc = MPC_SUCCESS;
-        MPI_internal_request_t *req;
         mpc_osc_module_t *module = &win->win_module;
+        size_t origin_len, target_len;
         uint64_t remote_addr = module->rdata_win_info[target].addr
                 + target_disp * OSC_GET_DISP(module, target); 
-        size_t origin_len, target_len;
         int is_orig_dt_contiguous   = 0;
         int is_target_dt_contiguous = 0;
         lcp_task_h task;
+        lcp_status_ptr_t status = LCP_STATUS_PTR(rc);
 
         //TODO: add a macro.
         if (module->eps[target] == NULL) {
@@ -299,7 +300,7 @@ int mpc_osc_rput(const void *origin_addr,
 
         //TODO: add rkey checking
         if (!target_count) {
-                return MPI_SUCCESS;
+                return LCP_STATUS_PTR(MPI_SUCCESS);
         }
 
         is_orig_dt_contiguous = mpc_lowcomm_datatype_is_common(origin_dt) ||
@@ -328,114 +329,17 @@ int mpc_osc_rput(const void *origin_addr,
         if (is_orig_dt_contiguous && is_target_dt_contiguous) {
                origin_len *= origin_count;
                target_len *= target_count;
-               lcp_status_ptr_t ret;
 
                assert(target_len == origin_len);
 
-               req = mpc_mpi_alloc_request();
-
                lcp_request_param_t req_param = {
-                       .ep       = module->eps[target],
+                       .ep  = module->eps[target],
+                       .datatype = LCP_DATATYPE_CONTIGUOUS,
                        .send_cb  = _mpc_osc_request_send_complete,
-                       .datatype = LCP_DATATYPE_CONTIGUOUS,
-                       .request  = _mpc_cl_get_lowcomm_request(req),
-                       .field_mask = LCP_REQUEST_USER_REQUEST |
-                               LCP_REQUEST_SEND_CALLBACK,
-               };
-               
-               ret = lcp_put_nb(module->eps[target], task, origin_addr,
-                                origin_len, remote_addr,
-                                module->rdata_win_info[target].rkey,
-                                &req_param);
-
-               if (LCP_PTR_IS_ERR(ret)) {
-                       mpc_common_debug_error("OSC: rput. rc=%d", ret);
-                       goto err;
-               }
-
-               *request = req;
-        } else {
-                not_implemented();
-        }
-
-err:
-        return rc;
-}
-
-int mpc_osc_get(void *origin_addr, int origin_count, 
-                _mpc_lowcomm_general_datatype_t *origin_dt,
-                int target, ptrdiff_t target_disp, int target_count,
-                _mpc_lowcomm_general_datatype_t *target_dt, mpc_win_t *win) 
-{
-        int rc = MPC_SUCCESS;
-        mpc_osc_module_t *module = &win->win_module;
-        size_t origin_len, target_len;
-        uint64_t remote_addr = module->rdata_win_info[target].addr
-                + target_disp * OSC_GET_DISP(module, target); 
-        int is_orig_dt_contiguous   = 0;
-        int is_target_dt_contiguous = 0;
-        lcp_task_h task;
-        lcp_status_ptr_t status;
-
-        //TODO: add a macro.
-        if (module->eps[target] == NULL) {
-                uint64_t target_uid = mpc_lowcomm_communicator_uid(win->comm, 
-                                                                   target);
-
-                rc = lcp_ep_create(module->mngr, &module->eps[target], 
-                                   target_uid, 0);
-                if (rc != 0) {
-                        mpc_common_debug_fatal("Could not create endpoint.");
-                }
-        }
-
-        task = lcp_context_task_get(module->ctx, mpc_common_get_task_rank());
-
-        if (win->flavor == MPI_WIN_FLAVOR_DYNAMIC) {
-                rc = get_dynamic_win_info(module->eps[target], task, target_disp, 
-                                          module, target);
-                if (rc != MPC_LOWCOMM_SUCCESS) {
-                        goto err;
-                }
-        }
-
-        //TODO: add rkey checking
-        if (!target_count) {
-                return MPI_SUCCESS;
-        }
-
-        is_orig_dt_contiguous = mpc_lowcomm_datatype_is_common(origin_dt) ||
-                mpc_mpi_cl_type_is_contiguous(origin_dt);
-        is_target_dt_contiguous = mpc_lowcomm_datatype_is_common(target_dt) ||
-                mpc_mpi_cl_type_is_contiguous(target_dt);
-
-        if (!is_orig_dt_contiguous) {
-                not_implemented();
-        }
-
-        if (!is_target_dt_contiguous) {
-                not_implemented();
-        }
-
-        rc = _mpc_cl_type_size(origin_dt, &origin_len);
-        if (rc != MPC_SUCCESS) {
-                goto err;
-        }
-
-        rc = _mpc_cl_type_size(target_dt, &target_len);
-        if (rc != MPC_SUCCESS) {
-                goto err;
-        }
-
-        if (is_orig_dt_contiguous && is_target_dt_contiguous) {
-               origin_len *= origin_count;
-               target_len *= target_count;
-
-               assert(target_len == origin_len);
-
-               lcp_request_param_t req_param = {
-                       .datatype = LCP_DATATYPE_CONTIGUOUS,
-                       .field_mask = 0,
+                       .request  = _mpc_cl_get_lowcomm_request(request),
+                       .field_mask = request == MPI_REQUEST_NULL ? 0 :
+                               (LCP_REQUEST_USER_REQUEST | 
+                                LCP_REQUEST_SEND_CALLBACK),
                };
 
                status = lcp_get_nb(module->eps[target], task, origin_addr,
@@ -448,7 +352,65 @@ int mpc_osc_get(void *origin_addr, int origin_count,
         }
 
 err:
+        return status;
+}
+
+int mpc_osc_put(const void *origin_addr, int origin_count,
+                _mpc_lowcomm_general_datatype_t *origin_dt,
+                int target, ptrdiff_t target_disp, int target_count,
+                _mpc_lowcomm_general_datatype_t *target_dt, mpc_win_t *win) 
+{
+        lcp_status_ptr_t status;
+        status = mpc_osc_put_common(origin_addr, origin_count, origin_dt, target,
+                                    target_disp, target_count, target_dt, win,
+                                    MPI_REQUEST_NULL);
+        if (LCP_PTR_IS_ERR(status)) {
+                return MPC_LOWCOMM_ERROR;
+        } else {
+                return MPI_SUCCESS;
+        }
+}
+
+int mpc_osc_rput(const void *origin_addr,
+                 int origin_count,
+                 _mpc_lowcomm_general_datatype_t *origin_dt,
+                 int target,
+                 ptrdiff_t target_disp,
+                 int target_count,
+                 _mpc_lowcomm_general_datatype_t *target_dt,
+                 mpc_win_t *win,
+                 MPI_Request *request)
+{
+        int rc = MPI_SUCCESS;
+        lcp_status_ptr_t status;
+        *request = MPI_REQUEST_NULL;
+
+        MPI_internal_request_t *req = mpc_mpi_alloc_request();
+
+        status = mpc_osc_put_common(origin_addr, origin_count, origin_dt, target,
+                                    target_disp, target_count, target_dt, win,
+                                    req);
+        if (LCP_PTR_IS_ERR(status)) rc = MPC_LOWCOMM_ERROR;
+
+        *request = req;
+
         return rc;
+}
+
+int mpc_osc_get(void *origin_addr, int origin_count, 
+                _mpc_lowcomm_general_datatype_t *origin_dt,
+                int target, ptrdiff_t target_disp, int target_count,
+                _mpc_lowcomm_general_datatype_t *target_dt, mpc_win_t *win) 
+{
+        lcp_status_ptr_t status;
+        status = mpc_osc_get_common(origin_addr, origin_count, origin_dt, target,
+                                    target_disp, target_count, target_dt, win,
+                                    MPI_REQUEST_NULL);
+        if (LCP_PTR_IS_ERR(status)) {
+                return MPC_LOWCOMM_ERROR;
+        } else {
+                return MPI_SUCCESS;
+        }
 }
 
 int mpc_osc_rget(void *origin_addr, int origin_count, 
@@ -457,97 +419,20 @@ int mpc_osc_rget(void *origin_addr, int origin_count,
                  _mpc_lowcomm_general_datatype_t *target_dt, mpc_win_t *win,
                  MPI_Request *request)
 {
-        int rc = MPC_SUCCESS;
-        MPI_internal_request_t *req;
-        mpc_osc_module_t *module = &win->win_module;
-        size_t origin_len, target_len;
-        int is_orig_dt_contiguous   = 0;
-        int is_target_dt_contiguous = 0;
-        uint64_t remote_addr = module->rdata_win_info[target].addr
-                + target_disp * OSC_GET_DISP(module, target); 
-        lcp_task_h task;
-        
-        //TODO: add a macro.
-        if (module->eps[target] == NULL) {
-                uint64_t target_uid = mpc_lowcomm_communicator_uid(win->comm, 
-                                                                   target);
+        int rc = MPI_SUCCESS;
+        lcp_status_ptr_t status;
+        *request = MPI_REQUEST_NULL;
 
-                rc = lcp_ep_create(module->mngr, &module->eps[target], 
-                                   target_uid, 0);
-                if (rc != 0) {
-                        mpc_common_debug_fatal("Could not create endpoint.");
-                }
-        }
+        MPI_internal_request_t *req = mpc_mpi_alloc_request();
 
-        task = lcp_context_task_get(module->ctx, mpc_common_get_task_rank());
+        status = mpc_osc_get_common(origin_addr, origin_count, origin_dt, target,
+                                    target_disp, target_count, target_dt, win,
+                                    req);
+        if (LCP_PTR_IS_ERR(status)) rc = MPC_LOWCOMM_ERROR;
 
-        if (win->flavor == MPI_WIN_FLAVOR_DYNAMIC) {
-                rc = get_dynamic_win_info(module->eps[target], task, target_disp, 
-                                          module, target);
-                if (rc != MPC_LOWCOMM_SUCCESS) {
-                        goto err;
-                }
-        }
+        *request = req;
 
-        //TODO: add rkey checking
-        if (!target_count) {
-                return MPI_SUCCESS;
-        }
-
-        is_orig_dt_contiguous = mpc_lowcomm_datatype_is_common(origin_dt) ||
-                mpc_mpi_cl_type_is_contiguous(origin_dt);
-        is_target_dt_contiguous = mpc_lowcomm_datatype_is_common(target_dt) ||
-                mpc_mpi_cl_type_is_contiguous(target_dt);
-
-        if (!is_orig_dt_contiguous || !is_target_dt_contiguous) {
-                not_implemented();
-        }
-
-        rc = _mpc_cl_type_size(origin_dt, &origin_len);
-        if (rc != MPC_SUCCESS) {
-                goto err;
-        }
-
-        rc = _mpc_cl_type_size(target_dt, &target_len);
-        if (rc != MPC_SUCCESS) {
-                goto err;
-        }
-
-        if (is_orig_dt_contiguous && is_target_dt_contiguous) {
-               origin_len *= origin_count;
-               target_len *= target_count;
-               lcp_status_ptr_t ret;
-
-               assert(target_len == origin_len);
-
-               req = mpc_mpi_alloc_request();
-
-               lcp_request_param_t req_param = {
-                       .ep       = module->eps[target],
-                       .send_cb  = _mpc_osc_request_send_complete,
-                       .request  = _mpc_cl_get_lowcomm_request(req),
-                       .datatype = LCP_DATATYPE_CONTIGUOUS,
-                       .field_mask = LCP_REQUEST_USER_REQUEST |
-                               LCP_REQUEST_SEND_CALLBACK,
-               };
-
-               ret = lcp_get_nb(module->eps[target], task, origin_addr,
-                                origin_len, remote_addr,
-                                module->rdata_win_info[target].rkey,
-                                &req_param);
-
-               if (LCP_PTR_IS_ERR(ret)) {
-                       mpc_common_debug_error("OSC: rget. rc=%d", ret);
-                       goto err;
-               }
-               *request = req;
-        } else {
-                not_implemented();
-        }
-
-err:
         return rc;
-
 }
 
 int mpc_osc_accumulate(const void *origin_addr, int origin_count, 
@@ -607,13 +492,26 @@ int mpc_osc_accumulate(const void *origin_addr, int origin_count,
         } else {
                 //NOTE: this is a contiguous path.
                 void *tmp_result_addr;
-                size_t tmp_len; 
+                mpc_lowcomm_datatype_t tmp_dt;
+                int tmp_dt_count;
+                size_t tmp_len, tmp_dt_len; 
 
-                rc = _mpc_cl_type_size(origin_dt, &tmp_len);
+                if (mpc_lowcomm_datatype_is_common_predefined(target_dt)) {
+                        tmp_dt = target_dt;
+                        tmp_dt_count = target_count;
+                } else {
+                        tmp_dt = _mpc_cl_type_get_inner(target_dt, &tmp_dt_count);
+                        if (tmp_dt == MPC_DATATYPE_NULL) {
+                                rc = MPC_LOWCOMM_ERROR;
+                                goto err;
+                        }
+                        tmp_dt_count *= target_count;
+                }
+                rc = _mpc_cl_type_size(tmp_dt, &tmp_dt_len);
                 if (rc != MPC_SUCCESS) {
                         goto err;
                 }
-                tmp_len *= origin_count;
+                tmp_len = tmp_dt_count * tmp_dt_len;
 
                 tmp_result_addr = sctk_malloc(tmp_len);
                 if (tmp_result_addr == NULL) {
@@ -623,7 +521,7 @@ int mpc_osc_accumulate(const void *origin_addr, int origin_count,
                         goto err;
                 }
 
-                rc = mpc_osc_get(tmp_result_addr, origin_count, origin_dt,
+                rc = mpc_osc_get(tmp_result_addr, tmp_dt_count, tmp_dt,
                                  target, target_disp, target_count, target_dt,
                                  win);
                 if (rc != MPC_LOWCOMM_SUCCESS) {
@@ -638,13 +536,13 @@ int mpc_osc_accumulate(const void *origin_addr, int origin_count,
 
                 /* Get mpc operation and perform the reduction. */
                 sctk_op_t *mpc_op = sctk_convert_to_mpc_op(op);
-                sctk_Op_f func = sctk_get_common_function(origin_dt,
+                sctk_Op_f func = sctk_get_common_function(tmp_dt,
                                                           mpc_op->op);
                 func((void *)origin_addr, tmp_result_addr,
-                     origin_count, origin_dt);
+                     tmp_dt_count, tmp_dt);
 
-                rc = mpc_osc_put(tmp_result_addr, origin_count,
-                                 origin_dt, target, target_disp,
+                rc = mpc_osc_put(tmp_result_addr, tmp_dt_count,
+                                 tmp_dt, target, target_disp,
                                  target_count, target_dt, win);
                 if (rc != MPC_LOWCOMM_SUCCESS) {
                         goto err;
@@ -679,8 +577,6 @@ int mpc_osc_raccumulate(const void *origin_addr, int origin_count,
         if (rc != MPC_LOWCOMM_SUCCESS) {
                 goto err;
         }
-
-        _mpc_osc_request_send_complete(MPC_LOWCOMM_SUCCESS, _mpc_cl_get_lowcomm_request(req), 0);
 
         *request = req;
 err:
@@ -756,13 +652,26 @@ int mpc_osc_get_accumulate(const void *origin_addr, int origin_count,
                 } else {
                         //NOTE: this is a contiguous path.
                         void *tmp_result_addr;
-                        size_t tmp_len; 
+                        mpc_lowcomm_datatype_t tmp_dt;
+                        int tmp_dt_count;
+                        size_t tmp_len, tmp_dt_len; 
                         
-                        rc = _mpc_cl_type_size(origin_datatype, &tmp_len);
+                        if (mpc_lowcomm_datatype_is_common_predefined(target_datatype)) {
+                                tmp_dt = target_datatype;
+                                tmp_dt_count = target_count;
+                        } else {
+                                tmp_dt = _mpc_cl_type_get_inner(target_datatype, &tmp_dt_count);
+                                if (tmp_dt == MPC_DATATYPE_NULL) {
+                                        rc = MPC_LOWCOMM_ERROR;
+                                        goto err;
+                                }
+                                tmp_dt_count *= target_count;
+                        }
+                        rc = _mpc_cl_type_size(tmp_dt, &tmp_dt_len);
                         if (rc != MPC_SUCCESS) {
                                 goto err;
                         }
-                        tmp_len *= origin_count;
+                        tmp_len = tmp_dt_count * tmp_dt_len;
 
                         tmp_result_addr = sctk_malloc(tmp_len);
                         if (tmp_result_addr == NULL) {
@@ -776,12 +685,11 @@ int mpc_osc_get_accumulate(const void *origin_addr, int origin_count,
 
                         /* Get mpc operation and perform the reduction. */
                         sctk_op_t *mpc_op = sctk_convert_to_mpc_op(op);
-                        sctk_Op_f func = sctk_get_common_function(origin_datatype, mpc_op->op);
-                        func(origin_addr, tmp_result_addr,
-                             origin_count, origin_datatype);
+                        sctk_Op_f func = sctk_get_common_function(tmp_dt, mpc_op->op);
+                        func(origin_addr, tmp_result_addr, tmp_dt_count, tmp_dt);
 
-                        rc = mpc_osc_put(tmp_result_addr, origin_count,
-                                         origin_datatype, target, target_disp,
+                        rc = mpc_osc_put(tmp_result_addr, tmp_dt_count,
+                                         tmp_dt, target, target_disp,
                                          target_count, target_datatype, win);
                         if (rc != MPC_LOWCOMM_SUCCESS) {
                                 goto err;
@@ -812,7 +720,6 @@ int mpc_osc_rget_accumulate(const void *origin_addr, int origin_count,
         int rc = MPI_SUCCESS;
 
         MPI_internal_request_t *mpi_req = *request = mpc_lowcomm_request_alloc();
-        mpc_lowcomm_request_t *lowcomm_req = _mpc_cl_get_lowcomm_request(mpi_req);
 
         rc = mpc_osc_get_accumulate(origin_addr, origin_count, origin_datatype,
                                     result_addr, result_count, result_datatype,
@@ -822,7 +729,9 @@ int mpc_osc_rget_accumulate(const void *origin_addr, int origin_count,
                 goto err;
         }
 
-        _mpc_osc_request_send_complete(MPC_LOWCOMM_SUCCESS, lowcomm_req, 0);
+        _mpc_osc_request_send_complete(MPC_LOWCOMM_SUCCESS, 
+                                       _mpc_cl_get_lowcomm_request(mpi_req), 
+                                       origin_count);
 
 err:
         return rc;

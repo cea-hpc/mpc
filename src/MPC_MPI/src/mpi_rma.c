@@ -646,7 +646,7 @@ mpc_MPI_Accumulate_RMA(struct mpc_MPI_Win *desc, void *origin_addr,
 	}
 	else
 	{
-		inner_type = _mpc_cl_type_get_inner(target_datatype);
+		inner_type = _mpc_cl_type_get_inner(target_datatype, NULL);
 	}
 
 	if(!mpc_lowcomm_datatype_is_common(inner_type) )

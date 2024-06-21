@@ -142,6 +142,8 @@ static int _win_setup(mpc_win_t *win, void **base, size_t size,
 
                 rc = lcp_mem_provision(module->mngr, &w_mem_data, &param); 
                 if (rc != MPC_LOWCOMM_SUCCESS) {
+                        mpc_common_debug_error("MPI OSC: could not provision "
+                                               "created data memory.");
                         goto err;
                 }
                 module->lkey_data = w_mem_data;
@@ -165,6 +167,8 @@ static int _win_setup(mpc_win_t *win, void **base, size_t size,
 
                 rc = lcp_mem_provision(module->mngr, &w_mem_data, &param); 
                 if (rc != MPC_LOWCOMM_SUCCESS) {
+                        mpc_common_debug_error("MPI OSC: could not provision "
+                                               "allocated data memory.");
                         goto err;
                 }
                 module->lkey_data = w_mem_data;
@@ -182,7 +186,6 @@ static int _win_setup(mpc_win_t *win, void **base, size_t size,
                 goto err;
         }
 
-        
         /* Allocate state for remote synchronization. */
         module->state = sctk_malloc(sizeof(mpc_osc_module_state_t));
         if (module->state == NULL) {
@@ -204,6 +207,8 @@ static int _win_setup(mpc_win_t *win, void **base, size_t size,
 
         rc = lcp_mem_provision(module->mngr, &w_mem_state, &mem_state_param); 
         if (rc != MPC_LOWCOMM_SUCCESS) {
+                mpc_common_debug_error("MPI OSC: could not provision "
+                                       "state memory.");
                 goto unmap_mem_data;
         }
         attr.field_mask = LCP_MEM_ADDR_FIELD |
@@ -257,11 +262,6 @@ static int _win_setup(mpc_win_t *win, void **base, size_t size,
         win_info_offset += key_data_len;
         memcpy((char *)win_info + win_info_offset, key_state_buf, key_state_len);
 
-        if (flavor == MPI_WIN_FLAVOR_CREATE || flavor == MPI_WIN_FLAVOR_ALLOCATE) {
-                lcp_mem_release_rkey_buf(key_data_buf);
-        }
-        lcp_mem_release_rkey_buf(key_state_buf);
-
         /* First send size of local key to all others. */
         win_info_lengths = sctk_malloc(win->comm_size * sizeof(int));
         win_info_disps   = sctk_malloc(win->comm_size * sizeof(int));
@@ -294,7 +294,7 @@ static int _win_setup(mpc_win_t *win, void **base, size_t size,
         module->rdata_win_info  = sctk_malloc(win->comm_size * sizeof(mpc_osc_win_info_t));
         module->rstate_win_info  = sctk_malloc(win->comm_size * sizeof(mpc_osc_win_info_t));
         if (module->rdata_win_info == NULL || module->rstate_win_info == NULL) {
-                mpc_common_debug_error("WIN: could not allocate memory for "
+                mpc_common_debug_error("OSC WIN: could not allocate memory for "
                                        "remote memory keys.");
                 goto release_key;
         }
@@ -319,6 +319,8 @@ static int _win_setup(mpc_win_t *win, void **base, size_t size,
                                                      win_info_disps[i] + win_info_offset),
                                             rkey_data_len);
                         if (rc != MPC_LOWCOMM_SUCCESS) {
+                                mpc_common_debug_error("OSC WIN: could not unpack memory for "
+                                                       "remote memory keys.");
                                 goto release_key;
                         }
                         win_info_offset += rkey_data_len;
@@ -339,17 +341,23 @@ static int _win_setup(mpc_win_t *win, void **base, size_t size,
         /* Finally, synchronize with everyone. */
 	PMPI_Barrier(comm);
 
+        if (flavor == MPI_WIN_FLAVOR_CREATE || flavor == MPI_WIN_FLAVOR_ALLOCATE) {
+                lcp_mem_release_rkey_buf(key_data_buf);
+        }
+        lcp_mem_release_rkey_buf(key_state_buf);
+
         sctk_free(win_info_lengths);
         sctk_free(win_info_buf);
         sctk_free(win_info_disps);
 
         return rc;
+
 release_key:
-        if (key_data_buf)          lcp_mem_release_rkey_buf(key_data_buf); 
-        if (key_state_buf)         lcp_mem_release_rkey_buf(key_state_buf); 
         if (win_info_buf)          sctk_free(win_info_buf);
         if (win_info_disps)        sctk_free(win_info_disps);
         if (win_info_lengths)      sctk_free(win_info_lengths);
+        if (key_data_buf)          lcp_mem_release_rkey_buf(key_data_buf); 
+        if (key_state_buf)         lcp_mem_release_rkey_buf(key_state_buf); 
 unmap_mem_state:
         lcp_mem_deprovision(module->mngr, w_mem_state);
 unmap_mem_data:
@@ -441,15 +449,21 @@ static int _win_init(mpc_win_t **win_p, int flavor, mpc_lowcomm_communicator_t c
 	mpc_common_hashtable_init(&win->attrs, 16);
 
         /* Exchange windows information with other processes. */ 
-        _win_setup(win, base, size, disp_unit, 
-                   comm, info, flavor);
+        rc = _win_setup(win, base, size, disp_unit, 
+                        comm, info, flavor);
+        if (rc != MPC_LOWCOMM_SUCCESS) {
+                goto err;
+        }
 
         /* Set windows attributes. */
         _win_config(base, size, disp_unit, flavor, MPI_WIN_SEPARATE, win);
         
         *win_p = win;
 
+        return rc;
+
 err:
+        mpc_common_debug_fatal("MPI OSC: could not initialize window.");
         return rc;
 }
 

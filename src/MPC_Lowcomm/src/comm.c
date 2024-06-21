@@ -3453,6 +3453,7 @@ void *mpc_lowcomm_request_alloc()
         }
 
         request->flags = 0;
+        request->completion_flag = MPC_LOWCOMM_MESSAGE_PENDING;
 
         return request + 1;
 }

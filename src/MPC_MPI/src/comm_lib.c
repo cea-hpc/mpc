@@ -1987,11 +1987,12 @@ mpc_lowcomm_datatype_t _mpc_cl_general_type_deserialize(void *buff, size_t size,
 	return ret;
 }
 
-mpc_lowcomm_datatype_t _mpc_cl_type_get_inner(mpc_lowcomm_datatype_t type)
+mpc_lowcomm_datatype_t _mpc_cl_type_get_inner(mpc_lowcomm_datatype_t type, int *dt_count_p)
 {
 	if(mpc_lowcomm_datatype_is_common(type) )
 	{
 		type = _mpc_dt_get_datatype(type);
+                *dt_count_p = 1;
 		return type;
 	}
 
@@ -1999,6 +2000,7 @@ mpc_lowcomm_datatype_t _mpc_cl_type_get_inner(mpc_lowcomm_datatype_t type)
 	{
 		_mpc_lowcomm_general_datatype_t *ctype = type;
 		assume(ctype != NULL);
+                *dt_count_p = ctype->count;
 		return ctype->datatypes[0];
 	}
 
@@ -2026,6 +2028,7 @@ mpc_lowcomm_datatype_t _mpc_cl_type_get_inner(mpc_lowcomm_datatype_t type)
 
 	assume(mpc_lowcomm_datatype_is_common(itype) );
 	/* if we are here, all types are the same */
+        *dt_count_p = itype->count;
 	return itype;
 }
 

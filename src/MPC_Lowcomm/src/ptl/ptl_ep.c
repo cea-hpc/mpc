@@ -500,8 +500,8 @@ int lcr_ptl_send_put_bcopy(_mpc_lowcomm_endpoint_t *ep,
                          "cth=%llu, mdh=%llu.", lctx->size, 
                          lctx->start, op->rma.local_offset,
                          op->rma.remote_offset,
-                         *(uint64_t*)&op->rma.lkey->cth,
-                         *(uint64_t*)&op->rma.lkey->mdh);
+                         op->rma.lkey->cth,
+                         op->rma.lkey->mdh);
         mpc_common_debug("LCR PTL: remote key. addr=%p, match=%llu", rctx->start,
                          (uint64_t)op->rma.match);
         op->id = lctx->mem->op_count++;
@@ -574,8 +574,8 @@ int lcr_ptl_send_get_bcopy(_mpc_lowcomm_endpoint_t *ep,
                          "cth=%llu, mdh=%llu.", lctx->size, 
                          lctx->start, op->rma.local_offset,
                          op->rma.remote_offset,
-                         *(uint64_t*)&op->rma.lkey->cth,
-                         *(uint64_t*)&op->rma.lkey->mdh);
+                         op->rma.lkey->cth,
+                         op->rma.lkey->mdh);
         mpc_common_debug("LCR PTL: remote key. addr=%p, match=%llu", rctx->start,
                          (uint64_t)op->rma.match);
         op->id = lctx->mem->op_count++;
@@ -645,8 +645,8 @@ int lcr_ptl_send_put_zcopy(_mpc_lowcomm_endpoint_t *ep,
                          "cth=%llu, mdh=%llu.", lctx->size, 
                          lctx->start, op->rma.local_offset,
                          op->rma.remote_offset,
-                         *(uint64_t*)&op->rma.lkey->cth,
-                         *(uint64_t*)&op->rma.lkey->mdh);
+                         op->rma.lkey->cth,
+                         op->rma.lkey->mdh);
         mpc_common_debug("LCR PTL: remote key. addr=%p, match=%llu", rctx->start,
                          (uint64_t)op->rma.match);
         rc = lcr_ptl_do_op(op);

@@ -77,7 +77,6 @@ struct lcp_mem {
         lcp_mem_alloc_method_t method;
         void * pointer_to_mmu_ctx; /* When handled by the MMU this 
                                       points to the management slot */
-        mpc_list_elem_t elem; /* Element in list of active memories. */
         lcr_memp_t mems[0]; /* table of memp pointers */
 };
 

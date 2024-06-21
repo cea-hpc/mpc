@@ -484,7 +484,6 @@ void sctk_rail_pin_ctx_init(sctk_rail_pin_ctx_t *ctx, void *addr, size_t size)
 	for(i = 0; i < SCTK_PIN_LIST_SIZE; i++)
 	{
 		memset(&ctx->list[i], 0, sizeof(struct sctk_rail_pin_ctx_list) );
-		ctx->list[i].rail_id = -1;
 	}
 
 

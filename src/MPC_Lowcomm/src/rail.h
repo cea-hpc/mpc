@@ -83,7 +83,6 @@ struct _mpc_ofi_pinning_context ofipin;
 struct sctk_rail_pin_ctx_list
 {
 	sctk_rail_pin_ctx_internal_t pin;
-	int                          rail_id;
 };
 typedef struct sctk_rail_pin_ctx_list lcr_memp_t; //TODO: change name
 
