@@ -4428,14 +4428,18 @@ int __INTERNAL__PMPI_Alltoallv_intra_shm(const void *sendbuf, const int *sendcnt
 		sctk_free( (void *)info.source_buff);
 	}
 
-	if(!_mpc_dt_is_contig_mem(sendtype) )
+	if(!_mpc_dt_is_contig_mem(sendtype))
 	{
-		for(i = 0; i < coll->comm_size; i++)
+		if (info.packed_buff != NULL)
 		{
-			sctk_free(info.packed_buff[i]);
+			for(i = 0; i < coll->comm_size; i++)
+			{
+				sctk_free(info.packed_buff[i]);
+			}
+
+			sctk_free(info.packed_buff);
 		}
 
-		sctk_free(info.packed_buff);
 		info.source_buff = NULL;
 	}
 
