@@ -5831,8 +5831,6 @@ static inline int __INTERNAL__PMPI_Reduce_derived_no_commute_ring(
 	int       is_MPI_IN_PLACE = 0;
 	sctk_Op_f func;
 
-	tmp_buf = recvbuf;
-
 	not_implemented();
 
 	if( (rank != root) || (sendbuf == MPI_IN_PLACE) )
