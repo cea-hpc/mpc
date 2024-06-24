@@ -9258,7 +9258,7 @@ int PMPI_Testsome(int incount, MPI_Request array_of_requests[], int *outcount, i
 
 	if( (array_of_requests == NULL) && (incount != 0) )
 	{
-		res = MPI_ERR_REQUEST;
+		return MPI_ERR_REQUEST;
 	}
 
 	if( ( (outcount == NULL || array_of_indices == NULL) && incount > 0) || incount < 0)
