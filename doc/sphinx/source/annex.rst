@@ -6,5 +6,4 @@ Additional documentation
    :caption: Contents:
 
    installmpc
-   mpcrun
    glossary

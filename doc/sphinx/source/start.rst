@@ -4,13 +4,19 @@ Getting started
 
 .. title:: Getting started
 
+Where to find MPC Documentation?
+================================
+
+MPC Documentation is a bit sparse and most of the current references one can have:
+
+- The Official website for the whole project: (http://mpc.hpcframework.com/) 
+- In-place documentation (within source code), under Doxygen formatting. Please note that this is currently in progress and not everything is fully documented. Feel free to contact one of the maintainers mentioned in the MAINTAINERS file.
+- A complete documentation based on currently-written Doxygen AND Markdown files placed in modules that can be generated. Please consult the /doc/Doxyfile.in to customize the generation to the needs. Once ready, please run ./doc/gen_doc. Be sure to have Doxygen in your PATH along with Graphviz (not mandatory) for drawings. 
+
 Installation guide
 ==================
 
-This page documents the standard installation process for MPC. First, you may download a tarball 
-from our `download page <https://france.paratools.com/mpc/releases/>`_. MPC embeds some of its 
-dependencies for ease of use and to simplify the installation process. The following main 
-dependencies are embedded:
+This page documents the standard installation process for MPC. First, you may download a tarball from our `download page <https://france.paratools.com/mpc/releases/>`_. MPC embeds some of its dependencies for ease of use and to simplify the installation process. The following main  dependencies are embedded:
 
 - A patched GCC for automatic privatization
 - A GCC plugin to support dynamic initializers
@@ -64,8 +70,7 @@ from your shell. You can then proceed to extract the tarball.
 Install MPC
 -----------
 
-MPC relies on an unified installation script, `installmpc`'. You can run it from the extracted 
-directory.
+MPC relies on an unified installation script, `installmpc`'. You can run it from the extracted directory.
 
 .. code-block:: bash
 
@@ -73,8 +78,7 @@ directory.
    mkdir BUILD && cd BUILD
    ../installmpc --prefix=<MPC_INSTALL_DIR> -j8
 
-The `--prefix` option sets the installation prefix directory, and the `-j8` option enables 8 
-parallel jobs during the build process.
+The `--prefix` option sets the installation prefix directory, and the `-j8` option enables 8 parallel jobs during the build process.
 
 .. note::
    Replace `<MPC_INSTALL_DIR>` with a suitable path to the desired MPC installation directory. The recommended location is `/usr/local`.
@@ -122,10 +126,7 @@ Compiling and launching a program :code:`test.c` with mpc should start like this
 
 mpc_cc wraps ap-gcc which is a patched version of gcc allowing privatization. You can pass any option that gcc authorizes.
 
-mpcrun is a multi-process launcher that uses Hydra and Slurm to launch MPI 
-applications. This command provides various options for configuring the launch 
-process, including node number, process number, task number, CPU number per UNIX 
-process, and more.
+mpcrun is a multi-process launcher that uses Hydra and Slurm to launch MPI applications. This command provides various options for configuring the launch process, including node number, process number, task number, CPU number per UNIX process, and more.
 
 **mpcrun**
 

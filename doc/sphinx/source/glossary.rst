@@ -5,7 +5,9 @@ Glossary
 
     TBSM 
         Thead-Based Shared Memory
+
     SHM
-        SHared Memory
+        Shared Memory
+
     OFI
         `Open Fabrics Interface <https://github.com/ofiwg/libfabric>`_

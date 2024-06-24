@@ -15,6 +15,7 @@ Welcome to mpc's documentation!
    runtime
    networks
    privatization
+   contribute
    annex
 
 
