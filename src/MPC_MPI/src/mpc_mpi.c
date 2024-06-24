@@ -4615,9 +4615,12 @@ static int __INTERNAL__PMPI_Neighbor_allgather_cart(
 	mpc_mpi_per_communicator_t *tmp;
 	int                         rc = MPI_SUCCESS, dim, nreqs = 0;
 
-	PMPI_Comm_rank(comm, &rank);
+	rc = PMPI_Comm_rank(comm, &rank);
+	MPI_HANDLE_ERROR(rc, comm, "Comm rank failed");
 
-	PMPI_Type_extent(recvtype, &extent);
+	rc = PMPI_Type_extent(recvtype, &extent);
+	MPI_HANDLE_ERROR(rc, comm, "Type extent failed");
+
 	tmp  = __get_per_comm_data(comm);
 	topo = &(tmp->topo);
 	reqs = sctk_malloc( (4 * (topo->data.cart.ndims) ) * sizeof(MPI_Request *) );
@@ -4713,17 +4716,23 @@ static int __INTERNAL__PMPI_Neighbor_allgather_graph(
 	mpi_topology_per_comm_t *   topo;
 	mpc_mpi_per_communicator_t *tmp;
 
-	PMPI_Comm_rank(comm, &rank);
+	rc = PMPI_Comm_rank(comm, &rank);
+	MPI_HANDLE_ERROR(rc, comm, "Comm rank failed");
+
 	tmp  = __get_per_comm_data(comm);
 	topo = &(tmp->topo);
-	PMPI_Graph_neighbors_count(comm, rank, &degree);
+	rc = PMPI_Graph_neighbors_count(comm, rank, &degree);
+	MPI_HANDLE_ERROR(rc, comm, "Graph neighbors count failed");
 
 	edges = topo->data.graph.edges;
 	if(rank > 0)
 	{
 		edges += topo->data.graph.index[rank - 1];
 	}
-	PMPI_Type_extent(recvtype, &extent);
+
+	rc = PMPI_Type_extent(recvtype, &extent);
+	MPI_HANDLE_ERROR(rc, comm, "Receive type extent failed");
+
 	reqs = sctk_malloc( (2 * degree) * sizeof(MPI_Request *) );
 
 	for(neighbor = 0; neighbor < degree; ++neighbor)
@@ -4770,9 +4779,12 @@ static int __INTERNAL__PMPI_Neighbor_allgatherv_cart(
 	mpc_mpi_per_communicator_t *tmp;
 	int                         rc = MPI_SUCCESS, dim, nreqs = 0, i;
 
-	PMPI_Comm_rank(comm, &rank);
+	rc = PMPI_Comm_rank(comm, &rank);
+	MPI_HANDLE_ERROR(rc, comm, "Comm rank failed");
 
-	PMPI_Type_extent(recvtype, &extent);
+	rc = PMPI_Type_extent(recvtype, &extent);
+	MPI_HANDLE_ERROR(rc, comm, "Type extent failed");
+
 	tmp  = __get_per_comm_data(comm);
 	topo = &(tmp->topo);
 	reqs = sctk_malloc( (4 * (topo->data.cart.ndims) ) * sizeof(MPI_Request *) );
@@ -4863,10 +4875,13 @@ static int __INTERNAL__PMPI_Neighbor_allgatherv_graph(
 	mpi_topology_per_comm_t *   topo;
 	mpc_mpi_per_communicator_t *tmp;
 
-	PMPI_Comm_rank(comm, &rank);
+	rc = PMPI_Comm_rank(comm, &rank);
+	MPI_HANDLE_ERROR(rc, comm, "Comm rank failed");
+
 	tmp  = __get_per_comm_data(comm);
 	topo = &(tmp->topo);
-	PMPI_Graph_neighbors_count(comm, rank, &degree);
+	rc = PMPI_Graph_neighbors_count(comm, rank, &degree);
+	MPI_HANDLE_ERROR(rc, comm, "Graph neighbors count failed");
 
 	edges = topo->data.graph.edges;
 	if(rank > 0)
@@ -4874,7 +4889,9 @@ static int __INTERNAL__PMPI_Neighbor_allgatherv_graph(
 		edges += topo->data.graph.index[rank - 1];
 	}
 
-	PMPI_Type_extent(recvtype, &extent);
+	rc = PMPI_Type_extent(recvtype, &extent);
+	MPI_HANDLE_ERROR(rc, comm, "Type extent failed");
+
 	reqs = sctk_malloc( (2 * degree) * sizeof(MPI_Request *) );
 
 	for(neighbor = 0; neighbor < degree; ++neighbor)
@@ -4925,10 +4942,15 @@ static int __INTERNAL__PMPI_Neighbor_alltoall_cart(const void *sendbuf, int send
 	mpc_mpi_per_communicator_t *tmp;
 	int                         rc = MPI_SUCCESS, dim, nreqs = 0;
 
-	PMPI_Comm_rank(comm, &rank);
+	rc = PMPI_Comm_rank(comm, &rank);
+	MPI_HANDLE_ERROR(rc, comm, "Comm rank failed");
 
-	PMPI_Type_extent(recvtype, &rdextent);
-	PMPI_Type_extent(recvtype, &sdextent);
+	rc = PMPI_Type_extent(recvtype, &rdextent);
+	MPI_HANDLE_ERROR(rc, comm, "Receive type extent failed");
+
+	rc = PMPI_Type_extent(sendtype, &sdextent);
+	MPI_HANDLE_ERROR(rc, comm, "Send type extent failed");
+
 	tmp  = __get_per_comm_data(comm);
 	topo = &(tmp->topo);
 	reqs = sctk_malloc( (4 * (topo->data.cart.ndims) ) * sizeof(MPI_Request *) );
@@ -5042,10 +5064,13 @@ static int __INTERNAL__PMPI_Neighbor_alltoall_graph(
 	mpi_topology_per_comm_t *   topo;
 	mpc_mpi_per_communicator_t *tmp;
 
-	PMPI_Comm_rank(comm, &rank);
+	rc = PMPI_Comm_rank(comm, &rank);
+	MPI_HANDLE_ERROR(rc, comm, "Comm rank failed");
 	tmp  = __get_per_comm_data(comm);
 	topo = &(tmp->topo);
-	PMPI_Graph_neighbors_count(comm, rank, &degree);
+
+	rc = PMPI_Graph_neighbors_count(comm, rank, &degree);
+	MPI_HANDLE_ERROR(rc, comm, "Graph neighbors count failed");
 
 	edges = topo->data.graph.edges;
 	if(rank > 0)
@@ -5053,8 +5078,12 @@ static int __INTERNAL__PMPI_Neighbor_alltoall_graph(
 		edges += topo->data.graph.index[rank - 1];
 	}
 
-	PMPI_Type_extent(recvtype, &rdextent);
-	PMPI_Type_extent(sendtype, &sdextent);
+	rc = PMPI_Type_extent(recvtype, &rdextent);
+	MPI_HANDLE_ERROR(rc, comm, "Receive type extent failed");
+
+	rc = PMPI_Type_extent(sendtype, &sdextent);
+	MPI_HANDLE_ERROR(rc, comm, "Send type extent failed");
+
 	reqs = sctk_malloc( (2 * degree) * sizeof(MPI_Request *) );
 
 	for(neighbor = 0; neighbor < degree; ++neighbor)
@@ -5102,10 +5131,15 @@ static int __INTERNAL__PMPI_Neighbor_alltoallv_cart(
 	mpc_mpi_per_communicator_t *tmp;
 	int                         rc = MPI_SUCCESS, dim, nreqs = 0, i;
 
-	PMPI_Comm_rank(comm, &rank);
+	rc = PMPI_Comm_rank(comm, &rank);
+	MPI_HANDLE_ERROR(rc, comm, "Comm rank failed");
 
-	PMPI_Type_extent(recvtype, &rdextent);
-	PMPI_Type_extent(recvtype, &sdextent);
+	rc = PMPI_Type_extent(recvtype, &rdextent);
+	MPI_HANDLE_ERROR(rc, comm, "Receive type extent failed");
+
+	rc = PMPI_Type_extent(recvtype, &sdextent);
+	MPI_HANDLE_ERROR(rc, comm, "Send type extent failed");
+
 	tmp  = __get_per_comm_data(comm);
 	topo = &(tmp->topo);
 	reqs = sctk_malloc( (4 * (topo->data.cart.ndims) ) * sizeof(MPI_Request *) );
@@ -5214,10 +5248,13 @@ static int __INTERNAL__PMPI_Neighbor_alltoallv_graph(
 	mpi_topology_per_comm_t *   topo;
 	mpc_mpi_per_communicator_t *tmp;
 
-	PMPI_Comm_rank(comm, &rank);
+	rc = PMPI_Comm_rank(comm, &rank);
+	MPI_HANDLE_ERROR(rc, comm, "Comm rank failed");
+
 	tmp  = __get_per_comm_data(comm);
 	topo = &(tmp->topo);
-	PMPI_Graph_neighbors_count(comm, rank, &degree);
+	rc = PMPI_Graph_neighbors_count(comm, rank, &degree);
+	MPI_HANDLE_ERROR(rc, comm, "Graph neighbors count failed");
 
 	edges = topo->data.graph.edges;
 	if(rank > 0)
@@ -5225,8 +5262,12 @@ static int __INTERNAL__PMPI_Neighbor_alltoallv_graph(
 		edges += topo->data.graph.index[rank - 1];
 	}
 
-	PMPI_Type_extent(recvtype, &rdextent);
-	PMPI_Type_extent(sendtype, &sdextent);
+	rc = PMPI_Type_extent(recvtype, &rdextent);
+	MPI_HANDLE_ERROR(rc, comm, "Receive type extent failed");
+
+	rc = PMPI_Type_extent(sendtype, &sdextent);
+	MPI_HANDLE_ERROR(rc, comm, "Send type extent failed");
+
 	reqs = sctk_malloc( (2 * degree) * sizeof(MPI_Request *) );
 
 	for(neighbor = 0; neighbor < degree; ++neighbor)
@@ -5277,7 +5318,9 @@ static int __INTERNAL__PMPI_Neighbor_alltoallw_cart(
 	mpc_mpi_per_communicator_t *tmp;
 	int                         rc = MPI_SUCCESS, dim, nreqs = 0, i;
 
-	PMPI_Comm_rank(comm, &rank);
+	rc = PMPI_Comm_rank(comm, &rank);
+	MPI_HANDLE_ERROR(rc, comm, "Comm rank failed");
+
 
 	tmp  = __get_per_comm_data(comm);
 	topo = &(tmp->topo);
@@ -5383,10 +5426,13 @@ static int __INTERNAL__PMPI_Neighbor_alltoallw_graph(
 	mpi_topology_per_comm_t *   topo;
 	mpc_mpi_per_communicator_t *tmp;
 
-	PMPI_Comm_rank(comm, &rank);
+	rc = PMPI_Comm_rank(comm, &rank);
+	MPI_HANDLE_ERROR(rc, comm, "Comm rank failed");
+
 	tmp  = __get_per_comm_data(comm);
 	topo = &(tmp->topo);
-	PMPI_Graph_neighbors_count(comm, rank, &degree);
+	rc = PMPI_Graph_neighbors_count(comm, rank, &degree);
+	MPI_HANDLE_ERROR(rc, comm, "Graph neighbors count failed");
 
 	edges = topo->data.graph.edges;
 	if(rank > 0)
