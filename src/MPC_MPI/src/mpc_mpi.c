@@ -4211,8 +4211,19 @@ int __INTERNAL__PMPI_Alltoall_intra_shared_node(void *sendbuf, int sendcount,
 	{
 		int i;
 		int tsize, rank;
-		PMPI_Type_size(sendtype, &tsize);
-		PMPI_Comm_rank(comm, &rank);
+		int ret;
+
+		ret = PMPI_Type_size(sendtype, &tsize);
+		if (ret != MPI_SUCCESS)
+		{
+			return ret;
+		}
+
+		ret = PMPI_Comm_rank(comm, &rank);
+		if (ret != MPI_SUCCESS)
+		{
+			return ret;
+		}
 
 		for(i = 0; i < coll->comm_size; i++)
 		{
