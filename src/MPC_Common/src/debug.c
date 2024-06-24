@@ -94,7 +94,7 @@ static inline char *__debug_print_info( char *buffer )
 /**********************************************************************/
 void mpc_launch_pmi_abort();
 
-void mpc_common_debug_abort( void )
+__attribute__((__noreturn__)) void mpc_common_debug_abort( void )
 {
 	mpc_common_debug_error("######## Program will now abort ########");
 	mpc_launch_pmi_abort();

@@ -2822,9 +2822,10 @@ int __INTERNAL__PMPI_Bcast_intra_shared_node_impl(void *buffer, int count, MPI_D
 
 			if(!is_shared)
 			{
-				/* We failed ! */
+				/* We failed! */
 				sctk_free(cdata.buffer_addr);
 				cdata.buffer_addr = NULL;
+				mpc_common_debug_fatal("Failed to allocate in memory pool");
 			}
 			else
 			{
@@ -3426,40 +3427,33 @@ int __INTERNAL__PMPI_Scatter_intra_shared_node_impl(void *sendbuf, int sendcnt, 
 	size_t to_scatter_size = tsize * sendcnt * coll->comm_size;
 
 	static __thread struct shared_node_coll_data *cdata = NULL;
+	cdata             = mpc_lowcomm_allocmem_pool_alloc(sizeof(struct shared_node_coll_data) );
+	cdata->is_counter = 0;
 
-
-	if(rank == root)
+	if(!mpc_lowcomm_allocmem_is_in_pool(sendbuf) )
 	{
-		if(!cdata)
-		{
-			cdata             = mpc_lowcomm_allocmem_pool_alloc(sizeof(struct shared_node_coll_data) );
-			cdata->is_counter = 0;
-		}
+		int is_shared = 0;
+		cdata->buffer_addr = mpc_lowcomm_allocmem_pool_alloc_check(to_scatter_size + sizeof(OPA_int_t),
+																   &is_shared);
 
-		if(!mpc_lowcomm_allocmem_is_in_pool(sendbuf) )
+		if(!is_shared)
 		{
-			int is_shared = 0;
-			cdata->buffer_addr = mpc_lowcomm_allocmem_pool_alloc_check(to_scatter_size + sizeof(OPA_int_t),
-			                                                           &is_shared);
-
-			if(!is_shared)
-			{
-				/* We failed ! */
-				sctk_free(cdata->buffer_addr);
-				cdata->buffer_addr = NULL;
-			}
-			else
-			{
-				/* Fill the buffer */
-				OPA_store_int( (OPA_int_t *)cdata->buffer_addr, coll->comm_size);
-				memcpy(cdata->buffer_addr + sizeof(OPA_int_t), sendbuf, to_scatter_size);
-				cdata->is_counter = 1;
-			}
+			/* We failed! */
+			sctk_free(cdata->buffer_addr);
+			cdata->buffer_addr = NULL;
+			mpc_common_debug_fatal("Failed to allocate in memory pool");
 		}
 		else
 		{
-			cdata->buffer_addr = sendbuf;
+			/* Fill the buffer */
+			OPA_store_int( (OPA_int_t *)cdata->buffer_addr, coll->comm_size);
+			memcpy(cdata->buffer_addr + sizeof(OPA_int_t), sendbuf, to_scatter_size);
+			cdata->is_counter = 1;
 		}
+	}
+	else
+	{
+		cdata->buffer_addr = sendbuf;
 	}
 
 	__INTERNAL__PMPI_Bcast_intra_shared_node(&cdata->buffer_addr, sizeof(struct shared_node_coll_data), MPI_CHAR, root, comm);
