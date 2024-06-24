@@ -160,8 +160,7 @@ Note the destructiveness of the operation and use it with precaution. For obviou
 Create a new MPC release tag and push it to Gitlab
 --------------------------------------------------
 
-As described in the [tag management](#tags) section above. To push a tag, just
-consider it as a regular branch name, Git will do the rest:
+To push a tag, just consider it as a regular branch name, Git will do the rest:
 
 .. code-block:: sh
 

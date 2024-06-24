@@ -35,7 +35,7 @@ As said, MPC workflow expects branch to be merged to be as linear as possible. N
 For a branch to be allowed to be merged into the main branch, it **has to** contain the main branch history. In other words, the last commit of the devel branch (at the time of your merge) **has to** be in your own branch. Because the main branch can evolve (i.e. new commits) while working on your own, you'll have to synchronize the MR branch at one point. The process we are going to describe here is to apply at any time you want to propagate in your own branch the content of the main branch, in order to sync them before the merge (or just to
 keep it up-to-date to avoid later issues). Let consider your branch is labeled `mr-A`:
 
-1. In your local repository, download the last version of the mirror. Considering    the Gitlab to be origin: `git fetch origin --prune`. The `--prune` allows    *mirrored* branches deleted from the server to be deleted from your local copy. **This does not apply to local branches**. For instance,if your locally checked out the "devel" branch, it won't make it disappear. But if the server-side devel branch is deleted, your local `origin/devel` will.
+1. In your local repository, download the last version of the mirror. Considering    the Gitlab to be origin: `git fetch origin --prune`. The `--prune` allows *mirrored* branches deleted from the server to be deleted from your local copy. **This does not apply to local branches**. For instance,if your locally checked out the "devel" branch, it won't make it disappear. But if the server-side devel branch is deleted, your local `origin/devel` will.
 
 2. Now, your local repo is in sync, you may proceed to update your branch. The preferred approach is to use a **rebase** because it keeps the history clean in your own branch, without creating any merge loop. To rebase the `mr-A` on top of the just-sync server-side devel branch:
 
@@ -52,9 +52,9 @@ once (only the last versions of devel & mr-A branch will be compared):
 	git checkout mr-A
 	git merge origin/devel
 
-Please note that this will create a merge loop, a thing MPC wants to avoid. Please note that only the rebase can be used to deploy the `mr-A` branch to the main branch, this step is done by Gitlab when approving the MR. For more explanation about merge and rebase, [check this out](GL/Git-tricks#merge-vs-rebase)
+Please note that this will create a merge loop, a thing MPC wants to avoid. Please note that only the rebase can be used to deploy the `mr-A` branch to the main branch, this step is done by Gitlab when approving the MR. For more explanation about merge and rebase, `you can check the official git documentation <https://git-scm.com/book/en/v2/Git-Branching-Rebasing>`_
 
-A final word about the `git pull` option. This command is just a 'script' applying `git fetch` + `git merge` (considering no particular Git configuration in `.gitconfig`). Please use with care when syncing a branch to be merged. Check this [section](GL/Git-tricks#common-mistakes) for common errors when using Git for MPC.
+A final word about the `git pull` option. This command is just a 'script' applying `git fetch` + `git merge` (considering no particular Git configuration in `.gitconfig`). Please use with care when syncing a branch to be merged.
 
 Create a new merge-request
 --------------------------
@@ -65,7 +65,7 @@ To create a merge-request, you **have to** have:
 
 * a clear title for your MR, stating what it is about.
 
-* Read the template available [here](TMPL/New-merge-request-template). You should copy it.
+* Read the template available on gitlab. You should copy it. Please fulfill all the required fields in order to make requests ready for people to review it. It is mandatory to follow the template, at the risk of getting a Bot warning. The bot only checks for section headers.
 
 * checked MPC is still able to build and run correctly
 
@@ -73,15 +73,14 @@ Once these prerequisites accomplished, you may open an MR. To do so: `Merge-Requ
 
 * As for tickets, choose an appropriate title, able to describe in one sentence the content of this pull-request
 
-* [here](TMPL/new-merge-request-template) can be found the template to write the content of the pull-request. Please fulfill all the required fields in order to make requests ready for people to review it. It is mandatory to follow the template, at the risk of getting a Bot warning. The bot only checks for section headers.
-
 * Pick up as assignee the one most suitable to take care of this merge request. In case of doubt, leave it blank.
 
-* As for tickets, choose the appropriate [milestone](GL/milestones-and-labels#milestones) & [labels](GL/milestones-and-labels#labels)
+* As for tickets, choose the appropriate milestone and labels
 
 * Two options are shown: 
 
 	* `Delete source branch when the merge request is accepted`: should be checked by default. This is good practice do delete the branch just merged from the Gitlab repository, to avoid old stalled branches.
+
 	* `Squash commits when the merge request is accepted.`: Up to the submitter to decide if all commits contained is the request should be squashed into a single commit before being merged. The committer ownership will be transferred to the user processing the merge (not necessarily the author, who keep the author ownership) 
 
 * Then, click `submit the merge request`. The bot will then take care of telling you if you made it correctly or not.
@@ -110,7 +109,7 @@ You may also add put a comment on a specific changes line. This will encourage s
 
 Once satisfied with changes/answers, you may approve the merge request by posting a comment with `/approve` as the only message. You are now registered as an approver of the MR. Once the MR reaches the required amount of approvals, the merge-request will be eligible for merge. Please note that Merge-request authors cannot approve their own merge-request. Also **once approval is given, it is not possible (=complex) to un-approve it** (no `/unapprove` command). Be sure to agree with submitted changes before approving.
 
-For more information, please consult the [Bot documentation](GL/paratools-bot)
+For more information, please consult the :ref:`Bot documentation<contribute_bot>`
 
 Merge a new merge-request
 -------------------------

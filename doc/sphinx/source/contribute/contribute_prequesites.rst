@@ -22,7 +22,7 @@ The two lines above are mandatory. Please note the following:
 
 * Use the same email used by Gitlab (for proper contribution recognition)
 
-* Check you do **NOT** have multiple identities in MPC history. To ensure that, run `git shortlog -sne` and look for duplicates. If so, please edit the `/.mailmap` file accordingly. ([Ask for help if needed](../home#contact) )
+* Check you do **NOT** have multiple identities in MPC history. To ensure that, run `git shortlog -sne` and look for duplicates. If so, please edit the `/.mailmap` file accordingly.
 
 Not further restriction, but a lot of recommended setup, listed below, to ease your experience with MPC & Gitlab (and general-purpose Git usage):
 

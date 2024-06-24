@@ -47,7 +47,7 @@ Label				Issue 	MR 	Def.
 Milestones 
 ----------
 
-MPC timeline will be split under milestones, to keep track globally of MPC work progression. Categorized under "deliveries" tag, it will gather under the same milestone any content due to a specified date. This is unrelated to a project release (as multiple releases could occur in a milestone). To keep an eye over currently active milestones, please check the [Milestone](https://gitlab.paratools.com/cea/mpc/-/milestones) section.
+MPC timeline will be split under milestones, to keep track globally of MPC work progression. Categorized under "deliveries" tag, it will gather under the same milestone any content due to a specified date. This is unrelated to a project release (as multiple releases could occur in a milestone).
 
 It could have been interesting to map a milestone to an MPC revision. But the visibility offered by milestones would not be fully exploited by the current MPC revision process (a new release not being on a regular basis). While a milestone let people easily know what is expected to be discussed/fixed/solved in a given time frame. For instance, the `2020 Deliveries` milestone will be attached to content planned to be addressed during the 2020 year. A "special" milestone, for contents unrelated to any due date, can be attached to `Go with the flow` before a decision is made. For instance, a bug submission can be attached to this milestone before any review has been made. Once a bug severity is defined (and its urge to be fixed known), a proper milestone should be set to this bug.
 

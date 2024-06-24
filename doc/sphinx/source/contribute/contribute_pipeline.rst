@@ -68,4 +68,4 @@ A new pipeline is run automatically when:
 
 * A new commit (or a set of commits) is pushed to a mainline branch-like devel or pt\_devel.
 
-* Each time a new commit is added to an existing merge-request. For more information about recommendations regarding pipelines, please read [this](#overall).
+* Each time a new commit is added to an existing merge-request.
