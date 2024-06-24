@@ -6038,7 +6038,7 @@ static inline int __INTERNAL__PMPI_Reduce_derived_no_commute_for(
 		int j;
 
 		/* These are the fastpaths */
-		if( (datatype == MPI_FLOAT) && (op = MPI_SUM) )
+		if( (datatype == MPI_FLOAT) && (op == MPI_SUM) )
 		{
 			if(sendbuf != MPI_IN_PLACE)
 			{
@@ -6055,7 +6055,7 @@ static inline int __INTERNAL__PMPI_Reduce_derived_no_commute_for(
 				}
 			}
 		}
-		else if( (datatype == MPI_DOUBLE) && (op = MPI_SUM) )
+		else if( (datatype == MPI_DOUBLE) && (op == MPI_SUM) )
 		{
 			if(sendbuf != MPI_IN_PLACE)
 			{
@@ -6072,7 +6072,7 @@ static inline int __INTERNAL__PMPI_Reduce_derived_no_commute_for(
 				}
 			}
 		}
-		else if( (datatype == MPI_INT) && (op = MPI_SUM) )
+		else if( (datatype == MPI_INT) && (op == MPI_SUM) )
 		{
 			if(sendbuf != MPI_IN_PLACE)
 			{
