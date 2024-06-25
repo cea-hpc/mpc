@@ -10114,11 +10114,11 @@ int PMPI_Type_contiguous(int count, MPI_Datatype old_type, MPI_Datatype *new_typ
 {
 	MPI_Comm comm = MPI_COMM_WORLD;
 
+	*new_type_p = MPC_DATATYPE_NULL;
+
 	mpi_check_count(count, comm);
 	mpi_check_type(old_type, comm);
 	mpi_check_type_created(old_type, comm);
-
-	*new_type_p = MPC_DATATYPE_NULL;
 
 	/* Here we set the ctx to NULL in order to create a contiguous type (no overriding) */
 	return __PMPI_Type_contiguous_inherits(count, old_type, new_type_p, NULL);
