@@ -11895,8 +11895,8 @@ int PMPI_Unpack_external(const char *datarep, const void *inbuf, MPI_Aint insize
 
 		/* We start with a contiguous vector gathering data-types
 		 * first extracting the datatype vector
-		 * and then by converting the key is that the endiannes conversion
-		 * is a symetrical one*/
+		 * and then by converting the key is that the endianness conversion
+		 * is a symmetrical one*/
 
 		int                    type_vector_count = 0;
 		MPI_Datatype *         type_vector       = NULL;
