@@ -12136,7 +12136,7 @@ int PMPI_Neighbor_alltoallv(const void *sendbuf, const int sendcounts[], const i
 		MPI_ERROR_REPORT(comm, MPI_ERR_ARG, "Invalid arg");
 	}
 
-	_mpc_cl_comm_rank(comm, &size);
+	_mpc_cl_comm_size(comm, &size);
 	for(i = 0; i < size; i++)
 	{
 		if(recvcounts[i] < 0)
@@ -12185,7 +12185,7 @@ int PMPI_Neighbor_alltoallw(const void *sendbuf, const int sendcounts[], const M
 		MPI_ERROR_REPORT(comm, MPI_ERR_ARG, "Invalid arg");
 	}
 
-	_mpc_cl_comm_rank(comm, &size);
+	_mpc_cl_comm_size(comm, &size);
 	for(i = 0; i < size; i++)
 	{
 		if(recvcounts[i] < 0)
