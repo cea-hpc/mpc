@@ -109,7 +109,7 @@ You may also add put a comment on a specific changes line. This will encourage s
 
 Once satisfied with changes/answers, you may approve the merge request by posting a comment with `/approve` as the only message. You are now registered as an approver of the MR. Once the MR reaches the required amount of approvals, the merge-request will be eligible for merge. Please note that Merge-request authors cannot approve their own merge-request. Also **once approval is given, it is not possible (=complex) to un-approve it** (no `/unapprove` command). Be sure to agree with submitted changes before approving.
 
-For more information, please consult the :ref:`Bot documentation<contribute_bot>`
+For more information, please consult the :doc:`Bot documentation<contribute_bot>`
 
 Merge a new merge-request
 -------------------------

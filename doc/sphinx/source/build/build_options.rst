@@ -1,7 +1,7 @@
 Build options
 =============
 
-This is a non-exhaustive list of build options for quick start. For a complete documentation please refer to :doc:`the full installmpc help page<installmpc>`.
+This is a non-exhaustive list of build options for quick start. For a complete documentation please refer to :doc:`the full installmpc help page<../installmpc>`.
 
 Files location and external modules configuration
 -------------------------------------------------

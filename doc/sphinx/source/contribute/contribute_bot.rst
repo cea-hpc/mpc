@@ -25,7 +25,7 @@ Any other issue is ignored, not part of the current process. There is (for now) 
 Merge-Request
 -------------
 
-When a merge-request is opened, its description is analyzed to check template compliance, as described :doc:`here<contribute_merge_request>`. If not, a comment indicates steps to follow in order to fix it. In the meantime, a `Wrong Format` label is used to taint it for other developers as non-conformant-yet. Still, Copy/paste the template should be fine (available :doc:`here<contribute_merge_request`). 
+When a merge-request is opened, its description is analyzed to check template compliance, as described :doc:`here<contribute_merge_request>`. If not, a comment indicates steps to follow in order to fix it. In the meantime, a `Wrong Format` label is used to taint it for other developers as non-conformant-yet. Still, Copy/paste the template should be fine (available :doc:`here<contribute_merge_request>`). 
 
 As explained in the same documentation, a merge-request is reviewed and subject to approvals by peers before being merged into the main branch. This process is supported by the `/approve` command, posted as a regular comment. If the comment only contains the command, the approval is registered but the comment is removed. In that context, the bot keeps track of the number of approvals, posting a new comment with an update each time a new approval is submitted. Once a merge-request reaches the threshold, the merge-request is eligible for merge (from approval point of view only) and maintainers are notified. A new comment is published to make it public.
 
