@@ -267,9 +267,9 @@ ompt_get_task_info ( int ancestor_level,
 }
 
 static int
-ompt_get_task_memory ( void **addr,
-                       size_t *size,
-                       int block ) {
+ompt_get_task_memory ( __UNUSED__ void **addr,
+                       __UNUSED__ size_t *size,
+                       __UNUSED__ int block ) {
     not_implemented();
 
 /* this implementation is wrong, check LLVM one */
