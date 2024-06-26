@@ -521,8 +521,6 @@ int *mpc_MPI_win_locks_pop(struct mpc_MPI_win_locks *locks, int *count_popped,
   struct mpc_MPI_win_lock_request *to_free = NULL;
   struct mpc_MPI_win_lock_request *cur = locks->head;
 
-  cur = locks->head;
-
   while (cur) {
     assert((cur->lock_type == MPI_LOCK_SHARED) ||
            (cur->lock_type == MPI_LOCK_EXCLUSIVE) ||
