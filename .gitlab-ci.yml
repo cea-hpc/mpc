@@ -39,10 +39,6 @@ variables:
   - devel
   - merge_requests
   - web
-  except:
-    variables:
-      # Skip MR tagged as WIP
-      - $CI_MERGE_REQUEST_TITLE =~ /^WIP:/
 
 .uses_slurm: &uses_slurm
   tags:
