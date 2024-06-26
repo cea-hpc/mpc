@@ -1353,9 +1353,13 @@ json_t * json_parse_array( char ** json_string )
 
 		json_array_push( ret, elem );
 
-		json_decref_lf( elem );
+		int ref_count = json_decref_lf( elem );
 
-		json_unlock( elem );
+		/* Only unlock if memory has not already been freed */
+		if ( ref_count )
+		{
+			json_unlock( elem );
+		}
 
 		while( *s && *s != ',' && *s != ']' )
 			s++;
@@ -1455,11 +1459,13 @@ json_t * json_parse_object( char ** json_string )
 
 		json_object_set( ret, key, elem );
 
-		json_decref_lf( elem );
+		int ref_count = json_decref_lf( elem );
 
-		json_unlock( elem );
-
-
+		/* Only unlock if memory has not already been freed */
+		if ( ref_count )
+		{
+			json_unlock( elem );
+		}
 
 		while( *s && *s != ',' && *s != '}' )
 			s++;
