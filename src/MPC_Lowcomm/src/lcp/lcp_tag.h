@@ -50,6 +50,7 @@ struct lcp_tag_data {
 
 //NOTE: choose the maximum size of all header. Optimal would be to check if
 //      request is sync etc... But did not want to add this logic.
+// NOLINTBEGIN(clang-diagnostic-unused-function)
 static inline size_t lcp_send_get_total_tag_payload(size_t data_length)
 {
         size_t hdr_size = mpc_common_max(sizeof(lcp_tag_hdr_t),
@@ -57,6 +58,7 @@ static inline size_t lcp_send_get_total_tag_payload(size_t data_length)
                                           sizeof(lcp_rndv_hdr_t)));
         return data_length + hdr_size;
 }
+// NOLINTEND(clang-diagnostic-unused-function)
 
 int lcp_send_eager_sync_ack(lcp_request_t *super, void *data);
 int lcp_send_task_tag_zcopy(lcp_request_t *req);
