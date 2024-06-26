@@ -14100,6 +14100,7 @@ int PMPI_Cart_sub(MPI_Comm comm, const int remain_dims[], MPI_Comm *comm_new)
 	if(res != MPI_SUCCESS)
 	{
 		mpc_common_spinlock_unlock(&(topo->lock) );
+		sctk_free(coords_in_new);
 		return res;
 	}
 
@@ -14120,7 +14121,11 @@ int PMPI_Cart_sub(MPI_Comm comm, const int remain_dims[], MPI_Comm *comm_new)
 		if(rank == 0)
 		{
 			res = PMPI_Comm_dup(MPI_COMM_SELF, comm_new);
-			MPI_HANDLE_ERROR(res, MPI_COMM_SELF, "PMPI_Comm_dup failed");
+			if ( res != MPI_SUCCESS )
+			{
+				sctk_free(coords_in_new);
+				MPI_ERROR_REPORT(MPI_COMM_SELF, res, "PMPI_Comm_dup failed");
+			}
 		}
 		else
 		{
@@ -14128,6 +14133,7 @@ int PMPI_Cart_sub(MPI_Comm comm, const int remain_dims[], MPI_Comm *comm_new)
 		}
 
 		mpc_common_spinlock_unlock(&(topo->lock) );
+		sctk_free(coords_in_new);
 		return MPI_SUCCESS;
 	}
 
@@ -14146,6 +14152,7 @@ int PMPI_Cart_sub(MPI_Comm comm, const int remain_dims[], MPI_Comm *comm_new)
 	if(res != MPI_SUCCESS)
 	{
 		mpc_common_spinlock_unlock(&(topo->lock) );
+		sctk_free(coords_in_new);
 		return res;
 	}
 
@@ -14154,6 +14161,7 @@ int PMPI_Cart_sub(MPI_Comm comm, const int remain_dims[], MPI_Comm *comm_new)
 	if(res != MPI_SUCCESS)
 	{
 		mpc_common_spinlock_unlock(&(topo->lock) );
+		sctk_free(coords_in_new);
 		return res;
 	}
 
