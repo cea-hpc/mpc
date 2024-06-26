@@ -726,7 +726,7 @@ int _mpc_topology_get_distance_from_pu(hwloc_topology_t target_topo, int source_
 	int common_prefix = 0;
 	for ( i = 0; i < _mpc_topology_depth; i++ )
 	{
-		if ( prefix_PU[i]->type == prefix_target[i]->type &&
+		if ( prefix_PU[i] != NULL && prefix_PU[i]->type == prefix_target[i]->type &&
 			 prefix_PU[i]->logical_index == prefix_target[i]->logical_index )
 		{
 			common_prefix = i;
