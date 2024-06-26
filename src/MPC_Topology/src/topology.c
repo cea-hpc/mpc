@@ -1362,8 +1362,8 @@ int _mpc_topology_get_effectors(char * input, int ** effectors_depth, long ** fa
   size = (size + 1) / 2;
 
   hwloc_topology_t global_topology = mpc_topology_global_get();
-  *effectors_depth = malloc(size * sizeof(int));
-  *factors = malloc(size * sizeof(long));
+  *effectors_depth = sctk_calloc(size, sizeof(int));
+  *factors = sctk_calloc(size, sizeof(long));
 
   int current;
   char *str, *token, *saveptr, *endptr;
