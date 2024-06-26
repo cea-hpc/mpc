@@ -295,6 +295,8 @@ void _mpc_topology_apply_mpc_process_constraints(hwloc_topology_t target_topolog
 	_mpc_topology_apply_smt_configuration(target_topology,
 			 						  &processor_count);
 
+	assume(processor_count > 0);
+
 	hwloc_cpuset_t pinning_constraints = _mpc_topology_get_pinning_constraints(processor_count);
 
 	int processor_per_process = processor_count;
