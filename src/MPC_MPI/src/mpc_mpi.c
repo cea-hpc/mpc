@@ -14075,7 +14075,9 @@ int PMPI_Cart_sub(MPI_Comm comm, const int remain_dims[], MPI_Comm *comm_new)
 
 	if(remain_dims == NULL)
 	{
-		PMPI_Comm_dup(MPI_COMM_SELF, comm_new);
+		res = PMPI_Comm_dup(MPI_COMM_SELF, comm_new);
+		MPI_HANDLE_ERROR(res, MPI_COMM_SELF, "PMPI_Comm_dup failed");
+
 		tmp      = __get_per_comm_data(*comm_new);
 		topo_new = &(tmp->topo);
 
@@ -14117,7 +14119,8 @@ int PMPI_Cart_sub(MPI_Comm comm, const int remain_dims[], MPI_Comm *comm_new)
 	{
 		if(rank == 0)
 		{
-			PMPI_Comm_dup(MPI_COMM_SELF, comm_new);
+			res = PMPI_Comm_dup(MPI_COMM_SELF, comm_new);
+			MPI_HANDLE_ERROR(res, MPI_COMM_SELF, "PMPI_Comm_dup failed");
 		}
 		else
 		{
