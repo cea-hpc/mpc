@@ -175,12 +175,6 @@ hwloc_cpuset_t _mpc_topology_get_pinning_constraints(int processor_count)
 	hwloc_cpuset_t pining_constraints = hwloc_bitmap_alloc();
 	hwloc_bitmap_zero( pining_constraints );
 
-	if ( __mpc_topo_config.pin_proc_list == NULL )
-	{
-		/* Nothing to do */
-		return pining_constraints;
-	}
-
 	if ( strlen(__mpc_topo_config.pin_proc_list) == 0 )
 	{
 		/* Nothing to do */
@@ -1298,21 +1292,18 @@ void mpc_topology_init()
 	hwloc_topology_set_type_filter(__mpc_module_topology, HWLOC_OBJ_GROUP, HWLOC_TYPE_FILTER_KEEP_ALL);
 #endif
 
-	if(__mpc_topo_config.hwloc_xml != NULL)
+	if(strlen(__mpc_topo_config.hwloc_xml) )
 	{
-		if(strlen(__mpc_topo_config.hwloc_xml) )
+		fprintf(stderr, "USE XML file %s\n", __mpc_topo_config.hwloc_xml);
+
+		if(hwloc_topology_set_xml(__mpc_module_topology, __mpc_topo_config.hwloc_xml) < 0 ||
+				hwloc_topology_set_xml(__mpc_module_topology_global, __mpc_topo_config.hwloc_xml) < 0)
 		{
-			fprintf(stderr, "USE XML file %s\n", __mpc_topo_config.hwloc_xml);
-
-			if(hwloc_topology_set_xml(__mpc_module_topology, __mpc_topo_config.hwloc_xml) < 0 ||
-         hwloc_topology_set_xml(__mpc_module_topology_global, __mpc_topo_config.hwloc_xml) < 0)
-			{
-				bad_parameter("MPC_TOPOLOGY_XML could not load HWLOC topology from %s", __mpc_topo_config.hwloc_xml);
-			}
-
-      hwloc_topology_set_flags(__mpc_module_topology       , HWLOC_TOPOLOGY_FLAG_IS_THISSYSTEM | hwloc_topology_get_flags(__mpc_module_topology));
-      hwloc_topology_set_flags(__mpc_module_topology_global, HWLOC_TOPOLOGY_FLAG_IS_THISSYSTEM | hwloc_topology_get_flags(__mpc_module_topology_global));
+			bad_parameter("MPC_TOPOLOGY_XML could not load HWLOC topology from %s", __mpc_topo_config.hwloc_xml);
 		}
+
+		hwloc_topology_set_flags(__mpc_module_topology       , HWLOC_TOPOLOGY_FLAG_IS_THISSYSTEM | hwloc_topology_get_flags(__mpc_module_topology));
+		hwloc_topology_set_flags(__mpc_module_topology_global, HWLOC_TOPOLOGY_FLAG_IS_THISSYSTEM | hwloc_topology_get_flags(__mpc_module_topology_global));
 	}
 
 	hwloc_topology_load(__mpc_module_topology);
