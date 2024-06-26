@@ -1450,7 +1450,8 @@ void mpc_topology_init_distance_simulation_factors(int * tab_cpuid, int size) {
   hwloc_topology_t global_topology = mpc_topology_global_get();
   int swap;
 
-  int latency_hashtable[latency_size];
+  int* latency_hashtable = sctk_malloc(latency_size * sizeof(int));
+
   for(int i = 0; i < latency_size; i++) {
     latency_hashtable[i] = i;
   }
@@ -1469,7 +1470,8 @@ void mpc_topology_init_distance_simulation_factors(int * tab_cpuid, int size) {
     }
   }
 
-  int bandwidth_hashtable[bandwidth_size];
+  int* bandwidth_hashtable = sctk_malloc(bandwidth_size * sizeof(int));
+
   for(int i = 0; i < bandwidth_size; i++) {
     bandwidth_hashtable[i] = i;
   }
@@ -1520,8 +1522,8 @@ void mpc_topology_init_distance_simulation_factors(int * tab_cpuid, int size) {
     }
   }
 
+  hwloc_obj_t * objs = sctk_malloc(size * sizeof(hwloc_obj_t));
 
-  hwloc_obj_t objs[size];
   for(int i = 0; i < size; i++) {
     objs[i] = hwloc_get_obj_by_type(global_topology, HWLOC_OBJ_PU, tab_cpuid[i * 2]);
   }
@@ -1538,6 +1540,10 @@ void mpc_topology_init_distance_simulation_factors(int * tab_cpuid, int size) {
         HWLOC_DISTANCES_KIND_FROM_USER | HWLOC_DISTANCES_KIND_MEANS_BANDWIDTH);
   }
 
+  sctk_free(latency_hashtable);
+  sctk_free(bandwidth_hashtable);
+
+  sctk_free(objs);
 
   sctk_free(latency_matrix);
   sctk_free(bandwidth_matrix);
