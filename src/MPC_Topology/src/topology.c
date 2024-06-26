@@ -1357,7 +1357,7 @@ int _mpc_topology_get_effectors(char * input, int ** effectors_depth, long ** fa
     size += (input[i] == ',');
   }
   if(!(size & 1)) {
-    bad_parameter("Wrong number of parameter for latency/bandwidth sleep factors. Need to be pair of hwloc_type & long (type1,long1,type2,long2,...):\n\t%s\n", input);
+    bad_parameter("Wrong number of list elements for latency/bandwidth topology simulation factors. Values need to be pairs of (hwloc_type,long), e.g. type1,long1,type2,long2:\n\t%s\n", input);
   }
   size = (size + 1) / 2;
 
