@@ -15146,6 +15146,11 @@ int PMPI_Comm_get_name(MPI_Comm comm, char *comm_name, int *resultlen)
 	int len;
 
 	tmp  = __get_per_comm_data(comm);
+	if (tmp == NULL)
+	{
+		MPI_ERROR_REPORT(comm, MPI_ERR_INTERN, "__get_per_comm_data returned a NULL pointer");
+	}
+
 	topo = &(tmp->topo);
 
 	mpc_common_spinlock_lock(&(topo->lock) );
@@ -15190,6 +15195,11 @@ int PMPI_Comm_set_name(MPI_Comm comm, const char *comm_name)
 	int len;
 
 	tmp  = __get_per_comm_data(comm);
+	if (tmp == NULL)
+	{
+		MPI_ERROR_REPORT(comm, MPI_ERR_INTERN, "__get_per_comm_data returned a NULL pointer");
+	}
+
 	topo = &(tmp->topo);
 
 	mpc_common_spinlock_lock(&(topo->lock) );
