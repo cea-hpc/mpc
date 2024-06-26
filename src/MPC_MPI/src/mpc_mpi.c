@@ -13011,6 +13011,15 @@ int PMPI_Attr_put(MPI_Comm comm, int keyval, void *attr_value)
 	}
 
 	tmp_per_comm = __get_per_comm_data(comm);
+
+	if (tmp_per_comm == NULL)
+	{
+		mpc_common_spinlock_unlock(&(tmp->lock) );
+		MPI_ERROR_REPORT(comm, MPI_ERR_INTERN, "__get_per_comm_data returned NULL pointer");
+	}
+
+	assert(tmp_per_comm->key_vals);
+
 	mpc_common_spinlock_lock(&(tmp_per_comm->lock) );
 
 	if(tmp_per_comm->max_number <= keyval)
@@ -13033,7 +13042,7 @@ int PMPI_Attr_put(MPI_Comm comm, int keyval, void *attr_value)
 		tmp_per_comm->max_number = keyval + 1;
 	}
 
-	if( (tmp_per_comm->key_vals != NULL) && (tmp_per_comm->key_vals[keyval].flag == 1) )
+	if(tmp_per_comm->key_vals[keyval].flag == 1)
 	{
 		mpc_common_spinlock_unlock(&(tmp_per_comm->lock) );
 		mpc_common_spinlock_unlock(&(tmp->lock) );
