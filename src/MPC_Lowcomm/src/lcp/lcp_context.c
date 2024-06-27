@@ -493,6 +493,7 @@ static inline int __init_rails(lcp_context_h ctx)
 
 
         /* Now generate the component list extracting driver configurations */
+		assume(num_rails > 0);
         ctx->cmpts = malloc(num_rails * sizeof(struct lcr_component));
         assume(ctx->cmpts);
         ctx->num_cmpts = num_rails;
@@ -519,13 +520,16 @@ static inline int __init_rails(lcp_context_h ctx)
                 //FIXME: there was a loop before with some unknown bug.
         }
 
+        assume(resource_count > 0);
         ctx->num_resources = resource_count;
+
         ctx->resources = sctk_malloc(sizeof(lcp_rsc_desc_t) * resource_count);
         assume(ctx->resources);
-        ctx->progress_counter = sctk_malloc(sizeof(int) * resource_count);
+        ctx->progress_counter = sctk_malloc(sizeof(unsigned int) * (unsigned int) resource_count);
+
         assume(ctx->progress_counter);
 
-        /* Walk again to initialize each ressource */
+        /* Walk again to initialize each resource */
         resource_count = 0;
 
         unsigned int l = 0;
