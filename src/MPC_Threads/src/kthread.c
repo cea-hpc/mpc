@@ -232,7 +232,7 @@ int _mpc_thread_kthread_create(mpc_thread_kthread_t *thread, void *(*start_routi
 		}
 
 #ifdef PTHREAD_STACK_MIN
-		if(PTHREAD_STACK_MIN > kthread_stack_size)
+		if((unsigned long) PTHREAD_STACK_MIN > kthread_stack_size)
 		{
 			pthread_attr_setstacksize(&attr, PTHREAD_STACK_MIN);
 		}
