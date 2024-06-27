@@ -1,6 +1,11 @@
 Using spack
 ===========
 
+Preamble
+--------
+
+You should be able to use the basics of spack to install mpc using this guide. However it you have any following questions please check out `the official spack documentation <https://spack.readthedocs.io/en/latest/>`_.
+
 Initial Deploy
 --------------
 
@@ -14,7 +19,7 @@ Prepare Offline Bootstrap
 -------------------------
 
 .. code-block:: sh
-	
+
 	#
 	# FIRST CHECK LOCAL SPACK IS THE SAME AS THE REMOTE ONE !
 	#
