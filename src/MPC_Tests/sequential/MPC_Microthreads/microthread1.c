@@ -20,18 +20,20 @@
 /* #   - CARRIBAULT Patrick patrick.carribault@cea.fr                     # */
 /* #                                                                      # */
 /* ######################################################################## */
+#include "mpc_keywords.h"
+#include "mpc_microthread.h"
 #include <stdio.h>
 #include <mpc.h>
 
 void *
-run (void *arg)
+run (__UNUSED__ void *arg)
 {
   printf ("Hello\n");
   return NULL;
 }
 
 int
-main (int argc, char **argv)
+main ()
 {
 
   sctk_microthread_t s;

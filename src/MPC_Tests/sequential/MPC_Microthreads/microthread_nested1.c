@@ -20,18 +20,20 @@
 /* #   - CARRIBAULT Patrick patrick.carribault@cea.fr                     # */
 /* #                                                                      # */
 /* ######################################################################## */
+#include "mpc_keywords.h"
+#include "mpc_microthread.h"
 #include <stdio.h>
 #include <mpc.h>
 
 void *
-run2 (void *arg)
+run2 (__UNUSED__ void *arg)
 {
   printf ("Hello from depth 2\n");
   return NULL;
 }
 
 void *
-run (void *arg)
+run (__UNUSED__ void *arg)
 {
 
   sctk_microthread_t s;
@@ -55,7 +57,7 @@ run (void *arg)
 }
 
 int
-main (int argc, char **argv)
+main ()
 {
 
   sctk_microthread_t s;
