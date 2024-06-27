@@ -387,7 +387,7 @@ TODO(understand why it crashes running without networking);
                 {
                         /* Do not take rail if it does not have offload
                          * capabilities */
-                        if(!rails[i]->offload)
+                        if(rails[i] != NULL && !rails[i]->offload)
                         {
                                 rails[i] = NULL;
                         }
