@@ -106,7 +106,7 @@ int mpc_conf_config_type_print_fd(mpc_conf_config_type_t *type, FILE * fd, mpc_c
 
 int mpc_conf_config_type_print(mpc_conf_config_type_t *type, mpc_conf_output_type_t output_type);
 
-int mpc_conf_config_type_count(mpc_conf_config_type_t *type);
+unsigned int mpc_conf_config_type_count(mpc_conf_config_type_t *type);
 
 mpc_conf_config_type_elem_t *mpc_conf_config_type_nth(mpc_conf_config_type_t *type, unsigned int id);
 

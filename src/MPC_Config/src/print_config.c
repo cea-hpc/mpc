@@ -25,7 +25,7 @@ void print_help(void)
 
 void print_cli_options(void)
 {
-	/* This prints all netowkring options */
+	/* This prints all networking options */
 
 #if 0
 	Configured CLI switches for network configurations:
@@ -61,7 +61,7 @@ void print_cli_options(void)
 	mpc_conf_config_type_elem_t * options = mpc_conf_root_config_get_sep("mpcframework.lowcomm.networking.cli.options", ".");
 	mpc_conf_config_type_t * cli = mpc_conf_config_type_elem_get_inner(options);
 
-	int len = mpc_conf_config_type_count(cli);
+	unsigned int len = mpc_conf_config_type_count(cli);
 
 	unsigned int i;
 
@@ -71,7 +71,7 @@ void print_cli_options(void)
 
 		printf("\t- %s:\n", param->name);
 
-		int param_len = mpc_conf_config_type_count(param);
+		unsigned int param_len = mpc_conf_config_type_count(param);
 
 		unsigned int j;
 		for(j = 0 ; j < param_len; j++ )
