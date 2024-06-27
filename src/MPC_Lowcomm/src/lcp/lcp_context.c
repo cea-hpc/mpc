@@ -553,6 +553,16 @@ static inline int __init_rails(lcp_context_h ctx)
 
         unsigned int total_priorities = 0;
 
+		/*
+		 * Make clang-tidy happy when reading ctx->progress_counter.
+		 * This code is currently poorly written, but resource_count
+		 * and ctx->num_resources are supposed to be equal at this point.
+		 *
+		 * Prevents error "Assigned value is garbage or undefined"
+		 * [clang-analyzer-core.uninitialized.Assign].
+		 */
+		assume(resource_count == ctx->num_resources);
+
         for(k = 0; k < (unsigned int)ctx->num_resources; ++k)
 	{
                 total_priorities += ctx->progress_counter[k];
