@@ -41,6 +41,7 @@
 #define MPCOMPT_GET_RETURN_ADDRESS NULL
 #endif
 
+// NOLINTBEGIN(clang-diagnostic-unused-function)
 static inline void
 _mpc_omp_ompt_frame_set_exit( void* rt_exit_addr ) {
     mpc_omp_thread_t* thread;
@@ -252,6 +253,7 @@ _mpc_omp_ompt_frame_get_wrapper_infos( mpc_omp_ompt_wrapper_t w ) {
         }
     }
 }
+// NOLINTEND(clang-diagnostic-unused-function)
 
 #endif /* OMPT_SUPPORT */
 #endif /* __MPCOMPT_FRAME_H__ */
