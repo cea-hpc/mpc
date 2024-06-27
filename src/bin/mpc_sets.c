@@ -1,3 +1,4 @@
+#include "mpc_keywords.h"
 #include <mpc.h>
 #include <mpc_lowcomm.h>
 #include <mpc_lowcomm_monitor.h>
@@ -55,7 +56,7 @@ void print_sets(int argc, char *argv[])
 
 
 
-int conn_callback(mpc_lowcomm_monitor_set_t set, void * arg)
+int conn_callback(mpc_lowcomm_monitor_set_t set, __UNUSED__ void * arg)
 {
     uint64_t size = mpc_lowcomm_monitor_set_peer_count(set);
 
@@ -99,7 +100,7 @@ int conn_callback(mpc_lowcomm_monitor_set_t set, void * arg)
 
 
 
-void get_connectivity(int argc, char ** argv)
+void get_connectivity()
 {
     printf("graph G{\n");
     printf("graph[concentrate=true]\n");
@@ -112,7 +113,7 @@ void get_connectivity(int argc, char ** argv)
 }
 
 
-void help(int argc, char *argv[])
+void help(__UNUSED__ int argc, char *argv[])
 {
     fprintf(stderr, "Usage of %s:\n", argv[0]);
     fprintf(stderr, "%s [sets,help] [EXTRA ARGS]\n", argv[0]);
@@ -127,7 +128,7 @@ void help(int argc, char *argv[])
 
 }
 
-void syncdump(int argc, char *argv[])
+void syncdump()
 {
     mpc_lowcomm_monitor_synchronous_connectivity_dump();
 }
@@ -156,11 +157,11 @@ int main( int argc, char *argv[])
     }
     else if(!strcmp(mode, "conn"))
     {
-        get_connectivity(argc, argv);
+        get_connectivity();
     }
     else if(!strcmp(mode, "syncconn"))
     {
-        syncdump(argc, argv);
+        syncdump();
     }
     else if(!strcmp(mode, "help") || !strcmp(mode, "-h") || !strcmp(mode, "--help"))
     {
