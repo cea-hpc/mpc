@@ -656,6 +656,7 @@ do {                                                                            
   c -= a; c -= b; c ^= ( b >> 15 );                                              \
 } while (0)
 
+// NOLINTBEGIN(clang-analyzer-core.UndefinedBinaryOperatorResult)
 #define HASH_JEN(key,keylen,hashv)                                               \
 do {                                                                             \
   unsigned _hj_i,_hj_j,_hj_k;                                                    \
@@ -696,6 +697,7 @@ do {                                                                            
   }                                                                              \
   HASH_JEN_MIX(_hj_i, _hj_j, hashv);                                             \
 } while (0)
+// NOLINTEND(clang-analyzer-core.UndefinedBinaryOperatorResult)
 
 /* The Paul Hsieh hash function */
 #undef get16bits
