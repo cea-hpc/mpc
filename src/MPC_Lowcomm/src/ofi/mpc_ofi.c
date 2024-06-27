@@ -732,6 +732,7 @@ int _mpc_ofi_query_devices(lcr_component_t *component,
       tmp = tmp->next;
    }
 
+   assume(device_count > 0);
    *devices_p = malloc(sizeof(lcr_device_t) * device_count);
    *num_devices_p = device_count;
 
