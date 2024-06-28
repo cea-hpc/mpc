@@ -238,18 +238,21 @@ static inline int lcp_rma_start(lcp_ep_h ep, lcp_request_t *req)
 {
         int rc = MPC_LOWCOMM_SUCCESS;
 
+        //FIXME: bcopy not yet supported by transports.
+#if 0
         size_t max_bcopy = req->send.rma.is_get ? ep->config.rma.max_get_bcopy :
                 ep->config.rma.max_put_bcopy;
-        size_t max_zcopy = req->send.rma.is_get ? ep->config.rma.max_get_zcopy :
-                ep->config.rma.max_put_zcopy;
 
         if (req->send.length <= max_bcopy) {
                 req->send.func = lcp_rma_progress_bcopy;
-        } else if (req->send.length <= max_zcopy) {
+        } else {
+#endif
                 //NOTE: Non contiguous datatype not supported for zcopy put
                 assert(req->datatype == LCP_DATATYPE_CONTIGUOUS);
                 req->send.func = lcp_rma_progress_zcopy;
-        }
+#if 0
+        } 
+#endif
 
         if (!(req->flags & LCP_REQUEST_USER_PROVIDED_MEMH)) {
 
