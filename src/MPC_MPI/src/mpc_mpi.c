@@ -10564,27 +10564,21 @@ int PMPI_Type_create_hindexed(int count, const int blocklens[], const MPI_Aint i
 			/* Update UB */
 			long int candidate_b = 0;
 
-			if(input_datatype.is_ub)
-			{
-				candidate_b = input_datatype.ub + indices[i] + extent * (blocklens[i] - 1);
+                        candidate_b = input_datatype.ub + indices[i] + extent * (blocklens[i] - 1);
 
-				if(input_datatype.ub < candidate_b)
-				{
-					new_ub = candidate_b;
-				}
-			}
+                        if(new_ub < candidate_b)
+                        {
+                                new_ub = candidate_b;
+                        }
 
-			/* Update LB */
-			if(input_datatype.is_lb)
-			{
-				candidate_b = input_datatype.lb + indices[i];
+                        /* Update LB */
+                        candidate_b = input_datatype.lb + indices[i];
 
-				if(candidate_b < input_datatype.lb)
-				{
-					new_lb = candidate_b;
-				}
-			}
-		}
+                        if(candidate_b < new_lb)
+                        {
+                                new_lb = candidate_b;
+                        }
+                }
 
 		/* Create the derived datatype */
 		_mpc_cl_general_datatype(newtype, begins_out, ends_out, datatypes, count_out, new_lb, input_datatype.is_lb, new_ub, input_datatype.is_ub, &dtctx);
