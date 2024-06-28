@@ -542,6 +542,7 @@ static inline void __vp_placement_init_data(int *vp_start_thread, int *vp_thread
 * THREAD DATA GETTER *
 **********************/
 
+//FIXME excess elements in struct initializer
 static sctk_thread_data_t sctk_main_datas = SCTK_THREAD_DATA_INIT;
 
 mpc_thread_keys_t stck_task_data;
