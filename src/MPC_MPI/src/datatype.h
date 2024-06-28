@@ -588,6 +588,15 @@ int _mpc_dt_attr_delete(struct _mpc_dt_storage *da, mpc_lowcomm_datatype_t type,
                         const int type_keyval);
 
 /************************************************************************/
+/* MPITypes                                                             */
+/************************************************************************/
+
+void *_mpc_dt_get_mpitypes_handle(mpc_lowcomm_datatype_t type);
+
+int _mpc_dt_set_mpitypes_handle(mpc_lowcomm_datatype_t type, 
+                                void *handle);
+
+/************************************************************************/
 /* Datatype  Naming                                                     */
 /************************************************************************/
 

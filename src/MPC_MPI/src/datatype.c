@@ -29,6 +29,8 @@
 #include "mpc_reduction.h"
 #include "uthash.h"
 
+#include "mpitypes.h"
+
 #include <sctk_alloc.h>
 
 /************************************************************************/
@@ -527,6 +529,8 @@ static inline void ___mpc_init_composed_common_type(mpc_lowcomm_datatype_t targe
 	/* Put the new type in the common location */
 	mpc_lowcomm_datatype_common_set_type_struct(target_type, new_type);
 
+        MPIT_Type_init(target_type);
+
 	/* Free the temporary datatype */
 	sctk_free(new_type);
 }
@@ -880,6 +884,9 @@ mpc_lowcomm_datatype_t _mpc_dt_general_create(
 
 	/* The datatype isn't commited at first */
 	type->is_commited = false;
+
+        /* Initialize MPITypes handle. */
+        type->handle = NULL;
 
 	/* Create context */
 	type->context = (struct _mpc_dt_footprint *)sctk_malloc(sizeof(struct _mpc_dt_footprint) );
@@ -1587,6 +1594,24 @@ int _mpc_dt_attr_delete(struct _mpc_dt_storage *da, mpc_lowcomm_datatype_t type,
 	_mpc_cl_per_mpi_process_ctx_datatype_unlock();
 
 	return MPC_LOWCOMM_SUCCESS;
+}
+
+/************************************************************************/
+/* MPITypes                                                             */
+/************************************************************************/
+
+void *_mpc_dt_get_mpitypes_handle(mpc_lowcomm_datatype_t type)
+{
+        mpc_lowcomm_datatype_t dtype = mpc_lowcomm_datatype_common_get_type_struct(type);
+        return dtype->handle;
+}
+
+int _mpc_dt_set_mpitypes_handle(mpc_lowcomm_datatype_t type, 
+                                void *handle)
+{
+        mpc_lowcomm_datatype_t dtype = mpc_lowcomm_datatype_common_get_type_struct(type);
+        dtype->handle = handle;
+        return MPC_LOWCOMM_SUCCESS;
 }
 
 /************************************************************************/
