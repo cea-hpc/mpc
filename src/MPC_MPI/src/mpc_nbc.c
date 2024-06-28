@@ -10182,9 +10182,6 @@ static inline int NBC_Initialize()
 	{
 		struct mpc_mpi_cl_per_mpi_process_ctx_s *task_specific = mpc_cl_per_mpi_process_ctx_get();
 
-		// _mpc_threads_ng_engine_attr_t attr;
-		// _mpc_threads_ng_engine_attr_init(&attr);
-
 		mpc_thread_attr_t attr;
 		mpc_thread_attr_init( &attr );
 
@@ -10198,22 +10195,6 @@ static inline int NBC_Initialize()
 		mpc_thread_attr_setbinding( &attr,
 									cpu_id_to_bind_progress_thread );
 
-		////DEBUG
-		// char hostname[1024];
-		// gethostname(hostname,1024);
-		// FILE *hostname_fd = fopen(strcat(hostname,".log"),"a");
-		////if (hostname_fd == NULL) perror("FAILED FOPEN hostname_fd");
-
-		// fprintf(hostname_fd,"task_id %03d, current_cpu=%03d,
-		// cpu_id_to_bind_progress_thread = %03d\n",
-		//        mpc_common_get_local_task_rank(),
-		//        sctk_get_cpu(),
-		//        cpu_id_to_bind_progress_thread
-		//      );
-		// fflush(hostname_fd);
-		// fclose(hostname_fd);
-		////DEBUG
-
 		int ret = mpc_thread_core_thread_create( &( task_specific->mpc_mpi_data->NBC_Pthread ),
 												 &attr,
 												 NBC_Pthread_func, NULL );
@@ -10223,7 +10204,6 @@ static inline int NBC_Initialize()
 			return NBC_OOR;
 		}
 
-		// _mpc_threads_ng_engine_attr_destroy(&attr);
 		mpc_thread_attr_destroy( &attr );
 
 		// task_specific->mpc_mpi_data->nbc_initialized_per_task = 1;
