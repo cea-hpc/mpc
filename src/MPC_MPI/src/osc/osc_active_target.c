@@ -404,6 +404,8 @@ int mpc_osc_test(mpc_win_t *win, int *flag)
                 win->win_module.epoch.exposure = NONE_EPOCH;
         } else {
                 *flag = 0;
+                //FIXME: handle active wait.
+                mpc_thread_yield();
         }
 
 
