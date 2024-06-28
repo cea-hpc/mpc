@@ -15824,7 +15824,7 @@ int PMPI_Win_allocate_shared(MPI_Aint size, int disp_unit, MPI_Info info,
 
 int PMPI_Win_create_dynamic(MPI_Info info, MPI_Comm comm, MPI_Win *win)
 {
-        return mpc_win_create_dynamic(NULL, 0, 0, info, comm, win);
+        return mpc_win_create_dynamic(info, comm, win);
 }
 
 int PMPI_Win_attach(MPI_Win, void *, MPI_Aint);
