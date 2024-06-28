@@ -6941,7 +6941,7 @@ int ___collectives_allgather_switch(const void *sendbuf, int sendcount, MPI_Data
   }
 #endif
 
-  if(sendcount == 0) {
+  if(sendcount == 0 && sendbuf != MPI_IN_PLACE) {
     return MPI_SUCCESS;
   }
 
