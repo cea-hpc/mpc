@@ -153,7 +153,7 @@ int mpc_osc_start(mpc_lowcomm_group_t *group,
 
                 while (win->win_module.post_count != grp_size) {
 
-                        for (i = 0; i < grp_win_size; i++) {
+                        for (i = 0; i < OSC_POST_PEER_MAX; i++) {
                                 if (win->win_module.state->post_state[i] == 0) {
                                         continue;
                                 }
