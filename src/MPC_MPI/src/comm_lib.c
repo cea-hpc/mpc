@@ -2021,6 +2021,61 @@ mpc_lowcomm_datatype_t _mpc_cl_type_get_inner(mpc_lowcomm_datatype_t type, int *
 	return itype;
 }
 
+mpc_lowcomm_datatype_t _mpc_cl_type_get_single_predefined_dt(mpc_lowcomm_datatype_t dt)
+{
+        int i;
+        mpc_lowcomm_datatype_t predef = NULL, curr_predefined;
+        mpc_lowcomm_datatype_t curr_dt;
+
+        if (mpc_lowcomm_datatype_is_common(dt)) {
+                return dt;
+        } else {
+                _mpc_lowcomm_general_datatype_t *dtype = dt;
+                for (i = 0; i < (int)dtype->count; i++) {
+                        curr_dt = dtype->datatypes[i];
+                        if (mpc_lowcomm_datatype_is_common(curr_dt)) {
+                                curr_predefined = curr_dt;
+                        } else {
+                                curr_predefined = _mpc_cl_type_get_single_predefined_dt(curr_dt);
+                                if (curr_predefined == NULL) {
+                                        return NULL;
+                                }
+                        }
+
+                        /* First iteration. */
+                        if (predef == NULL) {
+                                predef = curr_dt;
+                        } else {
+                                if (curr_predefined != predef) {
+                                        return NULL;
+                                }
+                        }
+                }
+        }
+        if (mpc_lowcomm_datatype_is_common_predefined(predef)) {
+                return predef;
+        } else {
+                return mpc_lowcomm_datatype_get_common_addr(predef);
+        }
+}
+
+int _mpc_cl_type_get_primitive_type_info(mpc_lowcomm_datatype_t dt,
+                                         mpc_lowcomm_datatype_t *prim_dt,
+                                         int *predefined_count_p)
+{
+        size_t dt_size, predefined_size;
+        
+        *prim_dt = _mpc_cl_type_get_single_predefined_dt(dt);
+        if (*prim_dt == NULL) {
+                return -1;
+        }
+        _mpc_cl_type_size(dt, &dt_size); 
+        _mpc_cl_type_size(*prim_dt, &predefined_size);
+        *predefined_count_p = dt_size / predefined_size;
+
+        return MPI_SUCCESS;
+}
+
 /************************************************************************/
 /* MPC Init and Finalize                                                */
 /************************************************************************/
