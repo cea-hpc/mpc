@@ -122,3 +122,59 @@ void mpc_osc_schedule_progress(lcp_manager_h mngr, volatile int *data,
         mpc_lowcomm_perform_idle(data, value, (void (*)(void *) ) lcp_progress,
                                  mngr);
 }
+
+
+int mpc_osc_start_exclusive(mpc_osc_module_t *module, lcp_task_h task, int target)
+{
+        int rc = MPC_LOWCOMM_SUCCESS;
+        uint64_t lock_state = OSC_LOCK_UNLOCK;
+        uint64_t base_rstate;
+
+        do {
+                base_rstate = (uint64_t)module->rstate_win_info[target].addr;
+
+                rc = mpc_osc_perform_atomic_op(module, module->eps[target],
+                                               task, OSC_LOCK_EXCLUSIVE,
+                                               sizeof(uint64_t), &lock_state,
+                                               base_rstate
+                                               + OSC_STATE_GLOBAL_LOCK_OFFSET,
+                                               module->rstate_win_info[target].rkey,
+                                               LCP_ATOMIC_OP_CSWAP);
+                if (rc != MPC_LOWCOMM_SUCCESS) {
+                        goto err;
+                }
+
+                if (lock_state != 0) {
+                        /* Reset lock value. */
+                        lock_state = OSC_LOCK_UNLOCK;
+                        rc = lcp_progress(module->mngr);
+                        if (rc != MPC_LOWCOMM_SUCCESS) {
+                                goto err;
+                        }
+                        mpc_thread_yield();
+                        continue;
+                }
+
+                mpc_common_debug("MPI OSC: start exclusive. to=%d", target);
+
+                break;
+        } while (1);
+
+err:
+        return rc;
+}
+
+int mpc_osc_end_exclusive(mpc_osc_module_t *module, lcp_task_h task, int target)
+{
+        int rc = MPC_LOWCOMM_SUCCESS;
+        uint64_t value = -OSC_LOCK_EXCLUSIVE;
+        uint64_t base_rstate = (uint64_t)module->rstate_win_info[target].addr;
+
+        mpc_common_debug("MPI OSC: end exclusive. to=%d", target);
+        rc = mpc_osc_perform_atomic_op(module, module->eps[target], task, value,
+                                       sizeof(uint64_t), NULL, base_rstate
+                                       + OSC_STATE_GLOBAL_LOCK_OFFSET,
+                                       module->rstate_win_info[target].rkey,
+                                       LCP_ATOMIC_OP_ADD);
+        return rc;
+}

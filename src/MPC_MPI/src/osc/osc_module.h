@@ -24,7 +24,8 @@
 #define OSC_COMMON_H 
 
 #include <list.h>
-#include <mpc_lowcomm_communicator.h> //NOTE: for lowcomm_communicator_t
+#include "mpc_lowcomm_communicator.h"
+#include "mpc_thread_accessor.h"
 #include <mpc_common_datastructure.h>
 #include <lcp.h>
 
@@ -135,6 +136,38 @@ typedef struct mpc_osc_module {
 
 } mpc_osc_module_t;
 
+static inline int mpc_osc_get_comm_info(mpc_osc_module_t *mod, int target,
+                                        mpc_lowcomm_communicator_t comm,
+                                        lcp_ep_h *ep_p, lcp_task_h *task_p)
+{
+        int rc = 0;
+        lcp_task_h task;
+        if (mod->eps[target] == NULL) {
+                uint64_t target_uid = mpc_lowcomm_communicator_uid(comm, 
+                                                                   target);
+
+                rc = lcp_ep_create(mod->mngr, &mod->eps[target], 
+                                   target_uid, 0);
+                if (rc != 0) {
+                        mpc_common_debug_fatal("Could not create endpoint.");
+                        goto err;
+                }
+        }
+
+        task = lcp_context_task_get(mod->ctx, mpc_common_get_task_rank());
+        if (task == NULL) {
+                mpc_common_debug_fatal("MPI OSC: could not find task. tid="
+                                       "%d.", mpc_common_get_task_rank());
+                rc = 1;
+                goto err;
+        }
+
+        *ep_p = mod->eps[target];
+        *task_p = task; 
+
+err:
+        return rc;
+}
 
 int mpc_osc_perform_atomic_op(mpc_osc_module_t *mod, lcp_ep_h ep,
                               lcp_task_h task, uint64_t value, size_t size,
@@ -150,5 +183,8 @@ int mpc_osc_perform_flush_op(mpc_osc_module_t *mod, lcp_task_h task,
 
 void mpc_osc_schedule_progress(lcp_manager_h mngr, volatile int *data,
                               int value);
+
+int mpc_osc_start_exclusive(mpc_osc_module_t *mod, lcp_task_h task, int target);
+int mpc_osc_end_exclusive(mpc_osc_module_t *mod, lcp_task_h task, int target);
 
 #endif

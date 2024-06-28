@@ -38,92 +38,16 @@
 static uint64_t one       = 1;
 static uint64_t minusone  = -1;
 
-static int start_exclusive(mpc_win_t *win, lcp_task_h task,
-                                  int target)
+static int start_shared(mpc_osc_module_t *module, lcp_task_h task, int target)
 {
-        mpc_osc_module_t *module = &win->win_module;
-        int rc = MPC_LOWCOMM_SUCCESS;
-        uint64_t lock_state = OSC_LOCK_UNLOCK;
-        uint64_t base_rstate;
-
-        do {
-               if (module->eps[target] == NULL) {
-                       uint64_t target_uid = mpc_lowcomm_communicator_uid(win->comm, 
-                                                                          target);
-
-                       rc = lcp_ep_create(module->mngr, &module->eps[target], 
-                                          target_uid, 0);
-                       if (rc != 0) {
-                               mpc_common_debug_fatal("Could not create endpoint.");
-                       }
-                }
-
-               base_rstate = (uint64_t)module->rstate_win_info[target].addr;
-                
-                rc = mpc_osc_perform_atomic_op(module, module->eps[target],
-                                               task, OSC_LOCK_EXCLUSIVE, sizeof(uint64_t),
-                                               &lock_state, base_rstate
-                                               + OSC_STATE_GLOBAL_LOCK_OFFSET,
-                                               module->rstate_win_info[target].rkey,
-                                               LCP_ATOMIC_OP_CSWAP);
-                if (rc != MPC_LOWCOMM_SUCCESS) {
-                        goto err;
-                }
-
-                if (lock_state != 0) {
-                        rc = lcp_progress(module->mngr);
-                        if (rc != MPC_LOWCOMM_SUCCESS) {
-                                goto err;
-                        }
-                        continue;
-                }
-
-                break;
-        } while (1);
-
-err:
-        return rc;
-}
-
-static int end_exclusive(mpc_win_t *win, lcp_task_h task,
-                                int target)
-{
-        mpc_osc_module_t *module = &win->win_module;
-        int rc = MPC_LOWCOMM_SUCCESS;
-        uint64_t value = -OSC_LOCK_EXCLUSIVE;
-        uint64_t base_rstate = (uint64_t)module->rstate_win_info[target].addr;
-
-        rc = mpc_osc_perform_atomic_op(module, module->eps[target], task, value,
-                                       sizeof(uint64_t), NULL, base_rstate
-                                       + OSC_STATE_GLOBAL_LOCK_OFFSET,
-                                       module->rstate_win_info[target].rkey,
-                                       LCP_ATOMIC_OP_ADD);
-        return rc;
-}
-
-static int start_shared(mpc_win_t *win, lcp_task_h task,
-                               int target)
-{
-        mpc_osc_module_t *module = &win->win_module;
         int rc = MPC_LOWCOMM_SUCCESS;
         uint64_t lock_state;
         uint64_t base_rstate;
 
         do {
-               if (module->eps[target] == NULL) {
-                       uint64_t target_uid = mpc_lowcomm_communicator_uid(win->comm, 
-                                                                          target);
-
-                       rc = lcp_ep_create(module->mngr, &module->eps[target], 
-                                          target_uid, 0);
-                       if (rc != 0) {
-                               mpc_common_debug_fatal("Could not create endpoint.");
-                       }
-                }
-                
                base_rstate = (uint64_t)module->rstate_win_info[target].addr; 
-               rc = mpc_osc_perform_atomic_op(module, module->eps[target],
-                                              task, one, sizeof(uint64_t),
+               rc = mpc_osc_perform_atomic_op(module, module->eps[target], task,
+                                              one, sizeof(uint64_t),
                                               &lock_state, base_rstate
                                               + OSC_STATE_GLOBAL_LOCK_OFFSET,
                                               module->rstate_win_info[target].rkey,
@@ -154,10 +78,8 @@ err:
         return rc;
 }
 
-static int end_shared(mpc_win_t *win, lcp_task_h task,
-                             int target)
+static int end_shared(mpc_osc_module_t *module, lcp_task_h task, int target)
 {
-        mpc_osc_module_t *module = &win->win_module;
         int rc = MPC_LOWCOMM_SUCCESS;
         uint64_t base_rstate = (uint64_t)module->rstate_win_info[target].addr;
 
@@ -167,16 +89,18 @@ static int end_shared(mpc_win_t *win, lcp_task_h task,
                                        + OSC_STATE_GLOBAL_LOCK_OFFSET,
                                        module->rstate_win_info[target].rkey,
                                        LCP_ATOMIC_OP_ADD);
+
         return rc;
 
 }
 
 int mpc_osc_lock(int lock_type, int target, int mpi_assert, mpc_win_t *win)
 {
-        int rc = MPC_LOWCOMM_ERROR;
+        int rc = MPC_LOWCOMM_SUCCESS;
+        lcp_ep_h ep;
+        lcp_task_h task;
         mpc_osc_module_t *module = &win->win_module;
         mpc_osc_epoch_t original_epoch = module->epoch.access;
-        lcp_task_h task;
 
         if (module->lock_count == 0) {
                 if (module->epoch.access != NONE_EPOCH &&
@@ -202,18 +126,21 @@ int mpc_osc_lock(int lock_type, int target, int mpi_assert, mpc_win_t *win)
         }
         lock->target = target;
 
-        task = lcp_context_task_get(module->ctx, mpc_common_get_task_rank());
+        rc = mpc_osc_get_comm_info(module, target, win->comm, &ep, &task);
+        if (rc != MPC_LOWCOMM_SUCCESS) {
+                goto err;
+        }
 
         if ((mpi_assert & MPI_MODE_NOCHECK) == 0) {
                 if (lock_type == MPI_LOCK_EXCLUSIVE) {
                         lock->type = LOCK_EXCLUSIVE;
-                        rc = start_exclusive(win, task, target);
+                        rc = mpc_osc_start_exclusive(module, task, target);
                         if (rc != MPC_LOWCOMM_SUCCESS) {
                                 goto err;
                         }
                 } else {
                         lock->type = LOCK_SHARED;
-                        rc = start_shared(win, task, target);
+                        rc = start_shared(module, task, target);
                         if (rc != MPC_LOWCOMM_SUCCESS) {
                                 goto err;
                         }
@@ -252,9 +179,10 @@ int mpc_osc_unlock(int target, mpc_win_t *win)
 
         mpc_common_hashtable_delete(&module->outstanding_locks, target);
 
-        ep = module->eps[target]; 
-
-        task = lcp_context_task_get(module->ctx, mpc_common_get_task_rank());
+        rc = mpc_osc_get_comm_info(module, target, win->comm, &ep, &task);
+        if (rc != MPC_LOWCOMM_SUCCESS) {
+                goto err;
+        }
 
         rc = mpc_osc_perform_flush_op(module, task, ep, NULL);
         if (rc != MPC_LOWCOMM_SUCCESS) {
@@ -263,12 +191,12 @@ int mpc_osc_unlock(int target, mpc_win_t *win)
 
         if (lock->is_no_check == 0) {
                 if (lock->type == LOCK_EXCLUSIVE) {
-                        rc = end_exclusive(win, task, target);
+                        rc = mpc_osc_end_exclusive(module, task, target);
                         if (rc != MPC_LOWCOMM_SUCCESS) {
                                 goto err;
                         }
                 } else {
-                        rc = end_shared(win, task, target);
+                        rc = end_shared(module, task, target);
                         if (rc != MPC_LOWCOMM_SUCCESS) {
                                 goto err;
                         }
@@ -292,6 +220,7 @@ int mpc_osc_lock_all(int mpi_assert, mpc_win_t *win)
         int i, j;
         mpc_osc_module_t *module = &win->win_module;
         lcp_task_h task;
+        lcp_ep_h ep;
 
         if (module->lock_count == 0) {
                 if (module->epoch.access != NONE_EPOCH &&
@@ -303,12 +232,15 @@ int mpc_osc_lock_all(int mpi_assert, mpc_win_t *win)
         module->epoch.access = PASSIVE_ALL_EPOCH;
 
         if ((mpi_assert & MPI_MODE_NOCHECK) == 0) {
-                task = lcp_context_task_get(module->ctx, mpc_common_get_task_rank());
                 for (i = 0; i < win->comm_size; i++) {
-                        rc = start_shared(win, task, i);
+                        rc = mpc_osc_get_comm_info(module, i, win->comm, &ep, &task);
+                        if (rc != MPC_LOWCOMM_SUCCESS) {
+                                goto err;
+                        }
+                        rc = start_shared(module, task, i);
                         if (rc != MPC_LOWCOMM_SUCCESS) {
                                 for (j = 0; j < i; j++) {
-                                        end_shared(win, task, j);
+                                        end_shared(module, task, j);
                                 }
                                 return rc;
                         }
@@ -318,6 +250,7 @@ int mpc_osc_lock_all(int mpi_assert, mpc_win_t *win)
                 module->lock_all_is_no_check = 1;
         }
 
+err:
         return rc;
 }
 
@@ -341,7 +274,7 @@ int mpc_osc_unlock_all(mpc_win_t *win)
 
         if (module->lock_all_is_no_check == 0) {
                 for (i = 0; i < win->comm_size; i++) {
-                        rc |= end_shared(win, task, i);
+                        rc |= end_shared(module, task, i);
                 }
                 module->lock_all_is_no_check = 0;
         } else {
@@ -384,9 +317,7 @@ int mpc_osc_flush(int target, mpc_win_t *win)
                 return MPC_LOWCOMM_ERROR;
         }
 
-        ep = module->eps[target];
-
-        task = lcp_context_task_get(module->ctx, mpc_common_get_task_rank());
+        mpc_osc_get_comm_info(module, target, win->comm, &ep, &task);
 
         rc = mpc_osc_perform_flush_op(module, task, ep, NULL);
 

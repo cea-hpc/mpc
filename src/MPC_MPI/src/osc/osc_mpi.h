@@ -62,8 +62,7 @@ int mpc_win_allocate(void **base, size_t size,
                      int disp_unit, MPI_Info info,
                      mpc_lowcomm_communicator_t comm, 
                      mpc_win_t **win_p);
-int mpc_win_create_dynamic(void **base, size_t size, 
-                           int disp_unit, MPI_Info info,
+int mpc_win_create_dynamic(MPI_Info info,
                            mpc_lowcomm_communicator_t comm, 
                            mpc_win_t **win_p);
 

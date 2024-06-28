@@ -346,6 +346,8 @@ static int _win_setup(mpc_win_t *win, void **base, size_t size,
         }
         lcp_mem_release_rkey_buf(key_state_buf);
 
+        mpc_common_debug("MPI OSC: win setup. state=%p", module->base_state);
+
         sctk_free(win_info_lengths);
         sctk_free(win_info_buf);
         sctk_free(win_info_disps);
@@ -430,6 +432,7 @@ static int _win_init(mpc_win_t **win_p, int flavor, mpc_lowcomm_communicator_t c
         win->model     = MPI_WIN_SEPARATE;
         win->size      = size;
         win->win_module.disp_unit = disp_unit;
+        win->win_module.lock_count = 0;
         win->info      = info;
         strcpy(win->win_name, "MPI_WIN_LCP");
 
@@ -457,7 +460,7 @@ static int _win_init(mpc_win_t **win_p, int flavor, mpc_lowcomm_communicator_t c
 
         /* Set windows attributes. */
         _win_config(base, size, disp_unit, flavor, MPI_WIN_SEPARATE, win);
-        
+
         *win_p = win;
 
         return rc;
@@ -473,7 +476,7 @@ int mpc_osc_find_attached_region_position(mpc_osc_dynamic_win_t *regions,
 {
         int mid_idx = (min_idx + max_idx) >> 1;
 
-        if (mid_idx > max_idx) {
+        if (min_idx > max_idx) {
                 *insert_idx = min_idx;
                 return -1;
         }
@@ -492,29 +495,48 @@ int mpc_osc_find_attached_region_position(mpc_osc_dynamic_win_t *regions,
 int mpc_osc_win_attach(mpc_win_t *win, void *base, size_t len)
 {
         int rc = MPI_SUCCESS;
+        int my_rank = mpc_lowcomm_communicator_rank_fast(win->comm);
         int insert_idx;
         int found_idx;
         int memkey_length;
         void *memkey_buf;
+        lcp_task_h task;
+        lcp_ep_h ep;
         mpc_osc_module_t *module = &win->win_module;
         lcp_mem_attr_t attr;
 
+        if (module->state->dynamic_win_count >= OSC_DYNAMIC_WIN_ATTACH_MAX) {
+                return MPI_ERR_INTERN;
+        }
+
+        rc = mpc_osc_get_comm_info(module, my_rank, win->comm, &ep, &task);
+        if (rc != MPC_LOWCOMM_SUCCESS) {
+                goto err;
+        }
+
+        rc = mpc_osc_start_exclusive(module, task, my_rank);
+        if (rc != MPC_LOWCOMM_SUCCESS) {
+                goto err;
+        }
         if (module->state->dynamic_win_count > 0) {
                 found_idx = mpc_osc_find_attached_region_position((mpc_osc_dynamic_win_t *)module->state->dynamic_wins, 0, 
-                                                                  module->state->dynamic_win_count, 
+                                                                  module->state->dynamic_win_count - 1,
                                                                   (uint64_t)base, len, &insert_idx);
 
                 if (found_idx != -1) {
                         module->local_dynamic_win_infos[found_idx].refcnt++;
+                        rc = mpc_osc_end_exclusive(module, task, my_rank);
                         return rc;
                 }
 
+                assert(insert_idx >= 0 && insert_idx <= (int)module->state->dynamic_win_count);
+
                 memmove((void *)&module->local_dynamic_win_infos[insert_idx+1],
                         (void *)&module->local_dynamic_win_infos[insert_idx],
-                        (OSC_DYNAMIC_WIN_ATTACH_MAX - (insert_idx+1)*sizeof(mpc_osc_local_dynamic_win_info_t)));
+                        (OSC_DYNAMIC_WIN_ATTACH_MAX - (insert_idx+1))*sizeof(mpc_osc_local_dynamic_win_info_t));
                 memmove((void *)&module->state->dynamic_wins[insert_idx+1],
                         (void *)&module->state->dynamic_wins[insert_idx],
-                        (OSC_DYNAMIC_WIN_ATTACH_MAX - (insert_idx+1)*sizeof(mpc_osc_dynamic_win_t)));
+                        (OSC_DYNAMIC_WIN_ATTACH_MAX - (insert_idx+1))*sizeof(mpc_osc_dynamic_win_t));
         } else {
                 insert_idx = 0;
         }
@@ -529,15 +551,15 @@ int mpc_osc_win_attach(mpc_win_t *win, void *base, size_t len)
         };
 
         rc = lcp_mem_provision(module->mngr, 
-                               &module->local_dynamic_win_infos[insert_idx].memh, 
+                               &(module->local_dynamic_win_infos[insert_idx].memh),
                                &param); 
         if (rc != MPC_LOWCOMM_SUCCESS) {
-                goto err;
+                goto unlock_dyn;
         }
 
-        attr.field_mask = LCP_MEM_ADDR_FIELD |
-                LCP_MEM_SIZE_FIELD;
-        rc = lcp_mem_query(module->local_dynamic_win_infos[insert_idx].memh, &attr);
+        attr.field_mask = LCP_MEM_ADDR_FIELD | LCP_MEM_SIZE_FIELD;
+        rc = lcp_mem_query(module->local_dynamic_win_infos[insert_idx].memh,
+                           &attr);
 
         assert(attr.size >= len && attr.address == base);
 
@@ -549,7 +571,7 @@ int mpc_osc_win_attach(mpc_win_t *win, void *base, size_t len)
                           &memkey_buf,
                           &memkey_length);
         if (rc != MPC_LOWCOMM_SUCCESS) {
-                goto err;
+                goto unlock_dyn;
         }
 
         assert(memkey_length <= OCS_LCP_RKEY_BUF_SIZE_MAX);
@@ -561,8 +583,15 @@ int mpc_osc_win_attach(mpc_win_t *win, void *base, size_t len)
         module->local_dynamic_win_infos[insert_idx].refcnt++;
         module->state->dynamic_win_count++;
 
+        mpc_common_debug("MPI OSC: dyn win count. count=%d", 
+                         module->state->dynamic_win_count);
+
         lcp_mem_release_rkey_buf(memkey_buf);
-        rc = MPI_SUCCESS;
+
+        mpc_common_debug("MPI OSC: attached memory. base=%p.", base);
+
+unlock_dyn:
+        mpc_osc_end_exclusive(module, task, my_rank);
 err:
         return rc;
 }
@@ -570,15 +599,27 @@ err:
 int mpc_osc_win_detach(mpc_win_t *win, const void *base)
 {
         int rc = MPI_SUCCESS;
+        int my_rank = mpc_lowcomm_communicator_rank_fast(win->comm);
         int region_idx, insert_idx;
+        lcp_task_h task;
         mpc_osc_module_t *module = &win->win_module;
 
-        region_idx = mpc_osc_find_attached_region_position((mpc_osc_dynamic_win_t *)module->state->dynamic_wins, 
-                                                           0, module->state->dynamic_win_count, 
-                                                           (uint64_t)base, 1, &insert_idx);
+        task = lcp_context_task_get(win->win_module.ctx, mpc_common_get_task_rank());
+
+        rc = mpc_osc_start_exclusive(module, task, my_rank);
+        if (rc != MPC_LOWCOMM_SUCCESS) {
+                goto err;
+        }
+        region_idx
+                = mpc_osc_find_attached_region_position((mpc_osc_dynamic_win_t*)module->state->dynamic_wins,
+                                                        0,
+                                                        module->state->dynamic_win_count-1,
+                                                        (uint64_t)base, 1,
+                                                        &insert_idx);
 
         if (region_idx == -1) {
-                return MPI_SUCCESS;
+                rc = mpc_osc_end_exclusive(module, task, my_rank);
+                return rc;
         }
 
         module->local_dynamic_win_infos[region_idx].refcnt--;
@@ -586,31 +627,36 @@ int mpc_osc_win_detach(mpc_win_t *win, const void *base)
                 lcp_mem_deprovision(module->mngr, module->local_dynamic_win_infos[region_idx].memh);
 
                 memmove((void *)&module->local_dynamic_win_infos[region_idx],
-                        (void *)&module->local_dynamic_win_infos[insert_idx+1],
-                        (OSC_DYNAMIC_WIN_ATTACH_MAX - (insert_idx+1)*sizeof(mpc_osc_local_dynamic_win_info_t)));
-                memmove((void *)&module->state->dynamic_wins[insert_idx],
-                        (void *)&module->state->dynamic_wins[insert_idx+1],
-                        (OSC_DYNAMIC_WIN_ATTACH_MAX - (insert_idx+1)*sizeof(mpc_osc_dynamic_win_t)));
+                        (void *)&module->local_dynamic_win_infos[region_idx+1],
+                        (OSC_DYNAMIC_WIN_ATTACH_MAX - (region_idx+1))*sizeof(mpc_osc_local_dynamic_win_info_t));
+                memmove((void *)&module->state->dynamic_wins[region_idx],
+                        (void *)&module->state->dynamic_wins[region_idx+1],
+                        (OSC_DYNAMIC_WIN_ATTACH_MAX - (region_idx+1))*sizeof(mpc_osc_dynamic_win_t));
 
                 module->state->dynamic_win_count--;
+                mpc_common_debug("MPI OSC: dyn win count. count=%d", 
+                                 module->state->dynamic_win_count);
         }
+        rc = mpc_osc_end_exclusive(module, task, my_rank);
 
+err:
         return rc;
 }
 
-int mpc_win_create_dynamic(void **base, size_t size, 
-                           int disp_unit, MPI_Info info,
+int mpc_win_create_dynamic(MPI_Info info,
                            mpc_lowcomm_communicator_t comm, 
                            mpc_win_t **win_p)
 {
         int rc = MPC_LOWCOMM_SUCCESS;
         mpc_win_t *win;
 
-        rc = _win_init(&win, MPI_WIN_FLAVOR_DYNAMIC, comm, base, disp_unit,
-                       size, info);
+        rc = _win_init(&win, MPI_WIN_FLAVOR_DYNAMIC, comm, NULL, 1,
+                       0, info);
         if (rc != MPC_LOWCOMM_SUCCESS) {
                 goto err;
         }
+
+        mpc_common_debug("MPI OSC: dynamic window creation.");
 
         *win_p = win;
 
@@ -632,6 +678,9 @@ int mpc_win_create(void **base, size_t size,
                 goto err;
         }
 
+        mpc_common_debug("MPI OSC: create window creation. base=%p size=%lu", 
+                         *base, size);
+
         *win_p = win;
 
 err:
@@ -652,6 +701,9 @@ int mpc_win_allocate(void **base, size_t size,
                 goto err;
         }
 
+        mpc_common_debug("MPI OSC: allocate window creation. base=%p size=%lu", 
+                         *base, size);
+
         *win_p = win;
 
 err:
@@ -660,7 +712,7 @@ err:
 
 int mpc_win_free(mpc_win_t *win)
 {
-        int rc;
+        int rc = MPI_SUCCESS, i;
         mpc_osc_module_t *module = &win->win_module;
         lcp_task_h task = lcp_context_task_get(win->win_module.ctx, 
                                                mpc_common_get_task_rank());
@@ -687,7 +739,25 @@ int mpc_win_free(mpc_win_t *win)
                         mpc_common_debug_error("WIN: could not deregister local data memory.");
                         goto err;
                 }
+
+                for (i = 0; i < win->comm_size; i++) {
+                        rc = lcp_mem_deprovision(win->win_module.mngr, 
+                                                 win->win_module.rdata_win_info[i].rkey);
+                        if (rc != MPC_LOWCOMM_SUCCESS) {
+                                goto err;
+                        }
+                }
+        } 
+
+        /* Detach all attached memory. */
+        for (i = 0; i < (int)win->win_module.state->dynamic_win_count; i++) {
+                rc = lcp_mem_deprovision(win->win_module.mngr, 
+                                         win->win_module.local_dynamic_win_infos[i].memh);
+                if (rc != MPC_LOWCOMM_SUCCESS) {
+                        goto err;
+                }
         }
+        win->win_module.state->dynamic_win_count = 0;
 
         rc = lcp_mem_deprovision(win->win_module.mngr, win->win_module.lkey_state);
         if (rc != MPC_LOWCOMM_SUCCESS) {
@@ -710,6 +780,8 @@ int osc_module_fini()
         int rc = MPC_LOWCOMM_SUCCESS;
         mpc_common_spinlock_lock(&osc_win_lock);
         if (osc_mngr != NULL) {
+                mpc_common_progress_unregister(mpc_osc_progress);
+
                 rc = lcp_manager_fini(osc_mngr);
                 osc_mngr = NULL;
         }
