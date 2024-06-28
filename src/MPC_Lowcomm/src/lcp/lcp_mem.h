@@ -60,7 +60,8 @@ struct lcp_pinning_mmu
 };
 
 enum {
-        LCP_MEM_FLAG_RELEASE = MPC_BIT(0),
+        LCP_MEM_FLAG_FREE           = MPC_BIT(0),
+        LCP_MEM_FLAG_RELEASE_UNPACK = MPC_BIT(1),
 };
 
 typedef enum {

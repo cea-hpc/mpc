@@ -464,7 +464,7 @@ static int lcp_mem_alloc(lcp_mem_h mem, size_t length, unsigned flags)
                 rc = MPC_LOWCOMM_ERROR;
         }
 
-        mem->flags |= LCP_MEM_FLAG_RELEASE;
+        mem->flags |= LCP_MEM_FLAG_FREE;
 err:
         return rc;
 }
@@ -575,6 +575,7 @@ int lcp_mem_unpack(lcp_manager_h mngr, lcp_mem_h *mem_p,
                 rc = MPC_LOWCOMM_ERROR;
                 goto err;
         }
+        mem->flags = LCP_MEM_FLAG_RELEASE_UNPACK;
 
         mem->bm = *(bmap_t *)p; unpacked_size += sizeof(bmap_t);
         for (i=0; i<mngr->num_ifaces; i++) {
@@ -872,6 +873,10 @@ int lcp_mem_deprovision(lcp_manager_h mngr, lcp_mem_h mem)
                 return MPC_LOWCOMM_SUCCESS;
         }
 
+        if (mem->flags & LCP_MEM_FLAG_RELEASE_UNPACK) {
+                goto delete;
+        }
+
         for (i=0; i<mngr->num_ifaces; i++) {
                 if (MPC_BITMAP_GET(mem->bm, i)) {
                         rc = lcp_iface_do_unregister_mem(mngr->ifaces[i],
@@ -882,10 +887,11 @@ int lcp_mem_deprovision(lcp_manager_h mngr, lcp_mem_h mem)
                 }
         }
 
-        if (mem->flags & LCP_MEM_FLAG_RELEASE) {
+        if (mem->flags & LCP_MEM_FLAG_FREE) {
                 lcp_mem_free(mem);
         }
 
+delete:
         lcp_mem_delete(mem);
 
 err:
