@@ -17065,6 +17065,12 @@ int PMPI_Allgather(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
 	mpi_check_type(recvtype, comm);
 	mpi_check_type_commited(recvtype, comm);
 
+        if (sendtype == MPI_DATATYPE_NULL) {
+                sendtype = recvtype;
+        } else if (recvtype == MPI_DATATYPE_NULL) {
+                recvtype = sendtype;
+        }
+
 	if(sendtype != recvtype)
 	{
 		MPI_ERROR_REPORT(comm, MPI_ERR_TYPE, "Mismatched datatypes");
