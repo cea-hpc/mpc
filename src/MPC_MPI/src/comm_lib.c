@@ -1353,19 +1353,8 @@ static inline size_t __mpc_cl_datatype_get_size(mpc_lowcomm_datatype_t datatype)
 				mpc_common_debug_fatal("Tried to retrieve an uninitialized datatype %d", datatype);
 			}
 
-			if(datatype->is_a_padded_struct)
-			{
-				/* Here we return UB as the size (padded struct) */
-				ret = datatype->ub;
-			}
-			else
-			{
-				/* Extract the size field */
-				ret = datatype->size;
-			}
-
 			/* Return */
-			return ret;
+			return datatype->size;
 
 			break;
 
