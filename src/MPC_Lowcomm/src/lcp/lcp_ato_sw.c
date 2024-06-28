@@ -181,7 +181,7 @@ int lcp_atomic_sw(lcp_request_t *req)
         int rc = MPC_LOWCOMM_SUCCESS;
         ssize_t packed_size;
 
-        mpc_common_debug("LCP ATO SW: perform op. req=%p, task=%p, tid=%d, "
+        mpc_common_nodebug("LCP ATO SW: perform op. req=%p, task=%p, tid=%d, "
                          "remote addr=%p, op=%s, compare=%llu, value=%llu", req,
                          req->task, req->task->tid, req->send.ato.remote_addr,
                          lcp_ato_sw_decode_op(req->send.ato.op), 
@@ -228,8 +228,8 @@ int lcp_atomic_reply(lcp_manager_h mngr, lcp_task_h task,
         reply_req->send.reply_ato.msg_id = ato_reply->msg_id;
         reply_req->send.ep = ep;
 
-        mpc_common_debug("LCP ATO: send atomic reply. dest_tid=%d", 
-                         ato_reply->dest_uid);
+        mpc_common_nodebug("LCP ATO: send atomic reply. dest_tid=%d, result=%llu", 
+                         ato_reply->dest_uid, ato_reply->result);
 
         payload_size = lcp_send_eager_bcopy(reply_req, lcp_atomic_reply_pack, 
                                             LCP_AM_ID_ATOMIC_REPLY);
@@ -403,7 +403,8 @@ static int lcp_atomic_reply_handler(void *arg, void *data,
 
         lcp_request_t *req = (lcp_request_t *)hdr->msg_id;
 
-        memcpy(req->send.ato.reply_buffer, &hdr->result, req->send.length);
+        memcpy(req->send.ato.reply_buffer, &hdr->result,
+               req->send.ato.reply_size);
 
         req->flags |= LCP_REQUEST_REMOTE_COMPLETED;
 

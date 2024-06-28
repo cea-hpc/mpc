@@ -137,6 +137,7 @@ struct lcp_request {
                                         lcp_atomic_op_t op;
                                         lcp_mem_h       rkey;
                                         void           *reply_buffer;
+                                        int             reply_size;
                                         uint64_t        value;
                                         uint64_t        compare;
                                 } ato;
@@ -366,7 +367,7 @@ struct lcp_request {
 
 #define LCP_REQUEST_INIT_ATO_SEND(_req, _mngr, _task, _length, _request, \
                                   _ep, _buf, _seqn, _msg_id, _dt, \
-                                  _rkey, _remote_addr, _op) \
+                                  _rkey, _remote_addr, _op, _reply_size) \
 { \
 	(_req)->status                 = MPC_LOWCOMM_IN_PROGRESS; \
 	(_req)->msg_id                 = _msg_id;                 \
@@ -382,6 +383,7 @@ struct lcp_request {
 	(_req)->send.ato.rkey          = _rkey;                   \
 	(_req)->send.ato.remote_addr   = _remote_addr;            \
 	(_req)->send.ato.op            = _op;                     \
+	(_req)->send.ato.reply_size    = _reply_size;             \
 	\
 	(_req)->state.remaining        = _length;                 \
 	(_req)->state.offset           = 0;                       \

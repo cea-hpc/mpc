@@ -159,8 +159,13 @@ lcp_status_ptr_t lcp_atomic_op_nb(lcp_ep_h ep, lcp_task_h task, const void *buff
         lcp_status_ptr_t ret;
         lcp_request_t *req;
         lcp_atomic_proto_t *atomic_proto;
+        int op_size = 0;
 
-        if (length > sizeof(uint64_t)) {
+        if (length <= sizeof(uint32_t)) {
+                op_size = sizeof(uint32_t);
+        } else if (length <= sizeof(uint64_t)) {
+                op_size = sizeof(uint64_t);
+        } else {
                 mpc_common_debug_error("LCP ATO: atomic operation of length "
                                        "superior to sizeof(uint64_t)=%d not "
                                        "supported.", sizeof(uint64_t));
@@ -174,9 +179,9 @@ lcp_status_ptr_t lcp_atomic_op_nb(lcp_ep_h ep, lcp_task_h task, const void *buff
                 return LCP_STATUS_PTR(MPC_LOWCOMM_ERROR);
         }
 
-        LCP_REQUEST_INIT_ATO_SEND(req, ep->mngr, task, length, param->request, ep, 
+        LCP_REQUEST_INIT_ATO_SEND(req, ep->mngr, task, op_size, param->request, ep, 
                                   (void *)buffer, 0, 0, param->datatype, 
-                                  rkey, remote_addr, op_type);
+                                  rkey, remote_addr, op_type, length);
 
         if (param->field_mask & LCP_REQUEST_SEND_CALLBACK) {
                 assert(param->field_mask & LCP_REQUEST_USER_REQUEST);
