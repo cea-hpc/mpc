@@ -25,6 +25,7 @@
 #include <stdlib.h>
 
 #include "mpitypes.h"
+#include "datatype.h"
 #include "mpitypes_dataloop.h"
 #include "typesize_support.h"
 
@@ -49,22 +50,8 @@ typedef struct MPIT_Datatype_s {
                                       MPIT_DATATYPE_VALID_DLOOP_DEPTH)
 
 /* MPI attr keyvals used internally */
-static int MPIT_Datatype_keyval = MPI_KEYVAL_INVALID;
-static int MPIT_Datatype_finalize_keyval = MPI_KEYVAL_INVALID;
-
-static MPIT_Datatype *MPIT_Datatype_allocate(MPI_Datatype type);
+static MPIT_Datatype *MPIT_Datatype_allocate();
 static void MPIT_Datatype_set_szext(MPI_Datatype type, MPIT_Datatype *dtp);
-static int MPIT_Datatype_initialize(void);
-static int MPIT_Datatype_finalize(MPI_Comm comm, int comm_keyval,
-				  void *attrval, void *extrastate);
-static int MPIT_Datatype_copy_attr_function(MPI_Datatype type, int type_keyval,
-					    void *extra_state,
-					    void *attribute_val_in,
-					    void *attribute_val_out, int *flag);
-static int MPIT_Datatype_delete_attr_function(MPI_Datatype type,
-					      int type_keyval,
-					      void *attribute_val,
-					      void *extra_state);
 
 /* MPIT_Type_init
  *
@@ -77,22 +64,16 @@ static int MPIT_Datatype_delete_attr_function(MPI_Datatype type,
  */
 int MPIT_Type_init(MPI_Datatype type)
 {
-    int mpi_errno, attrflag;
     MPIT_Datatype *dtp;
 
     /* trivial types don't get dataloops */
     if (!(MPIT_Datatype_is_nontrivial(type))) return MPI_SUCCESS;
 
-    if (MPIT_Datatype_keyval == MPI_KEYVAL_INVALID) {
-	MPIT_Datatype_initialize();
-    }
+    dtp = _mpc_dt_get_mpitypes_handle(type); 
 
-    mpi_errno = PMPI_Type_get_attr(type, MPIT_Datatype_keyval, &dtp, &attrflag);
-    DLOOP_Assert(mpi_errno == MPI_SUCCESS);
-
-    if (!attrflag) {
+    if (!dtp) {
 	/* allocate structure and create dataloop representation */
-	dtp = MPIT_Datatype_allocate(type);
+	dtp = MPIT_Datatype_allocate();
     }
     if (!(dtp->valid & MPIT_DATATYPE_VALID_DLOOP_PTR)) {
 	MPIT_Dataloop_create(type,
@@ -104,6 +85,8 @@ int MPIT_Type_init(MPI_Datatype type)
 	dtp->valid |= MPIT_DATATYPE_VALID_DLOOP_PTR |
 	    MPIT_DATATYPE_VALID_DLOOP_SIZE | MPIT_DATATYPE_VALID_DLOOP_DEPTH;
     }
+
+    _mpc_dt_set_mpitypes_handle(type, (void *)dtp);
 
     return MPI_SUCCESS;
 }
@@ -117,36 +100,22 @@ int MPIT_Type_init(MPI_Datatype type)
  */
 int MPIT_Type_is_initialized(MPI_Datatype type)
 {
-    int mpi_errno, attrflag;
     MPIT_Datatype *dtp;
 
     /* trivial types are always considered "initialized" */
     if (!MPIT_Datatype_is_nontrivial(type)) return 1;
 
-    /* if we haven't allocated the keyval, then no types have been
-     * initialized.
-     */
-    if (MPIT_Datatype_keyval == MPI_KEYVAL_INVALID) return 0;
-
-    mpi_errno = PMPI_Type_get_attr(type, MPIT_Datatype_keyval, &dtp, &attrflag);
-    if (mpi_errno != MPI_SUCCESS || !attrflag) return 0;
+    dtp = _mpc_dt_get_mpitypes_handle(type);
+    if (!dtp) return 0;
     else return 1;
 }
 
 void MPIT_Datatype_get_size(MPI_Datatype type, DLOOP_Offset *size_p)
 {
-    int mpi_errno, attrflag;
-    MPIT_Datatype *dtp;
+    MPIT_Datatype *dtp = _mpc_dt_get_mpitypes_handle(type);
 
-    if (MPIT_Datatype_keyval == MPI_KEYVAL_INVALID) {
-	MPIT_Datatype_initialize();
-    }
-
-    mpi_errno = PMPI_Type_get_attr(type, MPIT_Datatype_keyval, &dtp, &attrflag);
-    DLOOP_Assert(mpi_errno == MPI_SUCCESS);
-    
-    if (!attrflag) {
-	dtp = MPIT_Datatype_allocate(type);
+    if (!dtp) {
+	dtp = MPIT_Datatype_allocate();
     }
 
     if (!(dtp->valid & MPIT_DATATYPE_VALID_TYPESZEXT)) {
@@ -159,18 +128,10 @@ void MPIT_Datatype_get_size(MPI_Datatype type, DLOOP_Offset *size_p)
 
 void MPIT_Datatype_get_extent(MPI_Datatype type, DLOOP_Offset *extent_p)
 {
-    int mpi_errno, attrflag;
-    MPIT_Datatype *dtp;
-
-    if (MPIT_Datatype_keyval == MPI_KEYVAL_INVALID) {
-	MPIT_Datatype_initialize();
-    }
-
-    mpi_errno = PMPI_Type_get_attr(type, MPIT_Datatype_keyval, &dtp, &attrflag);
-    DLOOP_Assert(mpi_errno == MPI_SUCCESS);
+    MPIT_Datatype *dtp = _mpc_dt_get_mpitypes_handle(type);
     
-    if (!attrflag) {
-	dtp = MPIT_Datatype_allocate(type);
+    if (!dtp) {
+	dtp = MPIT_Datatype_allocate();
     }
 
     if (!(dtp->valid & MPIT_DATATYPE_VALID_TYPESZEXT)) {
@@ -195,7 +156,7 @@ void MPIT_Datatype_get_block_info(MPI_Datatype type,
 				  DLOOP_Offset *count_p,
 				  int *n_contig_p)
 {
-    int mpi_errno, attrflag;
+    int mpi_errno;
     int nr_ints, nr_aints, nr_types, combiner;
 
     mpi_errno = PMPI_Type_get_envelope(type, &nr_ints, &nr_aints,
@@ -214,16 +175,13 @@ void MPIT_Datatype_get_block_info(MPI_Datatype type,
 	*n_contig_p = 1;
     }
     else {
-	MPIT_Datatype *dtp;
+	MPIT_Datatype *dtp = _mpc_dt_get_mpitypes_handle(type);
 	MPIT_Segment  *segp;
 	DLOOP_Offset     bytes;
 
-	mpi_errno = PMPI_Type_get_attr(type, MPIT_Datatype_keyval, &dtp,
-				      &attrflag);
-	DLOOP_Assert(mpi_errno == MPI_SUCCESS);
-	if (!attrflag) {
+	if (!dtp) {
 	    /* need to allocate structure and create dataloop representation */
-	    dtp = MPIT_Datatype_allocate(type);
+	    dtp = MPIT_Datatype_allocate();
 	}
 	if (!(dtp->valid & MPIT_DATATYPE_VALID_DLOOP_PTR)) {
 	    MPIT_Dataloop_create(type,
@@ -305,15 +263,8 @@ void MPIT_Datatype_get_loopptr(MPI_Datatype type,
 			       MPIT_Dataloop **ptr_p,
 			       int UNUSED_(flag))
 {
-    int mpi_errno, attrflag;
-    MPIT_Datatype *dtp;
+    MPIT_Datatype *dtp = _mpc_dt_get_mpitypes_handle(type);
 
-    if (MPIT_Datatype_keyval == MPI_KEYVAL_INVALID) {
-	MPIT_Datatype_initialize();
-    }
-
-    mpi_errno = PMPI_Type_get_attr(type, MPIT_Datatype_keyval, &dtp, &attrflag);
-    DLOOP_Assert(mpi_errno == MPI_SUCCESS);
     /* in the init dataloop path, we create the datatype attribute if it does
      * not exist.  why do we assume the attribute is already set?  We hit this
      * assertion when processing subarray types: after converting the subarray,
@@ -325,7 +276,7 @@ void MPIT_Datatype_get_loopptr(MPI_Datatype type,
      * for which the MPI_Datatype structure has not been allocated. When we do,
      * we just return an NULL pointer.
      */
-    if (!attrflag || !(dtp->valid & MPIT_DATATYPE_VALID_DLOOP_PTR))
+    if (!dtp || !(dtp->valid & MPIT_DATATYPE_VALID_DLOOP_PTR))
 	*ptr_p = NULL;
     else 
 	*ptr_p = dtp->dloop;
@@ -335,15 +286,7 @@ void MPIT_Datatype_get_loopptr(MPI_Datatype type,
 
 void MPIT_Datatype_get_loopsize(MPI_Datatype type, int *size_p, int UNUSED_(flag))
 {
-    int mpi_errno, attrflag;
-    MPIT_Datatype *dtp;
-
-    if (MPIT_Datatype_keyval == MPI_KEYVAL_INVALID) {
-	MPIT_Datatype_initialize();
-    }
-
-    mpi_errno = PMPI_Type_get_attr(type, MPIT_Datatype_keyval, &dtp, &attrflag);
-    DLOOP_Assert(mpi_errno == MPI_SUCCESS);
+    MPIT_Datatype *dtp = _mpc_dt_get_mpitypes_handle(type);
 
     if (!(dtp->valid & MPIT_DATATYPE_VALID_DLOOP_SIZE))
 	*size_p = -1;
@@ -355,15 +298,7 @@ void MPIT_Datatype_get_loopsize(MPI_Datatype type, int *size_p, int UNUSED_(flag
 
 void MPIT_Datatype_get_loopdepth(MPI_Datatype type, int *depth_p, int UNUSED_(flag))
 {
-    int mpi_errno, attrflag;
-    MPIT_Datatype *dtp;
-
-    if (MPIT_Datatype_keyval == MPI_KEYVAL_INVALID) {
-	MPIT_Datatype_initialize();
-    }
-
-    mpi_errno = PMPI_Type_get_attr(type, MPIT_Datatype_keyval, &dtp, &attrflag);
-    DLOOP_Assert(mpi_errno == MPI_SUCCESS);
+    MPIT_Datatype *dtp = _mpc_dt_get_mpitypes_handle(type);
 
     if (!(dtp->valid & MPIT_DATATYPE_VALID_DLOOP_DEPTH))
 	*depth_p = -1;
@@ -375,17 +310,10 @@ void MPIT_Datatype_get_loopdepth(MPI_Datatype type, int *depth_p, int UNUSED_(fl
 
 void MPIT_Datatype_set_loopptr(MPI_Datatype type, MPIT_Dataloop *ptr, int UNUSED_(flag))
 {
-    int mpi_errno, attrflag;
-    MPIT_Datatype *dtp;
+    MPIT_Datatype *dtp = _mpc_dt_get_mpitypes_handle(type);
 
-    if (MPIT_Datatype_keyval == MPI_KEYVAL_INVALID) {
-	MPIT_Datatype_initialize();
-    }
-
-    mpi_errno = PMPI_Type_get_attr(type, MPIT_Datatype_keyval, &dtp, &attrflag);
-    DLOOP_Assert(mpi_errno == MPI_SUCCESS);
-    if (!attrflag) {
-	dtp = MPIT_Datatype_allocate(type);
+    if (!dtp) {
+	dtp = MPIT_Datatype_allocate();
     }
 
     dtp->dloop  = ptr;
@@ -395,17 +323,10 @@ void MPIT_Datatype_set_loopptr(MPI_Datatype type, MPIT_Dataloop *ptr, int UNUSED
 
 void MPIT_Datatype_set_loopsize(MPI_Datatype type, int size, int UNUSED_(flag))
 {
-    int mpi_errno, attrflag;
-    MPIT_Datatype *dtp;
+    MPIT_Datatype *dtp = _mpc_dt_get_mpitypes_handle(type);
 
-    if (MPIT_Datatype_keyval == MPI_KEYVAL_INVALID) {
-	MPIT_Datatype_initialize();
-    }
-
-    mpi_errno = PMPI_Type_get_attr(type, MPIT_Datatype_keyval, &dtp, &attrflag);
-    DLOOP_Assert(mpi_errno == MPI_SUCCESS);
-    if (!attrflag) {
-	dtp = MPIT_Datatype_allocate(type);
+    if (!dtp) {
+	dtp = MPIT_Datatype_allocate();
     }
 
     dtp->dloop_size  = size;
@@ -415,17 +336,10 @@ void MPIT_Datatype_set_loopsize(MPI_Datatype type, int size, int UNUSED_(flag))
 
 void MPIT_Datatype_set_loopdepth(MPI_Datatype type, int depth, int UNUSED_(flag))
 {
-    int mpi_errno, attrflag;
-    MPIT_Datatype *dtp;
+    MPIT_Datatype *dtp = _mpc_dt_get_mpitypes_handle(type);
 
-    if (MPIT_Datatype_keyval == MPI_KEYVAL_INVALID) {
-	MPIT_Datatype_initialize();
-    }
-
-    mpi_errno = PMPI_Type_get_attr(type, MPIT_Datatype_keyval, &dtp, &attrflag);
-    DLOOP_Assert(mpi_errno == MPI_SUCCESS);
-    if (!attrflag) {
-	dtp = MPIT_Datatype_allocate(type);
+    if (!dtp) {
+	dtp = MPIT_Datatype_allocate();
     }
 
     dtp->dloop_depth  = depth;
@@ -459,60 +373,8 @@ int MPIT_Datatype_is_nontrivial(MPI_Datatype type)
     }
 }
 
-/* internal functions */
-
-static int MPIT_Datatype_initialize(void)
+static MPIT_Datatype *MPIT_Datatype_allocate()
 {
-    int mpi_errno;
-
-    DLOOP_Assert(MPIT_Datatype_keyval == MPI_KEYVAL_INVALID);
-
-    /* create keyval for dataloop storage */
-    mpi_errno = PMPI_Type_create_keyval(MPIT_Datatype_copy_attr_function,
-				       MPIT_Datatype_delete_attr_function,
-				       &MPIT_Datatype_keyval,
-				       NULL);
-    DLOOP_Assert(mpi_errno == MPI_SUCCESS);
-
-    /* create keyval to hook to COMM_WORLD for finalize */
-    mpi_errno = PMPI_Comm_create_keyval(MPI_COMM_NULL_COPY_FN,
-					MPIT_Datatype_finalize,
-					&MPIT_Datatype_finalize_keyval,
-					NULL);
-    DLOOP_Assert(mpi_errno == MPI_SUCCESS);
-
-    mpi_errno = PMPI_Comm_set_attr(MPI_COMM_SELF,
-				   MPIT_Datatype_finalize_keyval,
-				   NULL);
-    DLOOP_Assert(mpi_errno == MPI_SUCCESS);
-
-    return 0;
-}
-
-/* MPIT_Datatype_finalize()
- */
-static int MPIT_Datatype_finalize(MPI_Comm UNUSED_(comm),
-				  int UNUSED_(comm_keyval),
-				  void *UNUSED_(attrval),
-				  void *UNUSED_(extrastate))
-{
-    int mpi_errno;
-
-    DLOOP_Assert(MPIT_Datatype_keyval != MPI_KEYVAL_INVALID);
-
-    /* remove keyvals */
-    mpi_errno = PMPI_Type_free_keyval(&MPIT_Datatype_keyval);
-    DLOOP_Assert(mpi_errno == MPI_SUCCESS);
-
-    mpi_errno = PMPI_Comm_free_keyval(&MPIT_Datatype_finalize_keyval);
-    DLOOP_Assert(mpi_errno == MPI_SUCCESS);
-
-    return MPI_SUCCESS;
-}
-
-static MPIT_Datatype *MPIT_Datatype_allocate(MPI_Datatype type)
-{
-    int mpi_errno;
     MPIT_Datatype *dtp;
 
     dtp = (MPIT_Datatype *) malloc(sizeof(MPIT_Datatype));
@@ -522,9 +384,6 @@ static MPIT_Datatype *MPIT_Datatype_allocate(MPI_Datatype type)
     dtp->dloop       = NULL;
     dtp->dloop_size  = -1;
     dtp->dloop_depth = -1;
-    
-    mpi_errno = PMPI_Type_set_attr(type, MPIT_Datatype_keyval, dtp);
-    DLOOP_Assert(mpi_errno == MPI_SUCCESS);
 
     return dtp;
 }
@@ -574,53 +433,6 @@ static void MPIT_Datatype_set_szext(MPI_Datatype type, MPIT_Datatype *dtp)
 
     dtp->valid |= MPIT_DATATYPE_VALID_TYPESZEXT;
     return;
-}
-
-static int MPIT_Datatype_copy_attr_function(MPI_Datatype UNUSED_(type),
-					    int UNUSED_(type_keyval),
-					    void *UNUSED_(extra_state),
-					    void *attribute_val_in,
-					    void *attribute_val_out,
-					    int *flag)
-{
-    MPIT_Datatype *dtp = (MPIT_Datatype *) attribute_val_in;
-
-    MPIT_dbg_printf("copy fn. called\n");
-
-    DLOOP_Assert(dtp->refct);
-
-    dtp->refct++;
-
-    * (MPIT_Datatype **) attribute_val_out = dtp;
-    *flag = 1;
-
-    MPIT_dbg_printf("inc'd refct.\n");
-
-    return MPI_SUCCESS;
-}
-
-static int MPIT_Datatype_delete_attr_function(MPI_Datatype UNUSED_(type),
-					      int UNUSED_(type_keyval),
-					      void *attribute_val,
-					      void *UNUSED_(extra_state))
-{
-    MPIT_Datatype *dtp = (MPIT_Datatype *) attribute_val;
-
-    MPIT_dbg_printf("delete fn. called\n");
-
-    DLOOP_Assert(dtp->refct);
-
-    MPIT_dbg_printf("dec'd refct\n");
-    
-    dtp->refct--;
-    if (dtp->refct == 0) {
-	free(dtp);
-	MPIT_dbg_printf("freed attr structure\n");
-    }
-
-    /* TODO: FREE DATALOOP?!? */
-
-    return MPI_SUCCESS;
 }
 
 /* 
