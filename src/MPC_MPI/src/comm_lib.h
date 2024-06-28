@@ -599,6 +599,16 @@ mpc_lowcomm_datatype_t _mpc_cl_general_type_deserialize(void *buff, size_t size,
 mpc_lowcomm_datatype_t _mpc_cl_type_get_inner(mpc_lowcomm_datatype_t type, 
                                               int *dt_count_p);
 
+/** \brief This function gets the predefined type constituing a general type for RMA
+ *         and the number of basic type in it. The difference with
+ *         _mpc_cl_type_get_inner is that it takes into account that there may
+ *         be nested general datatype of different type.
+ *  \param type general type to be checked
+ *  \return -1 if types are differing, the type if not
+ */
+int _mpc_cl_type_get_primitive_type_info(mpc_lowcomm_datatype_t dt,
+                                         mpc_lowcomm_datatype_t *prim_dt,
+                                         int *predefined_count_p);
 
 /* Types Keyval handling */
 int _mpc_cl_type_free_keyval(int *type_keyval);

@@ -1535,6 +1535,8 @@ int _mpc_cl_type_hcontiguous_ctx(mpc_lowcomm_datatype_t *datatype, size_t count,
 
 	ierr = _mpc_dt_general_on_slot(datatype);
 
+        MPIT_Type_init(*datatype); 
+
 	SCTK_PROFIL_END(MPC_Type_hcontiguous);
 	return ierr;
 }
@@ -1690,6 +1692,10 @@ int _mpc_cl_general_datatype(mpc_lowcomm_datatype_t *datatype,
 	_mpc_dt_context_set( (*datatype)->context, ectx);
 	/* Save it in the task array */
 	ierr = _mpc_dt_general_on_slot(datatype);
+
+        //NOTE: must come after registering the datatype in the slot. Otherwise
+        //      it cannot be recognize as a user datatype.
+        MPIT_Type_init(*datatype);
 
 	SCTK_PROFIL_END(MPC_Create_datatype);
 	return ierr;
@@ -2017,7 +2023,7 @@ mpc_lowcomm_datatype_t _mpc_cl_type_get_inner(mpc_lowcomm_datatype_t type, int *
 
 	assume(mpc_lowcomm_datatype_is_common(itype) );
 	/* if we are here, all types are the same */
-        *dt_count_p = itype->count;
+        *dt_count_p = dtype->count;
 	return itype;
 }
 
