@@ -6,7 +6,6 @@
 #include <string.h>
 #include <sctk_alloc.h>
 
-
 /**
  * \brief initializes a datatype
  *
@@ -201,6 +200,14 @@ bool mpc_lowcomm_datatype_is_common_addr(const mpc_lowcomm_datatype_t datatype)
 	}
 
 	return false;
+}
+
+mpc_lowcomm_datatype_t mpc_lowcomm_datatype_get_common_addr(const mpc_lowcomm_datatype_t datatype)
+{
+        assert(mpc_lowcomm_datatype_is_common_addr(datatype));
+        return (mpc_lowcomm_datatype_t)(((uintptr_t)datatype
+                                         - (uintptr_t)mpc_lowcomm_datatypes_list)
+                                        / sizeof(_mpc_lowcomm_datatype_common_t) + 1);
 }
 
 void mpc_lowcomm_datatype_common_display(const mpc_lowcomm_datatype_t datatype)

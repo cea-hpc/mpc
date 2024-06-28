@@ -228,6 +228,14 @@ bool mpc_lowcomm_datatype_is_common_addr(const mpc_lowcomm_datatype_t datatype);
 /* NOLINTBEGIN(clang-diagnostic-unused-function): False positives */
 
 /**
+ * \brief Get the representation of a common datatype with its actual address 
+ *
+ * \param datatype the datatype with address 
+ * \return datatype with common representation 
+ */
+mpc_lowcomm_datatype_t mpc_lowcomm_datatype_get_common_addr(const mpc_lowcomm_datatype_t datatype);
+
+/**
  * \brief Check if a given datatype is common
  *
  * \param datatype the datatype to check
