@@ -129,121 +129,50 @@ int mpc_topology_render_get_current_binding_from_logical( int logical_pu )
 
 /* used by graphic option */
 static void compute_master_color(int r, int g, int b,  int *r_m, int *g_m, int *b_m){
-    if(r > g && r > b){
-        *r_m = r + 25;
-        *g_m = g + 25;
-        *b_m = b + 25;
-    }
-    if(g > r && g > b){
-        *r_m = r + 25;
-        *g_m = g + 25;
-        *b_m = b + 25;
-    }
-    if(b > g && b > r){
-        *r_m = r + 25;
-        *g_m = g + 25;
-        *b_m = b + 25;
-    }
+	const int color_shift = 25;
+	*r_m = r + color_shift;
+	*g_m = g + color_shift;
+	*b_m = b + color_shift;
 }
 
 /* used by graphic option */
-static void chose_color_task(int task_id, int nb_task, int *r, int *g, int *b, int *r_m, int *g_m, int *b_m){
+static void choose_color_task(int task_id, int nb_task, int *r, int *g, int *b, int *r_m, int *g_m, int *b_m){
     int red, green, blue;
     int red_m, green_m, blue_m;
-    int init_x;
     int step = (230) / nb_task;
+
     switch((task_id + 6) % 6){
         case 0:
-            init_x = 0;
             red = 230;
-            green = 0;
             blue = 0;
-            if(init_x == 0){
-                green = 0 + step * task_id;
-                compute_master_color(red, green, blue, &red_m, &green_m, &blue_m);
-            }
-            else{
-                green = 230 - step * task_id;
-                compute_master_color(red, green, blue, &red_m, &green_m, &blue_m);
-            }
-
+			green = 0 + step * task_id;
             break;
 
         case 1:
-            init_x = 230;
-            red = 0;
             green = 230;
             blue = 0;
-            if(init_x == 0){
-                red = 0 + step * task_id;
-                compute_master_color(red, green, blue, &red_m, &green_m, &blue_m);
-            }
-            else{
-                red = 230 - step * task_id;
-                compute_master_color(red, green, blue, &red_m, &green_m, &blue_m);
-            }
-
+			red = 230 - step * task_id;
             break;
 
         case 2:
-            init_x = 0;
             red = 0;
             green = 230;
-            blue = 0;
-            if(init_x == 0){
-                blue = 0 + step * task_id;
-                compute_master_color(red, green, blue, &red_m, &green_m, &blue_m);
-            }
-            else{
-                blue = 230 - step * task_id;
-                compute_master_color(red, green, blue, &red_m, &green_m, &blue_m);
-            }
-
+			blue = 0 + step * task_id;
             break;
         case 3:
-            init_x = 230;
             red = 0;
-            green = 230;
             blue = 230;
-            if(init_x == 0){
-                green= 0 + step * task_id;
-                compute_master_color(red, green, blue, &red_m, &green_m, &blue_m);
-            }
-            else{
-                green = 230 - step * task_id;
-                compute_master_color(red, green, blue, &red_m, &green_m, &blue_m);
-            }
-
+			green = 230 - step * task_id;
             break;
         case 4:
-            init_x = 0;
-            red = 0;
             green = 0;
             blue = 230;
-            if(init_x == 0){
-                red = 0 + step * task_id;
-                compute_master_color(red, green, blue, &red_m, &green_m, &blue_m);
-            }
-            else{
-                red = 230 - step * task_id;
-                compute_master_color(red, green, blue, &red_m, &green_m, &blue_m);
-            }
-
+			red = 0 + step * task_id;
             break;
         case 5:
-            init_x = 230;
             red = 230;
             green = 0;
-            blue = 230;
-            if(init_x == 0){
-                blue = 0 + step * task_id;
-                compute_master_color(red, green, blue, &red_m, &green_m, &blue_m);
-            }
-            else{
-                blue = 230 - step * task_id;
-                compute_master_color(red, green, blue, &red_m, &green_m, &blue_m);
-            }
-
+			blue = 230 - step * task_id;
             break;
         default:
             red = 0;
@@ -255,6 +184,9 @@ static void chose_color_task(int task_id, int nb_task, int *r, int *g, int *b, i
             break;
 
     }
+
+	compute_master_color(red, green, blue, &red_m, &green_m, &blue_m);
+
     *r = red;
     *g = green;
     *b = blue;
@@ -342,7 +274,7 @@ void mpc_topology_render_create(int os_pu, int os_master_pu, int task_id){
     char string_rgb_hexa_master[512];
 
 
-    chose_color_task(task_id, mpc_common_get_task_count(), &red, &green, &blue, &red_m, &green_m, &blue_m);
+    choose_color_task(task_id, mpc_common_get_task_count(), &red, &green, &blue, &red_m, &green_m, &blue_m);
 
     convert_rgb_to_string(red, green, blue, string_rgb_hexa);
     convert_rgb_to_string(red, green, blue, string_rgb_hexa_master);
