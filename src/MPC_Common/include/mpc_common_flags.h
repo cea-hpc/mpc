@@ -47,7 +47,6 @@ struct mpc_common_flags
         /* Thread-library */
         char thread_library_kind[MPC_CONF_STRING_SIZE];             /*< Type of threading library requested */
         void ( *thread_library_init ) ( void ); /*< Function called to initialize the thread library */
-        short new_scheduler_engine_enabled;     /*< If the new thread engine has been enabled */
 
         /* Launch configuration */
 	unsigned int node_number;		/*< Number of MPC nodes passed on the CLI */

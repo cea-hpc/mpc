@@ -37,12 +37,7 @@
 #include "mpc_nbc_weak.h"
 #endif
 
-#ifdef MPC_Threads
-#include "mpc_thread_ng_engine.h"
-#endif
-
 #include "mpc_nbc_reduction_macros.h"
-
 #include "egreq_nbc.h"
 /* INTERNAL FOR NON-BLOCKING COLLECTIVES - CALL TO libNBC FUNCTIONS*/
 
@@ -9370,28 +9365,6 @@ static inline int NBC_Free( NBC_Handle *handle )
 		DL_DELETE( task_specific->mpc_mpi_data->NBC_Pthread_handles, elem_tmp );
 		task_specific->mpc_mpi_data->NBC_Pthread_nb--;
 
-		if ( mpc_common_get_flags()->new_scheduler_engine_enabled )
-		{
-#ifdef SCTK_DEBUG_SCHEDULER
-			{
-				char hostname[128];
-				char hostname2[128];
-				char current_vp[5];
-				gethostname( hostname, 128 );
-				strncpy( hostname2, hostname, 128 );
-				sprintf( current_vp, "_%03d", mpc_topology_get_pu() );
-				strcat( hostname2, current_vp );
-
-				FILE *fd = fopen( hostname2, "a" );
-				fprintf( fd, "NBC_DELETE %p %d\n", elem_tmp,
-						 task_specific->mpc_mpi_data->NBC_Pthread_nb );
-				fflush( fd );
-				fclose( fd );
-			}
-#endif
-			mpc_threads_generic_scheduler_decrease_prio();
-		}
-
 		mpc_thread_mutex_unlock( lock );
 
 		mpc_thread_mutex_lock( &handle->lock );
@@ -10299,8 +10272,6 @@ inline int NBC_Start( NBC_Handle *handle, NBC_Schedule *schedule )
 		task_specific->mpc_mpi_data->NBC_Pthread_nb++;
 		mpc_thread_mutex_unlock( lock );
 		mpc_thread_sem_post( &( task_specific->mpc_mpi_data->pending_req ) );
-
-		mpc_threads_generic_scheduler_increase_prio();
 
 		// mpc_thread_wait_for_value_and_poll(&(task_specific->mpc_mpi_data->nbc_initialized_per_task),
 		// 1, NULL, NULL);

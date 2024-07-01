@@ -71,7 +71,6 @@
 #include "thread_ptr.h"
 
 #include <kthread.h>
-#include <ng_engine.h>
 
 #include <tls.h>
 
@@ -128,29 +127,7 @@ static inline void __thread_module_config_defaults(void)
 	__thread_module_config.thread_timer_enabled = 1;
     __thread_module_config.kthread_stack_size = (10 * 1024 * 1024);
 	__thread_module_config.ethread_spin_delay = 10;
-
-	/* NG engine */
-	__thread_module_config.scheduler_quantum = 0.0;
-
-	__thread_module_config.scheduler_polling_basic_prio = 20;
-	__thread_module_config.scheduler_polling_step_prio = 20;
-	__thread_module_config.scheduler_polling_current_prio = 20;
-
-	__thread_module_config.scheduler_nbc_basic_prio = 20;
-	__thread_module_config.scheduler_nbc_step_prio = 20;
-	__thread_module_config.scheduler_nbc_current_prio = 20;
-
-	__thread_module_config.scheduler_mpi_basic_prio = 20;
-	__thread_module_config.scheduler_omp_basic_prio = 20;
-	__thread_module_config.scheduler_posix_basic_prio = 20;
-	__thread_module_config.scheduler_progress_basic_prio = 20;
 }
-
-int mpc_thread_get_progress_basic_prio(void)
-{
-	return __thread_module_config.scheduler_progress_basic_prio;
-}
-
 
 
 static inline void __init_thread_module_config(void)
@@ -173,47 +150,12 @@ static inline void __init_thread_module_config(void)
 															    NULL);
 
 
-	/* NG Scheduler */
-	mpc_conf_config_type_t *polling = mpc_conf_config_type_init("polling",
-														        PARAM("basic", &__thread_module_config.scheduler_polling_basic_prio ,MPC_CONF_INT, "Basic priority for polling threads"),
-														        PARAM("step", &__thread_module_config.scheduler_polling_step_prio ,MPC_CONF_INT, "Step of priority for polling threads"),
-														        PARAM("current", &__thread_module_config.scheduler_polling_current_prio ,MPC_CONF_INT, "Step of current priority for polling threads"),
-															    NULL);
-
-#ifdef MPC_MPI
-	mpc_conf_config_type_t *nbc = mpc_conf_config_type_init("nbc",
-														        PARAM("basic", &__thread_module_config.scheduler_nbc_basic_prio ,MPC_CONF_INT, "Basic priority for NBC threads"),
-														        PARAM("step", &__thread_module_config.scheduler_nbc_step_prio ,MPC_CONF_INT, "Step of priority for NBC threads"),
-														        PARAM("current", &__thread_module_config.scheduler_nbc_current_prio ,MPC_CONF_INT, "Step of current priority for NBC threads"),
-															    NULL);
-#endif
-
-	mpc_conf_config_type_t *other = mpc_conf_config_type_init("other",
-														        PARAM("mpi", &__thread_module_config.scheduler_mpi_basic_prio ,MPC_CONF_INT, "Basic priority for MPI threads"),
-#ifdef MPC_OpenMP
-														        PARAM("omp", &__thread_module_config.scheduler_omp_basic_prio ,MPC_CONF_INT, "Basic priority for OMP threads"),
-#endif
-																PARAM("posix", &__thread_module_config.scheduler_posix_basic_prio ,MPC_CONF_INT, "Basic priority for POSIX threads"),
-														        PARAM("progress", &__thread_module_config.scheduler_progress_basic_prio ,MPC_CONF_INT, "Basic priority for PROGRESS threads"),
-															    NULL);	
-
-
-	mpc_conf_config_type_t *sched = mpc_conf_config_type_init("scheduler",
-																PARAM("quantum", &__thread_module_config.scheduler_quantum, MPC_CONF_DOUBLE, "Scheduling quantum for NG threads"),
-																PARAM("polling", polling, MPC_CONF_TYPE, "Priorities for polling threads"),
-#ifdef MPC_MPI
-																PARAM("nbc", nbc, MPC_CONF_TYPE, "Priorities for NBC progress threads"),
-#endif
-																PARAM("other", other, MPC_CONF_TYPE, "Priotities for other thread types"),
-																NULL);
-
 	/* Aggegation for the thread config */
 
 	mpc_conf_config_type_t *thconf = mpc_conf_config_type_init("thread",
 														       PARAM("common", common, MPC_CONF_TYPE, "Common knobs for thread module"),
 														       PARAM("kthread", kthread, MPC_CONF_TYPE, "Parameters for regular 'kernel' threads"),
 														       PARAM("ethread", ethread, MPC_CONF_TYPE, "Parameters for 'ethread' user level threads"),
-														       PARAM("scheduler", sched, MPC_CONF_TYPE, "Parameters for NG shceduler"),
 															   NULL);
 
 	mpc_conf_root_config_append("mpcframework", thconf, "MPC Thread Configuration");
@@ -798,6 +740,8 @@ void  MPC_Process_hook(void)
 
 #endif
 
+//TODO Je ne suis pas sur qu'on créé vraiment 4 page vides sur GH200 avec cet appel étant donnée qu'on fait des malloc de 16000
+//L'autre question que je me pose est de savoir de combien de page on voulait vraiment avoir ?
 static inline void __prepare_free_pages(void)
 {
 	void *p1, *p2, *p3, *p4;
@@ -883,6 +827,7 @@ void mpc_thread_spawn_mpi_tasks(void *(*mpi_task_start_func)(void *), void *arg)
 
 	/* Start Waiting for the end of  all VPs */
 
+  //FIXME il me semble qu'on preferait faire un semaphose pour pas garder le thread dans les listes d'ordonnancement
 	mpc_thread_wait_for_value_and_poll( ( int * )&sctk_current_local_tasks_nb, 0, NULL, NULL);
 
 	sctk_multithreading_initialised = 0;
@@ -984,17 +929,6 @@ static inline void __tbb_finalize_for_mpc()
 	}
 }
 
-static inline void __scheduler_set_thread_kind_mpi(void)
-{
-	// thread priority
-	if(mpc_common_get_flags()->new_scheduler_engine_enabled)
-	{
-		mpc_threads_generic_kind_mask_add(KIND_MASK_MPI);
-		mpc_threads_generic_kind_basic_priority(__thread_module_config.scheduler_mpi_basic_prio);
-		mpc_threads_generic_kind_priority(__thread_module_config.scheduler_mpi_basic_prio);
-		mpc_threads_generic_kind_current_priority(__thread_module_config.scheduler_mpi_basic_prio);
-	}
-}
 
 static void *___vp_thread_start_routine(sctk_thread_data_t *__arg)
 {
@@ -1032,7 +966,8 @@ static void *___vp_thread_start_routine(sctk_thread_data_t *__arg)
 
 	sctk_register_thread_initial(task_rank);
 
-	__scheduler_set_thread_kind_mpi();
+  //Here begin the MPI process (that can be a thread): a mpc_task !
+  //mpc_threads_generic_kind_mask_add(KIND_MASK_MPI);
 
 	sctk_tls_dtors_init(&(tmp.dtors_head) );
 
@@ -1240,13 +1175,7 @@ static void *___nonvp_thread_start_routine(sctk_thread_data_t *__arg)
 	sctk_report_creation(mpc_thread_self() );
 	/** **/
 
-	if(mpc_common_get_flags()->new_scheduler_engine_enabled)
-	{
-		mpc_threads_generic_kind_mask_add(KIND_MASK_PTHREAD);
-		mpc_threads_generic_kind_basic_priority(__thread_module_config.scheduler_posix_basic_prio);
-		mpc_threads_generic_kind_priority(__thread_module_config.scheduler_posix_basic_prio);
-		mpc_threads_generic_kind_current_priority(__thread_module_config.scheduler_posix_basic_prio);
-	}
+  //mpc_threads_generic_kind_mask_add(KIND_MASK_PTHREAD);
 
 	mpc_common_init_trigger("Per Thread Init");
 	res = tmp.__start_routine(tmp.__arg);

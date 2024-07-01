@@ -56,33 +56,17 @@ struct mpc_thread_config
 {
 	/* Common */
 	char thread_layout[MPC_CONF_STRING_SIZE];
-    
-    /* enable/disable timer kernel thread, that counts tick */
-    int thread_timer_enabled;
-	
-    int thread_timer_interval;
+
+	/* enable/disable timer kernel thread, that counts tick */
+	int thread_timer_enabled;
+
+	int thread_timer_interval;
 
 	/* Kthread */
 	long int kthread_stack_size;
 
 	/* Ethread */
 	long int ethread_spin_delay;
-
-	/* NG Scheduler */
-	double scheduler_quantum;
-
-	int scheduler_polling_basic_prio;
-	int scheduler_polling_step_prio;
-	int scheduler_polling_current_prio;
-
-	int scheduler_nbc_basic_prio;
-	int scheduler_nbc_step_prio;
-	int scheduler_nbc_current_prio;
-
-	int scheduler_mpi_basic_prio;
-	int scheduler_omp_basic_prio;
-	int scheduler_posix_basic_prio;
-	int scheduler_progress_basic_prio;
 };
 
 struct mpc_thread_config  * _mpc_thread_config_get(void);
