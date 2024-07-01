@@ -363,11 +363,12 @@ static void read_char(char * buff, int *cpt, int *c, FILE *f){
 }
 
 /* used by graphic and text option */
-static void sctk_read_format_option_graphic_placement_and_complet_topo_infos(FILE *f, int lenght){
+static void sctk_read_format_option_graphic_placement_and_complet_topo_infos(FILE *f, int length){
+	char * os_indbuff = (char *)malloc(64*length);
+	char * infosbuff = (char *)malloc(64*length);
+
     while(1){
         //malloc buffer for infos of other ranks in the same processus
-        char * os_indbuff = (char *)malloc(64*lenght);
-        char * infosbuff = (char *)malloc(64*lenght);
         int c = getc(f);
         if(c == EOF){
             break;
@@ -406,16 +407,15 @@ static void sctk_read_format_option_graphic_placement_and_complet_topo_infos(FIL
             obj = hwloc_get_obj_by_type(mpc_topology_get(), HWLOC_OBJ_CORE, logical_ind);
         }
         if(!obj){
-            sctk_free(infosbuff);
-            sctk_free(os_indbuff );
-            return;
+			break;
         }
 
         hwloc_obj_add_info(obj, "lstopoStyle", infos);
-
-        sctk_free(infosbuff);
-        sctk_free(os_indbuff );
     }
+
+	sctk_free(infosbuff);
+	sctk_free(os_indbuff);
+
     fclose(f);
 }
 
@@ -443,18 +443,23 @@ static void name_and_date_file_text(char *file_name){
 
 /* init struct for text placement option */
 static void sctk_init_text_option(struct sctk_text_option_s **tab_option){
-    int lenght = hwloc_get_nbobjs_by_type(mpc_topology_get(), HWLOC_OBJ_PU);
+    int length = hwloc_get_nbobjs_by_type(mpc_topology_get(), HWLOC_OBJ_PU);
+	if (length <= 0)
+	{
+		mpc_common_debug_fatal("hwloc_get_nbobjs_by_type returned invalid length %d", length);
+	}
+
     *tab_option = (struct sctk_text_option_s *)malloc(sizeof(struct sctk_text_option_s));
-    (*tab_option)->os_index = (int *)malloc(sizeof(int)*lenght);
-    (*tab_option)->vp_tab = sctk_malloc(sizeof(int)*lenght);
-    (*tab_option)->rank_mpi= sctk_malloc(sizeof(int)*lenght);
-    (*tab_option)->compact_tab = sctk_malloc(sizeof(int)*lenght);
-    (*tab_option)->scatter_tab = sctk_malloc(sizeof(int)*lenght);
-    (*tab_option)->balanced_tab = sctk_malloc(sizeof(int)*lenght);
-    (*tab_option)->pid_tab = sctk_malloc(sizeof(int)*lenght);
+    (*tab_option)->os_index = (int *)malloc(sizeof(int)*length);
+    (*tab_option)->vp_tab = sctk_malloc(sizeof(int)*length);
+    (*tab_option)->rank_mpi= sctk_malloc(sizeof(int)*length);
+    (*tab_option)->compact_tab = sctk_malloc(sizeof(int)*length);
+    (*tab_option)->scatter_tab = sctk_malloc(sizeof(int)*length);
+    (*tab_option)->balanced_tab = sctk_malloc(sizeof(int)*length);
+    (*tab_option)->pid_tab = sctk_malloc(sizeof(int)*length);
     int l=0;
     struct sctk_text_option_s * temp = *tab_option;
-    for(l=0; l< lenght; l++){
+    for(l=0; l< length; l++){
         temp->vp_tab[l] = -1;
         temp->os_index[l] = -1;
         temp->rank_mpi[l] = -1;
@@ -858,16 +863,21 @@ void topology_graph_enable_graphic_placement( void )
 {
 
 	hwloc_obj_t cluster = hwloc_get_obj_by_type( mpc_topology_get(), HWLOC_OBJ_MACHINE, 0 );
-	int lenght_max;
+	int max_length;
 
-	lenght_max = hwloc_get_nbobjs_by_type( mpc_topology_get(), HWLOC_OBJ_PU );
+	max_length = hwloc_get_nbobjs_by_type( mpc_topology_get(), HWLOC_OBJ_PU );
+
+	if ( max_length <= 0 )
+	{
+		mpc_common_debug_fatal("hwloc_get_nbobjs_by_type returned error length %d", max_length);
+	}
 
 	if ( cluster != NULL )
 	{
 		FILE *f = fopen( placement_txt, "r" );
 		if ( f != NULL )
 		{
-			sctk_read_format_option_graphic_placement_and_complet_topo_infos( f, lenght_max );
+			sctk_read_format_option_graphic_placement_and_complet_topo_infos( f, max_length );
 		}
 
 		name_and_date_file_text( file_placement );
