@@ -197,7 +197,7 @@ check_net(){
 
 
 # Supported thread engines
-MODES_MULTITHREAD="pthread ethread_mxn pthread_ng ethread_mxn_ng ethread ethread_ng"
+MODES_MULTITHREAD="pthread ethread_mxn"
 
 
 check_thread(){

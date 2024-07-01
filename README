@@ -154,7 +154,7 @@ Launch Configuration:
 
 Multithreading:
 	-m=n, --multithreading=n        Define multithreading mode
-                                        modes: pthread ethread_mxn pthread_ng ethread_mxn_ng ethread ethread_ng
+                                        modes: pthread ethread_mxn
 
 Network:
 	-net=n, --net=, --network=n     Define Network mode (TCP + SHM by default)
