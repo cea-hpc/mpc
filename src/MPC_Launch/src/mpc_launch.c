@@ -131,7 +131,7 @@ static inline void __set_thread_engine(void)
 	}else
 	{
 		bad_parameter("No such thread engine '%s'\n"
-		              "choices are (pthread, ethread, ethread_mxn, ethread_mxn_ng, ethread_ng, pthread_ng)", mpc_common_get_flags()->thread_library_kind);
+		              "choices are (pthread, ethread, ethread_mxn)", mpc_common_get_flags()->thread_library_kind);
 	}
 
 
