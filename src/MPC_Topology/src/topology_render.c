@@ -442,8 +442,7 @@ static void name_and_date_file_text(char *file_name){
 }
 
 /* init struct for text placement option */
-static void sctk_init_text_option(struct sctk_text_option_s **tab_option){
-    int length = hwloc_get_nbobjs_by_type(mpc_topology_get(), HWLOC_OBJ_PU);
+static void sctk_init_text_option(struct sctk_text_option_s **tab_option, int length){
 	if (length <= 0)
 	{
 		mpc_common_debug_fatal("hwloc_get_nbobjs_by_type returned invalid length %d", length);
@@ -901,18 +900,22 @@ void topology_graph_enable_graphic_placement( void )
 void topology_graph_enable_text_placement( void )
 {
 	hwloc_obj_t cluster = hwloc_get_obj_by_type( mpc_topology_get(), HWLOC_OBJ_MACHINE, 0 );
-	int lenght_max;
-	int lenght_min;
-	int lenght;
-	lenght_max = hwloc_get_nbobjs_by_type( mpc_topology_get(), HWLOC_OBJ_PU );
-	lenght_min = hwloc_get_nbobjs_by_type( mpc_topology_get(), HWLOC_OBJ_CORE );
+	int max_length;
+	int min_length;
+	int length;
+	max_length = hwloc_get_nbobjs_by_type( mpc_topology_get(), HWLOC_OBJ_PU );
+	min_length = hwloc_get_nbobjs_by_type( mpc_topology_get(), HWLOC_OBJ_CORE );
+
+	// Make it so that clang-tidy does not report a buffer overflow later
+	assert(min_length <= max_length);
+
 	if ( mpc_common_get_flags()->enable_smt_capabilities )
 	{
-		lenght = lenght_max;
+		length = max_length;
 	}
 	else
 	{
-		lenght = lenght_min;
+		length = min_length;
 	}
 	/* read textual informations */
 	FILE *f_textual = fopen( textual_file, "r" );
@@ -920,9 +923,9 @@ void topology_graph_enable_text_placement( void )
 	{
 		struct sctk_text_option_s *tab_option;
 
-		sctk_init_text_option( &tab_option );
+		sctk_init_text_option( &tab_option, max_length );
 
-		sctk_read_format_option_text_placement( f_textual, tab_option, lenght_max );
+		sctk_read_format_option_text_placement( f_textual, tab_option, max_length );
 
 		const char *HostName = hwloc_obj_get_info_by_name( cluster, "HostName" );
 
@@ -935,14 +938,14 @@ void topology_graph_enable_text_placement( void )
 		if ( f != NULL )
 		{
 			fprintf( f, "|------------------------------HOST                 %s------------------------------|\n", HostName );
-			int higher_logical = sctk_determine_higher_logical( tab_option->os_index, lenght );
-			int lower_logical = determine_lower_logical( tab_option->os_index, lenght );
+			int higher_logical = sctk_determine_higher_logical( tab_option->os_index, length );
+			int lower_logical = determine_lower_logical( tab_option->os_index, length );
 			if ( 1 )
 			{ //TODO one proc amongs nodes
 				fprintf( stdout, "/* --text-placement : \n.txt dated file has been generated for each compute node to vizualise topology and thread placement with their infos. */\n" );
 				fflush( stdout );
 			}
-			print_children( mpc_topology_get(), root, 0, tab_option, lenght_max, higher_logical, lower_logical, HostName, f, 0, 0 );
+			print_children( mpc_topology_get(), root, 0, tab_option, max_length, higher_logical, lower_logical, HostName, f, 0, 0 );
 			fclose( f );
 		}
 		/* remove temp files */
