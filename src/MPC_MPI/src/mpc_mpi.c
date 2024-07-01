@@ -16878,7 +16878,6 @@ int PMPI_Barrier(MPI_Comm comm)
 	mpi_check_comm(comm);
 
 
-	//MPC_GENERIC_THREAD_ENTER_PROGRESS(KIND_MASK_PROGRESS_THREAD);
 
 
 	int (*barrier_ptr)(MPI_Comm) = NULL;
@@ -16887,7 +16886,6 @@ int PMPI_Barrier(MPI_Comm comm)
 
 	res = (barrier_ptr)(comm);
 
-	//MPC_GENERIC_THREAD_END_PROGRESS();
 
 	/* Profiling */
 	SCTK_PROFIL_END(MPI_Barrier);
@@ -16925,7 +16923,6 @@ int PMPI_Bcast(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Com
 	mpi_check_type_commited(datatype, comm);
 
 
-	//MPC_GENERIC_THREAD_ENTER_PROGRESS(KIND_MASK_PROGRESS_THREAD);
 
 
 	/* Bast is not synchronous, the collective can end directly if nothing
@@ -16942,7 +16939,6 @@ int PMPI_Bcast(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Com
 
 	res = (bcast_ptr)(buffer, count, datatype, root, comm);
 
-	//MPC_GENERIC_THREAD_END_PROGRESS();
 	/* Profiling */
 	SCTK_PROFIL_END(MPI_Bcast);
 	MPI_HANDLE_RETURN_VAL(res, comm);
@@ -17029,7 +17025,6 @@ int PMPI_Gather(const void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 		return MPI_SUCCESS;
 	}
 
-	//MPC_GENERIC_THREAD_ENTER_PROGRESS(KIND_MASK_PROGRESS_THREAD);
 
 
 	int (*gather_ptr)(const void *, int, MPI_Datatype, void *, int, MPI_Datatype, int, MPI_Comm) = NULL;
@@ -17038,7 +17033,6 @@ int PMPI_Gather(const void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 
 	res = (gather_ptr)(sendbuf, sendcnt, sendtype, recvbuf, recvcnt, recvtype, root, comm);
 
-	//MPC_GENERIC_THREAD_END_PROGRESS();
 
 	/* Profiling */
 	SCTK_PROFIL_END(MPI_Gather);
@@ -17100,7 +17094,6 @@ int PMPI_Gatherv(const void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 		MPI_ERROR_REPORT(comm, MPI_ERR_TYPE, "Mismatched datatypes");
 	}
 
-	//MPC_GENERIC_THREAD_ENTER_PROGRESS(KIND_MASK_PROGRESS_THREAD);
 
 	int (*gatherv_ptr)(const void *, int, MPI_Datatype, void *, const int *, const int *, MPI_Datatype, int, MPI_Comm) = NULL;
 
@@ -17110,7 +17103,6 @@ int PMPI_Gatherv(const void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 	res = (gatherv_ptr)(sendbuf, sendcnt, sendtype, recvbuf, recvcnts, displs, recvtype, root, comm);
 
 
-	//MPC_GENERIC_THREAD_END_PROGRESS();
 
 	/* Profiling */
 	SCTK_PROFIL_END(MPI_Gatherv);
@@ -17191,7 +17183,6 @@ int PMPI_Scatter(const void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 		return MPI_SUCCESS;
 	}
 
-	//MPC_GENERIC_THREAD_ENTER_PROGRESS(KIND_MASK_PROGRESS_THREAD);
 
 	int (*scatter_ptr)(const void *, int, MPI_Datatype, void *, int, MPI_Datatype, int, MPI_Comm) = NULL;
 
@@ -17200,7 +17191,6 @@ int PMPI_Scatter(const void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 
 	res = (scatter_ptr)(sendbuf, sendcnt, sendtype, recvbuf, recvcnt, recvtype, root, comm);
 
-	//MPC_GENERIC_THREAD_END_PROGRESS();
 
 	/* Profiling */
 	SCTK_PROFIL_END(MPI_Scatter);
@@ -17307,7 +17297,6 @@ int PMPI_Scatterv(const void *sendbuf, const int *sendcnts, const int *displs,
 	}
 
 
-	//MPC_GENERIC_THREAD_ENTER_PROGRESS(KIND_MASK_PROGRESS_THREAD );
 
 
 	int (*scatterv_ptr)(const void *, const int *, const int *, MPI_Datatype, void *, int, MPI_Datatype, int, MPI_Comm) = NULL;
@@ -17317,7 +17306,6 @@ int PMPI_Scatterv(const void *sendbuf, const int *sendcnts, const int *displs,
 
 	res = (scatterv_ptr)(sendbuf, sendcnts, displs, sendtype, recvbuf, recvcnt, recvtype, root, comm);
 
-	//MPC_GENERIC_THREAD_END_PROGRESS();
 
 	/* Profiling */
 	SCTK_PROFIL_END(MPI_Scatterv);
@@ -17386,7 +17374,6 @@ int PMPI_Allgather(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
 		MPI_ERROR_REPORT(comm, MPI_ERR_ARG, "");
 	}
 
-	//MPC_GENERIC_THREAD_ENTER_PROGRESS(KIND_MASK_PROGRESS_THREAD);
 
 	int (*allgather_ptr)(const void *, int, MPI_Datatype, void *, int, MPI_Datatype, MPI_Comm) = NULL;
 
@@ -17395,7 +17382,6 @@ int PMPI_Allgather(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
 
 	res = (allgather_ptr)(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm);
 
-	//MPC_GENERIC_THREAD_END_PROGRESS();
 
 	/* Profiling */
 	SCTK_PROFIL_END(MPI_Allgather);
@@ -17447,7 +17433,6 @@ int PMPI_Allgatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
 		MPI_ERROR_REPORT(comm, MPI_ERR_ARG, "RecvBuff is MPI_IN_PLACE");
 	}
 
-	//MPC_GENERIC_THREAD_ENTER_PROGRESS(KIND_MASK_PROGRESS_THREAD);
 
 	int (*allgatherv_ptr)(const void *, int, MPI_Datatype, void *, const int *, const int *, MPI_Datatype, MPI_Comm) = NULL;
 
@@ -17456,7 +17441,6 @@ int PMPI_Allgatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
 
 	res = (allgatherv_ptr)(sendbuf, sendcount, sendtype, recvbuf, recvcount, displs, recvtype, comm);
 
-	//MPC_GENERIC_THREAD_END_PROGRESS();
 
 	/* Profiling */
 	SCTK_PROFIL_END(MPI_Allgatherv);
@@ -17512,7 +17496,6 @@ int PMPI_Alltoall(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
 		MPI_ERROR_REPORT(comm, MPI_ERR_TYPE, "Mismatched datatypes");
 	}
 
-	//MPC_GENERIC_THREAD_ENTER_PROGRESS(KIND_MASK_PROGRESS_THREAD);
 
 
 	int (*alltoall_ptr)(const void *, int, MPI_Datatype, void *, int, MPI_Datatype, MPI_Comm) = NULL;
@@ -17522,7 +17505,6 @@ int PMPI_Alltoall(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
 
 	res = (alltoall_ptr)(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm);
 
-	//MPC_GENERIC_THREAD_END_PROGRESS();
 
 	/* Profiling */
 	SCTK_PROFIL_END(MPI_Alltoall);
@@ -17583,7 +17565,6 @@ int PMPI_Alltoallv(const void *sendbuf, const int *sendcnts, const int *sdispls,
 		MPI_ERROR_REPORT(comm, MPI_ERR_TYPE, "Mismatched datatypes");
 	}
 
-	//MPC_GENERIC_THREAD_ENTER_PROGRESS(KIND_MASK_PROGRESS_THREAD);
 
 	int (*alltoallv_ptr)(const void *, const int *, const int *, MPI_Datatype, void *, const int *, const int *, MPI_Datatype, MPI_Comm) = NULL;
 
@@ -17591,7 +17572,6 @@ int PMPI_Alltoallv(const void *sendbuf, const int *sendcnts, const int *sdispls,
 	assume(alltoallv_ptr != NULL);
 	res = (alltoallv_ptr)(sendbuf, sendcnts, sdispls, sendtype, recvbuf, recvcnts, rdispls, recvtype, comm);
 
-	//MPC_GENERIC_THREAD_END_PROGRESS();
 
 	/* Profiling */
 	SCTK_PROFIL_END(MPI_Alltoallv);
@@ -17684,7 +17664,6 @@ int PMPI_Alltoallw(const void *sendbuf, const int *sendcnts, const int *sdispls,
 	}
 
 
-	//MPC_GENERIC_THREAD_ENTER_PROGRESS(KIND_MASK_PROGRESS_THREAD);
 
 	int (*alltoallw_ptr)(const void *, const int *, const int *, const MPI_Datatype *, void *, const int *, const int *, const MPI_Datatype *, MPI_Comm) = NULL;
 
@@ -17692,7 +17671,6 @@ int PMPI_Alltoallw(const void *sendbuf, const int *sendcnts, const int *sdispls,
 	assume(alltoallw_ptr != NULL);
 	res = (alltoallw_ptr)(sendbuf, sendcnts, sdispls, sendtypes, recvbuf, recvcnts, rdispls, recvtypes, comm);
 
-	//MPC_GENERIC_THREAD_END_PROGRESS();
 
 	/* Profiling */
 	SCTK_PROFIL_END(MPI_Alltoallw);
@@ -17773,14 +17751,12 @@ int PMPI_Reduce(const void *sendbuf, void *recvbuf, int count, MPI_Datatype data
 		return MPI_SUCCESS;
 	}
 
-	//MPC_GENERIC_THREAD_ENTER_PROGRESS(KIND_MASK_PROGRESS_THREAD);
 
 	int (*reduce_ptr)(const void *, void *, int, MPI_Datatype, MPI_Op, int, MPI_Comm) = NULL;
 	MPC_MPI_CONFIG_ROUTE_COLL(reduce_ptr, comm, reduce);
 	assume(reduce_ptr != NULL);
 	res = (reduce_ptr)(sendbuf, recvbuf, count, datatype, op, root, comm);
 
-	//MPC_GENERIC_THREAD_END_PROGRESS();
 
 	/* Profiling */
 	SCTK_PROFIL_END(MPI_Reduce);
@@ -17827,14 +17803,12 @@ int PMPI_Allreduce(const void *sendbuf, void *recvbuf, int count,
 		}
 	}
 
-	//MPC_GENERIC_THREAD_ENTER_PROGRESS(KIND_MASK_PROGRESS_THREAD);
 
 	int (*allreduce_ptr)(const void *, void *, int, MPI_Datatype, MPI_Op, MPI_Comm) = NULL;
 	MPC_MPI_CONFIG_ROUTE_COLL(allreduce_ptr, comm, allreduce);
 	assume(allreduce_ptr != NULL);
 	res = (allreduce_ptr)(sendbuf, recvbuf, count, datatype, op, comm);
 
-	//MPC_GENERIC_THREAD_END_PROGRESS();
 
 	/* Profiling */
 	SCTK_PROFIL_END(MPI_Allreduce);
@@ -17880,14 +17854,12 @@ int PMPI_Reduce_scatter(const void *sendbuf, void *recvbuf, const int recvcnts[]
 	mpi_check_type_commited(datatype, comm);
 	mpi_check_op(op, datatype, comm);
 
-	//MPC_GENERIC_THREAD_ENTER_PROGRESS(KIND_MASK_PROGRESS_THREAD);
 
 	int (*reduce_scatter_ptr)(const void *, void *, const int *, MPI_Datatype, MPI_Op, MPI_Comm) = NULL;
 	MPC_MPI_CONFIG_ROUTE_COLL(reduce_scatter_ptr, comm, reduce_scatter);
 	assume(reduce_scatter_ptr != NULL);
 	res = (reduce_scatter_ptr)(sendbuf, recvbuf, recvcnts, datatype, op, comm);
 
-	//MPC_GENERIC_THREAD_END_PROGRESS();
 
 	/* Profiling */
 	SCTK_PROFIL_END(MPI_Reduce_scatter);
@@ -17925,14 +17897,12 @@ int PMPI_Reduce_scatter_block(const void *sendbuf, void *recvbuf, int recvcnt,
 	mpi_check_type_commited(datatype, comm);
 	mpi_check_op(op, datatype, comm);
 
-	//MPC_GENERIC_THREAD_ENTER_PROGRESS(KIND_MASK_PROGRESS_THREAD);
 
 	int (*reduce_scatter_block_ptr)(const void *, void *, int, MPI_Datatype, MPI_Op, MPI_Comm) = NULL;
 	MPC_MPI_CONFIG_ROUTE_COLL(reduce_scatter_block_ptr, comm, reduce_scatter_block);
 	assume(reduce_scatter_block_ptr != NULL);
 	res = (reduce_scatter_block_ptr)(sendbuf, recvbuf, recvcnt, datatype, op, comm);
 
-	//MPC_GENERIC_THREAD_END_PROGRESS();
 
 	/* Profiling */
 	SCTK_PROFIL_END(MPI_Reduce_scatter_block);
@@ -17967,14 +17937,12 @@ int PMPI_Scan(const void *sendbuf, void *recvbuf, int count, MPI_Datatype dataty
 	}
 
 
-	//MPC_GENERIC_THREAD_ENTER_PROGRESS(KIND_MASK_PROGRESS_THREAD);
 
 	int (*scan_ptr)(const void *, void *, int, MPI_Datatype, MPI_Op, MPI_Comm) = NULL;
 	MPC_MPI_CONFIG_ROUTE_COLL(scan_ptr, comm, scan);
 	assume(scan_ptr != NULL);
 	res = (scan_ptr)(sendbuf, recvbuf, count, datatype, op, comm);
 
-	//MPC_GENERIC_THREAD_END_PROGRESS();
 
 	/* Profiling */
 	SCTK_PROFIL_END(MPI_Scan);
@@ -18008,14 +17976,12 @@ int PMPI_Exscan(const void *sendbuf, void *recvbuf, int count, MPI_Datatype data
 	mpi_check_op(op, datatype, comm);
 
 
-	//MPC_GENERIC_THREAD_ENTER_PROGRESS(KIND_MASK_PROGRESS_THREAD);
 
 	int (*exscan_ptr)(const void *, void *, int, MPI_Datatype, MPI_Op, MPI_Comm) = NULL;
 	MPC_MPI_CONFIG_ROUTE_COLL(exscan_ptr, comm, exscan);
 	assume(exscan_ptr != NULL);
 	res = (exscan_ptr)(sendbuf, recvbuf, count, datatype, op, comm);
 
-	//MPC_GENERIC_THREAD_END_PROGRESS();
 
 	/* Profiling */
 	SCTK_PROFIL_END(MPI_Exscan);
