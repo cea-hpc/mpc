@@ -51,25 +51,6 @@
 
 void mpc_lowcomm_workshare_worker_steal(int rank);
 
-static inline int __scatter_compute_node_num_thread( mpc_omp_node_t *node, const int num_threads, int rank, int *first )
-{
-	assert( node );
-	assert( num_threads > 0 );
-	assert( first );
-	const int quot = num_threads / node->nb_children;
-	const int rest = num_threads % node->nb_children;
-	const int min = ( num_threads > node->nb_children ) ? node->nb_children : num_threads;
-	*first = -1;
-
-	if ( rank >= min )
-	{
-		return 0;
-	}
-
-	*first = ( rank < rest ) ? ( ( quot + 1 ) * rank ) : ( quot * rank + rest );
-	return ( rank < rest ) ? quot + 1 : quot;
-}
-
 static inline int __scatter_compute_instance_tree_depth( mpc_omp_node_t *node, const int expected_nb_mvps )
 {
 	int next_depth, num_nodes;
