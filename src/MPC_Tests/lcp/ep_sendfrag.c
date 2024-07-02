@@ -21,7 +21,8 @@ int lowcomm_request_complete(mpc_lowcomm_request_t *req){
 }
 
 int main(int argc, char** argv) {
-	int rc, i;
+	int rc;
+	size_t i;
 	lcp_context_h ctx;
         lcp_context_param_t param;
         lcp_task_h task;
@@ -172,9 +173,9 @@ int main(int argc, char** argv) {
 
 	/* receiver perform data check */
 	if (my_tid == 1) {
-		for (i=0; i<(int)size; i++) {
+		for (i=0; i<size; i++) {
 			if (data[i] != data_check[i]) {
-                                printf("%d\n", i);
+                                printf("%zu\n", i);
 				check = 0;
                                 break;
 			}
