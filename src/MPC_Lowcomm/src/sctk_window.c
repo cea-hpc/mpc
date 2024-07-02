@@ -23,6 +23,7 @@
 #include "sctk_window.h"
 #include "comm.h"
 #include "mpc_common_debug.h"
+#include "mpc_keywords.h"
 #include "mpc_lowcomm.h"
 #include "uthash.h"
 #include <sctk_alloc.h>
@@ -51,12 +52,12 @@ void sctk_win_translation_init(struct sctk_win_translation *wt,
 
 /* RDMA CM Callback */
 
-int __win_fence_cb(mpc_lowcomm_peer_uid_t from, char *data, char *return_data, int return_data_len, void *ctx)
+int __win_fence_cb(__UNUSED__ mpc_lowcomm_peer_uid_t from, __UNUSED__ char *data, __UNUSED__ char *return_data, __UNUSED__ int return_data_len, __UNUSED__ void *ctx)
 {
 	not_implemented();
 }
 
-int __win_mapto_cb(mpc_lowcomm_peer_uid_t from, char *data, char *return_data, int return_data_len, void *ctx)
+int __win_mapto_cb(__UNUSED__ mpc_lowcomm_peer_uid_t from, __UNUSED__ char *data, __UNUSED__ char *return_data, __UNUSED__ int return_data_len, __UNUSED__ void *ctx)
 {
 	struct mpc_lowcomm_rdma_window_map_request *  mr = (struct mpc_lowcomm_rdma_window_map_request *)data;
 	mpc_lowcomm_rdma_window_map_remote_ctrl_msg_handler(mr);
@@ -64,7 +65,7 @@ int __win_mapto_cb(mpc_lowcomm_peer_uid_t from, char *data, char *return_data, i
 }
 
 
-int __win_relax_cb(mpc_lowcomm_peer_uid_t from, char *data, char *return_data, int return_data_len, void *ctx)
+int __win_relax_cb(__UNUSED__ mpc_lowcomm_peer_uid_t from, char *data, __UNUSED__ char *return_data, __UNUSED__ int return_data_len, __UNUSED__ void *ctx)
 {
 	int win_id = -1;
 	memcpy(&win_id, data, sizeof(int) );
@@ -74,7 +75,7 @@ int __win_relax_cb(mpc_lowcomm_peer_uid_t from, char *data, char *return_data, i
 	return 0;
 }
 
-int __win_ewrite_cb(mpc_lowcomm_peer_uid_t from, char *data, char *return_data, int return_data_len, void *ctx)
+int __win_ewrite_cb(__UNUSED__ mpc_lowcomm_peer_uid_t from, char *data, __UNUSED__ char *return_data, __UNUSED__ int return_data_len, __UNUSED__ void *ctx)
 {
 	struct mpc_lowcomm_rdma_window_emulated_RDMA *erma = (struct mpc_lowcomm_rdma_window_emulated_RDMA *)data;
 	mpc_lowcomm_rdma_window_RDMA_emulated_write_ctrl_msg_handler(erma);
@@ -82,7 +83,7 @@ int __win_ewrite_cb(mpc_lowcomm_peer_uid_t from, char *data, char *return_data, 
 	return 0;
 }
 
-int __win_eread_cb(mpc_lowcomm_peer_uid_t from, char *data, char *return_data, int return_data_len, void *ctx)
+int __win_eread_cb(__UNUSED__ mpc_lowcomm_peer_uid_t from, char *data, __UNUSED__ char *return_data, __UNUSED__ int return_data_len, __UNUSED__ void *ctx)
 {
 	struct mpc_lowcomm_rdma_window_emulated_RDMA * erma = (struct mpc_lowcomm_rdma_window_emulated_RDMA *)data;
 	mpc_lowcomm_rdma_window_RDMA_emulated_read_ctrl_msg_handler(erma);
@@ -90,7 +91,7 @@ int __win_eread_cb(mpc_lowcomm_peer_uid_t from, char *data, char *return_data, i
 	return 0;
 }
 
-int __win_efop_cb(mpc_lowcomm_peer_uid_t from, char *data, char *return_data, int return_data_len, void *ctx)
+int __win_efop_cb(__UNUSED__ mpc_lowcomm_peer_uid_t from, char *data, __UNUSED__ char *return_data, __UNUSED__ int return_data_len, __UNUSED__ void *ctx)
 {
 	struct mpc_lowcomm_rdma_window_emulated_fetch_and_op_RDMA *fop = (struct mpc_lowcomm_rdma_window_emulated_fetch_and_op_RDMA *)data;
 	mpc_lowcomm_rdma_window_RDMA_fetch_and_op_ctrl_msg_handler(fop);
@@ -99,7 +100,7 @@ int __win_efop_cb(mpc_lowcomm_peer_uid_t from, char *data, char *return_data, in
 }
 
 
-int __win_ecas_cb(mpc_lowcomm_peer_uid_t from, char *data, char *return_data, int return_data_len, void *ctx)
+int __win_ecas_cb(__UNUSED__ mpc_lowcomm_peer_uid_t from, char *data, __UNUSED__ char *return_data, __UNUSED__ int return_data_len, __UNUSED__ void *ctx)
 {
 	struct mpc_lowcomm_rdma_window_emulated_CAS_RDMA * fcas = (struct mpc_lowcomm_rdma_window_emulated_CAS_RDMA *)data;
 	mpc_lowcomm_rdma_window_RDMA_CAS_ctrl_msg_handler(fcas);
@@ -1947,7 +1948,7 @@ void mpc_lowcomm_rdma_window_RDMA_wait(mpc_lowcomm_request_t *request)
 
 /* FENCE =================== */
 
-void mpc_lowcomm_rdma_window_RDMA_fence(mpc_lowcomm_rdma_window_t win_id, mpc_lowcomm_request_t *req)
+void mpc_lowcomm_rdma_window_RDMA_fence(mpc_lowcomm_rdma_window_t win_id, __UNUSED__ mpc_lowcomm_request_t *req)
 {
 	struct mpc_lowcomm_rdma_window *win = sctk_win_translate(win_id);
 
