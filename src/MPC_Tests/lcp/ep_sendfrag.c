@@ -29,7 +29,7 @@ int main(int argc, char** argv) {
 	lcp_ep_h ep;
 	mpc_lowcomm_set_uid_t suid;
         int my_tid, src_tid, dest_tid;
-	mpc_lowcomm_peer_uid_t src_uid, dest_uid, my_uid;
+	mpc_lowcomm_peer_uid_t src_uid, dest_uid;
 	int check = 1;
 
 	if (argc != 2) {
@@ -143,7 +143,7 @@ int main(int argc, char** argv) {
 	if (my_tid == 0) {
                 lcp_request_param_t param = {
                         .datatype  = LCP_DATATYPE_CONTIGUOUS,
-                        .recv_info = &req.recv_info,
+                        .tag_info = &req.tag_info,
                 };
 		rc = lcp_tag_send_nb(ep, task, (void *)data, size*sizeof(int), &req, &param);
 		if (rc != 0) {
@@ -152,7 +152,7 @@ int main(int argc, char** argv) {
 	} else {
                 lcp_request_param_t param = {
                         .datatype  = LCP_DATATYPE_CONTIGUOUS,
-                        .recv_info = &req.recv_info
+                        .tag_info = &req.tag_info
                 };
 		rc = lcp_tag_recv_nb(task, (void *)data, size*sizeof(int), &req, &param);
 		if (rc != 0) {
