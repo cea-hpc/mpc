@@ -53,7 +53,7 @@ void sctk_win_translation_init(struct sctk_win_translation *wt,
 
 int __win_fence_cb(mpc_lowcomm_peer_uid_t from, char *data, char *return_data, int return_data_len, void *ctx)
 {
-
+	not_implemented();
 }
 
 int __win_mapto_cb(mpc_lowcomm_peer_uid_t from, char *data, char *return_data, int return_data_len, void *ctx)
