@@ -20,6 +20,8 @@
 /* #   - JAEGER julien jaeger.julien@cea.fr                               # */
 /* #                                                                      # */
 /* ######################################################################## */
+
+#include "mpc_mpi.h"
 // PROFILER MPI_POINT_TO_POINT MPI point to point
 #pragma weak MPI_Send = PMPI_Send
 #pragma weak MPI_Recv = PMPI_Recv
