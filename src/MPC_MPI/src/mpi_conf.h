@@ -144,7 +144,11 @@ struct _mpc_mpi_config_coll_algorithm_array
 
 void _mpc_mpi_config_coll_array_resolve(struct _mpc_mpi_config_coll_array *coll, char *family);
 
-
+/*
+ * NOLINTBEGIN(clang-diagnostic-unused-function):
+ * False positive: _mpc_mpi_config_coll_route is used by MPC_MPI_CONFIG_ROUTE_COLL,
+ * that is called multiple times in mpc_mpi.c
+ */
 static inline void _mpc_mpi_config_coll_route(MPI_Comm comm,
                                               int (*inter)(),
                                               int (*intra_shm)(),
@@ -183,6 +187,7 @@ static inline void _mpc_mpi_config_coll_route(MPI_Comm comm,
         }
     }
 }
+/* NOLINTEND(clang-diagnostic-unused-function) */
 
 
 #define MPC_MPI_CONFIG_ROUTE_COLL(pointer, comm, coll_name) do{\
