@@ -28,11 +28,10 @@
 
 #if OMPT_SUPPORT
 #include "mpcomp_types.h"
-#include "mpc_common_debug.h"
 
-static inline ompt_state_t
-_mpc_omp_ompt_thread_set_state ( ompt_state_t state,
-                             ompt_wait_id_t wait_id ) {
+__UNUSED__ static inline ompt_state_t
+_mpc_omp_ompt_thread_set_state ( __UNUSED__ ompt_state_t state,
+                             __UNUSED__ ompt_wait_id_t wait_id ) {
     mpc_omp_thread_t* thread = (mpc_omp_thread_t*) mpc_omp_tls;
     assert( thread );
 
@@ -41,8 +40,8 @@ _mpc_omp_ompt_thread_set_state ( ompt_state_t state,
     return ompt_state_undefined;
 }
 
-static inline int
-_mpc_omp_ompt_thread_get_state ( ompt_wait_id_t* wait_id ) {
+__UNUSED__ static inline int
+_mpc_omp_ompt_thread_get_state ( __UNUSED__ ompt_wait_id_t* wait_id ) {
     mpc_omp_thread_t* thread = (mpc_omp_thread_t*) mpc_omp_tls;
     assert( thread );
 
