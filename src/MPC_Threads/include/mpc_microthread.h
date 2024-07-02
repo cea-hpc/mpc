@@ -52,7 +52,10 @@ typedef struct sctk_microthread_s
 } sctk_microthread_t;
 
 
-
+/*
+ * NOLINTBEGIN(clang-diagnostic-unused-function):
+ * In a public header, exposed to applications.
+ */
 /* Function initializing a 'microthread' structure */
 static inline void sctk_microthread_init_microthread_t(sctk_microthread_t *self)
 {
@@ -62,6 +65,7 @@ static inline void sctk_microthread_init_microthread_t(sctk_microthread_t *self)
 	/* Ready to accept VPs and being scheduled */
 	self->enable = 1;
 }
+/* NOLINTEND(clang-diagnostic-unused-function) */
 
 /* Application Programming Interface for Microthreads */
 
