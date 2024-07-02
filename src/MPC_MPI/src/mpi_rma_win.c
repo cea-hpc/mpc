@@ -635,6 +635,11 @@ int mpc_MPI_Win_allocate_shared(MPI_Aint size, int disp_unit, MPI_Info info,
 
 	int ret = PMPI_Allreduce( (void *)&tmp_size, (void *)&total_size, 1,
 	                          MPI_UINT64_T, MPI_SUM, comm);
+	if (ret != MPI_SUCCESS)
+	{
+		mpc_common_debug_error("%s: Allreduce failed with error %d", __func__, ret);
+		return ret;
+	}
 
 	size_t to_map_size = ( (total_size / SCTK_PAGE_SIZE) + 1) *
 	                     SCTK_PAGE_SIZE;
@@ -655,6 +660,11 @@ int mpc_MPI_Win_allocate_shared(MPI_Aint size, int disp_unit, MPI_Info info,
 
 		/* Broadcast the base address */
 		ret = PMPI_Bcast(&win_segment, sizeof(void *), MPI_CHAR, 0, comm);
+		if (ret != MPI_SUCCESS)
+		{
+			mpc_common_debug_error("%s: Bcast failed with error %d", __func__, ret);
+			return ret;
+		}
 
 		storage_type = MPC_MPI_WIN_STORAGE_ROOT_ALLOC;
 	}
@@ -670,10 +680,20 @@ int mpc_MPI_Win_allocate_shared(MPI_Aint size, int disp_unit, MPI_Info info,
 
 		MPI_Comm process_master_comm = MPI_COMM_NULL;
 		MPI_Comm node_comm = MPI_COMM_NULL;
-		PMPI_Comm_split_type(comm, MPI_COMM_TYPE_SHARED, rank, MPI_INFO_NULL,
+		ret = PMPI_Comm_split_type(comm, MPI_COMM_TYPE_SHARED, rank, MPI_INFO_NULL,
 		                     &node_comm);
+		if (ret != MPI_SUCCESS)
+		{
+			mpc_common_debug_error("%s: Comm_split_type failed with error %d", __func__, ret);
+			return ret;
+		}
 
-		PMPI_Comm_split(node_comm, is_master, rank, &process_master_comm);
+		ret = PMPI_Comm_split(node_comm, is_master, rank, &process_master_comm);
+		if (ret != MPI_SUCCESS)
+		{
+			mpc_common_debug_error("%s: Comm_split failed with error %d", __func__, ret);
+			return ret;
+		}
 
 		static void *win_base_addr = NULL;
 
@@ -691,21 +711,46 @@ int mpc_MPI_Win_allocate_shared(MPI_Aint size, int disp_unit, MPI_Info info,
 			win_segment = win_base_addr = mpc_launch_shm_map(to_map_size, MPC_LAUNCH_SHM_USE_MPI, &params);
 
 			/* Barrier BB */
-			PMPI_Barrier(node_comm);
+			ret = PMPI_Barrier(node_comm);
+			if (ret != MPI_SUCCESS)
+			{
+				mpc_common_debug_error("%s: Barrier (A) failed with error %d", __func__, ret);
+				return ret;
+			}
 		}
 		else
 		{
 			/* Barrier BB */
-			PMPI_Barrier(node_comm);
+			ret = PMPI_Barrier(node_comm);
+			if (ret != MPI_SUCCESS)
+			{
+				mpc_common_debug_error("%s: Barrier (B) failed with error %d", __func__, ret);
+				return ret;
+			}
 			win_segment = win_base_addr;
 		}
 
-		PMPI_Barrier(node_comm);
+		ret = PMPI_Barrier(node_comm);
+		if (ret != MPI_SUCCESS)
+		{
+			mpc_common_debug_error("%s: Barrier (B) failed with error %d", __func__, ret);
+			return ret;
+		}
 
 
 
-		PMPI_Comm_free(&process_master_comm);
-		PMPI_Comm_free(&node_comm);
+		ret = PMPI_Comm_free(&process_master_comm);
+		if (ret != MPI_SUCCESS)
+		{
+			mpc_common_debug_error("%s: Comm_free (A) failed with error %d", __func__, ret);
+			return ret;
+		}
+		ret = PMPI_Comm_free(&node_comm);
+		if (ret != MPI_SUCCESS)
+		{
+			mpc_common_debug_error("%s: Comm_free (B) failed with error %d", __func__, ret);
+			return ret;
+		}
 
 		storage_type = MPC_MPI_WIN_STORAGE_SHARED;
 	}
@@ -717,6 +762,11 @@ int mpc_MPI_Win_allocate_shared(MPI_Aint size, int disp_unit, MPI_Info info,
 
 	ret = PMPI_Allgather( (void *)&size, 1, MPI_AINT, (void *)individual_sizes, 1,
 	                      MPI_AINT, comm);
+	if (ret != MPI_SUCCESS)
+	{
+		mpc_common_debug_error("%s: Allgather failed with error %d", __func__, ret);
+		return ret;
+	}
 
 	size_t local_offset = 0;
 
@@ -741,6 +791,7 @@ int mpc_MPI_Win_allocate_shared(MPI_Aint size, int disp_unit, MPI_Info info,
 
 	if(ret != MPI_SUCCESS)
 	{
+		mpc_common_debug_error("%s: __mpc_MPI_Win_create failed with error %d", __func__, ret);
 		return ret;
 	}
 
