@@ -1033,6 +1033,19 @@ __places_detect_heretogeneous_places( mpc_omp_places_info_t *list )
 }
 
 /**
+ * Free memory and return NULL.
+ * Used in _mpc_omp_places_env_variable_parsing to factorize error-handling code.
+ */
+#define OMP_PLACES_ENV_HANDLE_ERROR\
+	if (named_str)\
+	{\
+		free(named_str);\
+	}\
+	free(prev_env);\
+	free(string);\
+	return NULL;
+
+/**
  * Entry point to parse OMP_PLACES environment variable.
  *
  * \param[in] nb_mvps Target number of microVPs (i.e., OpenMP threads)
@@ -1042,7 +1055,7 @@ mpc_omp_places_info_t *
 _mpc_omp_places_env_variable_parsing( const int nb_mvps )
 {
 	int error = 0;
-	char *tmp, *string, *end;
+	char *tmp, *string, *end = NULL;
 	mpc_omp_places_info_t *list = NULL;
 	/* Get the value of OMP_PLACES (as a string) */
 	tmp = mpc_omp_conf_get()->places;
@@ -1055,13 +1068,15 @@ _mpc_omp_places_env_variable_parsing( const int nb_mvps )
 	}
 
 	mpc_common_debug_log("OMP_PLACES = <%s>\n", tmp );
-	const char *prev_env = strdup( tmp );
-	string = ( char * ) prev_env;
-	const char *named_str = __places_is_named_places( prev_env, string, &error );
+	char *prev_env = strdup( tmp );
+	string = prev_env;
+	char *named_str = __places_is_named_places( prev_env, string, &error );
 
 	if ( error )
 	{
 		mpc_common_debug_error("OMP_PLACES ignored\n" );
+		free(string);
+		free(named_str);
 		return NULL;
 	}
 
@@ -1071,28 +1086,45 @@ _mpc_omp_places_env_variable_parsing( const int nb_mvps )
 	if ( !env )
 	{
 		mpc_common_debug_error("Can't parse named places\n" );
+		if (named_str)
+		{
+			free(named_str);
+		}
+		free(prev_env);
 		return NULL;
 	}
 
 	list = __places_build_place_infos( string, &end, nb_mvps );
 
+	if ( end == NULL )
+	{
+		OMP_PLACES_ENV_HANDLE_ERROR;
+	}
+
 	if ( *end != '\0' )
 	{
 		mpc_common_debug_error("offset %ld with \'%c\' end: %s\n", end - env - 1, *end, end );
-		return NULL;
+		OMP_PLACES_ENV_HANDLE_ERROR;
 	}
 
 	if ( mpc_omp_places_detect_collision( list ) )
 	{
 		mpc_common_debug_warning("MPC doesn't support collision between places\n" );
-		return NULL;
+		OMP_PLACES_ENV_HANDLE_ERROR;
 	}
 
 	if ( __places_detect_heretogeneous_places( list ) )
 	{
 		//mpc_common_debug_warning("Every place must have the same number of threads\n" );
-		return NULL;
+		OMP_PLACES_ENV_HANDLE_ERROR;
 	}
 
+
+	if (named_str)
+	{
+		free(named_str);
+	}
+
+	free(prev_env);
 	return list;
 }
