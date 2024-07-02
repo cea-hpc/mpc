@@ -250,6 +250,7 @@ void _mpc_thread_ethread_mxn_engine_return_task(_mpc_thread_ethread_per_thread_t
  *                                        _mpc_thread_ethread_per_thread_t *);
  */
 
+/* NOLINTBEGIN(clang-diagnostic-unused-function): Used in C files */
 static inline
 void _mpc_thread_ethread_print_task(_mpc_thread_ethread_per_thread_t *task)
 {
@@ -500,6 +501,8 @@ static inline void _mpc_thread_ethread_init_data(_mpc_thread_ethread_per_thread_
 	data->cancel_status    = 0;
 	data->thread_sigset    = sctk_thread_default_set;
 }
+
+/* NOLINTEND(clang-diagnostic-unused-function) */
 
 #define _mpc_thread_ethread_check_size(a, b)       mpc_common_debug_check_large_enough(sizeof(a), sizeof(b), MPC_STRING(a), MPC_STRING(b), __FILE__, __LINE__)
 #define _mpc_thread_ethread_check_size_eq(a, b)    mpc_common_debug_check_size_equal(sizeof(a), sizeof(b), MPC_STRING(a), MPC_STRING(b), __FILE__, __LINE__)
