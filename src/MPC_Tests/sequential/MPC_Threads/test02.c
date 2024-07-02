@@ -35,7 +35,7 @@ int count = 0;
 #define COUNT_HALT2  6
 
 int
-main (int argc, char **argv)
+main ()
 {
   mpc_thread_t thread1, thread2;
 
