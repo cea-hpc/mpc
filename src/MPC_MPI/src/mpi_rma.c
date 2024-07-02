@@ -622,9 +622,6 @@ mpc_MPI_Accumulate_RMA(struct mpc_MPI_Win *desc, void *origin_addr,
 		 * happened
 		 * note that the TMP buff will be freed at the end of the epoch */
 		origin_addr = tmp_buff;
-
-		/* Now that we packed flag read */
-		can_read_rma = 1;
 	}
 
 	/* Retrieve the Inner target datatype */
