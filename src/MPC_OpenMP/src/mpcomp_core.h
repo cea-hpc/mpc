@@ -42,6 +42,7 @@
  * ALLOC HOOK *
  **************/
 
+/* NOLINTBEGIN(clang-diagnostic-unused-function) */
 static inline void* mpc_omp_alloc( size_t size )
 {
   return sctk_malloc(size);
@@ -51,6 +52,7 @@ static inline void mpc_omp_free( void *p )
 {
     sctk_free(p);
 }
+/* NOLINTEND(clang-diagnostic-unused-function) */
 
 /*************************
  * MPC_OMP CONFIGURATION *
