@@ -38,6 +38,7 @@ extern "C" {
 /* Messages Types                                               */
 /************************************************************************/
 
+/* NOLINTBEGIN(clang-diagnostic-unused-function) */
 
 static inline int _mpc_comm_ptp_message_is_for_process(mpc_lowcomm_ptp_message_class_t type)
 {
@@ -336,6 +337,8 @@ static inline void _mpc_comm_ptp_message_clear_request(mpc_lowcomm_ptp_message_t
 #endif
 	}
 }
+
+/* NOLINTEND(clang-diagnostic-unused-function) */
 
 #ifdef __cplusplus
 }
