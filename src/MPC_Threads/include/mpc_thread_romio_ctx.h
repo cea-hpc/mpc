@@ -90,6 +90,7 @@ extern __thread struct mpc_thread_romio_ctx_s * mpc_thread_romio_ctx_storage;
 
 struct mpc_thread_romio_ctx_s *_mpc_thread_romio_ctx_init(void);
 
+// NOLINTNEXTLINE(clang-diagnostic-unused-function): Public header
 static inline struct mpc_thread_romio_ctx_s * mpc_thread_romio_ctx_storage_get()
 {
 	if(!mpc_thread_romio_ctx_storage)
