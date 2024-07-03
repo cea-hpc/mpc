@@ -22,16 +22,17 @@
 /* ######################################################################## */
 #include <stdio.h>
 #include <mpc.h>
+#include "mpc_keywords.h"
 
 void *
-run (void *arg)
+run (__UNUSED__ void *arg)
 {
   printf ("Hello\n");
   return NULL;
 }
 
 int
-main (int argc, char **argv)
+main ()
 {
 
   sctk_microthread_t s;
