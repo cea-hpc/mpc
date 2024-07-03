@@ -388,7 +388,6 @@ void _mpc_lowcomm_msg_cpy_in_buffer(mpc_lowcomm_ptp_message_t *msg,
 			size = SCTK_MSG_SIZE(msg);
 			mpc_common_nodebug("MSG SEND |%s|", ( char * )msg->tail.message.contiguous.addr);
 			memcpy(buffer, msg->tail.message.contiguous.addr, size);
-			buffer += size;
 			break;
 		}
 
@@ -401,7 +400,6 @@ void _mpc_lowcomm_msg_cpy_in_buffer(mpc_lowcomm_ptp_message_t *msg,
 			body = ( char * )msg + sizeof(mpc_lowcomm_ptp_message_t);
 
 			memcpy(buffer, body, size);
-			buffer += size;
 			break;
 		}
 
@@ -424,7 +422,6 @@ void _mpc_lowcomm_msg_cpy_in_buffer(mpc_lowcomm_ptp_message_t *msg,
 						memcpy(buffer, ( ( char * )(msg->tail.message.pack.list.std[i].addr) ) +
 						       msg->tail.message.pack.list.std[i].begins[j] *
 						       msg->tail.message.pack.list.std[i].elem_size, size);
-						buffer += size;
 					}
 				}
 			}
@@ -451,7 +448,6 @@ void _mpc_lowcomm_msg_cpy_in_buffer(mpc_lowcomm_ptp_message_t *msg,
 						memcpy(buffer, ( ( char * )(msg->tail.message.pack.list.absolute[i].addr) ) +
 						       msg->tail.message.pack.list.absolute[i].begins[j] *
 						       msg->tail.message.pack.list.absolute[i].elem_size, size);
-						buffer += size;
 					}
 				}
 			}
@@ -515,7 +511,6 @@ int _mpc_lowcomm_msg_cpy_frag(
 			body = ( char * )msg + sizeof(mpc_lowcomm_ptp_message_t);
 
 			memcpy(buffer, body, size);
-			buffer += size;
 			break;
 		}
 
@@ -535,7 +530,6 @@ int _mpc_lowcomm_msg_cpy_frag(
 					memcpy(buffer, ( ( char * )(msg->tail.message.pack.list.std[i].addr) ) +
 					       msg->tail.message.pack.list.std[i].begins[j] *
 					       msg->tail.message.pack.list.std[i].elem_size, size);
-					buffer += size;
 				}
 			}
 
@@ -559,7 +553,6 @@ int _mpc_lowcomm_msg_cpy_frag(
 					memcpy(buffer, ( ( char * )(msg->tail.message.pack.list.absolute[i].addr) ) +
 					       msg->tail.message.pack.list.absolute[i].begins[j] *
 					       msg->tail.message.pack.list.absolute[i].elem_size, size);
-					buffer += size;
 				}
 			}
 
@@ -595,7 +588,6 @@ void _mpc_lowcomm_msg_cpy(mpc_lowcomm_ptp_message_content_to_copy_t *tmp)
 	{
 		case MPC_LOWCOMM_MESSAGE_CONTIGUOUS: {
 			size_t size;
-			size = SCTK_MSG_SIZE(send);
 			size =
 				mpc_common_min(SCTK_MSG_SIZE(send), recv->tail.message.contiguous.size);
 
@@ -744,7 +736,6 @@ void _mpc_lowcomm_msg_cpy_from_buffer(char *body,
 		case MPC_LOWCOMM_MESSAGE_CONTIGUOUS:
 		{
 			size_t size;
-			size = SCTK_MSG_SIZE(send);
 			size = mpc_common_min(SCTK_MSG_SIZE(send), recv->tail.message.contiguous.size);
 
 			memcpy(recv->tail.message.contiguous.addr, body, size);
