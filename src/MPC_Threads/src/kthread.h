@@ -67,6 +67,7 @@ void _mpc_thread_kthread_exit(void *retval);
 
 int _mpc_thread_kthread_sigmask(int how, const sigset_t *newmask, sigset_t *oldmask);
 
+// NOLINTNEXTLINE(clang-diagnostic-unused-function)
 static inline void kthread_usleep(unsigned long usec)
 {
 #ifndef WINDOWS_SYS
