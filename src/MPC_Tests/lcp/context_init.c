@@ -1,3 +1,4 @@
+#include "lowcomm_config.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
@@ -6,7 +7,7 @@
 #include <mpc_conf.h>
 #include <mpc_lowcomm.h>
 
-int main(int argc, char** argv) {
+int main() {
 	int rc;
 	lcp_context_h ctx;
         lcp_context_param_t param;
