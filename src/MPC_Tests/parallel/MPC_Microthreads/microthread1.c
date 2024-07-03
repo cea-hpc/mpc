@@ -23,6 +23,7 @@
 #include <stdio.h>
 #include <mpc.h>
 #include "mpc_keywords.h"
+#include "mpc_microthread.h"
 
 void *
 run (__UNUSED__ void *arg)
