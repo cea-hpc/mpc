@@ -1,3 +1,6 @@
+/* FIXME: Outdated code, does not compile */
+
+#include "lowcomm_config.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
@@ -20,7 +23,7 @@ int lowcomm_request_complete(mpc_lowcomm_request_t *req){
 	return 0;
 }
 
-int main(int argc, char** argv) {
+int main() {
 	int rc;
 	lcp_context_h ctx;
 	lcp_ep_h ep;
@@ -111,7 +114,7 @@ int main(int argc, char** argv) {
 		size = 4096 * sizeof(int);
 		data1 = malloc(size);
                 lcp_request_param_t param = {
-                        .recv_info = &req1.recv_info
+                        .tag_info = &req1.tag_info
                 };
 		rc = lcp_tag_recv_nb(ctx, &data1, size, &req1, &param);
 		if (rc != 0) {
