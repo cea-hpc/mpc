@@ -27,6 +27,7 @@
 
 #include "mpc_common_debug.h"
 #include "mpc_common_asm.h"
+#include "mpc_keywords.h"
 
 
 void sctk_profile_meta_calibrate_begin(struct sctk_profile_meta *meta)
@@ -78,10 +79,9 @@ void sctk_profile_meta_init(struct sctk_profile_meta *meta)
 }
 
 
-void sctk_profile_meta_release(struct sctk_profile_meta *meta)
+void sctk_profile_meta_release(__UNUSED__ struct sctk_profile_meta *meta)
 {
-
-
+	not_implemented();
 }
 
 

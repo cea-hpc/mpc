@@ -27,6 +27,7 @@
 #include <mpc_common_types.h>
 
 #include "mpc_common_spinlock.h"
+#include "mpc_keywords.h"
 
 struct sctk_profile_meta
 {
@@ -48,7 +49,7 @@ struct sctk_profile_meta
 
 
 void sctk_profile_meta_init(struct sctk_profile_meta *meta);
-void sctk_profile_meta_release(struct sctk_profile_meta *meta);
+__UNUSED__ void sctk_profile_meta_release(struct sctk_profile_meta *meta);
 
 
 void sctk_profile_meta_begin_compute(struct sctk_profile_meta *meta);
