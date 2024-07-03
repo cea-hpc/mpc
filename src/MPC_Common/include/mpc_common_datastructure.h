@@ -83,6 +83,10 @@ struct mpc_common_bit_array
 	uint64_t real_size; /**< @brief The number of bits the array contains */
 };
 
+/*
+ * NOLINTBEGIN(clang-diagnostic-unused-function): False positive
+ */
+
 /**
  * @brief Getter on the array size
  * @param ba the array
@@ -497,6 +501,7 @@ unsigned char * mpc_common_datastructure_base64_encode(const unsigned char *src,
 unsigned char * mpc_common_datastructure_base64_decode(const unsigned char *src, size_t len,
 			      size_t *out_len);
 
+/* NOLINTEND(clang-diagnostic-unused-function) */
 
 #ifdef __cplusplus
 }

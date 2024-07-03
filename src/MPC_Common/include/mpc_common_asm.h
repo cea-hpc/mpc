@@ -61,7 +61,7 @@ extern "C" {
 
 typedef volatile int sctk_atomic_test_t;
 
-
+// NOLINTNEXTLINE(clang-diagnostic-unused-function)
 static inline int sctk_test_and_set( OPA_int_t *atomic )
 {
         return OPA_swap_int(atomic, 1 );
