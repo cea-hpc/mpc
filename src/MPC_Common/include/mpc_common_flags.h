@@ -70,6 +70,7 @@ struct mpc_common_flags
 
 extern struct mpc_common_flags ___mpc_flags;
 
+/* NOLINTBEGIN(clang-diagnostic-unused-function) */
 static inline struct mpc_common_flags * mpc_common_get_flags()
 {
         return &___mpc_flags;
@@ -83,6 +84,7 @@ static inline int mpc_common_flags_disguised_get()
 {
 	return OPA_load_int( &__mpc_p_disguise_flag );
 }
+/* NOLINTEND(clang-diagnostic-unused-function) */
 
 /***********************
  * INTIALIZATION LISTS *
