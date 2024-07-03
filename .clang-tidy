@@ -1,6 +1,9 @@
+# clang-diagnostic-deprecated-declarations:
+# FIXME: MPC contains calls to deprecated functions, that must be resolved in
+# the future. I (Remi) muted them at the moment, so that clang-tidy checks pass.
 # clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling:
 # strlcat, fprintf_s, snprintf_s & other variants are not supported by GCC
-Checks: '-clang-analyzer-optin.mpi.MPI-Checker,-clang-diagnostic-#warnings,-clang-diagnostic-#pragma-messages,-clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling,-clang-analyzer-security.insecureAPI.strcpy,-clang-diagnostic-unused-command-line-argument'
+Checks: '-clang-diagnostic-deprecated-declarations,-clang-analyzer-optin.mpi.MPI-Checker,-clang-diagnostic-#warnings,-clang-diagnostic-#pragma-messages,-clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling,-clang-analyzer-security.insecureAPI.strcpy,-clang-diagnostic-unused-command-line-argument'
 WarningsAsErrors: '*'
 HeaderFilterRegex: ''
 FormatStyle: none
