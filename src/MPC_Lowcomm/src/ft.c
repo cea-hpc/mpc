@@ -59,6 +59,8 @@ int dmtcp_get_ckpt_signal()
 }
 
 
+#ifdef MPC_USE_DMTCP
+
 /**
  * Routine called only when the application is in post-checkpoint state.
  * There are currently nothing to do.
@@ -94,6 +96,8 @@ static inline void __sctk_ft_set_ckptdir()
 	//dmtcp_set_tmpdir(dir);
 #endif
 }
+
+#endif /* MPC_USE_DMTCP */
 
 /**
  * Initialize DMTCP and C/R module.
