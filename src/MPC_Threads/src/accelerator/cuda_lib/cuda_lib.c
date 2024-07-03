@@ -20,6 +20,9 @@
 /* #   - ADAM Julien adamj@paratools.com                                  # */
 /* #                                                                      # */
 /* ######################################################################## */
+
+#ifdef MPC_USE_CUDA
+
 #include <cuda.h>
 
 /* libcuda.so wrappers...
@@ -35,3 +38,5 @@ CUresult sctk_cuCtxPushCurrent(CUcontext c) { return cuCtxPushCurrent(c); }
 CUresult sctk_cuDeviceGetByPCIBusId(CUdevice *d, const char *b) {
   return cuDeviceGetByPCIBusId(d, b);
 }
+
+#endif /* MPC_USE_CUDA */
