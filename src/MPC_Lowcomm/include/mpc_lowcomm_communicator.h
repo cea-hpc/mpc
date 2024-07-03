@@ -126,6 +126,11 @@ mpc_lowcomm_communicator_t mpc_lowcomm_communicator_self();
 /** define the MPI_COMM_WORLD internal communicator number **/
 #define MPC_COMM_WORLD    ( (mpc_lowcomm_communicator_t)2)
 
+/*
+ * NOLINTBEGIN(clang-diagnostic-unused-function):
+ * False positive on inline functions
+ */
+
 /** @brief Converts a generic comm handle in its predefined equivalent
  *
  *  @param comm    The handle to convert
@@ -175,6 +180,10 @@ static inline mpc_lowcomm_communicator_t __mpc_lowcomm_communicator_from_predefi
 	// Default return the entry
 	return comm;
 }
+
+/*
+ * NOLINTEND(clang-diagnostic-unused-function)
+ */
 
 /**************
 * ID FACTORY *
