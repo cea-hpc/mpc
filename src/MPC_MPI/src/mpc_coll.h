@@ -25,6 +25,7 @@
 #ifndef MPC_MPI_COLL
 #define MPC_MPI_COLL
 
+#include "mpc_mpi.h"
 
 int _mpc_mpi_collectives_bcast(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm);
 int _mpc_mpi_collectives_reduce(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm);
