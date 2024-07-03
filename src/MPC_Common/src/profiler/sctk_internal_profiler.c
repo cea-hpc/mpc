@@ -29,6 +29,9 @@
 #include "sctk_performance_tree.h"
 #include "sctk_profile_render.h"
 
+
+#ifdef MPC_Profiler
+
 /* Profiling switch */
 int sctk_profiler_internal_switch = 0;
 __thread void* mpc_profiler;
@@ -181,3 +184,5 @@ void mpc_cl_internal_profiler_init()
                                           "Init Profiling keys",
                                           sctk_internal_profiler_init, 24);
 }
+
+#endif /* MPC_Profiler */

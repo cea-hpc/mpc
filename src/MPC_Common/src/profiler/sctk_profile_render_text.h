@@ -23,6 +23,8 @@
 #ifndef SCTK_PROFILE_RENDER_TEXT_H
 #define SCTK_PROFILE_RENDER_TEXT_H
 
+#ifdef MPC_Profiler
+
 #include "sctk_profile_render.h"
 
 
@@ -39,5 +41,5 @@
 	void sctk_profile_render_text_render_entry( struct sctk_profiler_array *array, int id, int parent_id, int depth,  int going_up, struct sctk_profile_renderer *rd );
 
 
-
+#endif /* MPC_Profiler */
 #endif /* SCTK_PROFILE_RENDER_TEXT_H */
