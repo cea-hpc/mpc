@@ -44,6 +44,7 @@ void mpc_omp_slave_mvp_node( mpc_omp_mvp_t *mvp );
 void _mpc_omp_exit_node_signal( mpc_omp_node_t* node );
 mpc_omp_thread_t *__mvp_wakeup( mpc_omp_mvp_t *mvp );
 
+/* NOLINTBEGIN(clang-diagnostic-unused-function) */
 static inline void _mpc_omp_instance_tree_array_root_init( struct mpc_omp_node_s *root, mpc_omp_instance_t *instance, const int nthreads )
 {
 	struct mpc_omp_generic_node_s *meta_node;
@@ -199,5 +200,7 @@ static inline int _mpc_omp_spinning_leaf_compute_rank( mpc_omp_node_t *node, con
 }
 
 #endif
+
+/* NOLINTEND(clang-diagnostic-unused-function) */
 
 #endif /* __MPC_OMP_SPINNING_CORE_H__ */
