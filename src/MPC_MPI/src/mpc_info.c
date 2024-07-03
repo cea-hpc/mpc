@@ -312,6 +312,7 @@ int MPC_Info_cell_get( struct MPC_Info_cell * cell , char * key , char * dest, i
 	if( !flag )
 	{
 		mpc_common_debug_error("Flag cannot be NULL in %s", __FUNCTION__);
+		return 1;
 	}
 
 
@@ -320,7 +321,7 @@ int MPC_Info_cell_get( struct MPC_Info_cell * cell , char * key , char * dest, i
 	if( !entry )
 	{
 		*flag = 0;
-		return 1;
+		return 2;
 	}
 	else
 	{
