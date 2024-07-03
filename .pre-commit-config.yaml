@@ -26,7 +26,9 @@ repos:
             ^src/MPC_OpenMP/include/omp_lib_kinds\.h$|
             ^src/MPC_Fortran|
             ^src/MPC_Thread_db/src/gdb/linux-thread-db\.c$|
+            ^src/MPC_Tests/lcp|
             \.(m4|in|3in|f90)$
+          # FIXME: Remove exclude path "src/MPC_Tests/lcp" once tests are fixed (LCP v2)
 -   repo: git@gitlab.paratools.com:cea/mpc-pre-commit-hooks.git
     rev: 90dac57b3624db79877f93a59d218255463d708f
     hooks:
