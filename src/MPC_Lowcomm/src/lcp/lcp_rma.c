@@ -131,7 +131,6 @@ int lcp_rma_put_zcopy(lcp_request_t *req)
         /* Get the fragment length from rail attribute */
         //NOTE: max_{put,get}_zcopy might not be optimal.
         ep->lct_eps[cc]->rail->iface_get_attr(ep->lct_eps[cc]->rail, &attr);
-        frag_length = attr.iface.cap.rndv.max_put_zcopy;
 
         req->state.comp.comp_cb = lcp_rma_request_complete_put;
 
