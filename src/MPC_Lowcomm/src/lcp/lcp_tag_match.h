@@ -35,9 +35,12 @@
 #include "lcp_request.h"
 #include "lcp_header.h"
 
+/* NOLINTBEGIN(clang-diagnostic-unused-function) */
 static inline lcp_tag_hdr_t * lcp_ctnr_get_tag(lcp_unexp_ctnr_t *ctnr) {
         return (lcp_tag_hdr_t *)(ctnr + 1);
 }
+/* NOLINTEND(clang-diagnostic-unused-function) */
+
 void *lcp_match_prqueue(mpc_queue_head_t *prqs, uint16_t comm_id, int32_t tag, int32_t src);
 void lcp_append_prqueue(mpc_queue_head_t *prqs, mpc_queue_elem_t *elem, uint16_t comm_id);
 void *lcp_match_umqueue(mpc_queue_head_t *umqs,
