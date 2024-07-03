@@ -410,7 +410,7 @@ int mpi_pstart(MPI_internal_request_t *req)
         req->is_active = 1;
         task = lcp_context_task_get(ctx, mpc_common_get_task_rank());
         if (task == NULL) {
-                mpc_common_debug_fatal("LCP: task %d not fount",
+                mpc_common_debug_fatal("LCP: task %d not found",
                                        mpc_common_get_task_rank());
                 return MPC_LOWCOMM_ERROR;
         }
@@ -441,7 +441,17 @@ int mpi_pstart(MPI_internal_request_t *req)
                 rc = lcp_tag_recv_nb(task, prtd->send.rkeys_buf, prtd->send.rkeys_size,
                                      &prtd->rkey_req, &param);
 
-                mpc_lowcomm_wait(&prtd->rkey_req, &status);
+                if (rc != LCP_SUCCESS) {
+                        mpc_common_debug_error("MPI: LCP tag receive failed on partitioned request");
+                        return MPC_LOWCOMM_ERROR;
+                }
+
+				rc = mpc_lowcomm_wait(&prtd->rkey_req, &status);
+
+                if (rc != MPC_LOWCOMM_SUCCESS) {
+                        mpc_common_debug_error("MPI: Lowcomm wait failed on partitioned request");
+                        return rc;
+                }
 
                 break;
         case REQUEST_RECV:
@@ -457,11 +467,16 @@ int mpi_pstart(MPI_internal_request_t *req)
                 };
                 rc = lcp_tag_recv_nb(task, &prtd->recv.send_partitions,
                                      sizeof(int), &prtd->tag_req, &param);
+
+                if (rc != LCP_SUCCESS) {
+                        mpc_common_debug_error("MPI: LCP tag receive failed on partitioned request");
+                        return MPC_LOWCOMM_ERROR;
+                }
+
                 break;
         default:
-                rc = MPC_LOWCOMM_ERROR;
                 mpc_common_debug_error("MPI: partitioned request type error");
-                break;
+                return MPC_LOWCOMM_ERROR;
         }
 
         return MPI_SUCCESS;
