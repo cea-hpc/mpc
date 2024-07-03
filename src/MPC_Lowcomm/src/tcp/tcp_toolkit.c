@@ -345,8 +345,6 @@ static inline char *__gen_rail_target_name(sctk_rail_info_t *rail, char *buff, i
  */
 void tcp_on_demand_connection_handler(sctk_rail_info_t *rail, mpc_lowcomm_peer_uid_t dest_process)
 {
-	_mpc_lowcomm_endpoint_t *rout = sctk_rail_get_any_route_to_process(rail, dest_process);
-
 	//__sctk_network_connection_from_tcp(mpc_common_get_process_rank(), dest_process, rail, _MPC_LOWCOMM_ENDPOINT_DYNAMIC);
 	char my_net_name[128];
 
