@@ -31,6 +31,11 @@ typedef struct  mpix_progress_info_s
 /* test of request completion */
 typedef int (*mpc_lowcomm_request_test_t)(mpix_progress_info_t *);
 
+
+/*
+ * NOLINTBEGIN(clang-diagnostic-unused-function):
+ * Inline static functions in public header, may be used by external code.
+ */
 static int
 __request_test(mpix_progress_info_t * infos)
 {
@@ -203,5 +208,7 @@ MPIX_PWait(MPI_Request * request, MPI_Status * status, int partition)
     } while (!flag);
     return 0;
 }
+
+/* NOLINTEND(clang-diagnostic-unused-function) */
 
 #endif /* MPC_OMP_INTEROP_MPI_H */
