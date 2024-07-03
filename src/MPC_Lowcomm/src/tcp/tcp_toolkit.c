@@ -63,10 +63,9 @@
  * \param[in] rail the TCP rail
  * \return the newly created FD, -1 otherwise.
  */
-static int __connect_to(char *name_init, sctk_rail_info_t *rail)
+static int __connect_to(char *name_init)
 {
 	int             clientsock_fd;
-	struct hostent *server;
 
 	char  name[MPC_COMMON_MAX_STRING_SIZE];
 	char *portno = NULL;
@@ -84,7 +83,7 @@ static int __connect_to(char *name_init, sctk_rail_info_t *rail)
 			name_init[i] = '\0';
 
 			/* Make sure we hold the right port-no (from original buffer)
-			 * as it might be overwriten if we fallback network */
+			 * as it might be overwritten if we fallback network */
 			portno = name_init + (i + 1);
 			mpc_common_nodebug("%s Port no %s", name, portno);
 			break;
@@ -385,7 +384,7 @@ static int __tcp_on_demand_callback(mpc_lowcomm_peer_uid_t from,
 	mpc_common_debug("TCP on-demand from (%u, %u)", mpc_lowcomm_peer_get_set(from), mpc_lowcomm_peer_get_rank(from) );
 
 	/* Here we just need to connect to the target */
-	int new_socket = __connect_to(data, rail);
+	int new_socket = __connect_to(data);
 
 	if(new_socket < 0)
 	{
