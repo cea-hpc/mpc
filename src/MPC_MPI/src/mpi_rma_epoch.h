@@ -101,6 +101,11 @@ struct mpc_MPI_Win_request_array {
                            mpc_MPI_Win_request_array_test */
 };
 
+/*
+ * NOLINTBEGIN(clang-diagnostic-unused-function):
+ * False positive, static functions used elsewhere.
+ */
+
 /** Add a pending RMA operation to the request array
  * \warning This is needed for non-atomic RMA operation such as get_accumulate
  * @arg ra A pointer to an initialized request array
@@ -122,6 +127,8 @@ mpc_MPI_Win_request_array_add_done(struct mpc_MPI_Win_request_array *ra) {
   ra->pending_rma--;
   mpc_common_spinlock_unlock(&ra->lock);
 }
+
+/* NOLINTEND(clang-diagnostic-unused-function) */
 
 /** Initialize an empty request array
  * @arg ra A pointer to an unitialized request-array
