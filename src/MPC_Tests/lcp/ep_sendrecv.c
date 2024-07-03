@@ -1,3 +1,4 @@
+#include "lowcomm_config.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
@@ -19,17 +20,19 @@ int lowcomm_request_complete(mpc_lowcomm_request_t *req){
 	return 0;
 }
 
-int main(int argc, char** argv) {
+int main() {
 	int rc;
 	lcp_context_h ctx;
         lcp_context_param_t param;
         lcp_task_h task;
 	lcp_ep_h ep;
 	mpc_lowcomm_set_uid_t suid;
-        int my_tid, src_tid, dest_tid;
-	mpc_lowcomm_peer_uid_t src_uid, dest_uid, my_uid;
-
+	int my_tid;
+	mpc_lowcomm_peer_uid_t src_uid, dest_uid;
+	int check;
 	int data;
+
+	check = 0;
 
 	/* load default config */
 	mpc_conf_root_config_init("mpcframework");
@@ -72,15 +75,11 @@ int main(int argc, char** argv) {
         my_tid = mpc_lowcomm_get_rank();
 
         if (my_tid == 0) {
-                src_tid  = mpc_lowcomm_get_rank();
                 src_uid  = mpc_lowcomm_monitor_get_uid();
-                dest_tid = 1;
                 dest_uid = mpc_lowcomm_monitor_uid_of(suid, 1);
         } else {
-                src_tid = 0;
                 src_uid = mpc_lowcomm_monitor_uid_of(suid, 0);
                 dest_uid = mpc_lowcomm_monitor_get_uid();
-                dest_tid  = mpc_lowcomm_get_rank();
         }
 
         rc = lcp_task_create(ctx, my_tid, &task);
@@ -117,7 +116,7 @@ int main(int argc, char** argv) {
 		data = 42;
                 lcp_request_param_t param = {
                         .datatype  = LCP_DATATYPE_CONTIGUOUS,
-                        .recv_info = &req.recv_info
+                        .tag_info = &req.tag_info,
                 };
 		rc = lcp_tag_send_nb(ep, task, &data, sizeof(data), &req, &param);
 		if (rc != 0) {
@@ -126,7 +125,7 @@ int main(int argc, char** argv) {
 	} else {
                 lcp_request_param_t param = {
                         .datatype  = LCP_DATATYPE_CONTIGUOUS,
-                        .recv_info = &req.recv_info
+                        .tag_info = &req.tag_info
                 };
 		rc = lcp_tag_recv_nb(task, &data, sizeof(data), &req, &param);
 		if (rc != 0) {
@@ -140,7 +139,6 @@ int main(int argc, char** argv) {
 		lcp_progress(ctx);
 	}
 
-        int check = 0;
         if (my_tid == 1) {
                 if (data == 42)
                         check = 1;
