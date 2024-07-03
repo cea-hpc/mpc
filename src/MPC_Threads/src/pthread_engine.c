@@ -211,7 +211,7 @@ static int _mpc_thread_pthread_engine_user_create(pthread_t *thread, pthread_att
 		pthread_attr_init(&tmp_attr);
 
 #ifdef PTHREAD_STACK_MIN
-		if(PTHREAD_STACK_MIN > size)
+		if(PTHREAD_STACK_MIN > (long) size)
 		{
 			res = pthread_attr_setstacksize(&tmp_attr, PTHREAD_STACK_MIN);
 		}
@@ -252,7 +252,7 @@ static int _mpc_thread_pthread_engine_user_create(pthread_t *thread, pthread_att
 
 
 #ifdef PTHREAD_STACK_MIN
-	if(PTHREAD_STACK_MIN > size)
+	if(PTHREAD_STACK_MIN > (long) size)
 	{
 		res = pthread_attr_setstacksize(attr, PTHREAD_STACK_MIN);
 	}
@@ -324,7 +324,7 @@ static int _mpc_thread_pthread_engine_create(pthread_t *restrict thread,
 		size += sctk_extls_size();
 
 #ifdef PTHREAD_STACK_MIN
-		if(PTHREAD_STACK_MIN > size)
+		if(PTHREAD_STACK_MIN > (long) size)
 		{
 			res = pthread_attr_setstacksize(&tmp_attr, PTHREAD_STACK_MIN);
 		}
