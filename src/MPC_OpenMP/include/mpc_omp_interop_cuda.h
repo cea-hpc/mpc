@@ -3,6 +3,8 @@
 
 # include <mpc_omp.h>
 
+#ifdef MPC_USE_CUDA
+
 typedef struct  cuda_stream_progress_info_s
 {
     /* the omp event */
@@ -92,5 +94,7 @@ cuxStreamSynchronize(CUstream hStream)
     }
     return cuStreamSynchronize(hStream);
 }
+
+#endif /* MPC_USE_CUDA */
 
 #endif /* MPC_OMP_INTEROP_CUDA_H */
