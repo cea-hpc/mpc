@@ -351,6 +351,8 @@ typedef struct
 sctk_op_t *sctk_convert_to_mpc_op(MPI_Op op);
 
 
+/* NOLINTBEGIN(clang-diagnostic-unused-function): False positives */
+
 static inline int sctk_op_can_commute(sctk_op_t *op, MPI_Datatype type)
 {
 	if(op->commute == 0)
@@ -659,6 +661,9 @@ static int mpi_check_op_type_func_MPI_(MPI_Datatype datatype)
 }
 
 #endif
+
+/* NOLINTEND(clang-diagnostic-unused-function) */
+
 #define mpi_check_op_type_func_integer()                  \
 	mpi_check_op_type_func_notavail(MPC_LOWCOMM_INT); \
 	mpi_check_op_type_func_notavail(MPC_LOWCOMM_LONG)

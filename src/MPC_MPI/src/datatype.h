@@ -373,6 +373,10 @@ typedef enum
 	MPC_DATATYPES_USER       /**< These are user defined datatypes of type \ref _mpc_dt_general_t */
 } mpc_dt_kind_t;
 
+/*
+ * NOLINTBEGIN(clang-diagnostic-unused-function): False positives
+ */
+
 /** \brief Returns true if the datatype is a boundary (UB or LB)
  *
  * \param data_in Datatype to test
@@ -490,6 +494,8 @@ static inline int _mpc_dt_is_contig_mem(mpc_lowcomm_datatype_t data_in)
 	return mpc_dt_is_valid(data_in) &&
 	   _mpc_dt_get_datatype(data_in)->opt_count == 1;
 }
+
+/* NOLINTEND(clang-diagnostic-unused-function) */
 
 /************************************************************************/
 /* Datatype  Array                                                      */
