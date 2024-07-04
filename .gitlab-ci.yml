@@ -40,6 +40,12 @@ variables:
   - merge_requests
   - web
 
+
+  except:
+    variables:
+      # Skip MR labeled "CI::Disabled"
+      - $CI_MERGE_REQUEST_LABELS =~ /CI::Disabled/
+
 .uses_slurm: &uses_slurm
   tags:
     - slurm
