@@ -26,6 +26,7 @@ repos:
             ^src/MPC_OpenMP/include/omp_lib_kinds\.h$|
             ^src/MPC_Fortran|
             ^src/MPC_Thread_db/src/gdb/linux-thread-db\.c$|
+            ^src/MPC_Common/include/sctk_no_alloc\.h$|
             ^src/MPC_Tests/lcp|
             \.(m4|in|3in|f90)$
           # FIXME: Remove exclude path "src/MPC_Tests/lcp" once tests are fixed (LCP v2)
