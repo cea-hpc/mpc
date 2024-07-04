@@ -20,6 +20,7 @@
 /* #   - POUGET Kevin pougetk@ocre.cea.fr                                 # */
 /* ######################################################################## */
 
+#if defined(SCTK_USE_THREAD_DEBUG)
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -35,10 +36,7 @@
 #include "mpc_common_debug.h"
 #include "mpc_thread.h"
 #include "mpc_common_spinlock.h"
-#include "sctk_ethread.h"
 #include "sctk_context.h"
-
-#if defined(SCTK_USE_THREAD_DEBUG)
 #include <thread_db.h>
 #include <sys/syscall.h>
 #include "tdb_remote.h"
@@ -338,3 +336,5 @@ int sctk_report_death(void *tid)
 
 	return 0;
 }
+
+#endif /* SCTK_USE_THREAD_DEBUG */
