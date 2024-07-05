@@ -100,17 +100,6 @@ static int _lcp_manager_init_structures(lcp_manager_h mngr)
 
         mpc_common_spinlock_init(&mngr->mngr_lock, 0);
 
-        /* Init hash table of tasks */
-	mngr->tasks = sctk_malloc(mngr->num_tasks * sizeof(lcp_task_h));
-	if (mngr->tasks == NULL) {
-		mpc_common_debug_error("LCP MNGR: Could not allocate tasks table.");
-		rc = MPC_LOWCOMM_ERROR;
-		goto err;
-	}
-        //NOTE: to release tasks, lcp_context_fini relies on the fact that all entries 
-        //      are memset to NULL. 
-        memset(mngr->tasks, 0, mngr->num_tasks * sizeof(lcp_task_h));
-
         /* Init pending matching message request table */
 	mngr->match_ht = lcp_pending_init();
 	if (mngr->match_ht == NULL) {
@@ -250,7 +239,6 @@ int lcp_manager_create(lcp_context_h ctx,
 
         /* Initialize parameter fields. */
         mngr->ctx       = ctx;
-        mngr->num_tasks = params->num_tasks;
         mngr->num_eps   = params->estimated_eps;
         mngr->flags     = params->flags;
 
@@ -284,6 +272,9 @@ int lcp_manager_fini(lcp_manager_h mngr)
         int i;
         int rc = MPC_LOWCOMM_SUCCESS;
 
+        mpc_common_debug("LCP MNGR: mngr fini. mngr id=%d", 
+                         mngr->id);
+
         lcp_pinning_mmu_release(mngr->mmu);
 
 	/* Free allocated endpoints */
@@ -298,14 +289,6 @@ int lcp_manager_fini(lcp_manager_h mngr)
 
         mpc_common_hashtable_release(&mngr->eps);
 
-        /* Free task table */
-        for (i = 0; i < mngr->num_tasks; i++) {
-                if (mngr->tasks[i] != NULL) {
-                        lcp_task_fini(mngr->tasks[i]);
-                }
-        }
-        sctk_free(mngr->tasks);
-
         for (i = 0; i < mngr->num_ifaces; i++) {
                 if (mngr->ifaces[i]->driver_finalize != NULL) {
                         mngr->ifaces[i]->driver_finalize(mngr->ifaces[i]);
@@ -317,6 +300,7 @@ int lcp_manager_fini(lcp_manager_h mngr)
         lcp_context_unregister(mngr->ctx, mngr->id);
 
         sctk_free(mngr);
+        mngr = NULL;
 
         return rc;
 }

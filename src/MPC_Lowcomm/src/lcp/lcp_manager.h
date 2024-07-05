@@ -91,11 +91,6 @@ struct lcp_manager {
 	mpc_common_spinlock_t mngr_lock;      /* Manager lock */
         mpc_common_spinlock_t atomic_lock;
 
-	lcp_task_h           *tasks;         /* LCP tasks (per thread data) */
-        int                   num_tasks;     /* Number of tasks */
-
-	mpc_queue_head_t      pending_queue; /* Queue of pending requests to be sent */
-
         mpc_list_elem_t       progress_head; /* List of interface registered for progress */
 
         struct lcp_pinning_mmu *mmu;
