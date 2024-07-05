@@ -2097,7 +2097,7 @@ int td_get_tdb_verbosity (void) {
 }
 
 /* call by DBX to enable logs */
-#if defined (TDB___linux__)
+#if defined (_THREAD_DB_H)
 td_err_e td_log (void) {td_set_tdb_verbosity (10) ;return TD_OK ;}
 #else
 void td_log (void) {td_set_tdb_verbosity (10) ;}
