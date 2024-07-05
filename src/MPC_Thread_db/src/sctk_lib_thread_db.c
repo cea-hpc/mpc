@@ -21,6 +21,7 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
+#include "mpc_keywords.h"
 #include <mpc_arch.h>
 
 #if !(defined(MPC_I686_ARCH) || defined(MPC_X86_64_ARCH))
@@ -776,9 +777,9 @@ exit:
    CALLBACK.  */
 td_err_e td_ta_thr_iter (const td_thragent_t *ta,
                          td_thr_iter_f *callback, void *cbdata_p,
-                         td_thr_state_e state, int ti_pri,
-                         sigset_t *ti_sigmask_p,
-                         unsigned int ti_user_flags)
+                         td_thr_state_e state, __UNUSED__ int ti_pri,
+                         __UNUSED__ sigset_t *ti_sigmask_p,
+                         __UNUSED__ unsigned int ti_user_flags)
 {
   td_err_e err; ps_err_e ps_err ;
   tdb_thread_debug_t *first ;
@@ -1583,7 +1584,7 @@ exit:
 
 
 /* Retrieve extended register contents of process running thread TH.  */
-td_err_e td_thr_getxregs (const td_thrhandle_t *th, void *xregs)
+td_err_e td_thr_getxregs (__UNUSED__ const td_thrhandle_t *th, __UNUSED__ void *xregs)
 {
   td_err_e err = TD_DBERR;
 #if defined (SCTK_sparc_ARCH_SCTK)
@@ -1639,7 +1640,7 @@ exit:
 /** ***************************************************************************** **/
 
 /* Get size of extended register set of process running thread TH.  */
-td_err_e td_thr_getxregsize (const td_thrhandle_t *th, int *sizep)
+td_err_e td_thr_getxregsize (__UNUSED__ const td_thrhandle_t *th, __UNUSED__ int *sizep)
 {
 #if defined (SCTK_sparc_ARCH_SCTK)
     #error  not implemented
@@ -1694,8 +1695,8 @@ exit:
 /** ***************************************************************************** **/
 
 /* Set extended register contents of process running thread TH.  */
-td_err_e td_thr_setxregs (const td_thrhandle_t *th,
-                          const void *addr)
+td_err_e td_thr_setxregs (__UNUSED__ const td_thrhandle_t *th,
+                          __UNUSED__ const void *addr)
 {
   td_err_e err = TD_DBERR;
 #if defined (SCTK_sparc_ARCH_SCTK)
