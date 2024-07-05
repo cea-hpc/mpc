@@ -51,7 +51,7 @@ static lcr_atomic_op_t lcp_atomic_op_table[] = {
         [LCP_ATOMIC_OP_CSWAP] = LCR_ATOMIC_OP_CSWAP,
 };
 
-void lcp_atomic_complete(lcr_completion_t *comp)
+static void lcp_atomic_complete(lcr_completion_t *comp)
 {
         lcp_request_t *req = mpc_container_of(comp, lcp_request_t, 
                                               state.comp);
@@ -176,7 +176,8 @@ lcp_status_ptr_t lcp_atomic_op_nb(lcp_ep_h ep, lcp_task_h task, const void *buff
         if (req == NULL) {
                 mpc_common_debug_error("LCP ATO: could not allocate atomic "
                                        "request.");
-                return LCP_STATUS_PTR(MPC_LOWCOMM_ERROR);
+                rc = MPC_LOWCOMM_ERROR;
+                return LCP_STATUS_PTR(rc);
         }
 
         LCP_REQUEST_INIT_ATO_SEND(req, ep->mngr, task, op_size, param->request, ep, 
