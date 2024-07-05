@@ -3,6 +3,7 @@
 
 # include <mpc_omp.h>
 
+/* NOLINTNEXTLINE(clang-diagnostic-unused-variable): Used in public macro below */
 static char MPC_OMP_TASK_LABEL_BUFFER_NAME[MPC_OMP_TASK_LABEL_MAX_LENGTH];
 #  define MPC_OMP_TASK_SET_LABEL(...)    do {\
     snprintf(MPC_OMP_TASK_LABEL_BUFFER_NAME, MPC_OMP_TASK_LABEL_MAX_LENGTH, __VA_ARGS__);           \
