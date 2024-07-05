@@ -11,6 +11,7 @@
 
 #include "mpc_common_spinlock.h"
 
+/* NOLINTBEGIN(clang-diagnostic-unused-function): False positives */
 
 //#define EG_DEBUG
 
@@ -133,7 +134,7 @@ static inline void nbc_op_free_init(struct nbc_op * op, void * buff) {
     op->buff = buff;
 }
 
-static inline void nbc_op_comm_free_init(struct nbc_op * op, MPI_Comm comm) {
+__UNUSED__ static inline void nbc_op_comm_free_init(struct nbc_op * op, MPI_Comm comm) {
     op->trig = 0;
     op->done = 0;
     op->t = TYPE_COMM_FREE;
@@ -878,3 +879,5 @@ int MPI_Ixbarrier( MPI_Comm comm , MPI_Request * req )
 
     return start_request(xreq, req);
 }
+
+/* NOLINTEND(clang-diagnostic-unused-function) */
