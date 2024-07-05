@@ -234,6 +234,7 @@ static inline void __fill_process_info(mpc_lowcomm_group_t *g)
 	sctk_free(counter);
 }
 
+//FIXME: rename function to _mpc_lowcomm_group_local_task_count
 int _mpc_lowcomm_group_local_process_count(mpc_lowcomm_group_t *g)
 {
 	mpc_common_spinlock_lock(&g->process_lock);
