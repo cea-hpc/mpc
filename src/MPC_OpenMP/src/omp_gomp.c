@@ -33,6 +33,7 @@
 #include "omp_gomp.h"
 #include "mpc_common_types.h"
 #include "mpc_common_debug.h"
+#include "mpc_keywords.h"
 #include "mpc_omp_abi.h"
 #include "mpcomp_sync.h"
 #include "mpcomp_core.h"
@@ -1044,11 +1045,11 @@ bool mpc_omp_GOMP_loop_doacross_static_start( unsigned ncounts, long *counts,
 	bool ret;
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 	ret = false;
-	MPC_OMP_GOMP_UNUSED_VAR( ncounts );
-	MPC_OMP_GOMP_UNUSED_VAR( counts );
-	MPC_OMP_GOMP_UNUSED_VAR( chunk_size );
-	MPC_OMP_GOMP_UNUSED_VAR( start );
-	MPC_OMP_GOMP_UNUSED_VAR( end );
+	UNUSED( ncounts );
+	UNUSED( counts );
+	UNUSED( chunk_size );
+	UNUSED( start );
+	UNUSED( end );
 	not_implemented();
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 	return ret;
@@ -1061,11 +1062,11 @@ bool mpc_omp_GOMP_loop_doacross_dynamic_start( unsigned ncounts, long *counts,
 	bool ret;
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 	ret = false;
-	MPC_OMP_GOMP_UNUSED_VAR( ncounts );
-	MPC_OMP_GOMP_UNUSED_VAR( counts );
-	MPC_OMP_GOMP_UNUSED_VAR( chunk_size );
-	MPC_OMP_GOMP_UNUSED_VAR( start );
-	MPC_OMP_GOMP_UNUSED_VAR( end );
+	UNUSED( ncounts );
+	UNUSED( counts );
+	UNUSED( chunk_size );
+	UNUSED( start );
+	UNUSED( end );
 	not_implemented();
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 	return ret;
@@ -1078,11 +1079,11 @@ bool mpc_omp_GOMP_loop_doacross_guided_start( unsigned ncounts, long *counts,
 	bool ret;
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 	ret = false;
-	MPC_OMP_GOMP_UNUSED_VAR( ncounts );
-	MPC_OMP_GOMP_UNUSED_VAR( counts );
-	MPC_OMP_GOMP_UNUSED_VAR( chunk_size );
-	MPC_OMP_GOMP_UNUSED_VAR( start );
-	MPC_OMP_GOMP_UNUSED_VAR( end );
+	UNUSED( ncounts );
+	UNUSED( counts );
+	UNUSED( chunk_size );
+	UNUSED( start );
+	UNUSED( end );
 	not_implemented();
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 	return ret;
@@ -1095,10 +1096,10 @@ bool mpc_omp_GOMP_loop_doacross_runtime_start( unsigned ncounts, long *counts,
 	bool ret;
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 	ret = false;
-	MPC_OMP_GOMP_UNUSED_VAR( ncounts );
-	MPC_OMP_GOMP_UNUSED_VAR( counts );
-	MPC_OMP_GOMP_UNUSED_VAR( start );
-	MPC_OMP_GOMP_UNUSED_VAR( end );
+	UNUSED( ncounts );
+	UNUSED( counts );
+	UNUSED( start );
+	UNUSED( end );
 	not_implemented();
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 	return ret;

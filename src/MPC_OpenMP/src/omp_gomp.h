@@ -49,7 +49,6 @@
 # undef str
 #endif /* MPC_OMP_VERSION_SYMBOLS */
 
-#define MPC_OMP_GOMP_UNUSED_VAR( var ) (void) ( sizeof( var ) )
 #define MPC_OMP_GOMP_NO_ALIAS ""
 #define MPC_OMP_GOMP_EMPTY_FN ""
 
