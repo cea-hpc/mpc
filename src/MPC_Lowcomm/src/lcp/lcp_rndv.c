@@ -507,8 +507,11 @@ static int lcp_rndv_fin_handler(void *arg, void *data,
         UNUSED(length);
         UNUSED(flags);
         int rc = LCP_SUCCESS;
+
         lcp_context_h ctx = arg;
-        lcp_ack_hdr_t *hdr = data;
+		UNUSED(ctx); // Kept for readability concerns
+
+		lcp_ack_hdr_t *hdr = data;
         lcp_request_t *rndv_req, *req;
 
         /* Retrieve request */
