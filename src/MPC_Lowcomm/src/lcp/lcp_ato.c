@@ -66,7 +66,7 @@ static void lcp_atomic_complete(lcr_completion_t *comp)
 static int lcp_atomic_post(lcp_request_t *req)
 {
         int rc = MPC_LOWCOMM_SUCCESS;
-        _mpc_lowcomm_endpoint_t *ep = req->send.ep->lct_eps[req->send.ep->ato_chnl];
+        _mpc_lowcomm_endpoint_t *ep = req->send.ep->lct_eps[req->send.ato.cc];
 
         assert(req->send.ep->cap & LCR_IFACE_CAP_ATOMICS);
 
@@ -89,7 +89,7 @@ static int lcp_atomic_post(lcp_request_t *req)
 static int lcp_atomic_fetch(lcp_request_t *req)
 {
         int rc = MPC_LOWCOMM_SUCCESS;
-        _mpc_lowcomm_endpoint_t *ep = req->send.ep->lct_eps[req->send.ep->ato_chnl];
+        _mpc_lowcomm_endpoint_t *ep = req->send.ep->lct_eps[req->send.ato.cc];
 
         assert(req->send.ep->cap & LCR_IFACE_CAP_ATOMICS);
 
@@ -113,7 +113,7 @@ static int lcp_atomic_fetch(lcp_request_t *req)
 static int lcp_atomic_cswap(lcp_request_t *req)
 {
         int rc = MPC_LOWCOMM_SUCCESS;
-        _mpc_lowcomm_endpoint_t *ep = req->send.ep->lct_eps[req->send.ep->ato_chnl];
+        _mpc_lowcomm_endpoint_t *ep = req->send.ep->lct_eps[req->send.ato.cc];
 
         assert(req->send.ep->cap & LCR_IFACE_CAP_ATOMICS);
 
@@ -142,13 +142,28 @@ lcp_atomic_proto_t ato_rma_proto = {
         .send_post  = lcp_atomic_post,
 };
 
-static inline void lcp_atomic_select_proto(lcp_ep_h ep, lcp_atomic_proto_t **ato_proto_p) 
+static inline int lcp_atomic_select_proto_channel(lcp_ep_h ep, 
+                                                  const lcp_request_param_t *param,
+                                                  lcp_atomic_proto_t **ato_proto_p,
+                                                  lcp_chnl_idx_t *cc) 
 {
+        int rc = MPC_LOWCOMM_SUCCESS;
+
         if (ep->cap & LCR_IFACE_CAP_ATOMICS) {
                 *ato_proto_p = &ato_rma_proto;
+                if (param->field_mask & LCP_REQUEST_USE_NET_ATOMICS) {
+                        assert(ep->net_ato_chnl != LCP_NULL_CHANNEL);
+                        *cc = ep->net_ato_chnl;
+                } else {
+                        assert(ep->ato_chnl != LCP_NULL_CHANNEL);
+                        *cc = ep->ato_chnl;
+                }
         } else {
                 *ato_proto_p = &ato_sw_proto;
+                *cc          = ep->am_chnl;
         }
+
+        return rc;
 }
 
 
@@ -156,6 +171,7 @@ lcp_status_ptr_t lcp_atomic_op_nb(lcp_ep_h ep, lcp_task_h task, const void *buff
                                   size_t length, uint64_t remote_addr, lcp_mem_h rkey,
                                   lcp_atomic_op_t op_type, const lcp_request_param_t *param)
 {
+        int rc = MPC_LOWCOMM_SUCCESS;
         lcp_status_ptr_t ret;
         lcp_request_t *req;
         lcp_atomic_proto_t *atomic_proto;
@@ -203,7 +219,11 @@ lcp_status_ptr_t lcp_atomic_op_nb(lcp_ep_h ep, lcp_task_h task, const void *buff
 
         req->state.comp.comp_cb = lcp_atomic_complete;
         
-        lcp_atomic_select_proto(ep, &atomic_proto);
+        rc = lcp_atomic_select_proto_channel(ep, param, &atomic_proto, 
+                                             &req->send.ato.cc);
+        if (rc != MPC_LOWCOMM_SUCCESS) {
+                return LCP_STATUS_PTR(rc);
+        }
         
         if (param->field_mask & LCP_REQUEST_REPLY_BUFFER) {
                 req->flags |= LCP_REQUEST_USER_PROVIDED_REPLY_BUF;

@@ -189,8 +189,7 @@ int lcp_rndv_offload_rma_progress(lcp_request_t *rndv_req)
         /* Get next communication channel on which to communicate */
         //FIXME: because ep->next_cc is set to ep->tag_chnl the following works.
         //       It also acts as a hack to increment ep->next_cc
-        cc = ep->cc = ep->next_cc = ep->tag_chnl;
-        lcp_ep_get_next_cc(ep);
+        cc = ep->tag_chnl;
 
         /* Get maximum frag size attribute */
         //NOTE: this suppose that all rails involved in fragmentation are
@@ -202,7 +201,7 @@ int lcp_rndv_offload_rma_progress(lcp_request_t *rndv_req)
 
         while (remaining > 0) {
                 //FIXME: what bitmap to choose
-                if (!MPC_BITMAP_GET(ep->conn_map, cc)) {
+                if (!MPC_BITMAP_GET(ep->tag_bmap, cc)) {
                         continue;
                 }
 
@@ -228,7 +227,7 @@ int lcp_rndv_offload_rma_progress(lcp_request_t *rndv_req)
                 }
 
                 offset += length; remaining -= length;
-                cc = lcp_ep_get_next_cc(ep);
+                cc = lcp_ep_get_next_cc(ep, cc, ep->tag_bmap);
         }
 
         return rc;
@@ -250,18 +249,13 @@ int lcp_rndv_offload_reg_send_buffer(lcp_request_t *rndv_req)
                         goto err;
                 }
 
-                /* Get source address */
-                const void *start = req->datatype & LCP_DATATYPE_CONTIGUOUS ?
-                        req->send.buffer : req->state.pack_buf;
-
                 //FIXME: we use the tag_context of the rndv request but the local
                 //       memory handle of the super request...
-                req->state.lmem->bm = req->send.ep->conn_map;
                 LCP_OFFLOAD_SET_MUID(muid, req->send.tag.src_tid, req->tm.mid);
                 //FIXME: modify lcp_mem_post_from_map signature to use const
                 //       start
-                rc = lcp_mem_post_from_map(req->mngr, req->state.lmem, req->state.lmem->bm, 
-                                           (void *)start, req->send.length, (lcr_tag_t)muid,
+                rc = lcp_mem_post_from_map(req->mngr, req->state.lmem, rndv_req->send.ep->tag_bmap, 
+                                           (void*)req->send.buffer, req->send.length, (lcr_tag_t)muid,
                                            0, &(rndv_req->send.t_ctx));
         }
 err:

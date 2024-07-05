@@ -38,9 +38,8 @@ ssize_t lcp_send_eager_bcopy(lcp_request_t *req,
 {
         ssize_t payload;
         lcp_ep_h ep = req->send.ep;
-        lcp_chnl_idx_t cc = lcp_ep_get_next_cc(ep);
 
-        payload = lcp_send_do_am_bcopy(ep->lct_eps[cc],
+        payload = lcp_send_do_am_bcopy(ep->lct_eps[ep->am_chnl],
                                        am_id, pack, req);
 
 	if (payload < 0) {
@@ -57,9 +56,8 @@ int lcp_send_eager_zcopy(lcp_request_t *req, uint8_t am_id,
                          lcr_completion_t *comp)
 {
 	lcp_ep_h ep = req->send.ep;
-        lcp_chnl_idx_t cc = lcp_ep_get_next_cc(ep);
 
-        return lcp_send_do_am_zcopy(ep->lct_eps[cc],
+        return lcp_send_do_am_zcopy(ep->lct_eps[ep->am_chnl],
                                     am_id, hdr, hdr_size,
                                     iov, iovcnt, comp);
 }

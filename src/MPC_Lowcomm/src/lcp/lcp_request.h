@@ -134,6 +134,7 @@ struct lcp_request {
 
                                 struct {
                                         uint64_t        remote_addr;
+                                        lcp_chnl_idx_t  cc;
                                         lcp_atomic_op_t op;
                                         lcp_mem_h       rkey;
                                         void           *reply_buffer;

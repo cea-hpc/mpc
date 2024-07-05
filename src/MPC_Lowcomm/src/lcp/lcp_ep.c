@@ -31,6 +31,7 @@
 
 #include "lcp_ep.h"
 
+#include "bitmap.h"
 #include "mpc_common_datastructure.h"
 #include "mpc_common_debug.h"
 #include "rail.h"
@@ -48,32 +49,21 @@ static int lcp_ep_check_if_valid(lcp_ep_h ep)
 }
 
 //NOTE: Cannot be used by TAG offload data path since multiplexing not allowed.
-int lcp_ep_get_next_cc(lcp_ep_h ep)
+int lcp_ep_get_next_cc(lcp_ep_h ep, lcp_chnl_idx_t curr_cc, bmap_t send_map)
 {
 	int            i;
-	lcp_chnl_idx_t cc_idx;
-        lcp_context_h  ctx = ep->mngr->ctx;
+	lcp_chnl_idx_t cc_idx = (curr_cc + 1) % ep->num_chnls;
 
-	/* Set ep comm channel to next. Both are first set as priority channel
-	 * during endpoint creation. */
-	ep->cc = ep->next_cc;
+        for(i = 0; i < ep->num_chnls; i++)
+        {
+                if(MPC_BITMAP_GET(send_map, cc_idx) )
+                {
+                        return cc_idx;
+                }
+                cc_idx = (cc_idx + 1) % ep->num_chnls;
+        }
 
-	/* Set next comm channel */
-	if(ep->num_chnls > 1 && ctx->config.multirail_enabled)
-	{
-		cc_idx = ep->cc + 1;
-		for(i = 0; i < ctx->num_resources; i++)
-		{
-			if(MPC_BITMAP_GET(ep->conn_map, cc_idx) )
-			{
-				ep->next_cc = cc_idx;
-				break;
-			}
-			cc_idx = (cc_idx + 1) % ctx->num_resources;
-		}
-	}
-
-	return ep->cc;
+	return LCP_NULL_CHANNEL;
 }
 
 int lcp_ep_create_base(lcp_manager_h mngr, lcp_ep_h *ep_p)
@@ -122,11 +112,10 @@ err:
  * @param ep endpoint to initialize
  * @return int MPI_SUCCESS in case of success
  */
-int lcp_ep_init_config(lcp_manager_h mngr, lcp_ep_h ep)
+static int lcp_ep_init_config(lcp_manager_h mngr, lcp_ep_h ep)
 {
 	int i;
-        lcp_context_h ctx = mngr->ctx;
-	int max_prio = 0, prio_idx = 0;
+	int curr_prio, prev_prio = 0;
 
 	ep->config.am.max_bcopy       = SIZE_MAX;
 	ep->config.am.max_zcopy       = SIZE_MAX;
@@ -142,29 +131,22 @@ int lcp_ep_init_config(lcp_manager_h mngr, lcp_ep_h ep)
 	ep->config.rma.max_get_zcopy  = SIZE_MAX;
 	ep->config.offload            = 0;
         ep->cap                       = 0;
-        ep->tag_chnl = ep->ato_chnl   = LCP_NULL_CHANNEL;
+        ep->am_chnl = ep->tag_chnl = ep->ato_chnl = 
+                ep->net_ato_chnl = ep->rma_chnl = LCP_NULL_CHANNEL;
 
         //FIXME: endpoint configuration would need some refacto. It currently
         //       does not handle well heterogenous interfaces.
-	for(i = 0; i < ctx->num_resources; i++)
+	for(i = 0; i < mngr->num_ifaces; i++)
 	{
 		/* Only append config of used endpoint interfaces */
-		if(!MPC_BITMAP_GET(ep->avail_map, i) )
-		{
+		if(!MPC_BITMAP_GET(ep->avail_map, i) ) {
 			continue;
 		}
 
 		sctk_rail_info_t *iface   = mngr->ifaces[i];
 		lcr_rail_attr_t   attr;
 
-                //FIXME: in case of offload with multirail, the priority rail
-                //       chosen will be the first interface. Maybe we could find
-                //       a more formal way of setting it.
-		if(max_prio < iface->priority)
-		{
-			max_prio = iface->priority;
-			prio_idx = i;
-		}
+                curr_prio = iface->priority;
 
 		iface->iface_get_attr(iface, &attr);
 		if(attr.iface.cap.flags & LCR_IFACE_CAP_TAG_OFFLOAD)
@@ -183,19 +165,27 @@ int lcp_ep_init_config(lcp_manager_h mngr, lcp_ep_h ep)
                         if (ep->tag_chnl == LCP_NULL_CHANNEL) {
                                 ep->tag_chnl = i;
                         }
+                        if (curr_prio >= prev_prio) {
+                                MPC_BITMAP_SET(ep->tag_bmap, i);
+                        }
 		}
 
                 if (attr.iface.cap.flags & LCR_IFACE_CAP_ATOMICS) {
 			ep->cap |= LCR_IFACE_CAP_ATOMICS;
                         ep->config.ato.max_fetch_size = mpc_common_min(ep->config.ato.max_fetch_size,
                                                                        attr.iface.cap.ato.max_fetch_size);
-                        ep->config.ato.max_fetch_size = mpc_common_min(ep->config.ato.max_post_size,
+                        ep->config.ato.max_post_size = mpc_common_min(ep->config.ato.max_post_size,
                                                                        attr.iface.cap.ato.max_post_size);
 
                         //NOTE: first interface is taken. Define a better
                         //      strategy.
                         if (ep->ato_chnl == LCP_NULL_CHANNEL) {
                                 ep->ato_chnl = i;
+                        }
+                        if (attr.iface.cap.flags & LCR_IFACE_CAP_REMOTE) {
+                                if (ep->net_ato_chnl == LCP_NULL_CHANNEL) {
+                                        ep->net_ato_chnl = i;
+                                }
                         }
                 }
 
@@ -212,6 +202,12 @@ int lcp_ep_init_config(lcp_manager_h mngr, lcp_ep_h ep)
 		                                           attr.iface.cap.rndv.max_get_zcopy);
 		ep->config.rndv.max_put_zcopy = mpc_common_min(ep->config.rndv.max_put_zcopy,
 		                                           attr.iface.cap.rndv.max_put_zcopy);
+                if (ep->am_chnl == LCP_NULL_CHANNEL) {
+                        ep->am_chnl = i;
+                }
+                if (curr_prio >= prev_prio) {
+                        MPC_BITMAP_SET(ep->am_bmap, i);
+                }
 
 		if(attr.iface.cap.flags & LCR_IFACE_CAP_RMA)
 		{
@@ -224,13 +220,19 @@ int lcp_ep_init_config(lcp_manager_h mngr, lcp_ep_h ep)
 			                                          attr.iface.cap.rma.max_get_bcopy);
 			ep->config.rma.max_get_zcopy = mpc_common_min(ep->config.rma.max_get_zcopy,
 			                                          attr.iface.cap.rma.max_get_zcopy);
+                        if (ep->rma_chnl == LCP_NULL_CHANNEL) {
+                                ep->rma_chnl = i;
+                        }
+                        if (curr_prio >= prev_prio) {
+                                MPC_BITMAP_SET(ep->rma_bmap, i);
+                        }
 		}
+
+                prev_prio = curr_prio;
 	}
 
 	//FIXME: should it be two distinct thresholds? One for tag, one for am?
 	ep->config.rndv_threshold = ep->config.am.max_zcopy;
-
-	ep->cc = ep->next_cc = prio_idx;
 
 	return MPC_LOWCOMM_SUCCESS;
 }
@@ -284,16 +286,20 @@ err:
 //TODO: force homogeneity of transport for one endpoint. Select transport with
 //      highest priority, then build transport endpoints for all allocated
 //      devices.
-int lcp_ep_init_channels(lcp_manager_h mngr, lcp_ep_h ep)
+static int lcp_ep_init_channels(lcp_manager_h mngr, lcp_ep_h ep, 
+                                unsigned flags)
 {
-	int rc, i;
+	int rc = MPC_LOWCOMM_SUCCESS, i;
         lcp_context_h ctx = mngr->ctx;
-	int selected_prio = -1;
+        int net_atomics = 0;
+        unsigned net_atomics_mask = LCR_IFACE_CAP_REMOTE | LCR_IFACE_CAP_ATOMICS;
 
-	//NOTE: by default all resources are used except if communications are
-	//      shared, in which cases only shared memory resource is used
 	//NOTE: ctx->resources are sorted in descending order of priority
 	//      already.
+        //NOTE: lcp_context initialization already has checked that there cant be
+        //      heterogeneous rails. As a consequence, interfaces contained in
+        //      manager at this point are the composable ones and only one
+        //      non-composable.
 	//NOTE: rail homogeneity implies only one type of rail may be chosen.
 	//      With multirail, this is true only if two heterogeneous rails
 	//      have different priority. As a consequence, having heterogenous
@@ -303,34 +309,33 @@ int lcp_ep_init_channels(lcp_manager_h mngr, lcp_ep_h ep)
 	{
 		_mpc_lowcomm_endpoint_t *lcr_ep;
                 sctk_rail_info_t        *iface = mngr->ifaces[i];
+                lcr_rail_attr_t          attr;
+                iface->iface_get_attr(iface, &attr);
 
 		/* If uid cannot be reached through this interface, continue */
                 //FIXME: note that is is only useful for TBSM, for now any other
                 //       driver will return true but it does not mean that the
                 //       connection will be successful.
-		if(!iface->iface_is_reachable(iface, ep->uid) )
-		{
+		if(!iface->iface_is_reachable(iface, ep->uid) ) {
 			continue;
 		}
 
-		/* Set selected rail priority */
-		if(iface->priority >= selected_prio)
-		{
-			selected_prio = iface->priority;
-		}
-		else
-		{
-			/* Homogeneous rails with highest priority have been
-			 * selected */
-			break;
-		}
 		/* Resource can be used for communication. */
 		MPC_BITMAP_SET(ep->avail_map, i);
 		/* Flag resource as used to enable polling on it */
 		ctx->resources[i].used = 1;
 
+                if (flags & LCP_EP_REQUIRE_NET_ATOMICS) {
+                        /* Check weither interface can perform network atomics
+                         * if it is required. */
+                        if ((attr.iface.cap.flags & net_atomics_mask) == 
+                            net_atomics_mask) {
+                                net_atomics = 1;
+                        }
+                }
 
-		mpc_common_debug("Route to %llu using %s", ep->uid, iface->network_name);
+		mpc_common_debug("LCP EP: route to %llu using %s", ep->uid, 
+                                 iface->network_name);
 
 		/* Check transport endpoint availability */
                 //NOTE: For connection-oriented transport (TCP for example), low
@@ -345,8 +350,7 @@ int lcp_ep_init_channels(lcp_manager_h mngr, lcp_ep_h ep)
 			/* Get newly created endpoint */
 			lcr_ep = sctk_rail_get_any_route_to_process(iface,
 			                                            ep->uid);
-			if(lcr_ep == NULL)
-			{
+			if(lcr_ep == NULL) {
 				continue;
 			}
 		}
@@ -363,28 +367,25 @@ int lcp_ep_init_channels(lcp_manager_h mngr, lcp_ep_h ep)
 		/* Transport endpoint is connected */
 		MPC_BITMAP_SET(ep->conn_map, i);
 	}
+        
+        if ((flags & LCP_EP_REQUIRE_NET_ATOMICS) && !net_atomics) {
+                mpc_common_debug_warning("LCP EP: endpoint created with NET_ATOMICS "
+                                         "requirements but no interface supports it.");
+        }
+                
 
 	/* Protocol endpoint connected only if there are available interfaces
 	 * and all are connected */
 	int equal = !mpc_bitmap_is_zero(ep->avail_map) &&
 	            MPC_BITMAP_AND(ep->conn_map, ep->avail_map);
+        ep->state     = !equal ? LCP_EP_FLAG_CONNECTING : LCP_EP_FLAG_CONNECTED;
 
         //FIXME: num_chnls is set to num_iface since in many places a loop need
         //       to be done on such range, channel are used depending on the
         //       connection bitmap. Should be adapted...
         ep->num_chnls = mngr->num_ifaces;
 
-	if(!equal)
-	{
-		ep->state = LCP_EP_FLAG_CONNECTING;
-	}
-	else
-	{
-		ep->state = LCP_EP_FLAG_CONNECTED;
-	}
-	mpc_common_debug("LCP: ep state=%s.", ep->state ? "CONNECTING" : "CONNECTED");
-
-	rc = MPC_LOWCOMM_SUCCESS;
+	mpc_common_debug("LCP EP: ep state=%s.", !equal ? "CONNECTING" : "CONNECTED");
 
 	return rc;
 }
@@ -452,7 +453,7 @@ int lcp_ep_progress_conn(lcp_manager_h mngr, lcp_ep_h ep)
  * @return int MPI_SUCCESS in case of success
  */
 int lcp_context_ep_create(lcp_manager_h mngr, lcp_ep_h *ep_p,
-                          uint64_t uid, __UNUSED__ unsigned flags)
+                          uint64_t uid, unsigned flags)
 {
 	int      rc;
 	lcp_ep_h ep;
@@ -468,7 +469,7 @@ int lcp_context_ep_create(lcp_manager_h mngr, lcp_ep_h *ep_p,
 	ep->mngr = mngr;
 
 	/* Create all transport endpoints */
-	rc = lcp_ep_init_channels(mngr, ep);
+	rc = lcp_ep_init_channels(mngr, ep, flags);
 	if(rc != MPC_LOWCOMM_SUCCESS)
 	{
 		goto err_unalloc;
@@ -486,8 +487,10 @@ int lcp_context_ep_create(lcp_manager_h mngr, lcp_ep_h *ep_p,
 	}
 
 	*ep_p = ep;
-	mpc_common_debug_info("LCP: created ep dest=%llu, dst_tsk=%d.",
-	                      uid, uid);
+	mpc_common_debug_info("LCP: created ep. dest=%llu, dst_tsk=%d, "
+                              "am_map=%x, rma_map=%x, tag_map=%x",
+	                      uid, uid, ep->am_bmap, ep->rma_bmap, 
+                              ep->tag_bmap);
 
 	return rc;
 

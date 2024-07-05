@@ -97,10 +97,14 @@ struct lcp_ep {
         lcp_ep_config_t config;
         unsigned cap; /* Endpoint capabilities. */
 
-        lcp_chnl_idx_t tag_chnl; /* Channel for tag offload */
+        lcp_chnl_idx_t am_chnl; /* Priority channel for AM. */
+        bmap_t         am_bmap; /* Send map for AM. */
+        lcp_chnl_idx_t tag_chnl; /* Priority channel for tag offload */
+        bmap_t         tag_bmap; /* Send map for TAG. */
+        lcp_chnl_idx_t rma_chnl; /* Channel for RMA operations */
+        bmap_t         rma_bmap; /* Send map for RMA. */
         lcp_chnl_idx_t ato_chnl; /* Channel for Atomic operations */
-        lcp_chnl_idx_t cc; /* Round-Robin Communication Chanel */
-        lcp_chnl_idx_t next_cc; /* Next cc to be used */
+        lcp_chnl_idx_t net_ato_chnl; /* Channel for Network Atomic operations */
 
         lcp_ep_flags_t flags;
         int state;
@@ -120,6 +124,6 @@ int lcp_context_ep_create(lcp_manager_h ctx, lcp_ep_h *ep_p,
 			  uint64_t uid, unsigned flags);
 int lcp_ep_progress_conn(lcp_manager_h ctx, lcp_ep_h ep);
 void lcp_ep_delete(lcp_ep_h ep);
-int lcp_ep_get_next_cc(lcp_ep_h ep);
+int lcp_ep_get_next_cc(lcp_ep_h ep, lcp_chnl_idx_t cc, bmap_t send_map);
 
 #endif

@@ -269,7 +269,19 @@ int lcp_progress(lcp_manager_h mngr);
 
 /**
  * @ingroup LCP_EP
- * @brief Create LCP Endpoint.
+ * @brief LCP Endpoint flags. 
+ *
+ * Flags to specify special endpoint capabilities.
+ *
+ */
+
+enum {
+        LCP_EP_REQUIRE_NET_ATOMICS = MPC_BIT(0),
+};
+
+/**
+ * @ingroup LCP_EP
+ * @brief Create LCP Endpoint. 
  *
  * Instanciate a protocol endpoint. Upon return, connection will have been
  * started and the endpoint can be used directly with communication primitives.
@@ -329,16 +341,17 @@ enum {
 //       just a functionality (eg LCP_REQUEST_TRY_OFFLOAD or
 //       LCP_REQUEST_TAG_SYNC).
 //TODO: add a flags field in lcp_request_param_t
-        LCP_REQUEST_TRY_OFFLOAD   = MPC_BIT(0), /**< Try offload send mask */
-        LCP_REQUEST_USER_DATA     = MPC_BIT(1), /**< User data mask */
-        LCP_REQUEST_USER_REQUEST  = MPC_BIT(2), /**< User request mask */
-        LCP_REQUEST_TAG_SYNC      = MPC_BIT(3), /**< Sync request mask */
-        LCP_REQUEST_AM_SYNC       = MPC_BIT(4), /**< AM sync request mask */
-        LCP_REQUEST_SEND_CALLBACK = MPC_BIT(5), /**< Send callback mask */ 
-        LCP_REQUEST_RECV_CALLBACK = MPC_BIT(6), /**< Recv callback mask */ 
-        LCP_REQUEST_REPLY_BUFFER  = MPC_BIT(7), /**< Result buffer for Atomics */
-        LCP_REQUEST_USER_MEMH     = MPC_BIT(8), /**< User-provided local Memory handle */
-        LCP_REQUEST_USER_EPH      = MPC_BIT(9), /**< User-provided Endpoint handle */
+        LCP_REQUEST_TRY_OFFLOAD     = MPC_BIT(0),  /**< Try offload send mask */
+        LCP_REQUEST_USER_DATA       = MPC_BIT(1),  /**< User data mask */
+        LCP_REQUEST_USER_REQUEST    = MPC_BIT(2),  /**< User request mask */
+        LCP_REQUEST_TAG_SYNC        = MPC_BIT(3),  /**< Sync request mask */
+        LCP_REQUEST_AM_SYNC         = MPC_BIT(4),  /**< AM sync request mask */
+        LCP_REQUEST_SEND_CALLBACK   = MPC_BIT(5),  /**< Send callback mask */ 
+        LCP_REQUEST_RECV_CALLBACK   = MPC_BIT(6),  /**< Recv callback mask */ 
+        LCP_REQUEST_REPLY_BUFFER    = MPC_BIT(7),  /**< Result buffer for Atomics */
+        LCP_REQUEST_USER_MEMH       = MPC_BIT(8),  /**< User-provided local Memory handle */
+        LCP_REQUEST_USER_EPH        = MPC_BIT(9),  /**< User-provided Endpoint handle */
+        LCP_REQUEST_USE_NET_ATOMICS = MPC_BIT(10), /**< Force the use network atomics */
 };
 
 /**

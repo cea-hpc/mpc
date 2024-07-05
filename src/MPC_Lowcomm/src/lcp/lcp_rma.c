@@ -117,13 +117,12 @@ static void lcp_flush_request_complete(lcr_completion_t *comp)
  * @param req request to put
  * @return int MPC_LOWCOMM_SUCCESS in case of success
  */
-static int lcp_rma_progress_bcopy(lcp_request_t *req)
+__UNUSED__ static int lcp_rma_progress_bcopy(lcp_request_t *req)
 {
         int rc = MPC_LOWCOMM_SUCCESS;
         int payload_size;
         lcp_ep_h ep = req->send.ep;
-        lcp_chnl_idx_t cc = lcp_ep_get_next_cc(ep); //FIXME: not sure this works
-                                                    //       in multirail
+        lcp_chnl_idx_t cc = ep->rma_chnl; 
 
         not_implemented();
 	mpc_common_debug_info("LCP: send put bcopy remote addr=%p, dest=%d",
@@ -176,8 +175,7 @@ static int lcp_rma_progress_zcopy(lcp_request_t *req)
         ep        = req->send.ep;
         remaining = req->state.remaining;
         offset    = req->state.offset;
-
-        cc = lcp_ep_get_next_cc(ep);
+        cc        = ep->rma_chnl;
 
         /* Get the fragment length from rail attribute */
         //NOTE: max_{put,get}_zcopy might not be optimal.
@@ -221,7 +219,8 @@ static int lcp_rma_progress_zcopy(lcp_request_t *req)
 
                 offset  += length; remaining -= length;
 
-                cc = lcp_ep_get_next_cc(ep);
+                cc = lcp_ep_get_next_cc(ep, cc, ep->rma_bmap);
+                assert(cc != LCP_NULL_CHANNEL);
         }
 
         return rc;
@@ -251,12 +250,12 @@ static inline int lcp_rma_start(lcp_ep_h ep, lcp_request_t *req)
                 }
 
                 rc = lcp_mem_reg_from_map(req->mngr, req->state.lmem, 
-                                          ep->conn_map, req->send.buffer, 
+                                          ep->rma_bmap, req->send.buffer, 
                                           req->send.length, 
                                           LCR_IFACE_REGISTER_MEM_DYN,
                                           &req->state.lmem->bm);
 
-                assert(mpc_bitmap_equal(ep->conn_map, req->state.lmem->bm));
+                assert(mpc_bitmap_equal(ep->rma_bmap, req->state.lmem->bm));
         } else {
                 //TODO: check memory and rma call validity.
         } 
@@ -354,13 +353,24 @@ static int lcp_flush_manager_nb(lcp_request_t *req)
         int i;
         sctk_rail_info_t *iface;
         lcr_rail_attr_t attr;
+
         
+        //FIXME: code a better way to get the number of interface that support
+        //       RMA.
         for (i = 0; i < req->mngr->num_ifaces; i++) {
                 iface = req->mngr->ifaces[i];
 
                 iface->iface_get_attr(iface, &attr);
                 if (attr.iface.cap.flags & LCR_IFACE_CAP_RMA) {
                         req->state.comp.count++;
+                }
+        }
+        
+        for (i = 0; i < req->mngr->num_ifaces; i++) {
+                iface = req->mngr->ifaces[i];
+
+                iface->iface_get_attr(iface, &attr);
+                if (attr.iface.cap.flags & LCR_IFACE_CAP_RMA) {
                         rc = lcp_do_flush_iface(iface, &req->state.comp, 0);
 
                         if (rc != MPC_LOWCOMM_SUCCESS) {
@@ -378,26 +388,22 @@ static int lcp_flush_ep_nb(lcp_request_t *req)
         int i, rc = MPC_LOWCOMM_SUCCESS;
         lcp_ep_h ep = req->send.ep;
         sctk_rail_info_t *iface;
-        lcr_rail_attr_t attr;
 
         //NOTE: at least on channel must support RMA flush.
         assert(req->send.ep->cap & LCR_IFACE_CAP_RMA);
 
+        req->state.comp.count = mpc_bitmap_popcount(ep->rma_bmap);
+
         for (i = 0; i < ep->num_chnls; i++) {
-                if (!MPC_BITMAP_GET(ep->conn_map, i)) {
+                if (!MPC_BITMAP_GET(ep->rma_bmap, i)) {
                         continue;
                 }
 
                 iface = ep->lct_eps[i]->rail;
-
-                iface->iface_get_attr(iface, &attr);
-                if (attr.iface.cap.flags & LCR_IFACE_CAP_RMA) {
-                        req->state.comp.count++;
-                        rc = lcp_do_flush_ep(iface, ep->lct_eps[i], 
-                                          &req->state.comp, 0);
-                        if (rc != MPC_LOWCOMM_SUCCESS) {
-                                goto err;
-                        }
+                rc = lcp_do_flush_ep(iface, ep->lct_eps[i], 
+                                     &req->state.comp, 0);
+                if (rc != MPC_LOWCOMM_SUCCESS) {
+                        goto err;
                 }
         }
 
@@ -410,12 +416,13 @@ static int lcp_flush_mem_nb(lcp_request_t *req)
         int i, rc = MPC_LOWCOMM_SUCCESS;
         lcp_mem_h mem = req->state.lmem;
 
+        req->state.comp.count = mpc_bitmap_popcount(mem->bm);
+
         for (i = 0; i < req->mngr->num_ifaces; i++) {
                 if (!MPC_BITMAP_GET(mem->bm, i)) {
                         continue;
                 }
 
-                req->state.comp.count++;
                 rc = lcp_do_flush_mem(req->mngr->ifaces[i], &mem->mems[i], 
                                   &req->state.comp, 0);
                 if (rc != MPC_LOWCOMM_SUCCESS) {
@@ -433,28 +440,23 @@ static int lcp_flush_mem_ep_nb(lcp_request_t *req)
         lcp_ep_h ep = req->send.ep;
         lcp_mem_h mem = req->state.lmem;
         sctk_rail_info_t *iface;
-        lcr_rail_attr_t attr;
+        bmap_t flush_map = mpc_bitmap_copy_and(ep->rma_bmap, mem->bm);
 
         //NOTE: at least one channel must support RMA flush.
         assert(req->send.ep->cap & LCR_IFACE_CAP_RMA);
 
         for (i = 0; i < req->mngr->num_ifaces; i++) {
-                if (!MPC_BITMAP_GET(ep->conn_map, i) ||
-                    !MPC_BITMAP_GET(mem->bm, i) ) {
+                if (!MPC_BITMAP_GET(flush_map, i)) {
                         continue;
                 }
 
                 iface = ep->lct_eps[i]->rail;
 
-                iface->iface_get_attr(iface, &attr);
-                if (attr.iface.cap.flags & LCR_IFACE_CAP_RMA) {
-                        req->state.comp.count++;
-                        rc = lcp_do_flush_mem_ep(iface, ep->lct_eps[i], 
-                                          &mem->mems[i], &req->state.comp, 
-                                          0);
-                        if (rc != MPC_LOWCOMM_SUCCESS) {
-                                goto err;
-                        }
+                rc = lcp_do_flush_mem_ep(iface, ep->lct_eps[i], 
+                                         &mem->mems[i], &req->state.comp, 
+                                         0);
+                if (rc != MPC_LOWCOMM_SUCCESS) {
+                        goto err;
                 }
         }
 
@@ -473,7 +475,9 @@ static lcp_status_ptr_t lcp_request_send_flush(lcp_request_t *req)
                 break;
         case MPC_LOWCOMM_NO_RESOURCE:
                 //TODO: implement thread-safe pending queue
-                mpc_queue_push(&req->mngr->pending_queue, &req->queue);
+                mpc_common_debug_error("LCP RMA: no resource flush "
+                                       "operation not implemented.");
+                not_implemented();
                 ret = req + 1;
                 break;
         case MPC_LOWCOMM_IN_PROGRESS:

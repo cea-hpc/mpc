@@ -145,7 +145,7 @@ int lcp_rndv_rma_progress(lcp_request_t *rndv_req)
         remaining = rndv_req->state.remaining;
         offset    = rndv_req->state.offset;
 
-        cc = lcp_ep_get_next_cc(ep);
+        cc = ep->rma_chnl;
 
         ep->lct_eps[cc]->rail->iface_get_attr(ep->lct_eps[cc]->rail, &attr);
         //FIXME: to much indirection to get rndv config.
@@ -159,7 +159,8 @@ int lcp_rndv_rma_progress(lcp_request_t *rndv_req)
         while (remaining > 0) {
 
                 if (!MPC_BITMAP_GET(rkey->bm, cc)) {
-                        cc = lcp_ep_get_next_cc(ep);
+                        cc = lcp_ep_get_next_cc(ep, cc, ep->rma_bmap);
+                        assert(cc != LCP_NULL_CHANNEL);
                         continue;
                 }
 
@@ -192,7 +193,7 @@ int lcp_rndv_rma_progress(lcp_request_t *rndv_req)
                 }
 
                 offset += length; remaining -= length;
-                cc = lcp_ep_get_next_cc(ep);
+                cc = lcp_ep_get_next_cc(ep, cc, ep->rma_bmap);
         }
 
         return rc;
@@ -214,7 +215,7 @@ int lcp_rndv_register_buffer(lcp_request_t *rndv_req)
                          rndv_req);
         /* Register memory. */
         rc = lcp_mem_reg_from_map(rndv_req->mngr, rndv_req->state.lmem,
-                                  rndv_req->send.ep->conn_map,
+                                  rndv_req->send.ep->rma_bmap,
                                   rndv_req->send.buffer, 
                                   rndv_req->send.length,
                                   LCR_IFACE_REGISTER_MEM_DYN,
@@ -222,7 +223,7 @@ int lcp_rndv_register_buffer(lcp_request_t *rndv_req)
         if (rc != MPC_LOWCOMM_SUCCESS) {
                 goto err;
         }
-        assert(mpc_bitmap_equal(rndv_req->send.ep->conn_map, 
+        assert(mpc_bitmap_equal(rndv_req->send.ep->rma_bmap, 
                                 rndv_req->state.lmem->bm));
 
         assume(rndv_req->state.offset == 0);
@@ -245,7 +246,7 @@ void lcp_rndv_complete(lcr_completion_t *comp)
         if (rndv_req->state.remaining == 0) {
                 lcp_ep_h ep = rndv_req->send.ep;
                 lcp_request_t *super = rndv_req->super;
-                lcp_chnl_idx_t cc = lcp_ep_get_next_cc(ep);
+                lcp_chnl_idx_t cc = ep->am_chnl;
 
                 mpc_common_debug("LCP RNDV: send fin. uid=%llu, rndv req=%p",
                                  ep->uid, rndv_req);
@@ -337,7 +338,7 @@ static int lcp_rndv_progress_rtr(lcp_request_t *rndv_req)
 {
         int rc, payload;
         lcp_ep_h ep        = rndv_req->send.ep;
-        lcp_chnl_idx_t cc  = lcp_ep_get_next_cc(ep);
+        lcp_chnl_idx_t cc  = ep->am_chnl;
 
         mpc_common_debug("LCP RNDV: progress rtr request=%p",
                          rndv_req);

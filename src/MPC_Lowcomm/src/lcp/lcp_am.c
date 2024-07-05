@@ -183,7 +183,7 @@ static int lcp_send_rndv_am_rts_progress(lcp_request_t *req)
         int rc = MPC_LOWCOMM_SUCCESS;
         ssize_t payload_size;
         lcp_ep_h ep = req->send.ep;
-        lcp_chnl_idx_t cc = lcp_ep_get_next_cc(ep);
+        lcp_chnl_idx_t cc = ep->am_chnl;
 
         mpc_common_debug("LCP AM: start am rndv. src=%d, dest=%d, am_id=%d, "
                          "hdr_size=%d", req->send.am.src_uid, ep->uid,
