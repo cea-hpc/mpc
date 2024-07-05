@@ -30,6 +30,7 @@
 /* #                                                                      # */
 /* ######################################################################## */
 #include "omp_intel.h"
+#include "mpc_keywords.h"
 #include "mpc_omp_abi.h"
 #include "mpc_common_debug.h"
 #include "mpcomp_core.h"
@@ -2878,7 +2879,7 @@ kmp_task_t *__kmpc_omp_target_task_alloc(ident_t *loc_ref, kmp_int32 gtid,
                                          size_t sizeof_kmp_task_t,
                                          size_t sizeof_shareds,
                                          kmp_routine_entry_t task_entry,
-                                         kmp_int64 device_id) {
+                                         __UNUSED__ kmp_int64 device_id) {
 
   	return __kmpc_omp_task_alloc(loc_ref, gtid, flags, sizeof_kmp_task_t,
                                sizeof_shareds, task_entry);
@@ -3566,7 +3567,7 @@ void __kmpc_threadprivate_register_vec( __UNUSED__ ident_t *loc, void *data,
 	}
 }
 
-omp_event_handle_t __kmpc_task_allow_completion_event(ident_t * loc_ref, int gtid, kmp_task_t * kmp_task)
+omp_event_handle_t __kmpc_task_allow_completion_event(__UNUSED__ ident_t * loc_ref, __UNUSED__ int gtid, kmp_task_t * kmp_task)
 {
     mpc_omp_task_t * task = ((mpc_omp_task_t *) kmp_task) - 1;
     mpc_omp_task_set_property(&(task->property), MPC_OMP_TASK_PROP_DETACH);
@@ -3576,12 +3577,12 @@ omp_event_handle_t __kmpc_task_allow_completion_event(ident_t * loc_ref, int gti
     return hdl;
 }
 
-void **__kmpc_omp_get_target_async_handle_ptr(kmp_int32 gtid) {
+void **__kmpc_omp_get_target_async_handle_ptr(__UNUSED__ kmp_int32 gtid) {
         // TODO: implement this to interop. with libomptarget
         return NULL;
 }
 
-bool __kmpc_omp_has_task_team(kmp_int32 gtid) {
+bool __kmpc_omp_has_task_team(__UNUSED__ kmp_int32 gtid) {
 
         mpc_omp_thread_t * thread = (mpc_omp_thread_t *)mpc_omp_tls;
         assert(thread);
