@@ -1243,7 +1243,7 @@ int td_check_reg_offsets (const td_thragent_t *ta) {
   return ok ;
 }
 
-td_thr_state_e td_thr_getRunningState (const td_thrhandle_t *th, lwpid_t *lid_p, td_thr_state_e *state) {
+td_err_e td_thr_getRunningState (const td_thrhandle_t *th, lwpid_t *lid_p, td_thr_state_e *state) {
   ps_err_e ps_err ;
   lwpid_t lid ;
   tdb_thread_debug_t *thread_p = (tdb_thread_debug_t *) th->th_unique ;
