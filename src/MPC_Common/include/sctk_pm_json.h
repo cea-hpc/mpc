@@ -59,6 +59,8 @@ typedef struct json_t_s
 	volatile char locked;
 }json_t;
 
+/* NOLINTBEGIN(clang-diagnostic-unused-function): False positives */
+
 static inline void json_lock( json_t *json )
 {
 	if( !json )
@@ -292,6 +294,11 @@ static inline void json_object_iterator_init( json_object_iterator *it, json_t *
 
 }
 
+/*
+ * NOLINTBEGIN(clang-diagnostic-unneeded-internal-declaration):
+ * This function is actually used, but the recursive
+ * call somehow triggers this lint.
+ */
 static inline int json_object_iterator_next( json_object_iterator *it )
 {
 	if( !it->ht )
@@ -326,6 +333,8 @@ static inline int json_object_iterator_next( json_object_iterator *it )
 	}
 
 }
+
+/* NOLINTEND(clang-diagnostic-unneeded-internal-declaration) */
 
 static inline char * json_object_iterator_key( json_object_iterator *it )
 {
@@ -368,6 +377,8 @@ static inline void json_print( json_t * json, json_format mode )
 {
 	json_dump_f( stdout , json, mode );
 }
+
+/* NOLINTEND(clang-diagnostic-unused-function) */
 
 /*
   PARSING
