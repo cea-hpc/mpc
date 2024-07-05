@@ -464,7 +464,9 @@ static inline lcp_status_ptr_t lcp_request_send(lcp_request_t *req)
         if (req->send.ep->state == LCP_EP_FLAG_CONNECTING) {
                 lcp_ep_progress_conn(req->mngr, req->send.ep);
                 if (req->send.ep->state == LCP_EP_FLAG_CONNECTING) {
-                        mpc_queue_push(&req->mngr->pending_queue, &req->queue);
+                        mpc_common_debug_error("LCP REQ: pending endpoint "
+                                               "connection not implemented.");
+                        not_implemented();
                         return MPC_LOWCOMM_SUCCESS;
                 }
         }
@@ -478,7 +480,9 @@ static inline lcp_status_ptr_t lcp_request_send(lcp_request_t *req)
                 break;
         case MPC_LOWCOMM_NO_RESOURCE:
                 //TODO: implement thread-safe pending queue
-                mpc_queue_push(&req->mngr->pending_queue, &req->queue);
+                mpc_common_debug_error("LCP REQ: no resource managment not "
+                                       "implemented yet.");
+                not_implemented();
                 ret = req + 1;
                 break;
         case MPC_LOWCOMM_IN_PROGRESS:
