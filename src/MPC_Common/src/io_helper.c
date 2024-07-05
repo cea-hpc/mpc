@@ -251,7 +251,6 @@ size_t mpc_common_io_noalloc_fwrite ( const void *ptr, size_t size, size_t nmemb
 {
 	int fd;
 	size_t tmp;
-	fd = 2;
 
 	if ( stream == stderr )
 	{
