@@ -2176,6 +2176,6 @@ td_err_e td_thr_tlsbase (const td_thrhandle_t *th,
     return TD_ERR;
   }
 
-  fprintf(stderr,"ERROR in td_thr_tlsbase %p %d tls %p %p\n",th,__modid,tls, tls_level);
+  fprintf(stderr,"ERROR in td_thr_tlsbase %p %lu tls %p %p\n",th,__modid,tls, tls_level);
   return TD_OK;
 }
