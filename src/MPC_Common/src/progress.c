@@ -86,9 +86,15 @@ int mpc_common_progress_unregister(progress_callback_func_t func)
 
         mpc_common_spinlock_lock(&progress_lock);
 
+        //FIXME: there is a vulnerability here since another thread might be
+        //       polling at the same time. Callback pointer should be loaded
+        //       atomically.
         for (i = callback_idx; i < num_callbacks - 1; i++) {
                 callbacks[i] = callbacks[i + 1];
         }
+        num_callbacks--;
+
+        mpc_common_spinlock_unlock(&progress_lock);
 
         return 0;
 }
