@@ -800,8 +800,8 @@ int lcr_ptl_mem_activate(lcr_ptl_rail_info_t *srail,
                         PTL_ME_EVENT_LINK_DISABLE   | 
                         PTL_ME_EVENT_UNLINK_DISABLE |
                         PTL_ME_EVENT_SUCCESS_DISABLE,
-                .start       = (void *)start,
-                .length      = length 
+                .start       = 0,
+                .length      = PTL_SIZE_MAX 
         };
 
         lcr_ptl_chk(PtlMEAppend(srail->net.nih,

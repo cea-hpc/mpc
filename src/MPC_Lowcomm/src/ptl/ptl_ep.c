@@ -624,8 +624,11 @@ int lcr_ptl_send_put_zcopy(_mpc_lowcomm_endpoint_t *ep,
         op->rma.rkey          = rctx->mem;
         op->rma.match         = rctx->match;
         //FIXME: use a macro to convert from address to offset, might be clearer.
+        //FIXME: for coherency, remove this offset computation since in any
+        //       case, local memory is always Dynamic. As a consequence, the
+        //       offset is always a global address.
         op->rma.local_offset  = local_addr - lctx->mem->start;
-        op->rma.remote_offset = remote_addr - (uint64_t)rctx->start;
+        op->rma.remote_offset = remote_addr;
 
         /* Increment operation counts. */
         mpc_common_spinlock_lock(&lctx->mem->lock);
@@ -689,11 +692,12 @@ int lcr_ptl_send_get_zcopy(_mpc_lowcomm_endpoint_t *ep,
                                 txq);
 
         op->rma.lkey          = lctx->mem;
+        //FIXME: unused field.
         op->rma.rkey          = rctx->mem;
         op->rma.match         = rctx->match;
         //FIXME: use a macro to convert from address to offset, might be clearer.
         op->rma.local_offset  = local_addr - lctx->mem->start;
-        op->rma.remote_offset = remote_addr - (uint64_t)rctx->start;
+        op->rma.remote_offset = remote_addr;
 
         mpc_common_spinlock_lock(&lctx->mem->lock);
         //NOTE: Operation identifier and Put must be done atomically to make
