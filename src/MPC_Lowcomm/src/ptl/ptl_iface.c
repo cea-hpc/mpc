@@ -992,6 +992,9 @@ int lcr_ptl_get_attr(sctk_rail_info_t *rail,
         attr->iface.cap.rma.max_get_zcopy   = config->max_put;
         attr->iface.cap.rma.min_frag_size   = config->min_frag_size;
 
+        attr->iface.cap.ato.max_post_size   = config->max_limits.max_atomic_size;
+        attr->iface.cap.ato.max_fetch_size  = config->max_limits.max_fetch_atomic_size;
+
         attr->iface.cap.flags               = rail->cap;
 
         attr->mem.cap.max_reg               = PTL_SIZE_MAX;
