@@ -363,8 +363,7 @@ int lcr_tbsm_iface_init(sctk_rail_info_t *iface)
         mpc_common_spinlock_init(&(tbsm_iface->conn_lock), 0);
 
         /* Init capabilities */
-        iface->cap = LCR_IFACE_CAP_RMA |
-                LCR_IFACE_CAP_REMOTE;
+        iface->cap = LCR_IFACE_CAP_RMA;
 
         tbsm_iface->max_iov        = tbsm_info.max_iov;
         tbsm_iface->bcopy_buf_size = tbsm_info.bcopy_buf_size;
