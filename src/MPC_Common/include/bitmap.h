@@ -105,4 +105,25 @@ static inline int mpc_bitmap_equal(bmap_t a, bmap_t b) {
 }
 /* NOLINTEND(clang-diagnostic-unused-function) */
 
+static inline int mpc_bitmap_popcount(bmap_t bitmap) {
+        int count = 0;
+        size_t word_index;
+        _MPC_BITMAP_FOR_EACH_WORD(bitmap, word_index) {
+                while (bitmap.bits[word_index]) {
+                        bitmap.bits[word_index] &= (bitmap.bits[word_index] - 1);
+                        count++;
+                }
+        }
+        return count;
+}
+
+static inline bmap_t mpc_bitmap_copy_and(bmap_t a, bmap_t b) {
+        size_t word_index;
+        bmap_t out;
+        _MPC_BITMAP_FOR_EACH_WORD(a, word_index) {
+                out.bits[word_index] = a.bits[word_index] & b.bits[word_index];
+        }
+        return out;
+}
+
 #endif 
