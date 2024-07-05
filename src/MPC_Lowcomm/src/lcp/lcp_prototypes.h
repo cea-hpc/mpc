@@ -37,6 +37,8 @@
 
 #include <rail.h>
 
+/* NOLINTBEGIN(clang-diagnostic-unused-function): False positives */
+
 static inline int lcp_send_do_am_bcopy(_mpc_lowcomm_endpoint_t *lcr_ep,
                                        uint8_t am_id,
                                        lcr_pack_callback_t pack,
@@ -139,5 +141,7 @@ static inline int lcp_iface_do_progress(sctk_rail_info_t *rail)
 {
         return rail->iface_progress(rail);
 }
+
+/* NOLINTEND(clang-diagnostic-unused-function) */
 
 #endif
