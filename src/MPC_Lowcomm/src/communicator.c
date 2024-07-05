@@ -1056,8 +1056,6 @@ int mpc_lowcomm_communicator_scan(void (*callback)(mpc_lowcomm_communicator_t co
 
 	MPC_HT_ITER(&__id_factory.id_table, tmp)
 	{
-		mpc_lowcomm_communicator_t pcomm = (mpc_lowcomm_communicator_t)tmp;
-
 		(callback)(tmp, arg);
 	}
 	MPC_HT_ITER_END(&__id_factory.id_table)
