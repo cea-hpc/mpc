@@ -1603,7 +1603,7 @@ lcp_ep_h mpc_lowcomm_communicator_lookup(mpc_lowcomm_communicator_t comm, int ra
         mpc_lowcomm_communicator_t tcomm = __mpc_lowcomm_communicator_from_predefined(comm);
 
         if (mpc_lowcomm_communicator_is_intercomm(comm)) {
-                return tcomm->left_comm->group->eps[rank];
+                return tcomm->right_comm->group->eps[rank];
         } else {
                 return tcomm->group->eps[rank];
         }
@@ -1615,7 +1615,7 @@ void mpc_lowcomm_communicator_add_ep(mpc_lowcomm_communicator_t comm, int rank, 
 
         if (mpc_lowcomm_communicator_is_intercomm(tcomm)) {
                 assert(rank >= 0 && rank < (int)mpc_lowcomm_group_size(tcomm->left_comm->group));        
-                tcomm->left_comm->group->eps[rank] = ep;
+                tcomm->right_comm->group->eps[rank] = ep;
         } else {
                 assert(rank >= 0 && rank < (int)mpc_lowcomm_group_size(tcomm->group));        
                 tcomm->group->eps[rank] = ep;
@@ -2361,6 +2361,9 @@ mpc_lowcomm_communicator_t mpc_lowcomm_communicator_intercomm_create(const mpc_l
 		{
 			mpc_lowcomm_request_t reqs[2];
 
+                        mpc_lowcomm_request_init(&reqs[0], peer_comm, REQUEST_SEND, 
+                                                 local_comm_size * sizeof(_mpc_lowcomm_group_rank_descriptor_t), 
+                                                 NULL, NULL, 0);
 			mpc_lowcomm_isend(remote_leader,
 			                  left_comm->group->ranks,
 			                  local_comm_size * sizeof(_mpc_lowcomm_group_rank_descriptor_t),
@@ -2368,6 +2371,9 @@ mpc_lowcomm_communicator_t mpc_lowcomm_communicator_intercomm_create(const mpc_l
 			                  peer_comm,
 			                  &reqs[0]);
 
+                        mpc_lowcomm_request_init(&reqs[1], peer_comm, REQUEST_RECV, 
+                                                 local_comm_size * sizeof(_mpc_lowcomm_group_rank_descriptor_t), 
+                                                 NULL, NULL, 0);
 			mpc_lowcomm_irecv(remote_leader,
 			                  remote_descriptors,
 			                  right_comm_size * sizeof(_mpc_lowcomm_group_rank_descriptor_t),
