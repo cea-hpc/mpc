@@ -819,6 +819,7 @@ int lcr_ptl_mem_activate(lcr_ptl_rail_info_t *srail,
         mem->start = (uint64_t)start;
         mem->lifetime = lt;
         mpc_queue_init_head(&mem->pending_flush);
+        mpc_common_spinlock_init(&mem->lock, 0);
         mem->op_count = 0;
 
         mem->txqt  = sctk_malloc(LCR_PTL_MAX_EPS * sizeof(lcr_ptl_txq_t));
