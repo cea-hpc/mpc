@@ -37,9 +37,6 @@
 void
 run (__UNUSED__ void *arg)
 {
-  long from, to;
-  int i;
-
   if (mpc_omp_do_single ())
     {
       fprintf (stdout, "Single hello 1 from thread %d\n",
