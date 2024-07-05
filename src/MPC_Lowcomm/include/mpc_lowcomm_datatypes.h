@@ -222,6 +222,8 @@ void mpc_lowcomm_datatype_common_display(const mpc_lowcomm_datatype_t datatype);
  */
 bool mpc_lowcomm_datatype_is_common_addr(const mpc_lowcomm_datatype_t datatype);
 
+/* NOLINTBEGIN(clang-diagnostic-unused-function): False positives */
+
 /**
  * \brief Check if a given datatype is common
  *
@@ -250,6 +252,8 @@ static inline bool mpc_lowcomm_datatype_is_common(const mpc_lowcomm_datatype_t d
 {
 	return mpc_lowcomm_datatype_is_common_predefined(datatype) || mpc_lowcomm_datatype_is_common_addr(datatype);
 }
+
+/* NOLINTEND(clang-diagnostic-unused-function) */
 
 #ifdef __cplusplus
 }

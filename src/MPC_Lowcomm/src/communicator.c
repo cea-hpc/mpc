@@ -139,6 +139,7 @@ int _mpc_lowcomm_communicator_relax(mpc_lowcomm_internal_communicator_t *comm)
 * UNIVERSE COMM *
 *****************/
 
+/* NOLINTBEGIN(clang-diagnostic-unused-function): False positives */
 
 static inline mpc_lowcomm_internal_communicator_t *__init_communicator_with_id(mpc_lowcomm_communicator_id_t comm_id,
                                                                                mpc_lowcomm_group_t *group,
@@ -2607,6 +2608,8 @@ static void __poll_comm_avail(void *ppoll_comm)
 }
 
 #endif
+
+/* NOLINTEND(clang-diagnostic-unused-function) */
 
 int mpc_lowcomm_communicator_create_group(mpc_lowcomm_communicator_t comm, mpc_lowcomm_group_t *group, int tag, mpc_lowcomm_communicator_t *newcomm)
 {
