@@ -2025,7 +2025,7 @@ ps_err_e ps_continue (struct ps_prochandle *ph) {
 
 #define SMALL_BUFFER_SIZE 4096
 void tdb_formated_assert_print (FILE * stream, const int line,
-                                   const char *file, const char *func,
+                                   const char *file, __UNUSED__ const char *func,
                                    const char *fmt, ...) {
   va_list ap;
   char buff[SMALL_BUFFER_SIZE];
@@ -2042,7 +2042,7 @@ void tdb_formated_assert_print (FILE * stream, const int line,
 }
 
 /** ***************************************************************************** **/
-static inline void to_output(FILE *stream, const char *str) {
+static inline void to_output(__UNUSED__ FILE *stream, const char *str) {
 #if defined (DBG_OUTPUT)
   ps_plog(str);
 #elif defined (NO_OUTPUT)

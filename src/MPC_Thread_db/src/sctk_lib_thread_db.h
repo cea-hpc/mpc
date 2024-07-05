@@ -26,6 +26,7 @@
 #define __SCTK__LIB__THREAD_DBG__
 
 /*allow the utilization of sys/regset.h::REG_X*/
+#include "mpc_keywords.h"
 #define _GNU_SOURCE
 
 #include <thread_db.h>
@@ -155,12 +156,12 @@ static inline const char *tdb_err_str (td_err_e err) {
 ps_err_e ps_try_stop (struct ps_prochandle *ph) ;
 ps_err_e ps_continue (struct ps_prochandle *ph) ;
 
-static inline ps_err_e __ps_pstop(struct ps_prochandle *ph) {
+static inline ps_err_e __ps_pstop(__UNUSED__ struct ps_prochandle *ph) {
   tdb_log("__ps_pstop WEAK");
   return PS_OK;
 }
 
-static inline ps_err_e __ps_pcontinue(struct ps_prochandle *ph) {
+static inline ps_err_e __ps_pcontinue(__UNUSED__ struct ps_prochandle *ph) {
   tdb_log("__ps_pcontinue WEAK");
   return PS_OK;
 }
