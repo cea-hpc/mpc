@@ -417,8 +417,12 @@ int lcr_ptl_iface_progress_rma(lcr_ptl_rail_info_t *srail)
                 for (i = 0; i < num_eps; i++) {
                         lcr_ptl_flush_txq(mem, &mem->txqt[i], completed);
                 } 
-        } 
+        }
         mpc_common_spinlock_unlock(&srail->net.rma.lock);
+
+        //FIXME: this sync is necessary to make sure host memory is
+        //       synchronised, see lockcontention2.c from mpich test suite.
+        PtlAtomicSync();
 
         return rc;
 }
