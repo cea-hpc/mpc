@@ -29,7 +29,6 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#include "lcp.h"
 #include "mpc_thread_accessor.h"
 #include "osc_mpi.h"
 #include "osc_module.h"

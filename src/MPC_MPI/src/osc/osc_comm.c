@@ -24,15 +24,11 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#include "lcp.h"
 #include "mpc_thread_accessor.h"
 #include "osc_mpi.h"
 
 #include "mpc_mpi_internal.h"
-#include "mpc_common_debug.h"
 #include "comm_lib.h"
-
-#include "mpitypes.h"
 
 static lcp_status_ptr_t mpc_osc_discontig_common(lcp_ep_h ep, lcp_task_h task,
                                                  const void *origin_addr, int origin_count,
@@ -111,6 +107,7 @@ static int start_atomic_lock(mpc_osc_module_t *module, lcp_ep_h ep,
                 //FIXME: should this be added to a perform_idle type of function to
                 //       avoid active waiting.
                 do {
+
                         rc = mpc_osc_perform_atomic_op(module, ep, task, value,
                                                        sizeof(uint64_t),
                                                        &lock_state,
