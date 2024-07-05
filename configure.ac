@@ -326,38 +326,6 @@ AC_CHECK_TYPES([ptrdiff_t])
 
 AC_CHECK_TYPES([__float128])
 
-# determine sizes of key types
-AC_CHECK_SIZEOF([int])
-AC_CHECK_SIZEOF([long int])
-AC_CHECK_SIZEOF([long long int])                            
-AC_CHECK_SIZEOF([MPI_Aint],[],[
-		 AC_INCLUDES_DEFAULT
-		 #include "mpi.h"])       
-
-AC_TYPE_INTPTR_T
-AC_TYPE_UINTPTR_T
-
-# DLOOP_Offset printf format specifiers                                                    
-aint_dec_spec=""
-aint_hex_spec=""
-if test "$ac_cv_sizeof_MPI_Aint" = "$ac_cv_sizeof_int" ; then
-        aint_dec_spec="%d"
-        aint_hex_spec="%x"
-elif test "$ac_cv_sizeof_MPI_Aint" = "$ac_cv_sizeof_long_int" ; then
-        aint_dec_spec="%ld" 
-        aint_hex_spec="%lx"
-elif test "$ac_cv_sizeof_MPI_Aint" = "$ac_cv_sizeof_long_long_int" ; then
-        aint_dec_spec="%lld"
-        aint_hex_spec="%llx"
-else        
-	AC_MSG_ERROR([unable to determine a printf specification for MPI_Aint])
-fi          
-AC_DEFINE_UNQUOTED([DLOOP_OFFSET_FMT_DEC_SPEC],["$aint_dec_spec"],
-		   [a printf decimal format specifier for DLOOP_Offset])                        
-AC_DEFINE_UNQUOTED([DLOOP_OFFSET_FMT_HEX_SPEC],["$aint_hex_spec"],
-		   [a printf hexadecimal format specifier for DLOOP_Offset])
-
-
 AX_GCC_BUILTIN([__builtin_return_address])
 AX_GCC_BUILTIN([__builtin_frame_address])
 AX_GCC_BUILTIN([__builtin_expect])
