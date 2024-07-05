@@ -101,6 +101,8 @@ void omp_set_nest_lock( omp_nest_lock_t *lock );
 void omp_unset_nest_lock( omp_nest_lock_t *lock );
 int omp_test_nest_lock( omp_nest_lock_t *lock );
 
+/* NOLINTBEGIN(clang-diagnostic-unused-function): False positive */
+
 /* If the current task (thread if implicit task or explicit task)
 *     is not the owner of the lock */
 static inline int
@@ -117,5 +119,7 @@ omp_nest_lock_test_task( mpc_omp_thread_t *thread,
 	const bool have_task_owner = ( mpcomp_user_nest_lock->owner_task != NULL );
 	return !( is_task_owner && ( is_thread_owned || have_task_owner ) );
 }
+
+/* NOLINTEND(clang-diagnostic-unused-function) */
 
 #endif /*  __MPC_OMP_SYNC_H__ */
