@@ -57,6 +57,8 @@ void
 _mpc_omp_ompt_callback_nest_lock( ompt_scope_endpoint_t endpoint,
                               ompt_wait_id_t wait_id );
 
+/* NOLINTBEGIN(clang-diagnostic-unused-function): False positives */
+
 static inline ompt_wait_id_t
 _mpc_omp_ompt_mutex_gen_wait_id() {
     ompt_wait_id_t wait_id = 0;
@@ -79,6 +81,8 @@ _mpc_omp_ompt_mutex_gen_wait_id() {
 
     return wait_id;
 }
+
+/* NOLINTEND(clang-diagnostic-unused-function) */
 
 #endif /* OMPT_SUPPORT */
 #endif /* __MPCOMPT_MUTEX_H__ */
