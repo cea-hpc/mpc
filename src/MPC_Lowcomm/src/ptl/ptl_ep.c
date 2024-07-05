@@ -1145,9 +1145,9 @@ void lcr_ptl_connect_on_demand(struct sctk_rail_info_s *rail,
         }
         mpc_mempool_param_t mp_op_params = {
                 .alignment = MPC_COMMON_SYS_CACHE_LINE_SIZE,
-                .elem_per_chunk = 256,
+                .elem_per_chunk = 512,
                 .elem_size = sizeof(lcr_ptl_op_t),
-                .max_elems = 2048,
+                .max_elems = UINT_MAX,
                 .malloc_func = sctk_malloc,
                 .free_func = sctk_free
         };
