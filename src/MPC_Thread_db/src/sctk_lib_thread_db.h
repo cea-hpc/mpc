@@ -72,6 +72,8 @@
   #include <proc_service.h>
 #endif
 
+/* NOLINTBEGIN(clang-diagnostic-unused-function): False positives */
+
 /*
  * Define ps_plog if necessary.
  *
@@ -185,6 +187,8 @@ static inline ps_err_e __ps_pcontinue(__UNUSED__ struct ps_prochandle *ph) {
   tdb_log("__ps_pcontinue WEAK");
   return PS_OK;
 }
+
+/* NOLINTEND(clang-diagnostic-unused-function) */
 
 #pragma weak ps_pstop=__ps_pstop
 #pragma weak ps_pcontinue=__ps_pcontinue
