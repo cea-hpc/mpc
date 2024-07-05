@@ -15,6 +15,12 @@
 /* This is specific to MPICH2 */
 #include "mpitypes_dataloop.h"
 
+/* a printf decimal format specifier for DLOOP_Offset */
+#define DLOOP_OFFSET_FMT_DEC_SPEC "%ld"
+
+/* a printf hexadecimal format specifier for DLOOP_Offset */
+#define DLOOP_OFFSET_FMT_HEX_SPEC "%lx"
+
 #endif
 
 

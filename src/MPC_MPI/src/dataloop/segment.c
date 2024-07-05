@@ -372,7 +372,9 @@ void PREPEND_PREFIX(Segment_manipulate)(struct DLOOP_Segment *segp,
 
     if (first == *lastp) {
 	/* nothing to do */
+#ifdef DLOOP_DEBUG_MANIPULATE
 	DLOOP_dbg_printf("dloop_segment_manipulate: warning: first == last (" DLOOP_OFFSET_FMT_DEC_SPEC ")\n", first);
+#endif
 	return;
     }
 
