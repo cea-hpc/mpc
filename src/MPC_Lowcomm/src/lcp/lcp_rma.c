@@ -60,7 +60,7 @@ enum {
  * @param arg input request buffer
  * @return size_t size of copy
  */
-ssize_t lcp_rma_pack(void *dest, void *arg) {
+static ssize_t lcp_rma_pack(void *dest, void *arg) {
         lcp_request_t *req = (lcp_request_t *)arg;
 
         memcpy(dest, req->send.buffer, req->send.length);
@@ -68,7 +68,7 @@ ssize_t lcp_rma_pack(void *dest, void *arg) {
         return req->send.length;
 }
 
-ssize_t lcp_rma_unpack(void* req, const void *dest, size_t arg) {
+static ssize_t lcp_rma_unpack(void* req, const void *dest, size_t arg) {
         UNUSED(req);
         UNUSED(dest);
         UNUSED(arg);
@@ -81,7 +81,7 @@ ssize_t lcp_rma_unpack(void* req, const void *dest, size_t arg) {
  *
  * @param comp completion
  */
-void lcp_rma_request_complete(lcr_completion_t *comp)
+static void lcp_rma_request_complete(lcr_completion_t *comp)
 {
         lcp_request_t *req = mpc_container_of(comp, lcp_request_t, 
                                               state.comp);
@@ -98,7 +98,7 @@ void lcp_rma_request_complete(lcr_completion_t *comp)
         } 
 }
 
-void lcp_flush_request_complete(lcr_completion_t *comp)
+static void lcp_flush_request_complete(lcr_completion_t *comp)
 {
         lcp_request_t *req = mpc_container_of(comp, lcp_request_t, 
                                               state.comp);
@@ -117,7 +117,7 @@ void lcp_flush_request_complete(lcr_completion_t *comp)
  * @param req request to put
  * @return int MPC_LOWCOMM_SUCCESS in case of success
  */
-int lcp_rma_progress_bcopy(lcp_request_t *req)
+static int lcp_rma_progress_bcopy(lcp_request_t *req)
 {
         int rc = MPC_LOWCOMM_SUCCESS;
         int payload_size;
@@ -161,9 +161,9 @@ err:
  * @brief Put a zero copy
  *
  * @param req request to put
- * @return int MPC_LOWCOMM_SUCCESS in case of succes
+ * @return int MPC_LOWCOMM_SUCCESS in case of success
  */
-int lcp_rma_progress_zcopy(lcp_request_t *req)
+static int lcp_rma_progress_zcopy(lcp_request_t *req)
 {
         int rc = MPC_LOWCOMM_SUCCESS;
         size_t remaining, offset;
@@ -239,20 +239,9 @@ static inline int lcp_rma_start(lcp_ep_h ep, lcp_request_t *req)
         int rc = MPC_LOWCOMM_SUCCESS;
 
         //FIXME: bcopy not yet supported by transports.
-#if 0
-        size_t max_bcopy = req->send.rma.is_get ? ep->config.rma.max_get_bcopy :
-                ep->config.rma.max_put_bcopy;
-
-        if (req->send.length <= max_bcopy) {
-                req->send.func = lcp_rma_progress_bcopy;
-        } else {
-#endif
-                //NOTE: Non contiguous datatype not supported for zcopy put
-                assert(req->datatype == LCP_DATATYPE_CONTIGUOUS);
-                req->send.func = lcp_rma_progress_zcopy;
-#if 0
-        } 
-#endif
+        //NOTE: Non contiguous datatype not supported for zcopy put
+        assert(req->datatype == LCP_DATATYPE_CONTIGUOUS);
+        req->send.func = lcp_rma_progress_zcopy;
 
         if (!(req->flags & LCP_REQUEST_USER_PROVIDED_MEMH)) {
 
@@ -286,7 +275,8 @@ lcp_status_ptr_t lcp_put_nb(lcp_ep_h ep, lcp_task_h task, const void *buffer, si
         req = lcp_request_get_param(task, param);
         if (req == NULL) {
                 mpc_common_debug_error("LCP: could not allocate put request.");
-                return LCP_STATUS_PTR(MPC_LOWCOMM_ERROR);
+                rc = MPC_LOWCOMM_ERROR;
+                return LCP_STATUS_PTR(rc);
         }
         LCP_REQUEST_INIT_RMA_PUT(req, ep->mngr, task, length, param->request, ep, buffer, 
                                   0 /* no ordering for rma */, 0, param->datatype, 
@@ -358,7 +348,7 @@ lcp_status_ptr_t lcp_get_nb(lcp_ep_h ep, lcp_task_h task, void *buffer,
         return ret;
 }
 
-int lcp_flush_manager_nb(lcp_request_t *req)
+static int lcp_flush_manager_nb(lcp_request_t *req)
 {
         int rc = MPC_LOWCOMM_SUCCESS;
         int i;
@@ -383,7 +373,7 @@ err:
         return rc;
 }
 
-int lcp_flush_ep_nb(lcp_request_t *req)
+static int lcp_flush_ep_nb(lcp_request_t *req)
 {
         int i, rc = MPC_LOWCOMM_SUCCESS;
         lcp_ep_h ep = req->send.ep;
@@ -415,7 +405,7 @@ err:
         return rc;
 }
 
-int lcp_flush_mem_nb(lcp_request_t *req)
+static int lcp_flush_mem_nb(lcp_request_t *req)
 {
         int i, rc = MPC_LOWCOMM_SUCCESS;
         lcp_mem_h mem = req->state.lmem;
@@ -437,7 +427,7 @@ err:
         return rc;
 }
 
-int lcp_flush_mem_ep_nb(lcp_request_t *req)
+static int lcp_flush_mem_ep_nb(lcp_request_t *req)
 {
         int i, rc = MPC_LOWCOMM_SUCCESS;
         lcp_ep_h ep = req->send.ep;
