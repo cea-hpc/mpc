@@ -29,6 +29,7 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
+#include "lcp.h"
 #include "mpc_thread_accessor.h"
 #include "osc_mpi.h"
 #include "osc_module.h"
@@ -126,7 +127,8 @@ int mpc_osc_lock(int lock_type, int target, int mpi_assert, mpc_win_t *win)
         }
         lock->target = target;
 
-        rc = mpc_osc_get_comm_info(module, target, win->comm, &ep, &task);
+        task = lcp_context_task_get(module->ctx, mpc_common_get_task_rank());
+        rc = mpc_osc_get_comm_info(module, target, win->comm, &ep);
         if (rc != MPC_LOWCOMM_SUCCESS) {
                 goto err;
         }
@@ -179,7 +181,8 @@ int mpc_osc_unlock(int target, mpc_win_t *win)
 
         mpc_common_hashtable_delete(&module->outstanding_locks, target);
 
-        rc = mpc_osc_get_comm_info(module, target, win->comm, &ep, &task);
+        task = lcp_context_task_get(module->ctx, mpc_common_get_task_rank());
+        rc = mpc_osc_get_comm_info(module, target, win->comm, &ep);
         if (rc != MPC_LOWCOMM_SUCCESS) {
                 goto err;
         }
@@ -232,8 +235,9 @@ int mpc_osc_lock_all(int mpi_assert, mpc_win_t *win)
         module->epoch.access = PASSIVE_ALL_EPOCH;
 
         if ((mpi_assert & MPI_MODE_NOCHECK) == 0) {
+                task = lcp_context_task_get(module->ctx, mpc_common_get_task_rank());
                 for (i = 0; i < win->comm_size; i++) {
-                        rc = mpc_osc_get_comm_info(module, i, win->comm, &ep, &task);
+                        rc = mpc_osc_get_comm_info(module, i, win->comm, &ep);
                         if (rc != MPC_LOWCOMM_SUCCESS) {
                                 goto err;
                         }
@@ -317,7 +321,8 @@ int mpc_osc_flush(int target, mpc_win_t *win)
                 return MPC_LOWCOMM_ERROR;
         }
 
-        mpc_osc_get_comm_info(module, target, win->comm, &ep, &task);
+        task = lcp_context_task_get(module->ctx, mpc_common_get_task_rank());
+        mpc_osc_get_comm_info(module, target, win->comm, &ep);
 
         rc = mpc_osc_perform_flush_op(module, task, ep, NULL);
 

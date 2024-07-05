@@ -45,7 +45,7 @@ int mpc_osc_perform_atomic_op(mpc_osc_module_t *mod, lcp_ep_h ep,
 
         lcp_request_param_t params =  {
                 .field_mask = (result != NULL ? LCP_REQUEST_REPLY_BUFFER : 0) |
-                        LCP_REQUEST_USER_REQUEST,
+                        LCP_REQUEST_USER_REQUEST | mod->ato_flags,
                 .request      = req,
                 .reply_buffer = result,
         };
@@ -109,12 +109,12 @@ err:
         return rc;
 }
 
+#if 0
 void mpc_osc_schedule_progress(lcp_manager_h mngr, volatile int *data,
                               int value)
 {
         int trials = 0;
-        do
-        {
+        do {
                 lcp_progress(mngr);
                 trials++;
         } while( (*data != value) && (trials < 16) );
@@ -122,7 +122,7 @@ void mpc_osc_schedule_progress(lcp_manager_h mngr, volatile int *data,
         mpc_lowcomm_perform_idle(data, value, (void (*)(void *) ) lcp_progress,
                                  mngr);
 }
-
+#endif
 
 int mpc_osc_start_exclusive(mpc_osc_module_t *module, lcp_task_h task, int target)
 {

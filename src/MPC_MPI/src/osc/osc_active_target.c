@@ -97,7 +97,7 @@ int mpc_osc_start(mpc_lowcomm_group_t *group,
 {
         UNUSED(mpi_assert);
         int i, rc = MPC_LOWCOMM_SUCCESS;
-        int grp_size, grp_win_size;
+        int grp_size;
         mpc_lowcomm_group_t *win_grp;
         int *ranks_in_grp, *ranks_in_grp_win;
 
@@ -131,7 +131,6 @@ int mpc_osc_start(mpc_lowcomm_group_t *group,
         }
 
         win_grp = mpc_lowcomm_communicator_group(win->comm);
-        grp_win_size = mpc_lowcomm_group_size(win_grp);
         mpc_lowcomm_group_translate_ranks(group, grp_size, ranks_in_grp, 
                                           win_grp, ranks_in_grp_win);
 
@@ -237,16 +236,8 @@ int mpc_osc_post(mpc_lowcomm_group_t *group, int mpi_assert, mpc_win_t *win)
 
         /* Acquire a free index. */
         for (i = 0; i < grp_size; i++) {
-               if (module->eps[ranks_in_grp_win[i]] == NULL) {
-                       uint64_t target_uid = mpc_lowcomm_communicator_uid(win->comm, 
-                                                                          ranks_in_grp_win[i]);
-
-                       rc = lcp_ep_create(module->mngr, &module->eps[ranks_in_grp_win[i]], 
-                                          target_uid, 0);
-                       if (rc != 0) {
-                               mpc_common_debug_fatal("Could not create endpoint.");
-                       }
-                }
+               mpc_osc_get_comm_info(module, ranks_in_grp_win[i], win->comm, 
+                                     &module->eps[ranks_in_grp_win[i]]);
 
                base_rstate = (char *)module->rstate_win_info[ranks_in_grp_win[i]].addr;
 
@@ -326,18 +317,10 @@ int mpc_osc_complete(mpc_win_t *win)
 
         for (i = 0; i < grp_size; i++) {
                 target = module->start_grp_ranks[i];
-               if (module->eps[target] == NULL) {
-                       uint64_t target_uid = mpc_lowcomm_communicator_uid(win->comm, 
-                                                                          target);
+                mpc_osc_get_comm_info(module, target, win->comm, &module->eps[target]);
 
-                       rc = lcp_ep_create(module->mngr, &module->eps[target], 
-                                          target_uid, 0);
-                       if (rc != 0) {
-                               mpc_common_debug_fatal("Could not create endpoint.");
-                       }
-                }
+                base_rstate = (uint64_t)module->rstate_win_info[module->start_grp_ranks[i]].addr;
 
-               base_rstate = (uint64_t)module->rstate_win_info[module->start_grp_ranks[i]].addr;
                 rc = mpc_osc_perform_atomic_op(module, module->eps[target],
                                                task, one, sizeof(uint64_t),
                                                NULL, base_rstate

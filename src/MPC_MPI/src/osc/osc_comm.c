@@ -24,6 +24,7 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
+#include "lcp.h"
 #include "mpc_thread_accessor.h"
 #include "osc_mpi.h"
 
@@ -110,7 +111,6 @@ static int start_atomic_lock(mpc_osc_module_t *module, lcp_ep_h ep,
                 //FIXME: should this be added to a perform_idle type of function to
                 //       avoid active waiting.
                 do {
-
                         rc = mpc_osc_perform_atomic_op(module, ep, task, value,
                                                        sizeof(uint64_t),
                                                        &lock_state,
@@ -150,6 +150,7 @@ static int end_atomic_lock(mpc_osc_module_t *module, lcp_ep_h ep,
         size_t remote_lock_addr = module->rstate_win_info[target].addr + 
                 OSC_STATE_ACC_LOCK_OFFSET;
         
+        assert(ep);
         if (lock_acquired) {
                 rc = mpc_osc_perform_atomic_op(module, ep, task, value,
                                                sizeof(uint64_t), NULL,
@@ -290,7 +291,8 @@ static lcp_status_ptr_t mpc_osc_put_common(const void *origin_addr, int origin_c
                 return LCP_STATUS_PTR(MPI_SUCCESS);
         }
 
-        rc = mpc_osc_get_comm_info(module, target, win->comm, &ep, &task);
+        task = lcp_context_task_get(module->ctx, mpc_common_get_task_rank());
+        rc = mpc_osc_get_comm_info(module, target, win->comm, &ep);
         if (rc != MPC_LOWCOMM_SUCCESS) {
                 status = LCP_STATUS_PTR(rc);
                 goto err;
@@ -380,7 +382,8 @@ static lcp_status_ptr_t mpc_osc_get_common(void *origin_addr, int origin_count,
                 return LCP_STATUS_PTR(MPI_SUCCESS);
         }
 
-        rc = mpc_osc_get_comm_info(module, target, win->comm, &ep, &task);
+        task = lcp_context_task_get(module->ctx, mpc_common_get_task_rank());
+        rc = mpc_osc_get_comm_info(module, target, win->comm, &ep);
         if (rc != MPC_LOWCOMM_SUCCESS) {
                 status = LCP_STATUS_PTR(rc);
                 goto err;
@@ -743,7 +746,8 @@ int mpc_osc_accumulate(const void *origin_addr, int origin_count,
                 return rc;
         }
 
-        rc = mpc_osc_get_comm_info(module, target, win->comm, &ep, &task);
+        task = lcp_context_task_get(module->ctx, mpc_common_get_task_rank());
+        rc = mpc_osc_get_comm_info(module, target, win->comm, &ep);
         if (rc != MPC_LOWCOMM_SUCCESS) {
                 goto err;
         }
@@ -813,7 +817,7 @@ int mpc_osc_accumulate(const void *origin_addr, int origin_count,
 
                 /* Get mpc operation and perform the reduction. */
                 sctk_op_t *mpc_op = sctk_convert_to_mpc_op(op);
-                sctk_Op_f func = sctk_get_common_function(tmp_dt, mpc_op->op);
+                sctk_Op_f func    = sctk_get_common_function(tmp_dt, mpc_op->op);
 
                 if (is_orig_dt_contiguous) {
                         func((void *)origin_addr, tmp_result_addr, tmp_dt_count,
@@ -909,7 +913,8 @@ int mpc_osc_get_accumulate(const void *origin_addr, int origin_count,
         int lock_acquired = 0;
         void *tmp_result_addr = NULL;
 
-        rc = mpc_osc_get_comm_info(module, target, win->comm, &ep, &task);
+        task = lcp_context_task_get(module->ctx, mpc_common_get_task_rank());
+        rc = mpc_osc_get_comm_info(module, target, win->comm, &ep);
         if (rc != MPC_LOWCOMM_SUCCESS) {
                 goto err;
         }
@@ -1082,7 +1087,8 @@ int mpc_osc_compare_and_swap(const void *origin_addr, const void *compare_addr,
         lcp_mem_h rmem;
         int lock_acquired = 0;
 
-        rc = mpc_osc_get_comm_info(module, target, win->comm, &ep, &task);
+        task = lcp_context_task_get(module->ctx, mpc_common_get_task_rank());
+        rc = mpc_osc_get_comm_info(module, target, win->comm, &ep);
         if (rc != MPC_LOWCOMM_SUCCESS) {
                 goto err;
         }
@@ -1145,7 +1151,8 @@ int mpc_osc_fetch_and_op(const void *origin_addr, void *result_addr,
                 lcp_mem_h rmem;
                 lcp_atomic_op_t op_code;
 
-                rc = mpc_osc_get_comm_info(module, target, win->comm, &ep, &task);
+                task = lcp_context_task_get(module->ctx, mpc_common_get_task_rank());
+                rc = mpc_osc_get_comm_info(module, target, win->comm, &ep);
                 if (rc != MPC_LOWCOMM_SUCCESS) {
                         goto err;
                 }

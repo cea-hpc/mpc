@@ -20,6 +20,9 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
+#include "lcp.h"
+#include "mpc_lowcomm_communicator.h"
+#include "mpc_mpi.h"
 #include "osc_mpi.h"
 
 #include <assert.h>
@@ -436,7 +439,7 @@ static int _win_init(mpc_win_t **win_p, int flavor, mpc_lowcomm_communicator_t c
         win->info      = info;
         strcpy(win->win_name, "MPI_WIN_LCP");
 
-        win->comm = comm;
+        win->comm = mpc_lowcomm_communicator_dup(comm);
         win->group = mpc_lowcomm_communicator_group(comm);
         win->win_module.eps = sctk_malloc(win->comm_size * sizeof(lcp_ep_h));
         if (win->win_module.eps == NULL) {
@@ -446,6 +449,14 @@ static int _win_init(mpc_win_t **win_p, int flavor, mpc_lowcomm_communicator_t c
                 goto err;
         }
         memset(win->win_module.eps, 0, win->comm_size * sizeof(lcp_ep_h));
+
+        if (mpc_lowcomm_communicator_get_process_count(win->comm) > 1 && 
+            mpc_lowcomm_communicator_local_task_count(win->comm) > 1) {
+                win->win_module.ep_flags  = LCP_EP_REQUIRE_NET_ATOMICS;
+                win->win_module.ato_flags = LCP_REQUEST_USE_NET_ATOMICS;
+
+                mpc_common_debug("OSC WIN: using network atomics only.");
+        }
 
         mpc_common_hashtable_init(&win->win_module.outstanding_locks, 1024);
         mpc_list_init_head(&win->win_module.pending_posts);
@@ -509,7 +520,8 @@ int mpc_osc_win_attach(mpc_win_t *win, void *base, size_t len)
                 return MPI_ERR_INTERN;
         }
 
-        rc = mpc_osc_get_comm_info(module, my_rank, win->comm, &ep, &task);
+        task = lcp_context_task_get(module->ctx, mpc_common_get_task_rank());
+        rc = mpc_osc_get_comm_info(module, my_rank, win->comm, &ep);
         if (rc != MPC_LOWCOMM_SUCCESS) {
                 goto err;
         }
@@ -778,6 +790,18 @@ err:
 int osc_module_fini()
 {
         int rc = MPC_LOWCOMM_SUCCESS;
+        int tid;
+        lcp_task_h task;
+
+        tid = mpc_common_get_task_rank();
+        task = lcp_context_task_get(lcp_ctx_loc, tid);
+
+        rc = lcp_task_dissociate(task, osc_mngr);
+
+        //NOTE: make sure all task have been dissociated before finishing the
+        //      manager.
+        PMPI_Barrier(MPI_COMM_WORLD);
+
         mpc_common_spinlock_lock(&osc_win_lock);
         if (osc_mngr != NULL) {
                 mpc_common_progress_unregister(mpc_osc_progress);

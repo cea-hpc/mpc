@@ -128,43 +128,34 @@ typedef struct mpc_osc_module {
         int                          lock_count;
         struct mpc_common_hashtable  outstanding_locks;
         int                          lock_all_is_no_check;
-        int                          leader;
         mpc_osc_local_dynamic_win_info_t local_dynamic_win_infos[OSC_DYNAMIC_WIN_ATTACH_MAX];
 
         int disp_unit;
         int *disp_units;
 
+        unsigned                     ep_flags;
+        unsigned                     ato_flags;
+
 } mpc_osc_module_t;
 
 static inline int mpc_osc_get_comm_info(mpc_osc_module_t *mod, int target,
                                         mpc_lowcomm_communicator_t comm,
-                                        lcp_ep_h *ep_p, lcp_task_h *task_p)
+                                        lcp_ep_h *ep_p)
 {
         int rc = 0;
-        lcp_task_h task;
         if (mod->eps[target] == NULL) {
                 uint64_t target_uid = mpc_lowcomm_communicator_uid(comm, 
                                                                    target);
 
                 rc = lcp_ep_create(mod->mngr, &mod->eps[target], 
-                                   target_uid, 0);
+                                   target_uid, mod->ep_flags);
                 if (rc != 0) {
                         mpc_common_debug_fatal("Could not create endpoint.");
                         goto err;
                 }
         }
 
-        task = lcp_context_task_get(mod->ctx, mpc_common_get_task_rank());
-        if (task == NULL) {
-                mpc_common_debug_fatal("MPI OSC: could not find task. tid="
-                                       "%d.", mpc_common_get_task_rank());
-                rc = 1;
-                goto err;
-        }
-
         *ep_p = mod->eps[target];
-        *task_p = task; 
-
 err:
         return rc;
 }
