@@ -27,9 +27,13 @@ repos:
             ^src/MPC_Fortran|
             ^src/MPC_Thread_db/src/gdb/linux-thread-db\.c$|
             ^src/MPC_Common/include/sctk_no_alloc\.h$|
+            ^src/MPC_Thread_db/src/sctk_lib_thread_db\.c$|
             ^src/MPC_Tests/lcp|
             \.(m4|in|3in|f90)$
-          # FIXME: Remove exclude path "src/MPC_Tests/lcp" once tests are fixed (LCP v2)
+          # 1. FIXME: Remove exclude path "src/MPC_Tests/lcp" once tests are fixed (LCP v2)
+          # 2. sctk_lib_thread_db.c contains unmuteable false positives on "ambiguous" calls
+          #    with #pragma weak and extern functions. This a known LLVM issue, see
+          #    https://github.com/llvm/llvm-project/issues/16067
 -   repo: git@gitlab.paratools.com:cea/mpc-pre-commit-hooks.git
     rev: 90dac57b3624db79877f93a59d218255463d708f
     hooks:
