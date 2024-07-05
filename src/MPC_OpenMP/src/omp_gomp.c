@@ -1144,7 +1144,8 @@ void mpc_omp_GOMP_parallel_loop_runtime( void ( *fn )( void * ), void *data,
 
 #define MPC_SUPPORT_ULL_LOOP
 
-static inline bool __gomp_loop_ull_runtime_start( bool up,
+// Used by commented-out code
+__UNUSED__ static inline bool __gomp_loop_ull_runtime_start( bool up,
         unsigned long long start,
         unsigned long long end,
         unsigned long long incr,
@@ -1232,17 +1233,12 @@ bool mpc_omp_GOMP_loop_ull_doacross_runtime_start( __UNUSED__ unsigned ncounts,
         __UNUSED__ unsigned long long *istart,
         __UNUSED__ unsigned long long *iend )
 {
-	bool ret;
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 #ifdef MPC_SUPPORT_ULL_LOOP
-	ret = false;
 	not_implemented();
 #else  /* MPC_SUPPORT_ULL_LOOP */
-	ret = false;
 	not_implemented();
 #endif /* MPC_SUPPORT_ULL_LOOP */
-	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
-	return ret;
 }
 
 bool mpc_omp_GOMP_loop_ull_runtime_next( unsigned long long *istart,
@@ -1253,7 +1249,6 @@ bool mpc_omp_GOMP_loop_ull_runtime_next( unsigned long long *istart,
 #ifdef MPC_SUPPORT_ULL_LOOP
 	ret = mpc_omp_loop_ull_runtime_next( istart, iend );
 #else  /* MPC_SUPPORT_ULL_LOOP */
-	ret = false;
 	not_implemented();
 #endif /* MPC_SUPPORT_ULL_LOOP */
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
@@ -1268,7 +1263,6 @@ bool mpc_omp_GOMP_loop_ull_ordered_runtime_next( unsigned long long *istart,
 #ifdef MPC_SUPPORT_ULL_LOOP
 	ret = mpc_omp_loop_ull_ordered_runtime_next( istart, iend );
 #else  /* MPC_SUPPORT_ULL_LOOP */
-	ret = false;
 	not_implemented();
 #endif /* MPC_SUPPORT_ULL_LOOP */
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
@@ -1309,7 +1303,6 @@ bool mpc_omp_GOMP_loop_ull_static_start( bool up, unsigned long long start,
 	ret = __gomp_loop_ull_static_start( up, start, end, incr,
 	                                    chunk_size, istart, iend );
 #else  /* MPC_SUPPORT_ULL_LOOP */
-	ret = false;
 	not_implemented();
 #endif /* MPC_SUPPORT_ULL_LOOP */
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
@@ -1559,17 +1552,12 @@ bool mpc_omp_GOMP_loop_ull_doacross_static_start( __UNUSED__ unsigned ncounts,
         __UNUSED__ unsigned long long *istart,
         __UNUSED__ unsigned long long *iend )
 {
-	bool ret;
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 #ifdef MPC_SUPPORT_ULL_LOOP
-	ret = false;
 	not_implemented();
 #else  /* MPC_SUPPORT_ULL_LOOP */
-	ret = false;
 	not_implemented();
 #endif /* MPC_SUPPORT_ULL_LOOP */
-	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
-	return ret;
 }
 
 bool mpc_omp_GOMP_loop_ull_doacross_dynamic_start( __UNUSED__ unsigned ncounts,
@@ -1578,17 +1566,12 @@ bool mpc_omp_GOMP_loop_ull_doacross_dynamic_start( __UNUSED__ unsigned ncounts,
         __UNUSED__ unsigned long long *istart,
         __UNUSED__ unsigned long long *iend )
 {
-	bool ret;
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 #if ( defined( MPC_SUPPORT_ULL_LOOP ) && defined( MPC_SUPPORT_DOACCROSS ) )
-	ret = false;
 	not_implemented();
 #else  /* MPC_SUPPORT_ULL_LOOP && MPC_SUPPORT_DOACCROSS */
-	ret = false;
 	not_implemented();
 #endif /* MPC_SUPPORT_ULL_LOOP && MPC_SUPPORT_DOACCROSS */
-	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
-	return ret;
 }
 
 bool mpc_omp_GOMP_loop_ull_doacross_guided_start( __UNUSED__ unsigned ncounts,
@@ -1597,17 +1580,12 @@ bool mpc_omp_GOMP_loop_ull_doacross_guided_start( __UNUSED__ unsigned ncounts,
         __UNUSED__ unsigned long long *istart,
         __UNUSED__ unsigned long long *iend )
 {
-	bool ret;
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 #if ( defined( MPC_SUPPORT_ULL_LOOP ) && defined( MPC_SUPPORT_DOACCROSS ) )
-	ret = false;
 	not_implemented();
 #else  /* MPC_SUPPORT_ULL_LOOP  && MPC_SUPPORT_DOACCROSS */
-	ret = false;
 	not_implemented();
 #endif /* MPC_SUPPORT_ULL_LOOP && MPC_SUPPORT_DOACCROSS */
-	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
-	return ret;
 }
 
 bool mpc_omp_GOMP_loop_ull_static_next( unsigned long long *istart,
@@ -1618,7 +1596,6 @@ bool mpc_omp_GOMP_loop_ull_static_next( unsigned long long *istart,
 #ifdef MPC_SUPPORT_ULL_LOOP
 	ret = ( mpc_omp_static_loop_next_ull( istart, iend ) ) ? true : false;
 #else  /* MPC_SUPPORT_ULL_LOOP */
-	ret = false;
 	not_implemented();
 #endif /* MPC_SUPPORT_ULL_LOOP */
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
@@ -1633,7 +1610,6 @@ bool mpc_omp_GOMP_loop_ull_dynamic_next( unsigned long long *istart,
 #ifdef MPC_SUPPORT_ULL_LOOP
 	ret = ( mpc_omp_loop_ull_dynamic_next( istart, iend ) ) ? true : false;
 #else  /* MPC_SUPPORT_ULL_LOOP */
-	ret = false;
 	not_implemented();
 #endif /* MPC_SUPPORT_ULL_LOOP */
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
@@ -1648,7 +1624,6 @@ bool mpc_omp_GOMP_loop_ull_guided_next( unsigned long long *istart,
 #ifdef MPC_SUPPORT_ULL_LOOP
 	ret = ( mpc_omp_loop_ull_guided_next( istart, iend ) ) ? true : false;
 #else  /* MPC_SUPPORT_ULL_LOOP */
-	ret = false;
 	not_implemented();
 #endif /* MPC_SUPPORT_ULL_LOOP */
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
@@ -1663,7 +1638,6 @@ bool mpc_omp_GOMP_loop_ull_nonmonotonic_dynamic_next(  unsigned long long *istar
 #ifdef MPC_SUPPORT_ULL_LOOP
 	ret = ( mpc_omp_loop_ull_dynamic_next( istart, iend ) ) ? true : false;
 #else  /* MPC_SUPPORT_ULL_LOOP */
-	ret = false;
 	not_implemented();
 #endif /* MPC_SUPPORT_ULL_LOOP */
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
@@ -1678,7 +1652,6 @@ bool mpc_omp_GOMP_loop_ull_nonmonotonic_guided_next(  unsigned long long *istart
 #ifdef MPC_SUPPORT_ULL_LOOP
 	ret = ( mpc_omp_loop_ull_guided_next( istart, iend ) ) ? true : false;
 #else  /* MPC_SUPPORT_ULL_LOOP */
-	ret = false;
 	not_implemented();
 #endif /* MPC_SUPPORT_ULL_LOOP */
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
@@ -1693,7 +1666,6 @@ bool mpc_omp_GOMP_loop_ull_ordered_static_next( unsigned long long *istart,
 #ifdef MPC_SUPPORT_ULL_LOOP
 	ret = ( mpc_omp_ordered_static_loop_next_ull( istart, iend ) ) ? true : false;
 #else  /* MPC_SUPPORT_ULL_LOOP */
-	ret = false;
 	not_implemented();
 #endif /* MPC_SUPPORT_ULL_LOOP */
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
@@ -1708,7 +1680,6 @@ bool mpc_omp_GOMP_loop_ull_ordered_dynamic_next( unsigned long long *istart,
 #ifdef MPC_SUPPORT_ULL_LOOP
 	ret = ( mpc_omp_loop_ull_ordered_dynamic_next( istart, iend ) ) ? true : false;
 #else  /* MPC_SUPPORT_ULL_LOOP */
-	ret = false;
 	not_implemented();
 #endif /* MPC_SUPPORT_ULL_LOOP */
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
@@ -1723,7 +1694,6 @@ bool mpc_omp_GOMP_loop_ull_ordered_guided_next( unsigned long long *istart,
 #ifdef MPC_SUPPORT_ULL_LOOP
 	ret = ( mpc_omp_loop_ull_ordered_guided_next( istart, iend ) ) ? true : false;
 #else  /* MPC_SUPPORT_ULL_LOOP */
-	ret = false;
 	not_implemented();
 #endif /* MPC_SUPPORT_ULL_LOOP */
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
@@ -1858,12 +1828,8 @@ void mpc_omp_GOMP_parallel_sections_start( void ( *fn )( void * ), void *data,
 
 bool mpc_omp_GOMP_sections_end_cancel( void )
 {
-	bool ret;
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
-	ret = false;
 	not_implemented();
-	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
-	return ret;
 }
 
 void mpc_omp_GOMP_sections_end_nowait( void )
@@ -2310,11 +2276,12 @@ void mpc_omp_GOMP_taskloop( void (*fn)(void *), void *data,
     mpc_common_nodebug( "[Redirect mpc_omp_GOMP]%s:\tEnd", __func__ );
 }
 
-void mpc_omp_GOMP_taskloop_ull( void (*fn)(void *), void *data,
-                               void (*cpyfn)(void *, void *), long data_size, long align,
-                               unsigned flags, unsigned long num_tasks, int priority,
-                               unsigned long long start, unsigned long long end,
-                               unsigned long long step )
+void mpc_omp_GOMP_taskloop_ull( __UNUSED__ void (*fn)(void *), __UNUSED__ void *data,
+                               __UNUSED__ void (*cpyfn)(void *, void *), __UNUSED__ long data_size,
+							   __UNUSED__ long align,
+                               __UNUSED__ unsigned flags, __UNUSED__ unsigned long num_tasks, __UNUSED__ int priority,
+                               __UNUSED__ unsigned long long start, __UNUSED__ unsigned long long end,
+                               __UNUSED__ unsigned long long step )
 {
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
     _mpc_omp_ompt_frame_get_wrapper_infos( MPC_OMP_GOMP );
@@ -2322,9 +2289,8 @@ void mpc_omp_GOMP_taskloop_ull( void (*fn)(void *), void *data,
 #endif /* OMPT_SUPPORT */
 
 	mpc_common_nodebug( "[Redirect mpc_omp_GOMP]%s:\tBegin", __func__ );
+	TODO("implement 'mpc_omp_GOMP_taskloop_ull'");
     not_implemented();
-    TODO("implement 'mpc_omp_GOMP_taskloop_ull'");
-	mpc_common_nodebug( "[Redirect mpc_omp_GOMP]%s:\tEnd", __func__ );
 }
 
 /***********
