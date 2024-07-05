@@ -1898,6 +1898,8 @@ void __kmpc_for_static_init_8u( __UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 gt
 	mpc_omp_thread_t *t;
 	t = ( mpc_omp_thread_t * )mpc_omp_tls;
 	assert( t != NULL );
+	// Prevent division by zero
+	assert(incr != 0);
 
 	unsigned long  rank = t->rank;
 	unsigned long num_threads = t->info.num_threads;
