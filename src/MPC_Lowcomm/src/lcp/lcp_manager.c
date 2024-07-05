@@ -142,7 +142,7 @@ static int _lcp_manager_init_structures(lcp_manager_h mngr)
                 .alignment = MPC_COMMON_SYS_CACHE_LINE_SIZE,
                 .elem_per_chunk = 1024,
                 .elem_size = key_size,
-                .max_elems = 65536,
+                .max_elems = UINT_MAX,
                 .malloc_func = sctk_malloc,
                 .free_func = sctk_free
         };
