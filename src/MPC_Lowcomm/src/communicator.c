@@ -1357,7 +1357,7 @@ static inline mpc_lowcomm_communicator_t __new_communicator(mpc_lowcomm_communic
 		}
 
 		/* Now proceed to check group membership */
-		int i;
+		unsigned int i;
 
 		unsigned int g_size = mpc_lowcomm_group_size(group);
 
