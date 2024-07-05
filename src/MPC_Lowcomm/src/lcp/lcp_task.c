@@ -210,13 +210,18 @@ err:
 
 int lcp_task_dissociate(lcp_task_h task, lcp_manager_h mngr)
 {
-        sctk_free(task->tcct[mngr->id]->tag.prqs);
-        sctk_free(task->tcct[mngr->id]->tag.umqs);
-        sctk_free(task->tcct[mngr->id]->am.handlers);
+        if (mngr->flags & LCP_MANAGER_TSC_MODEL) {
+                sctk_free(task->tcct[mngr->id]->tag.prqs);
+                sctk_free(task->tcct[mngr->id]->tag.umqs);
+                sctk_free(task->tcct[mngr->id]->am.handlers);
+        }
 
         sctk_free(task->tcct[mngr->id]);
 
         task->tcct[mngr->id] = NULL;
+
+        mpc_common_debug("LCP TASK: dissociated task. tid=%d, mngr id=%d",
+                         task->tid, mngr->id);
         
         return MPC_LOWCOMM_SUCCESS;
 }
