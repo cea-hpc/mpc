@@ -169,6 +169,8 @@ static void __arg_set_verbosity(char *arg)
 * ARGUMENT PARSING HELPERS *
 ****************************/
 
+/* NOLINTBEGIN(clang-diagnostic-unused-function): False positives */
+
 static inline int __parse_arg(char *arg, void (*action)(void), char *passed_arg)
 {
 	if(strncmp(arg, passed_arg, strlen(arg) ) == 0)
@@ -674,6 +676,8 @@ static void __topology_init()
 		}
 	}
 }
+
+/* NOLINTEND(clang-diagnostic-unused-function) */
 
 
 void __check_for_print_config(void)
