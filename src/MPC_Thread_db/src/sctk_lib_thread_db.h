@@ -72,6 +72,26 @@
   #include <proc_service.h>
 #endif
 
+/*
+ * Define ps_plog if necessary.
+ *
+ * glibc does not seem to provide ps_plog in proc_service.h.
+ * GDB does provide this symbol unless the system already provides proc_service.h and HAVE_PROC_SERVICE_H is defined.
+ */
+#if !defined(GDB_PROC_SERVICE_H) || defined(HAVE_PROC_SERVICE_H)
+
+static inline void __ps_plog(const char *fmt, ...) {
+  va_list args;
+  va_start(args, fmt);
+
+  fprintf(stderr, fmt, args);
+  fflush(stderr);
+
+  va_end(args);
+}
+
+#pragma weak ps_plog=__ps_plog
+#endif
 
 #if defined(ENABLE_TEST)
   #include "sctk_lib_thread_db_tests.h"
