@@ -4,13 +4,6 @@
 #include "mpcompt_entryPoints.h"
 #include "mpcomp_types.h"
 
-/* Global variables */
-static char* mpcompt_status_convertion[e_tool_status_count] = { "uninitialized",
-                                                                "initialized",
-                                                                "inactive",
-                                                                "active",
-                                                                "pending" };
-
 int
 mpc_omp_ompt_register_tool ( ompt_start_tool_result_t* tool_result,
                         char *path ) {
