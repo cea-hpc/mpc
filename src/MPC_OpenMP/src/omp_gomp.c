@@ -1017,12 +1017,7 @@ void mpc_omp_GOMP_loop_end( void )
 
 bool mpc_omp_GOMP_loop_end_cancel( void )
 {
-	bool ret;
-	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
-	ret = false;
 	not_implemented();
-	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
-	return ret;
 }
 
 void mpc_omp_GOMP_loop_end_nowait( void )
@@ -1042,67 +1037,47 @@ bool mpc_omp_GOMP_loop_doacross_static_start( unsigned ncounts, long *counts,
         long chunk_size, long *start,
         long *end )
 {
-	bool ret;
-	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
-	ret = false;
 	UNUSED( ncounts );
 	UNUSED( counts );
 	UNUSED( chunk_size );
 	UNUSED( start );
 	UNUSED( end );
 	not_implemented();
-	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
-	return ret;
 }
 
 bool mpc_omp_GOMP_loop_doacross_dynamic_start( unsigned ncounts, long *counts,
         long chunk_size, long *start,
         long *end )
 {
-	bool ret;
-	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
-	ret = false;
 	UNUSED( ncounts );
 	UNUSED( counts );
 	UNUSED( chunk_size );
 	UNUSED( start );
 	UNUSED( end );
 	not_implemented();
-	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
-	return ret;
 }
 
 bool mpc_omp_GOMP_loop_doacross_guided_start( unsigned ncounts, long *counts,
         long chunk_size, long *start,
         long *end )
 {
-	bool ret;
-	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
-	ret = false;
 	UNUSED( ncounts );
 	UNUSED( counts );
 	UNUSED( chunk_size );
 	UNUSED( start );
 	UNUSED( end );
 	not_implemented();
-	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
-	return ret;
 }
 
 bool mpc_omp_GOMP_loop_doacross_runtime_start( unsigned ncounts, long *counts,
         long *start,
         long *end )
 {
-	bool ret;
-	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
-	ret = false;
 	UNUSED( ncounts );
 	UNUSED( counts );
 	UNUSED( start );
 	UNUSED( end );
 	not_implemented();
-	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
-	return ret;
 }
 
 /** OPENMP 4.0 **/
