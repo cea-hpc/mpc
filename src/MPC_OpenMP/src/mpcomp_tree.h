@@ -40,6 +40,8 @@
 /***************
  * TREE STRUCT *
  ***************/
+
+/* NOLINTBEGIN(clang-diagnostic-unused-function): False positives */
 static inline void
 _mpc_common_table_reset( struct common_table *th_pri_common )
 {
@@ -73,7 +75,7 @@ static inline void _mpc_omp_thread_infos_init( mpc_omp_thread_t *thread ) {
 	thread->reduction_method = 0;
 #endif /* MPC_OMP_USE_INTEL_ABI */
 }
-
+/* NOLINTEND(clang-diagnostic-unused-function) */
 
 /**************
  * TASK UTILS *
