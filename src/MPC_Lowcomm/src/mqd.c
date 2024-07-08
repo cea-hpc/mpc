@@ -49,6 +49,7 @@ int mqsx_rewind_process(void)
     current_exported_process_offset = 0;
     mpc_common_spinlock_unlock(&proc_lock);
 
+	return mqs_ok;
 }
 
 
@@ -202,10 +203,13 @@ int mqs_get_communicator(mqs_process *pprocess, mqs_communicator *mqs_comm)
 	}
 
 	*mqs_comm = process->comms[process->comm_current_offset];
+
+	return mqs_ok;
 }
 
 int mqs_get_comm_group(__UNUSED__ mqs_process *process, __UNUSED__ int *ranks)
 {
+	return mqs_ok;
 }
 
 int mqs_next_communicator(mqs_process *pprocess)
