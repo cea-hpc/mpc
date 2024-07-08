@@ -2123,6 +2123,7 @@ static inline void __intel_dispatch_init_long( mpc_omp_thread_t __UNUSED__ *t, l
         long chunk )
 {
 	assert( t );
+	assert(incr > 0);
 
 	switch ( t->schedule_type )
 	{
@@ -2183,6 +2184,7 @@ static inline void __intel_dispatch_init_ull( mpc_omp_thread_t __UNUSED__ *t, bo
         unsigned long long chunk )
 {
 	assert( t );
+	assert(incr > 0);
 
 	switch ( t->schedule_type )
 	{

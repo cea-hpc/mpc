@@ -2394,6 +2394,7 @@ int mpc_omp_loop_ull_ordered_runtime_begin( bool up, unsigned long long lb,
         unsigned long long *from,
         unsigned long long *to )
 {
+	assert(incr > 0);
 	int ret;
 	/* Handle orphaned directive (initialize OpenMP environment) */
 	mpc_omp_init();
