@@ -20,6 +20,8 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
+#ifdef MPC_Profiler
+
 #include "sctk_profile_render_tex.h"
 
 #include <stdlib.h>
@@ -209,3 +211,5 @@ void sctk_profile_render_tex_teardown_profile( struct sctk_profile_renderer *rd 
 	fprintf(rd->output_file, "\\end{tabular}\n"
 							 "\\end{center}\n");
 }
+
+#endif /* MPC_Profiler */

@@ -19,6 +19,9 @@
 /* #   - BESNARD Jean-Baptiste jean-baptiste.besnard@cea.fr               # */
 /* #                                                                      # */
 /* ######################################################################## */
+
+#ifdef MPC_Profiler
+
 #include "sctk_profile_render.h"
 
 #include <string.h>
@@ -545,3 +548,5 @@ char *sctk_profile_render_sanitize_string( char *string )
 
   return ret;
 }
+
+#endif /* MPC_Profiler */

@@ -19,6 +19,9 @@
 /* #   - BESNARD Jean-Baptiste jean-baptiste.besnard@cea.fr               # */
 /* #                                                                      # */
 /* ######################################################################## */
+
+#ifdef MPC_Profiler
+
 #include "sctk_internal_profiler.h"
 
 #include <mpc_common_flags.h>
@@ -28,9 +31,6 @@
 #include "mpc_common_debug.h"
 #include "sctk_performance_tree.h"
 #include "sctk_profile_render.h"
-
-
-#ifdef MPC_Profiler
 
 /* Profiling switch */
 int sctk_profiler_internal_switch = 0;

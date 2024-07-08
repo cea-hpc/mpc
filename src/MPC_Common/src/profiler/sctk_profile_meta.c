@@ -20,6 +20,8 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
+#ifdef MPC_Profiler
+
 #include "sctk_profile_meta.h"
 
 #include <mpc_common_rank.h>
@@ -133,3 +135,5 @@ void sctk_profile_meta_end_compute(struct sctk_profile_meta *meta)
         mpc_common_debug("Program running at %g ticks per sec", meta->ticks_per_second);
 
 }
+
+#endif /* MPC_Profiler */
