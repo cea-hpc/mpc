@@ -20,6 +20,7 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
+#ifdef MPC_Profiler
 #include "sctk_profile_render_xml.h"
 
 #include <stdlib.h>
@@ -253,3 +254,5 @@ void sctk_profile_render_xml_teardown_profile( struct sctk_profile_renderer *rd 
 {
 	fprintf(rd->output_file, "</profile>\n");
 }
+
+#endif /* MPC_Profiler */

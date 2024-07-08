@@ -20,6 +20,7 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
+#ifdef MPC_Profiler
 #include "sctk_profile_render_html.h"
 #include "sctk_profile_meta.h"
 
@@ -174,3 +175,5 @@ void sctk_profile_render_html_teardown_profile( struct sctk_profile_renderer *rd
 {
 	fprintf(rd->output_file, "</table>");
 }
+
+#endif /* MPC_Profiler */

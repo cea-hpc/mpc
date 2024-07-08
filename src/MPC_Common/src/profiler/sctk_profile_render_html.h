@@ -23,6 +23,7 @@
 #ifndef SCTK_PROFILE_RENDER_HTML_H
 #define SCTK_PROFILE_RENDER_HTML_H
 
+#ifdef MPC_Profiler
 #include "sctk_profile_render.h"
 
 
@@ -38,4 +39,5 @@
 	void sctk_profile_render_html_render_meta( struct sctk_profile_renderer *rd, struct sctk_profile_meta *meta );
 	void sctk_profile_render_html_teardown_meta( struct sctk_profile_renderer *rd );
 
+#endif /* MPC_Profiler */
 #endif /* SCTK_PROFILE_RENDER_HTML_H */
