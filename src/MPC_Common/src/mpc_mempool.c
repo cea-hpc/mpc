@@ -100,6 +100,9 @@ int mpc_mempool_init(mpc_mempool_t *mp,
 {
 	int i;
 
+	assert(min >= 0);
+	assert(max >= min);
+
         mp->data = sctk_malloc(sizeof(mpc_mempool_data_t));
         if (mp->data == NULL) {
                 mpc_common_debug_error("MEMPOOL: could not allocate "
