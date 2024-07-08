@@ -2,10 +2,11 @@
 #define BITMAP_H
 
 #include <limits.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include <lcp_common.h>
+#include "mpc_common_bit.h"
 
 typedef uint64_t word_t;
 
@@ -13,7 +14,7 @@ enum {
         BITS_PER_WORD = sizeof(word_t) * CHAR_BIT
 };
 
-#define MPC_BITMAP_MASK(i) (LCP_BIT(i) -1)
+#define MPC_BITMAP_MASK(i) (MPC_BIT(i) -1)
 
 #define MPC_BITMAP_INIT \
 { \
@@ -61,6 +62,8 @@ typedef struct bmap {
        word_t bits[_MPC_BITMAP_BITS_TO_WORDS(64)];
 } bmap_t;
 
+
+/* NOLINTBEGIN(clang-diagnostic-unused-function): False positives */
 static inline int mpc_bitmap_is_zero(bmap_t bitmap) {
         size_t word_index;
         _MPC_BITMAP_FOR_EACH_WORD(bitmap, word_index) {
@@ -74,7 +77,7 @@ static inline int mpc_bitmap_is_zero(bmap_t bitmap) {
 static inline int mpc_bitmap_equal(bmap_t a, bmap_t b) {
         return !(memcmp(a.bits, b.bits, sizeof(a.bits)));
 }
-
+/* NOLINTEND(clang-diagnostic-unused-function) */
 
 
 

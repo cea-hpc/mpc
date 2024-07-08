@@ -45,31 +45,32 @@
 #include "lcp_task.h"
 #include "lcp_header.h"
 
+#include <mpc_common_bit.h>
 #include <sctk_alloc.h>
 
 //TODO: LCP_REQUEST prefix confusing with those defined in lcp.h
 enum {
-	LCP_REQUEST_RECV_TRUNC          = LCP_BIT(1), /* flags if request is truncated */
-        LCP_REQUEST_MPI_COMPLETE        = LCP_BIT(2), /* call MPI level completion callback,
+	LCP_REQUEST_RECV_TRUNC          = MPC_BIT(1), /* flags if request is truncated */
+        LCP_REQUEST_MPI_COMPLETE        = MPC_BIT(2), /* call MPI level completion callback,
                                                          see ucp_request_complete */
-        LCP_REQUEST_RMA_COMPLETE        = LCP_BIT(3),
-        LCP_REQUEST_OFFLOADED_RNDV      = LCP_BIT(4),
-        LCP_REQUEST_LOCAL_COMPLETED     = LCP_BIT(5),
-        LCP_REQUEST_REMOTE_COMPLETED    = LCP_BIT(6),
-        LCP_REQUEST_USER_COMPLETE       = LCP_BIT(7),
+        LCP_REQUEST_RMA_COMPLETE        = MPC_BIT(3),
+        LCP_REQUEST_OFFLOADED_RNDV      = MPC_BIT(4),
+        LCP_REQUEST_LOCAL_COMPLETED     = MPC_BIT(5),
+        LCP_REQUEST_REMOTE_COMPLETED    = MPC_BIT(6),
+        LCP_REQUEST_USER_COMPLETE       = MPC_BIT(7),
 };
 
 //TODO: rename "unexpected container" to "receive descriptor". It was initially
 //      used only for receiving unexpected data but it was then extended to
 //      receive data for inter-thread communication.
 enum {
-	LCP_RECV_CONTAINER_UNEXP_RNDV_TAG       = LCP_BIT(0),
-	LCP_RECV_CONTAINER_UNEXP_EAGER_TAG      = LCP_BIT(1),
-	LCP_RECV_CONTAINER_UNEXP_EAGER_TAG_SYNC = LCP_BIT(2),
-	LCP_RECV_CONTAINER_UNEXP_RNDV_AM        = LCP_BIT(3),
-	LCP_RECV_CONTAINER_UNEXP_TASK_TAG_BCOPY = LCP_BIT(4),
-	LCP_RECV_CONTAINER_UNEXP_TASK_TAG_SYNC  = LCP_BIT(5),
-	LCP_RECV_CONTAINER_UNEXP_TASK_TAG_ZCOPY = LCP_BIT(6),
+	LCP_RECV_CONTAINER_UNEXP_RNDV_TAG       = MPC_BIT(0),
+	LCP_RECV_CONTAINER_UNEXP_EAGER_TAG      = MPC_BIT(1),
+	LCP_RECV_CONTAINER_UNEXP_EAGER_TAG_SYNC = MPC_BIT(2),
+	LCP_RECV_CONTAINER_UNEXP_RNDV_AM        = MPC_BIT(3),
+	LCP_RECV_CONTAINER_UNEXP_TASK_TAG_BCOPY = MPC_BIT(4),
+	LCP_RECV_CONTAINER_UNEXP_TASK_TAG_SYNC  = MPC_BIT(5),
+	LCP_RECV_CONTAINER_UNEXP_TASK_TAG_ZCOPY = MPC_BIT(6),
 };
 
 /* Store data for unexpected am messages

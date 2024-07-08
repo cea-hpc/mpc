@@ -1,6 +1,8 @@
 #ifndef LIST_H
 #define LIST_H
 
+#include "mpc_common_compiler_def.h"
+
 typedef struct mpc_list_elem {
         struct mpc_list_elem *next;
         struct mpc_list_elem *prev;

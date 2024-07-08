@@ -34,13 +34,13 @@
 
 #include <lcr/lcr_def.h>
 #include <lowcomm_config.h>
-#include <lcp_common.h>
 
 #include <utlist.h>
+#include <mpc_common_bit.h>
 
 enum {
-        LCR_COMPONENT_DEVICE_NUM = LCP_BIT(0),
-        LCR_COMPONENT_DEVICES    = LCP_BIT(1)
+        LCR_COMPONENT_DEVICE_NUM = MPC_BIT(0),
+        LCR_COMPONENT_DEVICES    = MPC_BIT(1)
 };
 
 #define LCR_COMPONENT_REGISTER(_component) \

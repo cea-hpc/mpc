@@ -1,9 +1,5 @@
-#ifndef LCP_COMMON_H
-#define LCP_COMMON_H
-
-#include <stdint.h>
-
-#define LCP_BIT(i) (1ul << (i))
+#ifndef MPC_COMMON_COMPILER_DEF_H
+#define MPC_COMMON_COMPILER_DEF_H
 
 //FIXME: redefine unicity
 #define MPC_PP_UNIQUE_ID __LINE__
@@ -23,16 +19,5 @@
 	 const typeof( ((type *)0)->member ) *__mptr = (ptr); \
 	 (type *)( (char *)__mptr - offsetof(type,member) ); \
 	 })
-
-void rand_seed_init(void);
-uint64_t lcp_rand_uint64(void);
-
-// NOLINTBEGIN(clang-diagnostic-unused-function)
-static inline uint64_t lcp_get_process_uid(uint64_t pid, int32_t tid) {
-        pid &= 0xFFFFFFFF00000000ull; /* first reset least significant bits to 0 */
-        return pid | tid;
-}
-// NOLINTEND(clang-diagnostic-unused-function)
-
 
 #endif

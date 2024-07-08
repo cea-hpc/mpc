@@ -40,6 +40,7 @@
 #include "lcp_header.h"
 #include "lcp_request.h"
 
+#include "mpc_common_compiler_def.h"
 #include "mpc_common_debug.h"
 #include "mpc_lowcomm_types.h"
 

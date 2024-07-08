@@ -1,9 +1,9 @@
 #include "mpi_partitioned.h"
 
+#include "mpc_common_compiler_def.h"
 #include "mpc_mpi_internal.h"
 
 #include "lcp.h"
-#include "lcp_common.h"
 
 extern lcp_context_h lcp_ctx_loc;
 

@@ -2,9 +2,9 @@
 #define LCP_H
 
 #include <stdlib.h>
+#include <mpc_common_bit.h>
 
 #include "lcp_def.h"
-#include "lcp_common.h"
 
 /**
  * @defgroup LCP_API LowComm Protocol API
@@ -75,9 +75,9 @@ typedef enum {
  */
 
 enum {
-        LCP_CONTEXT_DATATYPE_OPS  = LCP_BIT(0), /**< datatype mask */
-        LCP_CONTEXT_PROCESS_UID   = LCP_BIT(1), /**< process uid mask */
-        LCP_CONTEXT_NUM_PROCESSES = LCP_BIT(2), /**< num processes mask */
+        LCP_CONTEXT_DATATYPE_OPS  = MPC_BIT(0), /**< datatype mask */
+        LCP_CONTEXT_PROCESS_UID   = MPC_BIT(1), /**< process uid mask */
+        LCP_CONTEXT_NUM_PROCESSES = MPC_BIT(2), /**< num processes mask */
 };
 
 /**
@@ -232,12 +232,12 @@ enum {
 //       just a functionality (eg LCP_REQUEST_TRY_OFFLOAD or
 //       LCP_REQUEST_TAG_SYNC). Maybe this should be divided in two enum for
 //       clarity.
-        LCP_REQUEST_TRY_OFFLOAD   = LCP_BIT(0), /**< Try offload send mask */
-        LCP_REQUEST_USER_DATA     = LCP_BIT(1), /**< User data mask */
-        LCP_REQUEST_USER_REQUEST  = LCP_BIT(2), /**< User request mask */
-        LCP_REQUEST_TAG_SYNC      = LCP_BIT(3), /**< Sync request mask */
-        LCP_REQUEST_AM_SYNC       = LCP_BIT(4), /**< AM sync request mask */
-        LCP_REQUEST_AM_CALLBACK   = LCP_BIT(5), /**< AM callback mask */
+        LCP_REQUEST_TRY_OFFLOAD   = MPC_BIT(0), /**< Try offload send mask */
+        LCP_REQUEST_USER_DATA     = MPC_BIT(1), /**< User data mask */
+        LCP_REQUEST_USER_REQUEST  = MPC_BIT(2), /**< User request mask */
+        LCP_REQUEST_TAG_SYNC      = MPC_BIT(3), /**< Sync request mask */
+        LCP_REQUEST_AM_SYNC       = MPC_BIT(4), /**< AM sync request mask */
+        LCP_REQUEST_AM_CALLBACK   = MPC_BIT(5), /**< AM callback mask */
 };
 
 /**
@@ -264,8 +264,8 @@ typedef struct lcp_tag_info {
  */
 //FIXME: defined as a flags while it should be just an integer
 enum lcp_dt_type {
-        LCP_DATATYPE_CONTIGUOUS = LCP_BIT(0),
-        LCP_DATATYPE_DERIVED    = LCP_BIT(1),
+        LCP_DATATYPE_CONTIGUOUS = MPC_BIT(0),
+        LCP_DATATYPE_DERIVED    = MPC_BIT(1),
 };
 
 /**
@@ -356,8 +356,8 @@ int lcp_tag_probe_nb(lcp_task_h task, const int src,
                      lcp_tag_info_t *recv_info);
 
 enum {
-        LCP_AM_EAGER = LCP_BIT(0),
-        LCP_AM_RNDV  = LCP_BIT(1),
+        LCP_AM_EAGER = MPC_BIT(0),
+        LCP_AM_RNDV  = MPC_BIT(1),
 };
 
 /**

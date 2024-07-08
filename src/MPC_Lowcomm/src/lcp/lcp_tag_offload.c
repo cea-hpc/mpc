@@ -40,6 +40,7 @@
 #include "lcp_datatype.h"
 
 #include "mpc_common_debug.h"
+#include "mpc_common_compiler_def.h"
 
 /* ============================================== */
 /* Offload utils                                  */
@@ -115,6 +116,11 @@ enum {
         LCP_PROTOCOL_EAGER = 0,
         LCP_PROTOCOL_RNDV,
 };
+
+static inline uint64_t lcp_get_process_uid(uint64_t pid, int32_t tid) {
+        pid &= 0xFFFFFFFF00000000ull; /* first reset least significant bits to 0 */
+        return pid | tid;
+}
 
 /* ============================================== */
 /* Packing                                        */

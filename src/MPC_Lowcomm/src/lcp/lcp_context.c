@@ -47,7 +47,6 @@
 
 #include "lcp.h"
 #include "lcp_mem.h"
-#include "lcp_common.h"
 #include "lcp_ep.h"
 #include "lcp_task.h"
 #include "lcr/lcr_component.h"

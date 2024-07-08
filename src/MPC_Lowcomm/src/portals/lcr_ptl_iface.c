@@ -34,7 +34,6 @@
 
 #include "lcr_ptl.h"
 
-#include "lcp_common.h"
 
 #include "sctk_ptl_iface.h"
 #include "sctk_ptl_offcoll.h"

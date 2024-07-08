@@ -31,7 +31,6 @@
 #include "lcp_task.h"
 
 #include "lcp.h"
-#include "lcp_common.h"
 #include "mpc_common_debug.h"
 
 #include "lcp_def.h"
