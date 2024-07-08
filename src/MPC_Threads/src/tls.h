@@ -92,6 +92,7 @@ extern __thread struct mpc_mpi_cl_per_thread_ctx_s *___mpc_p_per_thread_comm_ctx
 /** initialize the context field to NULL */
 #define tls_init(a)       ucp->a = NULL;
 
+/* NOLINTBEGIN(clang-diagnostic-unused-function): False positives */
 /**
  * Save the current TLS environment in the given context.
  * This function is called in sctk_context.c.
@@ -238,6 +239,7 @@ static inline void sctk_context_init_tls(sctk_mctx_t *ucp)
 #endif
 #endif
 }
+/* NOLINTEND(clang-diagnostic-unused-function) */
 
 void sctk_tls_dtors_init(struct sctk_tls_dtors_s **head);
 void sctk_tls_dtors_add(struct sctk_tls_dtors_s **head, void *obj, void (*func)(void *) );
