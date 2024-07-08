@@ -86,7 +86,7 @@ void MPIR_Get_file_error_routine(__UNUSED__ MPI_Errhandler a,
 int MPIR_Abort(MPI_Comm comm, int mpi_errno, int exit_code, const char *error_msg)
 {
 	mpc_common_debug_error("ERRNO %d EXIT %d MSG: %s", mpi_errno, exit_code, error_msg);
-	PMPI_Abort(comm, exit_code);
+	return PMPI_Abort(comm, exit_code);
 }
 
 int MPIR_File_call_cxx_errhandler( __UNUSED__ void *fh, __UNUSED__ int *errorcode,
