@@ -21,6 +21,8 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
+#include "mpc_mpi.h"
+
 /* Collectives  */
 #pragma weak MPI_Ibcast = PMPI_Ibcast
 #pragma weak MPI_Bcast_init = PMPI_Bcast_init
