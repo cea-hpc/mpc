@@ -500,8 +500,12 @@ void mqsx_dump_communicators(mqs_process *proc)
 	do
 	{
 		mqs_communicator comm;
-		mqs_get_communicator(proc, &comm);
-		fprintf(stderr, MPC_COLOR_GRAY_BOLD([DUMP] COMM) " RANK %d %lu ME %ld / %ld %s\n", my_rank, comm.unique_id, comm.local_rank, comm.size, comm.name);
+		int ret = mqs_get_communicator(proc, &comm);
+
+		if (ret == mqs_ok)
+		{
+			fprintf(stderr, MPC_COLOR_GRAY_BOLD([DUMP] COMM) " RANK %d %lu ME %ld / %ld %s\n", my_rank, comm.unique_id, comm.local_rank, comm.size, comm.name);
+		}
 	}while(mqs_next_communicator(proc) == mqs_ok);
 }
 
@@ -525,8 +529,12 @@ int mqsx_dump_communicators_json(mqs_process *proc, FILE *out)
 		}
 
 		mqs_communicator comm;
-		mqs_get_communicator(proc, &comm);
-		fprintf(out, "{\"world_rank\": %d , \"id\" : %lu, \"local_rank\" : %ld, \"size\" : %ld, \"name\": \"%s\"}", my_rank, comm.unique_id, comm.local_rank, comm.size, comm.name);
+		int ret = mqs_get_communicator(proc, &comm);
+
+		if ( ret == mqs_ok )
+		{
+			fprintf(out, "{\"world_rank\": %d , \"id\" : %lu, \"local_rank\" : %ld, \"size\" : %ld, \"name\": \"%s\"}", my_rank, comm.unique_id, comm.local_rank, comm.size, comm.name);
+		}
 
 		prev = 1;
 	}while(mqs_next_communicator(proc) == mqs_ok);
