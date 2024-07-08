@@ -161,12 +161,17 @@ int MPIR_Get_node_id(MPI_Comm comm, int rank, int *id) {
 
   int node_number = mpc_common_get_node_count();
 
-  struct mpc_launch_pmi_process_layout *tmp;
+  struct mpc_launch_pmi_process_layout *tmp = NULL;
 
   int i, j;
 
   for (i = 0; i < node_number; i++) {
     HASH_FIND_INT(nodes_infos, &node_number, tmp);
+
+	if (tmp == NULL) {
+		return MPI_ERR_INTERN;
+	}
+
     for (j = 0; j < tmp->nb_process; j++) {
       if (tmp->process_list[j] == comm_world_rank) {
         *id = i;
