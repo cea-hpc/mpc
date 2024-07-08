@@ -107,6 +107,8 @@ mpc_lowcomm_peer_uid_t mpc_lowcomm_monitor_get_uid();
  */
 mpc_lowcomm_set_uid_t mpc_lowcomm_monitor_get_gid();
 
+
+/* NOLINTBEGIN(clang-diagnostic-unused-function): False positives */
 /**
  * @brief Get the set GID for a given peer
  *
@@ -157,6 +159,7 @@ static inline mpc_lowcomm_peer_uid_t mpc_lowcomm_monitor_local_uid_of(int peer_r
 {
 	return mpc_lowcomm_monitor_uid_of(mpc_lowcomm_monitor_get_gid(), peer_rank);
 }
+/* NOLINTEND(clang-diagnostic-unused-function) */
 
 /******************
 * PEER FUNCTIONS *

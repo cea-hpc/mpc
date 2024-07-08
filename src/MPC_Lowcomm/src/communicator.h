@@ -137,6 +137,7 @@ int _mpc_lowcomm_communicator_world_last_local_task();
 **********************/
 
 
+/* NOLINTBEGIN(clang-diagnostic-unused-function): False positives */
 /**
  * This method get the collectives related to the communicator.
  * @param communicator Identification number of the local communicator.
@@ -176,5 +177,6 @@ static inline mpc_lowcomm_communicator_id_t _mpc_lowcomm_communicator_id(mpc_low
 
 	return MPC_LOWCOMM_COMM_NULL_ID;
 }
+/* NOLINTEND(clang-diagnostic-unused-function) */
 
 #endif /* COMMUNICATOR_H */
