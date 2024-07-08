@@ -20,18 +20,18 @@ char MPIR_dll_name[] = "libmpclowcomm.so";
 * EXECUTABLE IMAGE RELATED FUNCTIONS *
 **************************************/
 
-int mqs_setup_image(mqs_image *image, mqs_image_callbacks *cb)
+int mqs_setup_image(__UNUSED__ mqs_image *image, __UNUSED__ mqs_image_callbacks *cb)
 {
 	return mqs_ok;
 }
 
-int mqs_image_has_queues(mqs_image *image, char **message)
+int mqs_image_has_queues(__UNUSED__ mqs_image *image, char **message)
 {
 	*message = "MPC %s";
 	return mqs_ok;
 }
 
-int mqs_destroy_image_info(mqs_image_info *info)
+int mqs_destroy_image_info(__UNUSED__ mqs_image_info *info)
 {
 	return mqs_ok;
 }
@@ -53,7 +53,7 @@ int mqsx_rewind_process(void)
 
 
 
-int mqs_setup_process(mqs_process *process, const mqs_process_callbacks *cb)
+int mqs_setup_process(mqs_process *process, __UNUSED__ const mqs_process_callbacks *cb)
 {
 	struct mpc_lowcomm_mqs_process *ret = sctk_malloc(sizeof(struct mpc_lowcomm_mqs_process) );
 
@@ -121,13 +121,13 @@ int mqs_setup_process(mqs_process *process, const mqs_process_callbacks *cb)
 	return mqs_ok;
 }
 
-int mqs_process_has_queues(mqs_process *process, char **message)
+int mqs_process_has_queues(__UNUSED__ mqs_process *process, char **message)
 {
 	*message = "MPC %s";
 	return mqs_ok;
 }
 
-int mqs_destroy_process_info(mqs_process_info *processinfo)
+int mqs_destroy_process_info(__UNUSED__ mqs_process_info *processinfo)
 {
 	return mqs_ok;
 }
@@ -204,7 +204,7 @@ int mqs_get_communicator(mqs_process *pprocess, mqs_communicator *mqs_comm)
 	*mqs_comm = process->comms[process->comm_current_offset];
 }
 
-int mqs_get_comm_group(mqs_process *process, int *ranks)
+int mqs_get_comm_group(__UNUSED__ mqs_process *process, __UNUSED__ int *ranks)
 {
 }
 
@@ -227,7 +227,7 @@ int mqs_next_communicator(mqs_process *pprocess)
 
 static void __unfold_msg_to_process(mpc_lowcomm_ptp_message_t *msg,
                                     struct mpc_lowcomm_mqs_process *process,
-                                    mqs_op_class top,
+                                    __UNUSED__ mqs_op_class top,
                                     int same_proc,
                                     int is_recv)
 {
@@ -440,7 +440,7 @@ int mqs_next_operation(mqs_process *pprocess, mqs_pending_operation *op)
 * SETUP RELATED FUNCTIONS *
 ***************************/
 
-void mqs_setup_basic_callbacks(const mqs_basic_callbacks *cb)
+void mqs_setup_basic_callbacks(__UNUSED__ const mqs_basic_callbacks *cb)
 {
 	/* NO OP */
 }
@@ -736,13 +736,13 @@ static void __dump_to_file()
 }
 
 
-void __dump_comm_info(int sig)
+void __dump_comm_info(__UNUSED__ int sig)
 {
     __dump_to_file();
     mqsx_rewind_process();
 }
 
-void __dump_comm_console(int sig)
+void __dump_comm_console(__UNUSED__ int sig)
 {
 	mqs_image img;
 
