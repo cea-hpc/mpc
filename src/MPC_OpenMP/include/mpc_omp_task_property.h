@@ -79,6 +79,8 @@ typedef struct  mpc_omp_task_flags_s
 /** Property of an OpenMP task */
 typedef unsigned int mpc_omp_task_property_t;
 
+
+/* NOLINTBEGIN(clang-diagnostic-unused-function): False positives */
 /*** Task property primitives ***/
 static inline void
 mpc_omp_task_reset_property(mpc_omp_task_property_t * property)
@@ -103,5 +105,6 @@ mpc_omp_task_property_isset(mpc_omp_task_property_t property, mpc_omp_task_prope
 {
     return (property & mask);
 }
+/* NOLINTEND(clang-diagnostic-unused-function) */
 
 # endif /* __MPC_OMP_TASK_PROPERTY_H__ */
