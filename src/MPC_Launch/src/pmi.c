@@ -695,7 +695,7 @@ int mpc_launch_pmi_get_process_layout( struct mpc_launch_pmi_process_layout **la
 }
 
 /** This is the fallback code when the nodeid attribute is buggy */
-static inline int __get_node_rank_from_process_rank_fallback(int process_rank)
+__UNUSED__ static inline int __get_node_rank_from_process_rank_fallback(int process_rank)
 {
 	struct mpc_launch_pmi_process_layout * tmp = NULL, *current = NULL;
 
