@@ -56,6 +56,7 @@ _mpc_omp_ompt_callback_implicit_task( ompt_scope_endpoint_t endpoint,
                                   int flags );
 
 
+/* NOLINTBEGIN(clang-diagnostic-unused-function): False positives */
 static inline ompt_task_flag_t
 __mpc_omp_ompt_get_task_flags( mpc_omp_thread_t * thread, mpc_omp_task_t *new_task ) {
     ompt_task_flag_t flags = ompt_task_explicit;
@@ -79,6 +80,7 @@ __mpc_omp_ompt_get_task_flags( mpc_omp_thread_t * thread, mpc_omp_task_t *new_ta
 
     return flags;
 }
+/* NOLINTEND(clang-diagnostic-unused-function) */
 
 #endif /* OMPT_SUPPORT */
 #endif /* __MPCOMPT_TASK_H__ */
