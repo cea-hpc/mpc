@@ -525,10 +525,8 @@ static inline void __topology_device_enrich_topology()
 
 	for ( i = 0; i < __mpc_topology_device_list_count; i++ )
 	{
-		mpc_topology_device_t *device = &__mpc_topology_device_list[i];
-
-
 #if defined( MPC_USE_CUDA )
+		mpc_topology_device_t *device = &__mpc_topology_device_list[i];
 
 		if ( cuda_device_to_locate > 0 )
 		{
