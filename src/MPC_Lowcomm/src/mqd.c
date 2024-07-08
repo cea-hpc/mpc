@@ -305,11 +305,11 @@ static void __unfold_msg_to_process(mpc_lowcomm_ptp_message_t *msg,
 
 	op->system_buffer = 0;
 
-	op->buffer = NULL;
+	op->buffer = (unsigned long) NULL;
 
 	if(msg->tail.message_type == MPC_LOWCOMM_MESSAGE_CONTIGUOUS)
 	{
-		op->buffer = msg->tail.message.contiguous.addr;
+		op->buffer = (unsigned long) msg->tail.message.contiguous.addr;
 	}
 
 	process->ops_count = process->ops_count + 1;
