@@ -30,6 +30,13 @@
 /* # - Thomas Dionisi <thomas.dionisi@exascale-computing.eu>              # */
 /* #                                                                      # */
 /* ######################################################################## */
+
+/*
+ * This file is meant to be included from "omp_gomp.h",
+ * which temporarily defines the GOMP_ABI_FUNC macro.
+ */
+#ifdef GOMP_ABI_FUNC
+
 /*------------------------------------------------------------------------*/
 /*-------------------------- MPCOMP GOMP API NAMES------------------------*/
 
@@ -169,3 +176,5 @@ GOMP_ABI_FUNC(mpc_omp_GOMP_parallel_loop_nonmonotonic_guided, GOMP_parallel_loop
 
 // All GOMP_5.0 symbols
 GOMP_ABI_FUNC(mpc_omp_GOMP_taskwait_depend, GOMP_taskwait_depend, "GOMP_5.0")
+
+#endif /* GOMP_ABI_FUNC */
