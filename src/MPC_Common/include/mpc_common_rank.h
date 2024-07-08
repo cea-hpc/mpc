@@ -65,10 +65,12 @@ extern int __process_rank;
 /** Global variable storing app rank*/
 extern int __process_app_rank;
 
+
+/* NOLINTBEGIN(clang-diagnostic-unused-function): False positives */
 /**
  * @brief Get the number of UNIX processes
  *
- * @return int Numbe of UNIX processes
+ * @return int Number of UNIX processes
  */
 static inline int mpc_common_get_process_count( void )
 {
@@ -221,7 +223,7 @@ static inline int mpc_common_get_thread_id( void )
 {
 	return (int)getpid();
 }
-
+/* NOLINTEND(clang-diagnostic-unused-function) */
 
 /* End Generic task-rank getters */
 /**
