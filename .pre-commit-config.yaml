@@ -27,8 +27,9 @@ repos:
             ^src/MPC_Fortran|
             ^src/MPC_Thread_db/src/gdb/linux-thread-db\.c$|
             ^src/MPC_Common/include/sctk_no_alloc\.h$|
-            ^src/MPC_Thread_db/src/sctk_lib_thread_db\.c$|
             ^src/MPC_Tests/lcp|
+            ^src/MPC_Thread_db/src/sctk_lib_thread_db\.c$|
+            ^cmake/example/t.c$|
             \.(m4|in|3in|f90)$
           # 1. FIXME: Remove exclude path "src/MPC_Tests/lcp" once tests are fixed (LCP v2)
           # 2. sctk_lib_thread_db.c contains unmuteable false positives on "ambiguous" calls
