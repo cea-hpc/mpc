@@ -296,7 +296,7 @@ int NBC_Init_handle(NBC_Handle *handle, MPI_Comm comm, int tag);
 	}
 
 
-
+/* NOLINTBEGIN(clang-diagnostic-unused-function): False positives */
 static inline void NBC_DEBUG(__UNUSED__ int level, __UNUSED__ const char *fmt, ...)
 {
 #if NBC_DLEVEL > 0
@@ -477,6 +477,7 @@ static inline int NBC_Unpack(void *src, int srccount, MPI_Datatype srctype, void
 
 	return NBC_OK;
 }
+/* NOLINTEND(clang-diagnostic-unused-function) */
 
 #ifdef __cplusplus
 }
