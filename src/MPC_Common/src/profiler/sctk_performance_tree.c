@@ -28,7 +28,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-void sctk_performance_tree_relative_percentage( struct sctk_profiler_array *array, int id, int parent_id, int depth, void *arg , int going_up )
+void sctk_performance_tree_relative_percentage( struct sctk_profiler_array *array, int id, int parent_id, __UNUSED__ int depth, void *arg , __UNUSED__ int going_up )
 {
 	struct sctk_performance_tree *tr = (struct sctk_performance_tree *)arg;
 
