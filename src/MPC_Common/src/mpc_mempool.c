@@ -39,6 +39,13 @@ mpc_mempool_elem_t *_mpc_mempool_pop(mpc_mempool_t *mp)
 {
 	mpc_mempool_elem_t *elem = mp->free_list;
 
+	if ( elem == NULL )
+	{
+		mpc_common_debug_warning("Current mempool element is already NULL");
+		mp->data->available--;
+		return NULL;
+	}
+
 	mp->free_list = mp->free_list->next;
 	mp->data->available--;
 	return elem;
