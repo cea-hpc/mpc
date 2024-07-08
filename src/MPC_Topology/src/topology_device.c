@@ -893,6 +893,10 @@ mpc_topology_device_t **mpc_topology_device_get_from_handle_regexp( char *handle
 {
 	if ( !handle_reg_exp )
 	{
+		if ( count )
+		{
+			*count = -1;
+		}
 		return NULL;
 	}
 
