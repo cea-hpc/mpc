@@ -507,6 +507,7 @@ void mpc_lowcomm_perform_idle(volatile int *data, int value, void (*func)(void *
 /* mpc_lowcomm_request_t                                                                    */
 /************************************************************************/
 
+/* NOLINTBEGIN(clang-diagnostic-unused-function): False positives */
 static inline int mpc_lowcomm_request_get_completion(mpc_lowcomm_request_t *request)
 {
 	return request->completion_flag;
@@ -569,6 +570,7 @@ static inline int mpc_lowcomm_status_get_cancelled(const mpc_lowcomm_status_t *s
 	*flag = (status->cancelled == 1);
 	return MPC_LOWCOMM_SUCCESS;
 }
+/* NOLINTEND(clang-diagnostic-unused-function) */
 
 /************************************************************************/
 /* Thread-safe message probing	                                        */
