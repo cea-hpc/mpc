@@ -109,6 +109,7 @@ struct _mpc_ofi_dns_name_entry_t * _mpc_ofi_dns_name_entry(char * buff, size_t l
 
    if(!entry->value)
    {
+      free(entry);
       perror("malloc");
       return NULL;
    }
