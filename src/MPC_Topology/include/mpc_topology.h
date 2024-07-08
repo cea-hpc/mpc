@@ -169,6 +169,7 @@ int mpc_topology_is_loaded(void);
 */
 int mpc_topology_get_global_current_cpu(void);
 
+/* NOLINTBEGIN(clang-diagnostic-unused-function): False positives */
 /**
  * @brief Return the PU executing current thread
  * @note This version relies on HWLOC as MPC has no scheduler
@@ -348,6 +349,7 @@ static const hwloc_obj_type_t mpc_topology_split_hardware_hwloc_type[MPC_LOWCOMM
         HWLOC_OBJ_L1CACHE
 };
 #endif
+/* NOLINTEND(clang-diagnostic-unused-function) */
 
 /** @brief Return logical id of a hardware instance for guided topological split
 */
