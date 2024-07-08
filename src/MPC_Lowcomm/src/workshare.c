@@ -1,12 +1,13 @@
-#include <math.h>
 #include <assert.h>
-#include "lowcomm_config.h"
 #include <mpc_common_rank.h>
+
+#ifdef MPC_ENABLE_WORKSHARE
+#include <math.h>
+#include "lowcomm_config.h"
+#include "mpc_lowcomm_workshare.h"
 
 #ifdef MPC_Threads
 #include "thread.h"
-#else
-#include "mpc_lowcomm_workshare.h"
 #endif
 
 #define MPC_WORKSHARE_SCHEDULE_STATIC 0
@@ -787,3 +788,5 @@ static int __choose_target_random(mpc_workshare* workshare,int rank)
   }
   return target_rank;
 }
+
+#endif
