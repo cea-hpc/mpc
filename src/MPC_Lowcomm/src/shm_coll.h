@@ -174,6 +174,7 @@ struct sctk_comm_coll * sctk_comm_coll_init(int nb_task);
 int sctk_comm_coll_release(struct sctk_comm_coll *coll);
 
 
+/* NOLINTBEGIN(clang-diagnostic-unused-function): False positives */
 static inline int __sctk_comm_coll_get_id(struct sctk_comm_coll *coll,
                                           int rank)
 {
@@ -205,6 +206,7 @@ static inline struct shared_mem_bcast *sctk_comm_coll_get_bcast(struct sctk_comm
 
 	return &coll->shm_bcast[xid];
 }
+/* NOLINTEND(clang-diagnostic-unused-function) */
 
 int sctk_per_node_comm_context_init(struct sctk_per_node_comm_context *ctx,
                                     mpc_lowcomm_communicator_t comm, int nb_task);
