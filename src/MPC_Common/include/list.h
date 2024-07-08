@@ -8,6 +8,7 @@ typedef struct mpc_list_elem {
         struct mpc_list_elem *prev;
 } mpc_list_elem_t;
 
+/* NOLINTBEGIN(clang-diagnostic-unused-function): False positives */
 static inline void mpc_list_init_head(mpc_list_elem_t *head) {
         head->prev = head->next = head;
 }
@@ -39,6 +40,7 @@ static inline void mpc_list_insert_before(mpc_list_elem_t *elem,
                                           mpc_list_elem_t *new_elem) {
         mpc_list_insert(elem->next, elem, new_elem);
 }
+/* NOLINTEND(clang-diagnostic-unused-function) */
 
 #define mpc_list_push_head(_head, _elem) \
         mpc_list_insert_after(_head, _elem)
