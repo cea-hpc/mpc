@@ -19,6 +19,8 @@
 /* #   - BESNARD Jean-Baptiste jean-baptiste.besnard@cea.fr               # */
 /* #                                                                      # */
 /* ######################################################################## */
+
+#ifdef MPC_Profiler
 #include "sctk_profiler_array.h"
 
 #include <stdio.h>
@@ -337,3 +339,5 @@ void gen_xml_keys()
 #include "mpc_common_profiler_keys.h"
 #undef PROBE
 }
+
+#endif /* MPC_Profiler */
