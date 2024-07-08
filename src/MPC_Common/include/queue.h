@@ -14,6 +14,7 @@ typedef struct mpc_queue_head {
 
 typedef struct mpc_queue_elem **mpc_queue_iter_t;
 
+/* NOLINTBEGIN(clang-diagnostic-unused-function): False positives */
 static inline void mpc_queue_init_head(mpc_queue_head_t *queue) {
         queue->head = (mpc_queue_elem_t *)queue;
         queue->tail = &queue->head;
@@ -79,6 +80,7 @@ static inline void mpc_queue_del_iter(mpc_queue_head_t *queue,
                 *iter       = (*iter)->next;
         }
 }
+/* NOLINTEND(clang-diagnostic-unused-function) */
 
 #define mpc_queue_for_each_safe(elem, iter, type, queue, member) \
         for (iter = &(queue)->head, \
