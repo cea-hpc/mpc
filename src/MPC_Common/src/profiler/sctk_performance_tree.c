@@ -20,6 +20,7 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
+#ifdef MPC_Profiler
 #include "sctk_performance_tree.h"
 
 #include "mpc_common_debug.h"
@@ -186,3 +187,5 @@ void  sctk_performance_tree_release( struct sctk_performance_tree *tr )
 {
 	memset( (void *)tr, 0, sizeof(  struct sctk_performance_tree ) );
 }
+
+#endif /* MPC_Profiler */
