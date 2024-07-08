@@ -24,6 +24,7 @@
 #ifndef __SCTK_FT_IFACE_H
 #define __SCTK_FT_IFACE_H
 
+#include "mpc_lowcomm_types.h"
 #include "sctk_ft_types.h"
 
 #ifdef __cplusplus
