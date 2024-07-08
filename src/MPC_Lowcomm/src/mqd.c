@@ -376,7 +376,7 @@ int mqs_setup_operation_iterator(mqs_process *pprocess, int opclass)
 			break;
 	}
 
-	int i;
+	unsigned int i;
 
 	for(i = 0; i < process->list_count; i++)
 	{
