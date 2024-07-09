@@ -934,10 +934,9 @@ int mpc_omp_loop_ull_ordered_guided_next( unsigned long long *from,
  */
 static inline int __loop_dyn_add( int *dest, int *src1, int *src2,
         int *base, int depth,
-        int top_level,
-        int include_carry_over )
+        int top_level)
 {
-	int i, ret, carry_over;
+	int i, ret;
 	ret = 1;
 
 	/* Step to the next target */
@@ -945,12 +944,10 @@ static inline int __loop_dyn_add( int *dest, int *src1, int *src2,
 	{
 		const int value = src1[i] + src2[i];
 		dest[i] = value;
-		carry_over = 0;
 
 		if ( value >= base[i] )
 		{
 			ret = ( i == top_level ) ? 0 : ret;
-			carry_over = ( include_carry_over ) ? value / base[i] : carry_over;
 			dest[i] = ( value % base[i] );
 		}
 	}
@@ -1356,7 +1353,7 @@ do_increase:
 
 		ret = __loop_dyn_increase( t->for_dyn_shift, tree_base, tree_depth, top_level, 1 );
 		/* Add t->for_dyn_shift and t->mvp->tree_rank[i] w/out carry over and store it into t->for_dyn_target */
-		__loop_dyn_add( t->for_dyn_target, t->for_dyn_shift, t->mvp->tree_rank, tree_base, tree_depth, top_level, 0 );
+		__loop_dyn_add( t->for_dyn_target, t->for_dyn_shift, t->mvp->tree_rank, tree_base, tree_depth, top_level );
 		/* Compute the index of the target */
 		target_idx = __loop_dyn_get_victim_rank( t );
 		target_mvp = t->instance->mvps[target_idx].ptr.mvp;
@@ -1817,7 +1814,11 @@ int mpc_omp_loop_ull_dynamic_next( unsigned long long *from,
 
 	int *tree_base = t->instance->tree_base + 1;
 	const int tree_depth = t->instance->tree_depth - 1;
+	assert( tree_depth >= 0 );
+
 	const int top_level = t->instance->root->depth;
+	assert( top_level >= 0 );
+
 	/* Compute the index of the target */
 	target = t->dyn_last_target;
 	found = 1;
@@ -1836,7 +1837,7 @@ do_increase:
 
 		ret = __loop_dyn_increase( t->for_dyn_shift, tree_base, tree_depth, top_level, 1 );
 		/* Add t->for_dyn_shift and t->mvp->tree_rank[i] w/out carry over and store it into t->for_dyn_target */
-		__loop_dyn_add( t->for_dyn_target, t->for_dyn_shift, t->mvp->tree_rank, tree_base, tree_depth, top_level, 0 );
+		__loop_dyn_add( t->for_dyn_target, t->for_dyn_shift, t->mvp->tree_rank, tree_base, tree_depth, top_level );
 		/* Compute the index of the target */
 		target_idx = __loop_dyn_get_victim_rank( t );
 		target_mvp = t->instance->mvps[target_idx].ptr.mvp;
