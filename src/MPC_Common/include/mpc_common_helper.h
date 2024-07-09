@@ -120,6 +120,7 @@
  * HASHING FUNCTIONS *
  *********************/
 
+/* NOLINTBEGIN(clang-diagnostic-unused-function): False positives */
 static inline uint64_t mpc_common_hash( uint64_t val )
 {
 	/* This is MURMUR Hash under MIT
@@ -259,6 +260,7 @@ static inline int sctk_safe_cast_long_int(long l)
 #endif
 	return ( int )l;
 }
+/* NOLINTEND(clang-diagnostic-unused-function) */
 
 #else
 #define sctk_safe_cast_long_int(l)    l
