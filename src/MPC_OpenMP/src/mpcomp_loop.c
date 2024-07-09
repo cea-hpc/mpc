@@ -364,7 +364,7 @@ int mpc_omp_static_loop_begin( long lb, long b, long incr, long chunk_size,
 	/* Initialization of loop internals */
 	_mpc_omp_static_loop_init( t, lb, b, incr, chunk_size );
 
-	return ( !from && !to ) ? -1 : mpc_omp_static_loop_next( from, to );
+	return ( !from || !to ) ? -1 : mpc_omp_static_loop_next( from, to );
 }
 
 int mpc_omp_static_loop_next( long *from, long *to )
@@ -529,7 +529,7 @@ int mpc_omp_static_loop_begin_ull( bool up, unsigned long long lb,
                              __loop_get_num_iters_gen( &( t->info.loop_infos )));
 #endif /* OMPT_SUPPORT */
 
-	if ( !from && !to )
+	if ( !from || !to )
 	{
 		return -1;
 	}
@@ -654,7 +654,7 @@ int mpc_omp_guided_loop_begin( long lb, long b, long incr, long chunk_size,
                              __loop_get_num_iters_gen( &( t->info.loop_infos )));
 #endif /* OMPT_SUPPORT */
 
-	return ( !from && !to ) ? -1 : mpc_omp_guided_loop_next( from, to );
+	return ( !from || !to ) ? -1 : mpc_omp_guided_loop_next( from, to );
 }
 
 int mpc_omp_guided_loop_next( long *from, long *to )
@@ -857,7 +857,7 @@ int mpc_omp_loop_ull_guided_begin( bool up, unsigned long long lb,
                              __loop_get_num_iters_gen( &( t->info.loop_infos )));
 #endif /* OMPT_SUPPORT */
 
-	return ( !from && !to ) ? -1 : mpc_omp_loop_ull_guided_next( from, to );
+	return ( !from || !to ) ? -1 : mpc_omp_loop_ull_guided_next( from, to );
 }
 
 int mpc_omp_loop_ull_guided_next( unsigned long long *from,
@@ -1332,7 +1332,7 @@ int mpc_omp_dynamic_loop_begin( long lb, long b, long incr, long chunk_size,
 		return 1;
 	}
 
-	return ( !from && !to ) ? -1 : mpc_omp_dynamic_loop_next( from, to );
+	return ( !from || !to ) ? -1 : mpc_omp_dynamic_loop_next( from, to );
 }
 
 int mpc_omp_dynamic_loop_next( long *from, long *to )
@@ -1803,7 +1803,7 @@ int mpc_omp_loop_ull_dynamic_begin( bool up, unsigned long long lb,
 		return 1;
 	}
 
-	return ( !from && !to ) ? -1 : mpc_omp_loop_ull_dynamic_next( from, to );
+	return ( !from || !to ) ? -1 : mpc_omp_loop_ull_dynamic_next( from, to );
 }
 
 /* DEBUG */
