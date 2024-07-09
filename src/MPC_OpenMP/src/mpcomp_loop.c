@@ -224,7 +224,7 @@ static inline int __loop_static_schedule_get_single_chunk( long lb, long b, long
 	else
 	{
 		/* The final part has a smaller chunk_size, therefore the computation is
-		splitted in 2 parts */
+		split into 2 parts */
 		*from = lb + ( trip_count % num_threads ) * ( chunk_size + 1 ) * incr +
 		        ( rank - ( trip_count % num_threads ) ) * chunk_size * incr;
 		*to = lb + ( trip_count % num_threads ) * ( chunk_size + 1 ) * incr +
@@ -242,48 +242,6 @@ void mpc_omp_static_schedule_get_single_chunk( long lb, long b, long incr,
         long *from, long *to )
 {
   __loop_static_schedule_get_single_chunk(lb, b, incr, from, to);
-}
-
-/* Return the number of chunks that a static schedule would create */
-static inline int __loop_static_schedule_get_nb_chunks( long lb, long b, long incr,
-        long chunk_size )
-{
-	/* Original loop: lb -> b step incr */
-	long trip_count;
-	long nb_chunks_per_thread;
-	struct mpc_omp_thread_s *t = mpc_omp_get_thread_tls();
-	/* Retrieve the number of threads and the rank of the current thread */
-	const int nb_threads = t->info.num_threads;
-	const int rank = t->rank;
-	/* Compute the trip count (total number of iterations of the original loop) */
-	trip_count = ( b - lb ) / incr;
-
-	if ( ( b - lb ) % incr != 0 )
-	{
-		trip_count++;
-	}
-
-	/* Compute the number of chunks per thread (floor value) */
-	nb_chunks_per_thread = trip_count / ( chunk_size * nb_threads );
-
-	/* The first threads will have one more chunk (according to the previous
-	approximation) */
-	if ( rank < ( trip_count / chunk_size ) % nb_threads )
-	{
-		nb_chunks_per_thread++;
-	}
-
-	/* One thread may have one more additionnal smaller chunk to finish the
-	iteration domain */
-	if ( rank == ( trip_count / chunk_size ) % nb_threads && trip_count % chunk_size != 0 )
-	{
-		nb_chunks_per_thread++;
-	}
-
-	mpc_common_nodebug( "____loop_static_schedule_get_nb_chunks[%d]: %ld -> [%ld] "
-	              "(cs=%ld) final nb_chunks = %ld",
-	              rank, lb, b, incr, chunk_size, nb_chunks_per_thread );
-	return nb_chunks_per_thread;
 }
 
 /* Return the chunk #'chunk_num' assuming a static schedule with 'chunk_size'
