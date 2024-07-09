@@ -652,7 +652,10 @@ __task_pqueue_delete_fixup(
                 /* case 4 */
                 w->color = x->parent->color;
                 x->parent->color = 'B';
-                w->right->color = 'B';
+				if (w->right)
+				{
+					w->right->color = 'B';
+				}
                 __task_pqueue_rotate_left(tree, x->parent);
                 x = tree->root;
             }
@@ -691,7 +694,10 @@ __task_pqueue_delete_fixup(
                 /* case 4 */
                 w->color = x->parent->color;
                 x->parent->color = 'B';
-                w->left->color = 'B';
+				if (w->left)
+				{
+					w->left->color = 'B';
+				}
                 __task_pqueue_rotate_right(tree, x->parent);
                 x = tree->root;
             }
