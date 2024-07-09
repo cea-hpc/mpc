@@ -484,7 +484,7 @@ static inline mpc_conf_config_type_t *___mpc_lowcomm_driver_instanciate_from_def
 
 void ___mpc_lowcomm_driver_conf_validate()
 {
-	int i;
+	unsigned int i;
 
 	mpc_conf_config_type_t *all_configs = ___mpc_lowcomm_driver_all();
 
@@ -739,7 +739,7 @@ static inline void ___mpc_lowcomm_rail_conf_validate(void)
 
 	mpc_conf_config_type_t *all_rails = ___mpc_lowcomm_rail_all();
 
-	int i;
+	unsigned int i;
 
 	for(i = 0; i < mpc_conf_config_type_count(all_rails); i++)
 	{
@@ -822,7 +822,7 @@ static mpc_conf_config_type_t *___mpc_lowcomm_cli_conf_option_init(char *name, c
 		                                  NULL);
 	}
 
-	int i;
+	unsigned int i;
 
 	/* All were allocated */
 	for(i = 0; i < mpc_conf_config_type_count(rails); i++)
@@ -902,7 +902,7 @@ static inline void ___mpc_lowcomm_cli_option_validate(mpc_conf_config_type_elem_
 
 	mpc_conf_config_type_t *toptions = mpc_conf_config_type_elem_get_inner(opt);
 
-	int i;
+	unsigned int i;
 
 	for(i = 0; i < mpc_conf_config_type_count(toptions); i++)
 	{
@@ -953,7 +953,7 @@ static inline void ___mpc_lowcomm_cli_conf_validate(void)
 
 	/* Now check all cli option for compliance */
 	mpc_conf_config_type_t *toptions = mpc_conf_config_type_elem_get_inner(options);
-	int i;
+	unsigned int i;
 
 	for(i = 0; i < mpc_conf_config_type_count(toptions); i++)
 	{
