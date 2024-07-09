@@ -1095,11 +1095,13 @@ _mpc_omp_task_array_last(mpc_omp_task_array_t * array)
     return array->tasks[array->n - 1];
 }
 
+/* NOLINTBEGIN(clang-diagnostic-unused-function): False positives */
 static inline void
 _mpc_omp_task_array_clear(mpc_omp_task_array_t * array)
 {
     array->n = 0;
 }
+/* NOLINTEND(clang-diagnostic-unused-function) */
 
 static void
 _mpc_omp_task_array_deinit(mpc_omp_task_array_t * array)
