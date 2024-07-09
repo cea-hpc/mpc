@@ -190,6 +190,10 @@ __task_list_remove(
     }
 }
 
+/*
+ * NOLINTBEGIN(clang-analyzer-unix.Malloc):
+ * False positive, see explanation in __task_priority_propagation_asynchronous.
+ */
 static inline mpc_omp_task_t *
 __task_list_pop_from_head(mpc_omp_task_list_t * list)
 {
@@ -213,6 +217,8 @@ __task_list_pop_from_head(mpc_omp_task_list_t * list)
     }
     return task;
 }
+/* NOLINTEND(clang-analyzer-unix.Malloc) */
+
 
 static inline mpc_omp_task_t *
 __task_list_pop_from_tail(mpc_omp_task_list_t * list)
@@ -2037,13 +2043,26 @@ __task_priority_propagation_asynchronous(void)
                     __task_list_push_to_tail(up, task);
                 }
             }
+
+			/*
+			 * At this point, task has either been replaced by its successors
+			 * and can be safely freed, or it has been pushed back to tail
+			 * and task->ref_count has been incremented, so that task is not
+			 * freed by the next __task_unref.
+			 * Even with the next assert though, clang-tidy is unable to detect
+			 * that no Use-After-Free scenario should occur and throws a warning.
+			 * This warning in __task_list_pop_from_head is muted.
+			 */
+			assert(task->dep_node.successors.n || task->ref_counter.v > 1);
             mpc_common_spinlock_unlock(&(task->state_lock));
-            __task_unref(task);
+
+			__task_unref(task);
 
             // PROPAGATE UP FROM LEAVES
             while (!__task_list_is_empty(up))
             {
                 mpc_omp_task_t * task = __task_list_pop_from_head(up);
+
                 int is_persistent = mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_PERSISTENT);
 
                 /* check if the task is not already queued */
