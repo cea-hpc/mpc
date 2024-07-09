@@ -304,7 +304,7 @@ __task_pqueue_coherency_check_paths(mpc_omp_task_pqueue_node_t * node)
     }
     else
     {
-        return left_height + (node->color == 'B') ? 1 : 0;
+        return (left_height + (node->color == 'B')) ? 1 : 0;
     }
 }
 
