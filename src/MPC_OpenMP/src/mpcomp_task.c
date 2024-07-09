@@ -1563,6 +1563,9 @@ __task_process_deps(mpc_omp_task_t * task, void ** depend)
     // passed dependencies through MPC API
     for (unsigned int i = 0 ; i < ndependencies ; ++i)
     {
+		/* dependencies should be non-NULL since ndependencies > 0 */
+		assert(dependencies);
+
         mpc_omp_task_dependency_t * dependency = dependencies + i;
         for (unsigned int j = 0 ; j < dependency->addrs_size ; ++j)
             __task_process_mpc_dep(task, dependency->addrs[j], dependency->type);
