@@ -151,6 +151,8 @@ __task_list_push_to_tail(
     }
     else
     {
+        /* List is not empty, tail should be non-null */
+        assert(list->tail);
         task->prev[t] = list->tail;
         task->next[t] = NULL;
         list->tail->next[t] = task;
