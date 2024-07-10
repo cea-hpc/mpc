@@ -2467,44 +2467,49 @@ __task_get_victim_hierarchical_random( const int globalRank, const int index, mp
             assert( gen_node->type == MPC_OMP_CHILDREN_NODE );
         }
 
-        int tmporder[nbVictims - 1];
+		if ( nbVictims > 1 )
+		{
+			int* tmporder = malloc( (nbVictims - 1) * sizeof(int) );
 
-        for ( i = 0; i < nbVictims - 1; i++ )
-        {
-            order[i] = first_rank + i;
-            order[i] = ( order[i] >= globalRank ) ? order[i] + 1 : order[i];
-            tmporder[i] = order[i];
-        }
+			for ( i = 0; i < nbVictims - 1; i++ )
+			{
+				order[i] = first_rank + i;
+				order[i] = ( order[i] >= globalRank ) ? order[i] + 1 : order[i];
+				tmporder[i] = order[i];
+			}
 
-        int parentrank = node->instance_global_rank - first_rank;
-        int startrank = parentrank;
-        int x = 1, k, l, cpt = 0;
+			int parentrank = node->instance_global_rank - first_rank;
+			int startrank = parentrank;
+			int x = 1, k, l, cpt = 0;
 
-        for ( i = 0; i < pqueueDepth; i++ )
-        {
-            for ( j = 0; j < ( node->barrier_num_threads - 1 ) * x; j++ )
-            {
-                lrand48_r( randBuffer, &value );
-                k = ( value % ( ( node->barrier_num_threads - 1 ) * x - j ) + parentrank + j ) % ( nbVictims - 1 );
-                l = ( parentrank + j ) % ( nbVictims - 1 );
-                int tmp = tmporder[l];
-                tmporder[l] = tmporder[k];
-                tmporder[k] = tmp;
-                order[cpt] = tmporder[l];
-                cpt++;
-            }
+			for ( i = 0; i < pqueueDepth; i++ )
+			{
+				for ( j = 0; j < ( node->barrier_num_threads - 1 ) * x; j++ )
+				{
+					lrand48_r( randBuffer, &value );
+					k = ( value % ( ( node->barrier_num_threads - 1 ) * x - j ) + parentrank + j ) % ( nbVictims - 1 );
+					l = ( parentrank + j ) % ( nbVictims - 1 );
+					int tmp = tmporder[l];
+					tmporder[l] = tmporder[k];
+					tmporder[k] = tmp;
+					order[cpt] = tmporder[l];
+					cpt++;
+				}
 
-            x *= node->barrier_num_threads;
-            startrank = startrank - node->rank * x;
+				x *= node->barrier_num_threads;
+				startrank = startrank - node->rank * x;
 
-            if ( node->father )
-            {
-                node = node->father;
-            }
+				if ( node->father )
+				{
+					node = node->father;
+				}
 
-            parentrank = ( ( ( ( parentrank / x ) * x ) + x ) % ( x * node->barrier_num_threads ) + startrank ) % ( nbVictims - 1 );
-            parentrank = ( parentrank >= globalRank - first_rank ) ? parentrank - 1 : parentrank;
-        }
+				parentrank = ( ( ( ( parentrank / x ) * x ) + x ) % ( x * node->barrier_num_threads ) + startrank ) % ( nbVictims - 1 );
+				parentrank = ( parentrank >= globalRank - first_rank ) ? parentrank - 1 : parentrank;
+			}
+
+			free(tmporder);
+		}
     }
 
     return order[index - 1];
