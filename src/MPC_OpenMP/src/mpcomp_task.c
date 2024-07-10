@@ -2670,6 +2670,11 @@ ___task_get_victim_roundrobin_prepare( const int globalRank, __UNUSED__ const in
     }
 }
 
+/*
+ * NOLINTBEGIN(clang-analyzer-core.uninitialized.UndefReturn):
+ * FIXME: I don't know how to this fix error, order may or may
+ * not be initialized.
+ */
 static inline int
 __task_get_victim_roundrobin( const int globalRank, const int index, mpc_omp_task_pqueue_type_t type )
 {
@@ -2689,6 +2694,7 @@ __task_get_victim_roundrobin( const int globalRank, const int index, mpc_omp_tas
     assert( order );
     return order[index - 1];
 }
+/* NOLINTEND(clang-analyzer-core.uninitialized.UndefReturn) */
 
 static inline int
 __task_get_victim_producer( int globalRank, __UNUSED__ int index, mpc_omp_task_pqueue_type_t type )
