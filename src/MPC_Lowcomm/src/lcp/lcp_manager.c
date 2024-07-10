@@ -210,8 +210,8 @@ int lcp_manager_create(lcp_context_h ctx,
                 goto err;
         }
 
-        if ( !(params->field_mask & LCP_MANAGER_COMM_MODEL) ) {
-                mpc_common_debug_error("LCP MNGR: must specify at least one "
+                if ( !(params->field_mask & LCP_MANAGER_COMM_MODEL) ) {
+                        mpc_common_debug_error("LCP MNGR: must specify at least one "
                                        "communication model.");
                 rc = MPC_LOWCOMM_ERROR;
                 goto err;
