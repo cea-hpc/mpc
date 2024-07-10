@@ -2889,7 +2889,7 @@ __task_larceny(mpc_omp_task_pqueue_type_t type)
     assert(thread);
     assert(thread->instance);
 
-    struct mpc_omp_mvp_s * mvp = mvp = thread->mvp;
+    struct mpc_omp_mvp_s * mvp = thread->mvp;
     assert(mvp);
 
     struct mpc_omp_team_s * team = thread->instance->team;
@@ -2932,7 +2932,6 @@ __task_larceny(mpc_omp_task_pqueue_type_t type)
             if (mvp->task_infos.last_thief != -1
                     && (pqueue = __rank_get_task_pqueue(mvp->task_infos.last_thief, type)) != NULL)
             {
-                victim = mvp->task_infos.last_thief;
                 if ((task = __task_pqueue_pop(pqueue)) != NULL) return task;
                 mvp->task_infos.last_thief = -1;
             }
