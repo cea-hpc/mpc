@@ -2486,7 +2486,14 @@ __task_get_victim_hierarchical_random( const int globalRank, const int index, mp
 			{
 				for ( j = 0; j < ( node->barrier_num_threads - 1 ) * x; j++ )
 				{
-					lrand48_r( randBuffer, &value );
+					if ( randBuffer )
+					{
+						lrand48_r( randBuffer, &value );
+					}
+					else
+					{
+						value = lrand48();
+					}
 					k = ( value % ( ( node->barrier_num_threads - 1 ) * x - j ) + parentrank + j ) % ( nbVictims - 1 );
 					l = ( parentrank + j ) % ( nbVictims - 1 );
 					int tmp = tmporder[l];
