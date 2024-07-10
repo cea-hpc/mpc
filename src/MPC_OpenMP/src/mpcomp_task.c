@@ -4013,6 +4013,7 @@ _mpc_omp_task_deinit_persistent(mpc_omp_task_t * task)
 
     mpc_omp_task_t * parent = task->parent;
     __task_unref(task);                     /* _mpc_omp_task_init_attributes */
+	/* NOLINTNEXTLINE(clang-analyzer-unix.Malloc): task hasn't been freed yet */
     __task_unref(task);                     /* _mpc_omp_task_init */
     __task_unref_parent_task(parent);       /* _mpc_omp_task_init */
 }
