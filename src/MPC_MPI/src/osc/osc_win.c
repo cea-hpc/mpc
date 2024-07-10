@@ -33,6 +33,7 @@
 #include <mpc_common_progress.h>
 
 extern lcp_context_h lcp_ctx_loc;
+static int osc_is_initialized = 0;
 static lcp_manager_h osc_mngr = NULL;
 static mpc_common_spinlock_t osc_win_lock = MPC_COMMON_SPINLOCK_INITIALIZER;
 
@@ -401,6 +402,8 @@ static int _win_init(mpc_win_t **win_p, int flavor, mpc_lowcomm_communicator_t c
                 goto err;
         }
         memset(win, 0, sizeof(mpc_win_t));
+
+        osc_is_initialized = 1;
 
         win->comm_size      = mpc_lowcomm_communicator_size(comm);
         win->win_module.ctx = lcp_ctx_loc;
@@ -790,6 +793,10 @@ int osc_module_fini()
         int rc = MPC_LOWCOMM_SUCCESS;
         int tid;
         lcp_task_h task;
+
+        if (!osc_is_initialized) {
+                return MPC_LOWCOMM_SUCCESS;
+        }
 
         tid = mpc_common_get_task_rank();
         task = lcp_context_task_get(lcp_ctx_loc, tid);
