@@ -301,7 +301,6 @@ int lcp_send_rndv_start(lcp_request_t *req)
                 mpc_common_debug_error("LCP RNDV: could not create request.");
                 return MPC_LOWCOMM_ERROR;
         }
-        req->flags |= LCP_REQUEST_RELEASE_ON_COMPLETION;
         rndv_req->super = req;
 
         rndv_req->mngr            = req->mngr;
