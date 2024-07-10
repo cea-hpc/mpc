@@ -156,8 +156,8 @@ int lcp_rndv_rma_progress(lcp_request_t *rndv_req)
         assert(attr.iface.cap.rndv.max_get_zcopy);
         assert(attr.iface.cap.rndv.max_put_zcopy);
 
-        while (remaining > 0) {
-
+        //NOTE: using a do while handles the 0 length case.
+        do { 
                 if (!MPC_BITMAP_GET(rkey->bm, cc)) {
                         cc = lcp_ep_get_next_cc(ep, cc, ep->rma_bmap);
                         assert(cc != LCP_NULL_CHANNEL);
@@ -194,7 +194,7 @@ int lcp_rndv_rma_progress(lcp_request_t *rndv_req)
 
                 offset += length; remaining -= length;
                 cc = lcp_ep_get_next_cc(ep, cc, ep->rma_bmap);
-        }
+        } while (remaining > 0);
 
         return rc;
 }
