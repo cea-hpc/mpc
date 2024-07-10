@@ -222,7 +222,6 @@ static int get_dynamic_win_info(lcp_ep_h ep, lcp_task_h task,
         if (rc != MPC_LOWCOMM_SUCCESS) {
                 goto err;
         }
-        module->rdata_win_info[found_idx].rkey_init = 1;
 
         sctk_free(rdyn_win_info);
 
