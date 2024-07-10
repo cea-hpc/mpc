@@ -69,8 +69,8 @@ err:
         return rc;
 }
 
-void mpc_osc_handle_incoming_post(mpc_osc_module_t *module, volatile uint64_t *post_ptr, 
-                                 int ranks_in_grp_win[], int size) 
+static void mpc_osc_handle_incoming_post(mpc_osc_module_t *module, volatile uint64_t *post_ptr, 
+                                         int ranks_in_grp_win[], int size) 
 {
         mpc_osc_pending_post_t *post;
         int i, post_rank = (int)*post_ptr - 1;
