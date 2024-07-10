@@ -2428,6 +2428,8 @@ __task_get_victim_hierarchical_random( const int globalRank, const int index, mp
     node = mvp->father;
     instance = thread->instance;
 
+	assert( index > 0 );
+
     if ( !MPC_OMP_TASK_THREAD_GET_LARCENY_ORDER( thread ) )
     {
         ___task_allocate_larceny_order( thread );
@@ -2675,6 +2677,8 @@ __task_get_victim_roundrobin( const int globalRank, const int index, mpc_omp_tas
     mpc_omp_thread_t *thread;
     assert( mpc_omp_tls );
     thread = ( mpc_omp_thread_t * ) mpc_omp_tls;
+
+	assert ( index > 0 );
 
     if ( index == 1 )
     {
