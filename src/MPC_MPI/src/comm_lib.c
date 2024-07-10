@@ -2271,9 +2271,6 @@ int _mpc_cl_isend(const void *buf, mpc_lowcomm_msg_count_t count,
 		MPC_ERROR_SUCCESS();
 	}
 
-        //FIXME: call at datatype creation
-        MPIT_Type_init(datatype);
-
         size_t msg_size = count * __mpc_cl_datatype_get_size(datatype);
         if (!mpc_mpi_cl_type_is_contiguous(datatype)) {
                 tmp_buf = sctk_malloc(msg_size);
@@ -2339,8 +2336,6 @@ int _mpc_cl_irecv(void *buf, mpc_lowcomm_msg_count_t count,
 	{
 		MPC_ERROR_SUCCESS();
 	}
-
-        MPIT_Type_init(datatype);
 
         size_t msg_size = count * __mpc_cl_datatype_get_size(datatype);
 
