@@ -229,8 +229,7 @@ int lcr_ptl_flush_mem_ep(sctk_rail_info_t *rail,
         lcr_ptl_op_t *op;
         lcr_ptl_rail_info_t *srail  = &rail->network.ptl;
         lcr_ptl_ep_info_t   *ptl_ep = &ep->data.ptl;
-        lcr_ptl_mem_t       *lkey   = list->pin.ptl.mem;
-        lcr_ptl_mem_t       *mem    = NULL;
+        lcr_ptl_mem_t       *mem   = list->pin.ptl.mem;
 
         op = mpc_mpool_pop(srail->iface_ops);
         if (op == NULL) {
@@ -388,8 +387,7 @@ int lcr_ptl_flush_mem(sctk_rail_info_t *rail,
         int rc = MPC_LOWCOMM_SUCCESS;
         lcr_ptl_op_t *op;
         lcr_ptl_rail_info_t *srail  = &rail->network.ptl;
-        lcr_ptl_mem_t       *lkey   = list->pin.ptl.mem;
-        lcr_ptl_mem_t       *mem    = NULL;
+        lcr_ptl_mem_t       *mem    = list->pin.ptl.mem;
 
         op = mpc_mpool_pop(srail->iface_ops);
         if (op == NULL) {
@@ -422,7 +420,7 @@ int lcr_ptl_flush_mem(sctk_rail_info_t *rail,
 
         rc = lcr_ptl_exec_flush_mem(srail, mem, op);
 
-        mpc_common_spinlock_lock(&mem->lock);
+        mpc_common_spinlock_unlock(&mem->lock);
 err:
         return rc;
 }
