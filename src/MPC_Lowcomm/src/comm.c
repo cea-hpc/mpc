@@ -4527,7 +4527,6 @@ static void __initialize_drivers()
         lcp_manager_param_t mngr_params = {
                 .field_mask     = LCP_MANAGER_ESTIMATED_EPS | LCP_MANAGER_COMM_MODEL,
                 .estimated_eps  = mpc_common_get_process_count(),
-                .num_tasks      = mpc_common_get_task_count(),
                 .flags          = LCP_MANAGER_TSC_MODEL, 
         };
         rc = lcp_manager_create(lcp_ctx_loc, &lcp_mngr_loc, &mngr_params);

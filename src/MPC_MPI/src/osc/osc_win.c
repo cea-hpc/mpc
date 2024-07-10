@@ -412,10 +412,8 @@ static int _win_init(mpc_win_t **win_p, int flavor, mpc_lowcomm_communicator_t c
         if (osc_mngr == NULL) {
                 lcp_manager_param_t mngr_param = {
                         .estimated_eps = win->comm_size,
-                        .num_tasks     = win->comm_size,
                         .flags         = LCP_MANAGER_OSC_MODEL,
                         .field_mask    = LCP_MANAGER_ESTIMATED_EPS |
-                                LCP_MANAGER_NUM_TASKS              |
                                 LCP_MANAGER_COMM_MODEL,
                 };
                 rc = lcp_manager_create(win->win_module.ctx, &osc_mngr, &mngr_param);

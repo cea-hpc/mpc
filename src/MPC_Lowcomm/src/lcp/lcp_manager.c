@@ -210,17 +210,6 @@ int lcp_manager_create(lcp_context_h ctx,
                 goto err;
         }
 
-        //FIXME: number of tasks is currently number of MPI ranks. This is
-        //       because the number of local tasks with
-        //       mpc_common_get_local_task_count() is not set yet. There might
-        //       be another way.
-        if ( (params->field_mask & LCP_MANAGER_NUM_TASKS) && 
-            (params->num_tasks <= 0) ) {
-                mpc_common_debug_error("LCP MNGR: wrong number of tasks");
-                rc = MPC_LOWCOMM_ERROR;
-                goto err;
-        }
-
         if ( !(params->field_mask & LCP_MANAGER_COMM_MODEL) ) {
                 mpc_common_debug_error("LCP MNGR: must specify at least one "
                                        "communication model.");

@@ -193,8 +193,7 @@ lcp_task_h lcp_context_task_get(lcp_context_h ctx, int tid);
  */
 enum {
         LCP_MANAGER_ESTIMATED_EPS = MPC_BIT(0),
-        LCP_MANAGER_NUM_TASKS     = MPC_BIT(1),
-        LCP_MANAGER_COMM_MODEL    = MPC_BIT(2),
+        LCP_MANAGER_COMM_MODEL    = MPC_BIT(1),
 };
 
 /**
@@ -220,7 +219,6 @@ enum {
 typedef struct lcp_manager_param {
         unsigned field_mask;
         int      estimated_eps; /**< Estimated number of endpoints. */
-        int      num_tasks;     /**< num of tasks (MPI processes) */
         unsigned flags;         /**< communication model. */
 } lcp_manager_param_t;
 

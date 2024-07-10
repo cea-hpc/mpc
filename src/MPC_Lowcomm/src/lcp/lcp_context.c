@@ -575,7 +575,7 @@ int lcp_context_create(lcp_context_h *ctx_p, lcp_context_param_t *param)
         //       because the number of local tasks with
         //       mpc_common_get_local_task_count() is not set yet. There might
         //       be another way.
-        if ( (param->field_mask & LCP_MANAGER_NUM_TASKS) && 
+        if ( (param->field_mask & LCP_CONTEXT_NUM_TASKS) && 
              (param->num_tasks <= 0) ) {
                 mpc_common_debug_error("LCP CTX: wrong number of tasks.");
                 rc = MPC_LOWCOMM_ERROR;
