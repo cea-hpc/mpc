@@ -4576,7 +4576,13 @@ mpc_omp_persistent_region_end(void)
     while (task)
     {
         _mpc_omp_task_deinit_persistent(task);
+		/*
+		 * NOLINTBEGIN(clang-analyzer-unix.Malloc):
+		 * FIXME: Make sure deinit_persistent does not actually
+		 * free memory and does not cause a use-after-free here.
+		 */
         task = task->persistent_infos.next;
+		/* NOLINTEND(clang-analyzer-unix.Malloc) */
     }
     region->active = 0;
 }
