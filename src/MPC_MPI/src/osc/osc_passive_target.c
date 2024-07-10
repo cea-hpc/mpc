@@ -305,6 +305,10 @@ int mpc_osc_sync(mpc_win_t *win)
 
         rc = mpc_osc_perform_flush_op(module, task, NULL, module->lkey_data);
 
+        //FIXME: whenever an interface is used but does not support RMA and/or
+        //       atomic operation. It is needed to progress the communication.
+        lcp_progress(module->mngr);
+
         return rc;
 }
 
@@ -324,6 +328,10 @@ int mpc_osc_flush(int target, mpc_win_t *win)
         mpc_osc_get_comm_info(module, target, win->comm, &ep);
 
         rc = mpc_osc_perform_flush_op(module, task, ep, NULL);
+
+        //FIXME: whenever an interface is used but does not support RMA and/or
+        //       atomic operation. It is needed to progress the communication.
+        lcp_progress(module->mngr);
 
         return rc;
 }
