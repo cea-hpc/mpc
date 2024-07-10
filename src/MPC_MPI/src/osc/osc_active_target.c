@@ -58,7 +58,7 @@ int mpc_osc_fence(int mpi_assert, mpc_win_t *win)
         /* Get task. */
         task = lcp_context_task_get(module->ctx, tid);
 
-        if (!(mpi_assert & MPI_MODE_NOSUCCEED)) {
+        if (!(mpi_assert & MPI_MODE_NOPRECEDE)) {
                 rc = mpc_osc_perform_flush_op(module, task, NULL, NULL);
                 if (rc != MPC_LOWCOMM_SUCCESS)
                         goto err;
