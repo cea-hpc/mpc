@@ -1628,6 +1628,12 @@ __task_process_deps(mpc_omp_task_t * task, void ** depend)
     }
 }
 
+/*
+ * NOLINTBEGIN(clang-analyzer-unix.Malloc):
+ * FIXME: Giving up on fixing warnings here, macro expansion on hash
+ * tables make it difficult to understand what is going on.
+ * These may be false positives with __task_unref.
+ */
 static void
 __task_delete_dependencies_hmap(mpc_omp_task_t * task)
 {
@@ -1648,6 +1654,7 @@ __task_delete_dependencies_hmap(mpc_omp_task_t * task)
         HASH_CLEAR(hh, task->dep_node.hmap);
     }
 }
+/* NOLINTEND(clang-analyzer-unix.Malloc) */
 
 /* remove the task dependencies from the parent hmap */
 static void
