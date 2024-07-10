@@ -38,14 +38,15 @@
         ((_module)->disp_unit < 0 ? (_module)->disp_units[_target] : (_module)->disp_unit)
 
 #define OCS_LCP_RKEY_BUF_SIZE_MAX 1024
-#define OSC_DYNAMIC_WIN_ATTACH_MAX 32
+#define OSC_DYNAMIC_WIN_ATTACH_MAX 512
 
 #define OSC_STATE_COMPLETION_COUNTER_OFFSET 0 
 #define OSC_STATE_POST_COUNTER_OFFSET sizeof(uint64_t)
 #define OSC_STATE_POST_OFFSET OSC_STATE_POST_COUNTER_OFFSET + sizeof(uint64_t)
 #define OSC_STATE_ACC_LOCK_OFFSET OSC_STATE_POST_OFFSET + OSC_POST_PEER_MAX * sizeof(uint64_t)
 #define OSC_STATE_GLOBAL_LOCK_OFFSET OSC_STATE_ACC_LOCK_OFFSET + sizeof(uint64_t)
-#define OSC_STATE_DYNAMIC_WIN_COUNT_OFFSET OSC_STATE_GLOBAL_LOCK_OFFSET + sizeof(uint64_t)
+#define OSC_STATE_REGION_LOCK_OFFSET OSC_STATE_GLOBAL_LOCK_OFFSET + sizeof(uint64_t)
+#define OSC_STATE_DYNAMIC_WIN_COUNT_OFFSET OSC_STATE_REGION_LOCK_OFFSET + sizeof(uint64_t)
 #define OSC_STATE_DYNAMIC_WIN_OFFSET OSC_STATE_DYNAMIC_WIN_COUNT_OFFSET + sizeof(uint64_t)
 
 typedef enum mpc_osc_epoch {
@@ -91,6 +92,7 @@ typedef struct mpc_osc_module_state {
         volatile uint64_t post_state[OSC_POST_PEER_MAX]; /* Depends on the group size. */
         volatile uint64_t acc_lock;
         volatile uint64_t global_lock;
+        volatile uint64_t region_lock;
         volatile uint64_t dynamic_win_count;
         volatile mpc_osc_dynamic_win_t dynamic_wins[OSC_DYNAMIC_WIN_ATTACH_MAX];
 } mpc_osc_module_state_t;
@@ -175,7 +177,9 @@ int mpc_osc_perform_flush_op(mpc_osc_module_t *mod, lcp_task_h task,
 void mpc_osc_schedule_progress(lcp_manager_h mngr, volatile int *data,
                               int value);
 
-int mpc_osc_start_exclusive(mpc_osc_module_t *mod, lcp_task_h task, int target);
-int mpc_osc_end_exclusive(mpc_osc_module_t *mod, lcp_task_h task, int target);
+int mpc_osc_start_exclusive(mpc_osc_module_t *mod, lcp_task_h task, 
+                            uint64_t lock_offset, int target);
+int mpc_osc_end_exclusive(mpc_osc_module_t *mod, lcp_task_h task, 
+                          uint64_t lock_offset, int target);
 
 #endif

@@ -3453,6 +3453,7 @@ void *mpc_lowcomm_request_alloc()
         }
 
         request->flags = 0;
+        //FIXME: check wether this should be set in request_init func
         request->completion_flag = MPC_LOWCOMM_MESSAGE_PENDING;
 
         return request + 1;

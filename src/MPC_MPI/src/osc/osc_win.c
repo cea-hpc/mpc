@@ -527,7 +527,9 @@ int mpc_osc_win_attach(mpc_win_t *win, void *base, size_t len)
                 goto err;
         }
 
-        rc = mpc_osc_start_exclusive(module, task, my_rank);
+        rc = mpc_osc_start_exclusive(module, task, 
+                                     OSC_STATE_REGION_LOCK_OFFSET, 
+                                     my_rank);
         if (rc != MPC_LOWCOMM_SUCCESS) {
                 goto err;
         }
@@ -538,7 +540,9 @@ int mpc_osc_win_attach(mpc_win_t *win, void *base, size_t len)
 
                 if (found_idx != -1) {
                         module->local_dynamic_win_infos[found_idx].refcnt++;
-                        rc = mpc_osc_end_exclusive(module, task, my_rank);
+                        rc = mpc_osc_end_exclusive(module, task, 
+                                                   OSC_STATE_REGION_LOCK_OFFSET, 
+                                                   my_rank);
                         return rc;
                 }
 
@@ -596,15 +600,15 @@ int mpc_osc_win_attach(mpc_win_t *win, void *base, size_t len)
         module->local_dynamic_win_infos[insert_idx].refcnt++;
         module->state->dynamic_win_count++;
 
-        mpc_common_debug("MPI OSC: dyn win count. count=%d", 
-                         module->state->dynamic_win_count);
-
         lcp_mem_release_rkey_buf(memkey_buf);
 
-        mpc_common_debug("MPI OSC: attached memory. base=%p.", base);
+        mpc_common_debug("MPI OSC: attached memory. base=%p, dyn win count=%d",
+                         base, module->state->dynamic_win_count);
 
 unlock_dyn:
-        mpc_osc_end_exclusive(module, task, my_rank);
+        rc = mpc_osc_end_exclusive(module, task, 
+                                   OSC_STATE_REGION_LOCK_OFFSET,
+                                   my_rank);
 err:
         return rc;
 }
@@ -619,7 +623,9 @@ int mpc_osc_win_detach(mpc_win_t *win, const void *base)
 
         task = lcp_context_task_get(win->win_module.ctx, mpc_common_get_task_rank());
 
-        rc = mpc_osc_start_exclusive(module, task, my_rank);
+        rc = mpc_osc_start_exclusive(module, task, 
+                                     OSC_STATE_REGION_LOCK_OFFSET, 
+                                     my_rank);
         if (rc != MPC_LOWCOMM_SUCCESS) {
                 goto err;
         }
@@ -631,7 +637,9 @@ int mpc_osc_win_detach(mpc_win_t *win, const void *base)
                                                         &insert_idx);
 
         if (region_idx == -1) {
-                rc = mpc_osc_end_exclusive(module, task, my_rank);
+                rc = mpc_osc_end_exclusive(module, task, 
+                                           OSC_STATE_REGION_LOCK_OFFSET, 
+                                           my_rank);
                 return rc;
         }
 
@@ -650,7 +658,9 @@ int mpc_osc_win_detach(mpc_win_t *win, const void *base)
                 mpc_common_debug("MPI OSC: dyn win count. count=%d", 
                                  module->state->dynamic_win_count);
         }
-        rc = mpc_osc_end_exclusive(module, task, my_rank);
+        rc = mpc_osc_end_exclusive(module, task, 
+                                   OSC_STATE_REGION_LOCK_OFFSET, 
+                                   my_rank);
 
 err:
         return rc;

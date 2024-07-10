@@ -135,7 +135,9 @@ int mpc_osc_lock(int lock_type, int target, int mpi_assert, mpc_win_t *win)
         if ((mpi_assert & MPI_MODE_NOCHECK) == 0) {
                 if (lock_type == MPI_LOCK_EXCLUSIVE) {
                         lock->type = LOCK_EXCLUSIVE;
-                        rc = mpc_osc_start_exclusive(module, task, target);
+                        rc = mpc_osc_start_exclusive(module, task, 
+                                                     OSC_STATE_GLOBAL_LOCK_OFFSET, 
+                                                     target);
                         if (rc != MPC_LOWCOMM_SUCCESS) {
                                 goto err;
                         }
@@ -193,7 +195,9 @@ int mpc_osc_unlock(int target, mpc_win_t *win)
 
         if (lock->is_no_check == 0) {
                 if (lock->type == LOCK_EXCLUSIVE) {
-                        rc = mpc_osc_end_exclusive(module, task, target);
+                        rc = mpc_osc_end_exclusive(module, task, 
+                                                   OSC_STATE_GLOBAL_LOCK_OFFSET, 
+                                                   target);
                         if (rc != MPC_LOWCOMM_SUCCESS) {
                                 goto err;
                         }

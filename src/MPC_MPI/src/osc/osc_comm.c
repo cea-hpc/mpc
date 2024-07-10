@@ -27,6 +27,7 @@
 #include "mpc_thread_accessor.h"
 #include "osc_mpi.h"
 
+#include <mpitypes.h>
 #include "mpc_mpi_internal.h"
 #include "comm_lib.h"
 
@@ -134,6 +135,10 @@ static int start_atomic_lock(mpc_osc_module_t *module, lcp_ep_h ep,
 
                 } while (1);
         }
+
+        mpc_common_debug("MPI OSC: acc atomic lock. from=%d, to=%d, remote"
+                         " lock addr=%p", mpc_common_get_task_rank(), target,
+                         remote_lock_addr);
         
 err:
         return rc;
@@ -147,6 +152,8 @@ static int end_atomic_lock(mpc_osc_module_t *module, lcp_ep_h ep,
         size_t remote_lock_addr = module->rstate_win_info[target].addr + 
                 OSC_STATE_ACC_LOCK_OFFSET;
         
+        mpc_common_debug("MPI OSC:  unlock. remote lock addr=%p", 
+                         remote_lock_addr);
         assert(ep);
         if (lock_acquired) {
                 rc = mpc_osc_perform_atomic_op(module, ep, task, value,
@@ -155,6 +162,10 @@ static int end_atomic_lock(mpc_osc_module_t *module, lcp_ep_h ep,
                                                module->rstate_win_info[target].rkey,
                                                LCP_ATOMIC_OP_ADD);
         }
+
+        mpc_common_debug("MPI OSC: acc atomic unlock. from=%d, to=%d, remote"
+                         " lock addr=%p", mpc_common_get_task_rank(), target,
+                         remote_lock_addr);
 
         return rc;
 }
@@ -186,6 +197,12 @@ static int get_dynamic_win_info(lcp_ep_h ep, lcp_task_h task,
                 goto err;
         }
 
+        /* Take the region lock since another region could be added concurrently
+         * at the target. */
+        rc = mpc_osc_start_exclusive(module, task, 
+                                     OSC_STATE_REGION_LOCK_OFFSET, 
+                                     target);
+
         params = (lcp_request_param_t) {
                 .field_mask = 0,
                 .ep = ep,
@@ -197,6 +214,10 @@ static int get_dynamic_win_info(lcp_ep_h ep, lcp_task_h task,
         if (LCP_PTR_IS_ERR(status)) {
                 goto err;
         }
+
+        rc = mpc_osc_end_exclusive(module, task, 
+                                   OSC_STATE_REGION_LOCK_OFFSET, 
+                                   target);
         
         rc = mpc_osc_perform_flush_op(module, task, ep, NULL);
         if (rc != MPC_LOWCOMM_SUCCESS) {
@@ -752,8 +773,6 @@ int mpc_osc_accumulate(const void *origin_addr, int origin_count,
         if (rc != MPC_LOWCOMM_SUCCESS) {
                 goto unlock;
         }
-        mpc_common_debug("MPI OSC: acc atomic lock. from=%d, to=%d",
-                         mpc_common_get_task_rank(), target);
 
         if (op == MPI_REPLACE) {
                 rc = mpc_osc_put(origin_addr, origin_count,
@@ -865,8 +884,6 @@ unlock:
         if (tmp_result_addr) sctk_free(tmp_result_addr);
         rc = end_atomic_lock(module, ep, task, target, lock_acquired);
 
-        mpc_common_debug("MPI OSC: acc atomic unlock. from=%d, to=%d",
-                         mpc_common_get_task_rank(), target);
 err:
         return rc;
 }
@@ -1034,6 +1051,7 @@ int mpc_osc_get_accumulate(const void *origin_addr, int origin_count,
 
 unlock:
         if (tmp_result_addr) sctk_free(tmp_result_addr);
+
         rc = end_atomic_lock(module, ep, task, target, lock_acquired);
 err:
         return rc;

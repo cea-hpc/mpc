@@ -444,14 +444,14 @@ int lcr_ptl_iface_progress(sctk_rail_info_t *rail)
 
                 op = (lcr_ptl_op_t *)ev.user_ptr;
                 if (ret == PTL_OK) {
-                        mpc_common_debug_info("PORTALS: EQS EVENT '%s' eqh=%llu, idx=%d, "
-                                              "sz=%llu, user=%p, start=%p, "
-                                              "remote_offset=%llu, iface=%llu",
-                                              lcr_ptl_event_decode(ev),
-                                              *(uint64_t *)&srail->net.eqh,
-                                              ev.pt_index, ev.mlength,
-                                              ev.user_ptr, ev.start,
-                                              ev.remote_offset, *(uint64_t *)&srail->net.nih);
+                        mpc_common_debug("PORTALS: EQS EVENT '%s' eqh=%llu, idx=%d, "
+                                         "sz=%llu, user=%p, start=%p, "
+                                         "remote_offset=%llu, iface=%llu",
+                                         lcr_ptl_event_decode(ev),
+                                         *(uint64_t *)&srail->net.eqh,
+                                         ev.pt_index, ev.mlength,
+                                         ev.user_ptr, ev.start,
+                                         ev.remote_offset, *(uint64_t *)&srail->net.nih);
 
                         if (ev.type == PTL_EVENT_PT_DISABLED) {
                                 mpc_common_debug_fatal("LCR PTL: PT DISABLED. Increase "
@@ -775,6 +775,8 @@ int lcr_ptl_mem_activate(lcr_ptl_rail_info_t *srail,
 
         lcr_ptl_chk(PtlCTAlloc(srail->net.nih, &mem->cth));
 
+        //FIXME: For now, the MD attached to the memory is not used by any of
+        //       the upper layer calls. Maybe this could be removed?
         md = (ptl_md_t) {
                 .ct_handle = mem->cth,
                 .eq_handle = srail->net.eqh,

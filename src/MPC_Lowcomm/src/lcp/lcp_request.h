@@ -87,7 +87,7 @@ typedef int (*lcp_send_func_t)(lcp_request_t *req);
 
 struct lcp_request {
         int            status;
-        uint64_t       flags;
+        uint64_t       flags; //FIXME: change to unsigned
         lcp_manager_h  mngr;
         lcp_task_h     task; 
         lcp_datatype_t datatype;

@@ -124,7 +124,8 @@ void mpc_osc_schedule_progress(lcp_manager_h mngr, volatile int *data,
 }
 #endif
 
-int mpc_osc_start_exclusive(mpc_osc_module_t *module, lcp_task_h task, int target)
+int mpc_osc_start_exclusive(mpc_osc_module_t *module, lcp_task_h task, 
+                            uint64_t lock_offset, int target)
 {
         int rc = MPC_LOWCOMM_SUCCESS;
         uint64_t lock_state = OSC_LOCK_UNLOCK;
@@ -136,8 +137,7 @@ int mpc_osc_start_exclusive(mpc_osc_module_t *module, lcp_task_h task, int targe
                 rc = mpc_osc_perform_atomic_op(module, module->eps[target],
                                                task, OSC_LOCK_EXCLUSIVE,
                                                sizeof(uint64_t), &lock_state,
-                                               base_rstate
-                                               + OSC_STATE_GLOBAL_LOCK_OFFSET,
+                                               base_rstate + lock_offset,
                                                module->rstate_win_info[target].rkey,
                                                LCP_ATOMIC_OP_CSWAP);
                 if (rc != MPC_LOWCOMM_SUCCESS) {
@@ -151,6 +151,8 @@ int mpc_osc_start_exclusive(mpc_osc_module_t *module, lcp_task_h task, int targe
                         if (rc != MPC_LOWCOMM_SUCCESS) {
                                 goto err;
                         }
+                        //FIXME: enable thread progression sharing with
+                        //       mpc_lowcomm_perform_idle.
                         mpc_thread_yield();
                         continue;
                 }
@@ -164,7 +166,8 @@ err:
         return rc;
 }
 
-int mpc_osc_end_exclusive(mpc_osc_module_t *module, lcp_task_h task, int target)
+int mpc_osc_end_exclusive(mpc_osc_module_t *module, lcp_task_h task, 
+                          uint64_t lock_offset, int target)
 {
         int rc = MPC_LOWCOMM_SUCCESS;
         uint64_t value = -OSC_LOCK_EXCLUSIVE;
@@ -173,7 +176,7 @@ int mpc_osc_end_exclusive(mpc_osc_module_t *module, lcp_task_h task, int target)
         mpc_common_debug("MPI OSC: end exclusive. to=%d", target);
         rc = mpc_osc_perform_atomic_op(module, module->eps[target], task, value,
                                        sizeof(uint64_t), NULL, base_rstate
-                                       + OSC_STATE_GLOBAL_LOCK_OFFSET,
+                                       + lock_offset,
                                        module->rstate_win_info[target].rkey,
                                        LCP_ATOMIC_OP_ADD);
         return rc;
