@@ -43,9 +43,6 @@
 
 #include "mpc_lowcomm_types.h"
 
-#include "mpi_rma_ctrl_msg.h"
-#include "mpi_rma_epoch.h"
-
 #include "mpc_reduction.h"
 
 #include "mpitypes.h"
@@ -3847,9 +3844,6 @@ static void __set_thread_trampoline()
 static void __set_lowcomm_trampoline()
 {
 	mpc_lowcomm_egreq_poll_set_trampoline(mpc_mpi_cl_egreq_progress_poll);
-	mpc_lowcomm_set_request_completion_trampoline(mpc_MPI_notify_request_counter);
-	mpc_lowcomm_rdma_MPC_MPI_notify_src_ctx_set_trampoline(mpc_MPI_Win_notify_src_ctx_counter);
-	mpc_lowcomm_rdma_MPC_MPI_notify_dest_ctx_set_trampoline(mpc_MPI_Win_notify_dest_ctx_counter);
 }
 
 void mpc_cl_comm_lib_init() __attribute__( (constructor) );

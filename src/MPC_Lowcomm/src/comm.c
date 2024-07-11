@@ -36,7 +36,6 @@
 #include "mpc_keywords.h"
 #include "rail.h"
 #include <mpc_launch.h>
-#include <sctk_window.h>
 #include <mpc_common_profiler.h>
 #include <sctk_alloc.h>
 #include <coll.h>
@@ -680,11 +679,6 @@ int ___mpi_windows_in_use = 0;
 static inline int __MPC_MPI_windows_in_use()
 {
 	return ___mpi_windows_in_use;
-}
-
-void mpc_lowcomm_rdma_MPI_windows_in_use(void)
-{
-	___mpi_windows_in_use |= 1;
 }
 
 static int (*___notify_request_completion_trampoline)(mpc_lowcomm_request_t *req) = NULL;
@@ -4539,8 +4533,6 @@ static void __initialize_drivers()
 
 	__init_request_null();
 
-	mpc_lowcomm_rdma_window_do_init();
-
 	_mpc_lowcomm_communicator_init();
 }
 
@@ -4549,7 +4541,6 @@ static void __finalize_driver()
         //FIXME: error checking
         lcp_manager_fini(lcp_mngr_loc);
 	lcp_context_fini(lcp_ctx_loc);
-	mpc_lowcomm_rdma_window_do_release();
 	_mpc_lowcomm_communicator_release();
 	_mpc_lowcomm_monitor_teardown();
 }
