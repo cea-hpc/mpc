@@ -2361,7 +2361,7 @@ mpc_lowcomm_communicator_t mpc_lowcomm_communicator_intercomm_create(const mpc_l
 		{
 			mpc_lowcomm_request_t reqs[2];
 
-                        mpc_lowcomm_request_init(&reqs[0], peer_comm, REQUEST_SEND, 
+                        mpc_lowcomm_request_init(&reqs[0], 
                                                  local_comm_size * sizeof(_mpc_lowcomm_group_rank_descriptor_t), 
                                                  NULL, NULL, 0);
 			mpc_lowcomm_isend(remote_leader,
@@ -2371,7 +2371,7 @@ mpc_lowcomm_communicator_t mpc_lowcomm_communicator_intercomm_create(const mpc_l
 			                  peer_comm,
 			                  &reqs[0]);
 
-                        mpc_lowcomm_request_init(&reqs[1], peer_comm, REQUEST_RECV, 
+                        mpc_lowcomm_request_init(&reqs[1], 
                                                  local_comm_size * sizeof(_mpc_lowcomm_group_rank_descriptor_t), 
                                                  NULL, NULL, 0);
 			mpc_lowcomm_irecv(remote_leader,

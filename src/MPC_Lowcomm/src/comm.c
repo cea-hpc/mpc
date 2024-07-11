@@ -2079,6 +2079,7 @@ void mpc_lowcomm_request_add_pack(mpc_lowcomm_request_t *req, void *adr,
 	size_t step;
 
 	req->dt_type  = MPC_LOWCOMM_REQUEST_PACK;
+	req->dt_magic = 0xDDDDDDDD;
 	if(req->dt.count >= req->dt.max_count)
 	{
 		req->dt.max_count += SCTK_PACK_REALLOC_STEP;
@@ -2106,6 +2107,7 @@ void mpc_lowcomm_request_add_pack_absolute(mpc_lowcomm_request_t *req,
 	size_t step;
 
 	req->dt_type  = MPC_LOWCOMM_REQUEST_PACK_ABSOLUTE;
+	req->dt_magic = 0xDDDDDDDD;
 	if(req->dt.count >= req->dt.max_count)
 	{
 		req->dt.max_count    += SCTK_PACK_REALLOC_STEP;
@@ -3195,21 +3197,15 @@ void mpc_lowcomm_request_init_struct(mpc_lowcomm_request_t *request,
 }
 #endif
 
-void mpc_lowcomm_request_init(mpc_lowcomm_request_t *request,
-                              mpc_lowcomm_communicator_t comm, int request_type, 
+void mpc_lowcomm_request_init(mpc_lowcomm_request_t *request, 
                               int count, mpc_lowcomm_datatype_t datatype,
                               mpc_lowcomm_complete_callback_func_t cb, 
                               unsigned flags)
 {
-        mpc_lowcomm_request_set_null(request, 0);
-        request->request_type     = request_type;
-        request->comm             = comm;
-        request->completion_flag  = MPC_LOWCOMM_MESSAGE_PENDING;
         request->datatype         = datatype;
         request->count            = count;
         request->request_complete = cb;
         request->flags            = flags;
-	//__mpc_comm_request_init(request, comm, request_type);
 }
 
 int mpc_lowcomm_request_cancel(mpc_lowcomm_request_t *msg)
@@ -3445,10 +3441,7 @@ void *mpc_lowcomm_request_alloc()
         if (request == NULL) {
                 return request;
         }
-
         request->flags = 0;
-        //FIXME: check wether this should be set in request_init func
-        request->completion_flag = MPC_LOWCOMM_MESSAGE_PENDING;
 
         return request + 1;
 }
@@ -3664,9 +3657,11 @@ static mpc_lowcomm_request_t __request_null;
 
 static inline void __init_request_null()
 {
-        mpc_lowcomm_request_init(&__request_null, MPC_COMM_NULL, REQUEST_NULL,
+        mpc_lowcomm_request_init(&__request_null,
                                  0, NULL, NULL, 0);
 	__request_null.is_null = 1;
+        __request_null.request_type = REQUEST_NULL;
+        __request_null.comm    = MPC_COMM_NULL;
         __request_null.completion_flag = MPC_LOWCOMM_MESSAGE_DONE;
 }
 
@@ -3733,8 +3728,16 @@ int _mpc_lowcomm_isend(int dest, const void *data, size_t size, int tag,
         lcp_task_h task;
         lcp_status_ptr_t request;
 
+        /* Initialize needed lowcomm request fields. */
+        mpc_lowcomm_request_set_null(req, 0);
+        req->request_type    = REQUEST_SEND;
+        req->comm            = comm;
+        req->completion_flag = MPC_LOWCOMM_MESSAGE_PENDING;
+
+        /* Initialize tag information based on comm: src, src_uid, tag,... */ 
         _mpc_lowcomm_build_send_tag_info(&tag_info, comm, dest, tag, req);
         
+        /* Try to get cached endpoint. */
 	ep = mpc_lowcomm_communicator_lookup(comm, dest);
 	if(ep == NULL)
 	{
@@ -3743,8 +3746,11 @@ int _mpc_lowcomm_isend(int dest, const void *data, size_t size, int tag,
                 if (rc != 0) {
                         mpc_common_debug_fatal("Could not create endpoint.");
                 }
+                /* Add endpoint to communicator cache. */
                 mpc_lowcomm_communicator_add_ep(comm, dest, ep);
 	}
+
+        /* Get MPI rank data store. */
 	task = lcp_context_task_get(lcp_ctx_loc, mpc_common_get_task_rank());
 	if(task == NULL)
 	{
@@ -3752,17 +3758,20 @@ int _mpc_lowcomm_isend(int dest, const void *data, size_t size, int tag,
 		                       tag_info.src);
 	}
 
-	/* fill up request */
+	/* Fill up request parameters. */
 	lcp_request_param_t param =
 	{
 		.field_mask = (synchronized ? LCP_REQUEST_TAG_SYNC : 0) |
                         LCP_REQUEST_SEND_CALLBACK,
-                .datatype   = LCP_DATATYPE_CONTIGUOUS,
+                .datatype   = req->dt_magic == (int)0xDDDDDDDD ? LCP_DATATYPE_DERIVED : LCP_DATATYPE_CONTIGUOUS,
                 .request    = req,
                 .send_cb    = _mpc_lowcomm_request_send_complete,
 	};
-        if (req->is_allocated == MPC_LOWCOMM_REQUEST_ALLOC) {
-                param.field_mask |= LCP_REQUEST_USER_REQUEST;
+
+	/* Request has been allocated through mpc_lowcomm_request_alloc. */
+	if ( req->is_allocated == MPC_LOWCOMM_REQUEST_ALLOC )
+	{
+		param.field_mask |= LCP_REQUEST_USER_REQUEST;
         }
                 
 	request = lcp_tag_send_nb(ep, task, data, size, &tag_info, &param);
@@ -3824,24 +3833,31 @@ int mpc_lowcomm_irecv(int src, void *data, size_t size, int tag,
         lcp_tag_info_t tag_info;
         lcp_task_h task;
 
-        /* First allocate a request. */
+        /* Initialize needed lowcomm request fields. */
+        mpc_lowcomm_request_set_null(req, 0);
+        req->request_type    = REQUEST_RECV;
+        req->comm            = comm;
+        req->completion_flag = MPC_LOWCOMM_MESSAGE_PENDING;
+
+        /* Initialize tag information based on comm: src, src_uid, tag,... */ 
         _mpc_lowcomm_build_recv_tag_info(&tag_info, comm, src, tag);
 
+	task = lcp_context_task_get(lcp_ctx_loc, tag_info.dest);
+	if(task == NULL) {
+		mpc_common_debug_fatal("LCP: Could not find task with tid %d.",
+		                       tag_info.src);
+	}
+
+	/* Fill up request parameters. */
 	lcp_request_param_t param = {
                 .field_mask   = LCP_REQUEST_RECV_CALLBACK,
-                .datatype     = LCP_DATATYPE_CONTIGUOUS,
+                .datatype   = req->dt_magic == (int)0xDDDDDDDD ? LCP_DATATYPE_DERIVED : LCP_DATATYPE_CONTIGUOUS,
                 .request      = req,
                 .recv_cb      = _mpc_lowcomm_request_recv_complete,
         };
         if (req->is_allocated == MPC_LOWCOMM_REQUEST_ALLOC) {
                 param.field_mask |= LCP_REQUEST_USER_REQUEST;
         }
-	task = lcp_context_task_get(lcp_ctx_loc, tag_info.dest);
-	if(task == NULL)
-	{
-		mpc_common_debug_fatal("LCP: Could not find task with tid %d.",
-		                       tag_info.src);
-	}
 	
         request = lcp_tag_recv_nb(lcp_mngr_loc, task, data, size, &tag_info, 
                                   src == MPC_ANY_SOURCE ? 0 : ~0,
@@ -3860,9 +3876,9 @@ int mpc_lowcomm_sendrecv(const void *sendbuf, size_t size, int dest, int tag, vo
 {
 	mpc_lowcomm_request_t sendreq, recvreq;
 
-        mpc_lowcomm_request_init(&sendreq, comm, REQUEST_SEND, size, NULL,
+        mpc_lowcomm_request_init(&sendreq, size, NULL,
                                  NULL, 0);
-        mpc_lowcomm_request_init(&recvreq, comm, REQUEST_RECV, size, NULL,
+        mpc_lowcomm_request_init(&recvreq, size, NULL,
                                  NULL, 0);
 
 	mpc_lowcomm_isend(dest, sendbuf, size, tag, comm, &sendreq);
@@ -3959,7 +3975,7 @@ int mpc_lowcomm_send(int dest, const void *data, size_t size, int tag, mpc_lowco
         int rc = MPC_LOWCOMM_SUCCESS;
 	mpc_lowcomm_request_t req;
 
-        mpc_lowcomm_request_init(&req, comm, REQUEST_SEND, size, NULL, NULL, 0);
+        mpc_lowcomm_request_init(&req, size, NULL, NULL, 0);
 
 	mpc_lowcomm_isend(dest, data, size, tag, comm, &req);
 	mpc_lowcomm_status_t status;
@@ -3975,7 +3991,7 @@ int mpc_lowcomm_recv(int src, void *buffer, size_t size, int tag, mpc_lowcomm_co
         int rc = MPC_LOWCOMM_SUCCESS;
 	mpc_lowcomm_request_t req;
 
-        mpc_lowcomm_request_init(&req, comm, REQUEST_RECV, size, NULL, NULL, 0);
+        mpc_lowcomm_request_init(&req, size, NULL, NULL, 0);
 
 	mpc_lowcomm_irecv(src, buffer, size, tag, comm, &req);
 	mpc_lowcomm_status_t status;
@@ -4133,8 +4149,7 @@ int mpc_lowcomm_universe_isend(mpc_lowcomm_peer_uid_t dest,
 {
 	if(mpc_lowcomm_peer_get_rank(dest) == MPC_PROC_NULL)
 	{
-                mpc_lowcomm_request_init(req, MPC_COMM_WORLD, REQUEST_SEND,
-                                         size, NULL, NULL, 0);
+                mpc_lowcomm_request_init(req, size, NULL, NULL, 0);
 		return MPC_LOWCOMM_SUCCESS;
 	}
 
@@ -4177,8 +4192,7 @@ int mpc_lowcomm_universe_irecv(mpc_lowcomm_peer_uid_t src,
 {
 	if(mpc_lowcomm_peer_get_rank(src) == MPC_PROC_NULL)
 	{
-                mpc_lowcomm_request_init(req, MPC_COMM_WORLD, REQUEST_SEND,
-                                         size, NULL, NULL, 0);
+                mpc_lowcomm_request_init(req, size, NULL, NULL, 0);
 		return MPC_LOWCOMM_SUCCESS;
 	}
 

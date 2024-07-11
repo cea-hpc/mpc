@@ -553,6 +553,12 @@ static inline void mpc_lowcomm_request_set_null(mpc_lowcomm_request_t *request, 
 	request->is_null = val;
 }
 
+typedef int (*mpc_lowcomm_complete_callback_func_t)(mpc_lowcomm_request_t *req);
+void mpc_lowcomm_request_init(mpc_lowcomm_request_t *request,
+                              int count, mpc_lowcomm_datatype_t datatype,
+                              mpc_lowcomm_complete_callback_func_t cb,
+                              unsigned flags);
+
 /************************************************************************/
 /* MPI Status Modification and Query                                    */
 /************************************************************************/

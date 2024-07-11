@@ -2260,7 +2260,7 @@ int _mpc_cl_isend(const void *buf, mpc_lowcomm_msg_count_t count,
         int rc;
         void *tmp_buf = NULL;
 
-        mpc_lowcomm_request_init(request, comm, REQUEST_SEND, count,
+        mpc_lowcomm_request_init(request, count,
                                  datatype, _mpc_cl_request_send_complete,
                                  MPC_LOWCOMM_REQUEST_CALLBACK);
 	if(dest == MPC_PROC_NULL)
@@ -2298,7 +2298,7 @@ int _mpc_cl_issend(const void *buf, mpc_lowcomm_msg_count_t count,
 	/* Issend is not buffered */
 	if(dest == MPC_PROC_NULL)
 	{
-                mpc_lowcomm_request_init(request, comm, REQUEST_SEND, count,
+                mpc_lowcomm_request_init(request, count,
                                          datatype, NULL, 0);
 		MPC_ERROR_SUCCESS();
 	}
@@ -2326,7 +2326,7 @@ int _mpc_cl_irecv(void *buf, mpc_lowcomm_msg_count_t count,
                   mpc_lowcomm_communicator_t comm, mpc_lowcomm_request_t *request)
 {
         void *tmp_buf;
-        mpc_lowcomm_request_init(request, comm, REQUEST_RECV, count, datatype,
+        mpc_lowcomm_request_init(request, count, datatype,
                                  _mpc_cl_request_recv_complete, 
                                  MPC_LOWCOMM_REQUEST_CALLBACK);
 	if(source == MPC_PROC_NULL)
@@ -2431,9 +2431,9 @@ int _mpc_cl_sendrecv(void *sendbuf, mpc_lowcomm_msg_count_t sendcount, mpc_lowco
 {
 	mpc_lowcomm_request_t reqs[2];
 
-        mpc_lowcomm_request_init(&reqs[0], comm, REQUEST_RECV, recvcount,
+        mpc_lowcomm_request_init(&reqs[0], recvcount,
                                  recvtype, NULL, 0);
-        mpc_lowcomm_request_init(&reqs[1], comm, REQUEST_SEND, sendcount,
+        mpc_lowcomm_request_init(&reqs[1], sendcount,
                                  recvtype, NULL, 0);
 
 	//mpc_common_debug_error("SEND %p CNT %d DEST %d TAG %d", sendbuf, sendcount, dest, sendtag);
@@ -3492,7 +3492,7 @@ int mpc_mpi_cl_isend_pack(int dest, int tag, mpc_lowcomm_communicator_t comm, mp
 
 	if(dest == MPC_PROC_NULL)
 	{
-		mpc_lowcomm_request_init(request, comm, REQUEST_SEND, 0, NULL, NULL, 0);
+		mpc_lowcomm_request_init(request, 0, NULL, NULL, 0);
 		MPC_ERROR_SUCCESS();
 	}
 
@@ -3513,7 +3513,7 @@ int mpc_mpi_cl_irecv_pack(int source, int tag, mpc_lowcomm_communicator_t comm, 
 
 	if(source == MPC_PROC_NULL)
 	{
-		mpc_lowcomm_request_init(request, comm, REQUEST_RECV, 0, NULL, NULL, 0);
+		mpc_lowcomm_request_init(request, 0, NULL, NULL, 0);
 		MPC_ERROR_SUCCESS();
 	}
 

@@ -111,12 +111,6 @@ int mpc_lowcomm_request_cancel(mpc_lowcomm_request_t *request);
  * @param request_type request type
  */
 
-typedef int (*mpc_lowcomm_complete_callback_func_t)(mpc_lowcomm_request_t *req);
-void mpc_lowcomm_request_init(mpc_lowcomm_request_t *request,
-                              mpc_lowcomm_communicator_t comm, int request_type,
-                              int count, mpc_lowcomm_datatype_t datatype,
-                              mpc_lowcomm_complete_callback_func_t cb,
-                              unsigned flags);
 void mpc_lowcomm_request_init_struct(mpc_lowcomm_request_t *request, 
                                      mpc_lowcomm_communicator_t comm, 
                                      int request_type, int src, int dest,

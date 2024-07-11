@@ -212,6 +212,7 @@ typedef struct mpc_lowcomm_request_s
 	 * in order to unpin when request completes */
 	lcp_tag_recv_info_t               recv_info;
 	mpc_lowcomm_request_pack_t        dt;
+        int                               dt_magic;
 	mpc_lowcomm_rtype_t               dt_type;
         unsigned int                      is_allocated;
         void *                            packed_buf;
