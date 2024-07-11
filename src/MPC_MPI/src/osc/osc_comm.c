@@ -26,6 +26,7 @@
 
 #include "mpc_thread_accessor.h"
 #include "osc_mpi.h"
+#include <mpc_common_helper.h>
 
 #include <mpitypes.h>
 #include "mpc_mpi_internal.h"
