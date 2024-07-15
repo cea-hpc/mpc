@@ -356,6 +356,7 @@ void sctk_rail_disable(sctk_rail_info_t *rail);
 
 void sctk_rail_dump_routes();
 
+/* NOLINTBEGIN(clang-diagnostic-unused-function): False positives */
 /** Retrieve the HWLOC device associated with a rail */
 static inline hwloc_obj_t sctk_rail_get_device_hwloc_obj(sctk_rail_info_t *rail)
 {
@@ -377,6 +378,7 @@ static inline char *sctk_rail_get_device_name(sctk_rail_info_t *rail)
 
 	return rail->runtime_config_rail->device;
 }
+/* NOLINTEND(clang-diagnostic-unused-function) */
 
 /************************************************************************/
 /* Add Routes to Rail                                                   */
