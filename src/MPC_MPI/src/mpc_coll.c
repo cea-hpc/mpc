@@ -20,6 +20,7 @@
 /* #   - PEPIN Thibaut thibaut.pepin@cea.fr                               # */
 /* #                                                                      # */
 /* ######################################################################## */
+#include <math.h>
 #include <mpi_conf.h>
 #include <stddef.h>
 
