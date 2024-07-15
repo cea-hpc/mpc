@@ -247,7 +247,12 @@ void mpc_lowcomm_coll_init_simple( mpc_lowcomm_communicator_t id )
  *******************************/
 
 /* Request data-structures */
-static void _mpc_coll_free_message( __UNUSED__ void *ptr )
+
+/*
+ * Referenced in _mpc_coll_message_send when LCP is disabled,
+ * i.e. when MPC_LOWCOMM_PROTOCOL is not defined.
+ */
+__UNUSED__ static void _mpc_coll_free_message( __UNUSED__ void *ptr )
 {
 }
 
