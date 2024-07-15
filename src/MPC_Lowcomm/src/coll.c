@@ -278,8 +278,8 @@ typedef struct
 
 /* Internal functions */
 
-static void _mpc_coll_message_send( const mpc_lowcomm_communicator_t communicator, int myself, int dest, int tag, void *buffer, size_t size,
-                                    mpc_lowcomm_ptp_message_class_t message_class, _mpc_coll_messages_t *msg_req, int check_msg )
+static void _mpc_coll_message_send( const mpc_lowcomm_communicator_t communicator, __UNUSED__ int myself, int dest, int tag, void *buffer, size_t size,
+                                    __UNUSED__ mpc_lowcomm_ptp_message_class_t message_class, _mpc_coll_messages_t *msg_req, __UNUSED__ int check_msg )
 {
 #ifdef MPC_LOWCOMM_PROTOCOL
         mpc_lowcomm_isend(dest, buffer, size, tag, communicator, &(msg_req->request));
@@ -294,8 +294,8 @@ static void _mpc_coll_message_send( const mpc_lowcomm_communicator_t communicato
 #endif
 }
 
-static void _mpc_coll_message_recv( const mpc_lowcomm_communicator_t communicator, int src, int myself, int tag, void *buffer, size_t size,
-                                    mpc_lowcomm_ptp_message_class_t message_class, _mpc_coll_messages_t *msg_req, int check_msg )
+static void _mpc_coll_message_recv( const mpc_lowcomm_communicator_t communicator, int src, __UNUSED__ int myself, int tag, void *buffer, size_t size,
+                                    __UNUSED__ mpc_lowcomm_ptp_message_class_t message_class, _mpc_coll_messages_t *msg_req, __UNUSED__ int check_msg )
 {
 #ifdef MPC_LOWCOMM_PROTOCOL
         mpc_lowcomm_irecv(src, buffer, size, tag, communicator, &(msg_req->request));
