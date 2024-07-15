@@ -36,6 +36,6 @@ repos:
           #    with #pragma weak and extern functions. This a known LLVM issue, see
           #    https://github.com/llvm/llvm-project/issues/16067
 -   repo: git@gitlab.paratools.com:cea/mpc-pre-commit-hooks.git
-    rev: 90dac57b3624db79877f93a59d218255463d708f
+    rev: v0.1.0
     hooks:
     -   id: git-blame-ignore-revs
