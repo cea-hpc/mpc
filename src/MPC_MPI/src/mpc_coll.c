@@ -1351,6 +1351,8 @@ static inline int ___collectives_ibcast( void *buffer, int count, MPI_Datatype d
   ___collectives_sched_info_init(&info, MPC_COLL_TYPE_NONBLOCKING, _mpc_mpi_config()->coll_opts.topo.bcast);
 
   res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
+  MPI_HANDLE_ERROR(res, comm, "Ibcast: NBC_Init_handle failed");
+
   handle->tmpbuf = NULL;
   schedule = (NBC_Schedule *)sctk_malloc(sizeof(NBC_Schedule));
 
@@ -1438,6 +1440,7 @@ static inline int ___collectives_bcast_init(void *buffer, int count, MPI_Datatyp
   Sched_info info;
   ___collectives_sched_info_init(&info, MPC_COLL_TYPE_PERSISTENT, _mpc_mpi_config()->coll_opts.topo.bcast);
   res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
+  MPI_HANDLE_ERROR(res, comm, "Bcast: NBC_Init_handle failed");
 
   handle->tmpbuf = NULL;
 
@@ -1777,6 +1780,11 @@ int ___collectives_bcast_topo(void *buffer, int count, MPI_Datatype datatype, in
       MPI_Comm master_comm = info->hardware_info_ptr->rootcomm[k];
 
       res = _mpc_mpi_config()->coll_algorithm_intracomm.bcast(buffer, count, datatype, 0, master_comm, coll_type, schedule, info);
+	  if (res != MPI_SUCCESS)
+	  {
+		  mpc_common_debug_error("Bcast topo: Intracomm bcast failed on level %d", k);
+	  }
+	  MPI_HANDLE_ERROR(res, comm, "Bcast topo: Intracomm bcast failed");
 
       ___collectives_barrier_type(coll_type, schedule, info);
     }
@@ -1868,6 +1876,7 @@ static inline int ___collectives_ireduce(const void *sendbuf, void* recvbuf, int
   ___collectives_sched_info_init(&info, MPC_COLL_TYPE_NONBLOCKING, _mpc_mpi_config()->coll_opts.topo.reduce);
 
   res = NBC_Init_handle(handle, comm, MPC_IREDUCE_TAG);
+  MPI_HANDLE_ERROR(res, comm, "Ireduce: NBC_Init_handle failed");
   handle->tmpbuf = NULL;
   schedule = (NBC_Schedule *)sctk_malloc(sizeof(NBC_Schedule));
 
@@ -1961,6 +1970,7 @@ static inline int ___collectives_reduce_init(const void *sendbuf, void* recvbuf,
   ___collectives_sched_info_init(&info, MPC_COLL_TYPE_PERSISTENT, _mpc_mpi_config()->coll_opts.topo.reduce);
 
   res = NBC_Init_handle(handle, comm, MPC_IREDUCE_TAG);
+  MPI_HANDLE_ERROR(res, comm, "Reduce: NBC_Init_handle failed");
 
   handle->tmpbuf = NULL;
 
@@ -2607,6 +2617,7 @@ static inline int ___collectives_iallreduce(const void *sendbuf, void* recvbuf, 
   ___collectives_sched_info_init(&info, MPC_COLL_TYPE_NONBLOCKING, _mpc_mpi_config()->coll_opts.topo.allreduce);
 
   res = NBC_Init_handle(handle, comm, MPC_IALLREDUCE_TAG);
+  MPI_HANDLE_ERROR(res, comm, "Iallreduce: NBC_Init_handle failed");
   handle->tmpbuf = NULL;
   schedule = (NBC_Schedule *)sctk_malloc(sizeof(NBC_Schedule));
 
@@ -2694,6 +2705,7 @@ static inline int ___collectives_allreduce_init(const void *sendbuf, void* recvb
   ___collectives_sched_info_init(&info, MPC_COLL_TYPE_PERSISTENT, _mpc_mpi_config()->coll_opts.topo.allreduce);
 
   res = NBC_Init_handle(handle, comm, MPC_IALLREDUCE_TAG);
+  MPI_HANDLE_ERROR(res, comm, "Allreduce: NBC_Init_handle failed");
 
   handle->tmpbuf = NULL;
 
@@ -3698,6 +3710,8 @@ static inline int ___collectives_iscatter(const void *sendbuf, int sendcount, MP
   ___collectives_sched_info_init(&info, MPC_COLL_TYPE_NONBLOCKING, _mpc_mpi_config()->coll_opts.topo.scatter);
 
   res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
+  MPI_HANDLE_ERROR(res, comm, "Iscatter: NBC_Init_handle failed");
+
   handle->tmpbuf = NULL;
   schedule = (NBC_Schedule *)sctk_malloc(sizeof(NBC_Schedule));
 
@@ -3793,6 +3807,7 @@ static inline int ___collectives_scatter_init(const void *sendbuf, int sendcount
   Sched_info info;
   ___collectives_sched_info_init(&info, MPC_COLL_TYPE_PERSISTENT, _mpc_mpi_config()->coll_opts.topo.scatter);
   res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
+  MPI_HANDLE_ERROR(res, comm, "Scatter: NBC_Init_handle failed");
 
   handle->tmpbuf = NULL;
 
@@ -4281,6 +4296,11 @@ int ___collectives_scatter_topo(const void *sendbuf, int sendcount, MPI_Datatype
       }
 
       res = _mpc_mpi_config()->coll_algorithm_intracomm.scatterv(tmpbuf, counts, displs, recvtype, scatterv_buf, info->hardware_info_ptr->send_data_count[i] * recvcount, recvtype, 0, master_comm, coll_type, schedule, info);
+	  if (res != MPI_SUCCESS)
+	  {
+		  mpc_common_debug_error("Scatter topo: Intracomm scatterv failed on level %d", i);
+	  }
+	  MPI_HANDLE_ERROR(res, comm, "Scatter topo: Intracomm scatterv failed");
 
       ___collectives_barrier_type(coll_type, schedule, info);
     }
@@ -4380,6 +4400,8 @@ static inline int ___collectives_iscatterv(const void *sendbuf, const int *sendc
   ___collectives_sched_info_init(&info, MPC_COLL_TYPE_NONBLOCKING, _mpc_mpi_config()->coll_opts.topo.scatterv);
 
   res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
+  MPI_HANDLE_ERROR(res, comm, "Iscatterv: NBC_Init_handle failed");
+
   handle->tmpbuf = NULL;
   schedule = (NBC_Schedule *)sctk_malloc(sizeof(NBC_Schedule));
 
@@ -4489,6 +4511,7 @@ static inline int ___collectives_scatterv_init(const void *sendbuf, const int *s
   ___collectives_sched_info_init(&info, MPC_COLL_TYPE_PERSISTENT, _mpc_mpi_config()->coll_opts.topo.scatterv);
 
   res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
+  MPI_HANDLE_ERROR(res, comm, "Scatterv: NBC_Init_handle failed");
 
   handle->tmpbuf = NULL;
 
@@ -4764,6 +4787,8 @@ static inline int ___collectives_igather(const void *sendbuf, int sendcount, MPI
   Sched_info info;
   ___collectives_sched_info_init(&info, MPC_COLL_TYPE_NONBLOCKING, _mpc_mpi_config()->coll_opts.topo.gather);
   res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
+  MPI_HANDLE_ERROR(res, comm, "Igather: NBC_Init_handle failed");
+
   handle->tmpbuf = NULL;
   schedule = (NBC_Schedule *)sctk_malloc(sizeof(NBC_Schedule));
 
@@ -4864,6 +4889,7 @@ static inline int ___collectives_gather_init(const void *sendbuf, int sendcount,
   Sched_info info;
   ___collectives_sched_info_init(&info, MPC_COLL_TYPE_PERSISTENT, _mpc_mpi_config()->coll_opts.topo.gather);
   res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
+  MPI_HANDLE_ERROR(res, comm, "Gather: NBC_Init_handle failed");
 
   handle->tmpbuf = NULL;
 
@@ -5439,6 +5465,8 @@ static inline int ___collectives_igatherv(const void *sendbuf, int sendcount, MP
   ___collectives_sched_info_init(&info, MPC_COLL_TYPE_NONBLOCKING, _mpc_mpi_config()->coll_opts.topo.gatherv);
 
   res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
+  MPI_HANDLE_ERROR(res, comm, "Igatherv: NBC_Init_handle failed");
+
   handle->tmpbuf = NULL;
   schedule = (NBC_Schedule *)sctk_malloc(sizeof(NBC_Schedule));
 
@@ -5545,6 +5573,7 @@ static inline int ___collectives_gatherv_init(const void *sendbuf, int sendcount
   ___collectives_sched_info_init(&info, MPC_COLL_TYPE_PERSISTENT, _mpc_mpi_config()->coll_opts.topo.gatherv);
 
   res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
+  MPI_HANDLE_ERROR(res, comm, "Gatherv: NBC_Init_handle failed");
 
   handle->tmpbuf = NULL;
 
@@ -5816,6 +5845,8 @@ static inline int ___collectives_ireduce_scatter_block (const void *sendbuf, voi
   ___collectives_sched_info_init(&info, MPC_COLL_TYPE_NONBLOCKING, _mpc_mpi_config()->coll_opts.topo.reduce_scatter_block);
 
   res = NBC_Init_handle(handle, comm, MPC_IALLREDUCE_TAG);
+  MPI_HANDLE_ERROR(res, comm, "Ireduce: NBC_Init_handle failed");
+
   handle->tmpbuf = NULL;
   schedule = (NBC_Schedule *)sctk_malloc(sizeof(NBC_Schedule));
 
@@ -5902,6 +5933,7 @@ static inline int ___collectives_reduce_scatter_block_init(const void *sendbuf, 
   Sched_info info;
   ___collectives_sched_info_init(&info, MPC_COLL_TYPE_PERSISTENT, _mpc_mpi_config()->coll_opts.topo.reduce_scatter_block);
   res = NBC_Init_handle(handle, comm, MPC_IALLREDUCE_TAG);
+  MPI_HANDLE_ERROR(res, comm, "Reduce_scatter_block: NBC_Init_handle failed");
 
   handle->tmpbuf = NULL;
 
@@ -6288,6 +6320,8 @@ static inline int ___collectives_ireduce_scatter (const void *sendbuf, void* rec
   ___collectives_sched_info_init(&info, MPC_COLL_TYPE_NONBLOCKING, _mpc_mpi_config()->coll_opts.topo.reduce_scatter);
 
   res = NBC_Init_handle(handle, comm, MPC_IALLREDUCE_TAG);
+  MPI_HANDLE_ERROR(res, comm, "Ireduce_scatter: NBC_Init_handle failed");
+
   handle->tmpbuf = NULL;
   schedule = (NBC_Schedule *)sctk_malloc(sizeof(NBC_Schedule));
 
@@ -6381,6 +6415,7 @@ static inline int ___collectives_reduce_scatter_init(const void *sendbuf, void* 
   Sched_info info;
   ___collectives_sched_info_init(&info, MPC_COLL_TYPE_PERSISTENT, _mpc_mpi_config()->coll_opts.topo.reduce_scatter);
   res = NBC_Init_handle(handle, comm, MPC_IALLREDUCE_TAG);
+  MPI_HANDLE_ERROR(res, comm, "Reduce_scatter: NBC_Init_handle failed");
 
   handle->tmpbuf = NULL;
 
@@ -6702,6 +6737,8 @@ static inline int ___collectives_iallgather(const void *sendbuf, int sendcount, 
   Sched_info info;
   ___collectives_sched_info_init(&info, MPC_COLL_TYPE_NONBLOCKING, _mpc_mpi_config()->coll_opts.topo.allgather);
   res = NBC_Init_handle(handle, comm, MPC_IALLGATHER_TAG);
+  MPI_HANDLE_ERROR(res, comm, "Iallgather: NBC_Init_handle failed");
+
   handle->tmpbuf = NULL;
   schedule = (NBC_Schedule *)sctk_malloc(sizeof(NBC_Schedule));
 
@@ -6797,6 +6834,7 @@ static inline int ___collectives_allgather_init(const void *sendbuf, int sendcou
   Sched_info info;
   ___collectives_sched_info_init(&info, MPC_COLL_TYPE_PERSISTENT, _mpc_mpi_config()->coll_opts.topo.allgather);
   res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
+  MPI_HANDLE_ERROR(res, comm, "Allgather: NBC_Init_handle failed");
 
   handle->tmpbuf = NULL;
 
@@ -7384,6 +7422,8 @@ static inline int ___collectives_iallgatherv(const void *sendbuf, int sendcount,
   ___collectives_sched_info_init(&info, MPC_COLL_TYPE_NONBLOCKING, _mpc_mpi_config()->coll_opts.topo.allgatherv);
 
   res = NBC_Init_handle(handle, comm, MPC_IALLGATHER_TAG);
+  MPI_HANDLE_ERROR(res, comm, "Iallgatherv: NBC_Init_handle failed");
+
   handle->tmpbuf = NULL;
   schedule = (NBC_Schedule *)sctk_malloc(sizeof(NBC_Schedule));
 
@@ -7492,6 +7532,7 @@ static inline int ___collectives_allgatherv_init(const void *sendbuf, int sendco
   ___collectives_sched_info_init(&info, MPC_COLL_TYPE_PERSISTENT, _mpc_mpi_config()->coll_opts.topo.allgatherv);
 
   res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
+  MPI_HANDLE_ERROR(res, comm, "Allgatherv: NBC_Init_handle failed");
 
   handle->tmpbuf = NULL;
 
@@ -7779,6 +7820,8 @@ static inline int ___collectives_ialltoall(const void *sendbuf, int sendcount, M
   ___collectives_sched_info_init(&info, MPC_COLL_TYPE_NONBLOCKING, _mpc_mpi_config()->coll_opts.topo.alltoall);
 
   res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
+  MPI_HANDLE_ERROR(res, comm, "Ialltoall: NBC_Init_handle failed");
+
   handle->tmpbuf = NULL;
   schedule = (NBC_Schedule *)sctk_malloc(sizeof(NBC_Schedule));
 
@@ -7873,6 +7916,7 @@ static inline int ___collectives_alltoall_init(const void *sendbuf, int sendcoun
   ___collectives_sched_info_init(&info, MPC_COLL_TYPE_PERSISTENT, _mpc_mpi_config()->coll_opts.topo.alltoall);
 
   res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
+  MPI_HANDLE_ERROR(res, comm, "Alltoall: NBC_Init_handle failed");
 
   handle->tmpbuf = NULL;
 
@@ -8614,8 +8658,10 @@ int ___collectives_alltoall_topo(const void *sendbuf, int sendcount, MPI_Datatyp
 
   if(hardware_comm_rank == 0) {
     res = _mpc_mpi_config()->coll_algorithm_intracomm.gather(MPI_IN_PLACE, 0, MPI_DATATYPE_NULL, tmpbuf, (size - 1) * recvcount, recvtype, 0, hardware_comm, coll_type, schedule, info);
+	MPI_HANDLE_ERROR(res, comm, "Alltoall topo: Intracomm gather failed (with hardware_comm_rank == 0)");
   } else {
     res = _mpc_mpi_config()->coll_algorithm_intracomm.gather(tmpbuf, (size - 1) * recvcount, recvtype, NULL, 0, MPI_DATATYPE_NULL, 0, hardware_comm, coll_type, schedule, info);
+	MPI_HANDLE_ERROR(res, comm, "Alltoall topo: Intracomm gather failed (with hardware_comm_rank != 0)");
   }
   ___collectives_barrier_type(coll_type, schedule, info);
 
@@ -8809,6 +8855,7 @@ int ___collectives_alltoall_topo(const void *sendbuf, int sendcount, MPI_Datatyp
       res = _mpc_mpi_config()->coll_algorithm_intracomm.gatherv(gatherv_buf, info->hardware_info_ptr->send_data_count[i] * (size - info->hardware_info_ptr->send_data_count[i]) * recvcount, recvtype,
           tmpbuf, counts, displs, recvtype,
           0, master_comm, coll_type, schedule, info);
+	  MPI_HANDLE_ERROR(res, comm, "Alltoall topo: Intracomm gatherv failed");
 
 
       ___collectives_barrier_type(coll_type, schedule, info);
@@ -9016,6 +9063,7 @@ int ___collectives_alltoall_topo(const void *sendbuf, int sendcount, MPI_Datatyp
       res = _mpc_mpi_config()->coll_algorithm_intracomm.scatterv(tmpbuf, counts, displs, recvtype,
           tmpbuf_other, info->hardware_info_ptr->send_data_count[i] * (size - info->hardware_info_ptr->send_data_count[i]) * recvcount, recvtype,
           0, master_comm, coll_type, schedule, info);
+	  MPI_HANDLE_ERROR(res, comm, "Alltoall topo: Intracomm scatterv failed");
 
       ___collectives_barrier_type(coll_type, schedule, info);
 
@@ -9362,6 +9410,8 @@ static inline int ___collectives_ialltoallv(const void *sendbuf, const int *send
   ___collectives_sched_info_init(&info, MPC_COLL_TYPE_NONBLOCKING, _mpc_mpi_config()->coll_opts.topo.alltoallv);
 
   res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
+  MPI_HANDLE_ERROR(res, comm, "Ialltoallv: NBC_Init_handle failed");
+
   handle->tmpbuf = NULL;
   schedule = (NBC_Schedule *)sctk_malloc(sizeof(NBC_Schedule));
 
@@ -9470,6 +9520,7 @@ static inline int ___collectives_alltoallv_init(const void *sendbuf, const int *
   ___collectives_sched_info_init(&info, MPC_COLL_TYPE_PERSISTENT, _mpc_mpi_config()->coll_opts.topo.alltoallv);
 
   res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
+  MPI_HANDLE_ERROR(res, comm, "Alltoallv: NBC_Init_handle failed");
 
   handle->tmpbuf = NULL;
 
@@ -9922,6 +9973,8 @@ static inline int ___collectives_ialltoallw(const void *sendbuf, const int *send
   ___collectives_sched_info_init(&info, MPC_COLL_TYPE_NONBLOCKING, _mpc_mpi_config()->coll_opts.topo.alltoallw);
 
   res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
+  MPI_HANDLE_ERROR(res, comm, "Ialltoallw: NBC_Init_handle failed");
+
   handle->tmpbuf = NULL;
   schedule = (NBC_Schedule *)sctk_malloc(sizeof(NBC_Schedule));
 
@@ -10031,6 +10084,7 @@ static inline int ___collectives_alltoallw_init(const void *sendbuf, const int *
   ___collectives_sched_info_init(&info, MPC_COLL_TYPE_PERSISTENT, _mpc_mpi_config()->coll_opts.topo.alltoallw);
 
   res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
+  MPI_HANDLE_ERROR(res, comm, "Alltoallw: NBC_Init_handle failed");
 
   handle->tmpbuf = NULL;
 
@@ -10455,6 +10509,8 @@ static inline int ___collectives_iscan (const void *sendbuf, void *recvbuf, int 
   ___collectives_sched_info_init(&info, MPC_COLL_TYPE_NONBLOCKING, _mpc_mpi_config()->coll_opts.topo.scan);
 
   res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
+  MPI_HANDLE_ERROR(res, comm, "Iscan: NBC_Init_handle failed");
+
   handle->tmpbuf = NULL;
   schedule = (NBC_Schedule *)sctk_malloc(sizeof(NBC_Schedule));
 
@@ -10546,6 +10602,7 @@ static inline int ___collectives_scan_init (const void *sendbuf, void *recvbuf, 
   ___collectives_sched_info_init(&info, MPC_COLL_TYPE_PERSISTENT, _mpc_mpi_config()->coll_opts.topo.scan);
 
   res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
+  MPI_HANDLE_ERROR(res, comm, "Scan: NBC_Init_handle failed");
 
   handle->tmpbuf = NULL;
 
@@ -10857,6 +10914,8 @@ static inline int ___collectives_iexscan (const void *sendbuf, void *recvbuf, in
   ___collectives_sched_info_init(&info, MPC_COLL_TYPE_NONBLOCKING, _mpc_mpi_config()->coll_opts.topo.exscan);
 
   res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
+  MPI_HANDLE_ERROR(res, comm, "Iexscan: NBC_Init_handle failed");
+
   handle->tmpbuf = NULL;
   schedule = (NBC_Schedule *)sctk_malloc(sizeof(NBC_Schedule));
 
@@ -10948,6 +11007,7 @@ static inline int ___collectives_exscan_init (const void *sendbuf, void *recvbuf
   ___collectives_sched_info_init(&info, MPC_COLL_TYPE_PERSISTENT, _mpc_mpi_config()->coll_opts.topo.exscan);
 
   res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
+  MPI_HANDLE_ERROR(res, comm, "Exscan: NBC_Init_handle failed");
 
   handle->tmpbuf = NULL;
 
@@ -11255,6 +11315,8 @@ static inline int ___collectives_ibarrier (MPI_Comm comm, NBC_Handle *handle) {
   ___collectives_sched_info_init(&info, MPC_COLL_TYPE_NONBLOCKING, _mpc_mpi_config()->coll_opts.topo.barrier);
 
   res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
+  MPI_HANDLE_ERROR(res, comm, "Ibarrier: NBC_Init_handle failed");
+
   handle->tmpbuf = NULL;
   schedule = (NBC_Schedule *)sctk_malloc(sizeof(NBC_Schedule));
 
@@ -11328,6 +11390,7 @@ static inline int ___collectives_barrier_init (MPI_Comm comm, NBC_Handle* handle
   ___collectives_sched_info_init(&info, MPC_COLL_TYPE_PERSISTENT, _mpc_mpi_config()->coll_opts.topo.barrier);
 
   res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
+  MPI_HANDLE_ERROR(res, comm, "Barrier: NBC_Init_handle failed");
 
   handle->tmpbuf = NULL;
 
