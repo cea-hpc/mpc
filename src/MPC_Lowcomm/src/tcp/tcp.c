@@ -356,7 +356,7 @@ err:
 }
 
 static void lcr_tcp_send_am_prepare(const struct iovec *iov, int iovcnt,
-				   const void *header, unsigned hdr_length,
+				   void *header, unsigned hdr_length,
 				   uint8_t id, lcr_tcp_am_zcopy_hdr_t *hdr,
 				   size_t *payload_length)
 {
@@ -385,7 +385,7 @@ static void lcr_tcp_send_am_prepare(const struct iovec *iov, int iovcnt,
 }
 
 static int lcr_tcp_send_am_zcopy(_mpc_lowcomm_endpoint_t *ep,
-				 uint8_t id, const void *header,
+				 uint8_t id, void *header,
 				 unsigned hdr_length, const struct iovec *iov,
 				 size_t iovcnt, __UNUSED__ unsigned flags,
 				 lcr_completion_t *comp)

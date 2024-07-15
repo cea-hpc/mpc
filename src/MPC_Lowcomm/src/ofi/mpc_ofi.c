@@ -447,7 +447,7 @@ static inline int __deffered_completion_cb(__UNUSED__ struct _mpc_ofi_request_t 
 
 int _mpc_ofi_send_am_zcopy(_mpc_lowcomm_endpoint_t *ep,
                                     uint8_t id,
-                                    const void *header,
+                                    void *header,
                                     unsigned header_length,
                                     const struct iovec *iov,
                                     size_t iovcnt,

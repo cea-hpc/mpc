@@ -596,7 +596,7 @@ int mpc_shm_unpack_rkey(sctk_rail_info_t *rail,
 
 int mpc_shm_send_am_zcopy(__UNUSED__ _mpc_lowcomm_endpoint_t *ep,
                           __UNUSED__ uint8_t id,
-                          __UNUSED__ const void *header,
+                          __UNUSED__ void *header,
                           __UNUSED__ unsigned header_length,
                           __UNUSED__ const struct iovec *iov,
                           __UNUSED__ size_t iovcnt,

@@ -46,7 +46,7 @@ typedef ssize_t (*lcr_send_am_bcopy_func_t)(_mpc_lowcomm_endpoint_t *ep,
 
 typedef int (*lcr_send_am_zcopy_func_t)(_mpc_lowcomm_endpoint_t *ep,
                                         uint8_t id,
-                                        const void *header,
+                                        void *header,
                                         unsigned header_length,
                                         const struct iovec *iov,
                                         size_t iovcnt,
