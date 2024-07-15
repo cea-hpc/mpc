@@ -82,6 +82,7 @@ typedef struct MPI_ABI_Group
 	mpc_lowcomm_handle_ctx_t              extra_ctx_ptr;
 } _mpc_lowcomm_group_s;
 
+/* NOLINTBEGIN(clang-diagnostic-unused-function): False positives */
 static inline void _mpc_lowcomm_group_acquire(mpc_lowcomm_group_t *g)
 {
 	OPA_incr_int(&g->refcount);
@@ -91,6 +92,7 @@ static inline void _mpc_lowcomm_group_relax(mpc_lowcomm_group_t *g)
 {
 	OPA_decr_int(&g->refcount);
 }
+/* NOLINTEND(clang-diagnostic-unused-function) */
 
 mpc_lowcomm_group_t *_mpc_lowcomm_group_create(unsigned int size, _mpc_lowcomm_group_rank_descriptor_t *ranks, int deduplicate);
 
