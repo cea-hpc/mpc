@@ -78,6 +78,7 @@ char *_mpc_dt_get_combiner_name(MPC_Type_combiner combiner)
 /* Datatype Init and Release                                            */
 /************************************************************************/
 
+/* NOLINTBEGIN(clang-diagnostic-unused-function): False positives */
 static volatile int __mpc_dt_initialized = 0;
 static inline void __mpc_composed_common_types_init();
 
@@ -2398,6 +2399,7 @@ static inline int _mpc_dt_layout_fill(struct _mpc_dt_layout *l, mpc_lowcomm_data
 
 	return MPC_LOWCOMM_SUCCESS;
 }
+/* NOLINTEND(clang-diagnostic-unused-function) */
 
 struct _mpc_dt_layout *_mpc_dt_get_layout(struct _mpc_dt_footprint *ctx, size_t *ly_count)
 {
