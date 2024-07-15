@@ -2314,6 +2314,14 @@ static inline int ___gather_intra(void *sendbuf, void *recvbuf, const size_t siz
 
 	if(comm_size == 1)
 	{
+		/*
+		 * If comm_size == 1, there is only one rank (equal to 0)
+		 * which necessarily guarantees that recvbuf has been
+		 * allocated in the calling functions, and that it is
+		 * non-null.
+		 */
+		assert(recvbuf != NULL);
+
 		if( sendbuf != MPC_IN_PLACE)
 		{
 			memcpy(recvbuf, sendbuf, size);
