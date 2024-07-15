@@ -274,6 +274,7 @@ int mpc_omp_task_parse_larceny_mode(char * mode);
  * TASK INTERFACE *
  ******************/
 
+/* NOLINTBEGIN(clang-diagnostic-unused-function): False positives */
 static inline long
 _mpc_omp_task_align_single_malloc( long size, long arg_align )
 {
@@ -289,6 +290,7 @@ _mpc_omp_task_align_single_malloc( long size, long arg_align )
 
     return size;
 }
+/* NOLINTEND(clang-diagnostic-unused-function) */
 
 # define TASK_STATE_TRANSITION(TASK, TO) OPA_store_int(&(TASK->state), TO)
 # define TASK_STATE_TRANSITION_ATOMIC(TASK, FROM, TO) (OPA_cas_int(&(TASK->state), FROM, TO) == FROM)
