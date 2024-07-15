@@ -2367,8 +2367,6 @@ static inline int ___gather_intra(void *sendbuf, void *recvbuf, const size_t siz
 	int div2_size = comm_size - (comm_size % 2);
 	int last_rank = comm_size - 1;
 
-	mpc_lowcomm_request_t last_rank_exchange = MPC_REQUEST_NULL;
-
 	/* Now we are normalized we can proceed to a recursive doubling approach */
 	int round = 0;
 	int rel_rank = rank;
