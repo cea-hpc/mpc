@@ -8461,6 +8461,8 @@ int ___collectives_alltoall_topo(const void *sendbuf, int sendcount, MPI_Datatyp
   PMPI_Type_extent(tmp_sendtype, &sendext);
   PMPI_Type_extent(recvtype, &recvext);
 
+  assert(size > 0);
+
   if(sendbuf == MPI_IN_PLACE) {
     tmp_sendbuf = recvbuf;
   }
