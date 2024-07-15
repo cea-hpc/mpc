@@ -32,6 +32,11 @@
 #ifndef __MPC_OMP_TYPES_KMP_ATOMICS_H__
 #define __MPC_OMP_TYPES_KMP_ATOMICS_H__
 
+#include "mpc_common_spinlock.h"
+#include "mpc_keywords.h"
+#include "omp_intel_types.h"
+#include <mpc_arch.h>
+
 /********************************
  * ATOMIC_OPERATIONS
  *******************************/
