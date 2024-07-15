@@ -2352,6 +2352,8 @@ static inline int ___gather_intra(void *sendbuf, void *recvbuf, const size_t siz
 	/* Handle in Place */
 	if( sendbuf != MPC_IN_PLACE)
 	{
+		assert(gather_buffer);
+
 		/* If not in PLACE we need to copy the
 		   contrib to the given slot */
 		memcpy(gather_buffer + size * rank, sendbuf, size);
