@@ -584,7 +584,7 @@ int lcp_mem_reg_from_map(lcp_context_h ctx,
                          size_t length)
 {
         int i, rc = LCP_SUCCESS;
-        sctk_rail_info_t *iface = ctx->resources[ctx->priority_rail].iface;
+        sctk_rail_info_t *iface;
 
         /* Pin the memory and create memory handles */
         for (i=0; i<ctx->num_resources; i++) {
