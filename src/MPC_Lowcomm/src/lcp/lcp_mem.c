@@ -319,11 +319,19 @@ struct lcp_pinning_entry * lcp_pinning_entry_list_push(struct lcp_pinning_entry_
                 }
 
                 lcp_mem_h mem_p = NULL;
-                lcp_mem_register_with_bitmap(ctx,
-                        &mem_p,
-                        bitmap,
-                        buffer,
-                        len);
+				int lcp_ret;
+
+				lcp_ret = lcp_mem_register_with_bitmap(ctx,
+               		    	&mem_p,
+                    	    bitmap,
+                        	buffer,
+                        	len);
+
+				if (lcp_ret)
+				{
+					return NULL;
+				}
+
                 ret = lcp_pinning_entry_new(buffer, len, ctx, mem_p);
                 lcp_pinning_entry_acquire(ret);
 
