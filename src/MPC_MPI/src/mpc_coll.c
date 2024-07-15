@@ -8739,6 +8739,8 @@ int ___collectives_alltoall_topo(const void *sendbuf, int sendcount, MPI_Datatyp
           master_comm = info->hardware_info_ptr->rootcomm[i + 1];
         }
         _mpc_cl_comm_size(master_comm, &size_master);
+		// Mute clang-tidy warnings about potential overflows when reading displs[j]
+		assert(size_master <= size);
 
         // Here the data is organized as follow:
         // send data block 1-1, keep data block 1, send data block 1-2, ... , send data block n-1, keep data block n, send data block n-2
