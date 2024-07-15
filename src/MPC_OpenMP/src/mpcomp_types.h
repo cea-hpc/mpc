@@ -1211,6 +1211,7 @@ typedef struct mpc_omp_new_parallel_region_info_s
     OPA_int_t task_ref;
 } mpc_omp_parallel_region_t;
 
+/* NOLINTBEGIN(clang-diagnostic-unused-function): False positives */
 static inline void
 _mpc_omp_parallel_region_infos_reset( mpc_omp_parallel_region_t *info )
 {
@@ -1225,6 +1226,7 @@ _mpc_omp_parallel_region_infos_init( mpc_omp_parallel_region_t *info )
 	_mpc_omp_parallel_region_infos_reset( info );
 	info->combined_pragma = MPC_OMP_COMBINED_NONE;
 }
+/* NOLINTEND(clang-diagnostic-unused-function) */
 
 /* Team of OpenMP threads */
 typedef struct mpc_omp_team_s
