@@ -95,7 +95,7 @@ INITIALIZATION/FINALIZE
 {\
         if ( (retcode) == PMI_ERR_INVALID_KEY)\
         {\
-		(void)fprintf( stderr, "KEY NOT FOUND (mpc_launch_pmi): %s: %d\n", ctx, retcode );\
+		/*(void)fprintf( stderr, "KEY NOT FOUND (mpc_launch_pmi): %s: %d\n", ctx, retcode );*/\
         } else if ( (retcode) != PMI_SUCCESS )\
 	{\
 		(void)fprintf( stderr, "FAILURE (mpc_launch_pmi): %s: %d\n", ctx, retcode );\
