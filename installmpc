@@ -36,7 +36,7 @@ USE_COLOR="no"
 # BUILD PARAMETERS #
 ####################
 
-# NOTE: these are only meaningfull when not using spack
+# NOTE: these are only meaningful when not using spack
 MAKE_J=""
 ALL_PACKAGE_ARGS=""
 MPC_COMP_ADD_BUILD_PARAMETERS=""
@@ -230,7 +230,7 @@ assert_cmd()
 	have_cmd "$1"
 
 	if test "x${HAVE_CMD}" = "xno"; then
-		checking "cmake is in path"
+		checking "$1 is in path"
 		nok
 		die "$1 could not be found in path"
 	fi
@@ -366,7 +366,7 @@ wrap_output()
 			cat "$outfile"
 		fi
 
-		die "See $outfile an error occured when running $*"
+		die "See $outfile an error occurred when running $*"
 	fi
 
 	set -e
@@ -501,7 +501,7 @@ check_if_spack_package_is_overriden()
 # Args:
 # -$1 : package
 # -$2 : version
-# -$3 : variant (optionnal)
+# -$3 : variant (optional)
 #
 DEP_FOUND="no"
 find_dep_with_spack()
@@ -1099,7 +1099,7 @@ find_in_prefix_or_use_spack_internal()
 # - $1: package name
 # - $2: package version
 # - $3: candidate_prefix
-# - $4: variant (optionnal)
+# - $4: variant (optional)
 
 find_in_prefix_or_use_spack()
 {
@@ -1111,8 +1111,8 @@ find_in_prefix_or_use_spack()
 # - $1: package name
 # - $2: package version
 # - $3: candidate_prefix
-# - $4: variant (optionnal)
-find_in_prefix_or_use_spack_optionnal()
+# - $4: variant (optional)
+find_in_prefix_or_use_spack_optional()
 {
 	required="no"
 	candidate_prefix="$3"
@@ -1216,7 +1216,7 @@ EOF
 #                                                  #
 ####################################################
 #
-# Disable all optionnal dependencies by default
+# Disable all optional dependencies by default
 #
 
 # Possible values are:
@@ -1772,7 +1772,7 @@ fi
 
 
 # Make sure to load libunwind after compiler-additions (https://trac.macports.org/ticket/43869)
-find_in_prefix_or_use_spack_optionnal "libunwind" "" "spackonly" "${LIBUNWIND_PREFIX}"
+find_in_prefix_or_use_spack_optional "libunwind" "" "spackonly" "${LIBUNWIND_PREFIX}"
 
 # It is now time to configure MPC
 
