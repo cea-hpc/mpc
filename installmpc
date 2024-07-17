@@ -36,8 +36,9 @@ USE_COLOR="no"
 # BUILD PARAMETERS #
 ####################
 
-# NOTE: these are only meaningful when not using spack
+LSP="no"
 MAKE_J=""
+# NOTE: these are only meaningful when not using spack
 ALL_PACKAGE_ARGS=""
 MPC_COMP_ADD_BUILD_PARAMETERS=""
 OPENPA_BUILD_PARAMETERS=""
@@ -185,7 +186,7 @@ notapplicable()
 #
 
 LIST_OF_FOUND_CMD=""
-COMMON_CMD="cmake spack patch cut ls pwd grep rm rev basename dirname make bzip2 gcc g++ ldd pkg-config mktemp getconf nproc lscpu wget curl"
+COMMON_CMD="bear cmake spack patch cut ls pwd grep rm rev basename dirname make bzip2 gcc g++ ldd pkg-config mktemp getconf nproc lscpu wget curl"
 check_for_commands()
 {
 	# Check already done
@@ -1146,6 +1147,8 @@ You may track issued commands using the "-v" flag.
   --verbose=1|2|3                         : Level of verbosity
   -v|-vv|-vvv                             : Level of verbosity
   -jN                                     : Allow N jobs at once (parallel install)
+  --enable-lsp                            : Use bear to generate a compile_commands.json file, used by Language Server Protocols
+  --disable-lsp                           : Do not generate a compile_commands.json file (default)
 
 # Features
   --with-slurm[=prefix]                   : Build MPC with PMI support (detect 1 and x)
@@ -1479,6 +1482,9 @@ do
 			;;
 		-j*)
 			extractParamValueAlt 'MAKE_J' 'j' "$arg"
+			if test "x${LSP}" = "xyes"; then
+				info "--enable-lsp is set, -j will be ignored when building MPC"
+			fi
 			;;
 		--prefix=*)
 			extractParamValue 'PREFIX' 'prefix' "$arg"
@@ -1496,6 +1502,16 @@ do
 			download_all_missing_deps
 			exit 0
 		;;
+		--enable-lsp)
+			assert_cmd "bear"
+			LSP="yes"
+			if [ -n "$MAKE_J" ]; then
+				info "--enable-lsp is set, -j will be ignored when building MPC"
+			fi
+			;;
+		--disable-lsp)
+			LSP="no"
+			;;
 		--spack|--enable-spack)
 			assert_cmd "spack"
 			SPACK_LOCATE_DEPENDENCY="yes"
@@ -1829,10 +1845,25 @@ if test $STEP_WRAPPER_VERBOSE -gt 0; then
 	fi
 fi
 
-checking "Building MPC"
-wrap_output make -j ${MAKE_J}
-ok
+if test "x${LSP}" = "xyes"; then
+	checking "Building & Installing MPC with Bear"
+	echo ""
+	info "This will take longer than a regular build"
 
-checking "Installing MPC"
-wrap_output make install -j ${MAKE_J}
-ok
+	# Parallel make with bear may access too many files
+	# at the same time and never finish.
+	wrap_output bear -- make install -j 1
+	ok
+
+	checking "Copying compile_commands.json to the source directory"
+	wrap_output cp ${PROJECT_BUILD_DIR}/compile_commands.json ${SCRIPTPATH}
+	ok
+else
+	checking "Building MPC"
+	wrap_output make -j ${MAKE_J}
+	ok
+
+	checking "Installing MPC"
+	wrap_output make install -j ${MAKE_J}
+	ok
+fi
