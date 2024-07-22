@@ -29,11 +29,11 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#include "lcp.h"
-#include "lcp_ep.h"
-#include "lcp_request.h"
-#include "lcp_tag.h"
-#include "lcp_tag_offload.h"
+#include <lcp.h>
+#include <core/lcp_ep.h>
+#include <core/lcp_request.h>
+#include <tag/lcp_tag.h>
+#include <tag/lcp_tag_offload.h>
 
 #include "mpc_common_debug.h"
 

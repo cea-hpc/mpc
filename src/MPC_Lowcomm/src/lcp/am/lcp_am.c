@@ -29,17 +29,17 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#include "lcp.h"
+#include <lcp.h>
 
-#include "lcp_context.h"
-#include "lcp_manager.h"
-#include "lcp_prototypes.h"
-#include "lcp_request.h"
-#include "lcp_header.h"
-#include "lcp_ep.h"
-#include "lcp_datatype.h"
-#include "lcp_eager.h"
-#include "lcp_rndv.h"
+#include <core/lcp_context.h>
+#include <core/lcp_manager.h>
+#include <core/lcp_prototypes.h>
+#include <core/lcp_request.h>
+#include <core/lcp_header.h>
+#include <core/lcp_ep.h>
+#include <core/lcp_datatype.h>
+#include <am/lcp_eager.h>
+#include <rndv/lcp_rndv.h>
 #include "mpc_common_debug.h"
 
 /* ============================================== */

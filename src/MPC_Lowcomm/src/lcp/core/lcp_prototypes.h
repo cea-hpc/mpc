@@ -32,8 +32,8 @@
 #ifndef LCP_PROTOTYPES_H
 #define LCP_PROTOTYPES_H
 
-#include "lcp_def.h"
-#include "lcr/lcr_def.h"
+#include <lcp_def.h>
+#include <lcr/lcr_def.h>
 
 #include <rail.h>
 

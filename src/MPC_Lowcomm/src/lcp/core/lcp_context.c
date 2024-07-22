@@ -48,7 +48,6 @@
 #include "lcp_task.h"
 
 #include "lcr_component.h"
-#include "lcr_def.h"
 
 //FIXME: add context param to decide whether to allocate context statically or
 //       dynamically.
@@ -139,81 +138,6 @@ int __sort_rails_by_priority(const void * pa, const void *pb)
                 return (*a)->priority < (*b)->priority;
         }
 }
-
-#if 0
-static inline int __init_rails(lcp_context_h ctx)
-{
-        ctx->num_resources = resource_count;
-        ctx->resources = sctk_malloc(sizeof(lcp_rsc_desc_t) * resource_count);
-        assume(ctx->resources);
-        ctx->progress_counter = sctk_malloc(sizeof(int) * resource_count);
-        assume(ctx->progress_counter);
-
-        /* Walk again to initialize each resource */
-        resource_count = 0;
-
-        //FIXME: To be moved to manager.
-        unsigned int l = 0;
-        for(k = 0; k < ctx->num_cmpts; ++k)
-	{
-                struct lcr_component * tmp = &ctx->cmpts[k];
-                unsigned int num_devices = mpc_common_min((int)ctx->cmpts[k].num_devices,
-                                                   sorted_rails[k]->max_ifaces);
-                for(l=0; l < num_devices; l++)
-                {
-                        lcp_context_resource_init(&ctx->resources[resource_count],
-                                                  tmp,
-                                                  &tmp->devices[l]);
-                        ctx->progress_counter[resource_count] = ctx->resources[resource_count].iface_config->priority;
-                        resource_count++;
-                }
-        }
-
-
-        /* Compute total priorities */
-
-        unsigned int total_priorities = 0;
-
-        for(k = 0; k < (unsigned int)ctx->num_resources; ++k)
-	{
-                total_priorities += ctx->progress_counter[k];
-        }
-
-        unsigned int max_prio = 0;
-
-        /* Normalize priorities */
-        for(k = 0; k < (unsigned int)ctx->num_resources; ++k)
-	{
-                ctx->progress_counter[k] = ctx->progress_counter[k] * 100 / total_priorities;
-                /* And minimum 1 */
-                if(ctx->progress_counter[k] == 0)
-                {
-                        ctx->progress_counter[k] = 1;
-                }
-
-                if(max_prio < ctx->progress_counter[k])
-                {
-                        max_prio = ctx->progress_counter[k];
-                }
-
-        }
-
-        assume(max_prio > 0);
-
-        /* Make Max Prio to be 256 (max of unsigned char) and scale others */
-        for(k = 0; k < (unsigned int)ctx->num_resources; ++k)
-	{
-                ctx->progress_counter[k] = ctx->progress_counter[k] * 256 / max_prio;
-                mpc_common_debug("%s has polling frequency %d", ctx->resources[k].name, ctx->progress_counter[k]);
-        }
-
-        /* It is this value which will wrap around to elect progressed rails */
-        ctx->current_progress_value = 0;
-
-
-        return MPC_LOWCOMM_SUCCESS;
-}
-#endif
 
 /**
  * This function generates the listing of the network configuration when passing -v to mpcrun

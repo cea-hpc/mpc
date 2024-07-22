@@ -29,16 +29,14 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#include "lcp_ep.h"
+#include <core/lcp_ep.h>
+#include <core/lcp_context.h>
+#include <core/lcp_manager.h>
 
 #include "bitmap.h"
 #include "mpc_common_datastructure.h"
 #include "mpc_common_debug.h"
 #include "rail.h"
-
-#include "lcp_context.h"
-#include "lcp_manager.h"
-
 #include <assert.h>
 #include <mpc_common_helper.h>
 

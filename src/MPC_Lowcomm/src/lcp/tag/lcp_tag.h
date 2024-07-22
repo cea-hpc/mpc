@@ -29,35 +29,43 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#include "lcp_request.h"
-#include "lcp_prototypes.h"
+#ifndef LCP_TAG_H
+#define LCP_TAG_H
 
-ssize_t lcp_send_eager_bcopy(lcp_request_t *req,
-                         lcr_pack_callback_t pack,
-                         uint8_t am_id)
+#include <lcp_def.h>
+#include <core/lcp_header.h>
+
+#include <stdint.h>
+#include <mpc_common_helper.h>
+
+struct lcp_tag_data {
+        size_t length;
+        int tag;
+        int32_t src_tid;
+        int32_t dest_tid;
+        uint16_t comm;
+        uint16_t seqn;
+};
+//FIXME: move tag header over here.
+
+//NOTE: choose the maximum size of all header. Optimal would be to check if
+//      request is sync etc... But did not want to add this logic.
+// NOLINTBEGIN(clang-diagnostic-unused-function)
+static inline size_t lcp_send_get_total_tag_payload(size_t data_length)
 {
-        ssize_t payload;
-        lcp_ep_h ep = req->send.ep;
-
-        payload = lcp_send_do_am_bcopy(ep->lct_eps[ep->am_chnl],
-                                       am_id, pack, req);
-
-	if (payload < 0) {
-		mpc_common_debug_error("LCP: error packing bcopy.");
-                return MPC_LOWCOMM_ERROR;
-	}
-
-        return payload;
+        size_t hdr_size = mpc_common_max(sizeof(lcp_tag_hdr_t),
+                                  mpc_common_max(sizeof(lcp_tag_sync_hdr_t),
+                                          sizeof(lcp_rndv_hdr_t)));
+        return data_length + hdr_size;
 }
+// NOLINTEND(clang-diagnostic-unused-function)
 
-int lcp_send_eager_zcopy(lcp_request_t *req, uint8_t am_id,
-                         void *hdr, size_t hdr_size,
-                         struct iovec *iov, size_t iovcnt,
-                         lcr_completion_t *comp)
-{
-	lcp_ep_h ep = req->send.ep;
+int lcp_send_eager_sync_ack(lcp_request_t *super, void *data);
+int lcp_send_eager_tag_zcopy(lcp_request_t *req); 
+int lcp_send_eager_tag_bcopy(lcp_request_t *req);
+int lcp_send_rndv_tag_start(lcp_request_t *req);
 
-        return lcp_send_do_am_zcopy(ep->lct_eps[ep->am_chnl],
-                                    am_id, hdr, hdr_size,
-                                    iov, iovcnt, comp);
-}
+int lcp_recv_eager_tag_data(lcp_request_t *req, void *data);
+void lcp_recv_rndv_tag_data(lcp_request_t *req, void *data);
+
+#endif

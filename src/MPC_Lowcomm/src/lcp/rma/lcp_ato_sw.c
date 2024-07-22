@@ -29,14 +29,14 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#include "lcp.h"
+#include <lcp.h>
 
-#include "lcp_header.h"
-#include "lcp_request.h"
-#include "lcp_eager.h"
-#include "lcp_context.h"
-#include "lcp_manager.h"
-#include "lcp_rma.h"
+#include <core/lcp_header.h>
+#include <core/lcp_request.h>
+#include <core/lcp_context.h>
+#include <core/lcp_manager.h>
+#include <rma/lcp_rma.h>
+#include <am/lcp_eager.h>
 
 #include <bitmap.h>
 

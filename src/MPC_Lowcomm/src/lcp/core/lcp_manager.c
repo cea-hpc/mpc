@@ -29,17 +29,19 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#include "lcp_manager.h"
+#include <core/lcp_manager.h>
 
-#include "lcp_context.h"
-#include "lcr_component.h"
-#include "lcp_pending.h"
-#include "rail.h"
-#include "lcp_task.h"
-#include "lcp_mem.h"
-#include "lcp_ep.h" //FIXME: for lcp_manager_fini but maybe add a lcp_ep_close
+#include <lcr/lcr_component.h>
+
+#include <tag/lcp_pending.h> //FIXME: try to remove this.
+
+#include <core/lcp_task.h>
+#include <core/lcp_mem.h>
+#include <core/lcp_context.h>
+#include <core/lcp_ep.h> //FIXME: for lcp_manager_fini but maybe add a lcp_ep_close
                     //       to the API. Let the user store the endpoints handles.
 
+#include "rail.h"
 #include "sctk_alloc.h"
 
 lcp_am_handler_t lcp_am_handlers[LCP_AM_ID_LAST] = {{NULL, 0}};

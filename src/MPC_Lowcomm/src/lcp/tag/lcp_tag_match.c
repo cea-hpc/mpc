@@ -29,14 +29,14 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
+#include <tag/lcp_tag_match.h>
+#include <core/lcp_request.h>
+
+#include "queue.h"
 #include <sctk_alloc.h>
 #include <uthash.h>
 
-#include "lcp_tag_match.h"
-#include "queue.h"
-#include "lcp_request.h"
-
-void *lcp_search_umqueue(mpc_queue_head_t *umqs,
+void *lcp_search_umqueue(mpc_queue_head_t *umqs, 
                          uint16_t comm_id, int32_t tag, int32_t tmask,
                          int32_t src, int32_t smask)
 {

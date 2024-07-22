@@ -29,13 +29,13 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#include "lcp.h"
+#include <lcp.h>
 
-#include "lcp_ep.h"
-#include "lcp_prototypes.h"
-#include "lcp_request.h"
-#include "lcp_mem.h"
-#include "lcp_rma.h"
+#include <core/lcp_ep.h>
+#include <core/lcp_prototypes.h>
+#include <core/lcp_request.h>
+#include <core/lcp_mem.h>
+#include <rma/lcp_rma.h>
 
 #include <bitmap.h>
 

@@ -32,10 +32,10 @@
 #ifndef LCP_REQUEST_H
 #define LCP_REQUEST_H
 
-#include "lcp.h"
+#include <lcp.h>
 //FIXME: try to remove lcp_ep.h. Currently needed to make progress on
 //       endpoint connection.
-#include "lcp_ep.h"
+#include <core/lcp_ep.h>
 //FIXME: rail.h is needed here for lcr_tag_context_t struct in request.
 //       See if we could use a pointer instead to avoid including rail.
 #include "rail.h"

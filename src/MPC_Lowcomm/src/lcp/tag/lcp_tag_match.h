@@ -29,43 +29,26 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#ifndef LCP_TAG_H
-#define LCP_TAG_H
+#ifndef LCP_TAG_MATCH_H
+#define LCP_TAG_MATCH_H
 
-#include "lcp_def.h"
-#include "lcp_header.h"
+#include <core/lcp_request.h> //FIXME: find a way to remove this dependency.
+#include <core/lcp_header.h>
 
-#include <stdint.h>
-#include <mpc_common_helper.h>
-
-struct lcp_tag_data {
-        size_t length;
-        int tag;
-        int32_t src_tid;
-        int32_t dest_tid;
-        uint16_t comm;
-        uint16_t seqn;
-};
-//FIXME: move tag header over here.
-
-//NOTE: choose the maximum size of all header. Optimal would be to check if
-//      request is sync etc... But did not want to add this logic.
-// NOLINTBEGIN(clang-diagnostic-unused-function)
-static inline size_t lcp_send_get_total_tag_payload(size_t data_length)
-{
-        size_t hdr_size = mpc_common_max(sizeof(lcp_tag_hdr_t),
-                                  mpc_common_max(sizeof(lcp_tag_sync_hdr_t),
-                                          sizeof(lcp_rndv_hdr_t)));
-        return data_length + hdr_size;
+/* NOLINTBEGIN(clang-diagnostic-unused-function) */
+static inline lcp_tag_hdr_t * lcp_ctnr_get_tag(lcp_unexp_ctnr_t *ctnr) {
+        return (lcp_tag_hdr_t *)(ctnr + 1);
 }
-// NOLINTEND(clang-diagnostic-unused-function)
+/* NOLINTEND(clang-diagnostic-unused-function) */
 
-int lcp_send_eager_sync_ack(lcp_request_t *super, void *data);
-int lcp_send_eager_tag_zcopy(lcp_request_t *req); 
-int lcp_send_eager_tag_bcopy(lcp_request_t *req);
-int lcp_send_rndv_tag_start(lcp_request_t *req);
-
-int lcp_recv_eager_tag_data(lcp_request_t *req, void *data);
-void lcp_recv_rndv_tag_data(lcp_request_t *req, void *data);
+void *lcp_match_prqueue(mpc_queue_head_t *prqs, uint16_t comm_id, int32_t tag, int32_t src);
+void lcp_append_prqueue(mpc_queue_head_t *prqs, mpc_queue_elem_t *elem, uint16_t comm_id);
+void *lcp_match_umqueue(mpc_queue_head_t *umqs,
+                        uint16_t comm_id, int32_t tag, int32_t tmask,
+                        int32_t src, int32_t smask);
+void lcp_append_umqueue(mpc_queue_head_t *umqs, mpc_queue_elem_t *elem, uint16_t comm_id);
+void *lcp_search_umqueue(mpc_queue_head_t *umqs,
+                         uint16_t comm_id, int32_t tag, int32_t tmask,
+                         int32_t src, int32_t smask);
 
 #endif

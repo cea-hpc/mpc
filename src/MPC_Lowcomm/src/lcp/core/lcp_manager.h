@@ -32,12 +32,12 @@
 #ifndef LCP_MANAGER_H
 #define LCP_MANAGER_H
 
-#include "lcp.h"
-#include "lcr_def.h"
+#include <lcr_def.h>
+
+#include <tag/lcp_pending.h> //FIXME: try to remove this.
 
 #include <mpc_common_datastructure.h>
 
-#include <stdatomic.h>
 #include <opa_primitives.h>
 #include <list.h>
 #include <queue.h>

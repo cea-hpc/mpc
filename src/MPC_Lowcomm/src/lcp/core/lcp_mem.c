@@ -29,15 +29,16 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#include "lcp_mem.h"
+#include <core/lcp_mem.h>
 
 #include <mpc_common_datastructure.h>
 #include <mpc_common_debug.h>
 #include <mpc_common_spinlock.h>
 
-#include "lcp_manager.h"
-#include "lcp_def.h"
-#include "lcp_prototypes.h"
+#include <core/lcp_manager.h>
+#include <core/lcp_prototypes.h>
+
+#include <lcp_def.h>
 
 #include <sctk_alloc.h>
 #include <rail.h>

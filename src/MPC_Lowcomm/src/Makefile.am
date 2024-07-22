@@ -71,8 +71,18 @@ libmpclowcomm_la_LIBADD =  $(ALLOC_LIBS) ../../MPC_Launch/src/libmpclaunch.la -l
 AM_CPPFLAGS += -I$(abs_srcdir)/tbsm/
 AM_CPPFLAGS += -I$(abs_srcdir)/lcp/ -I$(abs_srcdir)/lcr/
 libmpclowcomm_la_SOURCES += ./tbsm/tbsm.c
-libmpclowcomm_la_SOURCES += ./lcp/lcp_context.c ./lcp/lcp_ep.c ./lcp/lcp_pending.c ./lcp/lcp_progress.c ./lcp/lcp_recv.c ./lcp/lcp_send.c ./lcp/lcp_datatype.c ./lcp/lcp_probe.c ./lcp/lcp_eager.c ./lcp/lcp_am.c
-libmpclowcomm_la_SOURCES += ./lcp/lcp_tag.c ./lcp/lcp_request.c ./lcp/lcp_rndv.c ./lcp/lcp_tag_offload.c ./lcp/lcp_mem.c ./lcp/lcp_rma.c ./lcp/lcp_task.c ./lcp/lcp_tag_match.c ./lcp/lcp_manager.c ./lcp/lcp_ato.c ./lcp/lcp_ato_sw.c
+# LCP core files
+libmpclowcomm_la_SOURCES += ./lcp/core/lcp_context.c ./lcp/core/lcp_ep.c ./lcp/core/lcp_progress.c \
+							./lcp/core/lcp_datatype.c ./lcp/core/lcp_manager.c ./lcp/core/lcp_task.c \
+							./lcp/core/lcp_request.c ./lcp/core/lcp_mem.c 
+# LCP tag files
+libmpclowcomm_la_SOURCES += ./lcp/tag/lcp_tag.c ./lcp/tag/lcp_send.c ./lcp/tag/lcp_tag_offload.c \
+							./lcp/tag/lcp_tag_match.c ./lcp/tag/lcp_pending.c ./lcp/tag/lcp_recv.c \
+							./lcp/tag/lcp_probe.c 
+# LCP rndv and active message files
+libmpclowcomm_la_SOURCES += ./lcp/rndv/lcp_rndv.c ./lcp/am/lcp_eager.c ./lcp/am/lcp_am.c
+# LCP rma files
+libmpclowcomm_la_SOURCES += ./lcp/rma/lcp_rma.c ./lcp/rma/lcp_ato.c ./lcp/rma/lcp_ato_sw.c 
 libmpclowcomm_la_SOURCES += ./lcr/lcr_component.c ./shm/mpc_shm.c
 
 #AM Extensions #

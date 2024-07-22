@@ -29,64 +29,92 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#include "lcp.h"
+#include <core/lcp_request.h>
+#include <core/lcp_context.h>
 
-#include "lcp_context.h"
-#include "lcp_manager.h"
-#include "lcp_task.h"
-#include "lcp_tag_match.h"
-#include "lcp_tag_offload.h"
-#include "lcp_request.h"
-#include "lcp_header.h"
+#include <mpc_mempool.h>
+#include <mpc_common_debug.h>
+#include <mpc_common_rank.h>
+#include <sctk_alloc.h>
+#include <string.h>
 
-int lcp_tag_probe_nb(lcp_manager_h mngr, lcp_task_h task, const int src,
-                     const int tag, const uint64_t comm,
-                     lcp_tag_recv_info_t *recv_info)
+int lcp_request_check_status(void *request)
 {
-        int rc = MPC_LOWCOMM_SUCCESS;
-	lcp_unexp_ctnr_t *match = NULL;
+        lcp_request_t *req = (lcp_request_t *)(request) - 1;
 
-        int tmask = tag == MPC_ANY_TAG ? 0 : ~0;
-        int smask = src == MPC_ANY_SOURCE ? 0 : ~0;
-
-	if (mngr->ctx->config.offload) {
-	        sctk_rail_info_t *iface = mngr->ifaces[mngr->priority_iface];
-                rc = lcp_recv_tag_probe(task, iface, src, tag, comm, recv_info);
-
-                return rc;
+        if (req->flags & LCP_REQUEST_REMOTE_COMPLETED &&
+            req->flags & LCP_REQUEST_LOCAL_COMPLETED) {
+                return req->status;
         }
 
-        LCP_TASK_LOCK(task);
-        match = lcp_search_umqueue(task->tcct[mngr->id]->tag.umqs, (uint16_t)comm, tag, tmask, src, smask);
-        if (match != NULL) {
-                if (match->flags & LCP_RECV_CONTAINER_UNEXP_EAGER_TAG) {
-                        lcp_tag_hdr_t *hdr = (lcp_tag_hdr_t *)(match + 1);
+        return MPC_LOWCOMM_IN_PROGRESS;
+}
 
-                        recv_info->tag    = hdr->tag;
-                        recv_info->length = match->length - sizeof(lcp_tag_hdr_t);
-                        recv_info->src    = hdr->src_tid;
+void *lcp_request_alloc(lcp_task_h task)
+{
+        lcp_request_t *req = NULL;
 
-                } else if (match->flags & LCP_RECV_CONTAINER_UNEXP_EAGER_TAG_SYNC ) {
-                        lcp_tag_sync_hdr_t *hdr = (lcp_tag_sync_hdr_t *)(match + 1);
+        assert(task->ctx->config.request.size > 0);
 
-                        recv_info->tag    = hdr->base.tag;
-                        recv_info->length = match->length - sizeof(lcp_tag_sync_hdr_t);
-                        recv_info->src    = hdr->base.src_tid;
+        req = lcp_request_get(task);
+        if (req == NULL) {
+                mpc_common_debug_error("LCP REQ: could not allocate "
+                                       "request.");
+                return NULL;
+        }
+        req->flags |= LCP_REQUEST_USER_ALLOCATED;
+        //NOTE: with lcp_request_get, completion is set automatically.
+        //      Unset it.
+        req->flags &= ~LCP_REQUEST_RELEASE_ON_COMPLETION;
 
-                } else if (match->flags & LCP_RECV_CONTAINER_UNEXP_RNDV_TAG) {
-                        lcp_rndv_hdr_t *hdr = (lcp_rndv_hdr_t *)(match + 1);
+        return req + 1;
+}
 
-                        recv_info->src    = hdr->tag.src_tid;
-                        recv_info->tag    = hdr->tag.tag;
-                        recv_info->length = hdr->size;
-                }
-                recv_info->found = 1;
-                mpc_common_debug("LCP: probed request src=%d, tag=%d, length=%lu",
-                                 recv_info->src, recv_info->tag, recv_info->length);
+void lcp_request_free(void *request)
+{
+        lcp_request_t *req = (lcp_request_t *)(request) - 1;
 
+        assert(req->flags & LCP_REQUEST_USER_ALLOCATED);
+
+        lcp_request_put(req);
+}
+
+/**
+ * @brief Store data from unexpected message.
+ *
+ * @param task the task
+ * @param ctnr_p message data (out)
+ * @param data message data (in)
+ * @param length length of message
+ * @param flags flag of the unexpected message
+ * @return int MPC_LOWCOMM_SUCCESS in case of success
+ */
+int lcp_request_init_unexp_ctnr(lcp_task_h task, lcp_unexp_ctnr_t **ctnr_p,
+                                struct iovec *iov, size_t iovcnt, unsigned flags)
+{
+	lcp_unexp_ctnr_t *ctnr;
+        int i;
+
+	ctnr = lcp_container_get(task);
+	if (ctnr == NULL) {
+		mpc_common_debug_error("LCP: could not allocate recv container.");
+		return MPC_LOWCOMM_ERROR;
+	}
+
+        size_t elem_size = mpc_mpool_get_elem_size(&task->unexp_mp);
+        ptrdiff_t offset = 0;
+
+        for (i = 0; i < (int)iovcnt; i++) {
+                assert(iov[i].iov_len + offset < elem_size);
+                memcpy((char *)(ctnr + 1) + offset, iov[i].iov_base, iov[i].iov_len);
+                offset += iov[i].iov_len;
         }
 
-        LCP_TASK_UNLOCK(task);
+	ctnr->flags  = 0;
+	ctnr->flags |= flags;
+        ctnr->length = offset;
 
-        return rc;
+	*ctnr_p = ctnr;
+
+	return MPC_LOWCOMM_SUCCESS;
 }

@@ -29,26 +29,35 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#ifndef LCP_TAG_MATCH_H
-#define LCP_TAG_MATCH_H
+#include <core/lcp_request.h>
+#include <core/lcp_prototypes.h>
 
-#include "lcp_request.h" //FIXME: find a way to remove this dependency.
-#include "lcp_header.h"
+ssize_t lcp_send_eager_bcopy(lcp_request_t *req,
+                         lcr_pack_callback_t pack,
+                         uint8_t am_id)
+{
+        ssize_t payload;
+        lcp_ep_h ep = req->send.ep;
 
-/* NOLINTBEGIN(clang-diagnostic-unused-function) */
-static inline lcp_tag_hdr_t * lcp_ctnr_get_tag(lcp_unexp_ctnr_t *ctnr) {
-        return (lcp_tag_hdr_t *)(ctnr + 1);
+        payload = lcp_send_do_am_bcopy(ep->lct_eps[ep->am_chnl],
+                                       am_id, pack, req);
+
+	if (payload < 0) {
+		mpc_common_debug_error("LCP: error packing bcopy.");
+                return MPC_LOWCOMM_ERROR;
+	}
+
+        return payload;
 }
-/* NOLINTEND(clang-diagnostic-unused-function) */
 
-void *lcp_match_prqueue(mpc_queue_head_t *prqs, uint16_t comm_id, int32_t tag, int32_t src);
-void lcp_append_prqueue(mpc_queue_head_t *prqs, mpc_queue_elem_t *elem, uint16_t comm_id);
-void *lcp_match_umqueue(mpc_queue_head_t *umqs,
-                        uint16_t comm_id, int32_t tag, int32_t tmask,
-                        int32_t src, int32_t smask);
-void lcp_append_umqueue(mpc_queue_head_t *umqs, mpc_queue_elem_t *elem, uint16_t comm_id);
-void *lcp_search_umqueue(mpc_queue_head_t *umqs,
-                         uint16_t comm_id, int32_t tag, int32_t tmask,
-                         int32_t src, int32_t smask);
+int lcp_send_eager_zcopy(lcp_request_t *req, uint8_t am_id,
+                         void *hdr, size_t hdr_size,
+                         struct iovec *iov, size_t iovcnt,
+                         lcr_completion_t *comp)
+{
+	lcp_ep_h ep = req->send.ep;
 
-#endif
+        return lcp_send_do_am_zcopy(ep->lct_eps[ep->am_chnl],
+                                    am_id, hdr, hdr_size,
+                                    iov, iovcnt, comp);
+}

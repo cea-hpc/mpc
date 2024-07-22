@@ -32,15 +32,12 @@
 #ifndef LCP_CONTEXT_H
 #define LCP_CONTEXT_H
 
-#include "lcp.h"
-#include "lcp_def.h"
-#include "lcr/lcr_def.h"
-#include "lcp_types.h"
+#include <lcp.h>
+#include <lcr/lcr_def.h>
+#include <core/lcp_types.h>
 #include <mpc_common_datastructure.h>
 #include <queue.h>
 #include <list.h>
-
-#include <stdatomic.h>
 
 #define LCP_CONTEXT_LOCK(_ctx) \
 	mpc_common_spinlock_lock_yield(&( (_ctx)->ctx_lock) )
