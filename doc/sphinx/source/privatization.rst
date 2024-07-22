@@ -8,7 +8,7 @@ Privatization, as used in this context, refers to the process of taking global v
 In traditional MPI programming models, global variables are shared among all processes, which can lead to data replication and memory issues when running on many-core architectures. Privatization helps alleviate these issues by making each task or thread have its own copy of the variable, reducing the need for inter-process communication and improving performance.
 
 **How is Privatization Achieved?**
-Privatization in MPC is achieved through compiler-based transformations that extend the Thread-Local Storage (TLS) model. The `__task` keyword is introduced to create a new level betweenthread-local and process-level variables, allowing tasks to have their own context and share data with other tasks.
+Privatization in MPC is achieved through compiler-based transformations that extend the Thread-Local Storage (TLS) model. The `__task` keyword is introduced to create a new level between thread-local and process-level variables, allowing tasks to have their own context and share data with other tasks.
 
 **Compiling a Privatized Program**
 
@@ -16,13 +16,13 @@ Privatization in MPC can be achieved by compiling a program with `mpc_cc`, a com
 similar to `mpicc`. This allows developers to utilize privatization features while still 
 benefiting from the flexibility and scalability of MPI.
 
-To compile a privatized program using `mpc_cc`, you can use this line :
+To compile a privatized program using `mpc_cc`, you can use this line:
 
 .. code-block:: bash
 
     mpc_cc -fmpc-privatize myprogram.c -o ./a.out
 
-the :code:`-fmpc-privatize` is not required since privatization is activated by default in mpc unless mpc-compiler-additions is disabled on build. To disable privatization you can use :code:`-fno-mpc-privatize`. Let's try with a c code that would be problematic on thread-based runtime without privatization : 
+the :code:`-fmpc-privatize` is not required since privatization is activated by default in MPC unless mpc-compiler-additions is disabled on build. To disable privatization you can use :code:`-fno-mpc-privatize`. Let's try with a C code that would be problematic on thread-based runtime without privatization: 
 
 .. code-block:: c
 

@@ -36,6 +36,10 @@ Build & Installation
 
   :code:`-jN` : Allow N jobs at once (parallel install)
 
+  :code:`--enable-lsp` : Use bear to generate a compile_commands.json file, used by Language Server Protocols
+  
+  :code:`--disable-lsp` : Do not generate a compile_commands.json file (default)
+
 Features
 --------
 

@@ -28,11 +28,11 @@ CI/CD Tasks
 
 Tasks are gathered into groups, where tasks inside a group are run concurrently. If a single task within a group failed, the whole pipeline is marked as failed and the remaining tasks are canceled (the running group is completed, though). An "all-green" state requires all tasks to succeed, mandatory for a merge-request to occur to be mergeable (among other conditions).
 
-As far as this documentation is written, MPC pipeline contains the following groups:
+As far as this documentation is written, the MPC pipeline contains the following groups:
 
 * Build: MPC is built only once
 
-* basic testing: Check MPC can still run really basic programs + config
+* Basic testing: Check MPC can still run really basic programs + config
 
 
 * Regular testing: test main MPC features (MPI, OpenMP, privatization)
@@ -68,4 +68,4 @@ A new pipeline is run automatically when:
 
 * A new commit (or a set of commits) is pushed to a mainline branch-like devel or pt\_devel.
 
-* Each time a new commit is added to an existing merge-request.
+* Each time a new commit is added to an existing merge request.

@@ -4,7 +4,7 @@ Using spack
 Preamble
 --------
 
-You should be able to use the basics of spack to install mpc using this guide. However it you have any following questions please check out `the official spack documentation <https://spack.readthedocs.io/en/latest/>`_.
+You should be able to use the basics of spack to install MPC using this guide. For extra help on Spack, you can check out `the official Spack documentation <https://spack.readthedocs.io/en/latest/>`_.
 
 Initial Deploy
 --------------
@@ -21,9 +21,9 @@ Prepare Offline Bootstrap
 .. code-block:: sh
 
 	#
-	# FIRST CHECK LOCAL SPACK IS THE SAME AS THE REMOTE ONE !
+	# FIRST CHECK LOCAL SPACK IS THE SAME AS THE REMOTE ONE!
 	#
-	https://spack.readthedocs.io/en/v0.19.1/bootstrapping.html#creating-a-mirror-for-air-gapped-systems
+	https://spack.readthedocs.io/en/latest/bootstrapping.html#creating-a-mirror-for-air-gapped-systems
 	# On machine with the NET
 	spack bootstrap mirror  --binary-packages \[XXX\]/spack_bootstrap_mirror
 	# Copy spack_bootstrap_mirror to INTI

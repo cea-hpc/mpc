@@ -1,11 +1,11 @@
 ==========================
-Branches & tags management
+Branch & tag management
 ==========================
 
 General Description
 ===================
 
-To fully understand what a branch or a tag is, please refer to the Git documentation. If needed, a useful set of links could be provided. Here, we want to describe how branches and tags grow, based on team guidelines.
+To fully understand what a branch or a tag is, please refer to the `Git documentation <https://git-scm.com/doc>`. Here, we want to describe how branches and tags grow, based on team guidelines.
 
 Branches
 --------
@@ -45,33 +45,6 @@ Here is an example of a well-formatted branch name:
 
 What should be decided is to gather under a single namespace branch related to the same purpose, i.e using `mr/` prefix instead of `mr-`. While being transparent, it allows better bulk operations.
 
-Protected branches
-------------------
-
-We recommend anyone actively contributing to the MPC framework to push on Gitlab
-on a regular basis. Main advantages are:
-
-* Backup your work on a fault-resilient, RAID-5 protected  storage device
-
-* Allow you to check out your work from anywhere, without relying on manual SSH copies, repo-bridge clones, etc...
-
-* Ease of sharing your work with your community, giving more tools for people to contribute together to make better software.
-
-Some branches are "protected", meaning some restrictions apply to these branches to avoid disrupting the project because of a single error (bad typos in critical Git commands are the plague). Possible restrictions are:
-
-* No permission to **push-force** a protected branch (using `--force` is not possible, the push will be rejected).
-
-* Restriction about users able to **push** on this branch (in a straightforward way). Some can allow it, some don't. Merge-requests branches can be set as protected to avoid forced-push *but still*, anybody can contribute by pushing new commits. On the opposite, mainline branches are protected against accidental pushes and *no one* is allowed to directly push new commits on these branches. This is the case for branches like `devel` and `master` (and `pt_devel` as long as this branch exists). This permission only applies to direct pushes (by running `git push` from a repository).
-
-* Restriction about users able to **merge** on a branch (still in the context of Gitlab UI). Basically, it means the capability to "click" on the Merge/Rebase button to integrate new work into this protected branch. This is different permission than the "push" permission and is mainly used to integrate new work into mainline branches.
-
-Note that commits pushed to a protected branch **cannot be erased.** The only way to delete changes is to commit the opposite changes through commands like `git revert`. Only a subset of branches are protected within MPC framework:
-
-* `master` and `devel`: mainline branches, these are protected to avoid any confusion about the last up-to-date content. These are protected against regular pushes for anyone and can integrate merges only from "Maintainers"
-
-* At the time this documentation is written, the `pt_devel` still exists and is the current, un-official devel branch (and may be replaced by a single `devel` in a future time). Same as above, this branch is protected against any kind of pushes and is able to merge work through merge-requests by "Maintainers"
-
-* Multi-contributor merge-request branches can be protected to avoid accidental force-push. But still, anybody can merge or push (straightforward) to this branch. Because higher privileges are required to set a branch up as protected, please ask for a branch promotion if necessary.
 
 Tags
 ----

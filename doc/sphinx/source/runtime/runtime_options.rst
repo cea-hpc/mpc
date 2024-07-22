@@ -15,14 +15,14 @@ You can see the hierarchy of tasks and processes in mpc runtime :
 
 .. figure:: ../_static/mpc_task_hierarchy.png
 
-	mpc execution model as described in `this paper <https://hpcframework.com/wp-content/uploads/2015/06/MPC-A-Unified-Parallel-Runtime-for-Clusters-of-NUMA-Machines.pdf>`_
+	MPC execution model as described in `this paper <https://hpcframework.com/wp-content/uploads/2015/06/MPC-A-Unified-Parallel-Runtime-for-Clusters-of-NUMA-Machines.pdf>`_
 
 For example ``mpcrun -N 4 -p 8 -n 16 ./my_mpi_app`` launches `my_mpi_app` with 4 nodes, each having 2 processes, and each process running 4 tasks.
 
 Multithreading
 --------------
 
-MPCrun also provides options for configuring multithreading:
+mpcrun also provides options for configuring multithreading:
 
 * `-m=n`: Define multithreading mode (default: none)
 	+ `pthread`: Use pthreads for multithreading
@@ -66,7 +66,7 @@ The partition selection is not included directly into mpcrun command. However yo
 Other Options
 -------------
 
-MPCrun provides several other options for customizing the launch process. These 
+mpcrun provides several other options for customizing the launch process. These 
 include:
 
 * `-h`, `--help`: Display this help message

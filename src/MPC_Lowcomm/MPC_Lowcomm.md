@@ -170,7 +170,7 @@ for the TAG API. It will be executed by the underlying network transport, see
 
 Such tags are defined in `lcp_types.h`. These tags are registered in the 
 adequate protocol file (C.F. `lcp_tag.c`, `lcp_rndv.c`) using `LCP_DEFINE_AM`.
-This macro require a callback symbol which prototype is defined in 
+This macro requires a callback symbol which prototype is defined in 
 `lcr_defs.h` as `lcr_am_callback`. The specified callback is always called on
 request receive. However it is not called back if it has been called once. 
 

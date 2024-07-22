@@ -7,7 +7,7 @@ Getting started
 Where to find MPC Documentation?
 ================================
 
-MPC Documentation is a bit sparse and most of the current references one can have:
+MPC Documentation is a bit sparse and most of the current references one can have are:
 
 - The Official website for the whole project: (http://mpc.hpcframework.com/) 
 - In-place documentation (within source code), under Doxygen formatting. Please note that this is currently in progress and not everything is fully documented. Feel free to contact one of the maintainers mentioned in the MAINTAINERS file.
@@ -29,13 +29,13 @@ MPC has a few dependencies which must be installed prior to running the installa
 .. code-block:: bash
 
     # Install dependencies on Centos
-    yum install -y gcc gcc-gfortran gcc-c++ patch make cmake bzip2 pkg-config curl python36 texinfo diffutils file
+    yum install -y gcc gcc-gfortran gcc-c++ patch make cmake automake libtool binutils bzip2 pkg-config curl python36 texinfo diffutils file
     # Install dependencies on Debian / Ubuntu
-    apt-get install -y gcc g++ gfortran patch make cmake bzip2 pkg-config curl python
+    apt-get install -y gcc g++ gfortran patch make cmake automake libtool binutils bzip2 pkg-config curl python3
     # Install dependencies on Fedora
     yum install -y gcc gcc-gfortran gcc-c++ patch make cmake bzip2 pkg-config findutils texinfo diffutils file
     # Install dependencies on ArchLinux
-    pacman -Su gcc gcc-fortran patch make cmake bzip2 pkg-config python diffutils perl-podlators
+    pacman -Su gcc gcc-fortran patch make cmake bzip2 pkg-config python diffutils perl-podlators automake libtool binutils
 
 Fast Installation
 -----------------
@@ -63,9 +63,9 @@ from your shell. You can then proceed to extract the tarball.
 .. code-block:: bash
 
    # Get the last tarball
-   curl -k https://france.paratools.com/mpc/releases/mpcframework-4.0.0.tar.gz -o mpcframework-4.0.0.tar.gz
+   curl -k https://france.paratools.com/mpc/releases/mpcframework-4.2.0.tar.gz -o mpcframework-4.2.0.tar.gz
    # Extract the tarball
-   tar xf mpcframework-4.0.0.tar.gz
+   tar xf mpcframework-4.2.0.tar.gz
 
 Install MPC
 -----------
@@ -90,7 +90,7 @@ For example, on CentOS or Debian/Ubuntu:
    # Set the installation prefix directory
    export MPC_INSTALL_DIR=/usr/local
    # Enter the source directory
-   cd mpcframework-4.0.0
+   cd mpcframework-4.2.0
    # Run the install script
    mkdir BUILD && cd BUILD
    ../installmpc --prefix=$MPC_INSTALL_DIR -j8
@@ -102,7 +102,7 @@ On Fedora or ArchLinux:
    # Set the installation prefix directory
    export MPC_INSTALL_DIR=/usr/local/MPC
    # Enter the source directory
-   cd mpcframework-4.0.0
+   cd mpcframework-4.2.0
    # Run the install script
    mkdir BUILD && cd BUILD
    ../installmpc --prefix=$MPC_INSTALL_DIR -j8

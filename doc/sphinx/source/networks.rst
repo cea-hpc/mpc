@@ -1,7 +1,7 @@
 Networks
 ========
 
-MPC supports tcp, shm, portals and infiniband networks. Networks drivers are organized in "rails" which are the following :
+MPC supports TCP, SHM, Portals and InfiniBand networks. Network drivers are organized in "rails" which are listed below:
 
 - **tbsmmpi** : :term:`TBSM`
 - **shmmpi** : :term:`SHM`
