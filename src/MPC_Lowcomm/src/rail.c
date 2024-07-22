@@ -468,51 +468,6 @@ err:
 /* Rail Pin CTX                                                         */
 /************************************************************************/
 
-void sctk_rail_pin_ctx_init(sctk_rail_pin_ctx_t *ctx, void *addr, size_t size)
-{
-	sctk_rail_info_t *rdma_rail = sctk_rail_get_rdma();
-
-	if(!rdma_rail)
-	{
-		/* Emulated mode no need to pin */
-		return;
-	}
-
-	/* Clear the pin ctx */
-	int i = 0;
-
-	for(i = 0; i < SCTK_PIN_LIST_SIZE; i++)
-	{
-		memset(&ctx->list[i], 0, sizeof(struct sctk_rail_pin_ctx_list) );
-	}
-
-
-	/* By default we only pin for a single entry */
-	ctx->size = 1;
-
-	/* Make sure the rail did define pin */
-	assume(rdma_rail->rail_pin_region != NULL);
-
-	rdma_rail->rail_pin_region(rdma_rail, ctx->list, addr, size);
-	assume(ctx->list != NULL);
-}
-
-void sctk_rail_pin_ctx_release(sctk_rail_pin_ctx_t *ctx)
-{
-	sctk_rail_info_t *rdma_rail = sctk_rail_get_rdma();
-
-	if(!rdma_rail)
-	{
-		/* Emulated mode no need to pin */
-		return;
-	}
-
-	/* Make sure the rail did define unpin */
-	assume(rdma_rail->rail_unpin_region != NULL);
-
-	rdma_rail->rail_unpin_region(rdma_rail, ctx->list);
-}
-
 void sctk_rail_add_static_route(sctk_rail_info_t *rail, _mpc_lowcomm_endpoint_t *tmp)
 {
 	/* NO PARENT : Just add the route */

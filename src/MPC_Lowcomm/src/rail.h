@@ -243,7 +243,7 @@ struct sctk_rail_info_s
 {
 	/* Global Info */
 	int                                                  rail_number;  /**< ID of this rail */
-        int                                                  pmi_tag;
+        int                                                  pmi_tag;      /**< Tag of the rail within PMI key value store. Used for endpoint creation. */
 	int                                                  priority;     /**< Priority of this rail */
 	char *                                               network_name; /**< Name of this rail */
 	mpc_topology_device_t *                              rail_device;  /**< Device associated with the rail */
@@ -311,65 +311,9 @@ struct sctk_rail_info_s
 	/* Task Init and release */
 	void                                                 ( *finalize_task ) (struct sctk_rail_info_s *, int taskid, int rank);
 	void                                                 ( *initialize_task ) (struct sctk_rail_info_s *, int taskid, int rank);
-
-	/* Network interactions */
-	void                                                 ( *send_message_endpoint ) (mpc_lowcomm_ptp_message_t *, _mpc_lowcomm_endpoint_t *);
-
-	void                                                 ( *notify_recv_message ) (mpc_lowcomm_ptp_message_t *, struct sctk_rail_info_s *);
-	void                                                 ( *notify_matching_message ) (mpc_lowcomm_ptp_message_t *, struct sctk_rail_info_s *);
-	void                                                 ( *notify_perform_message ) (mpc_lowcomm_peer_uid_t, int, int, int, struct sctk_rail_info_s *);
-	void                                                 ( *notify_idle_message ) (struct sctk_rail_info_s *);
-	void                                                 ( *notify_any_source_message ) (int, int, struct sctk_rail_info_s *);
-	void                                                 ( *notify_probe_message) (struct sctk_rail_info_s *, mpc_lowcomm_ptp_message_header_t *, int *);
-	void                                                 ( *notify_new_comm)(struct sctk_rail_info_s *, mpc_lowcomm_communicator_id_t, size_t);
-	void                                                 ( *notify_del_comm)(struct sctk_rail_info_s *, mpc_lowcomm_communicator_id_t, size_t);
-
-
 	int                                                  ( *send_message_from_network ) (mpc_lowcomm_ptp_message_t *);
 	void                                                 ( *connect_on_demand ) (struct sctk_rail_info_s *rail, mpc_lowcomm_peer_uid_t dest);
 
-	/* RDMA Ops */
-
-	int                                                  (*rdma_fetch_and_op_gate)(sctk_rail_info_t *rail, size_t size, RDMA_op op, RDMA_type type);
-
-
-	void                                                 (*rdma_fetch_and_op)(sctk_rail_info_t *rail,
-	                                                                          mpc_lowcomm_ptp_message_t *msg,
-	                                                                          void *fetch_addr,
-	                                                                          struct  sctk_rail_pin_ctx_list *local_key,
-	                                                                          void *remote_addr,
-	                                                                          struct  sctk_rail_pin_ctx_list *remote_key,
-	                                                                          void *add,
-	                                                                          RDMA_op op,
-	                                                                          RDMA_type type);
-
-
-
-	int                                                  (*rdma_cas_gate)(sctk_rail_info_t *rail, size_t size, RDMA_type type);
-
-	void                                                 (*rdma_cas)(sctk_rail_info_t *rail,
-	                                                                 mpc_lowcomm_ptp_message_t *msg,
-	                                                                 void *res_addr,
-	                                                                 struct  sctk_rail_pin_ctx_list *local_key,
-	                                                                 void *remote_addr,
-	                                                                 struct  sctk_rail_pin_ctx_list *remote_key,
-	                                                                 void *comp,
-	                                                                 void *new,
-	                                                                 RDMA_type type);
-
-	void                                                 (*rdma_write)(sctk_rail_info_t *rail, mpc_lowcomm_ptp_message_t *msg,
-	                                                                   void *src_addr, struct sctk_rail_pin_ctx_list *local_key,
-	                                                                   void *dest_addr, struct  sctk_rail_pin_ctx_list *remote_key,
-	                                                                   size_t size);
-
-	void                                                 (*rdma_read)(sctk_rail_info_t *rail, mpc_lowcomm_ptp_message_t *msg,
-	                                                                  void *src_addr, struct  sctk_rail_pin_ctx_list *remote_key,
-	                                                                  void *dest_addr, struct  sctk_rail_pin_ctx_list *local_key,
-	                                                                  size_t size);
-
-	/* Pinning */
-	void                                                 (*rail_pin_region)(struct sctk_rail_info_s *rail, struct sctk_rail_pin_ctx_list *list, void *addr, size_t size);
-	void                                                 (*rail_unpin_region)(struct sctk_rail_info_s *rail, struct sctk_rail_pin_ctx_list *list);
 
 	void                                                 (*driver_finalize)(sctk_rail_info_t *);
 };

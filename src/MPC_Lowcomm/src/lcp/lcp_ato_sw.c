@@ -32,12 +32,10 @@
 #include "lcp.h"
 
 #include "lcp_header.h"
-#include "lcp_def.h"
 #include "lcp_request.h"
 #include "lcp_eager.h"
 #include "lcp_context.h"
 #include "lcp_manager.h"
-
 #include "lcp_rma.h"
 
 #include <bitmap.h>

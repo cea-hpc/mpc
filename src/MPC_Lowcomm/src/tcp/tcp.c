@@ -125,7 +125,7 @@ static void *__tcp_thread_loop(_mpc_lowcomm_endpoint_t *tmp)
  * \param[in] msg the message to send
  * \param[in] endpoint the route to use
  */
-static void _mpc_lowcomm_tcp_send_message(mpc_lowcomm_ptp_message_t *msg, _mpc_lowcomm_endpoint_t *endpoint)
+__UNUSED__ static void _mpc_lowcomm_tcp_send_message(mpc_lowcomm_ptp_message_t *msg, _mpc_lowcomm_endpoint_t *endpoint)
 {
 	size_t size;
 	int    fd;
@@ -193,12 +193,6 @@ void _mpc_lowcomm_tcp_finalize(sctk_rail_info_t *rail)
 void sctk_network_init_tcp(sctk_rail_info_t *rail)
 {
 	/* Register Hooks in rail */
-	rail->send_message_endpoint     = _mpc_lowcomm_tcp_send_message;
-	rail->notify_recv_message       = NULL;
-	rail->notify_matching_message   = NULL;
-	rail->notify_perform_message    = NULL;
-	rail->notify_idle_message       = NULL;
-	rail->notify_any_source_message = NULL;
 	rail->send_message_from_network = _mpc_lowcomm_tcp_send_message_from_network;
 	rail->driver_finalize           = _mpc_lowcomm_tcp_finalize;
 	rail->connect_on_demand         = tcp_on_demand_connection_handler;

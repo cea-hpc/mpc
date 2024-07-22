@@ -560,15 +560,20 @@ void _mpc_shm_storage_free_cell(struct _mpc_shm_storage * storage,
  * PINNING FUNCTIONS *
  *********************/
 
-void  mpc_shm_pin(struct sctk_rail_info_s *rail, struct sctk_rail_pin_ctx_list *list, void *addr, size_t size)
+int  mpc_shm_pin(struct sctk_rail_info_s *rail, struct sctk_rail_pin_ctx_list *list, const void *addr, size_t size, unsigned flags)
 {
-   list->pin.shm.addr = addr;
-   list->pin.shm.id = _mpc_shm_fragment_factory_register_segment(&rail->network.shm.frag_factory, addr, size);
+        UNUSED(flags);
+   list->pin.shm.addr = (void*)addr;
+   list->pin.shm.id = _mpc_shm_fragment_factory_register_segment(&rail->network.shm.frag_factory, (void*)addr, size);
+
+   return MPC_LOWCOMM_SUCCESS;
 }
 
-void mpc_shm_unpin(struct sctk_rail_info_s *rail, struct sctk_rail_pin_ctx_list *list)
+int mpc_shm_unpin(struct sctk_rail_info_s *rail, struct sctk_rail_pin_ctx_list *list)
 {
    _mpc_shm_fragment_factory_unregister_segment(&rail->network.shm.frag_factory, list->pin.shm.id);
+
+   return MPC_LOWCOMM_SUCCESS;
 }
 
 
@@ -1220,8 +1225,8 @@ int mpc_shm_iface_open(int mngr_id, const char *device_name, int id,
    rail->send_am_bcopy = mpc_shm_send_am_bcopy;
    rail->iface_progress = mpc_shm_progress;
    rail->iface_is_reachable = mpc_shm_iface_is_reachable;
-   rail->rail_pin_region = mpc_shm_pin;
-   rail->rail_unpin_region = mpc_shm_unpin;
+   rail->iface_register_mem = mpc_shm_pin;
+   rail->iface_unregister_mem = mpc_shm_unpin;
    rail->iface_pack_memp = mpc_shm_pack_rkey;
    rail->iface_unpack_memp = mpc_shm_unpack_rkey;
    rail->get_zcopy = mpc_shm_get_zcopy;

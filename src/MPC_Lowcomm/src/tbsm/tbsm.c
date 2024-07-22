@@ -352,6 +352,13 @@ int lcr_tbsm_is_reachable(sctk_rail_info_t *rail, uint64_t uid) {
                 (mpc_lowcomm_peer_get_rank(uid) == mpc_lowcomm_peer_get_rank(my_uid));
 }
 
+void lcr_tbsm_iface_finalize(sctk_rail_info_t *iface) 
+{
+        _mpc_lowcomm_tbsm_rail_info_t *tbsm_iface = &(iface->network.tbsm);
+
+        mpc_mpool_fini(&tbsm_iface->buf_mp);
+}
+
 int lcr_tbsm_iface_init(sctk_rail_info_t *iface)
 {
         int rc = MPC_LOWCOMM_SUCCESS;
@@ -390,6 +397,7 @@ int lcr_tbsm_iface_init(sctk_rail_info_t *iface)
         iface->connect_on_demand  = lcr_tbsm_connect_on_demand;
         iface->iface_is_reachable = lcr_tbsm_is_reachable;
         iface->iface_get_attr     = lcr_tbsm_get_attr;
+        iface->driver_finalize    = lcr_tbsm_iface_finalize;
 
         /* Initialize pool of copy-in buffers. */
         //FIXME: define suitable size for memory pool.
