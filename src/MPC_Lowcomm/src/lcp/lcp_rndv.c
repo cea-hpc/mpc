@@ -36,7 +36,7 @@
 #include "lcp_prototypes.h"
 #include "lcp_mem.h"
 #include "lcp_context.h"
-#include "lcp_datatype.h"
+#include "lcp_manager.h"
 #include "lcp_header.h"
 #include "lcp_request.h"
 
@@ -91,6 +91,7 @@ ssize_t lcp_rndv_rts_pack(lcp_request_t *super, void *dest)
         hdr->msg_id      = rndv_req->msg_id;
         hdr->remote_addr = (uint64_t)rndv_req->send.buffer;
 
+        //FIXME: store rndv_mode in endpoint.
         if (rndv_req->mngr->ctx->config.rndv_mode == LCP_RNDV_GET) {
                 /* Pack remote key from super request */
                 packed_size = lcp_mem_rkey_pack(rndv_req->mngr, 
@@ -306,8 +307,7 @@ int lcp_send_rndv_start(lcp_request_t *req)
         rndv_req->mngr            = req->mngr;
         rndv_req->datatype        = req->datatype;
         rndv_req->send.length     = req->send.length;
-        rndv_req->send.buffer     = req->datatype & LCP_DATATYPE_CONTIGUOUS ?
-                req->recv.buffer : req->state.pack_buf;
+        rndv_req->send.buffer     = req->recv.buffer;
         rndv_req->send.ep         = req->send.ep;
         rndv_req->state.remaining = req->send.length;
         rndv_req->state.offset    = 0;
@@ -335,7 +335,7 @@ int lcp_send_rndv_start(lcp_request_t *req)
 /* ============================================== */
 static int lcp_rndv_progress_rtr(lcp_request_t *rndv_req)
 {
-        int rc, payload;
+        int rc = MPC_LOWCOMM_SUCCESS, payload;
         lcp_ep_h ep        = rndv_req->send.ep;
         lcp_chnl_idx_t cc  = ep->am_chnl;
 
@@ -348,10 +348,8 @@ static int lcp_rndv_progress_rtr(lcp_request_t *rndv_req)
         if (payload < 0) {
                 mpc_common_debug_error("LCP RNDV: error sending ack rdv message");
                 rc = MPC_LOWCOMM_ERROR;
-                goto err;
         }
-        rc = MPC_LOWCOMM_SUCCESS;
-err:
+
         return rc;
 }
 
@@ -376,11 +374,9 @@ int lcp_rndv_process_rts(lcp_request_t *rreq,
         rndv_req->mngr            = rreq->mngr;
         rndv_req->datatype        = rreq->datatype;
         rndv_req->send.length     = rreq->recv.send_length;
-        rndv_req->state.pack_buf  = rreq->state.pack_buf;
 
         assert(rreq->datatype & LCP_DATATYPE_CONTIGUOUS);
-        rndv_req->send.buffer     = rreq->datatype & LCP_DATATYPE_CONTIGUOUS ?
-                rreq->recv.buffer : rreq->state.pack_buf;
+        rndv_req->send.buffer     = rreq->recv.buffer;
         rndv_req->state.remaining = rreq->recv.send_length;
         rndv_req->state.offset    = 0;
 
@@ -501,14 +497,6 @@ static int lcp_rndv_fin_handler(void *arg, void *data,
 
         mpc_common_debug_info("LCP RNDV: recv rfin header msg_id=%llu, req=%p",
                               hdr->msg_id, rndv_req);
-
-        if (req->datatype & LCP_DATATYPE_DERIVED) {
-                lcp_datatype_unpack(req->mngr->ctx, req, req->datatype,
-                                    NULL, req->state.pack_buf, 
-                                    req->state.lmem->length);
-                /* Free buffer allocated by rndv */
-                sctk_free(req->state.pack_buf);
-        }
 
         /* For both PUT and GET, when receiving a FIN message, we have to
          * unregister the memory */

@@ -32,7 +32,6 @@
 #include "lcp.h"
 
 #include "lcp_ep.h"
-#include "lcp_def.h"
 #include "lcp_prototypes.h"
 #include "lcp_request.h"
 #include "lcp_mem.h"

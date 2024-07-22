@@ -30,6 +30,7 @@
 /* ######################################################################## */
 
 #include "lcp_context.h"
+#include "lcp_manager.h"
 #include "lcp_request.h"
 #include "lcp_header.h"
 #include "lcp_tag.h"

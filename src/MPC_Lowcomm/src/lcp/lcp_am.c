@@ -32,18 +32,15 @@
 #include "lcp.h"
 
 #include "lcp_context.h"
+#include "lcp_manager.h"
 #include "lcp_prototypes.h"
 #include "lcp_request.h"
 #include "lcp_header.h"
 #include "lcp_ep.h"
 #include "lcp_datatype.h"
 #include "lcp_eager.h"
-#include "lcp_task.h"
 #include "lcp_rndv.h"
 #include "mpc_common_debug.h"
-
-#define LCP_SEND_AM_IS_TASK(_req) \
-        ((_req)->send.ep->uid == (_req)->mngr->ctx->process_uid) 
 
 /* ============================================== */
 /* Packing                                        */
@@ -331,12 +328,7 @@ int lcp_am_send_start(lcp_ep_h ep, lcp_request_t *req,
         req->state.offloaded = 0;
         //FIXME: remove usage of header structure
         size = req->send.length + req->send.am.hdr_size + sizeof(lcp_am_hdr_t);
-        if (LCP_SEND_AM_IS_TASK(req)) {
-                //FIXME: implement am send for task-based communication.
-                mpc_common_debug_warning("LCP AM: task-based communication "
-                                         "not implemented.");
-                not_implemented();
-        } else if (size <= ep->config.am.max_bcopy || 
+        if (size <= ep->config.am.max_bcopy || 
             ((req->send.length <= ep->config.am.max_zcopy) &&
              (param->datatype & LCP_DATATYPE_DERIVED))) {
                 req->send.func = lcp_send_eager_am_bcopy;

@@ -32,6 +32,7 @@
 #include "lcp.h"
 
 #include "lcp_context.h"
+#include "lcp_manager.h"
 #include "lcp_task.h"
 #include "lcp_tag_match.h"
 #include "lcp_tag_offload.h"

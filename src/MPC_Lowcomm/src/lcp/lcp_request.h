@@ -39,33 +39,26 @@
 //FIXME: rail.h is needed here for lcr_tag_context_t struct in request.
 //       See if we could use a pointer instead to avoid including rail.
 #include "rail.h"
-#include "lcp_manager.h"
-#include "lcp_header.h"
-#include <mpc_common_bit.h>
-#include <sctk_alloc.h>
-#include "lcp_task.h"
 
-//TODO: LCP_REQUEST prefix confusing with those defined in lcp.h
+#include "lcp_task.h" //NOTE: for lcp_request_* macros
+
+//TODO: LCP_REQUEST prefix confusing with those defined in lcp.h. Add FLAGS.
+/* Request flags. */
+//FIXME: LOCAL_COMPLETED and REMOTE_COMPLETED could be replaced by a single
+//       COMPLETED flags.
 enum {
-	LCP_REQUEST_RECV_TRUNC              = MPC_BIT(1), /* flags if request is truncated */
-        LCP_REQUEST_MPI_COMPLETE            = MPC_BIT(2), /* call MPI level completion callback, 
-                                                             see ucp_request_complete */
-        LCP_REQUEST_RMA_COMPLETE            = MPC_BIT(3),
-        LCP_REQUEST_OFFLOADED_RNDV          = MPC_BIT(4),
-        LCP_REQUEST_LOCAL_COMPLETED         = MPC_BIT(5),
-        LCP_REQUEST_REMOTE_COMPLETED        = MPC_BIT(6),
-        LCP_REQUEST_RELEASE_ON_COMPLETION   = MPC_BIT(7),
-        LCP_REQUEST_USER_CALLBACK           = MPC_BIT(8),
-        LCP_REQUEST_USER_PROVIDED_MEMH      = MPC_BIT(9),
-        LCP_REQUEST_USER_PROVIDED_EPH       = MPC_BIT(10),
-        LCP_REQUEST_USER_PROVIDED_REPLY_BUF = MPC_BIT(11),
-        LCP_REQUEST_USER_ALLOCATED          = MPC_BIT(12),
-        LCP_REQUEST_RELEASE_REMOTE_KEY      = MPC_BIT(13),
+	LCP_REQUEST_RECV_TRUNC              = MPC_BIT(1), /* Set if request is truncated */
+        LCP_REQUEST_LOCAL_COMPLETED         = MPC_BIT(2), /* Local completion. */
+        LCP_REQUEST_REMOTE_COMPLETED        = MPC_BIT(3), /* Remote completion. */
+        LCP_REQUEST_RELEASE_ON_COMPLETION   = MPC_BIT(4), /* Release request back to mpool. */
+        LCP_REQUEST_USER_CALLBACK           = MPC_BIT(5), /* Call user callback on completion. */ 
+        LCP_REQUEST_USER_PROVIDED_MEMH      = MPC_BIT(6), /* Use user-provided memory key, se lcp_flush_nb. */
+        LCP_REQUEST_USER_PROVIDED_EPH       = MPC_BIT(7), /* Use user-provided endpoint, see lcp_flush_nb. */
+        LCP_REQUEST_USER_PROVIDED_REPLY_BUF = MPC_BIT(8), /* User-provided reply buffer. */
+        LCP_REQUEST_USER_ALLOCATED          = MPC_BIT(9), /* Request allocated by user, see lcp_request_alloc. */
+        LCP_REQUEST_RELEASE_REMOTE_KEY      = MPC_BIT(10), /* Release remote back to mpool. */
 };
 
-//TODO: rename "unexpected container" to "receive descriptor". It was initially
-//      used only for receiving unexpected data but it was then extended to
-//      receive data for inter-thread communication.
 enum {
 	LCP_RECV_CONTAINER_UNEXP_RNDV_TAG       = MPC_BIT(0),
 	LCP_RECV_CONTAINER_UNEXP_EAGER_TAG      = MPC_BIT(1),
@@ -74,31 +67,32 @@ enum {
 };
 
 /* Store data for unexpected am messages
- * Data is stored after (at lcp_unexp_cntr + 1)
+ * Data is stored after (at struct lcp_unexp_cntr + 1)
  */
 struct lcp_unexp_ctnr {
-	ssize_t length;
-	unsigned flags;
-        mpc_queue_elem_t elem; /* element in the list of unexpected list */
+	ssize_t length; /* Payload length. */
+	unsigned flags; /* see above LCP_RECV_CONTAINER_* flags. */
+        mpc_queue_elem_t elem; /* element in the list of unexpected matching queue. */
 };
 
-/* Generatic send function */
+/* Generic send function */
 typedef int (*lcp_send_func_t)(lcp_request_t *req);
 
 struct lcp_request {
-        int            status;
-        uint64_t       flags; //FIXME: change to unsigned
-        lcp_manager_h  mngr;
-        lcp_task_h     task; 
-        lcp_datatype_t datatype;
-        int is_sync;
+        int            status; /* Request status. */
+        uint64_t       flags;  /* Request flags, see LCP_REQUEST_* above */
+                               //FIXME: change to unsigned
+        lcp_manager_h  mngr; /* Back reference to manager. */
+        lcp_task_h     task; /* Back reference to task. */
+        lcp_datatype_t datatype; /* Datatype (only contiguous now). */
+        int is_sync; /* Send mode synchronize. */
         union {
                 struct {
                         lcp_ep_h ep;
                         size_t length; /* Total length, in bytes */
-			void *buffer; //FIXME: set to const
-			lcr_tag_context_t t_ctx;
-                        lcp_send_callback_func_t send_cb;
+			void *buffer; /* Payload. */
+			lcr_tag_context_t t_ctx; /* Offload tag context. */
+                        lcp_send_callback_func_t send_cb; /* User callback. */ 
 			union {
 				struct {
 					uint16_t comm;
@@ -106,7 +100,7 @@ struct lcp_request {
                                         int32_t  src_tid;
                                         int32_t  dest_tid;
 					int32_t  tag;
-				} tag;
+				} tag; /* Tag information. */
 
                                 struct {
                                         uint8_t  am_id;
@@ -115,52 +109,53 @@ struct lcp_request {
                                         uint64_t src_uid;
                                         int32_t  dest_tid;
                                         void    *request;
-                                } am;
+                                } am; /* AM information. */
 
                                 struct {
-                                        uint64_t  addr;
-                                        lcp_mem_h rkey;
-                                } rndv;
+                                        uint64_t  addr; /* Remote address. */
+                                        lcp_mem_h rkey; /* Remote memory key. */
+                                } rndv; /* RNDV information. */
 
                                 struct {
                                         int32_t src_tid;
-                                } ack;
+                                } ack; /* Acknowledge information. */
 
                                 struct {
-                                        int       is_get;
+                                        int       is_get; /* Get operation. */
                                         uint64_t  remote_addr;
                                         lcp_mem_h rkey;
-                                } rma;
+                                } rma; /* RMA information. */
 
                                 struct {
-                                        uint64_t        remote_addr;
-                                        lcp_chnl_idx_t  cc;
-                                        lcp_atomic_op_t op;
-                                        lcp_mem_h       rkey;
-                                        void           *reply_buffer;
-                                        int             reply_size;
-                                        uint64_t        value;
-                                        uint64_t        compare;
-                                } ato;
+                                        uint64_t        remote_addr; /* Remote address. */
+                                        lcp_chnl_idx_t  cc; 
+                                        lcp_atomic_op_t op; /* Atomic operation. */
+                                        lcp_mem_h       rkey; /* Remote memory key. */
+                                        void           *reply_buffer; /* Reply address, for 
+                                                                         fetch or cas. */
+                                        int             reply_size; /* Data reply size. */
+                                        uint64_t        value; /* Atomic value. */
+                                        uint64_t        compare; /* Compare value. */
+                                } ato; /* Atomic information. */
 
                                 struct {
-                                        uint64_t result;
+                                        uint64_t result; 
                                         uint64_t msg_id;
-                                } reply_ato;
+                                } reply_ato; /* Atomic reply information. */
 
                                 struct {
                                         uint64_t flush;
-                                } flush;
+                                } flush; /* Flush information. */
 			};
 
-			lcp_send_func_t func;
+			lcp_send_func_t func; /* Protocol send function. */
 		} send;
 
 		struct {
-			size_t length;
-                        size_t send_length;
-			void *buffer;
-			lcr_tag_context_t t_ctx;
+			size_t length; /* Expected length. */
+                        size_t send_length; /* Actual received length. */
+			void *buffer; 
+			lcr_tag_context_t t_ctx; /* Offload tag context. */
 
                         union {
                                 struct {
@@ -171,42 +166,41 @@ struct lcp_request {
                                         int32_t  smask;
                                         int32_t  dest_tid; //FIXME: needed?
                                         int32_t  tag;
-                                        int32_t  tmask;
+                                        int32_t  tmask; 
+                                        lcp_tag_recv_info_t info; /* Tag info transmitted to upper layer. */
                                         lcp_tag_recv_callback_func_t recv_cb;
-                                        lcp_tag_recv_info_t info;
-                                } tag;
+                                } tag; /* Tag information. */
 
                                 struct {
                                         uint8_t  am_id;
                                         uint64_t src_uid;
-                                        lcp_unexp_ctnr_t *ctnr;
+                                        lcp_unexp_ctnr_t *ctnr; 
                                         lcp_send_callback_func_t cb; //FIXME: rename
-                                        void    *request;
+                                        void    *request; /* User request. */
                                 } am;
                         };
 		} recv;
 	};
 
         void                  *request;   /* Pointer to upper layer request. */
-        lcp_tag_recv_info_t    info;      /* Tag info transmitted to upper layer. */
 	uint16_t               seqn;      /* Sequence number */
-	uint64_t               msg_id;    /* Unique message identifier */
-        struct lcp_request    *super;     /* master request */
+	uint64_t               msg_id;    /* Unique message identifier (request addr) */
+        struct lcp_request    *super;     /* master request, only for rndv. */
         mpc_queue_elem_t       queue;     /* element in pending queue */
         mpc_queue_elem_t       match;     /* element in matching queue */
-
+        
+        //FIXME: should be in new offload union above to decrease request size.
         struct {
                 lcr_tag_t imm;
                 int mid; /* matching id */
         } tm;
 
 	struct {
-                void *                pack_buf;
-                size_t                offset;
-                size_t                remaining;
+                size_t                offset; /* Offset in buffer. */
+                size_t                remaining; /* Remaining bytes to send. */
                 lcr_completion_t      comp;  /* Completion for rail send */
-                lcp_mem_h             lmem;
-                int                   offloaded;
+                lcp_mem_h             lmem; /* Local memory key. */
+                int                   offloaded; /* Is request offloaded. */
 	} state;
 };
 
@@ -500,14 +494,8 @@ static inline lcp_status_ptr_t lcp_request_send(lcp_request_t *req)
         return ret;
 }
 
-// NOLINTEND(clang-diagnostic-unused-function)
-
-//FIXME: remove?
-void lcp_request_storage_init();
-//FIXME: remove?
-void lcp_request_storage_release();
-
-int lcp_request_init_unexp_ctnr(lcp_task_h task, lcp_unexp_ctnr_t **ctnr_p, struct iovec *iov, 
+int lcp_request_init_unexp_ctnr(lcp_task_h task, lcp_unexp_ctnr_t **ctnr_p, 
+                                struct iovec *iov, 
 				size_t iovcnt, unsigned flags);
 
 #endif

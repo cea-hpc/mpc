@@ -37,6 +37,7 @@
 #include "lcp.h"
 #include "lcp_ep.h"
 #include "lcp_header.h"
+#include "lcp_manager.h"
 #include "lcp_request.h"
 #include "lcp_task.h"
 #include "lcp_datatype.h"

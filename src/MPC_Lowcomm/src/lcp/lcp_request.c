@@ -33,49 +33,12 @@
 
 #include <mpc_common_rank.h>
 
-#include "lcp_def.h"
-#include "lcp_pending.h"
 #include "lcp_context.h"
 #include "mpc_common_debug.h"
 #include "mpc_mempool.h"
 
 #include <sctk_alloc.h>
 #include <string.h>
-
-static mpc_mempool_t *__request_mempool = NULL;
-static unsigned int __request_mempool_count = 0;
-
-void lcp_request_storage_init()
-{
-	assume(__request_mempool_count == 0);
-
-	__request_mempool_count = mpc_common_get_local_task_count();
-	assume(__request_mempool_count >= 1);
-	__request_mempool = sctk_malloc(sizeof(mpc_mempool_t) * __request_mempool_count);
-	assume(__request_mempool != NULL);
-
-	unsigned int i = 0;
-
-	for(i = 0 ; i < __request_mempool_count; i++)
-	{
-		/* We allocate 0 by default to avoid bad numa */
-		mpc_mempool_init(&__request_mempool[i], 0, 100, sizeof(lcp_request_t), sctk_malloc, sctk_free);
-	}
-}
-
-void lcp_request_storage_release()
-{
-	unsigned int i;
-
-	for(i = 0 ; i < __request_mempool_count; i++)
-	{
-		mpc_mempool_empty(&__request_mempool[i]);
-	}
-
-	sctk_free(__request_mempool);
-	__request_mempool = NULL;
-	__request_mempool_count = 0;
-}
 
 int lcp_request_check_status(void *request)
 {
