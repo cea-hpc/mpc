@@ -33,12 +33,29 @@ extern "C"
 #include <assert.h>
 #include <mpc_arch.h>
 #include <mpc_common_debugger.h>
+#include <mpc_common_helper.h>
 #include <mpc_config.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <unistd.h>
 
 #include "mpc_keywords.h"
+
+#define SMALL_BUFFER_SIZE ( 4 * 1024 )
+#define REGISTERED_MODULES_LENGTH 1024
+extern char registered_modules[];
+extern int registered_modules_index;
+extern FILE *ultra_verbose;
+
+#define pstr(s) #s
+#define xstr(s) pstr(s)
+
+enum print_type{
+	PRINT_DEBUG,
+	PRINT_INFO
+};
+
+int mpc_common_debug_is_stderr_tty();
 
 void mpc_common_debug_init();
 
@@ -88,10 +105,42 @@ void mpc_common_debug_check_large_enough(size_t a, size_t b, char *ca, char *cb,
 
 void MPC_printf(const char *fmt, ...);
 
-void mpc_common_debug_error(const char *fmt, ...);
-void mpc_common_debug_warning(const char *fmt, ...);
-void mpc_common_debug_log(const char *fmt, ...);
-void mpc_common_debug_info(const char *fmt, ...);
+
+#define register_module(modulename)\
+	if(strlen(modulename) + registered_modules_index > REGISTERED_MODULES_LENGTH){\
+		fprintf(stderr, "error module length exceeded");\
+	}\
+	else{\
+		snprintf(registered_modules + registered_modules_index, strlen(modulename) + 2, "%s,", modulename);\
+		registered_modules_index += strlen(modulename) + 1;\
+		fprintf(stderr, "%s", registered_modules);\
+	}
+
+static inline int authorized_module(char *modulename){
+	return 1;
+}
+
+static inline int authorized_function(const char *funcname){
+	return 1;
+}
+
+static inline int authorized_file(char *filename){
+	return 1;
+}
+
+int __mpcprintf(char *messagebuffer, char *modulename, char *filename, int line, char *color);
+
+int _common_debug(char *filename, int line, const char *funcname, char *color, int print_type, char *modulename, char *string, ...);
+
+#define mpc_common_debug_warning(s, ...)\
+	_common_debug(__FILE__, __LINE__, __func__, MPC_COLOR_YELLOW_CHAR, PRINT_INFO, xstr(MODULE), s, ## __VA_ARGS__)
+#define mpc_common_debug_error(s, ...)\
+	_common_debug(__FILE__, __LINE__, __func__, MPC_COLOR_RED_CHAR, PRINT_INFO, xstr(MODULE), s, ## __VA_ARGS__)
+#define mpc_common_debug_info(s, ...)\
+	_common_debug(__FILE__, __LINE__, __func__, MPC_COLOR_VIOLET_CHAR, PRINT_DEBUG, xstr(MODULE), s, ## __VA_ARGS__)
+#define mpc_common_debug_log(s, ...)\
+	_common_debug(__FILE__, __LINE__, __func__, MPC_COLOR_GREEN_CHAR, PRINT_DEBUG, xstr(MODULE), s, ## __VA_ARGS__)
+
 
 #ifdef MPC_ENABLE_DEBUG_MESSAGES
 void mpc_common_debug(const char *fmt, ...);

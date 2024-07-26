@@ -58,6 +58,12 @@
 	#define MPC_COLOR_WHITE_BOLD(txt)      MPC_COLOR_ESC"1;37m"#txt MPC_COLOR_ESC"0m"
 	#define MPC_COLOR_CYAN_BOLD(txt)       MPC_COLOR_ESC"1;36m"#txt MPC_COLOR_ESC"0m"
 
+	#define MPC_COLOR_DEFAULT_CHAR MPC_COLOR_ESC"0m"
+	#define MPC_COLOR_RED_CHAR MPC_COLOR_ESC"31m"
+	#define MPC_COLOR_GREEN_CHAR MPC_COLOR_ESC"32m"
+	#define MPC_COLOR_YELLOW_CHAR MPC_COLOR_ESC"33m"
+	#define MPC_COLOR_VIOLET_CHAR MPC_COLOR_ESC"35m"
+
 #else
 
 	/* Normal colors */
@@ -80,6 +86,7 @@
 	#define MPC_COLOR_CYAN_BOLD(txt)       #txt
 
 #endif /* SHELL_COLORS */
+
 
 /***********
  * DEFINES *
