@@ -51,11 +51,21 @@ MPC_SOURCE_DIRECTORY="${CURRENT_PATH}/../"
 
 export MPC_SOURCE_DIRECTORY
 
+safe_exec "Create buildir" mkdir -p ${MPC_SOURCE_DIRECTORY}/doc/build/doxygen ${MPC_SOURCE_DIRECTORY}/doc/build/sphinx
 if test -z "`which doxygen 2> /dev/null`";
 then
-	print_error "Unable to find a valid Doxygen installation (which doxygen)"
+	print_error "Skipping Doxygen: not found IN PATH"
 	print_error "Please install it and re-run."
-	exit 1
+else
+	safe_exec "Generating doxygen" doxygen ${MPC_SOURCE_DIRECTORY}/doc/Doxyfile.in
 fi
 
-safe_exec "Generating Documentation into ${MPC_SOURCE_DIRECTORY}/doc/build/" doxygen ${MPC_SOURCE_DIRECTORY}/doc/Doxyfile.in
+if test -z "`which sphinx-build 2> /dev/null`";
+then
+	print_error "Skipping RTD-compliant Sphinx Documentation: sphinx-build not found in PATH"
+	print_error "Please install it and re-run."
+else
+	safe_exec "Generating RTD-compliant Sphinx" make -f ${MPC_SOURCE_DIRECTORY}/doc/Makefile.sphinx html
+fi
+echo "Documentation generated under ${MPC_SOURCE_DIRECTORY}/doc/build/{doxygen,sphinx}"
+
