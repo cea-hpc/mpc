@@ -231,6 +231,7 @@ static inline void lcp_context_resource_init(lcp_rsc_desc_t *resource_p,
         lcr_driver_config_t *driver_config =
                 _mpc_lowcomm_conf_driver_unfolded_get(iface_config->config);
         assume(driver_config != NULL);
+        size_t device_name_length = strlen(device->name) + 1;
 
 
         /* Init resource */
@@ -239,7 +240,8 @@ static inline void lcp_context_resource_init(lcp_rsc_desc_t *resource_p,
         resource_p->iface         = NULL;
         resource_p->priority      = iface_config->priority;
         resource_p->component     = component;
-        resource_p->name          = strdup(device->name);
+        resource_p->name          = sctk_malloc(sizeof(char*) * device_name_length);
+        strncpy(resource_p->name, device->name, device_name_length);
         resource_p->used          = 0;
 }
 
@@ -518,9 +520,9 @@ static inline int __init_rails(lcp_context_h ctx)
         }
 
         ctx->num_resources = resource_count;
-        ctx->resources = malloc(sizeof(lcp_rsc_desc_t) * resource_count);
+        ctx->resources = sctk_malloc(sizeof(lcp_rsc_desc_t) * resource_count);
         assume(ctx->resources);
-        ctx->progress_counter = malloc(sizeof(int) * resource_count);
+        ctx->progress_counter = sctk_malloc(sizeof(int) * resource_count);
         assume(ctx->progress_counter);
 
         /* Walk again to initialize each ressource */

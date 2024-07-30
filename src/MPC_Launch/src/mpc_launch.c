@@ -503,7 +503,7 @@ static void __create_autokill_thread()
 
 static inline void __set_default_values()
 {
-	mpc_common_get_flags()->sctk_network_description_string = strdup("No networking");
+	mpc_common_get_flags()->sctk_network_description_string = NULL;
 
 	/* Set default configuration */
 	__launch_config.bt_sig_enabled = 1;

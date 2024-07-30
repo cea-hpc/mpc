@@ -75,7 +75,7 @@ int _mpc_ofi_request_cache_release(struct _mpc_ofi_request_cache_t *cache)
    }
 #endif
 
-   free(cache->requests);
+   sctk_free(cache->requests);
 
    return 0;
 }
