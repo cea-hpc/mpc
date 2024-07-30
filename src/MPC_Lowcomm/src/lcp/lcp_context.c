@@ -672,7 +672,7 @@ static inline int __generate_configuration_summary(lcp_context_h ctx)
                 }
         }
 
-        strncat(name, "\nInitialized ressources:\n", NETWORK_DESC_BUFFER_SIZE - 1);
+        strncat(name, "\nInitialized resources:\n", NETWORK_DESC_BUFFER_SIZE - 1);
 
         int k = 0;
 
@@ -747,7 +747,7 @@ static int lcp_context_check_offload(lcp_context_h ctx)
 
         if (ctx->config.offload && __count_non_composable_rails(ctx) > 1 && has_offload) {
                 mpc_common_debug_error("LCP CONTEXT: offload interface not "
-                                       "supported with heterogenous multirail");
+                                       "supported with heterogeneous multirail");
                 rc = LCP_ERROR;
                 goto err;
         } 
@@ -766,9 +766,9 @@ static int __check_configuration(lcp_context_h ctx)
 {
         int rc = LCP_SUCCESS;
 
-        /* Does not support heterogeous multirail (tsbm and shm not counted) */
+        /* Does not support heterogeneous multirail (tsbm and shm not counted) */
         if(__count_non_composable_rails(ctx) > 1) {
-                mpc_common_debug_error("LCP: heterogeous multirail not supported");
+                mpc_common_debug_error("LCP: heterogeneous multirail not supported");
                 return LCP_ERROR;
         }
 
