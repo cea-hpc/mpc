@@ -578,12 +578,12 @@ static inline void __register_config(void)
 	                                                       NULL);
 
 	mpc_conf_config_type_t *mc = mpc_conf_config_type_init("launch",
-	                                                       PARAM("banner", &__launch_config.banner_enabled, MPC_CONF_BOOL, "Should MPC's banner be dispayed"),
+	                                                       PARAM("banner", &__launch_config.banner_enabled, MPC_CONF_BOOL, "Should MPC's banner be displayed"),
 														   PARAM("autokill", &__launch_config.autokill_timer, MPC_CONF_INT, "What is the kill timer in seconds (0 means none)"),
 														   PARAM("debug", debug, MPC_CONF_TYPE, "MPC debug parameters"),
 	                                                       PARAM("mpcrun", mpcrun, MPC_CONF_TYPE, "Default values for MPCRUN"),
 	                                                       NULL);
-	mpc_conf_root_config_append("mpcframework", mc, "MPC Laucher Configuration");
+	mpc_conf_root_config_append("mpcframework", mc, "MPC Launcher Configuration");
 
 	/* Trigger all other configs */
 	mpc_common_init_trigger("Config Sources");
