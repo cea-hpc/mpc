@@ -91,15 +91,17 @@ void _mpc_dt_init()
 	mpc_common_spinlock_lock(&init_lock);
 
 	/* Common types are shared */
-	if(!__mpc_dt_initialized)
+	if(__mpc_dt_initialized)
 	{
-		__mpc_dt_initialized = 1;
+                mpc_common_spinlock_unlock(&init_lock);
+                return;
 	}
-
-	mpc_common_spinlock_unlock(&init_lock);
 
 	/* Initialize composed datatypes */
 	__mpc_composed_common_types_init();
+        __mpc_dt_initialized = 1;
+
+	mpc_common_spinlock_unlock(&init_lock);
 }
 
 static inline void __mpc_dt_name_clear();
