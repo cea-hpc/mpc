@@ -129,8 +129,7 @@ static int lcp_ep_init_config(lcp_manager_h mngr, lcp_ep_h ep)
 	ep->config.rma.max_get_zcopy  = SIZE_MAX;
 	ep->config.offload            = 0;
         ep->cap                       = 0;
-        ep->am_chnl = ep->tag_chnl = ep->ato_chnl = 
-                ep->net_ato_chnl = ep->rma_chnl = LCP_NULL_CHANNEL;
+        ep->am_chnl = ep->tag_chnl = ep->ato_chnl = ep->rma_chnl = LCP_NULL_CHANNEL;
 
         //FIXME: endpoint configuration would need some refacto. It currently
         //       does not handle well heterogenous interfaces.
@@ -179,11 +178,6 @@ static int lcp_ep_init_config(lcp_manager_h mngr, lcp_ep_h ep)
                         //      strategy.
                         if (ep->ato_chnl == LCP_NULL_CHANNEL) {
                                 ep->ato_chnl = i;
-                        }
-                        if (attr.iface.cap.flags & LCR_IFACE_CAP_REMOTE) {
-                                if (ep->net_ato_chnl == LCP_NULL_CHANNEL) {
-                                        ep->net_ato_chnl = i;
-                                }
                         }
                 }
 
@@ -287,10 +281,10 @@ err:
 static int lcp_ep_init_channels(lcp_manager_h mngr, lcp_ep_h ep, 
                                 unsigned flags)
 {
+        UNUSED(flags);
 	int rc = MPC_LOWCOMM_SUCCESS, i;
         lcp_context_h ctx = mngr->ctx;
-        int net_atomics = 0;
-        unsigned net_atomics_mask = LCR_IFACE_CAP_REMOTE | LCR_IFACE_CAP_ATOMICS;
+        int selected_prio = -1;
 
 	//NOTE: ctx->resources are sorted in descending order of priority
 	//      already.
@@ -318,19 +312,20 @@ static int lcp_ep_init_channels(lcp_manager_h mngr, lcp_ep_h ep,
 			continue;
 		}
 
+		/* Set selected rail priority */
+		if(iface->priority >= selected_prio)
+		{
+			selected_prio = iface->priority;
+		} else {
+			/* Homogeneous rails with highest priority have been
+			 * selected */
+			break;
+		}
+
 		/* Resource can be used for communication. */
 		MPC_BITMAP_SET(ep->avail_map, i);
 		/* Flag resource as used to enable polling on it */
 		ctx->resources[i].used = 1;
-
-                if (flags & LCP_EP_REQUIRE_NET_ATOMICS) {
-                        /* Check weither interface can perform network atomics
-                         * if it is required. */
-                        if ((attr.iface.cap.flags & net_atomics_mask) == 
-                            net_atomics_mask) {
-                                net_atomics = 1;
-                        }
-                }
 
 		mpc_common_debug("LCP EP: route to %llu using %s", ep->uid, 
                                  iface->network_name);
@@ -366,17 +361,11 @@ static int lcp_ep_init_channels(lcp_manager_h mngr, lcp_ep_h ep,
 		MPC_BITMAP_SET(ep->conn_map, i);
 	}
         
-        if ((flags & LCP_EP_REQUIRE_NET_ATOMICS) && !net_atomics) {
-                mpc_common_debug_warning("LCP EP: endpoint created with NET_ATOMICS "
-                                         "requirements but no interface supports it.");
-        }
-                
-
 	/* Protocol endpoint connected only if there are available interfaces
 	 * and all are connected */
 	int equal = !mpc_bitmap_is_zero(ep->avail_map) &&
 	            MPC_BITMAP_AND(ep->conn_map, ep->avail_map);
-        ep->state     = !equal ? LCP_EP_FLAG_CONNECTING : LCP_EP_FLAG_CONNECTED;
+        ep->state = !equal ? LCP_EP_FLAG_CONNECTING : LCP_EP_FLAG_CONNECTED;
 
         //FIXME: num_chnls is set to num_iface since in many places a loop need
         //       to be done on such range, channel are used depending on the

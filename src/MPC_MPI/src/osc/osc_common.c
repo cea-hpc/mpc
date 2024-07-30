@@ -45,7 +45,7 @@ int mpc_osc_perform_atomic_op(mpc_osc_module_t *mod, lcp_ep_h ep,
 
         lcp_request_param_t params =  {
                 .field_mask = (result != NULL ? LCP_REQUEST_REPLY_BUFFER : 0) |
-                        LCP_REQUEST_USER_REQUEST | mod->ato_flags,
+                        LCP_REQUEST_USER_REQUEST,
                 .request      = req,
                 .reply_buffer = result,
         };

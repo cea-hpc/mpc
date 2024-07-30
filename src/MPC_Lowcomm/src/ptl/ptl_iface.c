@@ -422,7 +422,8 @@ int lcr_ptl_iface_progress_rma(lcr_ptl_rail_info_t *srail)
 
         //FIXME: this sync is necessary to make sure host memory is
         //       synchronised, see lockcontention2.c from mpich test suite.
-        PtlAtomicSync();
+        //FIXME2: disabled for now for performance reasons.
+        //PtlAtomicSync();
 
         return rc;
 }

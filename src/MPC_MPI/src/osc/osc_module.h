@@ -135,9 +135,6 @@ typedef struct mpc_osc_module {
         int disp_unit;
         int *disp_units;
 
-        unsigned                     ep_flags;
-        unsigned                     ato_flags;
-
 } mpc_osc_module_t;
 
 static inline int mpc_osc_get_comm_info(mpc_osc_module_t *mod, int target,
@@ -150,7 +147,7 @@ static inline int mpc_osc_get_comm_info(mpc_osc_module_t *mod, int target,
                                                                    target);
 
                 rc = lcp_ep_create(mod->mngr, &mod->eps[target], 
-                                   target_uid, mod->ep_flags);
+                                   target_uid, 0);
                 if (rc != 0) {
                         mpc_common_debug_fatal("Could not create endpoint.");
                         goto err;

@@ -364,11 +364,9 @@ int MPIT_Datatype_is_nontrivial(MPI_Datatype type)
 	type == MPI_LONG_INT ||
 	type == MPI_SHORT_INT ||
 	type == MPI_LONG_DOUBLE_INT) {
-            printf("1");
             return 1;
     }
     else {
-            printf("0");
             return 0;
     }
 }

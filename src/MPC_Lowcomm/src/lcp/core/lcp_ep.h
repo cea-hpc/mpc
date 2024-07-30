@@ -104,7 +104,6 @@ struct lcp_ep {
         lcp_chnl_idx_t rma_chnl; /* Channel for RMA operations */
         bmap_t         rma_bmap; /* Send map for RMA. */
         lcp_chnl_idx_t ato_chnl; /* Channel for Atomic operations */
-        lcp_chnl_idx_t net_ato_chnl; /* Channel for Network Atomic operations */
 
         lcp_ep_flags_t flags;
         int state;

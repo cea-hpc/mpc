@@ -267,18 +267,6 @@ int lcp_progress(lcp_manager_h mngr);
 
 /**
  * @ingroup LCP_EP
- * @brief LCP Endpoint flags. 
- *
- * Flags to specify special endpoint capabilities.
- *
- */
-
-enum {
-        LCP_EP_REQUIRE_NET_ATOMICS = MPC_BIT(0),
-};
-
-/**
- * @ingroup LCP_EP
  * @brief Create LCP Endpoint. 
  *
  * Instanciate a protocol endpoint. Upon return, connection will have been
@@ -349,7 +337,6 @@ enum {
         LCP_REQUEST_REPLY_BUFFER    = MPC_BIT(7),  /**< Result buffer for Atomics */
         LCP_REQUEST_USER_MEMH       = MPC_BIT(8),  /**< User-provided local Memory handle */
         LCP_REQUEST_USER_EPH        = MPC_BIT(9),  /**< User-provided Endpoint handle */
-        LCP_REQUEST_USE_NET_ATOMICS = MPC_BIT(10), /**< Force the use network atomics */
 };
 
 /**

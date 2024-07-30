@@ -451,14 +451,6 @@ static int _win_init(mpc_win_t **win_p, int flavor, mpc_lowcomm_communicator_t c
         }
         memset(win->win_module.eps, 0, win->comm_size * sizeof(lcp_ep_h));
 
-        if (mpc_lowcomm_communicator_get_process_count(win->comm) > 1 && 
-            mpc_lowcomm_communicator_local_task_count(win->comm) > 1) {
-                win->win_module.ep_flags  = LCP_EP_REQUIRE_NET_ATOMICS;
-                win->win_module.ato_flags = LCP_REQUEST_USE_NET_ATOMICS;
-
-                mpc_common_debug("OSC WIN: using network atomics only.");
-        }
-
         mpc_common_hashtable_init(&win->win_module.outstanding_locks, 1024);
         mpc_list_init_head(&win->win_module.pending_posts);
 	mpc_common_hashtable_init(&win->attrs, 16);

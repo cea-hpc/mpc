@@ -142,7 +142,6 @@ lcp_atomic_proto_t ato_rma_proto = {
 };
 
 static inline int lcp_atomic_select_proto_channel(lcp_ep_h ep, 
-                                                  const lcp_request_param_t *param,
                                                   lcp_atomic_proto_t **ato_proto_p,
                                                   lcp_chnl_idx_t *cc) 
 {
@@ -150,13 +149,7 @@ static inline int lcp_atomic_select_proto_channel(lcp_ep_h ep,
 
         if (ep->cap & LCR_IFACE_CAP_ATOMICS) {
                 *ato_proto_p = &ato_rma_proto;
-                if (param->field_mask & LCP_REQUEST_USE_NET_ATOMICS) {
-                        assert(ep->net_ato_chnl != LCP_NULL_CHANNEL);
-                        *cc = ep->net_ato_chnl;
-                } else {
-                        assert(ep->ato_chnl != LCP_NULL_CHANNEL);
-                        *cc = ep->ato_chnl;
-                }
+                *cc = ep->ato_chnl;
         } else {
                 *ato_proto_p = &ato_sw_proto;
                 *cc          = ep->am_chnl;
@@ -218,7 +211,7 @@ lcp_status_ptr_t lcp_atomic_op_nb(lcp_ep_h ep, lcp_task_h task, const void *buff
 
         req->state.comp.comp_cb = lcp_atomic_complete;
         
-        rc = lcp_atomic_select_proto_channel(ep, param, &atomic_proto, 
+        rc = lcp_atomic_select_proto_channel(ep, &atomic_proto, 
                                              &req->send.ato.cc);
         if (rc != MPC_LOWCOMM_SUCCESS) {
                 return LCP_STATUS_PTR(rc);
