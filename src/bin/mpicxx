@@ -52,8 +52,22 @@ MPI_PRIV_ARG=""
 
 compiler_is_privatizing "mpc_cxx"
 
-if test "x${RES}" = "xyes" -a -n "$MPI_PRIV"; then
-	MPI_PRIV_ARG="-fmpc-privatize"
+# here, 4 scenarios
+# 1. CC is priv && User wants to privatize -> priv flag
+# 2. CC is priv User doesn't want to privatize/don't care -> nopriv flag
+# 3. CC is not priv && User don't care --> NO flag (<== default)
+# 4. CC it not priv && User wants to priv --> ERR
+if test "x${RES}" = "xyes"; then
+	if test -n "$MPI_PRIV"; then
+		#Scenario 1
+		MPI_PRIV_ARG="-fmpc-privatize"
+	else
+		#scenario 2
+		MPI_PRIV_ARG="-fno-mpc-privatize"
+	fi
+else
+	#scenario 4
+	test -n "$MPI_PRIV" && die "Selected compiler is not privatizing. Use another with `-cc=`"
 fi
 
 # Now invoke the compiler
