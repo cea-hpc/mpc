@@ -47,6 +47,7 @@
 #define SMALL_BUFFER_SIZE ( 4 * 1024 )
 #define DEBUG_INFO_SIZE ( 64 )
 
+/* NOLINTBEGIN(clang-diagnostic-unused-function): False positives */
 static inline int mpc_common_debug_is_stderr_tty(){
 	return mpc_common_get_flags()->isatty;
 }
@@ -87,7 +88,7 @@ static inline char *__debug_print_info( char *buffer )
 
 	return buffer;
 }
-
+/* NOLINTEND(clang-diagnostic-unused-function) */
 
 /**********************************************************************/
 /*Abort                                                               */
