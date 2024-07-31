@@ -39,3 +39,6 @@ repos:
     rev: v0.1.0
     hooks:
     -   id: git-blame-ignore-revs
+exclude: |
+  (?x)
+    ^src/MPC_Fortran/src/pregenerated
