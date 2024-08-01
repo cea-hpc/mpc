@@ -348,17 +348,17 @@ static inline void __parse_log_filter_rules(void)
 	regex_t re_module;
 	regex_t re_function;
 
-	if (regcomp(&re_file, "file\\((.*)\\)", REG_ICASE | REG_EXTENDED)) {
+	if (regcomp(&re_file, "file:(.*)", REG_ICASE | REG_EXTENDED)) {
 		mpc_common_debug_error("Failed to compile re_file regular expression");
 		return;
 	}
 
-	if (regcomp(&re_module, "mod\\((.*)\\)", REG_ICASE | REG_EXTENDED)) {
+	if (regcomp(&re_module, "mod:(.*)", REG_ICASE | REG_EXTENDED)) {
 		mpc_common_debug_error("Failed to compile re_module regular expression");
 		return;
 	}
 
-	if (regcomp(&re_function, "func\\((.*)\\)", REG_ICASE | REG_EXTENDED)) {
+	if (regcomp(&re_function, "func:(.*)", REG_ICASE | REG_EXTENDED)) {
 		mpc_common_debug_error("Failed to compile re_function regular expression");
 		return;
 	}
