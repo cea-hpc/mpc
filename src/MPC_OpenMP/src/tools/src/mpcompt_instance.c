@@ -45,7 +45,7 @@ mpc_omp_ompt_register_tool ( ompt_start_tool_result_t* tool_result,
             thread->tool_instance->path = path;
     }
 
-    mpc_common_debug_log( "%s: tool initialize = %d", __func__, ret );
+    mpc_common_debug( "%s: tool initialize = %d", __func__, ret );
 
     return ret;
 }
@@ -79,7 +79,7 @@ mpc_omp_ompt_unregister_tool () {
     sctk_free( tool_instance );
     thread->tool_instance = NULL;
 
-    mpc_common_debug_log( "%s: tool finalize", __func__ );
+    mpc_common_debug( "%s: tool finalize", __func__ );
 }
 
 #endif /* OMPT_SUPPORT */

@@ -23,48 +23,32 @@
 /* #                                                                      # */
 /* ######################################################################## */
 #define _GNU_SOURCE
+#include <ctype.h>
+#include <execinfo.h>
+#include <regex.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <string.h>
-#include <execinfo.h>
-#include <signal.h>
+#include <unistd.h>
 
 
 #include <mpc_config.h>
-#include <mpc_common_rank.h>
-#include <mpc_common_spinlock.h>
-#include <mpc_common_helper.h>
 
 #include <mpc_common_debug.h>
 #include <mpc_common_flags.h>
+#include <mpc_common_helper.h>
+#include <mpc_common_rank.h>
+#include <mpc_common_spinlock.h>
 
 
 #ifdef MPC_Thread_db
 	#include <sctk_debugger.h>
 #endif
 
+#define MPC_MODULE "Common/Debug"
+
 #define SMALL_BUFFER_SIZE ( 4 * 1024 )
 #define DEBUG_INFO_SIZE ( 64 )
-
-int __is_stderr_tty;
-
-FILE *ultra_verbose;
-
-char registered_modules[REGISTERED_MODULES_LENGTH];
-int registered_modules_index  = 0;
-
-int mpc_common_debug_is_stderr_tty(){
-	return __is_stderr_tty;
-}
-void mpc_common_debug_init(){
-	if(getenv("IS_STDERR_TTY"))
-		__is_stderr_tty = 1;
-	else 
-		__is_stderr_tty = 0;
-
-	ultra_verbose = fopen("./mpc_log.txt", "w");
-}
 
 /**********************************************************************/
 /*Threads support                                                     */
@@ -155,48 +139,6 @@ void MPC_printf( const char *fmt, ... )
 	va_end( ap );
 }
 
-#ifdef MPC_ENABLE_DEBUG_MESSAGES
-
-void mpc_common_debug( const char *fmt, ... )
-{
-#if defined( MPC_Lowcomm ) || defined( MPC_Threads )
-
-	if ( mpc_common_get_flags()->verbosity < 3 )
-	{
-		return;
-	}
-
-#endif
-	va_list ap;
-	char debug_info[SMALL_BUFFER_SIZE];
-	char buff[SMALL_BUFFER_SIZE];
-	va_start( ap, fmt );
-
-#ifdef MPC_ENABLE_SHELL_COLORS
-		char debug_message[SMALL_BUFFER_SIZE];
-		if(mpc_common_debug_is_stderr_tty() && mpc_common_get_flags()->colors){
-			mpc_common_io_noalloc_snprintf( debug_message, SMALL_BUFFER_SIZE, MPC_COLOR_CYAN_BOLD( "%s" ), fmt );
-			mpc_common_io_noalloc_snprintf( buff, SMALL_BUFFER_SIZE,
-											"%s DEBUG %s\n",
-											__debug_print_info( debug_info ),
-											debug_message );
-		}
-		else mpc_common_io_noalloc_snprintf( buff, SMALL_BUFFER_SIZE,
-		                                "%s DEBUG %s\n",
-		                                __debug_print_info( debug_info ),
-		                                fmt );
-#else
-		mpc_common_io_noalloc_snprintf( buff, SMALL_BUFFER_SIZE,
-		                                "%s DEBUG %s\n",
-		                                __debug_print_info( debug_info ),
-		                                fmt );
-#endif
-
-	mpc_common_io_noalloc_vfprintf( stderr, buff, ap );
-	fflush( stderr );
-	va_end( ap );
-}
-#endif
 
 void mpc_common_debug_assert_print( FILE *stream, int line, const char *file,
                                  const char *func, const char *fmt, ... )
@@ -228,7 +170,7 @@ void mpc_common_debug_assert_print( FILE *stream, int line, const char *file,
 }
 
 
-void mpc_common_debug_log_file( FILE *file, const char *fmt, ... )
+void mpc_common_debug_file( FILE *file, const char *fmt, ... )
 {
 	va_list ap;
 	char debug_info[SMALL_BUFFER_SIZE];
@@ -314,51 +256,354 @@ int __mpcprintf(char *messagebuffer, char *modulename, char *filename, int line,
 	int task_rank = mpc_common_get_task_rank();
 	#ifdef MPC_ENABLE_SHELL_COLORS
 		if(mpc_common_debug_is_stderr_tty() 
-			&& mpc_common_get_flags()->colors){
-			fprintf(stderr, 
-				MPC_COLOR_BLUE(%s)
-				MPC_COLOR_GREEN( [ )
+			&& mpc_common_get_flags()->colors)
+			(void)fprintf(stderr, 
+				MPC_COLOR_GREEN([ )
 				MPC_COLOR_RED(R%4d)
-				MPC_COLOR_BLUE( P%4dN%4d)
-				MPC_COLOR_GREEN( ] ) " %s%s%s\n",
-				modulename,
+				MPC_COLOR_BLUE(P%4dN%4d)
+				MPC_COLOR_GREEN(])
+				" "
+				MPC_COLOR_CYAN(%s)
+				" "
+				"%s%s%s\n",
 				task_rank, 
 				mpc_common_get_process_rank(), 
 				mpc_common_get_node_rank(),
+				modulename,
 				color , messagebuffer, MPC_COLOR_DEFAULT_CHAR);
-		}
-		else{
-			fprintf(stderr,"%s\n", messagebuffer);
-		}
+		else
 	#else
-		fprintf(stderr, "%s", messagebuffer);
+			(void)fprintf(stderr, 
+				"[ R%4d P%4dN%4d ] %s %s%s%s\n",
+				task_rank, 
+				mpc_common_get_process_rank(), 
+				mpc_common_get_node_rank(),
+				modulename,
+				color , messagebuffer, MPC_COLOR_DEFAULT_CHAR);
 	#endif
-	r = fprintf (ultra_verbose,
-		"[R%4dP%4dN%4d] <%s:%d> %s\n",
-		task_rank, 
-		mpc_common_get_process_rank(), 
-		mpc_common_get_node_rank(),
-		filename, line, messagebuffer);
+
 	return r;
 }
 
 
-int _common_debug(char *filename, int line, const char *funcname, char *color, int print_type, char *modulename, char *string, ...){
+/******************************
+ * LOG FILTERING CAPABILITIES *
+ ******************************/
+
+
+typedef enum
+{
+	FILTER_NONE,
+	FILTER_MODULE,
+	FILTER_FUNCTION,
+	FILTER_FILE,
+	FILTER_COUNT
+}__log_filter_type_t;
+
+const char *  __filter_type_name(__log_filter_type_t t)
+{
+	const char * names[] = {
+		"None",
+		"Module",
+		"Function",
+		"File"
+	};
+
+	if(t > FILTER_COUNT)
+	{
+		mpc_common_debug_fatal("Overflow in filter");
+	}
+
+	return names[t];
+}
+
+
+#define FILTER_MAX_SIZE 512
+
+struct __log_filter_rule_s
+{
+	__log_filter_type_t type;
+	char match[FILTER_MAX_SIZE];
+};
+
+
+#define MAX_LOG_FILTER_RULES 32
+
+static struct __log_filter_rule_s __log_filter_rules[MAX_LOG_FILTER_RULES];
+static unsigned int __log_filter_rules_count = 0;
+
+
+static inline void __parse_log_filter_rules(void)
+{
+	char * filter_str = getenv("MPC_LOG");
+
+	if(!filter_str)
+	{
+		/* No filter to apply __log_filter_rules remains null*/
+		return;
+	}
+
+	/* Prepare the regular expression to parse the filters */
+	regex_t re_file;
+	regex_t re_module;
+	regex_t re_function;
+
+	if (regcomp(&re_file, "file\\((.*)\\)", REG_ICASE | REG_EXTENDED)) {
+		mpc_common_debug_error("Failed to compile re_file regular expression");
+		return;
+	}
+
+	if (regcomp(&re_module, "mod\\((.*)\\)", REG_ICASE | REG_EXTENDED)) {
+		mpc_common_debug_error("Failed to compile re_module regular expression");
+		return;
+	}
+
+	if (regcomp(&re_function, "func\\((.*)\\)", REG_ICASE | REG_EXTENDED)) {
+		mpc_common_debug_error("Failed to compile re_function regular expression");
+		return;
+	}
+
+	/* Tokenize on ',' */
+
+	char *token = NULL;
+	char *save_ptr = NULL;
+
+    // Get the first token
+    token = strtok_r(filter_str, ",", &save_ptr);
+
+    // Walk through other tokens
+    while (token != NULL) {
+
+			char buff[FILTER_MAX_SIZE];
+			(void)snprintf(buff,FILTER_MAX_SIZE, "%s", token);
+			char * trimed_token = mpc_common_trim(buff);
+
+
+			regmatch_t match[2];
+
+			__log_filter_type_t filter_type = FILTER_NONE;
+			char * smatch = NULL;
+
+			if(regexec(&re_file, trimed_token, 2, match, 0) == 0)
+			{
+				*(trimed_token + match[1].rm_eo) = '\0';
+				smatch = trimed_token + match[1].rm_so;
+				filter_type = FILTER_FILE;
+			}else if (regexec(&re_module, trimed_token, 2, match, 0) == 0)
+			{
+				*(trimed_token + match[1].rm_eo) = '\0';
+				smatch = trimed_token + match[1].rm_so;
+				filter_type = FILTER_MODULE;
+			}
+			else if (regexec(&re_function, trimed_token, 2, match, 0) == 0)
+			{
+				*(trimed_token + match[1].rm_eo) = '\0';
+				smatch = trimed_token + match[1].rm_so;
+				filter_type = FILTER_FUNCTION;
+			}
+			else
+			{
+				/* No match it is a module */
+				smatch = trimed_token;
+				filter_type = FILTER_MODULE;
+			}
+
+			if(smatch)
+			{
+				if( __log_filter_rules_count == MAX_LOG_FILTER_RULES)
+				{
+					mpc_common_debug_fatal("It is not possible to have more than %d rules in MPC_LOG environment variable", MAX_LOG_FILTER_RULES);
+				}
+
+				mpc_common_debug_info("Filter on %s (from %s) type %s", smatch, token, __filter_type_name(filter_type));
+
+				(void)snprintf(__log_filter_rules[__log_filter_rules_count].match, FILTER_MAX_SIZE, "%s", smatch);
+				__log_filter_rules[__log_filter_rules_count].type = filter_type;
+
+				__log_filter_rules_count++;
+
+			}
+
+		
+			/* Move to next token */
+        token = strtok_r(NULL, "-", &save_ptr);
+
+    }
+}
+
+
+char* strstr_case_insensitive(const char* haystack, const char* needle) {
+    if (!*needle) return (char*)haystack;
+
+    for (; *haystack; ++haystack) {
+        if (tolower((unsigned char)*haystack) == tolower((unsigned char)*needle)) {
+            const char* h = haystack + 1;
+            const char* n = needle   + 1;
+            while (*n && *h && tolower((unsigned char)*h) == tolower((unsigned char)*n)) {
+                ++h;
+                ++n;
+            }
+            if (!*n) return (char*)haystack;
+        }
+    }
+
+    return NULL;
+}
+
+static inline int __call_is_filtered_from_env(const char * modulename, const char *funcname, const char * filename)
+{
+
+	/* No filter nothing is filtered */
+	if(__log_filter_rules_count == 0)
+	{
+		return 0;
+	}
+
+	unsigned int i = 0;
+
+	for( i = 0 ; i < __log_filter_rules_count ; i++)
+	{
+	 	struct __log_filter_rule_s * tmp = &__log_filter_rules[i];
+
+		/* Allow print at first rule matching */
+		switch (tmp->type) {
+			case FILTER_FILE:
+				if(strstr_case_insensitive(filename, tmp->match))
+				{
+					return 0;
+				}
+			break;
+			case FILTER_MODULE:
+				if(strstr_case_insensitive(modulename, tmp->match))
+				{
+					return 0;
+				}
+			break;
+			case FILTER_FUNCTION:
+				if(strstr_case_insensitive(funcname, tmp->match))
+				{
+					return 0;
+				}
+			break;
+			case FILTER_COUNT:
+			case FILTER_NONE:
+				mpc_common_debug_fatal("There should be no lo rule of type FILTER_NONE");
+			break;
+		}
+
+
+	}
+
+
+	/* If no rule did match we are filtered */
+
+	return 1;	
+}
+
+
+int mpc_common_debug_print(char *filename, int line, const char *funcname, char *color, mpc_common_debug_verbosity_level_t verbosity_level, char *modulename, char *string, ...){
 	va_list ap;
-	int r;
+	int r = 0;
+
+	/* Check loglevel */
+	if( mpc_common_get_flags()->verbosity < (int)verbosity_level)
+	{
+		return 0;
+	}
+
+	if(__call_is_filtered_from_env(modulename, funcname, filename))
+	{
+		/* All filters did fail no need to print*/
+		return 0;
+	}
+
 	va_start (ap, string); 
 
 	char messagebuffer[SMALL_BUFFER_SIZE];
 
-	r = vsnprintf(messagebuffer,SMALL_BUFFER_SIZE, string, ap);
-	if(print_type == PRINT_DEBUG){
-		if(authorized_module(modulename) || authorized_function(funcname) || authorized_file(filename))
-			__mpcprintf(messagebuffer, modulename, filename, line, color);
+	if(modulename[0] == 'M' && modulename[1] == 'P' && modulename[2] == 'C')
+	{
+		if(!strcmp("MPC_MODULE", modulename))
+		{
+			/* No module was set */
+			modulename = "";
+		}
 	}
-	else if(print_type == PRINT_INFO){
 
-		__mpcprintf(messagebuffer, modulename, filename, line, color);
+	/* Strip quotes */
+	char __no_quote_module_name[128];
+	char * no_quote_module_name = __no_quote_module_name;
+	(void)snprintf(no_quote_module_name, 128, "%s", modulename);
+
+	unsigned long modlen = strlen(no_quote_module_name);
+
+	if(modlen)
+	{
+		if(no_quote_module_name[modlen - 1] == '"' || no_quote_module_name[modlen - 1] == '\'')
+		{
+			no_quote_module_name[modlen - 1] = '\0';
+		}
+
+		if(no_quote_module_name[0] == '"' || no_quote_module_name[0] == '\'')
+		{
+			no_quote_module_name++;
+		}
 	}
+
+	r = vsnprintf(messagebuffer,(long)SMALL_BUFFER_SIZE, string, ap);
+
+
+	if(strchr(messagebuffer, '\n'))
+	{
+		char *save_ptr = NULL;
+ 		char * sline = strtok_r(messagebuffer, "\n", &save_ptr);
+
+    	while (sline != NULL) {
+			if(strlen(sline))
+			{
+				__mpcprintf(sline, no_quote_module_name, filename, line, color);
+			}
+			sline = strtok_r(NULL, "\n", &save_ptr);
+		}
+
+	}
+	else
+	{
+		__mpcprintf(messagebuffer, no_quote_module_name, filename, line, color);
+	}
+
 	va_end (ap);
 	return r;
+}
+
+/**************
+ * TTY STATUS *
+ **************/
+
+static int __is_stderr_tty = 0;
+
+
+int mpc_common_debug_is_stderr_tty(){
+	return __is_stderr_tty;
+}
+
+/***************************************
+ * MPC COMMON DEBUG INITALIZATION CODE *
+ ***************************************/
+
+
+void mpc_common_debug_init(){
+	/* Set TTY support for stderr from launcher state */
+	if(getenv("IS_STDERR_TTY") )
+	{
+		__is_stderr_tty = 1;
+	}
+	else
+	{ 
+		__is_stderr_tty = 0;
+	}
+
+
+	__parse_log_filter_rules();
+
 }

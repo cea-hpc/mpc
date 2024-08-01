@@ -54,7 +54,7 @@ static inline  void __list_trigger(struct mpc_common_init_list * list)
         {
                 if( ___mpc_flags.debug_callbacks )
                 {
-                        mpc_common_debug_log("INIT : Triggering %s - %s (%d)", list->name, list->entries[i].name, list->entries[i].priority);
+                        mpc_common_debug("INIT : Triggering %s - %s (%d)", list->name, list->entries[i].name, list->entries[i].priority);
                 }
 
                 if(list->entries[i].callback)
@@ -171,18 +171,18 @@ void mpc_common_init_print()
         for( i = 0 ; i < __mpc_init.list_count ; i++ )
         {
                 struct mpc_common_init_list * list = &__mpc_init.lists[i];
-                mpc_common_debug_log("INIT List %s --------", list->name);
+                mpc_common_debug("INIT List %s --------", list->name);
 
                 for( j = 0; j < list->entry_count ; j++ )
                 {
                         struct mpc_common_init_entry * entry = &list->entries[j];
-                        mpc_common_debug_log("\t(%d/%d) Callback %s (prio %d) (ptr %p)", j+1,
+                        mpc_common_debug("\t(%d/%d) Callback %s (prio %d) (ptr %p)", j+1,
                                                                                       list->entry_count,
                                                                                       entry->name,
                                                                                       entry->priority,
                                                                                       entry->callback);
                 }
 
-                mpc_common_debug_log("-------------------");
+                mpc_common_debug("-------------------");
         }
 }

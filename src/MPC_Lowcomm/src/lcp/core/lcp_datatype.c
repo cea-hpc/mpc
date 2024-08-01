@@ -36,6 +36,8 @@
 
 #include <string.h>
 
+#define MPC_MODULE "Lowcomm/LCP/Datatype"
+
 int lcp_datatype_pack(lcp_context_h ctx, lcp_request_t *req,
                       lcp_datatype_t datatype, void *dest,
                       const void *src, size_t length)

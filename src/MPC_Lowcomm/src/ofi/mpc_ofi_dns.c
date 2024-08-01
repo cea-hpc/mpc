@@ -40,6 +40,8 @@
 #include "mpc_ofi_helpers.h"
 #include "rdma/fabric.h"
 
+#define MPC_MODULE "Lowcomm/Ofi/Dns"
+
 //#define DEBUG_DNS_ADDR
 
 #define SMALL_BUFF 8

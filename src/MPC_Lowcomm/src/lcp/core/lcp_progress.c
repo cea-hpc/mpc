@@ -36,7 +36,9 @@
 
 #include "list.h"
 
+#define MPC_MODULE "Lowcomm/LCP/Progress"
 int lcp_progress(lcp_manager_h mngr)
+
 {
         sctk_rail_info_t *iface;
 

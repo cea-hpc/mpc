@@ -38,6 +38,7 @@
 #include <string.h>
 #include <unistd.h>
 
+#define MPC_MODULE "Lowcomm/Ofi/Helpers"
 
 /*****************
  * ALLOC ALIGNED *

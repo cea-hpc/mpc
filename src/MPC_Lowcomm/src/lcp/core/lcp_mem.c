@@ -48,6 +48,8 @@
 #include <stdlib.h>
 #include <sys/types.h>
 
+#define MPC_MODULE "Lowcomm/LCP/Mem"
+
 /*****************************
  * IMPLEMENTATION OF THE MMU *
  *****************************/

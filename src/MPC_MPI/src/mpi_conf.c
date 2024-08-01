@@ -4,6 +4,8 @@
 
 #include <mpc_common_debug.h>
 
+#define MPC_MODULE MPI/CONFIG
+
 /*********************
  * GLOBAL MPI CONFIG *
  *********************/
@@ -473,10 +475,6 @@ static inline void __load_coll_function( char *family, char *func_name, int ( **
 		if ( !( *func ) )
 		{
 			bad_parameter( "CONFIG: failed resolving collective '%s' for '%s'", func_name, family );
-		}
-		else
-		{
-			mpc_common_debug( "CONFIG %s == %p", func_name, *func );
 		}
 	}
 }

@@ -546,12 +546,12 @@ __init_task_tree( const int num_mvps, int *shape, const int *cpus_order )
 			top_level = 2;
 			place_depth = 0;
 			tree_shape = shape;
-			mpc_common_debug_log("Default Tree w/ places at level %d\n", place_depth );
+			mpc_common_debug("Default Tree w/ places at level %d\n", place_depth );
 		}
 		else
 		{
 			place_depth = i;
-			mpc_common_debug_log("Topological Tree w/ places at level %d\n", place_depth );
+			mpc_common_debug("Topological Tree w/ places at level %d\n", place_depth );
 		}
 
 		place_size = shape[1];
@@ -569,118 +569,118 @@ mpc_omp_display_env(int verbosity)
 {
     (void) verbosity; // ignored for now, compliant with 'omp_display_env' standard spec
 
-    mpc_common_debug_log("---------------------------------------------------------------");
-    mpc_common_debug_log("MPC OpenMP runtime version %d.%d (with GCC and LLVM ABI support)", MPC_OMP_VERSION_MAJOR, MPC_OMP_VERSION_MINOR );
-    mpc_common_debug_log("---------------------------------------------------------------");
+    mpc_common_debug("---------------------------------------------------------------");
+    mpc_common_debug("MPC OpenMP runtime version %d.%d (with GCC and LLVM ABI support)", MPC_OMP_VERSION_MAJOR, MPC_OMP_VERSION_MINOR );
+    mpc_common_debug("---------------------------------------------------------------");
 
-    mpc_common_debug_log("\tmaximum tasks=%d",            __omp_conf.maximum_tasks);
-    mpc_common_debug_log("\tnew tasks depth=%d",          __omp_conf.pqueue_new_depth);
-    mpc_common_debug_log("\tuntied tasks depth=%d",       __omp_conf.pqueue_untied_depth);
-    mpc_common_debug_log("\tlarceny mode=%d",             __omp_conf.task_larceny_mode);
-    mpc_common_debug_log("\tsteal last stolen=%d",        __omp_conf.task_steal_last_stolen);
-    mpc_common_debug_log("\tsteal last thief=%d",         __omp_conf.task_steal_last_thief);
-    mpc_common_debug_log("\tdirect succesor=%d",          __omp_conf.task_direct_successor_enabled);
-    mpc_common_debug_log("\tyield mode=%d",               __omp_conf.task_yield_mode);
-    mpc_common_debug_log("\tyield fair min time (s.)=%lf",__omp_conf.task_yield_fair_min_time);
-    mpc_common_debug_log("\tpriority policy=%d",          __omp_conf.task_priority_policy);
-    mpc_common_debug_log("\tpropagation policy=%d",       __omp_conf.task_priority_propagation_policy);
-    mpc_common_debug_log("\tpropagation synchronousity=%d", __omp_conf.task_priority_propagation_synchronousity);
+    mpc_common_debug("\tmaximum tasks=%d",            __omp_conf.maximum_tasks);
+    mpc_common_debug("\tnew tasks depth=%d",          __omp_conf.pqueue_new_depth);
+    mpc_common_debug("\tuntied tasks depth=%d",       __omp_conf.pqueue_untied_depth);
+    mpc_common_debug("\tlarceny mode=%d",             __omp_conf.task_larceny_mode);
+    mpc_common_debug("\tsteal last stolen=%d",        __omp_conf.task_steal_last_stolen);
+    mpc_common_debug("\tsteal last thief=%d",         __omp_conf.task_steal_last_thief);
+    mpc_common_debug("\tdirect succesor=%d",          __omp_conf.task_direct_successor_enabled);
+    mpc_common_debug("\tyield mode=%d",               __omp_conf.task_yield_mode);
+    mpc_common_debug("\tyield fair min time (s.)=%lf",__omp_conf.task_yield_fair_min_time);
+    mpc_common_debug("\tpriority policy=%d",          __omp_conf.task_priority_policy);
+    mpc_common_debug("\tpropagation policy=%d",       __omp_conf.task_priority_propagation_policy);
+    mpc_common_debug("\tpropagation synchronousity=%d", __omp_conf.task_priority_propagation_synchronousity);
 #if MPC_OMP_TASK_COMPILE_LIST_TYPE
-    mpc_common_debug_log("\ttask list policy=%s",     __omp_conf.task_list_policy == MPC_OMP_TASK_LIST_POLICY_LIFO ? "lifo" : "fifo");
+    mpc_common_debug("\ttask list policy=%s",     __omp_conf.task_list_policy == MPC_OMP_TASK_LIST_POLICY_LIFO ? "lifo" : "fifo");
 #endif /* MPC_OMP_TASK_COMPILE_LIST_TYPE */
-    mpc_common_debug_log("\ttrace=%d (%s)",                       __omp_conf.task_trace, __omp_conf.task_trace_auto ? "auto" : "manual");
-    mpc_common_debug_log("\ttrace mask=%d",                       __omp_conf.task_trace_mask);
-    mpc_common_debug_log("\ttrace record recycler capacity=%d",   __omp_conf.task_trace_recycler_capacity);
-    mpc_common_debug_log("\tthread tasks cond. wait = %s (nhyperactive=%d)", \
+    mpc_common_debug("\ttrace=%d (%s)",                       __omp_conf.task_trace, __omp_conf.task_trace_auto ? "auto" : "manual");
+    mpc_common_debug("\ttrace mask=%d",                       __omp_conf.task_trace_mask);
+    mpc_common_debug("\ttrace record recycler capacity=%d",   __omp_conf.task_trace_recycler_capacity);
+    mpc_common_debug("\tthread tasks cond. wait = %s (nhyperactive=%d)", \
             __omp_conf.task_cond_wait_enabled ? "enabled" : "disabled", __omp_conf.task_cond_wait_nhyperactive);
-    mpc_common_debug_log("");
+    mpc_common_debug("");
 
 
-    mpc_common_debug_log("\tTasks ucontext");
+    mpc_common_debug("\tTasks ucontext");
 # if MPC_OMP_TASK_COMPILE_UCONTEXT
-    mpc_common_debug_log("\t\tCompiled=yes");
-    mpc_common_debug_log("\t\tEnabled=%s", MPC_OMP_TASK_UCONTEXT_ENABLED ? "yes" : "no");
+    mpc_common_debug("\t\tCompiled=yes");
+    mpc_common_debug("\t\tEnabled=%s", MPC_OMP_TASK_UCONTEXT_ENABLED ? "yes" : "no");
 # else /* MPC_OMP_TASK_COMPILE_UCONTEXT */
-    mpc_common_debug_log("\t\tCompiled=no");
+    mpc_common_debug("\t\tCompiled=no");
 # endif /* MPC_OMP_TASK_COMPILE_UCONTEXT */
-    mpc_common_debug_log("");
-    mpc_common_debug_log("\tOMP_SCHEDULE %d", OMP_SCHEDULE );
+    mpc_common_debug("");
+    mpc_common_debug("\tOMP_SCHEDULE %d", OMP_SCHEDULE );
 
     if ( __omp_conf.OMP_NUM_THREADS == 0 )
     {
-        mpc_common_debug_log("\tDefault #threads (OMP_NUM_THREADS)" );
+        mpc_common_debug("\tDefault #threads (OMP_NUM_THREADS)" );
     }
     else
     {
-        mpc_common_debug_log("\tOMP_NUM_THREADS %d", __omp_conf.OMP_NUM_THREADS );
+        mpc_common_debug("\tOMP_NUM_THREADS %d", __omp_conf.OMP_NUM_THREADS );
     }
 
-    mpc_common_debug_log("\tOMP_DYNAMIC %d", __omp_conf.OMP_DYNAMIC );
-    mpc_common_debug_log("\tOMP_NESTED %d", __omp_conf.OMP_NESTED );
+    mpc_common_debug("\tOMP_DYNAMIC %d", __omp_conf.OMP_DYNAMIC );
+    mpc_common_debug("\tOMP_NESTED %d", __omp_conf.OMP_NESTED );
 
     if ( __omp_conf.OMP_MICROVP_NUMBER == 0 )
     {
-        mpc_common_debug_log("\tDefault #microVPs (OMP_MICROVP_NUMBER)" );
+        mpc_common_debug("\tDefault #microVPs (OMP_MICROVP_NUMBER)" );
     }
     else
     {
-        mpc_common_debug_log("\t%d microVPs (OMP_MICROVP_NUMBER)",
+        mpc_common_debug("\t%d microVPs (OMP_MICROVP_NUMBER)",
                 __omp_conf.OMP_MICROVP_NUMBER );
     }
 
     switch ( OMP_AFFINITY )
     {
         case MPC_OMP_AFFINITY_COMPACT:
-            mpc_common_debug_log("\tAffinity COMPACT (fill logical cores first)" );
+            mpc_common_debug("\tAffinity COMPACT (fill logical cores first)" );
             break;
 
         case MPC_OMP_AFFINITY_SCATTER:
-            mpc_common_debug_log("\tAffinity SCATTER (spread over NUMA nodes)" );
+            mpc_common_debug("\tAffinity SCATTER (spread over NUMA nodes)" );
             break;
 
         case MPC_OMP_AFFINITY_BALANCED:
-            mpc_common_debug_log("\tAffinity BALANCED (fill physical cores first)" );
+            mpc_common_debug("\tAffinity BALANCED (fill physical cores first)" );
             break;
 
         default:
-            mpc_common_debug_log("\tAffinity Unknown" );
+            mpc_common_debug("\tAffinity Unknown" );
             break;
     }
 
     if ( OMP_TREE != NULL )
     {
         int i;
-        mpc_common_debug_log("\tOMP_TREE w/ depth:%d leaves:%d, arity:[%d",
+        mpc_common_debug("\tOMP_TREE w/ depth:%d leaves:%d, arity:[%d",
                 OMP_TREE_DEPTH, OMP_TREE_NB_LEAVES, OMP_TREE[0] );
 
         for ( i = 1; i < OMP_TREE_DEPTH; i++ )
         {
-            mpc_common_debug_log(", %d", OMP_TREE[i] );
+            mpc_common_debug(", %d", OMP_TREE[i] );
         }
 
-        mpc_common_debug_log("]" );
+        mpc_common_debug("]" );
     }
     else
     {
-        mpc_common_debug_log("\tOMP_TREE default" );
+        mpc_common_debug("\tOMP_TREE default" );
     }
 
     switch ( OMP_MODE )
     {
         case MPC_OMP_MODE_SIMPLE_MIXED:
-            mpc_common_debug_log("\tMode for hybrid MPI+OpenMP parallelism SIMPLE_MIXED" );
+            mpc_common_debug("\tMode for hybrid MPI+OpenMP parallelism SIMPLE_MIXED" );
             break;
 
         case MPC_OMP_MODE_OVERSUBSCRIBED_MIXED:
-            mpc_common_debug_log("\tMode for hybrid MPI+OpenMP parallelism OVERSUBSCRIBED_MIXED" );
+            mpc_common_debug("\tMode for hybrid MPI+OpenMP parallelism OVERSUBSCRIBED_MIXED" );
             break;
 
         case MPC_OMP_MODE_ALTERNATING:
-            mpc_common_debug_log("\tMode for hybrid MPI+OpenMP parallelism ALTERNATING" );
+            mpc_common_debug("\tMode for hybrid MPI+OpenMP parallelism ALTERNATING" );
             break;
 
         case MPC_OMP_MODE_FULLY_MIXED:
-            mpc_common_debug_log("\tMode for hybrid MPI+OpenMP parallelism FULLY_MIXED" );
+            mpc_common_debug("\tMode for hybrid MPI+OpenMP parallelism FULLY_MIXED" );
             break;
 
         default:
@@ -689,37 +689,37 @@ mpc_omp_display_env(int verbosity)
     }
 
 #if MPC_OMP_MALLOC_ON_NODE
-    mpc_common_debug_log("\tNUMA allocation for tree nodes" );
+    mpc_common_debug("\tNUMA allocation for tree nodes" );
 #endif
 #if MPC_OMP_COHERENCY_CHECKING
-    mpc_common_debug_log("\tCoherency check enabled" );
+    mpc_common_debug("\tCoherency check enabled" );
 #endif
 #if MPC_OMP_ALIGN
-    mpc_common_debug_log("\tStructure field alignement" );
+    mpc_common_debug("\tStructure field alignement" );
 #endif
 
     if ( __omp_conf.OMP_WARN_NESTED )
     {
-        mpc_common_debug_log("\tOMP_WARN_NESTED %d (breakpoint mpcomp_warn_nested)",
+        mpc_common_debug("\tOMP_WARN_NESTED %d (breakpoint mpcomp_warn_nested)",
                 __omp_conf.OMP_WARN_NESTED );
     }
     else
     {
-        mpc_common_debug_log("\tNo warning for nested parallelism" );
+        mpc_common_debug("\tNo warning for nested parallelism" );
     }
 
 #if MPC_OMP_MIC
-    mpc_common_debug_log("\tMIC optimizations on" );
+    mpc_common_debug("\tMIC optimizations on" );
 #endif
 #if OMPT_SUPPORT
-    mpc_common_debug_log("\tTool support %s", OMP_TOOL ? "enabled" : "disabled" );
+    mpc_common_debug("\tTool support %s", OMP_TOOL ? "enabled" : "disabled" );
 
     if ( OMP_TOOL_LIBRARIES )
     {
-        mpc_common_debug_log("\tTool paths: %s", OMP_TOOL_LIBRARIES );
+        mpc_common_debug("\tTool paths: %s", OMP_TOOL_LIBRARIES );
     }
 #else
-    mpc_common_debug_log("\tTool Support disabled" );
+    mpc_common_debug("\tTool Support disabled" );
 #endif
     TODO( "Add every env variables and make output more understandable" )
 }

@@ -37,6 +37,43 @@
 #include <sctk_alloc.h>
 #include <sctk_alloc.h>
 
+
+
+/***********************
+ * TRIMMING OF STRINGS *
+ ***********************/
+
+char * mpc_common_trim(char * path)
+{
+	/* From start */
+	char * ret = path;
+
+	while( (*ret == ' ' || *ret == '\t') && (*ret != '\0') )
+	{
+		ret++;
+	}
+
+	/* From end */
+	unsigned long len = strlen(ret);
+
+	if(len == 0)
+	{
+		return ret;
+	}
+
+	unsigned long  off = len - 1;
+
+	while( ( ret[off] == ' ' || ret[off] == '\t' || ret[off] == '\n' ) && (0 <= off) )
+	{
+		ret[off] = '\0';
+		off--;
+	}	
+
+	return ret;
+}
+
+
+
 /********************************** GLOBALS *********************************/
 
 static inline int _mpc_io_all_digits( char *str )

@@ -37,6 +37,9 @@
 
 #include "ethread_posix.h"
 
+#define MPC_MODULE "Threads/MXN"
+
+
 static volatile unsigned int sctk_nb_vp_initialized           = 1;
 mpc_common_spinlock_t        _mpc_thread_ethread_key_spinlock = MPC_COMMON_SPINLOCK_INITIALIZER;
 static _mpc_thread_ethread_virtual_processor_t **_mpc_thread_ethread_mxn_engine_vp_list = NULL;

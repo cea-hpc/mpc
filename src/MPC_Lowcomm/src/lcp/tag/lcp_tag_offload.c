@@ -44,6 +44,9 @@
 #include "mpc_common_debug.h"
 #include "mpc_common_compiler_def.h"
 
+#define MPC_MODULE "Lowcomm/LCP/TagOffload"
+
+
 /* ============================================== */
 /* Offload utils                                  */
 /* ============================================== */

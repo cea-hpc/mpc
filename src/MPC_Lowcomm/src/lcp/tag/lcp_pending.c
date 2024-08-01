@@ -29,6 +29,7 @@
 #include "lcp_pending.h"
 #include "uthash.h"
 
+#define MPC_MODULE "Lowcomm/LCP/Pending"
 
 /**
  * @brief Create a pending request.

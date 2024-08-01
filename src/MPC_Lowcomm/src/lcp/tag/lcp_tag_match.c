@@ -36,6 +36,8 @@
 #include <sctk_alloc.h>
 #include <uthash.h>
 
+#define MPC_MODULE "Lowcomm/LCP/TagMatch"
+
 void *lcp_search_umqueue(mpc_queue_head_t *umqs,
                          uint16_t comm_id, int32_t tag, int32_t tmask,
                          int32_t src, int32_t smask)

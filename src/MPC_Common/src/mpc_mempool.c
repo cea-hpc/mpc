@@ -6,6 +6,8 @@
 #include <stdint.h>
 #include <string.h>
 
+#define MPC_MODULE "Common/Mempool"
+
 #if MPC_USE_CK
 #include <ck_stack.h>
 #endif

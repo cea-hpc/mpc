@@ -33,6 +33,8 @@
 
 #include <sctk_alloc.h>
 
+#define MPC_MODULE "MPI/Errh"
+
 /************************************************************************/
 /* Storage for this whole file                                          */
 /************************************************************************/
@@ -411,8 +413,6 @@ int _mpc_mpi_handle_set_errhandler(sctk_handle id, sctk_handle_type type,
 	hctx->handler = errh;
 	errh->ref_count++;
 	mpc_common_spinlock_unlock(&errorhandlers_lock);
-
-	mpc_common_debug("SET %d at %p <= %p for %d", errh, hctx, hctx->handler, id);
 
 	return 0;
 }

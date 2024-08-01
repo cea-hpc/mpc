@@ -32,6 +32,8 @@
 #include <core/lcp_request.h>
 #include <core/lcp_prototypes.h>
 
+#define MPC_MODULE "Lowcomm/LCP/Eager"
+
 ssize_t lcp_send_eager_bcopy(lcp_request_t *req,
                          lcr_pack_callback_t pack,
                          uint8_t am_id)

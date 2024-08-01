@@ -37,6 +37,8 @@
 
 #include <string.h>
 
+#define MPC_MODULE "Lowcomm/Ofi/Request"
+
 /*****************
  * REQUEST CACHE *
  *****************/

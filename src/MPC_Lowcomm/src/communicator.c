@@ -50,6 +50,8 @@
 #include <mpc_thread.h>
 #endif
 
+#define MPC_MODULE "Lowcomm/Communicator"
+
 /*************************
 * COMMUNICATOR PRINTING *
 *************************/
@@ -715,7 +717,7 @@ void mpc_lowcomm_topo_comm_set(mpc_lowcomm_communicator_t comm, int root, mpc_ha
 	if(index != -1)
 	{
 #ifdef MPC_ENABLE_DEBUG_MESSAGES
-		mpc_common_debug_log("SET | TASK %d | UPDATE | ROOT %d -> INDEX %d | ADR %p", task_rank, root, index, hw_info);
+		mpc_common_debug("SET | TASK %d | UPDATE | ROOT %d -> INDEX %d | ADR %p", task_rank, root, index, hw_info);
 #endif
 		comm->topo_comms[task_rank].hw_infos[index] = hw_info;
 		return;
@@ -737,7 +739,7 @@ void mpc_lowcomm_topo_comm_set(mpc_lowcomm_communicator_t comm, int root, mpc_ha
 	}
 
 #ifdef MPC_ENABLE_DEBUG_MESSAGES
-	mpc_common_debug_log("SET | TASK %d | ROOT %d -> INDEX %d | ADR %p", task_rank, root, index, hw_info);
+	mpc_common_debug("SET | TASK %d | ROOT %d -> INDEX %d | ADR %p", task_rank, root, index, hw_info);
 #endif
 	comm->topo_comms[task_rank].roots[index]    = root;
 	comm->topo_comms[task_rank].hw_infos[index] = hw_info;

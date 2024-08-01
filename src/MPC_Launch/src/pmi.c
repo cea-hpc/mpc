@@ -33,6 +33,9 @@
 
 #include "mpc_launch.h"
 
+#define MPC_MODULE "Launch/PMI"
+
+
 #ifdef MPC_USE_PMIX
 	#include <pmix.h>
 	#define PMI_SUCCESS PMIX_SUCCESS

@@ -50,6 +50,7 @@
 #include "rdma/fi_domain.h"
 #include "rdma/fi_errno.h"
 
+#define MPC_MODULE "Lowcomm/Ofi"
 
 static inline char *__gen_rail_target_name(sctk_rail_info_t *rail, char *buff, int bufflen)
 {

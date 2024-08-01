@@ -32,6 +32,9 @@
 #include "mpc_lowcomm_types.h"
 #include "peer.h"
 
+
+#define MPC_MODULE "Lowcomm/Group"
+
 /*******************************
 * COMMUNICATORS AND PROCESSES *
 *******************************/

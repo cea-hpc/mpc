@@ -41,6 +41,8 @@
 
 #include "mpc_common_debug.h"
 
+#define MPC_MODULE "Lowcomm/LCP/Recv"
+
 lcp_status_ptr_t lcp_tag_recv_nb(lcp_manager_h mngr, lcp_task_h task, void *buffer,
                                  size_t count, lcp_tag_info_t *tag_info, int32_t src_mask,
                                  int32_t tag_mask, const lcp_request_param_t *param)

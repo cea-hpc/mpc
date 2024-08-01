@@ -89,6 +89,9 @@
     #include "mpcomp_core.h"
 #endif
 
+
+#define MPC_MODULE "Threads/Threads"
+
 /***************
 * LOCAL TYPES *
 ***************/

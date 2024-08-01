@@ -61,6 +61,8 @@
 #include "rail.h"
 #include <lcr/lcr_component.h>
 
+#define MPC_MODULE "Lowcomm/Shm"
+
 /*************************
  * FRAGMENTED OPERATIONS *
  *************************/

@@ -1067,7 +1067,7 @@ _mpc_omp_places_env_variable_parsing( const int nb_mvps )
 		tmp = env_override;
 	}
 
-	mpc_common_debug_log("OMP_PLACES = <%s>\n", tmp );
+	mpc_common_debug("OMP_PLACES = <%s>\n", tmp );
 	char *prev_env = strdup( tmp );
 	string = prev_env;
 	char *named_str = __places_is_named_places( prev_env, string, &error );

@@ -63,6 +63,8 @@
 #include "mpc_lowcomm_workshare.h"
 #include <mpc_lowcomm_datatypes.h>
 
+#define MPC_MODULE "MPI/CommLib"
+
 sctk_Op_f sctk_get_common_function(mpc_lowcomm_datatype_t datatype, sctk_Op op);
 
 

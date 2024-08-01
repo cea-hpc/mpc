@@ -51,6 +51,8 @@
 #include <string.h>
 #include <unistd.h>
 
+#define MPC_MODULE "Lowcomm/Ofi/Domain"
+
 
 int _mpc_ofi_domain_buffer_init(struct _mpc_ofi_domain_buffer_t * buff,
                                struct _mpc_ofi_domain_t * domain,

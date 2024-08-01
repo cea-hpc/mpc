@@ -50,6 +50,10 @@
 #include <string.h>
 #include <unistd.h>
 
+
+#define MPC_MODULE "Topology/Topology"
+
+
 /******************************
  * MPC TOPOLOGY CONFIGURATION *
  ******************************/
@@ -353,7 +357,7 @@ void _mpc_topology_apply_mpc_process_constraints(hwloc_topology_t target_topolog
 			}
 			else if ( requested_processor_per_process < processor_per_process )
 			{
-				mpc_common_debug_log("Process %d does not use all CPUs (%d/%d)",
+				mpc_common_debug("Process %d does not use all CPUs (%d/%d)",
 							 mpc_common_get_process_rank(),
 							 requested_processor_per_process, processor_per_process );
 
@@ -1595,7 +1599,7 @@ void _mpc_topology_nvdimm_detection(hwloc_topology_t topology)
 		{
 			if(strcmp(current->subtype, "NVDIMM") == 0)
 			{
-				mpc_common_debug_log("<Topology> %s Found ! (OS Device #%d)\n", current->subtype, current->logical_index);
+				mpc_common_debug("<Topology> %s Found ! (OS Device #%d)\n", current->subtype, current->logical_index);
 				++__mpc_module_avail_nvdimm;
 			}
 		}

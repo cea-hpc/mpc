@@ -422,6 +422,7 @@ Informations:
 
 Debugger:
 	--dbg=<debugger_name> to use a debugger
+	-f, --filter                    Select log to be printed as comma separated list over modules, Files (file(xx)) and Functions (func(xx))
 EOF
 
 if test "x$MPC_HAVE_DMTCP" = "xyes"; then
@@ -616,7 +617,15 @@ for arg in "$@" ; do
 				--mpmd=*)
 					MPMD="true"
 					MPMD_PROC_NUM="$(echo "A$arg" | sed -e 's/A--mpmd=//g')"
-          echo "WARNING: The option --mpmd is set, --task-nb / -n is ignored" >&2
+					echo "WARNING: The option --mpmd is set, --task-nb / -n is ignored" >&2
+					;;
+				--filter=*)
+					MPC_LOG="$(echo "A$arg" | sed -e 's/A--filter=//g')"
+					export MPC_LOG 
+					;;
+				-f=*)
+					MPC_LOG="$(echo "A$arg" | sed -e 's/A-f=//g')"
+					export MPC_LOG
 					;;
 				--config=* | --profiles=*)
 					#Already processed in a previous loop on arguments, but need to capture them otherwise
@@ -928,7 +937,11 @@ export MPMD_COMMAND
 export MPMD_PROC_NUM
 export MPMD_LEN
 export LAUNCHED_WITH_MPCRUN=1
-export IS_STDERR_TTY
+
+if test -t 2; then
+	export IS_STDERR_TTY=1
+fi
+
 test -n "$GDB_LIBTHREAD_DB" && export GDB_LIBTHREAD_DB
 #########################################
 # Trap SIGINT to kill all process Group #

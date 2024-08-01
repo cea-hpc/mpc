@@ -59,6 +59,7 @@
 
 //#define MONITOR_DEBUG
 
+#define MPC_MODULE "Lowcomm/Monitor/cplane"
 
 static volatile int __monitor_running = 0;
 

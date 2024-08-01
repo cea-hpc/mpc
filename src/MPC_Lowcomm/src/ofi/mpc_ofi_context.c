@@ -46,6 +46,8 @@
 
 #include <rdma/fabric.h>
 
+#define MPC_MODULE "Lowcomm/Ofi/Context"
+
 
 int _mpc_ofi_context_init(struct _mpc_ofi_context_t *ctx,
                         char * provider,

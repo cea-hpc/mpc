@@ -11,6 +11,9 @@
 #include <unistd.h>
 #include <sys/types.h>
 
+#define MPC_MODULE "Launch/SHM"
+
+
 /*********************
 * PMI DATA EXCHANGE *
 *********************/

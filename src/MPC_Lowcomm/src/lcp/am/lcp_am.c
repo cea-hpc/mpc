@@ -42,6 +42,8 @@
 #include <rndv/lcp_rndv.h>
 #include "mpc_common_debug.h"
 
+#define MPC_MODULE "Lowcomm/LCP/Am"
+
 /* ============================================== */
 /* Packing                                        */
 /* ============================================== */

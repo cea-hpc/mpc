@@ -39,6 +39,8 @@
 
 #include <tag/lcp_tag_match.h>
 #include <tag/lcp_tag_offload.h>
+#define MPC_MODULE "Lowcomm/LCP/Probe"
+
 
 int lcp_tag_probe_nb(lcp_manager_h mngr, lcp_task_h task, const int src,
                      const int tag, const uint64_t comm,

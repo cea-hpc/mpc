@@ -29,6 +29,7 @@
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <string.h>
 #include <netdb.h>
 #include <mpc_config.h>
 
@@ -63,6 +64,8 @@
 	#define MPC_COLOR_GREEN_CHAR MPC_COLOR_ESC"32m"
 	#define MPC_COLOR_YELLOW_CHAR MPC_COLOR_ESC"33m"
 	#define MPC_COLOR_VIOLET_CHAR MPC_COLOR_ESC"35m"
+	#define MPC_COLOR_GRAY_CHAR MPC_COLOR_ESC"1;30m"
+
 
 #else
 
@@ -162,6 +165,13 @@ static inline uint64_t mpc_common_hash_string(const char * string)
 
 	return ret;
 }
+
+/***********************
+ * TRIMMING OF STRINGS *
+ ***********************/
+
+char * mpc_common_trim(char * path);
+
 
 /****************************
  * ROUND TO NEXT POWER OF 2 *

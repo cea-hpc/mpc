@@ -51,6 +51,9 @@
 #include "mpc_launch.h"
 #include "main.h"
 
+
+#define MPC_MODULE "Launch/Launch"
+
 #if defined(MPC_ENABLE_DEBUG_MESSAGES)
 #define SCTK_DEBUG_MODE    " Debug Messages Enabled"
 #else
@@ -157,6 +160,7 @@ static inline void __set_thread_engine(void)
 
 static void __arg_set_verbosity(char *arg)
 {
+
 	int tmp = atoi(arg);
 
 	if( (0 <= tmp) && (mpc_common_get_flags()->verbosity < tmp) )
@@ -281,6 +285,9 @@ static inline int __parse_arg_eq(char *arg,
 
 static inline void __parse_argument(char *passed_arg)
 {
+
+	mpc_common_debug("mpirun argument: %s", passed_arg);
+
 	/* Boolean flags */
 	SET_FLAG_BOOLEAN("smt", enable_smt_capabilities);
 	SET_FLAG_BOOLEAN("graphic-placement", enable_topology_graphic_placement);

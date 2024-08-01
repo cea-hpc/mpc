@@ -113,7 +113,7 @@ def split_mpmd(input_array):
 
 class MpcConfig:
 	def _populate_default_config(self):
-		self._conf["MPCFRAMEWORK_LAUNCH_VERBOSITY"] = 0
+		self._conf["MPCFRAMEWORK_LAUNCH_DEBUG_VERBOSITY"] = 0
 		self._conf["MPCFRAMEWORK_LAUNCH_AUTOKILL"] = 0
 		self._conf["MPCFRAMEWORK_LAUNCH_MPCRUN_ASLR"] = True
 		self._conf["MPCFRAMEWORK_LAUNCH_MPCRUN_PROCESS"] = 1
@@ -127,9 +127,11 @@ class MpcConfig:
 		self._conf["MPCFRAMEWORK_LAUNCH_APPCOUNT"] = 0
 		self._conf["MPCFRAMEWORK_LOWCOMM_NETWORKING_CLI_DEFAULT"] = "tcp"
 
+		# We also rely on environ as we may need this information
+		# early when running MPC (before loading arguments)
 		if os.isatty(sys.stderr.fileno()):
 			self._conf["MPIRUN_IS_RUNNING_IN_A_TTY"] = True
-
+			os.environ["IS_STDERR_TTY"] = "1"
 
 	def _load_from_mpc(self):
 		cmd = [MPC_BIN_DIR + "/mpc_print_config", "--conf", "conf", "mpcframework.launch", "mpcframework.lowcomm.networking.cli.default"]
@@ -197,7 +199,9 @@ class MpcConfig:
 		# Network
 		parser.add_argument('-net', '--net', '--network', type=unicode, help="Define Network mode")
 
-		# Launcher
+		# Log filter
+		parser.add_argument('-f', '--filter', type=unicode, help="Log filters as comma separated list over modules, Files (file(xx)) and Functions (func(xx))")
+
 		parser.add_argument('-l', '--launcher', type=unicode, help="Define launcher")
 		parser.add_argument('--opt', type=unicode, help="Launcher specific options")
 		parser.add_argument('-k', '--autokill', type=int, help="Timeout in second before killing the job")
@@ -229,6 +233,10 @@ class MpcConfig:
 	def config_for_args(self, arguments):
 		args, command = self.__parse_args(arguments)
 		new_conf = copy.deepcopy(self._conf)
+
+		if args.filter:
+			# Set log filter in Env as it needs to be processed early
+			os.environ["MPC_LOG"] = args.filter
 
 
 		ARG_MAP_TO_CONFIG = {

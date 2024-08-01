@@ -709,7 +709,7 @@ static inline int ___collectives_send_type(const void *buffer, int count, MPI_Da
     MPI_Comm_group(comm, &local_group);
     MPI_Comm_group(MPI_COMM_WORLD, &global_group);
     MPI_Group_translate_ranks(local_group, 1, &dest, global_group, &peer_global_rank);
-    mpc_common_debug_log("%sSEND | % 4d (% 4d) -> % 4d (% 4d) (count=%d) : %p | COMM %p", __debug_indentation, rank, global_rank, dest, peer_global_rank, count, buffer, comm);
+    mpc_common_debug("%sSEND | % 4d (% 4d) -> % 4d (% 4d) (count=%d) : %p | COMM %p", __debug_indentation, rank, global_rank, dest, peer_global_rank, count, buffer, comm);
   }
 #endif
 
@@ -756,7 +756,7 @@ static inline int ___collectives_recv_type(void *buffer, int count, MPI_Datatype
     MPI_Comm_group(comm, &local_group);
     MPI_Comm_group(MPI_COMM_WORLD, &global_group);
     MPI_Group_translate_ranks(local_group, 1, &source, global_group, &peer_global_rank);
-    mpc_common_debug_log("%sRECV | % 4d (% 4d) <- % 4d (% 4d) (count=%d) : %p | COMM %p", __debug_indentation, rank, global_rank, source, peer_global_rank, count, buffer, comm);
+    mpc_common_debug("%sRECV | % 4d (% 4d) <- % 4d (% 4d) (count=%d) : %p | COMM %p", __debug_indentation, rank, global_rank, source, peer_global_rank, count, buffer, comm);
   }
 #endif
 
@@ -790,7 +790,7 @@ static inline int ___collectives_barrier_type(MPC_COLL_TYPE coll_type, NBC_Sched
   if(coll_type != MPC_COLL_TYPE_COUNT) {
     int rank = -1;
     _mpc_cl_comm_rank(MPI_COMM_WORLD, &rank);
-    mpc_common_debug_log("%sBARR |      % 4d", __debug_indentation, rank);
+    mpc_common_debug("%sBARR |      % 4d", __debug_indentation, rank);
   }
 #endif
 
@@ -831,7 +831,7 @@ static inline int ___collectives_op_type( __UNUSED__ void *res_buf, const void* 
   if(coll_type != MPC_COLL_TYPE_COUNT) {
     int rank = -1;
     _mpc_cl_comm_rank(MPI_COMM_WORLD, &rank);
-    mpc_common_debug_log("%sOP   |      % 4d", __debug_indentation, rank);
+    mpc_common_debug("%sOP   |      % 4d", __debug_indentation, rank);
   }
 #endif
 
@@ -884,7 +884,7 @@ static inline int ___collectives_copy_type(const void *src, int srccount, MPI_Da
     _mpc_cl_comm_rank(comm, &rank);
     int global_rank = -1;
     _mpc_cl_comm_rank(MPI_COMM_WORLD, &global_rank);
-    mpc_common_debug_log("%sCOPY | % 4d (% 4d) : %p (COUNT %d) -> %p (COUNT %d)", __debug_indentation, rank, global_rank, src, srccount, tgt, tgtcount);
+    mpc_common_debug("%sCOPY | % 4d (% 4d) : %p (COUNT %d) -> %p (COUNT %d)", __debug_indentation, rank, global_rank, src, srccount, tgt, tgtcount);
   }
 #endif
 
@@ -927,7 +927,7 @@ static inline int ___collectives_move_type(const void *src, int srccount, MPI_Da
     _mpc_cl_comm_rank(comm, &rank);
     int global_rank = -1;
     _mpc_cl_comm_rank(MPI_COMM_WORLD, &global_rank);
-    mpc_common_debug_log("%sMOVE | % 4d (% 4d) : %p (COUNT %d) -> %p (COUNT %d)", __debug_indentation, rank, global_rank, src, srccount, tgt, tgtcount);
+    mpc_common_debug("%sMOVE | % 4d (% 4d) : %p (COUNT %d) -> %p (COUNT %d)", __debug_indentation, rank, global_rank, src, srccount, tgt, tgtcount);
   }
 #endif
 
@@ -985,7 +985,7 @@ static inline int ___collectives_create_hardware_comm_unguided(MPI_Comm comm, in
 #ifdef MPC_COLL_EXTRA_DEBUG_ENABLED
       _mpc_cl_comm_rank(hwcomm[level_num + 1], &tmp_rank);
       _mpc_cl_comm_size(hwcomm[level_num + 1], &tmp_size);
-      mpc_common_debug_log("%sRANK %d / %d | SPLIT COMM | SUBRANK %d / %d", __debug_indentation, rank, size, tmp_rank, tmp_size);
+      mpc_common_debug("%sRANK %d / %d | SPLIT COMM | SUBRANK %d / %d", __debug_indentation, rank, size, tmp_rank, tmp_size);
 #endif
 
       level_num++;
@@ -1053,7 +1053,7 @@ static inline int ___collectives_create_master_hardware_comm_unguided(int vrank,
     if(color == 0) {
       _mpc_cl_comm_rank(rootcomm[i], &tmp_rank);
       _mpc_cl_comm_size(rootcomm[i], &tmp_size);
-      mpc_common_debug_log("%sRANK %d / %d | SPLIT ROOT | SUBRANK %d / %d", __debug_indentation, rank, size, tmp_rank, tmp_size);
+      mpc_common_debug("%sRANK %d / %d | SPLIT ROOT | SUBRANK %d / %d", __debug_indentation, rank, size, tmp_rank, tmp_size);
     }
 #endif
   }
@@ -1080,7 +1080,7 @@ static inline int ___collectives_create_master_hardware_comm_unguided(int vrank,
 static inline int ___collectives_create_childs_counts(MPI_Comm comm, Sched_info *info) {
 
 #ifdef MPC_COLL_EXTRA_DEBUG_ENABLED
-  mpc_common_debug_log("%sTOPO COMM INIT CHILDS COUNT", __debug_indentation);
+  mpc_common_debug("%sTOPO COMM INIT CHILDS COUNT", __debug_indentation);
   strcat(__debug_indentation, "\t");
 #endif
 
@@ -1111,7 +1111,7 @@ static inline int ___collectives_create_childs_counts(MPI_Comm comm, Sched_info 
 
       info->hardware_info_ptr->send_data_count[i] = data_count;
 #ifdef MPC_COLL_EXTRA_DEBUG_ENABLED
-      mpc_common_debug_log("%sRANK %d | SEND DATA COUNT [%d] = %d", __debug_indentation, rank, i, data_count);
+      mpc_common_debug("%sRANK %d | SEND DATA COUNT [%d] = %d", __debug_indentation, rank, i, data_count);
 #endif
 
       MPI_Comm master_comm = info->hardware_info_ptr->rootcomm[i];
@@ -1147,7 +1147,7 @@ static inline int ___collectives_create_childs_counts(MPI_Comm comm, Sched_info 
         for(j = 1; j < size_master; j++) {
           sprintf(&(dbg_str[strlen(dbg_str)]), ", %d", info->hardware_info_ptr->childs_data_count[i][j]);
         }
-        mpc_common_debug_log("%s%s", __debug_indentation, dbg_str);
+        mpc_common_debug("%s%s", __debug_indentation, dbg_str);
 #endif
 
       } else {
@@ -1177,7 +1177,7 @@ static inline int ___collectives_create_childs_counts(MPI_Comm comm, Sched_info 
 static inline int ___collectives_create_swap_array(MPI_Comm comm, Sched_info *info) {
 
 #ifdef MPC_COLL_EXTRA_DEBUG_ENABLED
-  mpc_common_debug_log("%sTOPO COMM INIT SWAP ARRAY", __debug_indentation);
+  mpc_common_debug("%sTOPO COMM INIT SWAP ARRAY", __debug_indentation);
   strcat(__debug_indentation, "\t");
 #endif
 
@@ -1222,7 +1222,7 @@ static inline int ___collectives_create_swap_array(MPI_Comm comm, Sched_info *in
     sprintf(&(dbg_str[strlen(dbg_str)]), ", %d", info->hardware_info_ptr->reverse_swap_array[j]);
   }
 
-  mpc_common_debug_log("%s%s]", __debug_indentation, dbg_str);
+  mpc_common_debug("%s%s]", __debug_indentation, dbg_str);
 
 
   __debug_indentation[strlen(__debug_indentation) - 1] = '\0';
@@ -1242,7 +1242,7 @@ static inline int ___collectives_create_swap_array(MPI_Comm comm, Sched_info *in
 static inline int ___collectives_topo_comm_init(MPI_Comm comm, int root, int max_level, Sched_info *info) {
 
 #ifdef MPC_COLL_EXTRA_DEBUG_ENABLED
-  mpc_common_debug_log("%sTOPO COMM INIT", __debug_indentation);
+  mpc_common_debug("%sTOPO COMM INIT", __debug_indentation);
   strcat(__debug_indentation, "\t");
 #endif
 
@@ -1521,7 +1521,7 @@ int ___collectives_bcast_switch(void *buffer, int count, MPI_Datatype datatype, 
   {
     int global_rank = -1;
     _mpc_cl_comm_rank(MPI_COMM_WORLD, &global_rank);
-    mpc_common_debug_log("%sBCAST | %d / %d (%d)", __debug_indentation, rank, size, global_rank);
+    mpc_common_debug("%sBCAST | %d / %d (%d)", __debug_indentation, rank, size, global_rank);
     strcat(__debug_indentation, "\t");
   }
 #endif
@@ -2083,7 +2083,7 @@ int ___collectives_reduce_switch(const void *sendbuf, void* recvbuf, int count, 
   {
     int global_rank = -1;
     _mpc_cl_comm_rank(MPI_COMM_WORLD, &global_rank);
-    mpc_common_debug_log("%sREDUCE | %d / %d (%d)", __debug_indentation, rank, size, global_rank);
+    mpc_common_debug("%sREDUCE | %d / %d (%d)", __debug_indentation, rank, size, global_rank);
     strncat(__debug_indentation,"\t", DBG_INDENT_LEN - 1);
   }
 #endif
@@ -2824,7 +2824,7 @@ int ___collectives_allreduce_switch(const void *sendbuf, void* recvbuf, int coun
   {
     int global_rank = -1;
     _mpc_cl_comm_rank(MPI_COMM_WORLD, &global_rank);
-    mpc_common_debug_log("%sALLREDUCE | %d / %d (%d)", __debug_indentation, rank, size, global_rank);
+    mpc_common_debug("%sALLREDUCE | %d / %d (%d)", __debug_indentation, rank, size, global_rank);
     strncat(__debug_indentation, "\t", DBG_INDENT_LEN - 1);
   }
 #endif
@@ -3937,7 +3937,7 @@ int ___collectives_scatter_switch(const void *sendbuf, int sendcount, MPI_Dataty
   {
     int global_rank = -1;
     _mpc_cl_comm_rank(MPI_COMM_WORLD, &global_rank);
-    mpc_common_debug_log("%sSCATTER | %d / %d (%d)", __debug_indentation, rank, size, global_rank);
+    mpc_common_debug("%sSCATTER | %d / %d (%d)", __debug_indentation, rank, size, global_rank);
     strncat(__debug_indentation, "\t", DBG_INDENT_LEN - 1);
   }
 #endif
@@ -4637,7 +4637,7 @@ int ___collectives_scatterv_switch(const void *sendbuf, const int *sendcounts, c
     _mpc_cl_comm_size(comm, &size);
     int global_rank = -1;
     _mpc_cl_comm_rank(MPI_COMM_WORLD, &global_rank);
-    mpc_common_debug_log("%sSCATTERV | %d / %d (%d)", __debug_indentation, rank, size, global_rank);
+    mpc_common_debug("%sSCATTERV | %d / %d (%d)", __debug_indentation, rank, size, global_rank);
     strncat(__debug_indentation, "\t", DBG_INDENT_LEN - 1);
   }
 #endif
@@ -5021,7 +5021,7 @@ int ___collectives_gather_switch(const void *sendbuf, int sendcount, MPI_Datatyp
   {
     int global_rank = -1;
     _mpc_cl_comm_rank(MPI_COMM_WORLD, &global_rank);
-    mpc_common_debug_log("%sGATHER | %d / %d (%d)", __debug_indentation, rank, size, global_rank);
+    mpc_common_debug("%sGATHER | %d / %d (%d)", __debug_indentation, rank, size, global_rank);
     strncat(__debug_indentation, "\t", DBG_INDENT_LEN - 1);
   }
 #endif
@@ -5734,7 +5734,7 @@ int ___collectives_gatherv_switch(const void *sendbuf, int sendcount, MPI_Dataty
     _mpc_cl_comm_size(comm, &size);
     int global_rank = -1;
     _mpc_cl_comm_rank(MPI_COMM_WORLD, &global_rank);
-    mpc_common_debug_log("%sGATHERV | %d (%d)", __debug_indentation, rank, size, global_rank);
+    mpc_common_debug("%sGATHERV | %d (%d)", __debug_indentation, rank, size, global_rank);
     strncat(__debug_indentation,"\t", DBG_INDENT_LEN - 1);
   }
 #endif
@@ -6090,7 +6090,7 @@ int ___collectives_reduce_scatter_block_switch(const void *sendbuf, void* recvbu
     _mpc_cl_comm_size(comm, &size);
     int global_rank = -1;
     _mpc_cl_comm_rank(MPI_COMM_WORLD, &global_rank);
-    mpc_common_debug_log("%sREDUCE SCATTER BLOCK | %d / %d (%d)", __debug_indentation, rank, size, global_rank);
+    mpc_common_debug("%sREDUCE SCATTER BLOCK | %d / %d (%d)", __debug_indentation, rank, size, global_rank);
     strncat(__debug_indentation, "\t", DBG_INDENT_LEN - 1);
   }
 #endif
@@ -6574,7 +6574,7 @@ int ___collectives_reduce_scatter_switch(const void *sendbuf, void* recvbuf, con
     _mpc_cl_comm_size(comm, &size);
     int global_rank = -1;
     _mpc_cl_comm_rank(MPI_COMM_WORLD, &global_rank);
-    mpc_common_debug_log("%sREDUCE SCATTER | %d / %d (%d)", __debug_indentation, rank, size, global_rank);
+    mpc_common_debug("%sREDUCE SCATTER | %d / %d (%d)", __debug_indentation, rank, size, global_rank);
     strncat(__debug_indentation, "\t", DBG_INDENT_LEN - 1);
   }
 #endif
@@ -7001,7 +7001,7 @@ int ___collectives_allgather_switch(const void *sendbuf, int sendcount, MPI_Data
   {
     int global_rank = -1;
     _mpc_cl_comm_rank(MPI_COMM_WORLD, &global_rank);
-    mpc_common_debug_log("%sALLGATHER | %d / %d (%d)", __debug_indentation, rank, size, global_rank);
+    mpc_common_debug("%sALLGATHER | %d / %d (%d)", __debug_indentation, rank, size, global_rank);
     strncat(__debug_indentation, "\t", DBG_INDENT_LEN - 1);
   }
 #endif
@@ -7872,7 +7872,7 @@ int ___collectives_allgatherv_switch(const void *sendbuf, int sendcount, MPI_Dat
     _mpc_cl_comm_size(comm, &size);
     int global_rank = -1;
     _mpc_cl_comm_rank(MPI_COMM_WORLD, &global_rank);
-    mpc_common_debug_log("%sALLGATHERV | %d / %d (%d)", __debug_indentation, rank, size, global_rank);
+    mpc_common_debug("%sALLGATHERV | %d / %d (%d)", __debug_indentation, rank, size, global_rank);
     strncat(__debug_indentation, "\t", DBG_INDENT_LEN - 1);
   }
 #endif
@@ -8263,7 +8263,7 @@ int ___collectives_alltoall_switch(const void *sendbuf, int sendcount, MPI_Datat
     _mpc_cl_comm_size(comm, &size);
     int global_rank = -1;
     _mpc_cl_comm_rank(MPI_COMM_WORLD, &global_rank);
-    mpc_common_debug_log("%sALLTOALL | %d / %d (%d)", __debug_indentation, rank, size, global_rank);
+    mpc_common_debug("%sALLTOALL | %d / %d (%d)", __debug_indentation, rank, size, global_rank);
     strncat(__debug_indentation, "\t", DBG_INDENT_LEN - 1);
   }
 #endif
@@ -9872,7 +9872,7 @@ int ___collectives_alltoallv_switch(const void *sendbuf, const int *sendcounts, 
     _mpc_cl_comm_size(comm, &size);
     int global_rank = -1;
     _mpc_cl_comm_rank(MPI_COMM_WORLD, &global_rank);
-    mpc_common_debug_log("%sALLTOALLV | %d / %d (%d)", __debug_indentation, rank, size, global_rank);
+    mpc_common_debug("%sALLTOALLV | %d / %d (%d)", __debug_indentation, rank, size, global_rank);
     strncat(__debug_indentation, "\t", DBG_INDENT_LEN - 1);
   }
 #endif
@@ -10437,7 +10437,7 @@ int ___collectives_alltoallw_switch(const void *sendbuf, const int *sendcounts, 
     _mpc_cl_comm_size(comm, &size);
     int global_rank = -1;
     _mpc_cl_comm_rank(MPI_COMM_WORLD, &global_rank);
-    mpc_common_debug_log("%sALLTOALLW | %d / %d (%d)", __debug_indentation, rank, size, global_rank);
+    mpc_common_debug("%sALLTOALLW | %d / %d (%d)", __debug_indentation, rank, size, global_rank);
     strncat(__debug_indentation, "\t", DBG_INDENT_LEN - 1);
   }
 #endif
@@ -10947,7 +10947,7 @@ int ___collectives_scan_switch (const void *sendbuf, void *recvbuf, int count, M
     _mpc_cl_comm_size(comm, &size);
     int global_rank = -1;
     _mpc_cl_comm_rank(MPI_COMM_WORLD, &global_rank);
-    mpc_common_debug_log("%sSCAN | %d / %d (%d)", __debug_indentation, rank, size, global_rank);
+    mpc_common_debug("%sSCAN | %d / %d (%d)", __debug_indentation, rank, size, global_rank);
     strncat(__debug_indentation, "\t", DBG_INDENT_LEN - 1);
   }
 #endif
@@ -11354,7 +11354,7 @@ int ___collectives_exscan_switch (const void *sendbuf, void *recvbuf, int count,
     _mpc_cl_comm_size(comm, &size);
     int global_rank = -1;
     _mpc_cl_comm_rank(MPI_COMM_WORLD, &global_rank);
-    mpc_common_debug_log("%sEXSCAN | %d / %d (%d)", __debug_indentation, rank, size, global_rank);
+    mpc_common_debug("%sEXSCAN | %d / %d (%d)", __debug_indentation, rank, size, global_rank);
   }
 #endif
 
@@ -11729,7 +11729,7 @@ int ___collectives_barrier_switch (MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_S
     _mpc_cl_comm_size(comm, &size);
     int global_rank = -1;
     _mpc_cl_comm_rank(MPI_COMM_WORLD, &global_rank);
-    mpc_common_debug_log("%sBARRIER | %d / %d (%d)", __debug_indentation, rank, size, global_rank);
+    mpc_common_debug("%sBARRIER | %d / %d (%d)", __debug_indentation, rank, size, global_rank);
     strncat(__debug_indentation, "\t", DBG_INDENT_LEN - 1);
   }
 #endif
