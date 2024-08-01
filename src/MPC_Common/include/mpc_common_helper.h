@@ -88,6 +88,15 @@
 	#define MPC_COLOR_WHITE_BOLD(txt)      #txt
 	#define MPC_COLOR_CYAN_BOLD(txt)       #txt
 
+
+	#define MPC_COLOR_DEFAULT_CHAR ""
+	#define MPC_COLOR_RED_CHAR ""
+	#define MPC_COLOR_GREEN_CHAR ""
+	#define MPC_COLOR_YELLOW_CHAR ""
+	#define MPC_COLOR_VIOLET_CHAR ""
+	#define MPC_COLOR_GRAY_CHAR ""
+
+
 #endif /* SHELL_COLORS */
 
 
