@@ -4,23 +4,7 @@ Module MPC_Lowcomm
 SUMMARY:
 --------
 
-MPC communication module. It is a thread-safe, task-aware communication layer to
-exchange data between threads or processes. The module provides:
-- Point-to-point (P2P) communications: support for MPI tag-matching and
-  communicators.
-- Resource management: automatic discovery of available network interfaces (also
-  based on user input).
-
-Architecture with two layers:
-- top layer for protocols (LCP): message passing and active message
-  communication models supported, eager, rendez-vous, data striping protocols,
-  memory registration,...
-- lower layer for transports (Rail): abstract interface for underlying specific
-  transport such as TCP, OFI or Portals.
-
-Software designs are based on the Active Message paradigm: upon message
-reception and identifier, the corresponding registered handler is called and
-executed.
+Here are described the internal of the Lowcomm module.
 
 CONTENTS:
 ---------
@@ -28,38 +12,60 @@ CONTENTS:
 * **lcp/**        : LowComm Protocol network layer.
 * **lcr/**        : LowComm Rail network layer.
 * **cplane/**     : TCP-based network backbone for inter-job communication.
-* **tbsm/**       : Thread-Based Shared Memory driver to handle inter-task network layer.
-* **shm/**        : SHared Memory driver to handle intra-node communications.
+* **tbsm/**       : Driver sources to handle inter-task network layer (Thread-Based Shared Memory).
+* **shm/**        : driver sources to handle intra-node communications (SHared Memory).
 * **tcp/**        : Driver sources to handle TCP network layer.
-* **portals/**    : Driver sources to handle Portals network layer.
+* **ptl/**        : Driver sources to handle Portals network layer.
 * **ofi/**        : Driver sources to handle OpenFabric network layer
 
 COMPONENTS:
 -----------
 
-### Rail: transport layer
+### LowComm Protocol Layer
 
-TODO: general discussion on the rail abstraction.
+LCP is responsible for:
 
-#### Send mode
+**Resource Initialization**
 
-TODO: describe bcopy and zcopy semantics
+The Resource Initialization process in the LowComm Protocol Layer automates the
+discovery of network resources. It scans the network environment to identify
+hardware and software resources that meet application requirements, driven by
+user input. This process selects appropriate resources based on user-defined
+criteria, simplifying setup and optimizing resource use.  
 
+**Connection Management**
 
+Connection Management facilitates robust communication across networked
+environments. It handles the creation of endpoints necessary for establishing
+communication links between nodes. This component also manages multirail
+configurations where multiple network interfaces are used to increase bandwidth
+(and improve fault tolerance, TOBEIMPLEMENTED). It includes the negotiation and
+adjustment of connection parameters to maintain stable communication.  
 
-### LCP: LowComm Protocol Layer
+**Communication Protocols**
 
-LCP is reponsible for:
-- Resource initialization: automatically discover available network resources
-  and instanciation based on user input.
-- Connection management: endpoint creation, communication establishement,
-  multirail.
-- Communication protocols: optimized datapath for different communication
-  configuration (intra-proc, intra-node, inter-node).
-- Communication models: message passing and active message.
-- Memory management: register/unregister memory for RDMA communications.
+This function optimizes data paths for transferring information across various
+configurations, such as intra-process, intra-node, and inter-node
+communications. It adjusts to the network topology and communication hardware
+characteristics to ensure efficient data transmission.  
 
-Next, we introduce important definition and then explain implementation details.
+**Communication Progression**
+
+Communication Progression manages the stages and transitions of communication
+activities, ensuring the progression of messages within the infrastructure. 
+
+**Communication Models**
+
+The layer supports various communication models, including Message Passing and
+Remote Memory Access (RMA). Message Passing is suited for general
+communications, while RMA allows direct memory access on remote nodes,
+beneficial for high-performance computing.
+
+**Memory Management**
+
+Memory Management involves the registration and deregistration of memory for
+Remote Direct Memory Access (RDMA) communications. It allocates and manages
+memory across communication processes.
 
 #### Definitions
 
