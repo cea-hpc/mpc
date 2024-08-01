@@ -28,7 +28,7 @@
 /* Keyval low-level storage */
 #include "mpc_thread_accessor.h"
 #include "osc_mpi.h"
-#include "sctk_alloc_posix.h"
+#include "sctk_alloc.h"
 
 struct mpc_osc_win_keyval {
   uint64_t keyval;

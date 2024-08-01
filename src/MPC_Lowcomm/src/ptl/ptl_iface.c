@@ -650,7 +650,7 @@ static int _lcr_ptl_iface_init_am(lcr_ptl_rail_info_t *srail)
                 .elem_per_chunk = srail->config.num_eager_blocks,
                 .elem_size      = sizeof(lcr_ptl_recv_block_t) + 
                         srail->config.eager_block_size,
-                .max_elems      = 32, 
+                .max_elems      = 4*srail->config.num_eager_blocks, 
                 .alignment      = MPC_COMMON_SYS_CACHE_LINE_SIZE,
                 .malloc_func    = sctk_malloc,
                 .free_func      = sctk_free,
