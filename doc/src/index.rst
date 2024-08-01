@@ -7,7 +7,7 @@ Multi-Processor Computing
 =========================
 
 The Multi-Processor Computing runtime (MPC) is a unified runtime targeting the
-MPI, OpenMP and PThread standards. One of its main specificity is the ability to
+MPI, OpenMP and PThread standards. One of its main specificities is the ability to
 run MPI Processes inside threads, being a thread-based MPI.
 
 MPC supports the MPI 3.1 standard in both thread-based and process-based flavors
@@ -115,7 +115,7 @@ Memory Allocator
 ################
 
 The MPC thread library comes with a thread-aware and NUMA-aware memory allocator
-(malloc, calloc, realloc, free, memalign and posix_memalign). It implements a
+(`malloc`, `calloc`, `realloc`, `free`, `memalign` and `posix_memalign`). It implements a
 per-thread heap to avoid contention during allocation and to maintain data
 locality on NUMA nodes. Each new data allocation is first performed by a
 lock-free algorithm on the thread private heap. If this local private heap is

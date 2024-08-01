@@ -10,7 +10,7 @@ Overall
 
 To keep a high level of code quality in the mainline branch, Gitlab is configured to rely on CI/CD pipelines (Continuous Integration/Continuous Development). The main objective is to avoid code regression and improve the time-to-merge for new features. A pipeline is a set of tasks (in-order) to be run (under a given configuration). Each task will return a status (success, fail, warn). It will display a badge (green, yellow, red) depending on that status, the main objective being to keep an "all-green" pipeline at any time. Now considering MPC, a pipeline can run in different scenarios:
 
-* If a new commit is pushed to a branch belonging to the mainline set (= master, devel and, currently, pt\_devel), a pipeline is automatically run to assess the code quality.
+* If a new commit is pushed to the `devel` branch, a pipeline is automatically run to assess the code quality.
 
 * If a new merge-request is opened/updated, a pipeline is run on the head of this merge-request in a "detached" mode (such label can be seen in the pipeline UI) (not relevant to explain here why). Each time a new commit is pushed to the merge request, a new pipeline is triggered.
 
@@ -21,7 +21,7 @@ For now, all pipelines are run on a *single* Gitlab-runner, relying on a 4-node 
 
 * Any pipeline competes with any other at the server scale. Do not panic if your pipeline does not start right away. (If more than a day of waiting, please contact us).
 
-* Avoid pushing in a short timeframe multiple single commits **on merge-requests**. Prefer pushing once multiple commits. Any deprecated waiting pipeline on merge-requests will be canceled( ex: a first push triggers a a pipeline which, for multiple reasons, is in a waiting state. A second push triggers a new pipeline while the first still wait).
+* Avoid pushing in a short timeframe multiple single commits **on merge-requests**. Prefer pushing once multiple commits. Any deprecated waiting pipeline on merge-requests will be canceled( ex: a first push triggers a a pipeline which, for multiple reasons, is in a waiting state. A second push triggers a new pipeline while the first still wait). If you need to push to a merge request frequently and do not want the pipeline to be run each time, you can temporarily label your merge request `CI::Disabled`.
 
 CI/CD Tasks
 -----------

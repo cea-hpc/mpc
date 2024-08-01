@@ -80,7 +80,7 @@ these files should be already provided.
    ../installmpc --prefix=${INSTALL_PREFIX}
 
 This will build MPC and its dependencies and may take a while, especially if the
-*thread-based support is enabled (by defaults). To build MPC only in process
+*thread-based support is enabled (default). To build MPC only in process
 mode, one may uses the ``--process-mode`` to the ``installmpc`` script. MPC
 supports Spack to reuse already installed packages to shorten
 the time to build. This behavior is the default and can be customized with
@@ -93,7 +93,7 @@ avoid slowing down Spack installation with undesired packages.
 
 .. caution::
 
-   Installation prefix should be set to avoid "default" installation path  (usually under ``/usr/local``) as MPC provides redefinition of few system headers (like ``pthread.h`` to intercept applications). It could lead to issues when MPC is not loaded. Additionaly, MPC should be installed in a non-root environment.
+   Installation prefix should be set to avoid "default" installation path  (usually under ``/usr/local``) as MPC provides redefinition of few system headers (like ``pthread.h`` to intercept applications). It could lead to issues when MPC is not loaded. Additionally, MPC should be installed in a non-root environment.
 
 ---------
 Using MPC
