@@ -29,11 +29,8 @@ shortcuts, more to be appended over time :
    :maxdepth: 2
    :caption: Contents:
 
-   contribute/contribute_prequesites
-   contribute/contribute_branches_tag
+   contribute/contribute_setup
    contribute/contribute_commit
    contribute/contribute_issue
-   contribute/contribute_label
    contribute/contribute_merge_request
-   contribute/contribute_bot
    contribute/contribute_pipeline

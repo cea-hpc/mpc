@@ -22,8 +22,6 @@ When creating a new issue, multiple boxes have to be set (as shown by the UI):
 
 * The issue should be assigned to the person you think is in charge of answering to this issue, or at least able to give his point about it. If unsure, leave it empty.
 
-* The milestone should be set to the current year delivery. For more information about milestones and how they are used within MPC, please refer to the gitlab documentation about milestones
-
 * Labels are important to categorize your issue: is it a bug report, a feature request, documentation related, a discussion, about MPI, OpenMP, etc... More information on labels is available on GitLab.
 * The "Due date" is optional
 
