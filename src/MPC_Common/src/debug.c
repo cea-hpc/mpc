@@ -22,9 +22,7 @@
 /* #   - DIDELOT Sylvain sylvain.didelot@exascale-computing.eu            # */
 /* #                                                                      # */
 /* ######################################################################## */
-#include "mpc_conf_types.h"
-#include "mpc_keywords.h"
-#include "mpc_thread_accessor.h"
+
 #define _GNU_SOURCE
 #include <ctype.h>
 #include <execinfo.h>
@@ -34,6 +32,7 @@
 #include <string.h>
 #include <unistd.h>
 
+#include <mpc_config.h>
 
 #include <mpc_arch.h>
 #include <mpc_common_debug.h>
@@ -41,7 +40,9 @@
 #include <mpc_common_helper.h>
 #include <mpc_common_rank.h>
 #include <mpc_common_spinlock.h>
-#include <mpc_config.h>
+#include <mpc_conf_types.h>
+#include <mpc_keywords.h>
+
 
 
 #ifdef MPC_Thread_db
