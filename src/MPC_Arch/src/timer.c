@@ -28,7 +28,7 @@ double mpc_arch_get_timestamp_gettimeofday()
 	struct timeval tp;
 
 	gettimeofday(&tp, NULL);
-	return tp.tv_sec * 1e6 + tp.tv_usec;
+	return (double)tp.tv_sec * 1e6 + (double)tp.tv_usec;
 }
 
 #if defined(MPC_IA64_ARCH)
