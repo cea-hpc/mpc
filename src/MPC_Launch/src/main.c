@@ -81,6 +81,8 @@ static int __main_wrapper(int argc, char **argv)
 	pthread_win32_process_detach_np();
 #endif
 
+	mpc_common_debug_finalize();
+
 	return tmp;
 }
 

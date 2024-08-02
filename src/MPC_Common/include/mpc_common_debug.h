@@ -50,12 +50,18 @@ typedef enum {
 	MPC_COMMON_LOG_LEVEL_BASE = 0,
 	MPC_COMMON_LOG_LEVEL_LOG = 1,
 	MPC_COMMON_LOG_LEVEL_INFO = 2,
-	MPC_COMMON_LOG_LEVEL_DEBUG = 3
+	MPC_COMMON_LOG_LEVEL_DEBUG = 3,
+	MPC_COMMON_LOG_LEVEL_ERROR = 4,
+	MPC_COMMON_LOG_LEVEL_WARNING = 5,
+	MPC_COMMON_LOG_LEVEL_COUNT
 }mpc_common_debug_verbosity_level_t;
+
+const char * mpc_common_debug_verbosity_level_to_string(mpc_common_debug_verbosity_level_t level);
 
 int mpc_common_debug_is_stderr_tty();
 
 void mpc_common_debug_init();
+void mpc_common_debug_finalize();
 
 /*********
 * ABORT *
@@ -106,10 +112,10 @@ void MPC_printf(const char *fmt, ...);
 int mpc_common_debug_print(char *filename, int line, const char *funcname, char *color, mpc_common_debug_verbosity_level_t verbosity_level, char *modulename, char *string, ...);
 
 #define mpc_common_debug_warning(s, ...) do{\
-	mpc_common_debug_print(__FILE__, __LINE__, __func__, MPC_COLOR_YELLOW_CHAR, MPC_COMMON_LOG_LEVEL_BASE, xstr(MPC_MODULE), s, ## __VA_ARGS__);}while(0)
+	mpc_common_debug_print(__FILE__, __LINE__, __func__, MPC_COLOR_YELLOW_CHAR, MPC_COMMON_LOG_LEVEL_WARNING, xstr(MPC_MODULE), s, ## __VA_ARGS__);}while(0)
 
 #define mpc_common_debug_error(s, ...) do{\
-	mpc_common_debug_print(__FILE__, __LINE__, __func__, MPC_COLOR_RED_CHAR, MPC_COMMON_LOG_LEVEL_BASE, xstr(MPC_MODULE), s, ## __VA_ARGS__);}while(0)
+	mpc_common_debug_print(__FILE__, __LINE__, __func__, MPC_COLOR_RED_CHAR, MPC_COMMON_LOG_LEVEL_ERROR, xstr(MPC_MODULE), s, ## __VA_ARGS__);}while(0)
 
 #define mpc_common_debug_log(s, ...) do{\
 	mpc_common_debug_print(__FILE__, __LINE__, __func__, MPC_COLOR_GREEN_CHAR, MPC_COMMON_LOG_LEVEL_LOG, xstr(MPC_MODULE), s, ## __VA_ARGS__);}while(0)

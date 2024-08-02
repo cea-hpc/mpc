@@ -22,6 +22,9 @@
 /* #   - DIDELOT Sylvain sylvain.didelot@exascale-computing.eu            # */
 /* #                                                                      # */
 /* ######################################################################## */
+#include "mpc_conf_types.h"
+#include "mpc_keywords.h"
+#include "mpc_thread_accessor.h"
 #define _GNU_SOURCE
 #include <ctype.h>
 #include <execinfo.h>
@@ -32,13 +35,13 @@
 #include <unistd.h>
 
 
-#include <mpc_config.h>
-
+#include <mpc_arch.h>
 #include <mpc_common_debug.h>
 #include <mpc_common_flags.h>
 #include <mpc_common_helper.h>
 #include <mpc_common_rank.h>
 #include <mpc_common_spinlock.h>
+#include <mpc_config.h>
 
 
 #ifdef MPC_Thread_db
@@ -48,7 +51,90 @@
 #define MPC_MODULE "Common/Debug"
 
 #define SMALL_BUFFER_SIZE ( 4 * 1024 )
-#define DEBUG_INFO_SIZE ( 64 )
+#define DEBUG_INFO_SIZE ( 128 )
+
+/**********************
+ * FILE-BASED LOGGING *
+ **********************/
+
+ static FILE * __log_outfile = NULL;
+ static mpc_common_spinlock_t __log_outfile_lock = MPC_COMMON_SPINLOCK_INITIALIZER;
+
+static void __release_file_based_logging(void)
+{
+	if(__log_outfile)
+	{
+		(void)fclose(__log_outfile);
+	}
+}
+
+
+static void __init_file_based_logging(void)
+{
+	char * file_log_activated = getenv("MPC_LOGFILE");
+
+
+	if(!file_log_activated)
+	{
+		return;
+	}
+
+	if(!strcasecmp(file_log_activated, "1") || !strcasecmp(file_log_activated, "true"))
+	{
+		char path[DEBUG_INFO_SIZE];
+		char host[DEBUG_INFO_SIZE];
+		pid_t pid = getpid();
+
+		gethostname(host, DEBUG_INFO_SIZE);
+
+		(void)snprintf(path, DEBUG_INFO_SIZE, "./%s-%d.mpclog", host, pid);
+
+		mpc_common_debug_error("==> %s", path);
+
+
+		__log_outfile = fopen(path, "w");
+
+		if(!__log_outfile)
+		{
+			mpc_common_debug_fatal("Failed to open logfile %s activated by MPC_LOGFILE", path);
+		}
+	}
+}
+
+
+static void __log_to_file(char *filename, int line, const char *funcname, const  char * verbosity_level, char *modulename, char * content){
+	if(!__log_outfile)
+	{
+		return;
+	}
+
+	char escaped_buffer[2*SMALL_BUFFER_SIZE];
+	mpc_common_escape_string(content, escaped_buffer, (size_t)(2*SMALL_BUFFER_SIZE));
+
+	int task = mpc_common_get_task_rank();
+	int process = mpc_common_get_process_rank(); 
+	int node = mpc_common_get_node_rank();
+
+	mpc_common_spinlock_lock(&__log_outfile_lock);
+
+	double ts = mpc_arch_get_timestamp_gettimeofday();
+
+	(void)fprintf(__log_outfile, "{ \"time\" : %.24g, \"task\" : %d, \"process\" : %d, \"node\" : %d, \"filename\" : \"%s\", \"line\" : %d , \"funcname\" : '%s' , \"verbosity\" : \"%s\", \"module\" : '%s', \"content\" : \"%s\"}\n",
+	ts,
+	task,
+	process,
+	node,
+	filename,
+	line,
+	funcname,
+	verbosity_level,
+	modulename,
+	escaped_buffer);
+
+	mpc_common_spinlock_unlock(&__log_outfile_lock);
+}
+
+
 
 /**********************************************************************/
 /*Threads support                                                     */
@@ -251,8 +337,7 @@ void mpc_common_debug_check_size_equal( size_t a, size_t b, char *ca, char *cb, 
 	}
 }
 
-int __mpcprintf(char *messagebuffer, char *modulename, char *filename, int line, char *color){
-	int r;
+void __mpcprintf(char *messagebuffer, char *modulename, char *filename __UNUSED__, int line __UNUSED__, char *color){
 	int task_rank = mpc_common_get_task_rank();
 	#ifdef MPC_ENABLE_SHELL_COLORS
 		if(mpc_common_debug_is_stderr_tty() 
@@ -281,8 +366,6 @@ int __mpcprintf(char *messagebuffer, char *modulename, char *filename, int line,
 				modulename,
 				color , messagebuffer, MPC_COLOR_DEFAULT_CHAR);
 	#endif
-
-	return r;
 }
 
 
@@ -500,6 +583,16 @@ static inline int __call_is_filtered_from_env(const char * modulename, const cha
 	return 1;	
 }
 
+static void __log_and_print(char *filename, int line, const char *funcname, char *color, const char * verbosity_level, char *modulename, char * content)
+{
+	/* To console */
+	__mpcprintf(content, modulename, filename, line, color);
+	/* To file */
+	__log_to_file(filename, line, funcname, verbosity_level, modulename, content);
+}
+
+
+
 
 int mpc_common_debug_print(char *filename, int line, const char *funcname, char *color, mpc_common_debug_verbosity_level_t verbosity_level, char *modulename, char *string, ...){
 	va_list ap;
@@ -561,7 +654,7 @@ int mpc_common_debug_print(char *filename, int line, const char *funcname, char 
     	while (sline != NULL) {
 			if(strlen(sline))
 			{
-				__mpcprintf(sline, no_quote_module_name, filename, line, color);
+				 __log_and_print(filename, line, funcname, color, mpc_common_debug_verbosity_level_to_string(verbosity_level), no_quote_module_name, sline);
 			}
 			sline = strtok_r(NULL, "\n", &save_ptr);
 		}
@@ -569,12 +662,32 @@ int mpc_common_debug_print(char *filename, int line, const char *funcname, char 
 	}
 	else
 	{
-		__mpcprintf(messagebuffer, no_quote_module_name, filename, line, color);
+		__log_and_print(filename, line, funcname, color, mpc_common_debug_verbosity_level_to_string(verbosity_level), no_quote_module_name, messagebuffer);
 	}
 
 	va_end (ap);
 	return r;
 }
+
+const char * mpc_common_debug_verbosity_level_to_string(mpc_common_debug_verbosity_level_t level)
+{
+	if(level > MPC_COMMON_LOG_LEVEL_COUNT)
+	{
+		return NULL;
+	}
+
+	static const char * slevel[] = {
+		"base",
+		"log",
+		"info",
+		"debug",
+		"error",
+		"warning"
+	};
+
+	return slevel[level];
+}
+
 
 /**************
  * TTY STATUS *
@@ -603,7 +716,11 @@ void mpc_common_debug_init(){
 		__is_stderr_tty = 0;
 	}
 
-
 	__parse_log_filter_rules();
+	__init_file_based_logging();
+}
 
+void mpc_common_debug_finalize()
+{
+	__release_file_based_logging();
 }

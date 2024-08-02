@@ -201,7 +201,9 @@ class MpcConfig:
 
 		# Log filter
 		parser.add_argument('-f', '--filter', type=unicode, help="Log filters as comma separated list over modules, Files (file(xx)) and Functions (func(xx))")
+		parser.add_argument('-L', '--log', action='store_true', help="Log debug output to JSON files named [HOST]-[PID].mpclog")
 
+		# Launcher
 		parser.add_argument('-l', '--launcher', type=unicode, help="Define launcher")
 		parser.add_argument('--opt', type=unicode, help="Launcher specific options")
 		parser.add_argument('-k', '--autokill', type=int, help="Timeout in second before killing the job")
@@ -237,6 +239,10 @@ class MpcConfig:
 		if args.filter:
 			# Set log filter in Env as it needs to be processed early
 			os.environ["MPC_LOG"] = args.filter
+
+		if args.log:
+			# Set log filter in Env as it needs to be processed early
+			os.environ["MPC_LOGFILE"] = "1"
 
 
 		ARG_MAP_TO_CONFIG = {

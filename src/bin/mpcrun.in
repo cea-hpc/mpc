@@ -423,6 +423,7 @@ Informations:
 Debugger:
 	--dbg=<debugger_name> to use a debugger
 	-f, --filter                    Select log to be printed as comma separated list over modules, Files (file(xx)) and Functions (func(xx))
+	-L,--log                        Log debug output to files named [HOST]-[PID].mpclog
 EOF
 
 if test "x$MPC_HAVE_DMTCP" = "xyes"; then
@@ -626,6 +627,10 @@ for arg in "$@" ; do
 				-f=*)
 					MPC_LOG="$(echo "A$arg" | sed -e 's/A-f=//g')"
 					export MPC_LOG
+					;;
+				--log | -L)
+					MPC_LOGFILE=1
+					export MPC_LOGFILE
 					;;
 				--config=* | --profiles=*)
 					#Already processed in a previous loop on arguments, but need to capture them otherwise

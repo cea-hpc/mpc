@@ -72,7 +72,60 @@ char * mpc_common_trim(char * path)
 	return ret;
 }
 
+int mpc_common_escape_string(const char* str, char *out_str_double_len_of_str, size_t outlen) {
+    unsigned long len = strlen(str);
 
+    out_str_double_len_of_str[0] = '\0';  // Initialize the string with a null terminator
+
+    unsigned long i = 0;
+    unsigned long j = 0;
+    for (i = 0; i < len; i++) {
+        char c = str[i];
+        switch (c) {
+            case '\\':
+                out_str_double_len_of_str[j++] = '\\';
+                out_str_double_len_of_str[j++] = '\\';
+                break;
+            case '\b':
+                out_str_double_len_of_str[j++] = '\\';
+                out_str_double_len_of_str[j++] = 'b';
+                break;
+            case '\f':
+                out_str_double_len_of_str[j++] = '\\';
+                out_str_double_len_of_str[j++] = 'f';
+                break;
+            case '\n':
+                out_str_double_len_of_str[j++] = '\\';
+                out_str_double_len_of_str[j++] = 'n';
+                break;
+            case '\r':
+                out_str_double_len_of_str[j++] = '\\';
+                out_str_double_len_of_str[j++] = 'r';
+                break;
+            case '\t':
+                out_str_double_len_of_str[j++] = '\\';
+                out_str_double_len_of_str[j++] = 't';
+                break;
+			default:
+				break;
+        }
+        // If the character is printable ASCII, just append it
+        if (c >= ' ' && c <= '~') {
+            out_str_double_len_of_str[j++] = c;
+        }
+
+		if(j == (outlen - 1))
+		{
+			out_str_double_len_of_str[j] = '\0';
+			return 1;
+		}
+    }
+
+    // Null-terminate the string and return it
+    out_str_double_len_of_str[j] = '\0';
+
+	return 0;
+}
 
 /********************************** GLOBALS *********************************/
 

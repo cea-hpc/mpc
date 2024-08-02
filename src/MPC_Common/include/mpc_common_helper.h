@@ -181,6 +181,7 @@ static inline uint64_t mpc_common_hash_string(const char * string)
 
 char * mpc_common_trim(char * path);
 
+int mpc_common_escape_string(const char* str, char *out_str_double_len_of_str, size_t outlen);
 
 /****************************
  * ROUND TO NEXT POWER OF 2 *
