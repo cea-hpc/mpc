@@ -71,7 +71,7 @@ typedef struct lcr_component {
         int (*iface_open)(int mngr_id, const char *device_name, int id,
 			  lcr_rail_config_t *rail_config,
                           lcr_driver_config_t *driver_config,
-                          sctk_rail_info_t **iface_p, 
+                          sctk_rail_info_t **iface_p,
                           unsigned fflags /* feature flags */);
 } lcr_component_t;
 

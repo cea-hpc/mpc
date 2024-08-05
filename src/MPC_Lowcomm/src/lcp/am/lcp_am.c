@@ -146,7 +146,7 @@ static void lcp_am_send_complete(lcr_completion_t *comp) {
 
         if ((req->flags & LCP_REQUEST_REMOTE_COMPLETED) &&
             (req->flags & LCP_REQUEST_LOCAL_COMPLETED)) {
-                lcp_request_complete(req, send.send_cb, 
+                lcp_request_complete(req, send.send_cb,
                                      MPC_LOWCOMM_SUCCESS, req->send.length);
         }
 }
@@ -157,8 +157,8 @@ static void lcp_am_recv_complete(lcr_completion_t *comp)
 					      state.comp);
         lcp_unexp_ctnr_t *ctnr = req->recv.am.ctnr;
 
-        lcp_request_complete(req, recv.am.cb, 
-                             MPC_LOWCOMM_SUCCESS, 
+        lcp_request_complete(req, recv.am.cb,
+                             MPC_LOWCOMM_SUCCESS,
                              req->recv.send_length);
 
         //FIXME: recheck why we need to test the flags before putting back the
@@ -228,7 +228,7 @@ int lcp_send_eager_am_bcopy(lcp_request_t *req)
 
 	mpc_common_debug_info("LCP: send eager am bcopy comm=%d, src=%d, "
                               "dest=%d, length=%d, tag=%d", req->send.tag.comm,
-                              req->send.tag.src_tid, req->send.tag.dest_tid, 
+                              req->send.tag.src_tid, req->send.tag.dest_tid,
                               req->send.length, req->send.tag.tag);
 
         pack_cb = lcp_send_am_eager_pack;
@@ -328,7 +328,7 @@ int lcp_am_send_start(lcp_ep_h ep, lcp_request_t *req,
         req->state.offloaded = 0;
         //FIXME: remove usage of header structure
         size = req->send.length + req->send.am.hdr_size + sizeof(lcp_am_hdr_t);
-        if (size <= ep->config.am.max_bcopy || 
+        if (size <= ep->config.am.max_bcopy ||
             ((req->send.length <= ep->config.am.max_zcopy) &&
              (param->datatype & LCP_DATATYPE_DERIVED))) {
                 req->send.func = lcp_send_eager_am_bcopy;
@@ -365,8 +365,8 @@ lcp_status_ptr_t lcp_am_send_nb(lcp_ep_h ep, lcp_task_h task, int32_t dest_tid,
         //FIXME: what length should be set here, length of data or length of
         //       data + header size ?
         LCP_REQUEST_INIT_AM_SEND(req, ep->mngr, task, am_id, param->request,
-                                 ep->mngr->ctx->process_uid, dest_tid, 
-                                 data_size, ep, (void *)buffer, 0 /* no seqn for am */, 
+                                 ep->mngr->ctx->process_uid, dest_tid,
+                                 data_size, ep, (void *)buffer, 0 /* no seqn for am */,
                                  (uint64_t)req, param->datatype,
                                  param->field_mask & LCP_REQUEST_AM_SYNC ? 1 : 0);
 
@@ -405,14 +405,14 @@ lcp_status_ptr_t lcp_am_send_nb(lcp_ep_h ep, lcp_task_h task, int32_t dest_tid,
         ret = lcp_request_send(req);
 
         return ret;
-                
+
 }
 
 /* ============================================== */
 /* Receive                                        */
 /* ============================================== */
 
-lcp_status_ptr_t lcp_am_recv_nb(lcp_manager_h mngr, lcp_task_h task, void *data_ctnr, void *buffer, 
+lcp_status_ptr_t lcp_am_recv_nb(lcp_manager_h mngr, lcp_task_h task, void *data_ctnr, void *buffer,
                                 size_t count, const lcp_request_param_t *param)
 {
         int rc = MPC_LOWCOMM_SUCCESS;
@@ -432,7 +432,7 @@ lcp_status_ptr_t lcp_am_recv_nb(lcp_manager_h mngr, lcp_task_h task, void *data_
         }
 
         // initialize request
-        LCP_REQUEST_INIT_AM_RECV(req, mngr, task, count, param->request, 
+        LCP_REQUEST_INIT_AM_RECV(req, mngr, task, count, param->request,
                                  buffer, param->datatype);
 
         if (param->field_mask & LCP_REQUEST_SEND_CALLBACK) {
@@ -478,7 +478,7 @@ static int lcp_eager_am_handler(void *arg, void *data,
         void *data_ptr     = (char *)(hdr + 1) + hdr->hdr_size;
         size_t data_size   = length - sizeof(*hdr) - hdr->hdr_size;
 
-        task = lcp_context_task_get(mngr->ctx, hdr->dest_tid);  
+        task = lcp_context_task_get(mngr->ctx, hdr->dest_tid);
         if (task == NULL) {
                 mpc_common_errorpoint_fmt("LCP: could not find task with tid=%d length=%ld", hdr->dest_tid, hdr->hdr_size);
                 rc = MPC_LOWCOMM_ERROR;
@@ -562,7 +562,7 @@ static int lcp_rndv_am_handler(void *arg, void *data,
         int rc              = MPC_LOWCOMM_SUCCESS;
         lcp_manager_h mngr  = arg;
         lcp_rndv_hdr_t *hdr = data;
-        lcp_am_user_handler_t handler; 
+        lcp_am_user_handler_t handler;
         struct iovec *data_iov = alloca(2 * sizeof(struct iovec));
         size_t iovcnt;
 
@@ -571,7 +571,7 @@ static int lcp_rndv_am_handler(void *arg, void *data,
                                    flags, data_iov, &iovcnt);
         assert(iovcnt == 2);
 
-        task = lcp_context_task_get(mngr->ctx, hdr->am.dest_tid);  
+        task = lcp_context_task_get(mngr->ctx, hdr->am.dest_tid);
         if (task == NULL) {
                 mpc_common_errorpoint_fmt("LCP: could not find task with tid=%d length=%ld", hdr->am.dest_tid, hdr->am.hdr_size);
 

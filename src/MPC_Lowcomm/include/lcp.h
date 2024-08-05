@@ -128,7 +128,7 @@ int lcp_context_fini(lcp_context_h ctx);
 
 /**
  * @ingroup LCP_TASK
- * @brief Create LCP Task. 
+ * @brief Create LCP Task.
  *
  * Instanciate an LCP Task that will contain all communication related
  * information that should be own by a MPI task. There are as many tasks as MPI
@@ -145,7 +145,7 @@ int lcp_task_create(lcp_context_h ctx, int tid, lcp_task_h *task_p);
 
 /**
  * @ingroup LCP_COMM
- * @brief LCP Task associate to manager. 
+ * @brief LCP Task associate to manager.
  *
  * Associates a task to a communication context, or \ref lcp_manager_h.
  * Internal structures are instanciated to enable communication context
@@ -161,7 +161,7 @@ int lcp_task_associate(lcp_task_h task, lcp_manager_h mngr);
 
 /**
  * @ingroup LCP_COMM
- * @brief LCP Task dissociate from manager. 
+ * @brief LCP Task dissociate from manager.
  *
  * Remove all data structure used within the communication context, or \ref
  * lcp_manager_h.
@@ -174,7 +174,7 @@ int lcp_task_dissociate(lcp_task_h task, lcp_manager_h mngr);
 
 /**
  * @ingroup LCP_CONTEXT
- * @brief Get task handle. 
+ * @brief Get task handle.
  *
  * Get the task handle based on the task identifier (TID). The TID is the MPI
  * rank in the MPI_COMM_WORLD communicator.
@@ -187,7 +187,7 @@ lcp_task_h lcp_context_task_get(lcp_context_h ctx, int tid);
 
 /**
  * @ingroup LCP_COMM
- * @brief Manager fields 
+ * @brief Manager fields
  *
  * Specifies fields present in \ref lcp_manager_param_t during manager creation.
  */
@@ -198,7 +198,7 @@ enum {
 
 /**
  * @ingroup LCP_COMM
- * @brief Manager instanciation flags. 
+ * @brief Manager instanciation flags.
  *
  * Specifies a set of flags that are proposed to improve performances in some
  * situation.
@@ -210,7 +210,7 @@ enum {
 
 /**
  * @ingroup LCP_COMM
- * @brief Manager parameters 
+ * @brief Manager parameters
  *
  * Specifies the parameters that have been specified in \ref
  * lcp_manager_param_t.
@@ -224,12 +224,12 @@ typedef struct lcp_manager_param {
 
 /**
  * @ingroup LCP_COMM
- * @brief Create LCP Manager. 
+ * @brief Create LCP Manager.
  *
  * An LCP manager act as a communication context that groups all outstanding
  * communications. It can be used to insulate different communication contexts
  * such as MPI windows or global contexts to allow fine grain progression,
- * endpoint flush, etc... 
+ * endpoint flush, etc...
  * Endpoints \ref lcp_ep_h are local to managers. An LCP manager is shared
  * between a group of LCP Tasks.
  *
@@ -239,12 +239,12 @@ typedef struct lcp_manager_param {
  * @param [in] params  Manager parameters.
  * @return Error code returned.
  */
-int lcp_manager_create(lcp_context_h ctx, lcp_manager_h *mngr_p, 
+int lcp_manager_create(lcp_context_h ctx, lcp_manager_h *mngr_p,
                        lcp_manager_param_t *params);
 
 /**
  * @ingroup LCP_COMM
- * @brief Delete LCP Manager. 
+ * @brief Delete LCP Manager.
  *
  * Deletes resources associated to a LCP manager.
  *
@@ -267,7 +267,7 @@ int lcp_progress(lcp_manager_h mngr);
 
 /**
  * @ingroup LCP_EP
- * @brief Create LCP Endpoint. 
+ * @brief Create LCP Endpoint.
  *
  * Instanciate a protocol endpoint. Upon return, connection will have been
  * started and the endpoint can be used directly with communication primitives.
@@ -279,9 +279,9 @@ int lcp_progress(lcp_manager_h mngr);
  * @param [in] flags Flags to configure creation (unused for now).
  * @return Error code returned.
  */
-int lcp_ep_create(lcp_manager_h mngr, 
-                  lcp_ep_h *ep_p, 
-		  uint64_t uid, 
+int lcp_ep_create(lcp_manager_h mngr,
+                  lcp_ep_h *ep_p,
+		  uint64_t uid,
                   unsigned flags);
 
 /**
@@ -294,7 +294,7 @@ int lcp_ep_create(lcp_manager_h mngr,
  * @param [in] uid  Process identifier or MPC UNIX identifier.
  * @return \ref lcp_ep_h endpoint handle for the specified UID.
  */
-lcp_ep_h lcp_ep_get(lcp_manager_h mngr, 
+lcp_ep_h lcp_ep_get(lcp_manager_h mngr,
                 uint64_t uid);
 
 /**
@@ -311,8 +311,8 @@ lcp_ep_h lcp_ep_get(lcp_manager_h mngr,
  * @param [in] flags Flags to configure creation (unused for now).
  * @return Error code returned.
  */
-int lcp_ep_get_or_create(lcp_manager_h mngr, 
-                uint64_t uid, lcp_ep_h *ep_p, 
+int lcp_ep_get_or_create(lcp_manager_h mngr,
+                uint64_t uid, lcp_ep_h *ep_p,
                 unsigned flags);
 
 /**
@@ -332,8 +332,8 @@ enum {
         LCP_REQUEST_USER_REQUEST    = MPC_BIT(2),  /**< User request mask */
         LCP_REQUEST_TAG_SYNC        = MPC_BIT(3),  /**< Sync request mask */
         LCP_REQUEST_AM_SYNC         = MPC_BIT(4),  /**< AM sync request mask */
-        LCP_REQUEST_SEND_CALLBACK   = MPC_BIT(5),  /**< Send callback mask */ 
-        LCP_REQUEST_RECV_CALLBACK   = MPC_BIT(6),  /**< Recv callback mask */ 
+        LCP_REQUEST_SEND_CALLBACK   = MPC_BIT(5),  /**< Send callback mask */
+        LCP_REQUEST_RECV_CALLBACK   = MPC_BIT(6),  /**< Recv callback mask */
         LCP_REQUEST_REPLY_BUFFER    = MPC_BIT(7),  /**< Result buffer for Atomics */
         LCP_REQUEST_USER_MEMH       = MPC_BIT(8),  /**< User-provided local Memory handle */
         LCP_REQUEST_USER_EPH        = MPC_BIT(9),  /**< User-provided Endpoint handle */
@@ -377,7 +377,7 @@ typedef struct lcp_tag_info {
 
 /**
  * @ingroup LCP_COMM
- * @brief Datatype type 
+ * @brief Datatype type
  *
  * Specifies if the datat in the request is contiguous or not (derived)
  */
@@ -413,7 +413,7 @@ typedef struct lcp_request_param {
  *
  * Returns an initialized pointer to a user request. Within the upper layer, it
  * is sometimes needed to initialize fields of upper layer request before
- * actually sending the request. 
+ * actually sending the request.
  * The user is then responsible to free the request using \ref lcp_request_free
  *
  * @param [in]  task  Task handle of the task allocating the request.
@@ -446,7 +446,7 @@ int lcp_request_check_status(void *request);
 
 /**
  * @ingroup LCP_COMM
- * @brief LCP send tag communication. 
+ * @brief LCP send tag communication.
  *
  * Communication primitive to send a tag message to the corresponding \ref
  * lcp_tag_recv_nb(). The routine is non-blocking and thus returns directly,
@@ -466,7 +466,7 @@ int lcp_request_check_status(void *request);
  *         lcp_request_check_status to check completion.
  */
 lcp_status_ptr_t lcp_tag_send_nb(lcp_ep_h ep, lcp_task_h task, const void *buffer,
-                                 size_t count, lcp_tag_info_t *tag_info, 
+                                 size_t count, lcp_tag_info_t *tag_info,
                                  const lcp_request_param_t *param);
 
 /**
@@ -488,7 +488,7 @@ lcp_status_ptr_t lcp_tag_send_nb(lcp_ep_h ep, lcp_task_h task, const void *buffe
  * @return Error code returned or pointer to request. Use \ref
  *         lcp_request_check_status to check completion.
  */
-lcp_status_ptr_t lcp_tag_recv_nb(lcp_manager_h mngr, lcp_task_h task, void *buffer, 
+lcp_status_ptr_t lcp_tag_recv_nb(lcp_manager_h mngr, lcp_task_h task, void *buffer,
                                  size_t count, lcp_tag_info_t *tag_info, int32_t src_mask,
                                  int32_t tag_mask, const lcp_request_param_t *param);
 
@@ -509,16 +509,16 @@ lcp_status_ptr_t lcp_tag_recv_nb(lcp_manager_h mngr, lcp_task_h task, void *buff
  * @return Error code returned.
  */
 //FIXME: comm should be a const uint16_t
-int lcp_tag_probe_nb(lcp_manager_h mngr, lcp_task_h task, const int src, 
+int lcp_tag_probe_nb(lcp_manager_h mngr, lcp_task_h task, const int src,
                      const int tag, const uint64_t comm,
                      lcp_tag_recv_info_t *recv_info);
 
 /**
  * @ingroup LCP_COMM
- * @brief LCP Active Message flags. 
+ * @brief LCP Active Message flags.
  *
  * Flags identifying the type of message returned by the callback \ref
- * lcp_am_callback_t. 
+ * lcp_am_callback_t.
  */
 enum {
         LCP_AM_EAGER = MPC_BIT(0), /**< Message received is of type eager. */
@@ -629,13 +629,13 @@ lcp_status_ptr_t lcp_am_recv_nb(lcp_manager_h mngr, lcp_task_h task, void
  * @param [in] param  Request parameters \ref lcp_request_param_t.
  * @return Pointer to upper layer request.
  */
-lcp_status_ptr_t lcp_put_nb(lcp_ep_h ep, lcp_task_h task, const void *buffer, 
+lcp_status_ptr_t lcp_put_nb(lcp_ep_h ep, lcp_task_h task, void *buffer,
                             size_t length, uint64_t remote_addr, lcp_mem_h rkey,
-                            const lcp_request_param_t *param); 
+                            const lcp_request_param_t *param);
 
 /**
  * @ingroup LCP_COMM
- * @brief LCP Get RMA communication. 
+ * @brief LCP Get RMA communication.
  *
  * This routine exposes RMA get capabilities with the same semantics.
  *
@@ -653,13 +653,13 @@ lcp_status_ptr_t lcp_put_nb(lcp_ep_h ep, lcp_task_h task, const void *buffer,
  * @param [in] param  Request parameters \ref lcp_request_param_t.
  * @return Error code returned or pointer to pending request.
  */
-lcp_status_ptr_t lcp_get_nb(lcp_ep_h ep, lcp_task_h task, void *buffer, 
+lcp_status_ptr_t lcp_get_nb(lcp_ep_h ep, lcp_task_h task, void *buffer,
                             size_t length, uint64_t remote_addr, lcp_mem_h rkey,
-                            const lcp_request_param_t *param); 
+                            const lcp_request_param_t *param);
 
 /**
  * @ingroup LCP_COMM
- * @brief LCP Flush RMA communication. 
+ * @brief LCP Flush RMA communication.
  *
  * This routine flushes all outstanding RMA operations. Once the operation is
  * complete, all RMA operations issued before this call are locally and remotely
@@ -673,7 +673,7 @@ lcp_status_ptr_t lcp_get_nb(lcp_ep_h ep, lcp_task_h task, void *buffer,
  * @param [in] param  Request parameters \ref lcp_request_param_t.
  * @return Error code returned or pointer to pending request.
  */
-lcp_status_ptr_t lcp_flush_nb(lcp_manager_h mngr, lcp_task_h task, 
+lcp_status_ptr_t lcp_flush_nb(lcp_manager_h mngr, lcp_task_h task,
                               const lcp_request_param_t *param);
 
 typedef enum {
@@ -691,7 +691,7 @@ lcp_status_ptr_t lcp_atomic_op_nb(lcp_ep_h ep, lcp_task_h task, const void *buff
 
 /**
  * @ingroup lcp_mem
- * @brief lcp memory flags. 
+ * @brief lcp memory flags.
  *
  * Flags that will defined the allocation, registration strategies.
  *
@@ -706,7 +706,7 @@ enum {
 
 /**
  * @ingroup lcp_mem
- * @brief lcp memory parameters. 
+ * @brief lcp memory parameters.
  *
  * Specifies a set of fields used to characterize how a memory should be
  * registered. For example, memory could be already allocated or, on the
@@ -715,7 +715,7 @@ enum {
  */
 
 typedef struct lcp_mem_param {
-        uint32_t    field_mask; 
+        uint32_t    field_mask;
         unsigned    flags;
         const void *address;
         size_t      size;
@@ -723,7 +723,7 @@ typedef struct lcp_mem_param {
 
 /**
  * @ingroup LCP_MEM
- * @brief LCP provision memory. 
+ * @brief LCP provision memory.
  *
  * Provision memory by allocating if specified in the parameters and by
  * registering to a transport and get a memory handle from it. This call be used
@@ -736,7 +736,7 @@ typedef struct lcp_mem_param {
  * @param [in] flags  Flags to specify kind of registration.
  * @return Error code returned.
  */
-int lcp_mem_provision(lcp_manager_h mngr, lcp_mem_h *mem_p, 
+int lcp_mem_provision(lcp_manager_h mngr, lcp_mem_h *mem_p,
                       lcp_mem_param_t *params);
 
 /**
@@ -753,7 +753,7 @@ int lcp_mem_deprovision(lcp_manager_h mngr, lcp_mem_h mem);
 
 /**
  * @ingroup LCP_MEM
- * @brief LCP query registered memory. 
+ * @brief LCP query registered memory.
  *
  * Query attributes of memory that has been registered.
  *
@@ -765,7 +765,7 @@ int lcp_mem_query(lcp_mem_h mem, lcp_mem_attr_t *mem_attr);
 
 /**
  * @ingroup LCP_MEM
- * @brief LCP pack memory key. 
+ * @brief LCP pack memory key.
  *
  * Pack a memory key so it can be sent to a remote peer.
  *
@@ -779,7 +779,7 @@ int lcp_mem_query(lcp_mem_h mem, lcp_mem_attr_t *mem_attr);
  * @param [in] rkey_len  Length of packed memory key in bytes.
  * @return Error code returned.
  */
-int lcp_mem_pack(lcp_manager_h mngr, lcp_mem_h mem, 
+int lcp_mem_pack(lcp_manager_h mngr, lcp_mem_h mem,
                     void **rkey_buf_p, int *rkey_len);
 
 /**
@@ -796,7 +796,7 @@ int lcp_mem_pack(lcp_manager_h mngr, lcp_mem_h mem,
  * @param [in] size  Size of the packed key in bytes.
  * @return Error code returned.
  */
-int lcp_mem_unpack(lcp_manager_h mngr, lcp_mem_h *mem_p, 
+int lcp_mem_unpack(lcp_manager_h mngr, lcp_mem_h *mem_p,
                    void *src, size_t size);
 
 /**

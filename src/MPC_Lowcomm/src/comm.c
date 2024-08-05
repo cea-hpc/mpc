@@ -676,11 +676,6 @@ static inline int _mpc_comm_ptp_copy_task_insert(mpc_lowcomm_msg_list_t *ptr_rec
  */
 int ___mpi_windows_in_use = 0;
 
-static inline int __MPC_MPI_windows_in_use()
-{
-	return ___mpi_windows_in_use;
-}
-
 static int (*___notify_request_completion_trampoline)(mpc_lowcomm_request_t *req) = NULL;
 
 void mpc_lowcomm_set_request_completion_trampoline(int trampoline(mpc_lowcomm_request_t *req) )
@@ -2608,7 +2603,7 @@ static void __mpc_comm_perform_msg_wfv(void *a)
 		MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL();
 	}
 }
-#endif 
+#endif
 
 void mpc_lowcomm_perform_idle(volatile int *data, int value,
                               void (*func)(void *), void *arg)
@@ -3197,9 +3192,9 @@ void mpc_lowcomm_request_init_struct(mpc_lowcomm_request_t *request,
 }
 #endif
 
-void mpc_lowcomm_request_init(mpc_lowcomm_request_t *request, 
+void mpc_lowcomm_request_init(mpc_lowcomm_request_t *request,
                               int count, mpc_lowcomm_datatype_t datatype,
-                              mpc_lowcomm_complete_callback_func_t cb, 
+                              mpc_lowcomm_complete_callback_func_t cb,
                               unsigned flags)
 {
         request->datatype         = datatype;
@@ -3428,7 +3423,7 @@ void *mpc_lowcomm_request_alloc()
 {
         mpc_lowcomm_request_t *request = NULL;
 	int tid = mpc_common_get_task_rank();
-        lcp_task_h task; 
+        lcp_task_h task;
 
 	task = lcp_context_task_get(lcp_ctx_loc, tid);
 	if(task == NULL)
@@ -3449,7 +3444,7 @@ void *mpc_lowcomm_request_alloc()
 void mpc_lowcomm_set_packed_buf(mpc_lowcomm_request_t *request, void *buf,
                                 size_t packed_size)
 {
-       request->flags      |= MPC_LOWCOMM_REQUEST_PACKED; 
+       request->flags      |= MPC_LOWCOMM_REQUEST_PACKED;
        request->packed_buf  = buf;
        request->packed_size = packed_size;
 }
@@ -3468,89 +3463,6 @@ void mpc_lowcomm_request_free(mpc_lowcomm_request_t *req)
         }
         lcp_request_free(req);
 }
-
-static int mpc_lowcomm_map_comm_info(const mpc_lowcomm_communicator_t comm,
-                                     const int src,
-                                     const int dest,
-                                     mpc_lowcomm_request_type_t request_type,
-                                     int *src_out,
-                                     int *dest_out,
-                                     mpc_lowcomm_peer_uid_t *src_uid,
-                                     mpc_lowcomm_peer_uid_t *dest_uid)
-{
-	int is_intercomm = mpc_lowcomm_communicator_is_intercomm(comm);
-
-	mpc_lowcomm_peer_uid_t source_process = 0;
-	mpc_lowcomm_peer_uid_t dest_process   = 0;
-
-	int source_task = -1;
-	int dest_task   = -1;
-	/* Fill in Source and Dest Process Informations (convert from task) */
-
-	/* SOURCE */
-	int isource = src;
-
-	if(mpc_lowcomm_peer_get_rank(src) != MPC_ANY_SOURCE)
-	{
-		if(is_intercomm)
-		{
-			if(request_type == REQUEST_RECV)
-			{
-				/* If this is a RECV make sure the translation is done on the source according to remote */
-				source_task    = mpc_lowcomm_communicator_remote_world_rank(comm, isource);
-				source_process = mpc_lowcomm_communicator_remote_uid(comm, isource);
-			}
-			else if(request_type == REQUEST_SEND)
-			{
-				/* If this is a SEND make sure the translation is done on the dest according to remote */
-				source_task    = mpc_lowcomm_communicator_world_rank_of(comm, isource);
-				source_process = mpc_lowcomm_communicator_uid(comm, isource);
-			}
-		}
-		else
-		{
-			source_task    = mpc_lowcomm_communicator_world_rank_of(comm, isource);
-			source_process = mpc_lowcomm_communicator_uid(comm, isource);
-		}
-	}
-	else
-	{
-		source_task    = MPC_ANY_SOURCE;
-		source_process = mpc_lowcomm_monitor_local_uid_of(MPC_ANY_SOURCE);
-	}
-
-	/* DEST Handling */
-	int idestination = dest;
-
-	if(is_intercomm)
-	{
-		if(request_type == REQUEST_RECV)
-		{
-			/* If this is a RECV make sure the translation is done on the source according to remote */
-			dest_task    = mpc_lowcomm_communicator_world_rank_of(comm, idestination);
-			dest_process = mpc_lowcomm_communicator_uid(comm, idestination);
-		}
-		else if(request_type == REQUEST_SEND)
-		{
-			/* If this is a SEND make sure the translation is done on the dest according to remote */
-			dest_task    = mpc_lowcomm_communicator_remote_world_rank(comm, idestination);
-			dest_process = mpc_lowcomm_communicator_remote_uid(comm, idestination);
-		}
-	}
-	else
-	{
-		dest_task    = mpc_lowcomm_communicator_world_rank_of(comm, idestination);
-		dest_process = mpc_lowcomm_communicator_uid(comm, idestination);
-	}
-
-        *src_out  = source_task;
-        *dest_out = dest_task;
-        *src_uid  = source_process;
-        *dest_uid = dest_process;
-
-        return MPC_LOWCOMM_SUCCESS;
-}
-
 
 #if 0
 static int mpc_lowcomm_init_request_header(const int tag,
@@ -3671,7 +3583,7 @@ mpc_lowcomm_request_t * mpc_lowcomm_request_null(void)
 }
 
 static inline void _mpc_lowcomm_build_send_tag_info(lcp_tag_info_t *tag_info,
-                                                    mpc_lowcomm_communicator_t comm, 
+                                                    mpc_lowcomm_communicator_t comm,
                                                     int dest, int tag,
                                                     mpc_lowcomm_request_t *req)
 {
@@ -3720,7 +3632,7 @@ static int _mpc_lowcomm_request_send_complete(int status, void *request, size_t 
 }
 
 int _mpc_lowcomm_isend(int dest, const void *data, size_t size, int tag,
-                       mpc_lowcomm_communicator_t comm, mpc_lowcomm_request_t *req, 
+                       mpc_lowcomm_communicator_t comm, mpc_lowcomm_request_t *req,
                        int synchronized)
 {
         lcp_tag_info_t tag_info;
@@ -3734,9 +3646,9 @@ int _mpc_lowcomm_isend(int dest, const void *data, size_t size, int tag,
         req->comm            = comm;
         req->completion_flag = MPC_LOWCOMM_MESSAGE_PENDING;
 
-        /* Initialize tag information based on comm: src, src_uid, tag,... */ 
+        /* Initialize tag information based on comm: src, src_uid, tag,... */
         _mpc_lowcomm_build_send_tag_info(&tag_info, comm, dest, tag, req);
-        
+
         /* Try to get cached endpoint. */
 	ep = mpc_lowcomm_communicator_lookup(comm, dest);
 	if(ep == NULL)
@@ -3763,6 +3675,7 @@ int _mpc_lowcomm_isend(int dest, const void *data, size_t size, int tag,
 	{
 		.field_mask = (synchronized ? LCP_REQUEST_TAG_SYNC : 0) |
                         LCP_REQUEST_SEND_CALLBACK,
+                // NOLINTNEXTLINE(clang-analyzer-core.UndefinedBinaryOperatorResult)
                 .datatype   = req->dt_magic == (int)0xDDDDDDDD ? LCP_DATATYPE_DERIVED : LCP_DATATYPE_CONTIGUOUS,
                 .request    = req,
                 .send_cb    = _mpc_lowcomm_request_send_complete,
@@ -3773,7 +3686,7 @@ int _mpc_lowcomm_isend(int dest, const void *data, size_t size, int tag,
 	{
 		param.field_mask |= LCP_REQUEST_USER_REQUEST;
         }
-                
+
 	request = lcp_tag_send_nb(ep, task, data, size, &tag_info, &param);
 
         if (LCP_PTR_IS_ERR(request)) {
@@ -3795,7 +3708,7 @@ int mpc_lowcomm_isend(int dest, const void *data, size_t size, int tag,
 	return _mpc_lowcomm_isend(dest, data, size, tag, comm, req, 0);
 }
 
-static int _mpc_lowcomm_request_recv_complete(int status, void *request, 
+static int _mpc_lowcomm_request_recv_complete(int status, void *request,
                                               lcp_tag_recv_info_t *tag_info)
 {
         mpc_lowcomm_request_t *req = (mpc_lowcomm_request_t *)request;
@@ -3816,7 +3729,7 @@ static int _mpc_lowcomm_request_recv_complete(int status, void *request,
         return MPC_LOWCOMM_SUCCESS;
 }
 
-static inline void _mpc_lowcomm_build_recv_tag_info(lcp_tag_info_t *tag_info, 
+static inline void _mpc_lowcomm_build_recv_tag_info(lcp_tag_info_t *tag_info,
                                                     mpc_lowcomm_communicator_t comm,
                                                     int src, int tag)
 {
@@ -3839,7 +3752,7 @@ int mpc_lowcomm_irecv(int src, void *data, size_t size, int tag,
         req->comm            = comm;
         req->completion_flag = MPC_LOWCOMM_MESSAGE_PENDING;
 
-        /* Initialize tag information based on comm: src, src_uid, tag,... */ 
+        /* Initialize tag information based on comm: src, src_uid, tag,... */
         _mpc_lowcomm_build_recv_tag_info(&tag_info, comm, src, tag);
 
 	task = lcp_context_task_get(lcp_ctx_loc, tag_info.dest);
@@ -3851,6 +3764,7 @@ int mpc_lowcomm_irecv(int src, void *data, size_t size, int tag,
 	/* Fill up request parameters. */
 	lcp_request_param_t param = {
                 .field_mask   = LCP_REQUEST_RECV_CALLBACK,
+                // NOLINTNEXTLINE(clang-analyzer-core.UndefinedBinaryOperatorResult)
                 .datatype   = req->dt_magic == (int)0xDDDDDDDD ? LCP_DATATYPE_DERIVED : LCP_DATATYPE_CONTIGUOUS,
                 .request      = req,
                 .recv_cb      = _mpc_lowcomm_request_recv_complete,
@@ -3858,10 +3772,10 @@ int mpc_lowcomm_irecv(int src, void *data, size_t size, int tag,
         if (req->is_allocated == MPC_LOWCOMM_REQUEST_ALLOC) {
                 param.field_mask |= LCP_REQUEST_USER_REQUEST;
         }
-	
-        request = lcp_tag_recv_nb(lcp_mngr_loc, task, data, size, &tag_info, 
+
+        request = lcp_tag_recv_nb(lcp_mngr_loc, task, data, size, &tag_info,
                                   src == MPC_ANY_SOURCE ? 0 : ~0,
-                                  tag == MPC_ANY_TAG ? 0 : ~0, 
+                                  tag == MPC_ANY_TAG ? 0 : ~0,
                                   &param);
 
         if (LCP_PTR_IS_ERR(request)) {
@@ -4509,7 +4423,7 @@ static void __initialize_drivers()
 
         //FIXME: task count is number of MPI task while ctx->num_tasks should be
         //       the number of local tasks. At this point,
-        //       mpc_common_get_local_task_count() is not setup yet. 
+        //       mpc_common_get_local_task_count() is not setup yet.
 	lcp_context_param_t ctx_params =
 	{
                 .field_mask     = LCP_CONTEXT_DATATYPE_OPS  |
@@ -4536,7 +4450,7 @@ static void __initialize_drivers()
         lcp_manager_param_t mngr_params = {
                 .field_mask     = LCP_MANAGER_ESTIMATED_EPS | LCP_MANAGER_COMM_MODEL,
                 .estimated_eps  = mpc_common_get_process_count(),
-                .flags          = LCP_MANAGER_TSC_MODEL, 
+                .flags          = LCP_MANAGER_TSC_MODEL,
         };
         rc = lcp_manager_create(lcp_ctx_loc, &lcp_mngr_loc, &mngr_params);
         if (rc != MPC_LOWCOMM_SUCCESS) {

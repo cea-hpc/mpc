@@ -506,7 +506,7 @@ int _mpc_ofi_send_am_zcopy(_mpc_lowcomm_endpoint_t *ep,
    return MPC_LOWCOMM_SUCCESS;
 }
 
-int  _mpc_ofi_pin(struct sctk_rail_info_s *rail, struct sctk_rail_pin_ctx_list *list, 
+int  _mpc_ofi_pin(struct sctk_rail_info_s *rail, struct sctk_rail_pin_ctx_list *list,
                   const void *addr, size_t size,
                    unsigned flags)
 {
@@ -665,13 +665,13 @@ int _mpc_ofi_flush_mem_ep(sctk_rail_info_t *rail,
                          _mpc_lowcomm_endpoint_t *ep,
                          struct sctk_rail_pin_ctx_list *list,
                          lcr_completion_t *comp,
-                         unsigned flags) 
+                         unsigned flags)
 {
-       UNUSED(rail); 
-       UNUSED(ep); 
-       UNUSED(list); 
-       UNUSED(flags); 
-       UNUSED(comp); 
+       UNUSED(rail);
+       UNUSED(ep);
+       UNUSED(list);
+       UNUSED(flags);
+       UNUSED(comp);
        TODO("To be implemented.");
 
        comp->comp_cb(comp);
@@ -682,12 +682,12 @@ int _mpc_ofi_flush_mem_ep(sctk_rail_info_t *rail,
 int _mpc_ofi_flush_ep(sctk_rail_info_t *rail,
                       _mpc_lowcomm_endpoint_t *ep,
                       lcr_completion_t *comp,
-                      unsigned flags) 
+                      unsigned flags)
 {
-       UNUSED(rail); 
-       UNUSED(ep); 
-       UNUSED(flags); 
-       UNUSED(comp); 
+       UNUSED(rail);
+       UNUSED(ep);
+       UNUSED(flags);
+       UNUSED(comp);
        TODO("To be implemented.");
 
        comp->comp_cb(comp);
@@ -698,12 +698,12 @@ int _mpc_ofi_flush_ep(sctk_rail_info_t *rail,
 int _mpc_ofi_flush_mem(sctk_rail_info_t *rail,
                        struct sctk_rail_pin_ctx_list *list,
                        lcr_completion_t *comp,
-                       unsigned flags) 
+                       unsigned flags)
 {
-       UNUSED(rail); 
-       UNUSED(list); 
-       UNUSED(flags); 
-       UNUSED(comp); 
+       UNUSED(rail);
+       UNUSED(list);
+       UNUSED(flags);
+       UNUSED(comp);
        TODO("To be implemented.");
 
        comp->comp_cb(comp);
@@ -713,11 +713,11 @@ int _mpc_ofi_flush_mem(sctk_rail_info_t *rail,
 
 int _mpc_ofi_flush_iface(sctk_rail_info_t *rail,
                          lcr_completion_t *comp,
-                         unsigned flags) 
+                         unsigned flags)
 {
-       UNUSED(rail); 
-       UNUSED(flags); 
-       UNUSED(comp); 
+       UNUSED(rail);
+       UNUSED(flags);
+       UNUSED(comp);
        TODO("To be implemented.");
 
        comp->comp_cb(comp);
@@ -977,7 +977,7 @@ lcr_component_t shmofi_component =
 	.devices       = NULL,
 	.num_devices   = 0,
 	.flags         = 0,
-	.next          = NULL 
+	.next          = NULL
 };
 LCR_COMPONENT_REGISTER(&shmofi_component)
 
@@ -989,6 +989,6 @@ lcr_component_t verbsofi_component =
 	.devices       = NULL,
 	.num_devices   = 0,
 	.flags         = 0,
-	.next          = NULL 
+	.next          = NULL
 };
 LCR_COMPONENT_REGISTER(&verbsofi_component)

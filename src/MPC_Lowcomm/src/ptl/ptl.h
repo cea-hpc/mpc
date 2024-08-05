@@ -25,13 +25,20 @@
 #ifndef LCR_PTL_H
 #define LCR_PTL_H
 
-#include <mpc_mempool.h>
+#include <mpc_config.h>
+
+#ifdef MPC_USE_PORTALS
+
 #include <lcr_def.h>
+
 #include <sys/types.h>
 #include <sys/uio.h>
 #include <stdatomic.h>
+#include <string.h>
+
 #include <list.h>
 #include <queue.h>
+#include <mpc_mempool.h>
 #include <mpc_common_datastructure.h>
 #include <mpc_common_spinlock.h>
 #include <mpc_common_helper.h>
@@ -418,6 +425,7 @@ typedef struct lcr_ptl_rail_info _mpc_lowcomm_ptl_rail_info_t;
 #define lcr_ptl_chk(x) x
 #endif
 
+/* NOLINTBEGIN(clang-diagnostic-unused-function): False positives */
 static inline const char * lcr_ptl_event_ni_fail_type_decode(ptl_event_t ev)
 {
 	switch(ev.ni_fail_type)
@@ -840,6 +848,7 @@ static inline int lcr_ptl_post(lcr_ptl_ep_info_t *ep,
         return rc;
 }
 #endif
+/* NOLINTEND(clang-diagnostic-unused-function) */
 
 int lcr_ptl_complete_op(lcr_ptl_op_t *op);
 
@@ -862,7 +871,7 @@ ssize_t lcr_ptl_send_am_bcopy(_mpc_lowcomm_endpoint_t *ep,
 
 int lcr_ptl_send_am_zcopy(_mpc_lowcomm_endpoint_t *ep,
                           uint8_t id,
-                          const void *header,
+                          void *header,
                           unsigned header_length,
                           const struct iovec *iov,
                           size_t iovcnt,
@@ -902,7 +911,7 @@ int lcr_ptl_send_put_bcopy(_mpc_lowcomm_endpoint_t *ep,
                            lcr_memp_t *remote_key);
 
 int lcr_ptl_send_get_bcopy(_mpc_lowcomm_endpoint_t *ep,
-                           lcr_pack_callback_t pack,
+                           lcr_unpack_callback_t unpack,
                            void *arg,
                            uint64_t remote_addr,
                            lcr_memp_t *local_key,
@@ -1024,4 +1033,5 @@ int lcr_ptl_tk_init(ptl_handle_ni_t nih, lcr_ptl_tk_module_t *tk,
 int lcr_ptl_tk_fini(ptl_handle_ni_t nih, lcr_ptl_tk_module_t *tk);
 #endif
 
-#endif
+#endif /* MPC_USE_PORTALS */
+#endif /* LCR_PTL_H */

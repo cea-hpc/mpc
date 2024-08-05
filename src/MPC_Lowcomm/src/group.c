@@ -991,7 +991,7 @@ mpc_lowcomm_group_t *_mpc_lowcomm_group_create(unsigned int size, _mpc_lowcomm_g
 
 	/* As we create we set refcounter to 1 */
 	OPA_store_int(&ret->refcount, 1);
-        
+
         //TODO: add memory check
         ret->eps = sctk_malloc(size * sizeof(lcp_ep_h));
         memset(ret->eps, 0, size * sizeof(lcp_ep_h));
@@ -1011,7 +1011,7 @@ mpc_lowcomm_group_t *_mpc_lowcomm_group_create(unsigned int size, _mpc_lowcomm_g
                 //      path. It is set here because previous function can take
                 //      another group (but identical) which have not been
                 //      initialized.
-                ret->my_rank[mpc_common_get_local_task_rank()] = 
+                ret->my_rank[mpc_common_get_local_task_rank()] =
                         mpc_lowcomm_group_rank(ret);
         }
 

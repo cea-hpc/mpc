@@ -80,7 +80,6 @@ static inline void mpc_queue_del_iter(mpc_queue_head_t *queue,
                 *iter       = (*iter)->next;
         }
 }
-/* NOLINTEND(clang-diagnostic-unused-function) */
 
 #define mpc_queue_for_each_safe(elem, iter, type, queue, member) \
         for (iter = &(queue)->head, \
@@ -94,7 +93,7 @@ static inline void mpc_queue_del_iter(mpc_queue_head_t *queue,
         mpc_container_of(mpc_queue_pull(queue), type, member)
 
 
-static inline void mpc_queue_remove(mpc_queue_head_t *queue, 
+static inline void mpc_queue_remove(mpc_queue_head_t *queue,
                                     mpc_queue_elem_t *elem)
 {
         mpc_queue_iter_t iter = &queue->head;
@@ -107,5 +106,6 @@ static inline void mpc_queue_remove(mpc_queue_head_t *queue,
                 iter = &(*iter)->next;
         }
 }
-        
+/* NOLINTEND(clang-diagnostic-unused-function) */
+
 #endif

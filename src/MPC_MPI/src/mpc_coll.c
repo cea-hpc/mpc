@@ -1946,7 +1946,7 @@ int PMPI_Reduce_init(const void *sendbuf, void* recvbuf, int count, MPI_Datatype
   mpc_lowcomm_request_t *mpc_req;
   SCTK__MPI_INIT_REQUEST (request);
   //req = __sctk_new_mpc_request_internal (request,__sctk_internal_get_MPC_requests());
-  req = mpc_lowcomm_request_alloc(); 
+  req = mpc_lowcomm_request_alloc();
   mpc_req = _mpc_cl_get_lowcomm_request(req);
   req->freeable = 0;
   req->is_active = 0;

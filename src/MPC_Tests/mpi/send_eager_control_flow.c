@@ -16,7 +16,7 @@ int main(int argc, char** argv) {
 
         if (process_Rank == 0) {
                 req_array = (MPI_Request *)malloc((size_Of_Cluster - 1) * num_send_requests * sizeof(MPI_Request));
-        } else { 
+        } else {
                 req_array = (MPI_Request *)malloc(num_send_requests * sizeof(MPI_Request));
         }
 
@@ -37,16 +37,16 @@ int main(int argc, char** argv) {
          * sending a lot of messages. */
         if(process_Rank == 0){
                 for (i = 0; i < (size_Of_Cluster -1) * num_send_requests; i++) {
-                        MPI_Irecv(array_to_recv, size, MPI_INT, 
-                                  MPI_ANY_SOURCE, 1, MPI_COMM_WORLD, 
+                        MPI_Irecv(array_to_recv, size, MPI_INT,
+                                  MPI_ANY_SOURCE, 1, MPI_COMM_WORLD,
                                   &req_array[i]);
                 }
         } else {
                 for (i = 0; i < num_send_requests; i++) {
-                        MPI_Isend(array_to_send, size, MPI_INT, 
+                        MPI_Isend(array_to_send, size, MPI_INT,
                                   0, 1, MPI_COMM_WORLD, &req_array[i]);
                 }
-        } 
+        }
 
         if (process_Rank == 0) {
                 MPI_Waitall((size_Of_Cluster - 1) * num_send_requests, req_array, MPI_STATUSES_IGNORE);

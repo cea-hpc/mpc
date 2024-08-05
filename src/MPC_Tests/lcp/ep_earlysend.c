@@ -148,7 +148,7 @@ int main(int argc, char** argv) {
 =======
                 /* progress so that message can be put in unexpected list. */
 		lcp_progress(mngr);
-                lcp_request_param_t param = { 
+                lcp_request_param_t param = {
 >>>>>>> e285140f5 (WIP. LCP: communication manager for software communication context.):tests/lcp/ep_earlysend.c
                         .datatype  = LCP_DATATYPE_CONTIGUOUS,
                         .recv_info = &req.recv_info

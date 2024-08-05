@@ -278,7 +278,7 @@ err:
 //TODO: force homogeneity of transport for one endpoint. Select transport with
 //      highest priority, then build transport endpoints for all allocated
 //      devices.
-static int lcp_ep_init_channels(lcp_manager_h mngr, lcp_ep_h ep, 
+static int lcp_ep_init_channels(lcp_manager_h mngr, lcp_ep_h ep,
                                 unsigned flags)
 {
         UNUSED(flags);
@@ -327,7 +327,7 @@ static int lcp_ep_init_channels(lcp_manager_h mngr, lcp_ep_h ep,
 		/* Flag resource as used to enable polling on it */
 		ctx->resources[i].used = 1;
 
-		mpc_common_debug("LCP EP: route to %llu using %s", ep->uid, 
+		mpc_common_debug("LCP EP: route to %llu using %s", ep->uid,
                                  iface->network_name);
 
 		/* Check transport endpoint availability */
@@ -360,7 +360,7 @@ static int lcp_ep_init_channels(lcp_manager_h mngr, lcp_ep_h ep,
 		/* Transport endpoint is connected */
 		MPC_BITMAP_SET(ep->conn_map, i);
 	}
-        
+
 	/* Protocol endpoint connected only if there are available interfaces
 	 * and all are connected */
 	int equal = !mpc_bitmap_is_zero(ep->avail_map) &&
@@ -476,7 +476,7 @@ int lcp_context_ep_create(lcp_manager_h mngr, lcp_ep_h *ep_p,
 	*ep_p = ep;
 	mpc_common_debug_info("LCP: created ep. dest=%llu, dst_tsk=%d, "
                               "am_map=%x, rma_map=%x, tag_map=%x",
-	                      uid, uid, ep->am_bmap, ep->rma_bmap, 
+	                      uid, uid, ep->am_bmap, ep->rma_bmap,
                               ep->tag_bmap);
 
 	return rc;
@@ -556,7 +556,7 @@ lcp_ep_h lcp_ep_get(lcp_manager_h mngr, uint64_t uid)
         return elem->ep;
 }
 
-int lcp_ep_get_or_create(lcp_manager_h mngr, uint64_t uid, 
+int lcp_ep_get_or_create(lcp_manager_h mngr, uint64_t uid,
                          lcp_ep_h *ep_p, unsigned flags)
 {
 	if(!(*ep_p = lcp_ep_get(mngr, uid)))

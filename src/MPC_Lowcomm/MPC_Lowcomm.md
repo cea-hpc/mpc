@@ -52,7 +52,7 @@ characteristics to ensure efficient data transmission.
 **Communication Progression**
 
 Communication Progression manages the stages and transitions of communication
-activities, ensuring the progression of messages within the infrastructure. 
+activities, ensuring the progression of messages within the infrastructure.
 
 **Communication Models**
 

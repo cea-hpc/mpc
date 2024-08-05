@@ -109,11 +109,11 @@ int lcr_ptl_get_tag_zcopy(_mpc_lowcomm_endpoint_t *ep,
 int lcr_ptl_ep_flush(_mpc_lowcomm_endpoint_t *ep,
                      unsigned flags);
 
-void lcr_ptl_connect_on_demand(struct sctk_rail_info_s *rail, 
+void lcr_ptl_connect_on_demand(struct sctk_rail_info_s *rail,
                                uint64_t dest);
 
-void lcr_ptl_mem_register(struct sctk_rail_info_s *rail, 
-                          struct sctk_rail_pin_ctx_list *list, 
+void lcr_ptl_mem_register(struct sctk_rail_info_s *rail,
+                          struct sctk_rail_pin_ctx_list *list,
                           void * addr, size_t size);
 void lcr_ptl_mem_unregister(struct sctk_rail_info_s *rail,
                             struct sctk_rail_pin_ctx_list *list);
@@ -126,4 +126,3 @@ int lcr_ptl_unpack_rkey(sctk_rail_info_t *rail,
 int lcr_ptl_iface_progress(sctk_rail_info_t *rail);
 
 #endif
-

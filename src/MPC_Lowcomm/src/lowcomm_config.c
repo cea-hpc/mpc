@@ -281,13 +281,13 @@ static inline mpc_conf_config_type_t *__init_driver_tbsm(struct _mpc_lowcomm_con
 
 	mpc_conf_config_type_t *ret =
                 mpc_conf_config_type_init("tbsm",
-                                          PARAM("maxiov", 
-                                                &tbsm->max_iov, 
-                                                MPC_CONF_LONG_INT, 
+                                          PARAM("maxiov",
+                                                &tbsm->max_iov,
+                                                MPC_CONF_LONG_INT,
                                                 "Max iovec."),
-                                          PARAM("eagerlimit", 
-                                                &tbsm->eager_limit, 
-                                                MPC_CONF_INT, 
+                                          PARAM("eagerlimit",
+                                                &tbsm->eager_limit,
+                                                MPC_CONF_INT,
                                                 "Eager limit."),
                                           PARAM("maxmsgsize",
                                                 &tbsm->max_msg_size,
@@ -383,10 +383,10 @@ static inline mpc_conf_config_type_t *__init_driver_matching_portals(struct _mpc
 {
 	driver->type = MPC_LOWCOMM_CONFIG_DRIVER_PORTALS;
 
-	/* 
+	/*
 	 * Set defaults
 	 */
-	
+
 	struct _mpc_lowcomm_config_struct_net_driver_portals *portals = &driver->value.portals;
 
 	portals->eager_limit = 8192;
@@ -709,7 +709,7 @@ mpc_conf_config_type_t *__new_rail_conf_instance(
 	ret->max_ifaces = max_ifaces;
         ret->composable = composable;
         ret->offload    = offload;
-	snprintf(ret->config, MPC_CONF_STRING_SIZE, config);
+	snprintf(ret->config, MPC_CONF_STRING_SIZE, "%s", config);
 
 	/* This fills in a rail definition */
 	mpc_conf_config_type_t *rail = mpc_conf_config_type_init(name,
@@ -860,7 +860,7 @@ int _mpc_lowcomm_conf_load_rail_from_cli(struct _mpc_lowcomm_config_struct_net_r
 
 	mpc_conf_config_type_t *cli = _mpc_lowcomm_conf_cli_get(option_name);
         if (cli == NULL) {
-                mpc_common_debug_error("CONF: CLI with name %s not found.", 
+                mpc_common_debug_error("CONF: CLI with name %s not found.",
                                        option_name);
                 return MPC_LOWCOMM_ERROR;
         }

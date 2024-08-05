@@ -88,7 +88,7 @@ int lcp_task_create(lcp_context_h ctx, int tid, lcp_task_h *task_p)
         task->ctx = ctx;
 
         /* Allocate table of communication context. */
-        task->tcct = sctk_malloc(ctx->config.max_num_managers * 
+        task->tcct = sctk_malloc(ctx->config.max_num_managers *
                                  sizeof(lcp_task_comm_context_t *));
         if (task->tcct == NULL) {
                 mpc_common_debug_error("LCP TASK: could not allocated task "
@@ -96,7 +96,7 @@ int lcp_task_create(lcp_context_h ctx, int tid, lcp_task_h *task_p)
                 rc = MPC_LOWCOMM_ERROR;
                 goto err;
         }
-        memset(task->tcct, 0, ctx->config.max_num_managers * 
+        memset(task->tcct, 0, ctx->config.max_num_managers *
                sizeof(lcp_task_comm_context_t *));
 
         /* Init task lock used for matching lists */
@@ -113,7 +113,7 @@ int lcp_task_create(lcp_context_h ctx, int tid, lcp_task_h *task_p)
                 .free_func = sctk_free,
                 .obj_init_func = lcp_task_request_init,
         };
-                
+
         rc = mpc_mpool_init(&task->req_mp, &mp_req_params);
         if (rc != MPC_LOWCOMM_SUCCESS) {
                 goto err;
@@ -131,7 +131,7 @@ int lcp_task_create(lcp_context_h ctx, int tid, lcp_task_h *task_p)
                 .malloc_func = sctk_malloc,
                 .free_func = sctk_free
         };
-                
+
         rc = mpc_mpool_init(&task->unexp_mp, &mp_unexp_params);
         if (rc != MPC_LOWCOMM_SUCCESS) {
                 goto err;
@@ -186,7 +186,7 @@ int lcp_task_associate(lcp_task_h task, lcp_manager_h mngr)
                 }
 
                 /* Init table of user AM callbacks */
-                tcc->am.handlers = sctk_malloc(LCP_AM_ID_USER_MAX * 
+                tcc->am.handlers = sctk_malloc(LCP_AM_ID_USER_MAX *
                                       sizeof(lcp_am_user_handler_t));
                 if (tcc->am.handlers == NULL) {
                         mpc_common_debug_error("LCP TASK: Could not allocate "
@@ -194,7 +194,7 @@ int lcp_task_associate(lcp_task_h task, lcp_manager_h mngr)
                         rc = MPC_LOWCOMM_ERROR;
                         goto err;
                 }
-                memset(tcc->am.handlers, 0, LCP_AM_ID_USER_MAX * 
+                memset(tcc->am.handlers, 0, LCP_AM_ID_USER_MAX *
                        sizeof(lcp_am_user_handler_t));
 
         }
@@ -222,7 +222,7 @@ int lcp_task_dissociate(lcp_task_h task, lcp_manager_h mngr)
 
         mpc_common_debug("LCP TASK: dissociated task. tid=%d, mngr id=%d",
                          task->tid, mngr->id);
-        
+
         return MPC_LOWCOMM_SUCCESS;
 }
 

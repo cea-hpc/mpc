@@ -1608,7 +1608,7 @@ void *_mpc_dt_get_mpitypes_handle(mpc_lowcomm_datatype_t type)
         return dtype->handle;
 }
 
-int _mpc_dt_set_mpitypes_handle(mpc_lowcomm_datatype_t type, 
+int _mpc_dt_set_mpitypes_handle(mpc_lowcomm_datatype_t type,
                                 void *handle)
 {
         mpc_lowcomm_datatype_t dtype = mpc_lowcomm_datatype_common_get_type_struct(type);

@@ -17,7 +17,7 @@ all: context_init \
 	ep_earlyrecv \
 	ep_sendfrag \
 	ep_multi_manager_send \
-	ep_am 
+	ep_am
 
 context_init: context_init.o
 	$(CC) -o $@ $< $(LIBS)

@@ -61,7 +61,7 @@ static inline size_t lcp_send_get_total_tag_payload(size_t data_length)
 // NOLINTEND(clang-diagnostic-unused-function)
 
 int lcp_send_eager_sync_ack(lcp_request_t *super, void *data);
-int lcp_send_eager_tag_zcopy(lcp_request_t *req); 
+int lcp_send_eager_tag_zcopy(lcp_request_t *req);
 int lcp_send_eager_tag_bcopy(lcp_request_t *req);
 int lcp_send_rndv_tag_start(lcp_request_t *req);
 

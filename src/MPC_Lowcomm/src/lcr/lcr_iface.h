@@ -96,7 +96,7 @@ typedef int (*lcr_put_bcopy_func_t)(_mpc_lowcomm_endpoint_t *ep,
                                     lcr_memp_t *remote_key);
 
 typedef int (*lcr_get_bcopy_func_t)(_mpc_lowcomm_endpoint_t *ep,
-                                    lcr_pack_callback_t pack,
+                                    lcr_unpack_callback_t unpack,
                                     void *arg,
                                     uint64_t remote_addr,
                                     lcr_memp_t *local_key,
@@ -177,12 +177,12 @@ typedef int (*lcr_iface_pack_memp_func_t)(sctk_rail_info_t *rail,
                                           lcr_memp_t *memp,
                                           void *dest);
 
-typedef	int (*lcr_iface_register_mem_func_t)(struct sctk_rail_info_s *rail, 
-                                             lcr_memp_t *mem, 
-                                             const void *addr, 
+typedef	int (*lcr_iface_register_mem_func_t)(struct sctk_rail_info_s *rail,
+                                             lcr_memp_t *mem,
+                                             const void *addr,
                                              size_t size,
                                              unsigned flags);
-typedef int (*lcr_iface_unregister_mem_func_t)(struct sctk_rail_info_s *rail, 
+typedef int (*lcr_iface_unregister_mem_func_t)(struct sctk_rail_info_s *rail,
                                                lcr_memp_t *mem);
 
 typedef int (*lcr_iface_unpack_memp_func_t)(sctk_rail_info_t *rail,

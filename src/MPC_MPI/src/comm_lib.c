@@ -1329,8 +1329,6 @@ static inline size_t __mpc_cl_datatype_get_size(mpc_lowcomm_datatype_t datatype)
 		return sizeof(int);
 	}
 
-	size_t ret = 0;
-
 	/* Compute the size in function of the datatype */
 	switch(_mpc_dt_get_kind(datatype) )
 	{
@@ -1532,7 +1530,7 @@ int _mpc_cl_type_hcontiguous_ctx(mpc_lowcomm_datatype_t *datatype, size_t count,
 
 	ierr = _mpc_dt_general_on_slot(datatype);
 
-        MPIT_Type_init(*datatype); 
+        MPIT_Type_init(*datatype);
 
 	SCTK_PROFIL_END(MPC_Type_hcontiguous);
 	return ierr;
@@ -2067,13 +2065,14 @@ int _mpc_cl_type_get_primitive_type_info(mpc_lowcomm_datatype_t dt,
                                          int *predefined_count_p)
 {
         size_t dt_size, predefined_size;
-        
+
         *prim_dt = _mpc_cl_type_get_single_predefined_dt(dt);
         if (*prim_dt == NULL) {
                 return -1;
         }
-        _mpc_cl_type_size(dt, &dt_size); 
+        _mpc_cl_type_size(dt, &dt_size);
         _mpc_cl_type_size(*prim_dt, &predefined_size);
+        assert(predefined_size > 0);
         *predefined_count_p = dt_size / predefined_size;
 
         return MPI_SUCCESS;
@@ -2327,7 +2326,7 @@ int _mpc_cl_irecv(void *buf, mpc_lowcomm_msg_count_t count,
 {
         void *tmp_buf;
         mpc_lowcomm_request_init(request, count, datatype,
-                                 _mpc_cl_request_recv_complete, 
+                                 _mpc_cl_request_recv_complete,
                                  MPC_LOWCOMM_REQUEST_CALLBACK);
 	if(source == MPC_PROC_NULL)
 	{
@@ -2347,7 +2346,7 @@ int _mpc_cl_irecv(void *buf, mpc_lowcomm_msg_count_t count,
         }
 
 
-	mpc_lowcomm_irecv(source, buf, msg_size, tag, comm, request);
+	mpc_lowcomm_irecv(source, tmp_buf, msg_size, tag, comm, request);
 
 	MPC_ERROR_SUCCESS();
 }

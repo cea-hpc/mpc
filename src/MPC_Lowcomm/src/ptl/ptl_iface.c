@@ -86,7 +86,7 @@ static inline int lcr_ptl_invoke_am(sctk_rail_info_t *rail,
 	return rc;
 }
 
-int lcr_ptl_complete_op(lcr_ptl_op_t *op) 
+int lcr_ptl_complete_op(lcr_ptl_op_t *op)
 {
         int rc = MPC_LOWCOMM_SUCCESS;
 
@@ -140,7 +140,7 @@ out:
 }
 
 
-static int _lcr_ptl_iface_process_event_am(sctk_rail_info_t *rail, 
+static int _lcr_ptl_iface_process_event_am(sctk_rail_info_t *rail,
                                            ptl_event_t *ev)
 {
         uint8_t am_id;
@@ -171,7 +171,7 @@ static int _lcr_ptl_iface_process_event_am(sctk_rail_info_t *rail,
         case PTL_EVENT_PUT:
                 /* First, invoke AM handle. */
                 am_id = LCR_PTL_AM_HDR_GET_AM_ID(ev->hdr_data);
-                lcr_ptl_invoke_am(rail, am_id, ev->mlength, 
+                lcr_ptl_invoke_am(rail, am_id, ev->mlength,
                                   ev->start);
 
 #if defined(MPC_USE_PORTALS_CONTROL_FLOW)
@@ -179,7 +179,7 @@ static int _lcr_ptl_iface_process_event_am(sctk_rail_info_t *rail,
                  * - update token chunk based on current
                  *   contention info piggybacked from sender;
                  * - decrement outstanding token counter. */
-                lcr_ptl_tk_release_rsc_token(&rail->network.ptl.net.tk, 
+                lcr_ptl_tk_release_rsc_token(&rail->network.ptl.net.tk,
                                              ev->initiator,
                                              LCR_PTL_AM_HDR_GET_PEND_OPS(ev->hdr_data));
 #endif
@@ -219,7 +219,7 @@ static int _lcr_ptl_iface_process_event_am(sctk_rail_info_t *rail,
         return MPC_LOWCOMM_SUCCESS;
 }
 
-static int _lcr_ptl_iface_process_event_tag(sctk_rail_info_t *rail, 
+static int _lcr_ptl_iface_process_event_tag(sctk_rail_info_t *rail,
                                             ptl_event_t *ev)
 {
         UNUSED(rail);
@@ -265,7 +265,7 @@ static int _lcr_ptl_iface_process_event_tag(sctk_rail_info_t *rail,
                         //       should not be pulled from TX Queue, all event
                         //       should be drained from the Event Queue,
                         //       operation associated to these event need to be
-                        //       handled respecting message ordering. 
+                        //       handled respecting message ordering.
                         mpc_common_debug_fatal("LCR PTL: PT DISABLED. Increase "
                                                "num_eager_blocks.")
                 }
@@ -335,7 +335,7 @@ static int _lcr_ptl_iface_process_event_tag(sctk_rail_info_t *rail,
         return MPC_LOWCOMM_SUCCESS;
 }
 
-static int _lcr_ptl_iface_process_event_rma(sctk_rail_info_t *rail, 
+static int _lcr_ptl_iface_process_event_rma(sctk_rail_info_t *rail,
                                             ptl_event_t *ev)
 {
         int rc = MPC_LOWCOMM_SUCCESS;
@@ -348,10 +348,10 @@ static int _lcr_ptl_iface_process_event_rma(sctk_rail_info_t *rail,
         if (ev->ni_fail_type != PTL_NI_OK) {
                 mpc_common_debug_info("PORTALS: EQS NI EVENT '%s' idx=%d, "
                                       "sz=%llu, user=%p, start=%p, "
-                                      "remote_offset=%p, iface=%d", 
+                                      "remote_offset=%p, iface=%d",
                                       lcr_ptl_event_ni_fail_type_decode(*ev), ev->pt_index,
                                       ev->mlength, ev->user_ptr, ev->start,
-                                      ev->remote_offset, *(uint64_t *)&srail->net.nih);
+                                      ev->remote_offset, srail->net.nih);
 
                 /* Target PTE has been disabled, retry operation. */
                 if (ev->ni_fail_type == PTL_NI_PT_DISABLED) {
@@ -375,7 +375,7 @@ err:
 }
 
 //NOTE: must be called with mem lock
-ptl_size_t lcr_ptl_poll_mem(lcr_ptl_mem_t *mem) 
+ptl_size_t lcr_ptl_poll_mem(lcr_ptl_mem_t *mem)
 {
         ptl_ct_event_t ct_ev;
 
@@ -383,14 +383,14 @@ ptl_size_t lcr_ptl_poll_mem(lcr_ptl_mem_t *mem)
         lcr_ptl_chk(PtlCTGet(mem->cth, &ct_ev));
         if (ct_ev.failure > 0) {
                 /* Failure will be treated with full events. */
-                mpc_common_debug_warning("LCR PTL: %llu event failures.", 
+                mpc_common_debug_warning("LCR PTL: %llu event failures.",
                                          ct_ev.failure);
         }
         return ct_ev.success;
 }
 
-int lcr_ptl_iface_progress_rma(lcr_ptl_rail_info_t *srail) 
-{ 
+int lcr_ptl_iface_progress_rma(lcr_ptl_rail_info_t *srail)
+{
         int rc = MPC_LOWCOMM_SUCCESS;
         int i, it = 0, num_eps = 0;
         int64_t completed = 0;
@@ -409,14 +409,14 @@ int lcr_ptl_iface_progress_rma(lcr_ptl_rail_info_t *srail)
                                 mpc_queue_del_iter(&mem->pending_flush, iter);
                                 lcr_ptl_complete_op(flush_op);
                         }
-                } 
+                }
                 mpc_common_spinlock_unlock(&mem->lock);
                 it++;
 
                 num_eps = atomic_load(&srail->num_eps);
                 for (i = 0; i < num_eps; i++) {
                         lcr_ptl_flush_txq(mem, &mem->txqt[i], completed);
-                } 
+                }
         }
         mpc_common_spinlock_unlock(&srail->net.rma.lock);
 
@@ -428,7 +428,7 @@ int lcr_ptl_iface_progress_rma(lcr_ptl_rail_info_t *srail)
         return rc;
 }
 
-int lcr_ptl_iface_progress(sctk_rail_info_t *rail) 
+int lcr_ptl_iface_progress(sctk_rail_info_t *rail)
 {
         int rc = MPC_LOWCOMM_SUCCESS;
 
@@ -449,10 +449,10 @@ int lcr_ptl_iface_progress(sctk_rail_info_t *rail)
                                          "sz=%llu, user=%p, start=%p, "
                                          "remote_offset=%llu, iface=%llu",
                                          lcr_ptl_event_decode(ev),
-                                         *(uint64_t *)&srail->net.eqh,
+                                         srail->net.eqh,
                                          ev.pt_index, ev.mlength,
                                          ev.user_ptr, ev.start,
-                                         ev.remote_offset, *(uint64_t *)&srail->net.nih);
+                                         ev.remote_offset, srail->net.nih);
 
                         if (ev.type == PTL_EVENT_PT_DISABLED) {
                                 mpc_common_debug_fatal("LCR PTL: PT DISABLED. Increase "
@@ -493,7 +493,7 @@ int lcr_ptl_iface_progress(sctk_rail_info_t *rail)
         int i, count = 0;
         for (i = 0; i < srail->num_eps; i++) {
                 rc = lcr_ptl_tk_progress_pending_ops(srail,
-                                                     srail->ept[i], 
+                                                     srail->ept[i],
                                                      &count);
                 if (rc != MPC_LOWCOMM_SUCCESS) break;
         }
@@ -536,7 +536,7 @@ lcr_ptl_rail_info_t lcr_ptl_hardware_init(sctk_ptl_interface_t iface)
 	   by settign a few internal variables for CQs sharing */
 	int local_proc_count = mpc_common_get_local_process_count();
 
-	if(local_proc_count >= 62) 
+	if(local_proc_count >= 62)
 	{
 		int cqmaxpid = (local_proc_count / 62) + 1;
 		if(cqmaxpid > 8)
@@ -585,15 +585,15 @@ lcr_ptl_rail_info_t lcr_ptl_hardware_init(sctk_ptl_interface_t iface)
 	return res;
 }
 
-static inline void _lcr_ptl_iface_init_driver_config(lcr_ptl_rail_info_t *srail, 
+static inline void _lcr_ptl_iface_init_driver_config(lcr_ptl_rail_info_t *srail,
                                       struct _mpc_lowcomm_config_struct_net_driver_portals *driver_config)
 {
-        srail->config.eager_limit = driver_config->eager_limit < sizeof(size_t) ? 
+        srail->config.eager_limit = driver_config->eager_limit < sizeof(size_t) ?
                 sizeof(size_t) : driver_config->eager_limit;
 
-	srail->config.max_mr      = driver_config->max_msg_size < 
+	srail->config.max_mr      = driver_config->max_msg_size <
                 srail->config.max_limits.max_msg_size ?
-		(unsigned long int)driver_config->max_msg_size : 
+		(unsigned long int)driver_config->max_msg_size :
                 srail->config.max_limits.max_msg_size;
         srail->config.max_get = srail->config.max_mr;
         srail->config.max_put = srail->config.max_mr;
@@ -609,7 +609,7 @@ static inline void _lcr_ptl_iface_init_driver_config(lcr_ptl_rail_info_t *srail,
  * both two-sided and one-sided portals context. Also, the EQ is shared among
  * all context so that it will be instanciated except if the only feature
  * required is RMA. */
-static int _lcr_ptl_iface_init_am(lcr_ptl_rail_info_t *srail) 
+static int _lcr_ptl_iface_init_am(lcr_ptl_rail_info_t *srail)
 {
         int rc;
         ptl_md_t md;
@@ -626,8 +626,8 @@ static int _lcr_ptl_iface_init_am(lcr_ptl_rail_info_t *srail)
 	lcr_ptl_chk(PtlMDBind(
 		srail->net.nih,
 		&md,
-		&srail->net.am.mdh 
-	)); 
+		&srail->net.am.mdh
+	));
 
         /* Register portal table used for AM communication. */
         lcr_ptl_chk(PtlPTAlloc(srail->net.nih,
@@ -648,9 +648,9 @@ static int _lcr_ptl_iface_init_am(lcr_ptl_rail_info_t *srail)
         /* First, initialize memory pool of receive buffer. */
         mpc_mempool_param_t mp_block_params = {
                 .elem_per_chunk = srail->config.num_eager_blocks,
-                .elem_size      = sizeof(lcr_ptl_recv_block_t) + 
+                .elem_size      = sizeof(lcr_ptl_recv_block_t) +
                         srail->config.eager_block_size,
-                .max_elems      = 4*srail->config.num_eager_blocks, 
+                .max_elems      = 4*srail->config.num_eager_blocks,
                 .alignment      = MPC_COMMON_SYS_CACHE_LINE_SIZE,
                 .malloc_func    = sctk_malloc,
                 .free_func      = sctk_free,
@@ -674,7 +674,7 @@ err:
         return rc;
 }
 
-static int _lcr_ptl_iface_fini_am(lcr_ptl_rail_info_t *srail) 
+static int _lcr_ptl_iface_fini_am(lcr_ptl_rail_info_t *srail)
 {
         lcr_ptl_recv_block_disable(&srail->net.am.bhead);
 
@@ -687,7 +687,7 @@ static int _lcr_ptl_iface_fini_am(lcr_ptl_rail_info_t *srail)
 }
 
 /* Initialize ptl resources needed for TAG interface. */
-static int _lcr_ptl_iface_init_tag(lcr_ptl_rail_info_t *srail) 
+static int _lcr_ptl_iface_init_tag(lcr_ptl_rail_info_t *srail)
 {
         int rc;
         ptl_md_t md;
@@ -704,8 +704,8 @@ static int _lcr_ptl_iface_init_tag(lcr_ptl_rail_info_t *srail)
 	lcr_ptl_chk(PtlMDBind(
 		srail->net.nih,
 		&md,
-		&srail->net.tag.mdh 
-	)); 
+		&srail->net.tag.mdh
+	));
 
         //FIXME: only allocate if offload is enabled
         /* register the TAG EAGER PTE */
@@ -727,7 +727,7 @@ static int _lcr_ptl_iface_init_tag(lcr_ptl_rail_info_t *srail)
         /* First, initialize memory pool of receive buffer. */
         mpc_mempool_param_t mp_block_params = {
                 .elem_per_chunk = srail->config.num_eager_blocks,
-                .elem_size      = sizeof(lcr_ptl_recv_block_t) + 
+                .elem_size      = sizeof(lcr_ptl_recv_block_t) +
                         srail->config.eager_block_size,
                 .max_elems      = 16,
                 .alignment      = MPC_COMMON_SYS_CACHE_LINE_SIZE,
@@ -751,7 +751,7 @@ err:
         return rc;
 }
 
-static int _lcr_ptl_iface_fini_tag(lcr_ptl_rail_info_t *srail) 
+static int _lcr_ptl_iface_fini_tag(lcr_ptl_rail_info_t *srail)
 {
         lcr_ptl_recv_block_disable(&srail->net.tag.bhead);
 
@@ -785,7 +785,7 @@ int lcr_ptl_mem_activate(lcr_ptl_rail_info_t *srail,
                 .start  = (void *)start,
                 .options = PTL_MD_EVENT_SUCCESS_DISABLE |
                         PTL_MD_EVENT_SEND_DISABLE       |
-                        PTL_MD_EVENT_CT_ACK             | 
+                        PTL_MD_EVENT_CT_ACK             |
                         PTL_MD_EVENT_CT_REPLY,
         };
         lcr_ptl_chk(PtlMDBind(srail->net.nih, &md, &mem->mdh));
@@ -797,18 +797,18 @@ int lcr_ptl_mem_activate(lcr_ptl_rail_info_t *srail,
                 .ignore_bits = 0,
                 .match_bits  = mem->match,
                 .match_id    = {
-                        .phys.nid = PTL_NID_ANY, 
+                        .phys.nid = PTL_NID_ANY,
                         .phys.pid = PTL_PID_ANY
                 },
                 .uid         = PTL_UID_ANY,
                 .min_free    = 0,
-                .options     = PTL_ME_OP_PUT        | 
+                .options     = PTL_ME_OP_PUT        |
                         PTL_ME_OP_GET               |
-                        PTL_ME_EVENT_LINK_DISABLE   | 
+                        PTL_ME_EVENT_LINK_DISABLE   |
                         PTL_ME_EVENT_UNLINK_DISABLE |
                         PTL_ME_EVENT_SUCCESS_DISABLE,
                 .start       = 0,
-                .length      = PTL_SIZE_MAX 
+                .length      = PTL_SIZE_MAX
         };
 
         lcr_ptl_chk(PtlMEAppend(srail->net.nih,
@@ -856,7 +856,7 @@ int lcr_ptl_mem_deactivate(lcr_ptl_mem_t *mem)
 }
 
 /* Initialize ptl resources needed for RMA interface. */
-static int _lcr_ptl_iface_init_rma(lcr_ptl_rail_info_t *srail) 
+static int _lcr_ptl_iface_init_rma(lcr_ptl_rail_info_t *srail)
 {
         int rc = MPC_LOWCOMM_SUCCESS;
 
@@ -887,8 +887,8 @@ static int _lcr_ptl_iface_init_rma(lcr_ptl_rail_info_t *srail)
                 .alignment = MPC_COMMON_SYS_CACHE_LINE_SIZE,
                 .elem_per_chunk = 16,
                 .elem_size = sizeof(lcr_ptl_mem_t),
-                .max_elems = srail->config.max_limits.max_mds, //FIXME: should be minus number 
-                                                               //       of MD allocated for 
+                .max_elems = srail->config.max_limits.max_mds, //FIXME: should be minus number
+                                                               //       of MD allocated for
                                                                //       other interface
                 .malloc_func = sctk_malloc,
                 .free_func = sctk_free
@@ -902,10 +902,10 @@ static int _lcr_ptl_iface_init_rma(lcr_ptl_rail_info_t *srail)
         srail->net.rma.dynamic_mem = mpc_mpool_pop(srail->net.rma.mem_mp);
         assert(srail->net.rma.dynamic_mem != NULL);
 
-        rc = lcr_ptl_mem_activate(srail, 
+        rc = lcr_ptl_mem_activate(srail,
                                   LCR_PTL_MEM_DYNAMIC,
-                                  0, 
-                                  PTL_SIZE_MAX, 
+                                  0,
+                                  PTL_SIZE_MAX,
                                   srail->net.rma.dynamic_mem);
         mpc_common_spinlock_init(&srail->net.rma.dynamic_mem->lock, 0);
 
@@ -916,14 +916,14 @@ static int _lcr_ptl_iface_init_rma(lcr_ptl_rail_info_t *srail)
         mpc_list_init_head(&srail->net.rma.poll_list);
 
         /* Already append the dynamic memory that will always be polled. */
-        mpc_list_push_head(&srail->net.rma.poll_list, 
+        mpc_list_push_head(&srail->net.rma.poll_list,
                            &srail->net.rma.dynamic_mem->elem);
 
 err:
         return rc;
 }
 
-static int _lcr_ptl_iface_fini_rma(lcr_ptl_rail_info_t *srail) 
+static int _lcr_ptl_iface_fini_rma(lcr_ptl_rail_info_t *srail)
 {
         lcr_ptl_mem_deactivate(srail->net.rma.dynamic_mem);
 
@@ -957,11 +957,11 @@ static int __ptl_monitor_callback(mpc_lowcomm_peer_uid_t from,
 static inline void __register_monitor_callback(sctk_rail_info_t* rail)
 {
 	char rail_name[32];
-	mpc_lowcomm_monitor_register_on_demand_callback(__ptl_get_rail_callback_name(rail->pmi_tag, rail_name, 32), 
+	mpc_lowcomm_monitor_register_on_demand_callback(__ptl_get_rail_callback_name(rail->pmi_tag, rail_name, 32),
                                                         __ptl_monitor_callback, rail);
 }
 
-int lcr_ptl_iface_is_reachable(sctk_rail_info_t *rail, uint64_t uid) 
+int lcr_ptl_iface_is_reachable(sctk_rail_info_t *rail, uint64_t uid)
 {
         //FIXME: check whether getting connection info should be done here. For
         //       now just return true.
@@ -1001,8 +1001,8 @@ int lcr_ptl_get_attr(sctk_rail_info_t *rail,
         attr->iface.cap.flags               = rail->cap;
 
         attr->mem.cap.max_reg               = PTL_SIZE_MAX;
-        attr->mem.size_packed_mkey          = sizeof(uint64_t) + 
-                sizeof(ptl_match_bits_t) + sizeof(unsigned); //FIXME: to be generalized 
+        attr->mem.size_packed_mkey          = sizeof(uint64_t) +
+                sizeof(ptl_match_bits_t) + sizeof(unsigned); //FIXME: to be generalized
 
         return MPC_LOWCOMM_SUCCESS;
 }
@@ -1038,7 +1038,7 @@ int lcr_ptl_iface_init(sctk_rail_info_t *rail, unsigned fflags)
 
         /* Create the common EQ */
         lcr_ptl_chk(PtlEQAlloc(srail->net.nih,
-                                PTL_EQ_PTE_SIZE, 
+                                PTL_EQ_PTE_SIZE,
                                 &srail->net.eqh
                                ));
         mpc_common_spinlock_init(&srail->lock, 0);
@@ -1085,11 +1085,11 @@ int lcr_ptl_iface_init(sctk_rail_info_t *rail, unsigned fflags)
                          "tk pti=%d, "
 #endif
                          "am pti=%d, tag pti=%d, rma pti=%d", srail->addr.id.phys.nid,
-                         srail->addr.id.phys.pid, 
+                         srail->addr.id.phys.pid,
 #if defined (MPC_USE_PORTALS_CONTROL_FLOW)
                          srail->addr.pte.tk,
 #endif
-                         srail->addr.pte.am, srail->addr.pte.tag, 
+                         srail->addr.pte.am, srail->addr.pte.tag,
                          srail->addr.pte.rma);
 
         /* Initialize table of endpoints. */
@@ -1101,7 +1101,7 @@ int lcr_ptl_iface_init(sctk_rail_info_t *rail, unsigned fflags)
                 rc = MPC_LOWCOMM_ERROR;
                 goto err;
         }
-        
+
         /* Initialize pool of recv operations. */
         srail->iface_ops = sctk_malloc(sizeof(mpc_mempool_t));
         if (srail->iface_ops == NULL) {

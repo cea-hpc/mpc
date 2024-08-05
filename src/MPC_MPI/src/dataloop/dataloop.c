@@ -159,7 +159,7 @@ void PREPEND_PREFIX(Dataloop_update)(DLOOP_Dataloop *dataloop,
 		DLOOP_Assert(dataloop->loop_params.cm_t.dataloop);
 
 		DLOOP_Ensure_Offset_fits_in_pointer(DLOOP_VOID_PTR_CAST_TO_OFFSET (char *) dataloop->loop_params.cm_t.dataloop + ptrdiff);
-	    
+
 		dataloop->loop_params.cm_t.dataloop =
 		    (DLOOP_Dataloop *) DLOOP_OFFSET_CAST_TO_VOID_PTR
 		    (DLOOP_VOID_PTR_CAST_TO_OFFSET (char *) dataloop->loop_params.cm_t.dataloop + ptrdiff);

@@ -2,10 +2,10 @@ send_eager_control_flow:
   build:
     files: ./send_eager_control_flow.c
     sources:
-      binary: send_eager_control_flow 
+      binary: send_eager_control_flow
       cflags: -g -O0
   run:
-    program: @SRCPATH@/script.sh @BUILDPATH@/send_eager_control_flow
+    program: "@SRCPATH@/script.sh @BUILDPATH@/send_eager_control_flow"
 send_rdv_multiple:
   build:
     files: ./send_rdv_multiple.c

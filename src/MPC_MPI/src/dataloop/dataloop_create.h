@@ -5,6 +5,7 @@
  *      See COPYRIGHT in top-level directory.
  */
 
+// NOLINTBEGIN
 #ifndef DATALOOP_CREATE_H
 #define DATALOOP_CREATE_H
 
@@ -63,21 +64,21 @@ int PREPEND_PREFIX(Dataloop_create_pairtype)(MPI_Datatype type,
 
 /* Helper functions for dataloop construction */
 int PREPEND_PREFIX(Type_convert_subarray)(int ndims,
-					  int *array_of_sizes, 
+					  int *array_of_sizes,
 					  int *array_of_subsizes,
 					  int *array_of_starts,
 					  int order,
-					  MPI_Datatype oldtype, 
+					  MPI_Datatype oldtype,
 					  MPI_Datatype *newtype);
 int PREPEND_PREFIX(Type_convert_darray)(int size,
 					int rank,
-					int ndims, 
+					int ndims,
 					int *array_of_gsizes,
-					int *array_of_distribs, 
+					int *array_of_distribs,
 					int *array_of_dargs,
-					int *array_of_psizes, 
+					int *array_of_psizes,
 					int order,
-					MPI_Datatype oldtype, 
+					MPI_Datatype oldtype,
 					MPI_Datatype *newtype);
 
 DLOOP_Count PREPEND_PREFIX(Type_indexed_count_contig)(DLOOP_Count count,
@@ -85,13 +86,13 @@ DLOOP_Count PREPEND_PREFIX(Type_indexed_count_contig)(DLOOP_Count count,
                                                       void *displacement_array,
                                                       int dispinbytes,
                                                       DLOOP_Offset old_extent);
-                                                     
+
 DLOOP_Count PREPEND_PREFIX(Type_blockindexed_count_contig)(DLOOP_Count count,
                                                            DLOOP_Count blklen,
                                                            void *disp_array,
                                                            int dispinbytes,
                                                            DLOOP_Offset old_extent);
-                                                          
+
 #if 0
 /* Helper functions for accessing datatype contents */
 void PREPEND_PREFIX(Type_access_contents)(MPI_Datatype type,
@@ -105,3 +106,4 @@ void PREPEND_PREFIX(Type_release_contents)(MPI_Datatype type,
 #endif
 
 #endif
+// NOLINTEND

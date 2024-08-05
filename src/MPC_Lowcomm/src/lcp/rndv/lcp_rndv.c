@@ -64,7 +64,7 @@ static ssize_t lcp_rndv_rtr_pack(void *dest, void *data)
         hdr->msg_id = rndv_req->msg_id;
         hdr->remote_addr = (uint64_t)rndv_req->send.buffer;
 
-        packed_size = lcp_mem_rkey_pack(rndv_req->mngr, 
+        packed_size = lcp_mem_rkey_pack(rndv_req->mngr,
                                         rndv_req->state.lmem,
                                         hdr + 1);
 
@@ -93,7 +93,7 @@ ssize_t lcp_rndv_rts_pack(lcp_request_t *super, void *dest)
         //FIXME: store rndv_mode in endpoint.
         if (rndv_req->mngr->ctx->config.rndv_mode == LCP_RNDV_GET) {
                 /* Pack remote key from super request */
-                packed_size = lcp_mem_rkey_pack(rndv_req->mngr, 
+                packed_size = lcp_mem_rkey_pack(rndv_req->mngr,
                                                 rndv_req->state.lmem,
                                                 hdr + 1);
         }
@@ -157,7 +157,7 @@ int lcp_rndv_rma_progress(lcp_request_t *rndv_req)
         assert(attr.iface.cap.rndv.max_put_zcopy);
 
         //NOTE: using a do while handles the 0 length case.
-        do { 
+        do {
                 if (!MPC_BITMAP_GET(rkey->bm, cc)) {
                         cc = lcp_ep_get_next_cc(ep, cc, ep->rma_bmap);
                         assert(cc != LCP_NULL_CHANNEL);
@@ -169,16 +169,16 @@ int lcp_rndv_rma_progress(lcp_request_t *rndv_req)
                 if (rndv_req->mngr->ctx->config.rndv_mode == LCP_RNDV_GET) {
                         /* Get source address */
                         rc = lcp_send_do_get_zcopy(ep->lct_eps[cc],
-                                                   mpc_buffer_offset(rndv_req->send.buffer, offset), 
-                                                   mpc_buffer_offset(rndv_req->send.rndv.addr, offset), 
+                                                   mpc_buffer_offset(rndv_req->send.buffer, offset),
+                                                   mpc_buffer_offset(rndv_req->send.rndv.addr, offset),
                                                    &(rndv_req->state.lmem->mems[cc]),
                                                    &(rkey->mems[cc]),
                                                    length,
                                                    &(rndv_req->state.comp));
                 } else {
                         rc = lcp_send_do_put_zcopy(ep->lct_eps[cc],
-                                                   mpc_buffer_offset(rndv_req->send.buffer, offset), 
-                                                   mpc_buffer_offset(rndv_req->send.rndv.addr, offset), 
+                                                   mpc_buffer_offset(rndv_req->send.buffer, offset),
+                                                   mpc_buffer_offset(rndv_req->send.rndv.addr, offset),
                                                    &(rndv_req->state.lmem->mems[cc]),
                                                    &(rkey->mems[cc]),
                                                    length,
@@ -216,14 +216,14 @@ int lcp_rndv_register_buffer(lcp_request_t *rndv_req)
         /* Register memory. */
         rc = lcp_mem_reg_from_map(rndv_req->mngr, rndv_req->state.lmem,
                                   rndv_req->send.ep->rma_bmap,
-                                  rndv_req->send.buffer, 
+                                  rndv_req->send.buffer,
                                   rndv_req->send.length,
                                   LCR_IFACE_REGISTER_MEM_DYN,
                                   &rndv_req->state.lmem->bm);
         if (rc != MPC_LOWCOMM_SUCCESS) {
                 goto err;
         }
-        assert(mpc_bitmap_equal(rndv_req->send.ep->rma_bmap, 
+        assert(mpc_bitmap_equal(rndv_req->send.ep->rma_bmap,
                                 rndv_req->state.lmem->bm));
 
         assume(rndv_req->state.offset == 0);
@@ -275,7 +275,7 @@ void lcp_rndv_complete(lcr_completion_t *comp)
                 super->state.comp.comp_cb(&(super->state.comp));
 
                 /* Complete rndv request */
-                lcp_request_complete(rndv_req, send.send_cb, MPC_LOWCOMM_SUCCESS, 
+                lcp_request_complete(rndv_req, send.send_cb, MPC_LOWCOMM_SUCCESS,
                                      rndv_req->send.length);
         }
 }
@@ -321,7 +321,7 @@ int lcp_send_rndv_start(lcp_request_t *req)
         //      completed.
         //NOTE: set both super and rndv requests because it is needed during
         //      packing, see lcp_rndv_rts_pack.
-        rndv_req->msg_id = req->msg_id = (uint64_t)rndv_req; 
+        rndv_req->msg_id = req->msg_id = (uint64_t)rndv_req;
 
         /* Register memory if GET protocol */
         rc = lcp_rndv_register_buffer(rndv_req);
@@ -387,7 +387,7 @@ int lcp_rndv_process_rts(lcp_request_t *rreq,
 
         /* Get endpoint */
         if (!(rndv_req->send.ep = lcp_ep_get(rndv_req->mngr, hdr->src_uid))) {
-                rc = lcp_ep_create(rndv_req->mngr, &(rndv_req->send.ep), 
+                rc = lcp_ep_create(rndv_req->mngr, &(rndv_req->send.ep),
                                    hdr->src_uid, 0);
                 if (rc != MPC_LOWCOMM_SUCCESS) {
                         mpc_common_debug_error("LCP RNDV: could not create ep "
@@ -414,7 +414,7 @@ int lcp_rndv_process_rts(lcp_request_t *rreq,
                 };
 
                 /* Unpack remote key */
-                rc = lcp_mem_unpack(rreq->mngr, &(rndv_req->send.rndv.rkey), 
+                rc = lcp_mem_unpack(rreq->mngr, &(rndv_req->send.rndv.rkey),
                                     hdr + 1, length);
                 if (rc < 0) {
                         goto err;
@@ -429,6 +429,7 @@ int lcp_rndv_process_rts(lcp_request_t *rreq,
                 break;
         }
 
+        //FIXME: add error check.
         lcp_request_send(rndv_req);
 err:
         return rc;
@@ -455,7 +456,7 @@ static int lcp_rndv_rtr_handler(void *arg, void *data,
         //       null test may not be enough
         assume(rndv_req != NULL);
 
-        rc = lcp_mem_unpack(mngr, &(rndv_req->send.rndv.rkey), hdr + 1, 
+        rc = lcp_mem_unpack(mngr, &(rndv_req->send.rndv.rkey), hdr + 1,
                             size - sizeof(lcp_ack_hdr_t));
         if (rc < 0) {
                 goto err;
@@ -464,6 +465,7 @@ static int lcp_rndv_rtr_handler(void *arg, void *data,
 
         rndv_req->send.func = lcp_rndv_rma_progress;
 
+        //FIXME: add error check.
         lcp_request_send(rndv_req);
 
 err:
@@ -507,7 +509,7 @@ static int lcp_rndv_fin_handler(void *arg, void *data,
         /* Call completion of super request */
         req->state.comp.comp_cb(&(req->state.comp));
 
-        lcp_request_complete(rndv_req, send.send_cb, MPC_LOWCOMM_SUCCESS, 
+        lcp_request_complete(rndv_req, send.send_cb, MPC_LOWCOMM_SUCCESS,
                              rndv_req->send.length);
 
 err:

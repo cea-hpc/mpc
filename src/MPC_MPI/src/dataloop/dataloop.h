@@ -22,6 +22,3 @@
 #define DLOOP_OFFSET_FMT_HEX_SPEC "%lx"
 
 #endif
-
-
-

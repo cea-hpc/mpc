@@ -42,7 +42,7 @@ static int num_callbacks = 0;
 static progress_callback_func_t callbacks[COMMON_PROGRESS_CALLBACK_MAX];
 
 
-static int _mpc_common_find_callback(progress_callback_func_t func) 
+static int _mpc_common_find_callback(progress_callback_func_t func)
 {
         int i;
         for (i = 0; i < num_callbacks; i++) {
@@ -53,7 +53,7 @@ static int _mpc_common_find_callback(progress_callback_func_t func)
         return COMMON_PROGRESS_FUNC_NOTFOUND;
 }
 
-int mpc_common_progress_register(progress_callback_func_t func) 
+int mpc_common_progress_register(progress_callback_func_t func)
 {
         mpc_common_spinlock_lock(&progress_lock);
         if (_mpc_common_find_callback(func) != COMMON_PROGRESS_FUNC_NOTFOUND) {
@@ -77,7 +77,7 @@ unlock:
 int mpc_common_progress_unregister(progress_callback_func_t func)
 {
         int i, callback_idx;
-        
+
         callback_idx = _mpc_common_find_callback(func);
         if (callback_idx == COMMON_PROGRESS_FUNC_NOTFOUND) {
                 mpc_common_debug_error("COMMON PROGRESS: unregister unknown callback");
@@ -107,5 +107,5 @@ int mpc_common_progress()
                 rc |= callbacks[i]();
         }
 
-        return rc; 
+        return rc;
 }

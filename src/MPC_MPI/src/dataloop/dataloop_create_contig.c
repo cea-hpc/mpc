@@ -141,7 +141,7 @@ int PREPEND_PREFIX(Dataloop_create_contiguous)(int icount,
 	    DLOOP_Handle_get_size_macro(oldtype, new_dlp->el_size);
 	    DLOOP_Handle_get_extent_macro(oldtype, new_dlp->el_extent);
 	    DLOOP_Handle_get_basic_type_macro(oldtype, new_dlp->el_type);
-	    
+
 	    new_dlp->loop_params.c_t.count = count;
 	}
     }

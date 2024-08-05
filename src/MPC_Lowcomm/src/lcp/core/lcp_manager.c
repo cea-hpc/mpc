@@ -46,17 +46,17 @@
 
 lcp_am_handler_t lcp_am_handlers[LCP_AM_ID_LAST] = {{NULL, 0}};
 
-static inline int _lcp_manager_set_am_handler(lcp_manager_h mngr, 
+static inline int _lcp_manager_set_am_handler(lcp_manager_h mngr,
                                              sctk_rail_info_t *iface)
 {
 	int rc = 0;
         int am_id = 0;
 
 	for (am_id=0; am_id<LCP_AM_ID_LAST; am_id++) {
-		
-		rc = lcr_iface_set_am_handler(iface, am_id, 
-					      lcp_am_handlers[am_id].cb, 
-					      mngr, 
+
+		rc = lcr_iface_set_am_handler(iface, am_id,
+					      lcp_am_handlers[am_id].cb,
+					      mngr,
 					      lcp_am_handlers[am_id].flags);
 
 		if (rc != MPC_LOWCOMM_SUCCESS) {
@@ -87,7 +87,7 @@ static int _lcp_manager_register_iface_attrs(lcp_manager_h mngr)
                 }
 
 		rc = _lcp_manager_set_am_handler(mngr, iface);
-		if (rc != MPC_LOWCOMM_SUCCESS) 
+		if (rc != MPC_LOWCOMM_SUCCESS)
 			break;
         }
 
@@ -129,7 +129,7 @@ static int _lcp_manager_init_structures(lcp_manager_h mngr)
         }
         mngr->num_ifaces = mngr->ctx->num_resources;
 
-        int key_size = sizeof(struct lcp_mem) + 
+        int key_size = sizeof(struct lcp_mem) +
                 mngr->num_ifaces * sizeof(lcr_memp_t);
 
         /* Initialize pool of memory handles. */
@@ -184,14 +184,14 @@ static int _lcp_manager_open_interfaces(lcp_manager_h mngr)
                         mngr->priority_iface = i;
                 }
 	}
-	
+
 	rc = MPC_LOWCOMM_SUCCESS;
 err:
 	return rc;
 }
 
-int lcp_manager_create(lcp_context_h ctx, 
-                       lcp_manager_h *mngr_p, 
+int lcp_manager_create(lcp_context_h ctx,
+                       lcp_manager_h *mngr_p,
                        lcp_manager_param_t *params)
 {
         int rc = MPC_LOWCOMM_SUCCESS;
@@ -204,7 +204,7 @@ int lcp_manager_create(lcp_context_h ctx,
                 goto err;
         }
 
-        if (!(params->field_mask & LCP_MANAGER_ESTIMATED_EPS) && 
+        if (!(params->field_mask & LCP_MANAGER_ESTIMATED_EPS) &&
             params->estimated_eps < 0) {
                 mpc_common_debug_error("LCP MNGR: must specify an correct "
                                        "estimated number of endpoints.");
@@ -263,7 +263,7 @@ int lcp_manager_fini(lcp_manager_h mngr)
         int i;
         int rc = MPC_LOWCOMM_SUCCESS;
 
-        mpc_common_debug("LCP MNGR: mngr fini. mngr id=%d", 
+        mpc_common_debug("LCP MNGR: mngr fini. mngr id=%d",
                          mngr->id);
 
         lcp_pinning_mmu_release(mngr->mmu);
@@ -295,4 +295,3 @@ int lcp_manager_fini(lcp_manager_h mngr)
 
         return rc;
 }
-

@@ -20,8 +20,8 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#ifndef OSC_COMMON_H 
-#define OSC_COMMON_H 
+#ifndef OSC_COMMON_H
+#define OSC_COMMON_H
 
 #include <list.h>
 #include "mpc_lowcomm_communicator.h"
@@ -40,7 +40,7 @@
 #define OCS_LCP_RKEY_BUF_SIZE_MAX 1024
 #define OSC_DYNAMIC_WIN_ATTACH_MAX 512
 
-#define OSC_STATE_COMPLETION_COUNTER_OFFSET 0 
+#define OSC_STATE_COMPLETION_COUNTER_OFFSET 0
 #define OSC_STATE_POST_COUNTER_OFFSET sizeof(uint64_t)
 #define OSC_STATE_POST_OFFSET OSC_STATE_POST_COUNTER_OFFSET + sizeof(uint64_t)
 #define OSC_STATE_ACC_LOCK_OFFSET OSC_STATE_POST_OFFSET + OSC_POST_PEER_MAX * sizeof(uint64_t)
@@ -137,16 +137,17 @@ typedef struct mpc_osc_module {
 
 } mpc_osc_module_t;
 
+/* NOLINTBEGIN(clang-diagnostic-unused-function): False positives */
 static inline int mpc_osc_get_comm_info(mpc_osc_module_t *mod, int target,
                                         mpc_lowcomm_communicator_t comm,
                                         lcp_ep_h *ep_p)
 {
         int rc = 0;
         if (mod->eps[target] == NULL) {
-                uint64_t target_uid = mpc_lowcomm_communicator_uid(comm, 
+                uint64_t target_uid = mpc_lowcomm_communicator_uid(comm,
                                                                    target);
 
-                rc = lcp_ep_create(mod->mngr, &mod->eps[target], 
+                rc = lcp_ep_create(mod->mngr, &mod->eps[target],
                                    target_uid, 0);
                 if (rc != 0) {
                         mpc_common_debug_fatal("Could not create endpoint.");
@@ -158,25 +159,26 @@ static inline int mpc_osc_get_comm_info(mpc_osc_module_t *mod, int target,
 err:
         return rc;
 }
+/* NOLINTEND(clang-diagnostic-unused-function) */
 
 int mpc_osc_perform_atomic_op(mpc_osc_module_t *mod, lcp_ep_h ep,
                               lcp_task_h task, uint64_t value, size_t size,
-                              uint64_t *result, uint64_t remote_addr, 
+                              uint64_t *result, uint64_t remote_addr,
                               lcp_mem_h rkey, lcp_atomic_op_t op);
 
 int mpc_osc_find_attached_region_position(mpc_osc_dynamic_win_t *regions,
                                           int min_idx, int max_idx, uint64_t base,
                                           size_t len, int *insert_idx);
 
-int mpc_osc_perform_flush_op(mpc_osc_module_t *mod, lcp_task_h task, 
+int mpc_osc_perform_flush_op(mpc_osc_module_t *mod, lcp_task_h task,
                              lcp_ep_h ep, lcp_mem_h mem);
 
 void mpc_osc_schedule_progress(lcp_manager_h mngr, volatile int *data,
                               int value);
 
-int mpc_osc_start_exclusive(mpc_osc_module_t *mod, lcp_task_h task, 
+int mpc_osc_start_exclusive(mpc_osc_module_t *mod, lcp_task_h task,
                             uint64_t lock_offset, int target);
-int mpc_osc_end_exclusive(mpc_osc_module_t *mod, lcp_task_h task, 
+int mpc_osc_end_exclusive(mpc_osc_module_t *mod, lcp_task_h task,
                           uint64_t lock_offset, int target);
 
 #endif

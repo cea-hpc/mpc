@@ -283,8 +283,8 @@ static void _mpc_coll_message_send( const mpc_lowcomm_communicator_t communicato
         UNUSED(check_msg);
         UNUSED(myself);
         UNUSED(message_class);
-        mpc_lowcomm_request_init(&msg_req->request, 
-                                 size, NULL, NULL, 0); 
+        mpc_lowcomm_request_init(&msg_req->request,
+                                 size, NULL, NULL, 0);
         mpc_lowcomm_isend(dest, buffer, size, tag, communicator, &msg_req->request);
 }
 
@@ -295,7 +295,7 @@ static void _mpc_coll_message_recv( const mpc_lowcomm_communicator_t communicato
         UNUSED(myself);
         UNUSED(message_class);
         mpc_lowcomm_request_init(&msg_req->request,
-                                 size, NULL, NULL, 0); 
+                                 size, NULL, NULL, 0);
         mpc_lowcomm_irecv(src, buffer, size, tag, communicator, &msg_req->request);
 }
 

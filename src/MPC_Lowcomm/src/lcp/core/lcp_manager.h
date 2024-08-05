@@ -81,7 +81,7 @@ struct lcp_manager {
         unsigned              flags;
 
         int                   id;  /* Manager identifier. */
-        
+
 	int                   num_eps;       /* number of endpoints created */
 	struct mpc_common_hashtable eps; /* Hash table of endpoints for other sets */
 
@@ -101,4 +101,4 @@ struct lcp_manager {
         int                   priority_iface;
 };
 
-#endif 
+#endif

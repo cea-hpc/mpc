@@ -37,7 +37,7 @@ static lcp_status_ptr_t mpc_osc_discontig_common(lcp_ep_h ep, lcp_task_h task,
                                                  _mpc_lowcomm_general_datatype_t *origin_dt,
                                                  int is_orig_dt_contig,
                                                  uint64_t remote_addr, int target_count,
-                                                 _mpc_lowcomm_general_datatype_t *target_dt, 
+                                                 _mpc_lowcomm_general_datatype_t *target_dt,
                                                  int is_target_dt_contig, int is_get,
                                                  lcp_mem_h rmem,
                                                  MPI_internal_request_t *request);
@@ -62,10 +62,10 @@ static int _mpc_osc_request_send_complete(int status, void *request, size_t leng
         return MPC_LOWCOMM_SUCCESS;
 }
 
-static inline int need_atomic_lock(mpc_osc_module_t *module, 
+static inline int need_atomic_lock(mpc_osc_module_t *module,
                                    int target)
 {
-        mpc_osc_lock_t *lock = mpc_common_hashtable_get(&module->outstanding_locks, 
+        mpc_osc_lock_t *lock = mpc_common_hashtable_get(&module->outstanding_locks,
                                                         target);
 
         return !(lock != NULL && (lock->type == LOCK_EXCLUSIVE &&
@@ -82,15 +82,15 @@ static inline int atomic_size_supported(uint64_t remote_addr, size_t size)
         return size <= sizeof(uint64_t);
 }
 
-static inline uint64_t load_uint64(const void *ptr, size_t size) 
+static inline uint64_t load_uint64(const void *ptr, size_t size)
 {
         if (sizeof(uint8_t) == size) {
                 return *(uint8_t *) ptr;
-        } else if (sizeof(uint16_t) == size) { 
+        } else if (sizeof(uint16_t) == size) {
                 return *(uint16_t *) ptr;
         } else if (sizeof(uint32_t) == size) {
                 return *(uint32_t *) ptr;
-        } else {  
+        } else {
                 return *(uint64_t *) ptr;
         }
 }
@@ -101,7 +101,7 @@ static int start_atomic_lock(mpc_osc_module_t *module, lcp_ep_h ep,
         int rc = MPC_LOWCOMM_SUCCESS;
         uint64_t lock_state = 0;
         uint64_t value = 1;
-        size_t remote_lock_addr = module->rstate_win_info[target].addr + 
+        size_t remote_lock_addr = module->rstate_win_info[target].addr +
                 OSC_STATE_ACC_LOCK_OFFSET;
         *lock_acquired = 0;
 
@@ -140,7 +140,7 @@ static int start_atomic_lock(mpc_osc_module_t *module, lcp_ep_h ep,
         mpc_common_debug("MPI OSC: acc atomic lock. from=%d, to=%d, remote"
                          " lock addr=%p", mpc_common_get_task_rank(), target,
                          remote_lock_addr);
-        
+
 err:
         return rc;
 }
@@ -150,10 +150,10 @@ static int end_atomic_lock(mpc_osc_module_t *module, lcp_ep_h ep,
 {
         int rc = MPC_LOWCOMM_SUCCESS;
         uint64_t value = -1;
-        size_t remote_lock_addr = module->rstate_win_info[target].addr + 
+        size_t remote_lock_addr = module->rstate_win_info[target].addr +
                 OSC_STATE_ACC_LOCK_OFFSET;
-        
-        mpc_common_debug("MPI OSC:  unlock. remote lock addr=%p", 
+
+        mpc_common_debug("MPI OSC:  unlock. remote lock addr=%p",
                          remote_lock_addr);
         assert(ep);
         if (lock_acquired) {
@@ -171,14 +171,14 @@ static int end_atomic_lock(mpc_osc_module_t *module, lcp_ep_h ep,
         return rc;
 }
 
-static int get_dynamic_win_info(lcp_ep_h ep, lcp_task_h task, 
-                                uint64_t remote_addr, 
-                                mpc_osc_module_t *module, 
+static int get_dynamic_win_info(lcp_ep_h ep, lcp_task_h task,
+                                uint64_t remote_addr,
+                                mpc_osc_module_t *module,
                                 int target, lcp_mem_h *rmem_p)
 {
         int rc = MPC_LOWCOMM_SUCCESS;
         lcp_status_ptr_t status;
-        void *rdyn_win_info; 
+        void *rdyn_win_info;
         lcp_request_param_t params;
         uint64_t dynamic_win_count;
         mpc_osc_dynamic_win_t *tmp_dyn_win_infos;
@@ -186,7 +186,7 @@ static int get_dynamic_win_info(lcp_ep_h ep, lcp_task_h task,
                 * sizeof(mpc_osc_dynamic_win_t);
         lcp_mem_h rkey_state = module->rstate_win_info[target].rkey;
         lcp_mem_h rkey_data;
-        uint64_t remote_state_dyn_addr = module->rstate_win_info[target].addr + 
+        uint64_t remote_state_dyn_addr = module->rstate_win_info[target].addr +
                 OSC_STATE_DYNAMIC_WIN_COUNT_OFFSET;
         int found_idx, insert_idx;
 
@@ -200,9 +200,12 @@ static int get_dynamic_win_info(lcp_ep_h ep, lcp_task_h task,
 
         /* Take the region lock since another region could be added concurrently
          * at the target. */
-        rc = mpc_osc_start_exclusive(module, task, 
-                                     OSC_STATE_REGION_LOCK_OFFSET, 
+        rc = mpc_osc_start_exclusive(module, task,
+                                     OSC_STATE_REGION_LOCK_OFFSET,
                                      target);
+        if (rc != MPC_LOWCOMM_SUCCESS) {
+                goto err;
+        }
 
         params = (lcp_request_param_t) {
                 .field_mask = 0,
@@ -210,16 +213,20 @@ static int get_dynamic_win_info(lcp_ep_h ep, lcp_task_h task,
                 .datatype = LCP_DATATYPE_CONTIGUOUS,
         };
 
-        status = lcp_get_nb(ep, task, rdyn_win_info, rdyn_win_info_len, 
+        status = lcp_get_nb(ep, task, rdyn_win_info, rdyn_win_info_len,
                         remote_state_dyn_addr, rkey_state, &params);
         if (LCP_PTR_IS_ERR(status)) {
+                rc = MPC_LOWCOMM_ERROR;
                 goto err;
         }
 
-        rc = mpc_osc_end_exclusive(module, task, 
-                                   OSC_STATE_REGION_LOCK_OFFSET, 
+        rc = mpc_osc_end_exclusive(module, task,
+                                   OSC_STATE_REGION_LOCK_OFFSET,
                                    target);
-        
+        if (rc != MPC_LOWCOMM_SUCCESS) {
+                goto err;
+        }
+
         rc = mpc_osc_perform_flush_op(module, task, ep, NULL);
         if (rc != MPC_LOWCOMM_SUCCESS) {
                 goto err;
@@ -236,9 +243,9 @@ static int get_dynamic_win_info(lcp_ep_h ep, lcp_task_h task,
 
         assert(found_idx >= 0 && (uint64_t)found_idx < dynamic_win_count);
 
-        rc = lcp_mem_unpack(module->mngr, 
-                            &rkey_data, 
-                            tmp_dyn_win_infos[found_idx].rkey_buf, 
+        rc = lcp_mem_unpack(module->mngr,
+                            &rkey_data,
+                            tmp_dyn_win_infos[found_idx].rkey_buf,
                             tmp_dyn_win_infos[found_idx].rkey_len);
 
         if (rc != MPC_LOWCOMM_SUCCESS) {
@@ -253,10 +260,10 @@ err:
         return rc;
 }
 
-static int mpc_osc_get_remote_memory(mpc_osc_module_t *module, lcp_ep_h ep, 
-                                     lcp_task_h task, int win_flavor, 
-                                     int target, uint64_t remote_addr, 
-                                     lcp_mem_h *rmem_p) 
+static int mpc_osc_get_remote_memory(mpc_osc_module_t *module, lcp_ep_h ep,
+                                     lcp_task_h task, int win_flavor,
+                                     int target, uint64_t remote_addr,
+                                     lcp_mem_h *rmem_p)
 {
         int rc = MPI_SUCCESS;
         lcp_mem_h rmem;
@@ -276,7 +283,7 @@ err:
 }
 
 static inline int mpc_osc_release_remote_memory(mpc_osc_module_t *module,
-                                                int win_flavor, lcp_mem_h rmem) 
+                                                int win_flavor, lcp_mem_h rmem)
 {
         int rc = MPC_LOWCOMM_SUCCESS;
         if (win_flavor == MPI_WIN_FLAVOR_DYNAMIC) {
@@ -289,13 +296,13 @@ static lcp_status_ptr_t mpc_osc_put_common(const void *origin_addr, int origin_c
                                            _mpc_lowcomm_general_datatype_t *origin_dt,
                                            int target, ptrdiff_t target_disp, int target_count,
                                            _mpc_lowcomm_general_datatype_t *target_dt, mpc_win_t *win,
-                                           MPI_internal_request_t *request) 
+                                           MPI_internal_request_t *request)
 {
         int rc = MPC_SUCCESS;
         mpc_osc_module_t *module = &win->win_module;
         size_t origin_len;
         uint64_t remote_addr = module->rdata_win_info[target].addr
-                + target_disp * OSC_GET_DISP(module, target); 
+                + target_disp * OSC_GET_DISP(module, target);
         int is_orig_dt_contiguous   = 0;
         int is_target_dt_contiguous = 0;
         long orig_lb, target_lb;
@@ -306,7 +313,7 @@ static lcp_status_ptr_t mpc_osc_put_common(const void *origin_addr, int origin_c
         lcp_status_ptr_t status = LCP_STATUS_PTR(rc);
 
         if (!origin_count || !target_count) {
-                return LCP_STATUS_PTR(MPI_SUCCESS);
+                return status;
         }
 
         task = lcp_context_task_get(module->ctx, mpc_common_get_task_rank());
@@ -346,7 +353,7 @@ static lcp_status_ptr_t mpc_osc_put_common(const void *origin_addr, int origin_c
                        .send_cb  = _mpc_osc_request_send_complete,
                        .request  = _mpc_cl_get_lowcomm_request(request),
                        .field_mask = request == MPI_REQUEST_NULL ? 0 :
-                               (LCP_REQUEST_USER_REQUEST | 
+                               (LCP_REQUEST_USER_REQUEST |
                                 LCP_REQUEST_SEND_CALLBACK),
                };
 
@@ -373,19 +380,19 @@ err:
 
 }
 
-static lcp_status_ptr_t mpc_osc_get_common(void *origin_addr, int origin_count, 
+static lcp_status_ptr_t mpc_osc_get_common(void *origin_addr, int origin_count,
                                            _mpc_lowcomm_general_datatype_t *origin_dt,
-                                           int target, ptrdiff_t target_disp, 
+                                           int target, ptrdiff_t target_disp,
                                            int target_count,
-                                           _mpc_lowcomm_general_datatype_t *target_dt, 
+                                           _mpc_lowcomm_general_datatype_t *target_dt,
                                            mpc_win_t *win,
-                                           MPI_internal_request_t *request) 
+                                           MPI_internal_request_t *request)
 {
         int rc = MPC_SUCCESS;
         mpc_osc_module_t *module = &win->win_module;
         size_t origin_len;
         uint64_t remote_addr = module->rdata_win_info[target].addr
-                + target_disp * OSC_GET_DISP(module, target); 
+                + target_disp * OSC_GET_DISP(module, target);
         int is_orig_dt_contiguous   = 0;
         int is_target_dt_contiguous = 0;
         long orig_lb, target_lb;
@@ -395,9 +402,9 @@ static lcp_status_ptr_t mpc_osc_get_common(void *origin_addr, int origin_count,
         lcp_mem_h rmem;
         lcp_status_ptr_t status = LCP_STATUS_PTR(rc);
 
-        //TODO: add rkey and sync checking 
+        //TODO: add rkey and sync checking
         if (!origin_count || !target_count) {
-                return LCP_STATUS_PTR(MPI_SUCCESS);
+                return status;
         }
 
         task = lcp_context_task_get(module->ctx, mpc_common_get_task_rank());
@@ -437,7 +444,7 @@ static lcp_status_ptr_t mpc_osc_get_common(void *origin_addr, int origin_count,
                        .send_cb  = _mpc_osc_request_send_complete,
                        .request  = _mpc_cl_get_lowcomm_request(request),
                        .field_mask = request == MPI_REQUEST_NULL ? 0 :
-                               (LCP_REQUEST_USER_REQUEST | 
+                               (LCP_REQUEST_USER_REQUEST |
                                 LCP_REQUEST_SEND_CALLBACK),
                };
 
@@ -466,7 +473,7 @@ err:
 
 static int mpc_osc_create_dt_blocks(const void *typebuf, int count,
                               mpc_lowcomm_datatype_t dt,
-                              int **blocks_p, 
+                              int **blocks_p,
                               MPI_Aint **disps_p,
                               int *intblockct_p)
 {
@@ -492,14 +499,14 @@ static int mpc_osc_create_dt_blocks(const void *typebuf, int count,
                 goto err;
         }
 
-        disps = sctk_malloc(blockct * sizeof(MPI_Aint)); 
+        disps = sctk_malloc(blockct * sizeof(MPI_Aint));
         if (disps == NULL) {
                 mpc_common_debug_error("MPI OSC: could not allocate iovec "
                                        "displacements.");
                 rc = MPI_ERR_INTERN;
                 goto err;
         }
-        
+
         blocks = sctk_malloc(blockct * sizeof(int));
         if (blocks == NULL) {
                 mpc_common_debug_error("MPI OSC: could not allocate iovec "
@@ -528,7 +535,7 @@ static lcp_status_ptr_t mpc_osc_discontig_common(lcp_ep_h ep, lcp_task_h task,
                                                  _mpc_lowcomm_general_datatype_t *origin_dt,
                                                  int is_orig_dt_contig,
                                                  uint64_t remote_addr, int target_count,
-                                                 _mpc_lowcomm_general_datatype_t *target_dt, 
+                                                 _mpc_lowcomm_general_datatype_t *target_dt,
                                                  int is_target_dt_contig, int is_get,
                                                  lcp_mem_h rmem,
                                                  MPI_internal_request_t *request)
@@ -566,10 +573,10 @@ static lcp_status_ptr_t mpc_osc_discontig_common(lcp_ep_h ep, lcp_task_h task,
                 .send_cb  = _mpc_osc_request_send_complete,
                 .request  = _mpc_cl_get_lowcomm_request(request),
                 .field_mask = request == MPI_REQUEST_NULL ? 0 :
-                        (LCP_REQUEST_USER_REQUEST | 
+                        (LCP_REQUEST_USER_REQUEST |
                          LCP_REQUEST_SEND_CALLBACK),
         };
-        
+
         if (!is_orig_dt_contig && !is_target_dt_contig) {
                 size_t curr_len;
                 while (orig_blockidx < orig_intblockct) {
@@ -592,7 +599,7 @@ static lcp_status_ptr_t mpc_osc_discontig_common(lcp_ep_h ep, lcp_task_h task,
                         if (LCP_PTR_IS_ERR(status)) {
                                 goto err;
                         }
-                
+
                         orig_disps[orig_blockidx]  += curr_len;
                         orig_blocks[orig_blockidx] -= curr_len;
                         if (orig_blocks[orig_blockidx] == 0) {
@@ -613,7 +620,7 @@ static lcp_status_ptr_t mpc_osc_discontig_common(lcp_ep_h ep, lcp_task_h task,
                                 .send_cb  = _mpc_osc_request_send_complete,
                                 .request  = _mpc_cl_get_lowcomm_request(request),
                                 .field_mask = request == MPI_REQUEST_NULL ? 0 :
-                                        (LCP_REQUEST_USER_REQUEST | 
+                                        (LCP_REQUEST_USER_REQUEST |
                                          LCP_REQUEST_SEND_CALLBACK),
                         };
                         if (is_get) {
@@ -668,7 +675,7 @@ err:
 int mpc_osc_put(const void *origin_addr, int origin_count,
                 _mpc_lowcomm_general_datatype_t *origin_dt,
                 int target, ptrdiff_t target_disp, int target_count,
-                _mpc_lowcomm_general_datatype_t *target_dt, mpc_win_t *win) 
+                _mpc_lowcomm_general_datatype_t *target_dt, mpc_win_t *win)
 {
         lcp_status_ptr_t status;
         status = mpc_osc_put_common(origin_addr, origin_count, origin_dt, target,
@@ -707,10 +714,10 @@ int mpc_osc_rput(const void *origin_addr,
         return rc;
 }
 
-int mpc_osc_get(void *origin_addr, int origin_count, 
+int mpc_osc_get(void *origin_addr, int origin_count,
                 _mpc_lowcomm_general_datatype_t *origin_dt,
                 int target, ptrdiff_t target_disp, int target_count,
-                _mpc_lowcomm_general_datatype_t *target_dt, mpc_win_t *win) 
+                _mpc_lowcomm_general_datatype_t *target_dt, mpc_win_t *win)
 {
         lcp_status_ptr_t status;
         status = mpc_osc_get_common(origin_addr, origin_count, origin_dt, target,
@@ -723,7 +730,7 @@ int mpc_osc_get(void *origin_addr, int origin_count,
         }
 }
 
-int mpc_osc_rget(void *origin_addr, int origin_count, 
+int mpc_osc_rget(void *origin_addr, int origin_count,
                  _mpc_lowcomm_general_datatype_t *origin_dt,
                  int target, ptrdiff_t target_disp, int target_count,
                  _mpc_lowcomm_general_datatype_t *target_dt, mpc_win_t *win,
@@ -745,7 +752,7 @@ int mpc_osc_rget(void *origin_addr, int origin_count,
         return rc;
 }
 
-int mpc_osc_accumulate(const void *origin_addr, int origin_count, 
+int mpc_osc_accumulate(const void *origin_addr, int origin_count,
                        _mpc_lowcomm_general_datatype_t *origin_dt,
                        int target, ptrdiff_t target_disp, int target_count,
                        _mpc_lowcomm_general_datatype_t *target_dt,
@@ -787,7 +794,7 @@ int mpc_osc_accumulate(const void *origin_addr, int origin_count,
                 int tmp_dt_count;
                 size_t tmp_len, tmp_dt_size;
                 long tmp_lb, tmp_extent;
-                int is_orig_dt_contiguous = 
+                int is_orig_dt_contiguous =
                         mpc_lowcomm_datatype_is_common(origin_dt) ||
                         mpc_mpi_cl_type_is_contiguous(origin_dt);
 
@@ -815,7 +822,6 @@ int mpc_osc_accumulate(const void *origin_addr, int origin_count,
                 if (tmp_result_addr == NULL) {
                         mpc_common_debug_error("MPI OSC: could not allocate "
                                                "accumulate temp buffer.");
-                        rc = MPC_LOWCOMM_ERROR;
                         goto unlock;
                 }
 
@@ -850,7 +856,7 @@ int mpc_osc_accumulate(const void *origin_addr, int origin_count,
                         if (rc != MPI_SUCCESS) {
                                 goto unlock;
                         }
-                        
+
                         if (mpc_mpi_cl_type_is_contiguous(tmp_dt)) {
                                 _mpc_cl_type_size(tmp_dt, &tmp_dt_size);
 
@@ -880,6 +886,10 @@ int mpc_osc_accumulate(const void *origin_addr, int origin_count,
         }
 
         rc = mpc_osc_perform_flush_op(module, task, ep, NULL);
+        if (rc != MPC_LOWCOMM_SUCCESS) {
+                mpc_common_debug_error("MPI OSC: could not flush operation on "
+                                       "accumulate.");
+        }
 
 unlock:
         if (tmp_result_addr) sctk_free(tmp_result_addr);
@@ -890,7 +900,7 @@ err:
 }
 
 
-int mpc_osc_raccumulate(const void *origin_addr, int origin_count, 
+int mpc_osc_raccumulate(const void *origin_addr, int origin_count,
                         _mpc_lowcomm_general_datatype_t *origin_dt,
                         int target, ptrdiff_t target_disp, int target_count,
                         _mpc_lowcomm_general_datatype_t *target_dt, MPI_Op op,
@@ -912,9 +922,9 @@ err:
         return rc;
 }
 
-int mpc_osc_get_accumulate(const void *origin_addr, int origin_count, 
+int mpc_osc_get_accumulate(const void *origin_addr, int origin_count,
                            _mpc_lowcomm_general_datatype_t *origin_dt,
-                           void *result_addr, int result_count, 
+                           void *result_addr, int result_count,
                            _mpc_lowcomm_general_datatype_t *result_dt,
                            int target, ptrdiff_t target_disp,
                            int target_count, _mpc_lowcomm_general_datatype_t *target_dt,
@@ -964,7 +974,7 @@ int mpc_osc_get_accumulate(const void *origin_addr, int origin_count,
                         int tmp_dt_count;
                         size_t tmp_len, tmp_dt_size;
                         long tmp_lb, tmp_extent;
-                        int is_orig_dt_contiguous = 
+                        int is_orig_dt_contiguous =
                                 mpc_lowcomm_datatype_is_common(origin_dt) ||
                                 mpc_mpi_cl_type_is_contiguous(origin_dt);
 
@@ -992,7 +1002,6 @@ int mpc_osc_get_accumulate(const void *origin_addr, int origin_count,
                         if (tmp_result_addr == NULL) {
                                 mpc_common_debug_error("MPI OSC: could not allocate "
                                                        "accumulate temp buffer.");
-                                rc = MPC_LOWCOMM_ERROR;
                                 goto unlock;
                         }
 
@@ -1058,9 +1067,9 @@ err:
         return rc;
 }
 
-int mpc_osc_rget_accumulate(const void *origin_addr, int origin_count, 
+int mpc_osc_rget_accumulate(const void *origin_addr, int origin_count,
                                 _mpc_lowcomm_general_datatype_t *origin_datatype,
-                                void *result_addr, int result_count, 
+                                void *result_addr, int result_count,
                                 _mpc_lowcomm_general_datatype_t *result_datatype,
                                 int target, ptrdiff_t target_disp, int target_count,
                                 _mpc_lowcomm_general_datatype_t *target_datatype,
@@ -1079,8 +1088,8 @@ int mpc_osc_rget_accumulate(const void *origin_addr, int origin_count,
                 goto err;
         }
 
-        _mpc_osc_request_send_complete(MPC_LOWCOMM_SUCCESS, 
-                                       _mpc_cl_get_lowcomm_request(mpi_req), 
+        _mpc_osc_request_send_complete(MPC_LOWCOMM_SUCCESS,
+                                       _mpc_cl_get_lowcomm_request(mpi_req),
                                        origin_count);
 
 err:
@@ -1093,9 +1102,9 @@ int mpc_osc_compare_and_swap(const void *origin_addr, const void *compare_addr,
                              mpc_win_t *win)
 {
         int rc = MPI_SUCCESS;
-        mpc_osc_module_t *module = &win->win_module;        
-        uint64_t remote_addr = module->rdata_win_info[target].addr + 
-                target_disp * OSC_GET_DISP(module, target); 
+        mpc_osc_module_t *module = &win->win_module;
+        uint64_t remote_addr = module->rdata_win_info[target].addr +
+                target_disp * OSC_GET_DISP(module, target);
         size_t dt_size;
         lcp_task_h task;
         lcp_ep_h ep;
@@ -1130,12 +1139,12 @@ int mpc_osc_compare_and_swap(const void *origin_addr, const void *compare_addr,
         memcpy(result_addr, compare_addr, dt_size);
         mpc_common_debug("OSC MPI: perform cswap. origin addr=%p, dt size=%d, "
                          "compare addr=%p, result_addr=%p, remote addr=%p, "
-                         "target disp=%d", origin_addr, dt_size, compare_addr, 
+                         "target disp=%d", origin_addr, dt_size, compare_addr,
                          remote_addr, remote_addr, target_disp);
         rc = mpc_osc_perform_atomic_op(module, ep, task,
                                        *(uint64_t*)origin_addr, dt_size,
                                        (uint64_t*)result_addr, remote_addr,
-                                       rmem, LCP_ATOMIC_OP_CSWAP); 
+                                       rmem, LCP_ATOMIC_OP_CSWAP);
         if (rc != MPC_LOWCOMM_SUCCESS) {
                 goto err;
         }
@@ -1152,13 +1161,13 @@ int mpc_osc_fetch_and_op(const void *origin_addr, void *result_addr,
 {
         int rc = MPI_SUCCESS;
         mpc_osc_module_t *module = &win->win_module;
-        uint64_t remote_addr = module->rdata_win_info[target].addr 
+        uint64_t remote_addr = module->rdata_win_info[target].addr
                 + target_disp * OSC_GET_DISP(module, target);
-        size_t dt_size; 
+        size_t dt_size;
         int lock_acquired = 0;
 
         _mpc_cl_type_size(dt, &dt_size);
-        if (atomic_size_supported(remote_addr, dt_size) && 
+        if (atomic_size_supported(remote_addr, dt_size) &&
             (op == MPI_NO_OP || op == MPI_REPLACE || op == MPI_SUM)) {
                 uint64_t value;
                 lcp_task_h task;
@@ -1199,7 +1208,7 @@ int mpc_osc_fetch_and_op(const void *origin_addr, void *result_addr,
                 }
 
                 rc = mpc_osc_perform_atomic_op(module, ep, task, value,
-                                               dt_size, 
+                                               dt_size,
                                                (uint64_t*)result_addr,
                                                remote_addr, rmem, op_code);
                 if (rc != MPC_LOWCOMM_SUCCESS) {

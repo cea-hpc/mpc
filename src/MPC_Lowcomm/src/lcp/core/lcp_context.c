@@ -55,7 +55,7 @@ static lcp_context_h static_ctx = NULL;
 
 /**
  * Get the resources of a component.
- * 
+ *
  * component component to get the resources from
  * devices_p resources (out)
  * num_devices_p number of resources
@@ -118,7 +118,7 @@ static inline void _lcp_context_resource_init(lcp_rsc_desc_t *resource_p,
 
 /**
  * This function is used to sort the rail array by priority before unfolding resources
- * 
+ *
  * pa pointer to pointer of rail (qsort)
  * pb pointer to pointer of rail (qsort)
  * int order function result
@@ -141,7 +141,7 @@ int __sort_rails_by_priority(const void * pa, const void *pb)
 
 /**
  * This function generates the listing of the network configuration when passing -v to mpcrun
- * 
+ *
  * ctx the context to generate the description of
  * int 0 on success
  */
@@ -155,7 +155,7 @@ static inline void _lcp_context_log_resource_config_summary(lcp_context_h ctx)
         {
                 sctk_free(mpc_common_get_flags()->sctk_network_description_string);
         }
-        mpc_common_get_flags()->sctk_network_description_string = 
+        mpc_common_get_flags()->sctk_network_description_string =
                 sctk_malloc(NETWORK_DESC_BUFFER_SIZE);
 
         /* Initialize network description string. */
@@ -184,8 +184,8 @@ static inline void _lcp_context_log_resource_config_summary(lcp_context_h ctx)
         for(k = 0; k < ctx->num_resources; k++)
         {
                 lcp_rsc_desc_t *res = &ctx->resources[k];
-                (void)snprintf(tmp, 512, " - [%d] %s %s (%s, %s)\n", res->priority, 
-                               res->name, res->component->name, res->iface_config->name, 
+                (void)snprintf(tmp, 512, " - [%d] %s %s (%s, %s)\n", res->priority,
+                               res->name, res->component->name, res->iface_config->name,
                                res->driver_config->name);
                 strncat(name, tmp, NETWORK_DESC_BUFFER_SIZE- 1);
         }
@@ -194,14 +194,14 @@ static inline void _lcp_context_log_resource_config_summary(lcp_context_h ctx)
 static int _lcp_context_load_ctx_config(lcp_context_h ctx, lcp_context_param_t *param)
 {
         int i, j, net_found;
-        int rc = MPC_LOWCOMM_SUCCESS; 
+        int rc = MPC_LOWCOMM_SUCCESS;
         lcr_rail_config_t **rail_configs = NULL;
-        int num_configs; 
+        int num_configs;
         lcr_component_h *components = NULL;
         int num_components;
 
         /* First, load context configuration. */
-        struct _mpc_lowcomm_config_struct_protocol * config = 
+        struct _mpc_lowcomm_config_struct_protocol * config =
                 _mpc_lowcomm_config_proto_get();
 
         ctx->config.multirail_enabled    = config->multirail_enabled;
@@ -226,14 +226,14 @@ static int _lcp_context_load_ctx_config(lcp_context_h ctx, lcp_context_param_t *
         for (i = 0; i < num_configs; i++) {
                 net_found = 0;
                 for (j = 0; j < num_components; j++) {
-                        if (strcmp(rail_configs[i]->name, 
+                        if (strcmp(rail_configs[i]->name,
                                     components[j]->name) == 0) {
                                 net_found = 1;
                         }
                 }
                 if (!net_found) {
                         mpc_common_debug_error("LCP CTX: requested %s but no rail "
-                                               "available with such name.", 
+                                               "available with such name.",
                                                rail_configs[i]->name);
                         rc = MPC_LOWCOMM_ERROR;
                         goto err_free;
@@ -280,7 +280,7 @@ static int _lcp_context_load_ctx_config(lcp_context_h ctx, lcp_context_param_t *
 
         /* Throw warning for multirail and max_iface incoherences. */
         for (i = 0; i < num_configs; i++) {
-                if (!ctx->config.multirail_enabled && 
+                if (!ctx->config.multirail_enabled &&
                     rail_configs[i]->max_ifaces > 1) {
                         mpc_common_debug_warning("LCP CTX: multirail not enabled "
                                                  "but max_ifaces > 1 for rail %s",
@@ -290,7 +290,7 @@ static int _lcp_context_load_ctx_config(lcp_context_h ctx, lcp_context_param_t *
         }
 
         /* Check offload configuration. */
-        if (ctx->config.offload && 
+        if (ctx->config.offload &&
             mpc_common_get_process_count() != (int)mpc_common_get_task_count()) {
                 //NOTE: this could be supported by implementing post
                 //      cancellation on the offload interface in case a message
@@ -309,7 +309,7 @@ static int _lcp_context_load_ctx_config(lcp_context_h ctx, lcp_context_param_t *
         }
 
         /* Sort config by priority and copy filtered list to context. */
-        qsort(rail_configs, num_configs, sizeof(lcr_rail_config_t *), 
+        qsort(rail_configs, num_configs, sizeof(lcr_rail_config_t *),
               __sort_rails_by_priority);
 
         /* Retain only components requested by user. */
@@ -327,7 +327,7 @@ static int _lcp_context_load_ctx_config(lcp_context_h ctx, lcp_context_param_t *
                                 ctx->components[i] = components[j];
                                 /* Also set their config. */
                                 ctx->components[i]->rail_config   = rail_configs[i];
-                                ctx->components[i]->driver_config = 
+                                ctx->components[i]->driver_config =
                                         _mpc_lowcomm_conf_driver_unfolded_get(rail_configs[i]->config);
                         }
                 }
@@ -383,7 +383,7 @@ static int _lcp_context_devices_load_and_filter(lcp_context_h ctx)
          *   by the configuration.
          *   - else pick the first device from the list //FIXME: no topology.
          * - else (a list of device name is provided):
-         *   max_ifaces config is overwritten, pick all devices found. */ 
+         *   max_ifaces config is overwritten, pick all devices found. */
         int num_dev = 0;
         int dev_index = 0;
         for (i = 0; (unsigned)i < ctx->num_cmpts; i++) {
@@ -405,7 +405,7 @@ static int _lcp_context_devices_load_and_filter(lcp_context_h ctx)
                         } else {
                                 /* Here, we override max_ifaces config. */
                                 for (j = 0; (unsigned int)j < ctx->components[j]->num_devices; j++) {
-                                        if (strstr(ctx->components[i]->rail_config->device, 
+                                        if (strstr(ctx->components[i]->rail_config->device,
                                                    ctx->components[i]->devices[j].name)) {
                                                 MPC_BITMAP_SET(dev_map, dev_index);
                                                 num_dev++;
@@ -455,7 +455,7 @@ int _lcp_context_structures_init(lcp_context_h ctx)
         /* Preallocate a table of manager handles. */
         //NOTE: Upon manager creation, see lcp_manager_create, a handle will be
         //      atomically retrieved by incrementing the num_managers.
-        ctx->mngrt = sctk_malloc(ctx->config.max_num_managers * 
+        ctx->mngrt = sctk_malloc(ctx->config.max_num_managers *
                                  sizeof(lcp_manager_h));
         if (ctx-> mngrt == NULL) {
                 mpc_common_debug_error("LCP CTX: could not allocated "
@@ -472,8 +472,8 @@ int _lcp_context_structures_init(lcp_context_h ctx)
 		rc = MPC_LOWCOMM_ERROR;
                 goto err;
 	}
-        //NOTE: to release tasks, lcp_context_fini relies on the fact that all entries 
-        //      are memset to NULL. 
+        //NOTE: to release tasks, lcp_context_fini relies on the fact that all entries
+        //      are memset to NULL.
         memset(ctx->tasks, 0, ctx->num_tasks * sizeof(lcp_task_h));
 
         return rc;
@@ -499,7 +499,7 @@ int lcp_context_create(lcp_context_h *ctx_p, lcp_context_param_t *param)
         //       because the number of local tasks with
         //       mpc_common_get_local_task_count() is not set yet. There might
         //       be another way.
-        if ( (param->field_mask & LCP_CONTEXT_NUM_TASKS) && 
+        if ( (param->field_mask & LCP_CONTEXT_NUM_TASKS) &&
              (param->num_tasks <= 0) ) {
                 mpc_common_debug_error("LCP CTX: wrong number of tasks.");
                 rc = MPC_LOWCOMM_ERROR;
@@ -591,7 +591,7 @@ int lcp_context_fini(lcp_context_h ctx)
 }
 
 /* Returns the manager identifier. */
-int lcp_context_register(lcp_context_h ctx, lcp_manager_h mngr) 
+int lcp_context_register(lcp_context_h ctx, lcp_manager_h mngr)
 {
         int i = 1;
         LCP_CONTEXT_LOCK(ctx);
@@ -607,7 +607,7 @@ int lcp_context_register(lcp_context_h ctx, lcp_manager_h mngr)
         return i;
 }
 
-void lcp_context_unregister(lcp_context_h ctx, int manager_id) 
+void lcp_context_unregister(lcp_context_h ctx, int manager_id)
 {
         LCP_CONTEXT_LOCK(ctx);
         ctx->mngrt[manager_id] = NULL;
@@ -618,4 +618,3 @@ lcp_task_h lcp_context_task_get(lcp_context_h ctx, int tid)
 {
         return ctx->tasks[tid];
 }
-

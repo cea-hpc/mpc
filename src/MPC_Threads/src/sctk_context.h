@@ -25,9 +25,6 @@
 
 #include <stdlib.h>
 #include <string.h>
-#ifdef MPC_USE_EXTLS
-	#include <extls.h>
-#endif
 
 #include <mpc_config.h>
 #include "mpc_threads_config.h"
@@ -174,6 +171,11 @@ struct sigaction
 
 #ifdef MPC_MPI
 struct mpc_mpi_cl_per_thread_ctx_s;
+#endif
+
+#ifdef MPC_USE_EXTLS
+#include <extls.h>
+#include <extls_hls.h>
 #endif
 
 typedef struct sctk_mctx_st

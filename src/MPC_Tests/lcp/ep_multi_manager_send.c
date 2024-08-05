@@ -45,7 +45,7 @@ int main(int argc, char** argv) {
 	/* create communication context */
         ctx_params = (lcp_context_param_t) {
                 .flags = LCP_CONTEXT_PROCESS_UID,
-                .process_uid = 0 
+                .process_uid = 0
         };
 	rc = lcp_context_create(&ctx, &ctx_params);
 	if (rc != 0) {
@@ -75,7 +75,7 @@ int main(int argc, char** argv) {
 	mpc_launch_pmi_barrier();
 
 	/* init world and self comm */
-	_mpc_lowcomm_communicator_init();	
+	_mpc_lowcomm_communicator_init();
 
 	/* get uids */
 	suid = mpc_lowcomm_monitor_get_gid();
@@ -133,7 +133,7 @@ int main(int argc, char** argv) {
 			.message_tag = 1111,
 		},
 		.completion_flag = 0,
-	};                          
+	};
 
 	mpc_lowcomm_request_t req2 = {
 		.header = {
@@ -146,7 +146,7 @@ int main(int argc, char** argv) {
 			.message_tag = 1111,
 		},
 		.completion_flag = 0,
-	};                          
+	};
 
 	mpc_launch_pmi_barrier();
 
@@ -171,18 +171,18 @@ int main(int argc, char** argv) {
 			printf("ERROR: send\n");
 		}
 	} else {
-                lcp_request_param_t param1 = { 
+                lcp_request_param_t param1 = {
                         .datatype  = LCP_DATATYPE_CONTIGUOUS,
-                        .recv_info = &req1.recv_info 
+                        .recv_info = &req1.recv_info
                 };
 		rc = lcp_tag_recv_nb(task1, &data1, sizeof(data1), &req1, &param1);
 		if (rc != 0) {
 			printf("ERROR: recv\n");
 		}
 
-                lcp_request_param_t param2 = { 
+                lcp_request_param_t param2 = {
                         .datatype  = LCP_DATATYPE_CONTIGUOUS,
-                        .recv_info = &req2.recv_info 
+                        .recv_info = &req2.recv_info
                 };
 		rc = lcp_tag_recv_nb(task2, &data2, sizeof(data2), &req2, &param2);
 		if (rc != 0) {
@@ -190,7 +190,7 @@ int main(int argc, char** argv) {
 		}
 	}
 
-        
+
         int check = 0;
 	/* progress communication */
 	while (req1.completion_flag == 0) {
@@ -213,7 +213,7 @@ int main(int argc, char** argv) {
 	}
 
         if (my_tid == 1) {
-                if (data1 == 'c' && data2 == 'd') 
+                if (data1 == 'c' && data2 == 'd')
                         check = 1;
         } else {
                 check = 1;

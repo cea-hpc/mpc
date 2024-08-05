@@ -129,7 +129,7 @@ void PREPEND_PREFIX(Dataloop_create)(MPI_Datatype type,
 	    DLOOP_Handle_get_loopdepth_macro(types[0], old_dldepth, flag);
 	}
     }
-       
+
     switch(combiner)
     {
 	case MPI_COMBINER_DUP:
@@ -140,7 +140,7 @@ void PREPEND_PREFIX(Dataloop_create)(MPI_Datatype type,
 	    }
 	    else {
 		PREPEND_PREFIX(Dataloop_create_contiguous)(1,
-							   types[0], 
+							   types[0],
 							   dlp_p, dlsz_p,
 							   dldepth_p,
 							   flag);
@@ -154,7 +154,7 @@ void PREPEND_PREFIX(Dataloop_create)(MPI_Datatype type,
 	    }
 	    else {
 		PREPEND_PREFIX(Dataloop_create_contiguous)(1,
-							   types[0], 
+							   types[0],
 							   dlp_p, dlsz_p,
 							   dldepth_p,
 							   flag);
@@ -257,7 +257,7 @@ void PREPEND_PREFIX(Dataloop_create)(MPI_Datatype type,
 							&old_dlsz,
 							&old_dldepth,
 							flag);
-			
+
 			DLOOP_Handle_set_loopptr_macro(types[i], old_dlp,
 						       flag);
 			DLOOP_Handle_set_loopsize_macro(types[i], old_dlsz,
@@ -307,7 +307,7 @@ void PREPEND_PREFIX(Dataloop_create)(MPI_Datatype type,
 					    dlsz_p,
 					    dldepth_p,
 					    flag);
-	    
+
 	    NMPI_Type_free(&tmptype);
 	    break;
 	case MPI_COMBINER_DARRAY:

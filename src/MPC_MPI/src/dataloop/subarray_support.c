@@ -41,7 +41,7 @@ int PREPEND_PREFIX(Type_convert_subarray)(int ndims,
 		tmp1 = tmp2;
 	    }
 	}
-	
+
 	/* add displacement and UB */
 	disps[1] = (MPI_Aint)(array_of_starts[0]);
 	size = 1;
@@ -70,7 +70,7 @@ int PREPEND_PREFIX(Type_convert_subarray)(int ndims,
 		tmp1 = tmp2;
 	    }
 	}
-	
+
 	/* add displacement and UB */
 	disps[1] = (MPI_Aint)(array_of_starts[ndims-1]);
 	size = 1;
@@ -90,7 +90,7 @@ int PREPEND_PREFIX(Type_convert_subarray)(int ndims,
     types[0] = MPI_LB;
     types[1] = tmp1;
     types[2] = MPI_UB;
-    
+
     NMPI_Type_struct(3, blklens, disps, types, newtype);
 
     NMPI_Type_free(&tmp1);

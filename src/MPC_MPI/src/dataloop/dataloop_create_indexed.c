@@ -73,7 +73,7 @@ int PREPEND_PREFIX(Dataloop_create_indexed)(int icount,
     for (first = 0; first < count; first++)
         if ((DLOOP_Count) blocklength_array[first])
             break;
-    
+
 
     is_builtin = (DLOOP_Handle_hasloop_macro(oldtype)) ? 0 : 1;
 
@@ -115,7 +115,7 @@ int PREPEND_PREFIX(Dataloop_create_indexed)(int icount,
      *
      * if contig_count == 1 and block starts at displacement 0,
      * store it as a contiguous rather than an indexed dataloop.
-     */    
+     */
     if ((contig_count == 1) &&
 	((!dispinbytes && ((int *) displacement_array)[first] == 0) ||
 	 (dispinbytes && ((MPI_Aint *) displacement_array)[first] == 0)))
@@ -302,14 +302,14 @@ static void DLOOP_Type_indexed_array_copy(DLOOP_Count count,
     for (first = 0; first < count; ++first)
         if ((DLOOP_Count) in_blklen_array[first])
             break;
-    
+
     out_blklen_array[0] = (DLOOP_Count) in_blklen_array[first];
 
     if (!dispinbytes)
     {
 	out_disp_array[0] = (DLOOP_Offset)
 	    ((int *) in_disp_array)[first] * old_extent;
-	
+
 	for (i = first+1; i < count; ++i)
 	{
 	    if (in_blklen_array[i] == 0)
@@ -336,7 +336,7 @@ static void DLOOP_Type_indexed_array_copy(DLOOP_Count count,
     else /* input displacements already in bytes */
     {
 	out_disp_array[0] = (DLOOP_Offset) ((MPI_Aint *) in_disp_array)[first];
-	
+
 	for (i = first+1; i < count; ++i)
 	{
 	    if (in_blklen_array[i] == 0)
@@ -399,7 +399,7 @@ DLOOP_Count PREPEND_PREFIX(Type_indexed_count_contig)(DLOOP_Count count,
         {
             DLOOP_Offset cur_tdisp =
                 (DLOOP_Offset) ((int *) displacement_array)[first];
-	
+
             for (i = first+1; i < count; ++i)
             {
                 if (blocklength_array[i] == 0)
@@ -424,7 +424,7 @@ DLOOP_Count PREPEND_PREFIX(Type_indexed_count_contig)(DLOOP_Count count,
         {
             DLOOP_Offset cur_bdisp =
                 (DLOOP_Offset) ((MPI_Aint *) displacement_array)[first];
-	
+
             for (i = first+1; i < count; ++i)
             {
                 if (blocklength_array[i] == 0)

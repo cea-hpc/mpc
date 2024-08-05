@@ -74,15 +74,15 @@ libmpclowcomm_la_SOURCES += ./tbsm/tbsm.c
 # LCP core files
 libmpclowcomm_la_SOURCES += ./lcp/core/lcp_context.c ./lcp/core/lcp_ep.c ./lcp/core/lcp_progress.c \
 							./lcp/core/lcp_datatype.c ./lcp/core/lcp_manager.c ./lcp/core/lcp_task.c \
-							./lcp/core/lcp_request.c ./lcp/core/lcp_mem.c 
+							./lcp/core/lcp_request.c ./lcp/core/lcp_mem.c
 # LCP tag files
 libmpclowcomm_la_SOURCES += ./lcp/tag/lcp_tag.c ./lcp/tag/lcp_send.c ./lcp/tag/lcp_tag_offload.c \
 							./lcp/tag/lcp_tag_match.c ./lcp/tag/lcp_pending.c ./lcp/tag/lcp_recv.c \
-							./lcp/tag/lcp_probe.c 
+							./lcp/tag/lcp_probe.c
 # LCP rndv and active message files
 libmpclowcomm_la_SOURCES += ./lcp/rndv/lcp_rndv.c ./lcp/am/lcp_eager.c ./lcp/am/lcp_am.c
 # LCP rma files
-libmpclowcomm_la_SOURCES += ./lcp/rma/lcp_rma.c ./lcp/rma/lcp_ato.c ./lcp/rma/lcp_ato_sw.c 
+libmpclowcomm_la_SOURCES += ./lcp/rma/lcp_rma.c ./lcp/rma/lcp_ato.c ./lcp/rma/lcp_ato_sw.c
 libmpclowcomm_la_SOURCES += ./lcr/lcr_component.c ./shm/mpc_shm.c
 
 #AM Extensions #

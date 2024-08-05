@@ -21,6 +21,8 @@ repos:
         exclude: |
           (?x)
             ^src/MPC_IO/src/romio|
+            ^src/MPC_MPI/src/dataloop|
+            ^src/MPC_MPI/src/mpitypes|
             ^src/MPC_Common/include/mpc_common_profiler_keys\.h$|
             ^src/MPC_OpenMP/include/omp_lib\.h$|
             ^src/MPC_OpenMP/include/omp_lib_kinds\.h$|
@@ -35,6 +37,9 @@ repos:
           # 2. sctk_lib_thread_db.c contains unmuteable false positives on "ambiguous" calls
           #    with #pragma weak and extern functions. This a known LLVM issue, see
           #    https://github.com/llvm/llvm-project/issues/16067
+          # 3. dataloop and mpitypes contain files from an external library
+          #    adapted to MPC. Within those files, there are a number of errors
+          #    and warning that would probably require a large refactoring.
 -   repo: git@gitlab.paratools.com:cea/mpc-pre-commit-hooks.git
     rev: v0.1.0
     hooks:

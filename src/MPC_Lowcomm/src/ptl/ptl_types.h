@@ -85,7 +85,7 @@ typedef struct lcr_ptl_addr {
                 .pte.am  = LCR_PTL_PT_NULL,  \
                 .pte.tag = LCR_PTL_PT_NULL,  \
                 .pte.rma = LCR_PTL_PT_NULL,  \
-        } 
+        }
 #define LCR_PTL_IS_ANY_PROCESS(a) ((a).id.phys.nid == PTL_NID_ANY && (a).id.phys.pid == PTL_PID_ANY)
 
 typedef struct lcr_ptl_txq {

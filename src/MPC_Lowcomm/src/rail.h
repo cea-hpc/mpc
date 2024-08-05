@@ -132,7 +132,7 @@ enum {
 
 //TODO: doc to doxygen.
 /* Interface feature requested during initialization. If feature not supported
- * by interface capabitities, then error is returned. */ 
+ * by interface capabitities, then error is returned. */
 //FIXME: see how to factorize with LCP_MANAGER_FEATURE_{AM,TAG,RMA}. Also,
 //       should they be called LCP_HINTS_{...} instead?
 enum {

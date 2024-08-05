@@ -1418,7 +1418,7 @@ static inline mpc_lowcomm_communicator_t __new_communicator(mpc_lowcomm_communic
 			assume(ret->id == new_id);
 		}
 	} else {
-                //FIXME: in the case where 
+                //FIXME: in the case where
                 ret = MPC_COMM_NULL;
         }
 
@@ -1609,15 +1609,15 @@ lcp_ep_h mpc_lowcomm_communicator_lookup(mpc_lowcomm_communicator_t comm, int ra
         }
 }
 
-void mpc_lowcomm_communicator_add_ep(mpc_lowcomm_communicator_t comm, int rank, lcp_ep_h ep) 
+void mpc_lowcomm_communicator_add_ep(mpc_lowcomm_communicator_t comm, int rank, lcp_ep_h ep)
 {
         mpc_lowcomm_communicator_t tcomm = __mpc_lowcomm_communicator_from_predefined(comm);
 
         if (mpc_lowcomm_communicator_is_intercomm(tcomm)) {
-                assert(rank >= 0 && rank < (int)mpc_lowcomm_group_size(tcomm->left_comm->group));        
+                assert(rank >= 0 && rank < (int)mpc_lowcomm_group_size(tcomm->left_comm->group));
                 tcomm->right_comm->group->eps[rank] = ep;
         } else {
-                assert(rank >= 0 && rank < (int)mpc_lowcomm_group_size(tcomm->group));        
+                assert(rank >= 0 && rank < (int)mpc_lowcomm_group_size(tcomm->group));
                 tcomm->group->eps[rank] = ep;
         }
 }
@@ -2361,8 +2361,8 @@ mpc_lowcomm_communicator_t mpc_lowcomm_communicator_intercomm_create(const mpc_l
 		{
 			mpc_lowcomm_request_t reqs[2];
 
-                        mpc_lowcomm_request_init(&reqs[0], 
-                                                 local_comm_size * sizeof(_mpc_lowcomm_group_rank_descriptor_t), 
+                        mpc_lowcomm_request_init(&reqs[0],
+                                                 local_comm_size * sizeof(_mpc_lowcomm_group_rank_descriptor_t),
                                                  NULL, NULL, 0);
 			mpc_lowcomm_isend(remote_leader,
 			                  left_comm->group->ranks,
@@ -2371,8 +2371,8 @@ mpc_lowcomm_communicator_t mpc_lowcomm_communicator_intercomm_create(const mpc_l
 			                  peer_comm,
 			                  &reqs[0]);
 
-                        mpc_lowcomm_request_init(&reqs[1], 
-                                                 local_comm_size * sizeof(_mpc_lowcomm_group_rank_descriptor_t), 
+                        mpc_lowcomm_request_init(&reqs[1],
+                                                 local_comm_size * sizeof(_mpc_lowcomm_group_rank_descriptor_t),
                                                  NULL, NULL, 0);
 			mpc_lowcomm_irecv(remote_leader,
 			                  remote_descriptors,

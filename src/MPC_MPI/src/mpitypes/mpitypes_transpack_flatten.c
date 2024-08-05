@@ -111,7 +111,7 @@ int MPIT_Type_xpack(void *inbuf, int incount, MPI_Datatype intype,
 	    char * src = inbuf  + params.idisps[j];
 	    char *dest = outbuf + params.odisps[j];
 	    const int sz = params.blklens[j];
-	    
+
 	    /* On some platforms memcpy() does a bad job with doubles. */
 	    if (!(((MPI_Aint) src | (MPI_Aint) dest | sz) & 0x7)) {
 	    /* if (0) { */
@@ -148,7 +148,7 @@ static int MPIT_Leaf_contig_inxflatten(MPI_Aint    *blocksp,
     /* TODO: cut out this size if possible; maybe force ALL_BYTES? */
     MPI_Type_size(el_type, &el_size);
     sizebytes = *blocksp * el_size;
-   
+
     if (paramp->length < 0) {
 	paramp->startoff = rel_off;
 	paramp->length   = sizebytes;
@@ -175,7 +175,7 @@ static int MPIT_Leaf_contig_inxflatten(MPI_Aint    *blocksp,
 	paramp->length = sizebytes;
     }
 
-    if (paramp->procbytes + paramp->length == paramp->totalbytes) {	
+    if (paramp->procbytes + paramp->length == paramp->totalbytes) {
 	int mylength;
 	MPI_Aint last;
 
@@ -190,7 +190,7 @@ static int MPIT_Leaf_contig_inxflatten(MPI_Aint    *blocksp,
     }
     return 0;
 }
-					
+
 static int MPIT_Leaf_contig_outxflatten(MPI_Aint    *blocksp,
 					MPI_Datatype el_type,
 					MPI_Aint     rel_off,
@@ -223,7 +223,7 @@ static int MPIT_Leaf_contig_outxflatten(MPI_Aint    *blocksp,
     }
 }
 
-/* 
+/*
  * Local variables:
  * c-indent-tabs-mode: nil
  * End:

@@ -1,7 +1,6 @@
 #include "lowcomm_config.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include <assert.h>
 
 #include <lcp.h>
 #include <mpc_conf.h>
@@ -18,8 +17,15 @@ int main() {
 	mpc_conf_root_config_load_env_all();
 
         param = (lcp_context_param_t) {
-                .flags = LCP_CONTEXT_PROCESS_UID,
-                .process_uid = 0
+                .field_mask = LCP_CONTEXT_PROCESS_UID |
+                        LCP_CONTEXT_NUM_TASKS         |
+                        LCP_CONTEXT_DATATYPE_OPS,
+                .process_uid = 0,
+                .num_tasks = 1,
+                .dt_ops = {
+                        .pack   = NULL,
+                        .unpack = NULL,
+                },
         };
 	rc = lcp_context_create(&ctx, &param);
 	if (rc != 0) {

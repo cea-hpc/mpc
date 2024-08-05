@@ -130,8 +130,8 @@ static inline uint64_t lcp_get_process_uid(uint64_t pid, int32_t tid) {
 
 //NOTE: for offload rndv algorithm, everything is sent through the matching bit
 //      and the immediate data so there is nothing to pack.
-//TODO: add send_tag_short() API call 
-static ssize_t lcp_rts_offload_dummy_pack(void *dest, void *data) 
+//TODO: add send_tag_short() API call
+static ssize_t lcp_rts_offload_dummy_pack(void *dest, void *data)
 {
         UNUSED(dest);
         UNUSED(data);
@@ -252,7 +252,7 @@ int lcp_rndv_offload_reg_send_buffer(lcp_request_t *rndv_req)
                 LCP_OFFLOAD_SET_MUID(muid, req->send.tag.src_tid, req->tm.mid);
                 //FIXME: modify lcp_mem_post_from_map signature to use const
                 //       start
-                rc = lcp_mem_post_from_map(req->mngr, req->state.lmem, rndv_req->send.ep->tag_bmap, 
+                rc = lcp_mem_post_from_map(req->mngr, req->state.lmem, rndv_req->send.ep->tag_bmap,
                                            (void*)req->send.buffer, req->send.length, (lcr_tag_t)muid,
                                            0, &(rndv_req->send.t_ctx));
         }
@@ -298,7 +298,7 @@ void lcp_rndv_offload_send_complete(lcr_completion_t *comp)
                 lcp_request_t *super = rndv_req->super;
 
                 if (super->mngr->ctx->config.rndv_mode == LCP_RNDV_GET) {
-                        rc = lcp_mem_unpost(super->mngr, super->state.lmem, 
+                        rc = lcp_mem_unpost(super->mngr, super->state.lmem,
                                             super->tm.imm);
                         if (rc != MPC_LOWCOMM_SUCCESS) {
                                 mpc_common_debug_error("LCP OFFLOAD: could "
@@ -317,7 +317,7 @@ void lcp_rndv_offload_send_complete(lcr_completion_t *comp)
 
 void lcp_rndv_offload_recv_complete(lcr_completion_t *comp)
 {
-        lcp_request_t *rndv_req = mpc_container_of(comp, lcp_request_t, 
+        lcp_request_t *rndv_req = mpc_container_of(comp, lcp_request_t,
                                                    state.comp);
 
         rndv_req->state.remaining -= comp->sent;
@@ -463,7 +463,7 @@ int lcp_send_tag_offload_eager_bcopy(lcp_request_t *req)
 		rc = MPC_LOWCOMM_ERROR;
                 goto err;
 	}
-        
+
         lcp_request_complete(req, send.send_cb, rc, req->send.length);
 err:
         return rc;
@@ -497,9 +497,9 @@ int lcp_send_tag_offload_eager_zcopy(lcp_request_t *req)
         req->state.comp.comp_cb =  lcp_tag_offload_send_complete;
 
         mpc_common_debug_info("LCP: post send tag zcopy req=%p, src=%d, dest=%d, "
-                              "size=%d, matching[src:tag:comm]=[%d:%d:%d]", req, 
-                              req->send.tag.src_tid, req->send.tag.dest_tid, 
-                              req->send.length, tag.t_tag.src, tag.t_tag.tag, 
+                              "size=%d, matching[src:tag:comm]=[%d:%d:%d]", req,
+                              req->send.tag.src_tid, req->send.tag.dest_tid,
+                              req->send.length, tag.t_tag.src, tag.t_tag.tag,
                               tag.t_tag.comm);
         return lcp_send_do_tag_zcopy(lcr_ep, tag, imm, &iov, 1, &(req->state.comp));
 }
@@ -511,7 +511,7 @@ int lcp_send_tag_offload_eager_zcopy(lcp_request_t *req)
 
 int lcp_rndv_offload_process_rts(lcp_request_t *rreq)
 {
-        int rc;
+        int rc = MPC_LOWCOMM_SUCCESS;
         lcp_request_t *rndv_req;
 
         /* Rendez-vous request used for RTR (PUT) or RMA (GET) */
@@ -562,7 +562,7 @@ int lcp_rndv_offload_process_rts(lcp_request_t *rreq)
                 break;
         }
 
-        rc = lcp_request_send(rndv_req);
+        lcp_request_send(rndv_req);
 err:
         return rc;
 }
@@ -584,7 +584,7 @@ int lcp_recv_eager_tag_offload_data(lcp_request_t *req, void *data,
         /* Unpack necessary if datatype is derived or if
          * data was in overflow list from underlying transport */
         if (req->recv.t_ctx.flags & LCR_IFACE_TM_OVERFLOW) {
-                unpacked_len = lcp_datatype_unpack(req->mngr->ctx, req, req->datatype, 
+                unpacked_len = lcp_datatype_unpack(req->mngr->ctx, req, req->datatype,
                                                    req->recv.buffer, data, length);
                 if (unpacked_len < 0) {
                         rc = MPC_LOWCOMM_ERROR;
@@ -657,15 +657,15 @@ void lcp_recv_tag_probe_callback(lcr_completion_t *comp)
         /* Fill out recv info given by user */
         req->recv.tag.info.tag    = LCP_TM_GET_TAG(tag.t);
         req->recv.tag.info.src    = LCP_TM_GET_SRC(tag.t);
-        req->recv.tag.info.length = LCP_TM_GET_HDR_LENGTH(imm); 
+        req->recv.tag.info.length = LCP_TM_GET_HDR_LENGTH(imm);
         req->recv.tag.info.found  = 1;
 
         mpc_common_debug_info("LCP: probe tag callback req=%p, src=%d, size=%d, "
-                              "matching=[%d:%d:%d]", req, req->recv.tag.info.src, 
-                              req->recv.tag.info.length, tag.t_tag.tag, 
+                              "matching=[%d:%d:%d]", req, req->recv.tag.info.src,
+                              req->recv.tag.info.length, tag.t_tag.tag,
                               tag.t_tag.src, tag.t_tag.comm);
 
-        lcp_request_complete(req, recv.tag.recv_cb, MPC_LOWCOMM_SUCCESS, 
+        lcp_request_complete(req, recv.tag.recv_cb, MPC_LOWCOMM_SUCCESS,
                              &req->recv.tag.info);
 
         return;
@@ -712,9 +712,9 @@ int lcp_recv_tag_zcopy(lcp_request_t *rreq, sctk_rail_info_t *iface)
         rreq->state.comp.comp_cb      = lcp_tag_offload_recv_complete;
 
         mpc_common_debug_info("LCP: post recv tag zcopy req=%p, src=%d, dest=%d, "
-                              "size=%d, matching[src:tag:comm]=[%d:%d:%d], ignore=[%d:%d:%d]", 
-                              rreq, rreq->recv.tag.src_tid, rreq->recv.tag.dest_tid, 
-                              rreq->recv.length, tag.t_tag.src, tag.t_tag.tag, 
+                              "size=%d, matching[src:tag:comm]=[%d:%d:%d], ignore=[%d:%d:%d]",
+                              rreq, rreq->recv.tag.src_tid, rreq->recv.tag.dest_tid,
+                              rreq->recv.length, tag.t_tag.src, tag.t_tag.tag,
                               tag.t_tag.comm, ign_tag.t_tag.tag, ign_tag.t_tag.src,
                               ign_tag.t_tag.comm);
         rc = lcp_post_do_tag_zcopy(iface, tag, ign_tag,
@@ -725,7 +725,7 @@ int lcp_recv_tag_zcopy(lcp_request_t *rreq, sctk_rail_info_t *iface)
 }
 
 int lcp_recv_tag_probe(lcp_task_h task, sctk_rail_info_t *rail, const int src, const int tag,
-                       const uint64_t comm, lcp_tag_recv_info_t *recv_info) 
+                       const uint64_t comm, lcp_tag_recv_info_t *recv_info)
 {
         int rc = MPC_LOWCOMM_SUCCESS;
         unsigned flags = 0;

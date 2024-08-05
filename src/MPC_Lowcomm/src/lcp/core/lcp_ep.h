@@ -119,7 +119,7 @@ struct lcp_ep {
 };
 
 
-int lcp_context_ep_create(lcp_manager_h ctx, lcp_ep_h *ep_p, 
+int lcp_context_ep_create(lcp_manager_h ctx, lcp_ep_h *ep_p,
 			  uint64_t uid, unsigned flags);
 int lcp_ep_progress_conn(lcp_manager_h ctx, lcp_ep_h ep);
 void lcp_ep_delete(lcp_ep_h ep);

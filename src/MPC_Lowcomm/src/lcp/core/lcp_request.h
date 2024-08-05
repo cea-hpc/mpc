@@ -51,7 +51,7 @@ enum {
         LCP_REQUEST_LOCAL_COMPLETED         = MPC_BIT(2), /* Local completion. */
         LCP_REQUEST_REMOTE_COMPLETED        = MPC_BIT(3), /* Remote completion. */
         LCP_REQUEST_RELEASE_ON_COMPLETION   = MPC_BIT(4), /* Release request back to mpool. */
-        LCP_REQUEST_USER_CALLBACK           = MPC_BIT(5), /* Call user callback on completion. */ 
+        LCP_REQUEST_USER_CALLBACK           = MPC_BIT(5), /* Call user callback on completion. */
         LCP_REQUEST_USER_PROVIDED_MEMH      = MPC_BIT(6), /* Use user-provided memory key, se lcp_flush_nb. */
         LCP_REQUEST_USER_PROVIDED_EPH       = MPC_BIT(7), /* Use user-provided endpoint, see lcp_flush_nb. */
         LCP_REQUEST_USER_PROVIDED_REPLY_BUF = MPC_BIT(8), /* User-provided reply buffer. */
@@ -92,7 +92,7 @@ struct lcp_request {
                         size_t length; /* Total length, in bytes */
 			void *buffer; /* Payload. */
 			lcr_tag_context_t t_ctx; /* Offload tag context. */
-                        lcp_send_callback_func_t send_cb; /* User callback. */ 
+                        lcp_send_callback_func_t send_cb; /* User callback. */
 			union {
 				struct {
 					uint16_t comm;
@@ -128,10 +128,10 @@ struct lcp_request {
 
                                 struct {
                                         uint64_t        remote_addr; /* Remote address. */
-                                        lcp_chnl_idx_t  cc; 
+                                        lcp_chnl_idx_t  cc;
                                         lcp_atomic_op_t op; /* Atomic operation. */
                                         lcp_mem_h       rkey; /* Remote memory key. */
-                                        void           *reply_buffer; /* Reply address, for 
+                                        void           *reply_buffer; /* Reply address, for
                                                                          fetch or cas. */
                                         int             reply_size; /* Data reply size. */
                                         uint64_t        value; /* Atomic value. */
@@ -139,7 +139,7 @@ struct lcp_request {
                                 } ato; /* Atomic information. */
 
                                 struct {
-                                        uint64_t result; 
+                                        uint64_t result;
                                         uint64_t msg_id;
                                 } reply_ato; /* Atomic reply information. */
 
@@ -154,7 +154,7 @@ struct lcp_request {
 		struct {
 			size_t length; /* Expected length. */
                         size_t send_length; /* Actual received length. */
-			void *buffer; 
+			void *buffer;
 			lcr_tag_context_t t_ctx; /* Offload tag context. */
 
                         union {
@@ -166,7 +166,7 @@ struct lcp_request {
                                         int32_t  smask;
                                         int32_t  dest_tid; //FIXME: needed?
                                         int32_t  tag;
-                                        int32_t  tmask; 
+                                        int32_t  tmask;
                                         lcp_tag_recv_info_t info; /* Tag info transmitted to upper layer. */
                                         lcp_tag_recv_callback_func_t recv_cb;
                                 } tag; /* Tag information. */
@@ -174,7 +174,7 @@ struct lcp_request {
                                 struct {
                                         uint8_t  am_id;
                                         uint64_t src_uid;
-                                        lcp_unexp_ctnr_t *ctnr; 
+                                        lcp_unexp_ctnr_t *ctnr;
                                         lcp_send_callback_func_t cb; //FIXME: rename
                                         void    *request; /* User request. */
                                 } am;
@@ -188,7 +188,7 @@ struct lcp_request {
         struct lcp_request    *super;     /* master request, only for rndv. */
         mpc_queue_elem_t       queue;     /* element in pending queue */
         mpc_queue_elem_t       match;     /* element in matching queue */
-        
+
         //FIXME: should be in new offload union above to decrease request size.
         struct {
                 lcr_tag_t imm;
@@ -400,16 +400,16 @@ struct lcp_request {
                         __req = lcp_request_get(_task); \
                 } \
                 __req; \
-         }) 
+         })
 
 #define lcp_request_get(_task) \
         ({ \
                 lcp_request_t *__req = mpc_mpool_pop(&(_task)->req_mp); \
                 if (__req != NULL) { \
                         lcp_request_reset(__req); \
+                        (__req)->flags |= LCP_REQUEST_RELEASE_ON_COMPLETION; \
+                        mpc_common_nodebug("LCP REQ: alloc request. req=%p", __req); \
                 } \
-                (__req)->flags |= LCP_REQUEST_RELEASE_ON_COMPLETION; \
-                mpc_common_nodebug("LCP REQ: alloc request. req=%p", __req); \
                 __req; \
          })
 
@@ -494,8 +494,10 @@ static inline lcp_status_ptr_t lcp_request_send(lcp_request_t *req)
         return ret;
 }
 
-int lcp_request_init_unexp_ctnr(lcp_task_h task, lcp_unexp_ctnr_t **ctnr_p, 
-                                struct iovec *iov, 
+// NOLINTEND(clang-diagnostic-unused-function)
+
+int lcp_request_init_unexp_ctnr(lcp_task_h task, lcp_unexp_ctnr_t **ctnr_p,
+                                struct iovec *iov,
 				size_t iovcnt, unsigned flags);
 
 #endif

@@ -5,6 +5,7 @@
  *      See COPYRIGHT in top-level directory.
  */
 
+// NOLINTBEGIN
 #ifndef DATALOOP_PARTS_H
 #define DATALOOP_PARTS_H
 
@@ -62,9 +63,9 @@
  * Each of the MPI datatypes can be mapped into one of 5 very simple
  * loops.  This loop has the following parameters:
  * - count
- * - blocksize[] 
+ * - blocksize[]
  * - offset[]
- * - stride 
+ * - stride
  * - datatype[]
  *
  * where each [] indicates that a field may be *either* an array or a scalar.
@@ -98,7 +99,7 @@ typedef struct DLOOP_Dataloop_contig {
   Module:
   Datatype
   S*/
-typedef struct DLOOP_Dataloop_vector { 
+typedef struct DLOOP_Dataloop_vector {
     DLOOP_Count count;
     struct DLOOP_Dataloop *dataloop;
     DLOOP_Count blocksize;
@@ -170,10 +171,10 @@ typedef struct DLOOP_Dataloop_struct {
 } DLOOP_Dataloop_struct;
 
 /* In many cases, we need the count and the next dataloop item. This
-   common structure gives a quick access to both.  Note that all other 
+   common structure gives a quick access to both.  Note that all other
    structures must use the same ordering of elements.
-   Question: should we put the pointer first in case 
-   sizeof(pointer)>sizeof(int) ? 
+   Question: should we put the pointer first in case
+   sizeof(pointer)>sizeof(int) ?
 */
 typedef struct DLOOP_Dataloop_common {
     DLOOP_Count count;
@@ -197,9 +198,9 @@ typedef struct DLOOP_Dataloop_common {
         2   - Elements are in units of 4 bytes
         3   - Elements are in units of 8 bytes
 .ve
-  The dataloop type is one of 'DLOOP_CONTIG', 'DLOOP_VECTOR', 
-  'DLOOP_BLOCKINDEXED', 'DLOOP_INDEXED', or 'DLOOP_STRUCT'.  
-. loop_parms - A union containing the 5 dataloop structures, e.g., 
+  The dataloop type is one of 'DLOOP_CONTIG', 'DLOOP_VECTOR',
+  'DLOOP_BLOCKINDEXED', 'DLOOP_INDEXED', or 'DLOOP_STRUCT'.
+. loop_parms - A union containing the 5 dataloop structures, e.g.,
   'DLOOP_Dataloop_contig', 'DLOOP_Dataloop_vector', etc.  A sixth element in
   this union, 'count', allows quick access to the shared 'count' field in the
   five dataloop structure.
@@ -212,10 +213,10 @@ typedef struct DLOOP_Dataloop_common {
   Datatype
 
   S*/
-typedef struct DLOOP_Dataloop { 
-    int kind;                  /* Contains both the loop type 
+typedef struct DLOOP_Dataloop {
+    int kind;                  /* Contains both the loop type
 				  (contig, vector, blockindexed, indexed,
-				  or struct) and a bit that indicates 
+				  or struct) and a bit that indicates
 				  whether the dataloop is a leaf type. */
     union {
 	DLOOP_Count                 count;
@@ -239,8 +240,8 @@ typedef struct DLOOP_Dataloop {
 #define DLOOP_KIND_INDEXED 0x4
 #define DLOOP_KIND_STRUCT 0x5
 
-/* The max datatype depth is the maximum depth of the stack used to 
-   evaluate datatypes.  It represents the length of the chain of 
+/* The max datatype depth is the maximum depth of the stack used to
+   evaluate datatypes.  It represents the length of the chain of
    datatype dependencies.  Defining this and testing when a datatype
    is created removes a test in the datatype evaluation loop. */
 #define DLOOP_MAX_DATATYPE_DEPTH 16
@@ -250,8 +251,8 @@ typedef struct DLOOP_Dataloop {
   to process dataloops
 
   Fields:
-+ curcount - Current loop count value (between 0 and 
-             loop.loop_params.count-1) 
++ curcount - Current loop count value (between 0 and
+             loop.loop_params.count-1)
 . orig_count - original count value (cached so we don't have to look it up)
 . curoffset - Offset into memory relative to the pointer to the buffer
               passed in by the user.  Used to maintain our position as we
@@ -294,7 +295,7 @@ typedef struct DLOOP_Dataloop_stackelm {
   Questions:
   Should this have an id for allocation and similarity purposes?
   S*/
-typedef struct DLOOP_Segment { 
+typedef struct DLOOP_Segment {
     void *ptr; /* pointer to datatype buffer */
     DLOOP_Handle handle;
     DLOOP_Offset stream_off; /* next offset into data stream resulting from datatype
@@ -303,14 +304,14 @@ typedef struct DLOOP_Segment {
 			      */
     DLOOP_Dataloop_stackelm stackelm[DLOOP_MAX_DATATYPE_DEPTH];
     int  cur_sp;   /* Current stack pointer when using dataloop */
-    int  valid_sp; /* maximum valid stack pointer.  This is used to 
+    int  valid_sp; /* maximum valid stack pointer.  This is used to
                       maintain information on the stack after it has
                       been placed there by following the datatype field
                       in a DLOOP_Dataloop_st for any type except struct */
 
     struct DLOOP_Dataloop builtin_loop; /* used for both predefined types (which
-		         		  * won't have a loop already) and for 
-				  * situations where a count is passed in 
+		         		  * won't have a loop already) and for
+				  * situations where a count is passed in
 				  * and we need to create a contig loop
 				  * to handle it
 				  */
@@ -364,8 +365,8 @@ int PREPEND_PREFIX(Segment_init)(const DLOOP_Buffer buf,
 
 void
 PREPEND_PREFIX(Segment_manipulate)(DLOOP_Segment *segp,
-				   DLOOP_Offset first, 
-				   DLOOP_Offset *lastp, 
+				   DLOOP_Offset first,
+				   DLOOP_Offset *lastp,
 				   int (*piecefn) (DLOOP_Offset *blocks_p,
 						   DLOOP_Type el_type,
 						   DLOOP_Offset rel_off,
@@ -460,5 +461,4 @@ int PREPEND_PREFIX(Segment_index_m2m)(DLOOP_Offset *blocks_p,
 				      void *v_paramp);
 #endif
 
-
-
+// NOLINTEND

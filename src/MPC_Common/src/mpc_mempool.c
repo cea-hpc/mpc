@@ -4,6 +4,7 @@
 #include "mpc_common_helper.h"
 #include <stddef.h>
 #include <stdint.h>
+#include <string.h>
 
 #if MPC_USE_CK
 #include <ck_stack.h>
@@ -391,7 +392,7 @@ int mpc_mpool_init(mpc_mempool_t *mp, mpc_mempool_param_t *params)
         int rc = 0;
 
         if (params->alignment == 0 || !mpc_common_is_powerof2(params->alignment) ||
-            params->elem_per_chunk == 0 || params->max_elems < (uint32_t)params->elem_per_chunk) 
+            params->elem_per_chunk == 0 || params->max_elems < (uint32_t)params->elem_per_chunk)
         {
                 mpc_common_debug_error("COMMON: wrong parameter, could not "
                                        "create mpool.");

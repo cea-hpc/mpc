@@ -22,6 +22,10 @@
 #define _GNU_SOURCE
 
 
+#ifdef MPC_USE_EXTLS
+	#include <extls.h>
+	#include <extls_hls.h>
+#endif
 
 #if HAVE_PTHREAD_ATTR_SETAFFINITY_NP
 #include <sched.h>

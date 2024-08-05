@@ -94,7 +94,7 @@ int PREPEND_PREFIX(Segment_contig_m2m)(DLOOP_Offset *blocks_p,
 
 #ifdef MPID_SU_VERBOSE
     dbg_printf("\t[contig unpack: do=%d, dp=%x, bp=%x, sz=%d, blksz=%d]\n",
-	       rel_off, 
+	       rel_off,
 	       (unsigned) bufp,
 	       (unsigned) paramp->u.unpack.unpack_buffer,
 	       el_size,
@@ -156,7 +156,7 @@ int PREPEND_PREFIX(Segment_vector_m2m)(DLOOP_Offset *blocks_p,
     blocks_left = (blksz > 0) ? (*blocks_p % blksz) : 0;
 
     if (paramp->direction == DLOOP_M2M_TO_USERBUF) {
-	if (el_size == 8 
+	if (el_size == 8
 	    MPIR_ALIGN8_TEST(paramp->streambuf,cbufp))
 	{
 	    MPIDI_COPY_TO_VEC(paramp->streambuf, cbufp, stride,
@@ -191,7 +191,7 @@ int PREPEND_PREFIX(Segment_vector_m2m)(DLOOP_Offset *blocks_p,
 	}
     }
     else /* M2M_FROM_USERBUF */ {
-	if (el_size == 8 
+	if (el_size == 8
 	    MPIR_ALIGN8_TEST(cbufp,paramp->streambuf))
 	{
 	    MPIDI_COPY_FROM_VEC(cbufp, paramp->streambuf, stride,
@@ -309,7 +309,7 @@ int PREPEND_PREFIX(Segment_blkidx_m2m)(DLOOP_Offset *blocks_p,
 	    if (el_size == 8 MPIR_ALIGN8_TEST(src,cbufp)) {
 		int64_t const *restrict l_src = (int64_t *)src;
 		while (blocks_left--) {
-		    int64_t *restrict l_dest = 
+		    int64_t *restrict l_dest =
 			(int64_t *)(cbufp + *offsetp++);
 		    *l_dest = *l_src++;
 		}
@@ -345,14 +345,14 @@ int PREPEND_PREFIX(Segment_blkidx_m2m)(DLOOP_Offset *blocks_p,
 	}
 	else {
 	    while (blocks_left) {
-		
+
 		if (blocklen > blocks_left) {
 		    blocklen = blocks_left;
 		    srcsize = el_size * blocklen;
 		}
-	    
+
 		dest = cbufp + *offsetp++;
-		
+
 		/* note: macro modifies dest buffer ptr, so we must reset */
 		if (el_size == 8
 		    MPIR_ALIGN8_TEST(src, dest))
@@ -371,7 +371,7 @@ int PREPEND_PREFIX(Segment_blkidx_m2m)(DLOOP_Offset *blocks_p,
 		    memcpy(dest, src, srcsize);
 		    src += srcsize;
 		}
-		
+
 		blocks_left -= blocklen;
 	    }
 	}
@@ -386,7 +386,7 @@ int PREPEND_PREFIX(Segment_blkidx_m2m)(DLOOP_Offset *blocks_p,
 	    if (el_size == 8 MPIR_ALIGN8_TEST(cbufp,dest)) {
 		int64_t * restrict l_dest = (int64_t *)dest;
 		while (blocks_left--) {
-		    register int64_t const * restrict l_src     = 
+		    register int64_t const * restrict l_src     =
 			(int64_t *)(cbufp + *offsetp++);
 		    *l_dest++ = *l_src;
 		}
@@ -394,9 +394,9 @@ int PREPEND_PREFIX(Segment_blkidx_m2m)(DLOOP_Offset *blocks_p,
 	    }
 	    else {
 		while (blocks_left--) {
-		    
+
 		    src  = cbufp + *offsetp++;
-		    
+
 		    if (el_size == 8 MPIR_ALIGN8_TEST(src, dest)) {
 			int64_t *l_dest = (int64_t *)dest;
 			int64_t const *l_src = (int64_t *)src;
@@ -424,14 +424,14 @@ int PREPEND_PREFIX(Segment_blkidx_m2m)(DLOOP_Offset *blocks_p,
 	}
 	else {
 	    while (blocks_left) {
-		
+
 		if (blocklen > blocks_left) {
 		    blocklen = blocks_left;
 		    destsize = el_size * blocklen;
 		}
-		
+
 		src  = cbufp + *offsetp++;
-		
+
 		/* note: macro modifies dest buffer ptr, so we must reset */
 		if (el_size == 8
 		    MPIR_ALIGN8_TEST(src, dest))
@@ -450,13 +450,13 @@ int PREPEND_PREFIX(Segment_blkidx_m2m)(DLOOP_Offset *blocks_p,
 		    memcpy(dest, src, blocklen * el_size);
 		    dest += destsize;
 		}
-		
+
 		blocks_left -= blocklen;
 	    }
 	}
 	paramp->streambuf = dest;
     }
-    
+
     }
 #endif
     return 0;
@@ -572,7 +572,7 @@ void PREPEND_PREFIX(Segment_unpack)(DLOOP_Segment *segp,
     return;
 }
 
-/* 
+/*
  * Local variables:
  * c-indent-tabs-mode: nil
  * End:

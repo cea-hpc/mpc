@@ -44,7 +44,7 @@ int mpc_osc_fence(int mpi_assert, mpc_win_t *win)
         lcp_task_h task;
         int tid = mpc_common_get_task_rank();
 
-        if (module->epoch.access != NONE_EPOCH && 
+        if (module->epoch.access != NONE_EPOCH &&
             module->epoch.access != FENCE_EPOCH) {
                 return MPC_LOWCOMM_ERROR;
         }
@@ -69,15 +69,15 @@ err:
         return rc;
 }
 
-static void mpc_osc_handle_incoming_post(mpc_osc_module_t *module, volatile uint64_t *post_ptr, 
-                                         int ranks_in_grp_win[], int size) 
+static void mpc_osc_handle_incoming_post(mpc_osc_module_t *module, volatile uint64_t *post_ptr,
+                                         int ranks_in_grp_win[], int size)
 {
         mpc_osc_pending_post_t *post;
         int i, post_rank = (int)*post_ptr - 1;
 
         /* Reset state post so it can be reused by another process. */
         *post_ptr = 0;
-        
+
         for (i = 0; i < size; i++) {
                 if (post_rank == ranks_in_grp_win[i]) {
                         module->post_count++;
@@ -91,8 +91,8 @@ static void mpc_osc_handle_incoming_post(mpc_osc_module_t *module, volatile uint
         mpc_list_push_head(&module->pending_posts, &post->elem);
 }
 
-int mpc_osc_start(mpc_lowcomm_group_t *group, 
-                  int mpi_assert, 
+int mpc_osc_start(mpc_lowcomm_group_t *group,
+                  int mpi_assert,
                   mpc_win_t *win)
 {
         UNUSED(mpi_assert);
@@ -101,7 +101,7 @@ int mpc_osc_start(mpc_lowcomm_group_t *group,
         mpc_lowcomm_group_t *win_grp;
         int *ranks_in_grp, *ranks_in_grp_win;
 
-        if (win->win_module.epoch.access != NONE_EPOCH && 
+        if (win->win_module.epoch.access != NONE_EPOCH &&
             win->win_module.epoch.access != FENCE_EPOCH) {
                 mpc_common_debug_error("MPC OSC: access epoch already active.");
                 return MPC_LOWCOMM_ERROR;
@@ -109,7 +109,7 @@ int mpc_osc_start(mpc_lowcomm_group_t *group,
 
         win->win_module.epoch.access = START_COMPLETE_EPOCH;
         win->win_module.start_group  = mpc_lowcomm_group_dup(group);
-        
+
         grp_size = mpc_lowcomm_group_size(win->win_module.start_group);
         ranks_in_grp = sctk_malloc(grp_size * sizeof(int));
         if (ranks_in_grp == NULL) {
@@ -131,7 +131,7 @@ int mpc_osc_start(mpc_lowcomm_group_t *group,
         }
 
         win_grp = mpc_lowcomm_communicator_group(win->comm);
-        mpc_lowcomm_group_translate_ranks(group, grp_size, ranks_in_grp, 
+        mpc_lowcomm_group_translate_ranks(group, grp_size, ranks_in_grp,
                                           win_grp, ranks_in_grp_win);
 
         if ((mpi_assert & MPI_MODE_NOCHECK) == 0) {
@@ -139,7 +139,7 @@ int mpc_osc_start(mpc_lowcomm_group_t *group,
 
                 /* First, handle pending post list. */
                 mpc_osc_pending_post_t *post, *tmp;
-                mpc_list_for_each_safe(post, tmp, &win->win_module.pending_posts, 
+                mpc_list_for_each_safe(post, tmp, &win->win_module.pending_posts,
                                        mpc_osc_pending_post_t, elem) {
                         for (i = 0; i < grp_size; i++) {
                                 if (post->rank == ranks_in_grp_win[i]) {
@@ -157,8 +157,8 @@ int mpc_osc_start(mpc_lowcomm_group_t *group,
                                         continue;
                                 }
 
-                                mpc_osc_handle_incoming_post(&win->win_module, 
-                                                             &win->win_module.state->post_state[i], 
+                                mpc_osc_handle_incoming_post(&win->win_module,
+                                                             &win->win_module.state->post_state[i],
                                                              ranks_in_grp_win, grp_size);
                         }
 
@@ -186,7 +186,7 @@ err:
         return rc;
 }
 
-int mpc_osc_post(mpc_lowcomm_group_t *group, int mpi_assert, mpc_win_t *win) 
+int mpc_osc_post(mpc_lowcomm_group_t *group, int mpi_assert, mpc_win_t *win)
 {
         UNUSED(mpi_assert);
         mpc_osc_module_t *module = &win->win_module;
@@ -205,7 +205,7 @@ int mpc_osc_post(mpc_lowcomm_group_t *group, int mpi_assert, mpc_win_t *win)
         }
 
         module->post_group = mpc_lowcomm_group_dup(group);
-        
+
         grp_size = mpc_lowcomm_group_size(module->post_group);
         ranks_in_grp = sctk_malloc(grp_size * sizeof(int));
         if (ranks_in_grp == NULL) {
@@ -227,7 +227,7 @@ int mpc_osc_post(mpc_lowcomm_group_t *group, int mpi_assert, mpc_win_t *win)
         }
 
         win_grp = mpc_lowcomm_communicator_group(win->comm);
-        mpc_lowcomm_group_translate_ranks(group, grp_size, ranks_in_grp, 
+        mpc_lowcomm_group_translate_ranks(group, grp_size, ranks_in_grp,
                                           win_grp, ranks_in_grp_win);
 
         my_rank = mpc_lowcomm_communicator_rank(win->comm);
@@ -236,7 +236,7 @@ int mpc_osc_post(mpc_lowcomm_group_t *group, int mpi_assert, mpc_win_t *win)
 
         /* Acquire a free index. */
         for (i = 0; i < grp_size; i++) {
-               mpc_osc_get_comm_info(module, ranks_in_grp_win[i], win->comm, 
+               mpc_osc_get_comm_info(module, ranks_in_grp_win[i], win->comm,
                                      &module->eps[ranks_in_grp_win[i]]);
 
                base_rstate = (char *)module->rstate_win_info[ranks_in_grp_win[i]].addr;
@@ -276,8 +276,8 @@ int mpc_osc_post(mpc_lowcomm_group_t *group, int mpi_assert, mpc_win_t *win)
                                         continue;
                                 }
 
-                                mpc_osc_handle_incoming_post(module, 
-                                                             &module->state->post_state[j], 
+                                mpc_osc_handle_incoming_post(module,
+                                                             &module->state->post_state[j],
                                                              ranks_in_grp_win, grp_size);
 
                                 lcp_progress(module->mngr);
@@ -367,7 +367,7 @@ int mpc_osc_wait(mpc_win_t *win)
         return MPC_LOWCOMM_SUCCESS;
 }
 
-int mpc_osc_test(mpc_win_t *win, int *flag) 
+int mpc_osc_test(mpc_win_t *win, int *flag)
 {
         mpc_osc_module_t *module = &win->win_module;
         int grp_size = mpc_lowcomm_group_size(win->win_module.post_group);

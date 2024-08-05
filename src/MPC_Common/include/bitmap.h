@@ -103,7 +103,6 @@ static inline int mpc_bitmap_is_zero(bmap_t bitmap) {
 static inline int mpc_bitmap_equal(bmap_t a, bmap_t b) {
         return !(memcmp(a.bits, b.bits, sizeof(a.bits)));
 }
-/* NOLINTEND(clang-diagnostic-unused-function) */
 
 static inline int mpc_bitmap_popcount(bmap_t bitmap) {
         int count = 0;
@@ -126,4 +125,6 @@ static inline bmap_t mpc_bitmap_copy_and(bmap_t a, bmap_t b) {
         return out;
 }
 
-#endif 
+/* NOLINTEND(clang-diagnostic-unused-function) */
+
+#endif

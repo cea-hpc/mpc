@@ -190,7 +190,7 @@ int mpc_osc_win_set_attr(MPI_Win win, int keyval, void *attr_val)
 	}
 
 	/* Retrieve win desc */
-	mpc_win_t *desc = win; 
+	mpc_win_t *desc = win;
 
 	if(!desc)
 	{
@@ -412,4 +412,3 @@ int mpc_osc_win_free_keyval(int *keyval)
 
 	return MPI_SUCCESS;
 }
-

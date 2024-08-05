@@ -327,7 +327,7 @@ struct _mpc_lowcomm_config_struct_protocol *_mpc_lowcomm_config_proto_get(void);
 
 struct _mpc_lowcomm_config_struct_networks *_mpc_lowcomm_config_net_get(void);
 
-/** @brief Helper to get a table of rail config from CLI 
+/** @brief Helper to get a table of rail config from CLI
 *   @return The configuration or NULL
 */
 int _mpc_lowcomm_conf_load_rail_from_cli(struct _mpc_lowcomm_config_struct_net_rail ***cli_rail_configs_p,

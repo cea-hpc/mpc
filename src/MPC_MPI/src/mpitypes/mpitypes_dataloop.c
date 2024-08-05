@@ -69,7 +69,7 @@ int MPIT_Type_init(MPI_Datatype type)
     /* trivial types don't get dataloops */
     if (!(MPIT_Datatype_is_nontrivial(type))) return MPI_SUCCESS;
 
-    dtp = _mpc_dt_get_mpitypes_handle(type); 
+    dtp = _mpc_dt_get_mpitypes_handle(type);
 
     if (!dtp) {
 	/* allocate structure and create dataloop representation */
@@ -93,7 +93,7 @@ int MPIT_Type_init(MPI_Datatype type)
 
 /* MPIT_Type_is_initialized
  *
- * Note that "trivial" types are always considered initialized. 
+ * Note that "trivial" types are always considered initialized.
  *
  * Returns 0 if type has not been initialized for MPITypes, non-zero
  * otherwise.
@@ -129,7 +129,7 @@ void MPIT_Datatype_get_size(MPI_Datatype type, DLOOP_Offset *size_p)
 void MPIT_Datatype_get_extent(MPI_Datatype type, DLOOP_Offset *extent_p)
 {
     MPIT_Datatype *dtp = _mpc_dt_get_mpitypes_handle(type);
-    
+
     if (!dtp) {
 	dtp = MPIT_Datatype_allocate();
     }
@@ -148,7 +148,7 @@ void MPIT_Datatype_get_extent(MPI_Datatype type, DLOOP_Offset *extent_p)
  * type     - MPI datatype
  * true_lb  - true_lb for type (offset to start of data)
  * count    - count of # of contiguous regions in the type
- * n_contig - flag, indicating if N of these types would also form a 
+ * n_contig - flag, indicating if N of these types would also form a
  *            single contiguous block
  */
 void MPIT_Datatype_get_block_info(MPI_Datatype type,
@@ -194,7 +194,7 @@ void MPIT_Datatype_get_block_info(MPI_Datatype type,
 		MPIT_DATATYPE_VALID_DLOOP_DEPTH;
 
 	}
-	    
+
 	DLOOP_Assert((dtp->valid & MPIT_DATATYPE_VALID_DLOOP_PTR) &&
 		     (dtp->valid & MPIT_DATATYPE_VALID_DLOOP_SIZE) &&
 		     (dtp->valid & MPIT_DATATYPE_VALID_DLOOP_DEPTH));
@@ -278,7 +278,7 @@ void MPIT_Datatype_get_loopptr(MPI_Datatype type,
      */
     if (!dtp || !(dtp->valid & MPIT_DATATYPE_VALID_DLOOP_PTR))
 	*ptr_p = NULL;
-    else 
+    else
 	*ptr_p = dtp->dloop;
 
     return;
@@ -356,7 +356,7 @@ int MPIT_Datatype_is_nontrivial(MPI_Datatype type)
     int short_int = MPI_SHORT_INT;
     int long_double_int = MPI_LONG_DOUBLE_INT;
     int combiner_name = MPI_COMBINER_NAMED;
-    
+
     PMPI_Type_get_envelope(type, &nr_ints, &nr_aints, &nr_types, &combiner);
     if (combiner != MPI_COMBINER_NAMED ||
 	type == MPI_FLOAT_INT ||
@@ -405,14 +405,14 @@ static void MPIT_Datatype_set_szext(MPI_Datatype type, MPIT_Datatype *dtp)
     {
 	int size;
 	MPI_Aint lb, extent, true_lb, true_extent;
-	
+
 	mpi_errno = PMPI_Type_size(type, &size);
 	DLOOP_Assert(mpi_errno == MPI_SUCCESS);
-	
+
 	mpi_errno = PMPI_Type_get_extent(type, &lb, &extent);
 	DLOOP_Assert(mpi_errno == MPI_SUCCESS);
-	
-	mpi_errno = PMPI_Type_get_true_extent(type, &true_lb, &true_extent); 
+
+	mpi_errno = PMPI_Type_get_true_extent(type, &true_lb, &true_extent);
 
 	dtp->size        = (DLOOP_Offset) size;
 	dtp->extent      = (DLOOP_Offset) extent;
@@ -421,7 +421,7 @@ static void MPIT_Datatype_set_szext(MPI_Datatype type, MPIT_Datatype *dtp)
     }
     else {
 	MPIT_Type_footprint tfp;
-	
+
 	MPIT_Type_calc_footprint(type, &tfp);
 	dtp->size        = tfp.size;
 	dtp->extent      = tfp.extent;
@@ -433,7 +433,7 @@ static void MPIT_Datatype_set_szext(MPI_Datatype type, MPIT_Datatype *dtp)
     return;
 }
 
-/* 
+/*
  * Local variables:
  * c-indent-tabs-mode: nil
  * End:

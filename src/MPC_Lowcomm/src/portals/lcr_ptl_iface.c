@@ -228,7 +228,7 @@ int lcr_ptl_iface_progress(sctk_rail_info_t *rail)
                                 break;
                         case PTL_EVENT_AUTO_UNLINK:
                                 block = mpc_container_of(op, lcr_ptl_recv_block_t, op);
-                                sctk_ptl_list_t list = ev.pt_index == LCR_PTL_PTE_IDX_TAG_EAGER ? 
+                                sctk_ptl_list_t list = ev.pt_index == LCR_PTL_PTE_IDX_TAG_EAGER ?
                                         SCTK_PTL_OVERFLOW_LIST : SCTK_PTL_PRIORITY_LIST;
                                 lcr_ptl_recv_block_activate(block, ev.pt_index, list);
                                 goto poll_unlock;

@@ -45,6 +45,7 @@ typedef struct lcp_atomic_proto {
         lcp_send_func_t send_post;
 } lcp_atomic_proto_t;
 
+// NOLINTBEGIN(clang-diagnostic-unused-function)
 static inline const char *lcp_ato_sw_decode_op(lcp_atomic_op_t op_type) {
         switch (op_type) {
         case LCP_ATOMIC_OP_ADD: return "LCP_ATOMIC_OP_ADD"; break;
@@ -58,6 +59,7 @@ static inline const char *lcp_ato_sw_decode_op(lcp_atomic_op_t op_type) {
 
         return NULL;
 }
+// NOLINTEND(clang-diagnostic-unused-function)
 
 extern lcp_atomic_proto_t ato_sw_proto;
 extern lcp_atomic_proto_t ato_rma_proto;

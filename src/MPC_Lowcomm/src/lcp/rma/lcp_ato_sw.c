@@ -110,7 +110,7 @@ static uint64_t lcp_ato_sw_swap64(uint64_t *orig_val, uint64_t *remote_val) {
         return tmp;
 }
 
-static uint32_t lcp_ato_sw_cswap32(uint32_t *orig_val, uint32_t compare, 
+static uint32_t lcp_ato_sw_cswap32(uint32_t *orig_val, uint32_t compare,
                                    uint32_t *remote_val) {
         uint32_t tmp = *orig_val;
         if (*orig_val == compare) {
@@ -119,7 +119,7 @@ static uint32_t lcp_ato_sw_cswap32(uint32_t *orig_val, uint32_t compare,
         return tmp;
 }
 
-static uint64_t lcp_ato_sw_cswap64(uint64_t *orig_val, uint64_t compare, 
+static uint64_t lcp_ato_sw_cswap64(uint64_t *orig_val, uint64_t compare,
                                  uint64_t *remote_val) {
         uint64_t tmp = *orig_val;
         if (*orig_val == compare) {
@@ -143,7 +143,7 @@ ssize_t lcp_atomic_pack(void *dest, void *data) {
 
         if (req->flags & LCP_REQUEST_USER_PROVIDED_REPLY_BUF) {
             hdr->msg_id = (uint64_t)req;
-            if (req->send.ato.op == LCP_ATOMIC_OP_CSWAP) { 
+            if (req->send.ato.op == LCP_ATOMIC_OP_CSWAP) {
                 hdr->compare = req->send.ato.compare;
             }
         } else {
@@ -164,19 +164,19 @@ ssize_t lcp_atomic_reply_pack(void *dest, void *data) {
         return sizeof(*hdr);
 }
 
-static void lcp_atomic_complete(lcr_completion_t *comp) 
+static void lcp_atomic_complete(lcr_completion_t *comp)
 {
-	lcp_request_t *req = mpc_container_of(comp, lcp_request_t, 
+	lcp_request_t *req = mpc_container_of(comp, lcp_request_t,
 					      state.comp);
 
-        if ( (req->flags & LCP_REQUEST_REMOTE_COMPLETED) && 
+        if ( (req->flags & LCP_REQUEST_REMOTE_COMPLETED) &&
              (req->flags & LCP_REQUEST_LOCAL_COMPLETED) ) {
                 req->status = MPC_LOWCOMM_SUCCESS;
-                lcp_request_complete(req, send.send_cb, req->status, req->send.length); 
+                lcp_request_complete(req, send.send_cb, req->status, req->send.length);
         }
 }
 
-int lcp_atomic_sw(lcp_request_t *req) 
+int lcp_atomic_sw(lcp_request_t *req)
 {
         int rc = MPC_LOWCOMM_SUCCESS;
         ssize_t packed_size;
@@ -184,7 +184,7 @@ int lcp_atomic_sw(lcp_request_t *req)
         mpc_common_nodebug("LCP ATO SW: perform op. req=%p, task=%p, tid=%d, "
                          "remote addr=%p, op=%s, compare=%llu, value=%llu", req,
                          req->task, req->task->tid, req->send.ato.remote_addr,
-                         lcp_ato_sw_decode_op(req->send.ato.op), 
+                         lcp_ato_sw_decode_op(req->send.ato.op),
                          req->send.ato.compare,
                          req->send.ato.value);
 
@@ -197,21 +197,21 @@ int lcp_atomic_sw(lcp_request_t *req)
         req->flags |= LCP_REQUEST_LOCAL_COMPLETED;
         if (!(req->flags & LCP_REQUEST_USER_PROVIDED_REPLY_BUF)) {
                 req->flags |= LCP_REQUEST_REMOTE_COMPLETED;
-        } 
+        }
 
         lcp_atomic_complete(&req->state.comp);
 
         return rc;
 }
 
-int lcp_atomic_reply(lcp_manager_h mngr, lcp_task_h task, 
+int lcp_atomic_reply(lcp_manager_h mngr, lcp_task_h task,
                      lcp_atomic_reply_t *ato_reply)
 {
         int rc;
 	ssize_t payload_size;
         lcp_ep_h ep;
 	lcp_request_t *reply_req;
-	
+
         /* Get endpoint */
         rc = lcp_ep_get_or_create(mngr, ato_reply->dest_uid, &ep, 0);
         if (rc != MPC_LOWCOMM_SUCCESS) {
@@ -228,21 +228,21 @@ int lcp_atomic_reply(lcp_manager_h mngr, lcp_task_h task,
         reply_req->send.reply_ato.msg_id = ato_reply->msg_id;
         reply_req->send.ep = ep;
 
-        mpc_common_nodebug("LCP ATO: send atomic reply. dest_tid=%d, result=%llu", 
+        mpc_common_nodebug("LCP ATO: send atomic reply. dest_tid=%d, result=%llu",
                          ato_reply->dest_uid, ato_reply->result);
 
-        payload_size = lcp_send_eager_bcopy(reply_req, lcp_atomic_reply_pack, 
+        payload_size = lcp_send_eager_bcopy(reply_req, lcp_atomic_reply_pack,
                                             LCP_AM_ID_ATOMIC_REPLY);
         if (payload_size < 0) {
                 rc = MPC_LOWCOMM_ERROR;
                 goto err;
         }
 
-        reply_req->flags |= LCP_REQUEST_LOCAL_COMPLETED | 
+        reply_req->flags |= LCP_REQUEST_LOCAL_COMPLETED |
                 LCP_REQUEST_REMOTE_COMPLETED;
 
         /* Complete ack request */
-        lcp_request_complete(reply_req, send.send_cb, reply_req->status, 
+        lcp_request_complete(reply_req, send.send_cb, reply_req->status,
                              reply_req->send.length);
 
 err:
@@ -256,7 +256,7 @@ lcp_atomic_proto_t ato_sw_proto = {
         .send_post  = lcp_atomic_sw,
 };
 
-static int lcp_atomic_handler(void *arg, void *data, 
+static int lcp_atomic_handler(void *arg, void *data,
                               size_t length,
                               unsigned flags)
 {
@@ -277,11 +277,11 @@ static int lcp_atomic_handler(void *arg, void *data,
         case LCP_ATOMIC_OP_ADD:
                 switch(hdr->length) {
                 case sizeof(uint32_t):
-                        reply.result = lcp_ato_sw_add32((uint32_t *)hdr->remote_addr, 
+                        reply.result = lcp_ato_sw_add32((uint32_t *)hdr->remote_addr,
                                                         (uint32_t *)&hdr->value);
                         break;
                 case sizeof(uint64_t):
-                        reply.result = lcp_ato_sw_add64((uint64_t *)hdr->remote_addr, 
+                        reply.result = lcp_ato_sw_add64((uint64_t *)hdr->remote_addr,
                                                         &hdr->value);
                         break;
                 default:
@@ -292,11 +292,11 @@ static int lcp_atomic_handler(void *arg, void *data,
         case LCP_ATOMIC_OP_AND:
                 switch(hdr->length) {
                 case sizeof(uint32_t):
-                        reply.result = lcp_ato_sw_and32((uint32_t *)hdr->remote_addr, 
+                        reply.result = lcp_ato_sw_and32((uint32_t *)hdr->remote_addr,
                                                         (uint32_t *)&hdr->value);
                         break;
                 case sizeof(uint64_t):
-                        reply.result = lcp_ato_sw_and64((uint64_t *)hdr->remote_addr, 
+                        reply.result = lcp_ato_sw_and64((uint64_t *)hdr->remote_addr,
                                                         &hdr->value);
                         break;
                 default:
@@ -308,11 +308,11 @@ static int lcp_atomic_handler(void *arg, void *data,
         case LCP_ATOMIC_OP_OR:
                 switch(hdr->length) {
                 case sizeof(uint32_t):
-                        reply.result = lcp_ato_sw_or32((uint32_t *)hdr->remote_addr, 
+                        reply.result = lcp_ato_sw_or32((uint32_t *)hdr->remote_addr,
                                                        (uint32_t *)&hdr->value);
                         break;
                 case sizeof(uint64_t):
-                        reply.result = lcp_ato_sw_or64((uint64_t *)hdr->remote_addr, 
+                        reply.result = lcp_ato_sw_or64((uint64_t *)hdr->remote_addr,
                                                        &hdr->value);
                         break;
                 default:
@@ -323,11 +323,11 @@ static int lcp_atomic_handler(void *arg, void *data,
         case LCP_ATOMIC_OP_XOR:
                 switch(hdr->length) {
                 case sizeof(uint32_t):
-                        reply.result = lcp_ato_sw_xor32((uint32_t *)hdr->remote_addr, 
+                        reply.result = lcp_ato_sw_xor32((uint32_t *)hdr->remote_addr,
                                                         (uint32_t *)&hdr->value);
                         break;
                 case sizeof(uint64_t):
-                        reply.result = lcp_ato_sw_xor64((uint64_t *)hdr->remote_addr, 
+                        reply.result = lcp_ato_sw_xor64((uint64_t *)hdr->remote_addr,
                                                         &hdr->value);
                         break;
                 default:
@@ -338,11 +338,11 @@ static int lcp_atomic_handler(void *arg, void *data,
         case LCP_ATOMIC_OP_SWAP:
                 switch(hdr->length) {
                 case sizeof(uint32_t):
-                        reply.result = lcp_ato_sw_swap32((uint32_t *)hdr->remote_addr, 
+                        reply.result = lcp_ato_sw_swap32((uint32_t *)hdr->remote_addr,
                                                          (uint32_t *)&hdr->value);
                         break;
                 case sizeof(uint64_t):
-                        reply.result = lcp_ato_sw_swap64((uint64_t *)hdr->remote_addr, 
+                        reply.result = lcp_ato_sw_swap64((uint64_t *)hdr->remote_addr,
                                                          &hdr->value);
                         break;
                 default:
@@ -353,13 +353,13 @@ static int lcp_atomic_handler(void *arg, void *data,
         case LCP_ATOMIC_OP_CSWAP:
                 switch(hdr->length) {
                 case sizeof(uint32_t):
-                        reply.result = lcp_ato_sw_cswap32((uint32_t *)hdr->remote_addr, 
-                                                          (uint32_t)hdr->compare, 
+                        reply.result = lcp_ato_sw_cswap32((uint32_t *)hdr->remote_addr,
+                                                          (uint32_t)hdr->compare,
                                                           (uint32_t *)&hdr->value);
                         break;
                 case sizeof(uint64_t):
-                        reply.result = lcp_ato_sw_cswap64((uint64_t *)hdr->remote_addr, 
-                                                          (uint64_t)hdr->compare, 
+                        reply.result = lcp_ato_sw_cswap64((uint64_t *)hdr->remote_addr,
+                                                          (uint64_t)hdr->compare,
                                                           (uint64_t *)&hdr->value);
                         break;
                 default:
@@ -392,7 +392,7 @@ err:
         return rc;
 }
 
-static int lcp_atomic_reply_handler(void *arg, void *data, 
+static int lcp_atomic_reply_handler(void *arg, void *data,
                                     size_t length,
                                     unsigned flags)
 {

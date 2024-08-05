@@ -76,7 +76,7 @@ struct lcp_mem {
         bmap_t bm;
         unsigned flags;
         lcp_mem_alloc_method_t method;
-        void * pointer_to_mmu_ctx; /* When handled by the MMU this 
+        void * pointer_to_mmu_ctx; /* When handled by the MMU this
                                       points to the management slot */
         lcr_memp_t mems[0]; /* table of memp pointers */
 };
@@ -84,8 +84,8 @@ struct lcp_mem {
 int lcp_mem_create(lcp_manager_h mngr, lcp_mem_h *mem_p);
 void lcp_mem_delete(lcp_mem_h mem);
 size_t lcp_mem_rkey_pack(lcp_manager_h mngr, lcp_mem_h mem, void *dest);
-int lcp_mem_post_from_map(lcp_manager_h mngr, 
-                          lcp_mem_h mem, 
+int lcp_mem_post_from_map(lcp_manager_h mngr,
+                          lcp_mem_h mem,
                           bmap_t bm,
                           void *buffer,
                           size_t length,
@@ -109,7 +109,7 @@ int lcp_mem_unpost(lcp_manager_h mngr, lcp_mem_h mem, lcr_tag_t tag);
 int lcp_pinning_mmu_init(struct lcp_pinning_mmu **mmu_p, unsigned flags);
 int lcp_pinning_mmu_release(struct lcp_pinning_mmu *mmu);
 
-lcp_mem_h lcp_pinning_mmu_pin(lcp_manager_h mngr, const void *addr, 
+lcp_mem_h lcp_pinning_mmu_pin(lcp_manager_h mngr, const void *addr,
                               size_t size, bmap_t bitmap, unsigned flags);
 int lcp_pinning_mmu_unpin(lcp_manager_h mngr, lcp_mem_h mem);
 

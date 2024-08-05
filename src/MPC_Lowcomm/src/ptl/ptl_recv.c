@@ -38,7 +38,7 @@
 #include <mpc_common_debug.h>
 #include <mpc_lowcomm_types.h>
 
-int lcr_ptl_recv_block_init(lcr_ptl_rail_info_t *srail, 
+int lcr_ptl_recv_block_init(lcr_ptl_rail_info_t *srail,
                             mpc_mempool_t *mp,
                             ptl_pt_index_t pti,
                             lcr_ptl_recv_block_t **block_p)
@@ -72,8 +72,8 @@ err:
         return rc;
 }
 
-int lcr_ptl_recv_block_activate(lcr_ptl_recv_block_t *block, 
-                                ptl_pt_index_t pte, 
+int lcr_ptl_recv_block_activate(lcr_ptl_recv_block_t *block,
+                                ptl_pt_index_t pte,
                                 ptl_list_t list)
 {
         ptl_me_t me;
@@ -94,9 +94,9 @@ int lcr_ptl_recv_block_activate(lcr_ptl_recv_block_t *block,
                         .phys.pid = PTL_PID_ANY,
                 },
                 .min_free    = block->rail->config.eager_limit,
-                .options     = PTL_ME_OP_PUT       | 
-                        PTL_ME_MANAGE_LOCAL        | 
-                        PTL_ME_EVENT_LINK_DISABLE  | 
+                .options     = PTL_ME_OP_PUT       |
+                        PTL_ME_MANAGE_LOCAL        |
+                        PTL_ME_EVENT_LINK_DISABLE  |
                         PTL_ME_MAY_ALIGN,
                 .uid         = PTL_UID_ANY,
                 .start       = block->start,
@@ -114,10 +114,10 @@ int lcr_ptl_recv_block_activate(lcr_ptl_recv_block_t *block,
         return MPC_LOWCOMM_SUCCESS;
 }
 
-int lcr_ptl_recv_block_enable(lcr_ptl_rail_info_t *srail, 
+int lcr_ptl_recv_block_enable(lcr_ptl_rail_info_t *srail,
                               mpc_mempool_t *block_mp,
                               mpc_list_elem_t *block_head,
-                              ptl_pt_index_t pte, 
+                              ptl_pt_index_t pte,
                               ptl_list_t list)
 {
         int rc = MPC_LOWCOMM_SUCCESS, i;
@@ -129,10 +129,10 @@ int lcr_ptl_recv_block_enable(lcr_ptl_rail_info_t *srail,
                         mpc_common_debug_error("LCR PTL: could not allocate block");
                         return rc;
                 }
-                
+
                 /* Append block to list. */
                 mpc_list_push_head(block_head, &block->elem);
-               
+
                 /* Create the ME on the card. */
                 rc = lcr_ptl_recv_block_activate(block, pte, list);
                 if (rc != MPC_LOWCOMM_SUCCESS) {

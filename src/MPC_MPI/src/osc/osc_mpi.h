@@ -20,8 +20,8 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#ifndef MPI_WIN_H 
-#define MPI_WIN_H 
+#ifndef MPI_WIN_H
+#define MPI_WIN_H
 
 #include <mpc_mpi.h>
 #include <mpc_mpi_comm_lib.h>
@@ -41,7 +41,7 @@ typedef struct MPI_ABI_Win {
 
         char win_name[MPI_MAX_OBJECT_NAME];
 
-        int flavor; 
+        int flavor;
         int model;
         size_t size;
 
@@ -51,19 +51,19 @@ typedef struct MPI_ABI_Win {
         mpc_osc_module_t win_module;
 } mpc_win_t;
 
-void mpc_win_get_attr(mpc_win_t *win, int win_keyval, void *attr_val, 
+void mpc_win_get_attr(mpc_win_t *win, int win_keyval, void *attr_val,
                       int *flag);
 
-int mpc_win_create(void **base, size_t size, 
+int mpc_win_create(void **base, size_t size,
                    int disp_unit, MPI_Info info,
-                   mpc_lowcomm_communicator_t comm, 
+                   mpc_lowcomm_communicator_t comm,
                    mpc_win_t **win_p);
-int mpc_win_allocate(void **base, size_t size, 
+int mpc_win_allocate(void **base, size_t size,
                      int disp_unit, MPI_Info info,
-                     mpc_lowcomm_communicator_t comm, 
+                     mpc_lowcomm_communicator_t comm,
                      mpc_win_t **win_p);
 int mpc_win_create_dynamic(MPI_Info info,
-                           mpc_lowcomm_communicator_t comm, 
+                           mpc_lowcomm_communicator_t comm,
                            mpc_win_t **win_p);
 
 int mpc_win_free(mpc_win_t *win);
@@ -77,11 +77,11 @@ int mpc_osc_put(const void *origin_addr, int origin_count,
                 _mpc_lowcomm_general_datatype_t *origin_dt,
                 int target, ptrdiff_t target_disp, int target_count,
                 _mpc_lowcomm_general_datatype_t *target_dt, mpc_win_t *win);
-int mpc_osc_get(void *origin_addr, int origin_count, 
+int mpc_osc_get(void *origin_addr, int origin_count,
                 _mpc_lowcomm_general_datatype_t *origin_dt,
                 int target, ptrdiff_t target_disp, int target_count,
                 _mpc_lowcomm_general_datatype_t *target_dt, mpc_win_t *win);
-int mpc_osc_accumulate(const void *origin_addr, int origin_count, 
+int mpc_osc_accumulate(const void *origin_addr, int origin_count,
                        _mpc_lowcomm_general_datatype_t *origin_dt,
                        int target, ptrdiff_t target_disp, int target_count,
                        _mpc_lowcomm_general_datatype_t *target_dt,
@@ -89,36 +89,36 @@ int mpc_osc_accumulate(const void *origin_addr, int origin_count,
 int mpc_osc_compare_and_swap(const void *origin_addr, const void *compare_addr,
                              void *result_addr, _mpc_lowcomm_general_datatype_t *dt,
                              int target, ptrdiff_t target_disp,
-                             mpc_win_t *win);        
+                             mpc_win_t *win);
 int mpc_osc_fetch_and_op(const void *origin_addr, void *result_addr,
                          _mpc_lowcomm_general_datatype_t *dt, int target,
                          ptrdiff_t target_disp, MPI_Op op,
-                         mpc_win_t *win);        
-int mpc_osc_get_accumulate(const void *origin_addr, int origin_count, 
+                         mpc_win_t *win);
+int mpc_osc_get_accumulate(const void *origin_addr, int origin_count,
                            _mpc_lowcomm_general_datatype_t *origin_datatype,
-                           void *result_addr, int result_count, 
+                           void *result_addr, int result_count,
                            _mpc_lowcomm_general_datatype_t *result_datatype,
                            int target_rank, ptrdiff_t target_disp,
                            int target_count, _mpc_lowcomm_general_datatype_t *target_datatype,
                            MPI_Op op, mpc_win_t *win);
-int mpc_osc_rput(const void *origin_addr, int origin_count, 
+int mpc_osc_rput(const void *origin_addr, int origin_count,
                  _mpc_lowcomm_general_datatype_t *origin_dt,
                  int target, ptrdiff_t target_disp, int target_count,
                  _mpc_lowcomm_general_datatype_t *target_dt,
                  mpc_win_t *win, MPI_Request *req);
-int mpc_osc_rget(void *origin_addr, int origin_count, 
+int mpc_osc_rget(void *origin_addr, int origin_count,
                  _mpc_lowcomm_general_datatype_t *origin_dt,
                  int target, ptrdiff_t target_disp, int target_count,
                  _mpc_lowcomm_general_datatype_t *target_dt, mpc_win_t *win,
                  MPI_Request *req);
-int mpc_osc_raccumulate(const void *origin_addr, int origin_count, 
+int mpc_osc_raccumulate(const void *origin_addr, int origin_count,
                         _mpc_lowcomm_general_datatype_t *origin_dt,
                         int target, ptrdiff_t target_disp, int target_count,
                         _mpc_lowcomm_general_datatype_t *target_dt, MPI_Op op,
                         mpc_win_t *win, MPI_Request *request);
-int mpc_osc_rget_accumulate(const void *origin_addr, int origin_count, 
+int mpc_osc_rget_accumulate(const void *origin_addr, int origin_count,
                                 _mpc_lowcomm_general_datatype_t *origin_datatype,
-                                void *result_addr, int result_count, 
+                                void *result_addr, int result_count,
                                 _mpc_lowcomm_general_datatype_t *result_datatype,
                                 int target_rank, ptrdiff_t target_disp, int target_count,
                                 _mpc_lowcomm_general_datatype_t *target_datatype,

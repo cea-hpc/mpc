@@ -341,7 +341,7 @@ static int DLOOP_Leaf_blkidx_mpi_flatten(DLOOP_Offset *blocks_p,
 	     * use DLOOP_VOID_PTR_CAST_TO_OFFSET to cast the sum to a pointer.
 	     * Just let it sign extend.
 	     */
-            paramp->disps[last_idx+1]   = DLOOP_PTR_DISP_CAST_TO_OFFSET bufp + 
+            paramp->disps[last_idx+1]   = DLOOP_PTR_DISP_CAST_TO_OFFSET bufp +
 		rel_off + offsetarray[i];
 	    paramp->blklens[last_idx+1] = size;
 	    paramp->index++;

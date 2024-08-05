@@ -83,28 +83,28 @@ static ssize_t lcp_rma_unpack(void* req, const void *dest, size_t arg) {
  */
 static void lcp_rma_request_complete(lcr_completion_t *comp)
 {
-        lcp_request_t *req = mpc_container_of(comp, lcp_request_t, 
+        lcp_request_t *req = mpc_container_of(comp, lcp_request_t,
                                               state.comp);
 
         req->state.remaining -= comp->sent;
         if (req->state.remaining == 0) {
                 lcp_mem_deprovision(req->mngr, req->state.lmem);
 
-                req->flags |= LCP_REQUEST_REMOTE_COMPLETED | 
+                req->flags |= LCP_REQUEST_REMOTE_COMPLETED |
                         LCP_REQUEST_LOCAL_COMPLETED;
                 req->status = MPC_LOWCOMM_SUCCESS;
 
                 lcp_request_complete(req, send.send_cb, req->status, 0);
-        } 
+        }
 }
 
 static void lcp_flush_request_complete(lcr_completion_t *comp)
 {
-        lcp_request_t *req = mpc_container_of(comp, lcp_request_t, 
+        lcp_request_t *req = mpc_container_of(comp, lcp_request_t,
                                               state.comp);
 
         if (--req->state.comp.count == 0) {
-                req->flags |= LCP_REQUEST_REMOTE_COMPLETED | 
+                req->flags |= LCP_REQUEST_REMOTE_COMPLETED |
                         LCP_REQUEST_LOCAL_COMPLETED;
                 req->status = MPC_LOWCOMM_SUCCESS;
                 lcp_request_complete(req, send.send_cb, req->status, 0);
@@ -122,22 +122,21 @@ __UNUSED__ static int lcp_rma_progress_bcopy(lcp_request_t *req)
         int rc = MPC_LOWCOMM_SUCCESS;
         int payload_size;
         lcp_ep_h ep = req->send.ep;
-        lcp_chnl_idx_t cc = ep->rma_chnl; 
+        lcp_chnl_idx_t cc = ep->rma_chnl;
 
-        not_implemented();
 	mpc_common_debug_info("LCP: send put bcopy remote addr=%p, dest=%d",
 			      req->send.rma.remote_addr, ep->uid);
         if (req->send.rma.is_get) {
                 //FIXME: not implemented
-                payload_size = lcp_send_do_get_bcopy(ep->lct_eps[cc], 
-                                                     lcp_rma_unpack, req, 
+                payload_size = lcp_send_do_get_bcopy(ep->lct_eps[cc],
+                                                     lcp_rma_unpack, req,
                                                      req->send.rma.remote_addr,
                                                      &req->state.lmem->mems[cc],
                                                      &req->send.rma.rkey->mems[cc]);
 
         } else {
-                payload_size = lcp_send_do_put_bcopy(ep->lct_eps[cc], 
-                                                     lcp_rma_pack, req, 
+                payload_size = lcp_send_do_put_bcopy(ep->lct_eps[cc],
+                                                     lcp_rma_pack, req,
                                                      req->send.rma.remote_addr,
                                                      &req->state.lmem->mems[cc],
                                                      &req->send.rma.rkey->mems[cc]);
@@ -233,7 +232,7 @@ static int lcp_rma_progress_zcopy(lcp_request_t *req)
  * @param req request
  * @return int MPC_LOWCOMM_SUCCESS in case of success
  */
-static inline int lcp_rma_start(lcp_ep_h ep, lcp_request_t *req) 
+static inline int lcp_rma_start(lcp_ep_h ep, lcp_request_t *req)
 {
         int rc = MPC_LOWCOMM_SUCCESS;
 
@@ -249,23 +248,23 @@ static inline int lcp_rma_start(lcp_ep_h ep, lcp_request_t *req)
                         goto err;
                 }
 
-                rc = lcp_mem_reg_from_map(req->mngr, req->state.lmem, 
-                                          ep->rma_bmap, req->send.buffer, 
-                                          req->send.length, 
+                rc = lcp_mem_reg_from_map(req->mngr, req->state.lmem,
+                                          ep->rma_bmap, req->send.buffer,
+                                          req->send.length,
                                           LCR_IFACE_REGISTER_MEM_DYN,
                                           &req->state.lmem->bm);
 
                 assert(mpc_bitmap_equal(ep->rma_bmap, req->state.lmem->bm));
         } else {
                 //TODO: check memory and rma call validity.
-        } 
+        }
 err:
         return rc;
 }
 
-lcp_status_ptr_t lcp_put_nb(lcp_ep_h ep, lcp_task_h task, const void *buffer, size_t length,
+lcp_status_ptr_t lcp_put_nb(lcp_ep_h ep, lcp_task_h task, void *buffer, size_t length,
                             uint64_t remote_addr, lcp_mem_h rkey,
-                            const lcp_request_param_t *param) 
+                            const lcp_request_param_t *param)
 {
         int rc = MPC_LOWCOMM_SUCCESS;
         lcp_status_ptr_t ret;
@@ -277,8 +276,8 @@ lcp_status_ptr_t lcp_put_nb(lcp_ep_h ep, lcp_task_h task, const void *buffer, si
                 rc = MPC_LOWCOMM_ERROR;
                 return LCP_STATUS_PTR(rc);
         }
-        LCP_REQUEST_INIT_RMA_PUT(req, ep->mngr, task, length, param->request, ep, buffer, 
-                                  0 /* no ordering for rma */, 0, param->datatype, 
+        LCP_REQUEST_INIT_RMA_PUT(req, ep->mngr, task, length, param->request, ep, buffer,
+                                  0 /* no ordering for rma */, 0, param->datatype,
                                   rkey, remote_addr);
 
         if (param->field_mask & LCP_REQUEST_SEND_CALLBACK) {
@@ -295,9 +294,9 @@ lcp_status_ptr_t lcp_put_nb(lcp_ep_h ep, lcp_task_h task, const void *buffer, si
         if (rc != MPC_LOWCOMM_SUCCESS) {
                 return LCP_STATUS_PTR(rc);
         }
-        
+
         mpc_common_debug("LCP RMA: perform put. req=%p, task=%p, "
-                         "buffer=%p, length=%d, remote addr=%p.", 
+                         "buffer=%p, length=%d, remote addr=%p.",
                          req, task, buffer, length, remote_addr);
 
         ret = lcp_request_send(req);
@@ -305,9 +304,9 @@ lcp_status_ptr_t lcp_put_nb(lcp_ep_h ep, lcp_task_h task, const void *buffer, si
         return ret;
 }
 
-lcp_status_ptr_t lcp_get_nb(lcp_ep_h ep, lcp_task_h task, void *buffer, 
+lcp_status_ptr_t lcp_get_nb(lcp_ep_h ep, lcp_task_h task, void *buffer,
                             size_t length, uint64_t remote_addr, lcp_mem_h rkey,
-                            const lcp_request_param_t *param) 
+                            const lcp_request_param_t *param)
 {
         int rc = MPC_LOWCOMM_SUCCESS;
         lcp_status_ptr_t ret;
@@ -318,9 +317,9 @@ lcp_status_ptr_t lcp_get_nb(lcp_ep_h ep, lcp_task_h task, void *buffer,
                 mpc_common_debug_error("LCP: could not allocate get request.");
                 return LCP_STATUS_PTR(MPC_LOWCOMM_ERROR);
         }
-        LCP_REQUEST_INIT_RMA_GET(req, ep->mngr, task, length, param->request, 
-                                 ep, (void *)buffer, 
-                                 0 /* no ordering for rma */, 0, param->datatype, 
+        LCP_REQUEST_INIT_RMA_GET(req, ep->mngr, task, length, param->request,
+                                 ep, (void *)buffer,
+                                 0 /* no ordering for rma */, 0, param->datatype,
                                  rkey, remote_addr);
 
         if (param->field_mask & LCP_REQUEST_SEND_CALLBACK) {
@@ -339,7 +338,7 @@ lcp_status_ptr_t lcp_get_nb(lcp_ep_h ep, lcp_task_h task, void *buffer,
         }
 
         mpc_common_debug("LCP RMA: perform get. req=%p, task=%p, "
-                         "buffer=%p, length=%d, remote addr=%p.", 
+                         "buffer=%p, length=%d, remote addr=%p.",
                          req, task, buffer, length, remote_addr);
 
         ret = lcp_request_send(req);
@@ -354,7 +353,7 @@ static int lcp_flush_manager_nb(lcp_request_t *req)
         sctk_rail_info_t *iface;
         lcr_rail_attr_t attr;
 
-        
+
         //FIXME: code a better way to get the number of interface that support
         //       RMA.
         for (i = 0; i < req->mngr->num_ifaces; i++) {
@@ -365,7 +364,7 @@ static int lcp_flush_manager_nb(lcp_request_t *req)
                         req->state.comp.count++;
                 }
         }
-        
+
         for (i = 0; i < req->mngr->num_ifaces; i++) {
                 iface = req->mngr->ifaces[i];
 
@@ -400,7 +399,7 @@ static int lcp_flush_ep_nb(lcp_request_t *req)
                 }
 
                 iface = ep->lct_eps[i]->rail;
-                rc = lcp_do_flush_ep(iface, ep->lct_eps[i], 
+                rc = lcp_do_flush_ep(iface, ep->lct_eps[i],
                                      &req->state.comp, 0);
                 if (rc != MPC_LOWCOMM_SUCCESS) {
                         goto err;
@@ -423,7 +422,7 @@ static int lcp_flush_mem_nb(lcp_request_t *req)
                         continue;
                 }
 
-                rc = lcp_do_flush_mem(req->mngr->ifaces[i], &mem->mems[i], 
+                rc = lcp_do_flush_mem(req->mngr->ifaces[i], &mem->mems[i],
                                   &req->state.comp, 0);
                 if (rc != MPC_LOWCOMM_SUCCESS) {
                         goto err;
@@ -452,8 +451,8 @@ static int lcp_flush_mem_ep_nb(lcp_request_t *req)
 
                 iface = ep->lct_eps[i]->rail;
 
-                rc = lcp_do_flush_mem_ep(iface, ep->lct_eps[i], 
-                                         &mem->mems[i], &req->state.comp, 
+                rc = lcp_do_flush_mem_ep(iface, ep->lct_eps[i],
+                                         &mem->mems[i], &req->state.comp,
                                          0);
                 if (rc != MPC_LOWCOMM_SUCCESS) {
                         goto err;

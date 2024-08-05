@@ -5,6 +5,7 @@
  *      See COPYRIGHT in top-level directory.
  */
 
+/* NOLINTBEGIN */
 #include "mpc_mpi.h"
 #include "mpitypes.h"
 #include <stdlib.h>
@@ -347,18 +348,18 @@ char *MPIDU_Datatype_builtin_to_string(MPI_Datatype type)
     if (type == MPI_LONG_LONG_INT)     return t_longlongint;
     if (type == MPI_LONG_LONG)         return t_longlong;
     if (type == MPI_UNSIGNED_LONG_LONG) return t_ulonglong;
-	
+
     if (type == MPI_PACKED)            return t_packed;
     if (type == MPI_LB)                return t_lb;
     if (type == MPI_UB)                return t_ub;
-	
+
     if (type == MPI_FLOAT_INT)         return t_floatint;
     if (type == MPI_DOUBLE_INT)        return t_doubleint;
     if (type == MPI_LONG_INT)          return t_longint;
     if (type == MPI_SHORT_INT)         return t_shortint;
     if (type == MPI_2INT)              return t_2int;
     if (type == MPI_LONG_DOUBLE_INT)   return t_longdoubleint;
-	
+
     if (type == MPI_COMPLEX)           return t_complex;
     if (type == MPI_DOUBLE_COMPLEX)    return t_doublecomplex;
     if (type == MPI_LOGICAL)           return t_logical;
@@ -639,3 +640,5 @@ void MPIDI_Datatype_contents_printf(MPI_Datatype type,
     }
 }
 /* --END ERROR HANDLING-- */
+
+/* NOLINTEND */

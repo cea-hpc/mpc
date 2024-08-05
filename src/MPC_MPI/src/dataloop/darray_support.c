@@ -133,13 +133,13 @@ int PREPEND_PREFIX(Type_convert_darray)(int size,
 
     disps[2] = orig_extent;
     for (i=0; i<ndims; i++) disps[2] *= (MPI_Aint)(array_of_gsizes[i]);
-	
+
     disps[0] = 0;
     blklens[0] = blklens[1] = blklens[2] = 1;
     types[0] = MPI_LB;
     types[1] = type_new;
     types[2] = MPI_UB;
-    
+
     NMPI_Type_struct(3, blklens, disps, types, newtype);
 
     NMPI_Type_free(&type_new);

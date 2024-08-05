@@ -39,8 +39,8 @@
 
 /* NOLINTBEGIN(clang-diagnostic-unused-function): False positives */
 
-static inline ssize_t lcp_send_do_am_bcopy(_mpc_lowcomm_endpoint_t *lcr_ep, 
-                                       uint8_t am_id, 
+static inline ssize_t lcp_send_do_am_bcopy(_mpc_lowcomm_endpoint_t *lcr_ep,
+                                       uint8_t am_id,
                                        lcr_pack_callback_t pack,
                                        void *arg)
 {
@@ -110,7 +110,7 @@ static inline ssize_t lcp_send_do_put_bcopy(_mpc_lowcomm_endpoint_t *lcr_ep,
                                         lcr_memp_t *local_key,
                                         lcr_memp_t *remote_key)
 {
-        return lcr_ep->rail->put_bcopy(lcr_ep, pack, arg, 
+        return lcr_ep->rail->put_bcopy(lcr_ep, pack, arg,
                                        remote_addr, local_key, remote_key);
 }
 
@@ -121,7 +121,7 @@ static inline ssize_t lcp_send_do_get_bcopy(_mpc_lowcomm_endpoint_t *lcr_ep,
                                         lcr_memp_t *local_key,
                                         lcr_memp_t *remote_key)
 {
-        return lcr_ep->rail->get_bcopy(lcr_ep, unpack, arg, 
+        return lcr_ep->rail->get_bcopy(lcr_ep, unpack, arg,
                                        remote_addr, local_key, remote_key);
 }
 
@@ -144,7 +144,7 @@ static inline int lcp_send_do_get_zcopy(_mpc_lowcomm_endpoint_t *lcr_ep,
                                         lcr_memp_t *local_key,
                                         lcr_memp_t *remote_key,
                                         size_t size,
-                                        lcr_completion_t *comp) 
+                                        lcr_completion_t *comp)
 {
         return lcr_ep->rail->get_zcopy(lcr_ep, local_addr,
                                        remote_addr, local_key,
@@ -159,7 +159,7 @@ static inline int lcp_atomic_do_post(_mpc_lowcomm_endpoint_t *lcr_ep,
                                      size_t size,
                                      lcr_completion_t *comp)
 {
-        return lcr_ep->rail->atomic_post(lcr_ep, value, 
+        return lcr_ep->rail->atomic_post(lcr_ep, value,
                                          remote_offset, op_type,
                                          remote_key,
                                          size, comp);
@@ -174,7 +174,7 @@ static inline int lcp_atomic_do_fetch(_mpc_lowcomm_endpoint_t *lcr_ep,
                                       size_t size,
                                       lcr_completion_t *comp)
 {
-        return lcr_ep->rail->atomic_fetch(lcr_ep, (uint64_t)result, 
+        return lcr_ep->rail->atomic_fetch(lcr_ep, (uint64_t)result,
                                           value,
                                           remote_offset, op_type,
                                           remote_key,
@@ -189,7 +189,7 @@ static inline int lcp_atomic_do_cswap(_mpc_lowcomm_endpoint_t *lcr_ep,
                                       lcr_atomic_op_t op_type,
                                       lcr_memp_t *remote_key,
                                       size_t size,
-                                      lcr_completion_t *comp) 
+                                      lcr_completion_t *comp)
 {
         return lcr_ep->rail->atomic_cswap(lcr_ep, (uint64_t)result,
                                           value,
@@ -209,7 +209,7 @@ static inline int lcp_do_flush_mem_ep(sctk_rail_info_t *rail,
 
 static inline int lcp_do_flush_ep(sctk_rail_info_t *rail,
                                   _mpc_lowcomm_endpoint_t *ep,
-                                  lcr_completion_t *comp, 
+                                  lcr_completion_t *comp,
                                   unsigned flags)
 {
         return rail->flush_ep(rail, ep, comp, flags);
@@ -233,7 +233,7 @@ static inline int lcp_do_flush_iface(sctk_rail_info_t *rail,
 
 static inline int lcp_iface_do_register_mem(sctk_rail_info_t *rail,
                                             lcr_memp_t *mem,
-                                            const void *buffer, size_t length, 
+                                            const void *buffer, size_t length,
                                             unsigned flags)
 {
         return rail->iface_register_mem(rail, mem, buffer, length, flags);

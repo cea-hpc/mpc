@@ -89,12 +89,12 @@ err:
 
 int lcr_tbsm_send_am_zcopy(_mpc_lowcomm_endpoint_t *ep,
                            uint8_t id,
-                           const void *header,
+                           void *header,
                            unsigned header_length,
                            const struct iovec *iov,
                            size_t iovcnt,
-                           unsigned flags, 
-                           lcr_completion_t *comp) 
+                           unsigned flags,
+                           lcr_completion_t *comp)
 {
         UNUSED(flags);
         UNUSED(comp);
@@ -146,9 +146,9 @@ int lcr_tbsm_send_am_zcopy(_mpc_lowcomm_endpoint_t *ep,
          * copied to destination buffer. Therefore, request is remotely
          * completed and completion can be called. Note that, sent length should
          * be the payload length only, see upper completion implementation. */
-        comp->sent = send_length; 
+        comp->sent = send_length;
         comp->comp_cb(comp);
-err: 
+err:
         return rc;
 }
 
@@ -158,7 +158,7 @@ int lcr_tbsm_send_put_zcopy(_mpc_lowcomm_endpoint_t *ep,
                             lcr_memp_t *local_key,
                             lcr_memp_t *remote_key,
                             size_t size,
-                            lcr_completion_t *comp) 
+                            lcr_completion_t *comp)
 {
         UNUSED(ep);
         UNUSED(local_key);
@@ -176,7 +176,7 @@ int lcr_tbsm_send_get_zcopy(_mpc_lowcomm_endpoint_t *ep,
                             lcr_memp_t *local_key,
                             lcr_memp_t *remote_key,
                             size_t size,
-                            lcr_completion_t *comp) 
+                            lcr_completion_t *comp)
 {
         UNUSED(ep);
         UNUSED(local_key);
@@ -192,12 +192,12 @@ int lcr_tbsm_flush_mem_ep(sctk_rail_info_t *rail,
                          _mpc_lowcomm_endpoint_t *ep,
                          struct sctk_rail_pin_ctx_list *list,
                          lcr_completion_t *comp,
-                         unsigned flags) 
+                         unsigned flags)
 {
-       UNUSED(rail); 
-       UNUSED(ep); 
-       UNUSED(list); 
-       UNUSED(flags); 
+       UNUSED(rail);
+       UNUSED(ep);
+       UNUSED(list);
+       UNUSED(flags);
 
        comp->comp_cb(comp);
        return MPC_LOWCOMM_SUCCESS;
@@ -206,11 +206,11 @@ int lcr_tbsm_flush_mem_ep(sctk_rail_info_t *rail,
 int lcr_tbsm_flush_ep(sctk_rail_info_t *rail,
                       _mpc_lowcomm_endpoint_t *ep,
                       lcr_completion_t *comp,
-                      unsigned flags) 
+                      unsigned flags)
 {
-       UNUSED(rail); 
-       UNUSED(ep); 
-       UNUSED(flags); 
+       UNUSED(rail);
+       UNUSED(ep);
+       UNUSED(flags);
 
        comp->comp_cb(comp);
        return MPC_LOWCOMM_SUCCESS;
@@ -219,11 +219,11 @@ int lcr_tbsm_flush_ep(sctk_rail_info_t *rail,
 int lcr_tbsm_flush_mem(sctk_rail_info_t *rail,
                        struct sctk_rail_pin_ctx_list *list,
                        lcr_completion_t *comp,
-                       unsigned flags) 
+                       unsigned flags)
 {
-       UNUSED(rail); 
-       UNUSED(list); 
-       UNUSED(flags); 
+       UNUSED(rail);
+       UNUSED(list);
+       UNUSED(flags);
 
        comp->comp_cb(comp);
        return MPC_LOWCOMM_SUCCESS;
@@ -231,17 +231,17 @@ int lcr_tbsm_flush_mem(sctk_rail_info_t *rail,
 
 int lcr_tbsm_flush_iface(sctk_rail_info_t *rail,
                          lcr_completion_t *comp,
-                         unsigned flags) 
+                         unsigned flags)
 {
-       UNUSED(rail); 
-       UNUSED(flags); 
+       UNUSED(rail);
+       UNUSED(flags);
 
        comp->comp_cb(comp);
        return MPC_LOWCOMM_SUCCESS;
 }
 
-int lcr_tbsm_mem_register(struct sctk_rail_info_s *rail, 
-                           lcr_memp_t *list, const void *addr, 
+int lcr_tbsm_mem_register(struct sctk_rail_info_s *rail,
+                           lcr_memp_t *list, const void *addr,
                            size_t size, unsigned flags)
 {
         UNUSED(rail);
@@ -252,7 +252,7 @@ int lcr_tbsm_mem_register(struct sctk_rail_info_s *rail,
         return MPC_LOWCOMM_SUCCESS;
 }
 
-int lcr_tbsm_mem_unregister(struct sctk_rail_info_s *rail, 
+int lcr_tbsm_mem_unregister(struct sctk_rail_info_s *rail,
                             lcr_memp_t *list)
 {
         UNUSED(rail);
@@ -266,7 +266,7 @@ int lcr_tbsm_pack_rkey(sctk_rail_info_t *rail,
         UNUSED(rail);
         UNUSED(memp);
         UNUSED(dest);
-        
+
         return 0;
 }
 
@@ -320,7 +320,7 @@ int lcr_tbsm_get_attr(sctk_rail_info_t *rail,
         //      data by the current rail (header added by the transport layer
         //      for example).
         //NOTE: eager messages are sent through zcopy API. Rendez-vous uses the
-        //      bcopy API to send control messages. 
+        //      bcopy API to send control messages.
         attr->iface.cap.am.max_iovecs = tbsm_iface->max_iov; //FIXME: arbitrary value...
         attr->iface.cap.am.max_bcopy  = 0;
         attr->iface.cap.am.max_zcopy  = tbsm_iface->eager_limit;
@@ -352,7 +352,7 @@ int lcr_tbsm_is_reachable(sctk_rail_info_t *rail, uint64_t uid) {
                 (mpc_lowcomm_peer_get_rank(uid) == mpc_lowcomm_peer_get_rank(my_uid));
 }
 
-void lcr_tbsm_iface_finalize(sctk_rail_info_t *iface) 
+void lcr_tbsm_iface_finalize(sctk_rail_info_t *iface)
 {
         _mpc_lowcomm_tbsm_rail_info_t *tbsm_iface = &(iface->network.tbsm);
 
@@ -442,7 +442,7 @@ err:
 }
 
 int lcr_tbsm_iface_open(int mngr_id, __UNUSED__ const char *device_name, int id,
-                        lcr_rail_config_t *rail_config, 
+                        lcr_rail_config_t *rail_config,
                         lcr_driver_config_t *driver_config,
                         sctk_rail_info_t **iface_p,
                         unsigned flags)

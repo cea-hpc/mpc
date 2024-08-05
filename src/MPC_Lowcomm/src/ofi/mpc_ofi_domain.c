@@ -1199,7 +1199,7 @@ int _mpc_ofi_domain_get(struct _mpc_ofi_domain_t *domain,
       {
          continue;
       }
-        
+
       if(ret < 0)
       {
          MPC_OFI_DUMP_ERROR(ret);

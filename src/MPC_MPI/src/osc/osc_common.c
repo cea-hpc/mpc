@@ -29,7 +29,7 @@
 
 int mpc_osc_perform_atomic_op(mpc_osc_module_t *mod, lcp_ep_h ep,
                               lcp_task_h task, uint64_t value, size_t size,
-                              uint64_t *result, uint64_t remote_addr, 
+                              uint64_t *result, uint64_t remote_addr,
                               lcp_mem_h rkey, lcp_atomic_op_t op)
 {
         int rc = MPC_LOWCOMM_SUCCESS;
@@ -67,7 +67,7 @@ err:
         return rc;
 }
 
-int mpc_osc_perform_flush_op(mpc_osc_module_t *mod, lcp_task_h task, 
+int mpc_osc_perform_flush_op(mpc_osc_module_t *mod, lcp_task_h task,
                              lcp_ep_h ep, lcp_mem_h mem)
 {
         int rc = MPC_LOWCOMM_SUCCESS;
@@ -88,7 +88,7 @@ int mpc_osc_perform_flush_op(mpc_osc_module_t *mod, lcp_task_h task,
                 .ep = ep,
                 .mem = mem,
         };
-        
+
         status = lcp_flush_nb(mod->mngr, task, &params);
         if (LCP_PTR_IS_ERR(status)) {
                 rc = MPC_LOWCOMM_ERROR;
@@ -124,7 +124,7 @@ void mpc_osc_schedule_progress(lcp_manager_h mngr, volatile int *data,
 }
 #endif
 
-int mpc_osc_start_exclusive(mpc_osc_module_t *module, lcp_task_h task, 
+int mpc_osc_start_exclusive(mpc_osc_module_t *module, lcp_task_h task,
                             uint64_t lock_offset, int target)
 {
         int rc = MPC_LOWCOMM_SUCCESS;
@@ -166,7 +166,7 @@ err:
         return rc;
 }
 
-int mpc_osc_end_exclusive(mpc_osc_module_t *module, lcp_task_h task, 
+int mpc_osc_end_exclusive(mpc_osc_module_t *module, lcp_task_h task,
                           uint64_t lock_offset, int target)
 {
         int rc = MPC_LOWCOMM_SUCCESS;

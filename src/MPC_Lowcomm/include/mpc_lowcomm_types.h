@@ -149,7 +149,7 @@ typedef struct
 
 //FIXME: flag hack to identify a request that has been allocated by the LCP
 //       layer, see is_allocated field of mpc_lowcomm_request_t
-#define MPC_LOWCOMM_REQUEST_ALLOC  0xDEADBEEF 
+#define MPC_LOWCOMM_REQUEST_ALLOC  0xDEADBEEF
 
 enum {
         MPC_LOWCOMM_REQUEST_PACKED   = 1,

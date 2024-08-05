@@ -436,7 +436,7 @@ static void DLOOP_Type_calc_footprint_struct(MPI_Datatype UNUSED_(type),
 	tfp->has_sticky_lb = tfp->has_sticky_ub = 0;
 	return;
     }
-    
+
     for (; i < ints[0]; i++) {
 	/* skip zero blocklength elements */
 	if (ints[i+1] == 0) continue;
@@ -469,7 +469,7 @@ static void DLOOP_Type_calc_footprint_struct(MPI_Datatype UNUSED_(type),
 	if (combiner == MPI_COMBINER_NAMED) {
 	    /* NOTE: This is a special case. If a user creates a struct
 	     *       with a named type at a non-zero displacement, the
-	     *       alignment may be different than expected due to 
+	     *       alignment may be different than expected due to
 	     *       special compiler rules for this case. Thus we must
 	     *       over-ride the value that we obtained from
 	     *       Type_calc_footprint() above.
@@ -478,7 +478,7 @@ static void DLOOP_Type_calc_footprint_struct(MPI_Datatype UNUSED_(type),
 	}
 
 	if (max_alignsz < alignsz) max_alignsz = alignsz;
-  
+
 	/* We save this LB if:
 	 * (1) this is our first iteration where we saw a nonzero blklen,
 	 * (2) we haven't found a sticky LB and this LB is lower than
@@ -589,7 +589,7 @@ static int DLOOP_Named_type_alignsize(MPI_Datatype type, MPI_Aint disp)
     else if (type == MPI_DOUBLE) {
 	if (alignsize > max_doublealign)
 	    alignsize = max_doublealign;
-	    
+
 	if (have_double_pos_align && disp != (MPI_Aint) 0)
 	    alignsize = 4; /* would be better to test */
     }
@@ -598,9 +598,9 @@ static int DLOOP_Named_type_alignsize(MPI_Datatype type, MPI_Aint disp)
 	    alignsize = max_longdoublealign;
     }
     else {
-	if (alignsize > max_intalign) 
+	if (alignsize > max_intalign)
 	    alignsize = max_intalign;
-	    
+
 	if (have_llint_pos_align &&
 	    type == MPI_LONG_LONG_INT &&
 	    disp != (MPI_Aint) 0)
@@ -841,7 +841,7 @@ static int DLOOP_Structalign_long_double_max()
  * double value is at front of type.
  *
  * Search for "Power alignment mode" for more details.
- * 
+ *
  * Return value is 1 or 0.
  */
 static int DLOOP_Structalign_double_position()
@@ -864,7 +864,7 @@ static int DLOOP_Structalign_double_position()
  * padding when long long int value is at front of type.
  *
  * Search for "Power alignment mode" for more details.
- * 
+ *
  * Return value is 1 or 0.
  */
 static int DLOOP_Structalign_llint_position()
@@ -891,12 +891,12 @@ static int DLOOP_Structalign_llint_position()
  * and that if there is no maximum alignment, or a type is smaller than
  * that value, then we align on the size of the value, with the exception
  * of the "position-based alignment" rules we test for separately.
- * 
+ *
  * It turns out that these assumptions have fallen short in at least one
  * case, on MacBook Pros, where doubles are aligned on 4-byte boundaries
  * even when long doubles are aligned on 16-byte boundaries. So this test
  * is here specifically to handle this case.
- * 
+ *
  * Return value is 4 or 0.
 */
 static int double_align_exception()

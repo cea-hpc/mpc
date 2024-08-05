@@ -347,7 +347,7 @@ extern "C"
 
 /* Other Null Handles */
 #define MPI_WIN_NULL                     ( (MPI_Win) - 1)
-#define MPI_MESSAGE_NULL                 ( (MPI_Message)MPI_REQUEST_NULL)
+#define MPI_MESSAGE_NULL                 ( (MPI_Message)-1)
 #define MPI_MESSAGE_NO_PROC              -2
 
 #ifdef ROMIO_COMP

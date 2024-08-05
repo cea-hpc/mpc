@@ -1,6 +1,8 @@
 #ifndef MPC_COMMON_COMPILER_DEF_H
 #define MPC_COMMON_COMPILER_DEF_H
 
+#include <stdint.h>
+
 //FIXME: redefine unicity
 #define MPC_PP_UNIQUE_ID __LINE__
 

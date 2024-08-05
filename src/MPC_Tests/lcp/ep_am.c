@@ -35,13 +35,13 @@ typedef struct gateway {
         request_t     request;
 } gateway_t;
 
-int recv_completion(__UNUSED__ size_t sent, void *user_data) {
+int recv_completion(__UNUSED__ int status, void *user_data, __UNUSED__ size_t length) {
         struct request *req = (struct request *)user_data;
 
         printf("req=%p\n", req);
         req->completion_flag = 1;
 
-		return 0;
+        return 0;
 }
 
 #define AM_ID 1
@@ -50,6 +50,7 @@ int am_handler(void *arg, const void *user_hdr, __UNUSED__ const size_t hdr_size
                lcp_am_recv_param_t *am_param)
 {
         int rc = 0;
+        lcp_status_ptr_t status;
         gateway_t *gateway = (gateway_t *)arg;
         hdr_request_t *hdr = (hdr_request_t *)user_hdr;
 
@@ -61,20 +62,21 @@ int am_handler(void *arg, const void *user_hdr, __UNUSED__ const size_t hdr_size
                 gateway->request.reply_ep = am_param->reply_ep;
 
                 lcp_request_param_t param = {
-                        .on_am_completion = recv_completion,
+                        .field_mask = LCP_REQUEST_SEND_CALLBACK,
+                        .send_cb = recv_completion,
                         .datatype = LCP_DATATYPE_CONTIGUOUS,
-                        .flags = LCP_REQUEST_AM_CALLBACK,
-                        .user_request = &gateway->request,
+                        .request = &gateway->request,
                 };
-                rc = lcp_am_recv_nb(gateway->task, data, gateway->request.buffer,
-                                    hdr->size, &param);
-                if (rc != LCP_SUCCESS) {
+                status = lcp_am_recv_nb(gateway->mngr, gateway->task, data,
+                                        gateway->request.buffer, hdr->size, &param);
+                if (LCP_STATUS_IS_ERR(status)) {
                         printf("ERROR: could not receive data");
+                        rc = -1;
                 }
         } else if (am_param->flags & LCP_AM_EAGER) {
                 memcpy(gateway->request.buffer, hdr + 1, hdr->size);
 
-                recv_completion(length, &gateway->request);
+                recv_completion(0, &gateway->request, length);
         }
 
         return rc;
@@ -130,8 +132,15 @@ int main(int argc, char** argv) {
 	}
 
         ctx_params = (lcp_context_param_t) {
-                .flags = LCP_CONTEXT_PROCESS_UID,
-                .process_uid = mpc_lowcomm_monitor_get_uid()
+                .field_mask = LCP_CONTEXT_PROCESS_UID |
+                        LCP_CONTEXT_NUM_TASKS         |
+                        LCP_CONTEXT_DATATYPE_OPS,
+                .process_uid = mpc_lowcomm_monitor_get_uid(),
+                .num_tasks = 2,
+                .dt_ops = {
+                        .unpack = NULL,
+                        .pack   = NULL,
+                },
         };
 	rc = lcp_context_create(&ctx, &ctx_params);
 	if (rc != 0) {
@@ -140,10 +149,8 @@ int main(int argc, char** argv) {
 	}
 
         mngr_params = (lcp_manager_param_t) {
-                .field_mask = LCP_MANAGER_ESTIMATED_EPS |
-                        LCP_MANAGER_NUM_TASKS,
+                .field_mask = LCP_MANAGER_ESTIMATED_EPS,
                 .estimated_eps = 2,
-                .num_tasks = 1,
         };
         rc = lcp_manager_create(ctx, &mngr, &mngr_params);
         if (rc != 0) {
@@ -166,7 +173,7 @@ int main(int argc, char** argv) {
                 dest_tid  = mpc_lowcomm_get_rank();
         }
 
-        rc = lcp_task_create(mngr, my_tid, &task);
+        rc = lcp_task_create(ctx, my_tid, &task);
         if (rc != MPC_LOWCOMM_SUCCESS) {
                 printf("ERROR: create task");
                 goto monitor_fini;
@@ -174,7 +181,7 @@ int main(int argc, char** argv) {
 
         gateway.mngr = mngr;
         gateway.task = task;
-        rc = lcp_am_set_handler_callback(task, AM_ID, &gateway, am_handler, 0);
+        rc = lcp_am_set_handler_callback(mngr, task, AM_ID, &gateway, am_handler, 0);
         if (rc != MPC_LOWCOMM_SUCCESS) {
                 goto err;
         }

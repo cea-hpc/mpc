@@ -97,7 +97,7 @@ struct lcp_pinning_entry * lcp_pinning_entry_new(const void * start, size_t size
         return ret;
 }
 
-int lcp_pinning_entry_contains(struct lcp_pinning_entry *entry, 
+int lcp_pinning_entry_contains(struct lcp_pinning_entry *entry,
                                const void * start, size_t size, bmap_t bitmap)
 {
         if( (entry->start <= start) && ((start + size) <= (entry->start + entry->size))
@@ -174,7 +174,7 @@ err:
 }
 
 
-struct lcp_pinning_entry * lcp_pinning_entry_list_find_no_lock(struct lcp_pinning_entry_list * list, 
+struct lcp_pinning_entry * lcp_pinning_entry_list_find_no_lock(struct lcp_pinning_entry_list * list,
                                                                const void * start, size_t size, bmap_t bitmap)
 {
         struct lcp_pinning_entry * ret = NULL;
@@ -197,8 +197,8 @@ struct lcp_pinning_entry * lcp_pinning_entry_list_find_no_lock(struct lcp_pinnin
         return ret;
 }
 
-struct lcp_pinning_entry * lcp_pinning_entry_list_find(struct lcp_pinning_entry_list * list, 
-                                                       const void * start, 
+struct lcp_pinning_entry * lcp_pinning_entry_list_find(struct lcp_pinning_entry_list * list,
+                                                       const void * start,
                                                        size_t size, bmap_t bitmap)
 {
         struct lcp_pinning_entry * ret = NULL;
@@ -292,8 +292,8 @@ int lcp_pinning_entry_list_decimate_no_lock(struct lcp_pinning_entry_list * list
         return 0;
 }
 
-struct lcp_pinning_entry * lcp_pinning_entry_list_push(struct lcp_pinning_entry_list * list, 
-                                                       const void * buffer, size_t len, lcp_manager_h mngr, 
+struct lcp_pinning_entry * lcp_pinning_entry_list_push(struct lcp_pinning_entry_list * list,
+                                                       const void * buffer, size_t len, lcp_manager_h mngr,
                                                        bmap_t bitmap, unsigned flags)
 {
         struct lcp_pinning_entry * ret = NULL;
@@ -320,16 +320,21 @@ struct lcp_pinning_entry * lcp_pinning_entry_list_push(struct lcp_pinning_entry_
                 }
 
                 int rc;
-                lcp_mem_h mem_p = NULL;
-                rc = lcp_mem_reg_from_map(mngr, mem_p,
-                                          bitmap,
-                                          buffer,
-                                          len, flags, 
-                                          &mem_p->bm);
+                lcp_mem_h mem = NULL;
+                rc = lcp_mem_create(mngr, &mem);
                 if (rc != MPC_LOWCOMM_SUCCESS) {
                         goto err;
                 }
-                ret = lcp_pinning_entry_new(buffer, len, mngr, mem_p);
+
+                rc = lcp_mem_reg_from_map(mngr, mem,
+                                          bitmap,
+                                          buffer,
+                                          len, flags,
+                                          &mem->bm);
+                if (rc != MPC_LOWCOMM_SUCCESS) {
+                        goto err;
+                }
+                ret = lcp_pinning_entry_new(buffer, len, mngr, mem);
                 lcp_pinning_entry_acquire(ret);
 
                 ret->prev = NULL;
@@ -398,7 +403,7 @@ int lcp_pinning_mmu_release(struct lcp_pinning_mmu *mmu)
 //       configurations which may not have the same base address or size. Since
 //       put/get operation are performed using the base address the remote key,
 //       it won't use the right base address to compute its offset.
-lcp_mem_h lcp_pinning_mmu_pin(lcp_manager_h mngr, const void *addr, 
+lcp_mem_h lcp_pinning_mmu_pin(lcp_manager_h mngr, const void *addr,
                               size_t size, bmap_t bitmap, unsigned flags)
 {
         struct lcp_pinning_entry * exists = lcp_pinning_entry_list_find(&mngr->mmu->list, addr, size, bitmap);
@@ -411,7 +416,7 @@ lcp_mem_h lcp_pinning_mmu_pin(lcp_manager_h mngr, const void *addr,
                 return exists->mem_entry;
         }
 
-        exists = lcp_pinning_entry_list_push(&mngr->mmu->list, addr, 
+        exists = lcp_pinning_entry_list_push(&mngr->mmu->list, addr,
                                              size, mngr, bitmap, flags);
         assume(exists);
 
@@ -450,14 +455,14 @@ static int lcp_mem_alloc(lcp_mem_h mem, size_t length, unsigned flags)
                 break;
         case LCP_MEM_ALLOC_RD:
                 //NOTE: implement Resource Domain allocation to allocate shared
-                //      memory for example. 
+                //      memory for example.
                 not_implemented();
                 break;
         case LCP_MEM_ALLOC_MMAP:
                 //NOTE: use MMAP with MAP_FIXED to implement symmetric
                 //      allocation with a unique address. This could avoid
                 //      overloading translation table of the NIC for example
-                //      when a lot of windows need to be created. 
+                //      when a lot of windows need to be created.
                 not_implemented();
                 break;
         default:
@@ -470,7 +475,7 @@ err:
         return rc;
 }
 
-static void lcp_mem_free(lcp_mem_h mem) 
+static void lcp_mem_free(lcp_mem_h mem)
 {
         switch(mem->method) {
         case LCP_MEM_ALLOC_MALLOC:
@@ -478,14 +483,14 @@ static void lcp_mem_free(lcp_mem_h mem)
                 break;
         case LCP_MEM_ALLOC_RD:
                 //NOTE: implement Resource Domain allocation to allocate shared
-                //      memory for example. 
+                //      memory for example.
                 not_implemented();
                 break;
         case LCP_MEM_ALLOC_MMAP:
                 //NOTE: use MMAP with MAP_FIXED to implement symmetric
                 //      allocation with a unique address. This could avoid
                 //      overloading translation table of the NIC for example
-                //      when a lot of windows need to be created. 
+                //      when a lot of windows need to be created.
                 not_implemented();
                 break;
         default:
@@ -519,7 +524,7 @@ size_t lcp_mem_rkey_pack(lcp_manager_h mngr, lcp_mem_h mem, void *dest)
         return packed_size;
 }
 
-int lcp_mem_pack(lcp_manager_h mngr, lcp_mem_h mem, 
+int lcp_mem_pack(lcp_manager_h mngr, lcp_mem_h mem,
                  void **rkey_buf_p, int *rkey_len)
 {
         int i, rc = MPC_LOWCOMM_SUCCESS;
@@ -561,7 +566,7 @@ void lcp_mem_release_rkey_buf(void *rkey_buffer)
         rkey_buffer = NULL;
 }
 
-int lcp_mem_unpack(lcp_manager_h mngr, lcp_mem_h *mem_p, 
+int lcp_mem_unpack(lcp_manager_h mngr, lcp_mem_h *mem_p,
                    void *src, size_t size)
 {
         int i, rc = MPC_LOWCOMM_SUCCESS;
@@ -582,8 +587,8 @@ int lcp_mem_unpack(lcp_manager_h mngr, lcp_mem_h *mem_p,
         for (i=0; i<mngr->num_ifaces; i++) {
                 if (MPC_BITMAP_GET(mem->bm, i)) {
                         iface = mngr->ifaces[i];
-                        unpacked_size += iface->iface_unpack_memp(iface, 
-                                                                  &mem->mems[i], 
+                        unpacked_size += iface->iface_unpack_memp(iface,
+                                                                  &mem->mems[i],
                                                                   p + unpacked_size);
                 }
         }
@@ -635,7 +640,7 @@ int lcp_mem_reg_from_map(lcp_manager_h mngr,
         int i, rc = MPC_LOWCOMM_SUCCESS;
         sctk_rail_info_t *iface = NULL;
         lcr_rail_attr_t attr;
-        bmap_t reg_bm = MPC_BITMAP_INIT; 
+        bmap_t reg_bm = MPC_BITMAP_INIT;
 
         /* Pin the memory and create memory handles */
         for (i=0; i<mngr->num_ifaces; i++) {
@@ -644,10 +649,10 @@ int lcp_mem_reg_from_map(lcp_manager_h mngr,
                         iface->iface_get_attr(iface, &attr);
 
                         if (!(attr.iface.cap.flags & LCR_IFACE_CAP_RMA)) {
-                               continue; 
+                               continue;
                         }
 
-                        rc = lcp_iface_do_register_mem(iface, &mem->mems[i], 
+                        rc = lcp_iface_do_register_mem(iface, &mem->mems[i],
                                                        buffer, length,
                                                        flags);
                         if (rc != MPC_LOWCOMM_SUCCESS) {
@@ -677,14 +682,14 @@ int lcp_mem_provision(lcp_manager_h mngr,
 
         if (param == NULL) {
                 mpc_common_debug_error("LCP MEM: param field must be set.");
-                return MPC_LOWCOMM_ERROR; 
+                return MPC_LOWCOMM_ERROR;
         }
 
         if (!(param->field_mask & LCP_MEM_SIZE_FIELD) ) {
                 mpc_common_debug_error("LCP MEM: must specify size field.");
                 return MPC_LOWCOMM_ERROR;
         }
-        
+
         if (!(param->field_mask & LCP_MEM_ADDR_FIELD) ) {
                 mpc_common_debug_error("LCP MEM: must specify address field.");
                 return MPC_LOWCOMM_ERROR;
@@ -773,8 +778,8 @@ int lcp_mem_query(lcp_mem_h mem, lcp_mem_attr_t *attr)
  * @param tag_ctx tag context
  * @return int MPC_LOWCOMM_SUCCESS in case of success
  */
-int lcp_mem_post_from_map(lcp_manager_h mngr, 
-                          lcp_mem_h mem, 
+int lcp_mem_post_from_map(lcp_manager_h mngr,
+                          lcp_mem_h mem,
                           bmap_t bm,
                           void *buffer,
                           size_t length,
@@ -817,7 +822,7 @@ int lcp_mem_post_from_map(lcp_manager_h mngr,
                         continue;
                 }
                 iface = mngr->ifaces[i];
-                rc = iface->post_tag_zcopy(iface, tag, ign, iov, 
+                rc = iface->post_tag_zcopy(iface, tag, ign, iov,
                                            iovcnt, flags, tag_ctx);
                 if (rc != MPC_LOWCOMM_SUCCESS) {
                         mpc_common_debug_error("LCP MEM: could not post on "
@@ -837,7 +842,7 @@ err:
         return rc;
 }
 
-int lcp_mem_unpost(lcp_manager_h mngr, lcp_mem_h mem, lcr_tag_t tag) 
+int lcp_mem_unpost(lcp_manager_h mngr, lcp_mem_h mem, lcr_tag_t tag)
 {
         int i;
         int rc = MPC_LOWCOMM_SUCCESS;

@@ -41,7 +41,7 @@
 
 #include "mpc_common_debug.h"
 
-lcp_status_ptr_t lcp_tag_recv_nb(lcp_manager_h mngr, lcp_task_h task, void *buffer, 
+lcp_status_ptr_t lcp_tag_recv_nb(lcp_manager_h mngr, lcp_task_h task, void *buffer,
                                  size_t count, lcp_tag_info_t *tag_info, int32_t src_mask,
                                  int32_t tag_mask, const lcp_request_param_t *param)
 {
@@ -64,7 +64,7 @@ lcp_status_ptr_t lcp_tag_recv_nb(lcp_manager_h mngr, lcp_task_h task, void *buff
                 req->recv.tag.recv_cb = param->recv_cb;
         }
 
-        LCP_REQUEST_INIT_TAG_RECV(req, mngr, task, count, param->request, buffer, 
+        LCP_REQUEST_INIT_TAG_RECV(req, mngr, task, count, param->request, buffer,
                                   tag_info, src_mask, tag_mask, param->datatype);
 
 	// get interface for the request to go through

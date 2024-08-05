@@ -12,7 +12,8 @@ int main(int argc, char** argv) {
 	int rc;
 	lcp_context_h ctx;
         lcp_context_param_t ctx_params;
-        lcp_manager_h mngr;
+        lcp_manager_h mngr1;
+        lcp_manager_h mngr2;
         lcp_manager_param_t mngr_params;
 
 	mpc_conf_root_config_init("mpcframework");
@@ -27,7 +28,6 @@ int main(int argc, char** argv) {
 		goto err;
 	}
 
-
 	/* setup monitor: necessary to exchange set uid */
 	rc = _mpc_lowcomm_monitor_setup();
 	if (rc != 0) {
@@ -35,10 +35,11 @@ int main(int argc, char** argv) {
 		goto err;
 	}
 
+
 	/* create communication context */
         ctx_params = (lcp_context_param_t) {
                 .flags = LCP_CONTEXT_PROCESS_UID,
-                .process_uid = 0 
+                .process_uid = 0
         };
 	rc = lcp_context_create(&ctx, &ctx_params);
 	if (rc != 0) {
@@ -52,13 +53,25 @@ int main(int argc, char** argv) {
                 .estimated_eps = 2,
                 .num_tasks = 1,
         };
-        rc = lcp_manager_create(ctx, &mngr, &mngr_params);
+        rc = lcp_manager_create(ctx, &mngr1, &mngr_params);
         if (rc != 0) {
                 printf("ERROR: create manager\n");
                 goto err;
         }
 
-        rc = lcp_manager_fini(mngr);
+        rc = lcp_manager_create(ctx, &mngr2, &mngr_params);
+        if (rc != 0) {
+                printf("ERROR: create manager\n");
+                goto err;
+        }
+
+        rc = lcp_manager_fini(mngr1);
+        if (rc != 0) {
+                printf("ERROR: fini manager\n");
+                goto err;
+        }
+
+        rc = lcp_manager_fini(mngr2);
         if (rc != 0) {
                 printf("ERROR: fini manager\n");
                 goto err;
@@ -81,6 +94,7 @@ int main(int argc, char** argv) {
 		printf("ERROR: fini pmi\n");
                 goto err;
 	}
+
 
         printf("SUCCESS");
 err:

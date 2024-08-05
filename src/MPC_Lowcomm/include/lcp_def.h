@@ -58,7 +58,7 @@ typedef struct _mpc_lowcomm_config_struct_net_rail          lcr_rail_config_t;
 //       mpc_lowcomm_status_t.
 typedef int (*lcp_send_callback_func_t)(int status, void *request, size_t length);
 
-typedef int (*lcp_tag_recv_callback_func_t)(int status, void *request, 
+typedef int (*lcp_tag_recv_callback_func_t)(int status, void *request,
                                             lcp_tag_recv_info_t *tag_info);
 
 typedef int (*lcp_am_callback_t)(void *arg, const void *user_hdr, const size_t hdr_size,
@@ -68,7 +68,7 @@ typedef int (*lcp_am_callback_t)(void *arg, const void *user_hdr, const size_t h
 typedef void (*lcp_request_init_callback_func_t)(void *request);
 /**
  * @ingroup LCP_MEM
- * @brief LCP memory attributes. 
+ * @brief LCP memory attributes.
  *
  * Memory attributes.
  *
@@ -83,14 +83,14 @@ enum {
 
 /**
  * @ingroup LCP_MEM
- * @brief LCP memory attributes. 
+ * @brief LCP memory attributes.
  *
  * Specifies a set of attributes associated to a memory region. They can be
  * retrieved by a call to \ref lcp_mem_query.
- * 
+ *
  */
 typedef struct lcp_mem_attr {
-        uint32_t field_mask; 
+        uint32_t field_mask;
         void    *address;
         size_t   size;
 } lcp_mem_attr_t;

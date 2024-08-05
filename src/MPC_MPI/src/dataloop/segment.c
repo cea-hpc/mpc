@@ -107,7 +107,7 @@ int PREPEND_PREFIX(Segment_init)(const DLOOP_Buffer buf,
 	DLOOP_Dataloop *oldloop; /* loop from original type, before new count */
 	DLOOP_Offset type_size, type_extent;
 	DLOOP_Type el_type;
-	
+
 	DLOOP_Handle_get_loopdepth_macro(handle, depth, flag);
 
 	DLOOP_Handle_get_loopptr_macro(handle, oldloop, flag);

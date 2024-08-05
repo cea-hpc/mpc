@@ -274,7 +274,7 @@ MPI_internal_request_t *mpc_mpi_request_empty = MPI_REQUEST_NULL;
 //FIXME: change name
 void PMPI_internal_free_request(MPI_Request *request) {
         MPI_internal_request_t *req = *request;
-        mpc_common_debug("MPC MPI: free MPI request. req=%p, is_nbc=%d", req, req->is_nbc);
+        assert(*request);
 
         req->is_nbc = 0;
         mpc_lowcomm_request_free(_mpc_cl_get_lowcomm_request(req));
@@ -359,17 +359,6 @@ static inline mpc_mpi_data_t *__get_per_task_data()
 	task_specific = mpc_cl_per_mpi_process_ctx_get();
 	return task_specific->mpc_mpi_data;
 }
-
-static inline void PMPC_Get_requests(struct MPI_request_struct_s **requests)
-{
-	*requests = __get_per_task_data()->requests;
-}
-
-static inline void PMPC_Set_requests(struct MPI_request_struct_s *requests)
-{
-	__get_per_task_data()->requests = requests;
-}
-
 
 static inline void PMPC_Get_buffers(struct _mpc_mpi_buffer **buffers)
 {
@@ -1223,8 +1212,8 @@ static int __Isend_test_req(const void *buf, int count, MPI_Datatype datatype,
 				derived_datatype.opt_ends   = &(tmp[derived_datatype.opt_count]);
 			}
 
-			res = mpc_mpi_cl_add_pack_absolute(buf, derived_datatype.opt_count, 
-                                                           derived_datatype.opt_begins, derived_datatype.opt_ends, 
+			res = mpc_mpi_cl_add_pack_absolute(buf, derived_datatype.opt_count,
+                                                           derived_datatype.opt_begins, derived_datatype.opt_ends,
                                                            MPC_LOWCOMM_CHAR, _mpc_cl_get_lowcomm_request(*request));
 
 			if(res != MPI_SUCCESS)
@@ -1240,13 +1229,13 @@ static int __Isend_test_req(const void *buf, int count, MPI_Datatype datatype,
 	{
 		if(is_valid_request)
 		{
-			return _mpc_cl_isend(buf, count, datatype, dest, 
+			return _mpc_cl_isend(buf, count, datatype, dest,
                                              tag, comm, _mpc_cl_get_lowcomm_request(*request));
 		}
 		else
 		{
                         *request = (MPI_internal_request_t *)mpc_lowcomm_request_alloc();
-			return _mpc_cl_isend(buf, count, datatype, dest, tag, comm, 
+			return _mpc_cl_isend(buf, count, datatype, dest, tag, comm,
                                              _mpc_cl_get_lowcomm_request(*request));
 		}
 	}
@@ -1320,8 +1309,8 @@ static int __Irecv_test_req(void *buf, int count, MPI_Datatype datatype,
 			}
 
 			res =
-				mpc_mpi_cl_add_pack_absolute(buf, derived_datatype.opt_count, derived_datatype.opt_begins, 
-                                                             derived_datatype.opt_ends, MPC_LOWCOMM_CHAR, 
+				mpc_mpi_cl_add_pack_absolute(buf, derived_datatype.opt_count, derived_datatype.opt_begins,
+                                                             derived_datatype.opt_ends, MPC_LOWCOMM_CHAR,
                                                              _mpc_cl_get_lowcomm_request(*request));
 			if(res != MPI_SUCCESS)
 			{
@@ -1341,7 +1330,7 @@ static int __Irecv_test_req(void *buf, int count, MPI_Datatype datatype,
 
 		return _mpc_cl_irecv(buf, count, datatype, source, tag, comm,
 		             _mpc_cl_get_lowcomm_request(*request));
-	
+
 	}
 }
 
@@ -1354,7 +1343,7 @@ int PMPI_Grequest_start(MPI_Grequest_query_function *query_fn, MPI_Grequest_free
 {
         MPI_internal_request_t *req = *request = mpc_lowcomm_request_alloc();
 
-	return _mpc_cl_grequest_start(query_fn, free_fn, cancel_fn, extra_state, 
+	return _mpc_cl_grequest_start(query_fn, free_fn, cancel_fn, extra_state,
                                       _mpc_cl_get_lowcomm_request(req));
 }
 
@@ -1377,7 +1366,7 @@ int PMPIX_Grequest_start(MPI_Grequest_query_function *query_fn,
 {
         *request = mpc_lowcomm_request_alloc();
 
-	return _mpc_cl_egrequest_start(query_fn, free_fn, cancel_fn, poll_fn, extra_state, 
+	return _mpc_cl_egrequest_start(query_fn, free_fn, cancel_fn, poll_fn, extra_state,
                                        _mpc_cl_get_lowcomm_request(*request));
 }
 
@@ -1399,7 +1388,7 @@ int PMPIX_Grequest_class_allocate(MPIX_Grequest_class target_class, void *extra_
 {
         *request = mpc_lowcomm_request_alloc();
 
-	return _mpc_cl_grequest_class_allocate(target_class, extra_state, 
+	return _mpc_cl_grequest_class_allocate(target_class, extra_state,
                                                _mpc_cl_get_lowcomm_request(*request));
 }
 
@@ -8762,7 +8751,7 @@ int PMPI_Testany(int count,
 
 		{
 			mpc_lowcomm_request_t *req;
-			req = _mpc_cl_get_lowcomm_request(array_of_requests[i]); 
+			req = _mpc_cl_get_lowcomm_request(array_of_requests[i]);
 			if(req == &MPC_REQUEST_NULL)
 			{
 				continue;
@@ -8999,7 +8988,7 @@ int PMPI_Waitall(int count, MPI_Request array_of_requests[],
 			}
 			else
 			{
-				mpc_array_of_requests[i] = _mpc_cl_get_lowcomm_request(tmp); 
+				mpc_array_of_requests[i] = _mpc_cl_get_lowcomm_request(tmp);
 			}
 		}
 	}
@@ -9851,6 +9840,7 @@ int PMPI_Startall(int count, MPI_Request array_of_requests[])
 
 int PMPI_Pready(int partition, MPI_Request request)
 {
+        UNUSED(partition);
 	MPI_Comm comm = MPI_COMM_WORLD;
 	int      res  = MPI_ERR_INTERN;
 
@@ -9860,6 +9850,7 @@ int PMPI_Pready(int partition, MPI_Request request)
 	}
 
 	MPI_internal_request_t *req = request;
+        UNUSED(req);
 
         not_implemented();
 	//res = mpi_pready(partition, req);
@@ -9870,6 +9861,8 @@ int PMPI_Pready(int partition, MPI_Request request)
 
 int PMPI_Parrived(MPI_Request request, int partition, int *flags)
 {
+        UNUSED(partition);
+        UNUSED(flags);
 	MPI_Comm comm = MPI_COMM_WORLD;
 	int      res  = MPI_ERR_INTERN;
 
@@ -9879,6 +9872,7 @@ int PMPI_Parrived(MPI_Request request, int partition, int *flags)
 	}
 
 	MPI_internal_request_t *req = request;
+        UNUSED(req);
 
         not_implemented();
 	//res = mpi_parrived(partition, req, flags);
@@ -11297,7 +11291,7 @@ int PMPI_Type_get_elements_x(MPI_Status *status, MPI_Datatype datatype, MPI_Coun
                         break;
                 }
         }
-	
+
 
 	MPI_HANDLE_RETURN_VAL(res, comm);
 }
@@ -12499,7 +12493,7 @@ int PMPI_Intercomm_create(MPI_Comm local_comm, int local_leader,
 
 	_mpc_cl_comm_size(peer_comm, &size);
 
-	if(mpc_lowcomm_communicator_is_intercomm(peer_comm) == 0 && 
+	if(mpc_lowcomm_communicator_is_intercomm(peer_comm) == 0 &&
            rank == local_leader)
 	{
 		mpi_check_rank_send(remote_leader, size, comm);
@@ -15855,8 +15849,8 @@ int PMPI_Put(const void *origin_addr, int origin_count,
 {
         if (target_rank == MPI_PROC_NULL) return MPI_SUCCESS;
 
-        return mpc_osc_put(origin_addr, origin_count, origin_datatype, 
-                           target_rank, target_disp, target_count, 
+        return mpc_osc_put(origin_addr, origin_count, origin_datatype,
+                           target_rank, target_disp, target_count,
                            target_datatype, win);
 }
 

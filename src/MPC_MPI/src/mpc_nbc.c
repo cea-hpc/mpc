@@ -463,10 +463,10 @@ static inline int __NBC_Start_round_persistent( NBC_Handle *handle, int depth )
 				NBC_CHECK_NULL( handle->req_array );
 				if ( handle->is_persistent != 2 )
 				{
-                                        MPI_Request req = NBC_HANDLE_ALLOC_REQ(handle, 
+                                        MPI_Request req = NBC_HANDLE_ALLOC_REQ(handle,
                                                                                old_req_count + req_cpt -1);
 
-					res = _mpc_cl_isend(buf1, sendargs->count, sendargs->datatype, sendargs->dest, 
+					res = _mpc_cl_isend(buf1, sendargs->count, sendargs->datatype, sendargs->dest,
                                                             handle->tag, comm, _mpc_cl_get_lowcomm_request(req));
 					/*mark new intermediate nbc request to keep it as long as collective isn't free*/
                                         req->is_persistent = 1;
@@ -480,10 +480,10 @@ static inline int __NBC_Start_round_persistent( NBC_Handle *handle, int depth )
 				}
 				else
 				{
-                                        MPI_Request req = NBC_HANDLE_ALLOC_REQ(handle, 
+                                        MPI_Request req = NBC_HANDLE_ALLOC_REQ(handle,
                                                                                handle->array_offset + req_cpt -1);
 
-					res = _mpc_cl_isend(buf1, sendargs->count, sendargs->datatype, sendargs->dest, 
+					res = _mpc_cl_isend(buf1, sendargs->count, sendargs->datatype, sendargs->dest,
                                                             handle->tag, comm, _mpc_cl_get_lowcomm_request(req));
 				}
 				if ( MPI_SUCCESS != res )
@@ -516,13 +516,13 @@ static inline int __NBC_Start_round_persistent( NBC_Handle *handle, int depth )
 				if ( handle->is_persistent != 2 )
 				{
                                         MPI_Request mpi_req = NBC_HANDLE_ALLOC_REQ(handle, old_req_count + req_cpt - 1);
-					res = _mpc_cl_irecv(buf1, recvargs->count, recvargs->datatype, recvargs->source, 
+					res = _mpc_cl_irecv(buf1, recvargs->count, recvargs->datatype, recvargs->source,
                                                             handle->tag, comm, _mpc_cl_get_lowcomm_request(mpi_req));
 					/*mark new intermediate nbc request to keep it as long as collective isn't free*/
                                         mpi_req->is_persistent = 1;
 					if ( handle->is_persistent == 1 )
 					{
-                                                
+
 						mpi_req->is_persistent = 2;
 						mpi_req->used = 1;
 						mpi_req->nbc_handle.schedule = handle->schedule;
@@ -534,7 +534,7 @@ static inline int __NBC_Start_round_persistent( NBC_Handle *handle, int depth )
 					mpi_req->is_persistent = 2;
 					mpi_req->used = 1;
 					mpi_req->nbc_handle.schedule = handle->schedule;
-					res = _mpc_cl_irecv( buf1, recvargs->count, recvargs->datatype, recvargs->source, 
+					res = _mpc_cl_irecv( buf1, recvargs->count, recvargs->datatype, recvargs->source,
                                                              handle->tag, comm, _mpc_cl_get_lowcomm_request(mpi_req));
 				}
 
@@ -807,7 +807,7 @@ static inline int __NBC_Start_round( NBC_Handle *handle, int depth )
 				NBC_CHECK_NULL( handle->req_array );
 				// fprintf(stderr, "rank %d send to rank %d datatype %d count %d\n", mpc_common_get_task_rank(), sendargs->dest, sendargs->datatype, sendargs->count);
                                 mpi_req = NBC_HANDLE_ALLOC_REQ(handle, old_req_count + req_cpt - 1);
-				res = _mpc_cl_isend( buf1, sendargs->count, sendargs->datatype, sendargs->dest, 
+				res = _mpc_cl_isend( buf1, sendargs->count, sendargs->datatype, sendargs->dest,
                                                      handle->tag, comm, _mpc_cl_get_lowcomm_request(mpi_req));
 				if ( MPI_SUCCESS != res )
 				{
@@ -839,7 +839,7 @@ static inline int __NBC_Start_round( NBC_Handle *handle, int depth )
 				NBC_CHECK_NULL( handle->req_array );
 				// fprintf(stderr, "rank %d recv from rank %d datatype %d count %d\n", mpc_common_get_task_rank(), recvargs->source, recvargs->datatype, recvargs->count);
                                 mpi_req = NBC_HANDLE_ALLOC_REQ(handle, old_req_count + req_cpt - 1);
-				res = _mpc_cl_irecv( buf1, recvargs->count, recvargs->datatype, recvargs->source, 
+				res = _mpc_cl_irecv( buf1, recvargs->count, recvargs->datatype, recvargs->source,
                                                      handle->tag, comm, _mpc_cl_get_lowcomm_request(mpi_req));
 
 				if ( MPI_SUCCESS != res )

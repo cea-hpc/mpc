@@ -20,7 +20,7 @@ manager_init:
   run:
     depends_on: ["compile_units"]
     program: @BUILDPATH@/lcp_compute_env.sh @BUILDPATH@/manager_init
-    iterate: 
+    iterate:
       n_core:
         values: [2]
       n_node:
@@ -32,7 +32,7 @@ multi_manager_init:
   run:
     depends_on: ["compile_units"]
     program: @BUILDPATH@/lcp_compute_env.sh @BUILDPATH@/multi_manager_init
-    iterate: 
+    iterate:
       n_core:
         values: [2]
       n_node:
@@ -124,7 +124,7 @@ ep_multi_manager_send:
   run:
     program: @BUILDPATH@/lcp_compute_env.sh @BUILDPATH@/ep_multi_manager_send
     depends_on: ["compile_units"]
-    iterate: 
+    iterate:
       n_core:
         values: [2]
       n_node:

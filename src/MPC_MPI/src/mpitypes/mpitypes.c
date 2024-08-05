@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
 
-#include "mpc_mpi.h" 
+#include "mpc_mpi.h"
 #include "mpitypes.h"
 
 /*
