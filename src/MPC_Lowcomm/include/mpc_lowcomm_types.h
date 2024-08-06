@@ -153,7 +153,7 @@ typedef struct
 
 enum {
         MPC_LOWCOMM_REQUEST_PACKED   = 1,
-        MPC_LOWCOMM_REQUEST_CALLBACK = 1 << 2,
+        MPC_LOWCOMM_REQUEST_CALLBACK = 1 << 1,
 };
 /************
 * REQUESTS *

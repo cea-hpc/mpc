@@ -734,7 +734,7 @@ static inline mpc_conf_config_type_t *__mpc_lowcomm_rail_conf_init()
 	__mpc_lowcomm_rail_conf_default();
 
 	/* Here we instanciate default rails */
-	mpc_conf_config_type_t *shm_mpi = __new_rail_conf_instance("shmmpi", 99, "any", 1, 0, 0, 1, 0, "shmconfigmpi");
+	mpc_conf_config_type_t *shm_mpi = __new_rail_conf_instance("shmmpi", 99, "any", 1, 0, 1, 1, 0, "shmconfigmpi");
 	mpc_conf_config_type_t *tcp_mpi = __new_rail_conf_instance("tcpmpi", 1, "any", 1, 0, 1, 0, 0, "tcpconfigmpi");
         mpc_conf_config_type_t *tbsm_mpi = __new_rail_conf_instance("tbsmmpi", 100, "any", 1, 1, 1, 1, 0, "tbsmconfigmpi");
 
