@@ -10,12 +10,9 @@
 #include <string.h>
 #include <sys/types.h>
 
-#include "./dataloop.h"
+#include "mpc_keywords.h"
 
-/* This is a temporary definition to enable the restrict keyword that is part
-   of C.  Sophisticated compilers can use this to improve code generation,
-   particularly for loops that copy data */
-#define restrict __restrict
+#include "./dataloop.h"
 
 #ifdef HAVE_ANY_INT64_T_ALIGNMENT
 #define MPIR_ALIGN8_TEST(p1,p2)
@@ -82,9 +79,10 @@
 int PREPEND_PREFIX(Segment_contig_m2m)(DLOOP_Offset *blocks_p,
 				       DLOOP_Type    el_type,
 				       DLOOP_Offset  rel_off,
-				       DLOOP_Buffer  UNUSED_(unused),
+				       DLOOP_Buffer  unused,
 				       void         *v_paramp)
 {
+    UNUSED(unused);
     DLOOP_Offset el_size; /* DLOOP_Count? */
     DLOOP_Offset size;
     struct PREPEND_PREFIX(m2m_params) *paramp = v_paramp;
@@ -136,14 +134,16 @@ int PREPEND_PREFIX(Segment_contig_m2m)(DLOOP_Offset *blocks_p,
  * of a whole block in a vector type.
  */
 int PREPEND_PREFIX(Segment_vector_m2m)(DLOOP_Offset *blocks_p,
-				       DLOOP_Count   UNUSED_(unused),
+				       DLOOP_Count   unused,
 				       DLOOP_Count   blksz,
 				       DLOOP_Offset  stride,
 				       DLOOP_Type    el_type,
 				       DLOOP_Offset  rel_off, /* into buffer */
-				       DLOOP_Buffer  UNUSED_(unused2),
+				       DLOOP_Buffer  unused2,
 				       void         *v_paramp)
 {
+    UNUSED(unused);
+    UNUSED(unused2);
     DLOOP_Count i, blocks_left, whole_count;
     DLOOP_Offset el_size;
     struct PREPEND_PREFIX(m2m_params) *paramp = v_paramp;
@@ -232,14 +232,16 @@ int PREPEND_PREFIX(Segment_vector_m2m)(DLOOP_Offset *blocks_p,
 /* MPID_Segment_blkidx_m2m
  */
 int PREPEND_PREFIX(Segment_blkidx_m2m)(DLOOP_Offset *blocks_p,
-				       DLOOP_Count   UNUSED_(count),
+				       DLOOP_Count   count,
 				       DLOOP_Count   blocklen,
 				       DLOOP_Offset *offsetarray,
 				       DLOOP_Type    el_type,
 				       DLOOP_Offset  rel_off,
-				       DLOOP_Buffer  UNUSED_(unused),
+				       DLOOP_Buffer  unused,
 				       void         *v_paramp)
 {
+    UNUSED(count);
+    UNUSED(unused);
 #define OLDCODE 0
 #if OLDCODE
     DLOOP_Count curblock = 0;
@@ -470,9 +472,10 @@ int PREPEND_PREFIX(Segment_index_m2m)(DLOOP_Offset *blocks_p,
 				      DLOOP_Offset *offsetarray,
 				      DLOOP_Type    el_type,
 				      DLOOP_Offset  rel_off,
-				      DLOOP_Buffer  UNUSED_(unused),
+				      DLOOP_Buffer  unused,
 				      void         *v_paramp)
 {
+    UNUSED(unused);
     int curblock = 0;
     DLOOP_Offset el_size;
     DLOOP_Offset cur_block_sz, blocks_left = *blocks_p;

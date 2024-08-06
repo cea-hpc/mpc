@@ -11,6 +11,7 @@
 #include <sys/types.h>
 
 #include "dataloop.h"
+#include "mpc_keywords.h"
 
 /* NOTE: bufp values are unused, ripe for removal */
 
@@ -91,9 +92,10 @@ void PREPEND_PREFIX(Segment_count_contig_blocks)(DLOOP_Segment *segp,
 static int DLOOP_Leaf_contig_count_block(DLOOP_Offset *blocks_p,
 					 DLOOP_Type el_type,
 					 DLOOP_Offset rel_off,
-					 DLOOP_Buffer bufp ATTRIBUTE((unused)),
+					 DLOOP_Buffer bufp,
 					 void *v_paramp)
 {
+    UNUSED(bufp);
     DLOOP_Offset size, el_size;
     struct PREPEND_PREFIX(contig_blocks_params) *paramp = v_paramp;
 
@@ -141,9 +143,10 @@ static int DLOOP_Leaf_vector_count_block(DLOOP_Offset *blocks_p,
 					 DLOOP_Offset stride,
 					 DLOOP_Type el_type,
 					 DLOOP_Offset rel_off, /* offset into buffer */
-					 void *bufp ATTRIBUTE((unused)),
+					 void *bufp,
 					 void *v_paramp)
 {
+    UNUSED(bufp);
     DLOOP_Count new_blk_count;
     DLOOP_Offset size, el_size;
     struct PREPEND_PREFIX(contig_blocks_params) *paramp = v_paramp;
@@ -179,9 +182,10 @@ static int DLOOP_Leaf_blkidx_count_block(DLOOP_Offset *blocks_p,
 					 DLOOP_Offset *offsetarray,
 					 DLOOP_Type el_type,
 					 DLOOP_Offset rel_off,
-					 void *bufp ATTRIBUTE((unused)),
+					 void *bufp,
 					 void *v_paramp)
 {
+    UNUSED(bufp);
     DLOOP_Count i, new_blk_count;
     DLOOP_Offset size, el_size, last_loc;
     struct PREPEND_PREFIX(contig_blocks_params) *paramp = v_paramp;
@@ -221,9 +225,10 @@ static int DLOOP_Leaf_index_count_block(DLOOP_Offset *blocks_p,
 					DLOOP_Offset *offsetarray,
 					DLOOP_Type el_type,
 					DLOOP_Offset rel_off,
-					void *bufp ATTRIBUTE((unused)),
+					void *bufp,
 					void *v_paramp)
 {
+    UNUSED(bufp);
     DLOOP_Count new_blk_count;
     DLOOP_Offset el_size, last_loc;
     struct PREPEND_PREFIX(contig_blocks_params) *paramp = v_paramp;

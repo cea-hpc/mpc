@@ -135,7 +135,7 @@ typedef struct sctk_thread_data_s
 
 } sctk_thread_data_t;
 
-#define SCTK_THREAD_DATA_INIT_STRUCT_START    { NULL, NULL, NULL, {-1, -1}, -1, -1, NULL,           \
+#define SCTK_THREAD_DATA_INIT_STRUCT_START    { NULL, NULL, NULL, {-1, -1, -1}, -1, -1, NULL,           \
 		                   NULL, -1, (void *)NULL, sctk_thread_undef_status, \
 		                   NULL, NULL, -1, NULL, {NULL, NULL}
 #define SCTK_THREAD_DATA_INIT_STRUCT_END }

@@ -261,8 +261,9 @@ void MPIT_Datatype_get_el_type(MPI_Datatype type,
 /* dataloop-related functions used by dataloop code */
 void MPIT_Datatype_get_loopptr(MPI_Datatype type,
 			       MPIT_Dataloop **ptr_p,
-			       int UNUSED_(flag))
+			       int flag)
 {
+    UNUSED(flag);
     MPIT_Datatype *dtp = _mpc_dt_get_mpitypes_handle(type);
 
     /* in the init dataloop path, we create the datatype attribute if it does
@@ -284,8 +285,9 @@ void MPIT_Datatype_get_loopptr(MPI_Datatype type,
     return;
 }
 
-void MPIT_Datatype_get_loopsize(MPI_Datatype type, int *size_p, int UNUSED_(flag))
+void MPIT_Datatype_get_loopsize(MPI_Datatype type, int *size_p, int flag)
 {
+    UNUSED(flag);
     MPIT_Datatype *dtp = _mpc_dt_get_mpitypes_handle(type);
 
     if (!(dtp->valid & MPIT_DATATYPE_VALID_DLOOP_SIZE))
@@ -296,8 +298,9 @@ void MPIT_Datatype_get_loopsize(MPI_Datatype type, int *size_p, int UNUSED_(flag
     return;
 }
 
-void MPIT_Datatype_get_loopdepth(MPI_Datatype type, int *depth_p, int UNUSED_(flag))
+void MPIT_Datatype_get_loopdepth(MPI_Datatype type, int *depth_p, int flag)
 {
+    UNUSED(flag);
     MPIT_Datatype *dtp = _mpc_dt_get_mpitypes_handle(type);
 
     if (!(dtp->valid & MPIT_DATATYPE_VALID_DLOOP_DEPTH))
@@ -308,8 +311,9 @@ void MPIT_Datatype_get_loopdepth(MPI_Datatype type, int *depth_p, int UNUSED_(fl
     return;
 }
 
-void MPIT_Datatype_set_loopptr(MPI_Datatype type, MPIT_Dataloop *ptr, int UNUSED_(flag))
+void MPIT_Datatype_set_loopptr(MPI_Datatype type, MPIT_Dataloop *ptr, int flag)
 {
+    UNUSED(flag);
     MPIT_Datatype *dtp = _mpc_dt_get_mpitypes_handle(type);
 
     if (!dtp) {
@@ -321,8 +325,9 @@ void MPIT_Datatype_set_loopptr(MPI_Datatype type, MPIT_Dataloop *ptr, int UNUSED
     return;
 }
 
-void MPIT_Datatype_set_loopsize(MPI_Datatype type, int size, int UNUSED_(flag))
+void MPIT_Datatype_set_loopsize(MPI_Datatype type, int size, int flag)
 {
+    UNUSED(flag);
     MPIT_Datatype *dtp = _mpc_dt_get_mpitypes_handle(type);
 
     if (!dtp) {
@@ -334,8 +339,9 @@ void MPIT_Datatype_set_loopsize(MPI_Datatype type, int size, int UNUSED_(flag))
     return;
 }
 
-void MPIT_Datatype_set_loopdepth(MPI_Datatype type, int depth, int UNUSED_(flag))
+void MPIT_Datatype_set_loopdepth(MPI_Datatype type, int depth, int flag)
 {
+    UNUSED(flag);
     MPIT_Datatype *dtp = _mpc_dt_get_mpitypes_handle(type);
 
     if (!dtp) {
@@ -350,12 +356,6 @@ void MPIT_Datatype_set_loopdepth(MPI_Datatype type, int depth, int UNUSED_(flag)
 int MPIT_Datatype_is_nontrivial(MPI_Datatype type)
 {
     int nr_ints, nr_aints, nr_types, combiner;
-    int float_int = MPI_FLOAT_INT;
-    int double_int = MPI_DOUBLE_INT;
-    int long_int = MPI_LONG_INT;
-    int short_int = MPI_SHORT_INT;
-    int long_double_int = MPI_LONG_DOUBLE_INT;
-    int combiner_name = MPI_COMBINER_NAMED;
 
     PMPI_Type_get_envelope(type, &nr_ints, &nr_aints, &nr_types, &combiner);
     if (combiner != MPI_COMBINER_NAMED ||

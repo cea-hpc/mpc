@@ -379,7 +379,7 @@ class MpcRunner:
 						curapp.write(custom_join(jargs["binary"]))
 					os.chmod(curapp.name, 0o500)
 					mc_file.write("{iter} bash {exec}\n".format(
-						iter = proc_num, 
+						iter = proc_num,
 						# startup_args = mpc_args,
 						exec = curapp.name))
 					proc_count += jargs["MPCFRAMEWORK_LAUNCH_MPCRUN_PROCESS"]
@@ -479,7 +479,7 @@ if __name__ == "__main__":
 
 	commands = split_mpmd(sys.argv[1:])
 	for command in commands:
-		if("--multiconf" in command):	
+		if("--multiconf" in command):
 			command.remove("--multiconf")
 			MULTICONF=True
 	conf = MpcConfig()

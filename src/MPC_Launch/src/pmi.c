@@ -1117,7 +1117,7 @@ int mpc_launch_pmi_get_app_size(int* appsize){
 // does not work
 
 int mpc_launch_pmi_get_app_num(int* appnum){
-	
+
 	*appnum = mpc_common_get_flags()->appnum;
 	return MPC_LAUNCH_PMI_SUCCESS;
 

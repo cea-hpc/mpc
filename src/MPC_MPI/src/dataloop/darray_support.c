@@ -60,14 +60,14 @@ int PREPEND_PREFIX(Type_convert_darray)(int size,
 				 coords[i], array_of_dargs[i],
 				 order, orig_extent,
 				 type_old, &type_new,
-				 st_offsets+i);
+				 &st_offsets[i]);
 		break;
 	    case MPI_DISTRIBUTE_CYCLIC:
 		MPIOI_Type_cyclic(array_of_gsizes, i, ndims,
 				  array_of_psizes[i], coords[i],
 				  array_of_dargs[i], order,
 				  orig_extent, type_old,
-				  &type_new, st_offsets+i);
+				  &type_new, &st_offsets[i]);
 		break;
 	    case MPI_DISTRIBUTE_NONE:
 		/* treat it as a block distribution on 1 process */
@@ -75,7 +75,7 @@ int PREPEND_PREFIX(Type_convert_darray)(int size,
 				 MPI_DISTRIBUTE_DFLT_DARG, order,
 				 orig_extent,
 				 type_old, &type_new,
-				 st_offsets+i);
+				 &st_offsets[i]);
 		break;
 	    }
 	    if (i) NMPI_Type_free(&type_old);
@@ -100,20 +100,20 @@ int PREPEND_PREFIX(Type_convert_darray)(int size,
 		MPIOI_Type_block(array_of_gsizes, i, ndims, array_of_psizes[i],
 				 coords[i], array_of_dargs[i], order,
 				 orig_extent, type_old, &type_new,
-				 st_offsets+i);
+				 &st_offsets[i]);
 		break;
 	    case MPI_DISTRIBUTE_CYCLIC:
 		MPIOI_Type_cyclic(array_of_gsizes, i, ndims,
 				  array_of_psizes[i], coords[i],
 				  array_of_dargs[i], order,
 				  orig_extent, type_old, &type_new,
-				  st_offsets+i);
+				  &st_offsets[i]);
 		break;
 	    case MPI_DISTRIBUTE_NONE:
 		/* treat it as a block distribution on 1 process */
 		MPIOI_Type_block(array_of_gsizes, i, ndims, array_of_psizes[i],
 		      coords[i], MPI_DISTRIBUTE_DFLT_DARG, order, orig_extent,
-                           type_old, &type_new, st_offsets+i);
+                           type_old, &type_new, &st_offsets[i]);
 		break;
 	    }
 	    if (i != ndims-1) NMPI_Type_free(&type_old);

@@ -355,6 +355,7 @@ static inline int __split_for(mpc_lowcomm_communicator_t src_comm, const char *d
 
 int _mpc_lowcomm_pset_bootstrap(void)
 {
+        int rc;
 	_mpc_lowcomm_init_psets();
 
 	mpc_lowcomm_barrier(MPC_COMM_WORLD);
@@ -369,7 +370,10 @@ int _mpc_lowcomm_pset_bootstrap(void)
 
 	mpc_launch_pmi_get_app_num(&my_app_id);
 
-	__split_for(MPC_COMM_WORLD, "app://", my_app_id, &rank );
+	rc = __split_for(MPC_COMM_WORLD, "app://", my_app_id, &rank );
+        if (rc != MPC_LOWCOMM_SUCCESS) {
+                return rc;
+        }
 	mpc_common_set_app_rank(rank);
 
 	return MPC_LOWCOMM_SUCCESS;

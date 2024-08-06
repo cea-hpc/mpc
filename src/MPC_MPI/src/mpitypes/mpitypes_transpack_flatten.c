@@ -11,6 +11,7 @@
 
 #include "mpc_mpi.h"
 #include "mpitypes.h"
+#include "mpc_keywords.h"
 
 /* MPIT_Type_xflatten_params
  *
@@ -58,6 +59,7 @@ int MPIT_Type_xpack(void *inbuf, int incount, MPI_Datatype intype,
     MPIT_Segment *insegp, *outsegp;
     MPI_Aint inextent, outextent, lb;
     double start;
+    UNUSED(mpi_errno);
 
     MPIT_Type_xflatten_params params;
 
@@ -139,9 +141,10 @@ int MPIT_Type_xpack(void *inbuf, int incount, MPI_Datatype intype,
 static int MPIT_Leaf_contig_inxflatten(MPI_Aint    *blocksp,
 				       MPI_Datatype el_type,
 				       MPI_Aint     rel_off,
-				       void        *UNUSED_(bufp),
+				       void        *bufp,
 				       void        *v_paramp)
 {
+    UNUSED(bufp);
     int el_size, sizebytes;
     MPIT_Type_xflatten_params *paramp = v_paramp;
 
@@ -194,9 +197,10 @@ static int MPIT_Leaf_contig_inxflatten(MPI_Aint    *blocksp,
 static int MPIT_Leaf_contig_outxflatten(MPI_Aint    *blocksp,
 					MPI_Datatype el_type,
 					MPI_Aint     rel_off,
-					void        *UNUSED_(bufp),
+					void        *bufp,
 					void        *v_paramp)
 {
+    UNUSED(bufp);
     int el_size, size, copysize;
     MPIT_Type_xflatten_params *paramp = v_paramp;
 

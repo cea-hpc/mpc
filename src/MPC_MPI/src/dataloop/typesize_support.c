@@ -19,6 +19,7 @@
  */
 
 #include "./dataloop.h"
+#include "mpc_keywords.h"
 #include "typesize_support.h"
 
 static void DLOOP_Type_calc_footprint_struct(MPI_Datatype type,
@@ -409,13 +410,15 @@ void PREPEND_PREFIX(Type_calc_footprint)(MPI_Datatype type,
   DLOOP_Type_calc_footprint_struct - calculate size, lb, ub, extent,
                                      and alignsize for a struct type
 */
-static void DLOOP_Type_calc_footprint_struct(MPI_Datatype UNUSED_(type),
-					     int UNUSED_(struct_combiner),
+static void DLOOP_Type_calc_footprint_struct(MPI_Datatype type,
+					     int struct_combiner,
 					     int *ints,
 					     MPI_Aint *aints,
 					     MPI_Datatype *types,
 					     DLOOP_Type_footprint *tfp)
 {
+    UNUSED(type);
+    UNUSED(struct_combiner);
     int i, found_sticky_lb = 0, found_sticky_ub = 0, first_iter = 1;
     DLOOP_Offset tmp_lb, tmp_ub, tmp_extent, tmp_true_lb, tmp_true_ub;
     DLOOP_Offset max_alignsz = 0, tmp_size = 0, min_lb = 0, max_ub = 0;
