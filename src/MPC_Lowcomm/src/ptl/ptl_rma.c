@@ -242,7 +242,7 @@ int lcr_ptl_flush_mem_ep(sctk_rail_info_t *rail,
 
         assert(mem != NULL && ep != NULL);
 
-        _lcr_ptl_init_op_common(op, 0, lkey->mdh,
+        _lcr_ptl_init_op_common(op, 0, mem->mdh,
                                 ptl_ep->addr.id,
                                 ptl_ep->addr.pte.rma,
                                 LCR_PTL_OP_RMA_FLUSH,
@@ -399,7 +399,7 @@ int lcr_ptl_flush_mem(sctk_rail_info_t *rail,
         mpc_list_init_head(&op->flush.mem_head);
 
         assert(mem != NULL);
-        _lcr_ptl_init_op_common(op, 0, lkey->mdh,
+        _lcr_ptl_init_op_common(op, 0, mem->mdh,
                                 LCR_PTL_PROCESS_ANY,
                                 srail->net.rma.pti,
                                 LCR_PTL_OP_RMA_FLUSH,
