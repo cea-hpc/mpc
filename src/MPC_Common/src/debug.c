@@ -358,7 +358,7 @@ void __mpcprintf(char *messagebuffer, char *modulename, char *filename __UNUSED_
 				modulename,
 				color , messagebuffer, MPC_COLOR_DEFAULT_CHAR);
 		else
-	#else
+	#endif
 			(void)fprintf(stderr, 
 				"[ R%4d P%4dN%4d ] %s %s%s%s\n",
 				task_rank, 
@@ -366,7 +366,6 @@ void __mpcprintf(char *messagebuffer, char *modulename, char *filename __UNUSED_
 				mpc_common_get_node_rank(),
 				modulename,
 				color , messagebuffer, MPC_COLOR_DEFAULT_CHAR);
-	#endif
 }
 
 
