@@ -38,10 +38,11 @@
 static int max_num_devices = 0;
 
 
-int lcr_ptl_query_devices(__UNUSED__ lcr_component_t *component,
+int lcr_ptl_query_devices(lcr_component_t *component,
                           lcr_device_t **devices_p,
                           unsigned int *num_devices_p)
 {
+        UNUSED(component);
         int rc = MPC_LOWCOMM_SUCCESS;
         static const char *bxi_dir = "/sys/class/bxi";
         lcr_device_t *devices;
@@ -54,7 +55,7 @@ int lcr_ptl_query_devices(__UNUSED__ lcr_component_t *component,
         num_devices = 0;
 
         /* First, try simulator */
-        const char *ptl_iface_name; 
+        const char *ptl_iface_name;
         if ((ptl_iface_name = getenv("PTL_IFACE_NAME")) != NULL) {
                 devices = sctk_malloc(sizeof(lcr_device_t));
                 strcpy(devices[0].name, ptl_iface_name);
@@ -100,9 +101,9 @@ int lcr_ptl_query_devices(__UNUSED__ lcr_component_t *component,
                         rc = MPC_LOWCOMM_ERROR;
                         goto close_dir;
                 }
-                
+
                 //FIXME: interface name should always be of the form:
-                //       bxi<id> with id, 0 < id < 9 
+                //       bxi<id> with id, 0 < id < 9
                 strcpy(devices[num_devices].name, entry->d_name);
                 ++num_devices;
         }
@@ -120,7 +121,7 @@ out:
 }
 
 int lcr_ptl_iface_open(int mngr_id, const char *device_name, int id,
-		       lcr_rail_config_t *rail_config, 
+		       lcr_rail_config_t *rail_config,
 		       lcr_driver_config_t *driver_config,
 		       sctk_rail_info_t **iface_p,
                        unsigned flags)
@@ -145,8 +146,8 @@ int lcr_ptl_iface_open(int mngr_id, const char *device_name, int id,
         iface->pmi_tag = lcr_rail_build_pmi_tag(mngr_id, iface->rail_number);
 
         /* Init capabilities */
-        iface->cap = LCR_IFACE_CAP_RMA    | 
-                LCR_IFACE_CAP_LOOPBACK    |
+        iface->cap = LCR_IFACE_CAP_RMA |
+                LCR_IFACE_CAP_LOOPBACK |
                 LCR_IFACE_CAP_REMOTE;
 
         if (flags & LCR_FEATURE_TS) {
@@ -154,7 +155,7 @@ int lcr_ptl_iface_open(int mngr_id, const char *device_name, int id,
                         init_flags |= LCR_PTL_FEATURE_TAG;
                         iface->cap |= LCR_IFACE_CAP_TAG_OFFLOAD;
                 } else {
-                        init_flags |= LCR_PTL_FEATURE_AM | 
+                        init_flags |= LCR_PTL_FEATURE_AM |
                                 LCR_PTL_FEATURE_RMA;
                 }
         }
@@ -228,12 +229,12 @@ int lcr_ptl_iface_open(int mngr_id, const char *device_name, int id,
         /* Interface progress */
         iface->iface_progress      = lcr_ptl_iface_progress;
         iface->iface_is_reachable  = lcr_ptl_iface_is_reachable;
-        
+
         iface->driver_finalize     = lcr_ptl_iface_fini;
 
         *iface_p = iface;
 err:
-        return rc; 
+        return rc;
 }
 
 lcr_component_t ptl_component = {

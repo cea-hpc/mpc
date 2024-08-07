@@ -41,8 +41,8 @@
  * Memory registration.
  *################################################*/
 
-int lcr_ptl_mem_register(struct sctk_rail_info_s *rail, 
-                         struct sctk_rail_pin_ctx_list *list, 
+int lcr_ptl_mem_register(struct sctk_rail_info_s *rail,
+                         struct sctk_rail_pin_ctx_list *list,
                          const void * addr, size_t size, unsigned flags)
 {
         int rc = MPC_LOWCOMM_SUCCESS;
@@ -50,7 +50,7 @@ int lcr_ptl_mem_register(struct sctk_rail_info_s *rail,
         lcr_ptl_mem_ctx_t *ctx       = &list->pin.ptl;
 
         /* First, check flags error. */
-        if (!(flags & (LCR_IFACE_REGISTER_MEM_DYN | 
+        if (!(flags & (LCR_IFACE_REGISTER_MEM_DYN |
                        LCR_IFACE_REGISTER_MEM_STAT)) ) {
                 mpc_common_debug_error("LCR PTL: flags mush specify at least "
                                        "on registration type.");
@@ -66,14 +66,14 @@ int lcr_ptl_mem_register(struct sctk_rail_info_s *rail,
 
         /* Init packable data. */
         ctx->size  = size;
-        ctx->start = addr; 
+        ctx->start = addr;
         ctx->flags = flags;
 
         if (flags & LCR_IFACE_REGISTER_MEM_DYN) {
                 ctx->mem = srail->net.rma.dynamic_mem;
                 assert(!PtlHandleIsEqual(ctx->mem->cth, PTL_INVALID_HANDLE));
         } else {
-                ctx->mem = mpc_mpool_pop(srail->net.rma.mem_mp); 
+                ctx->mem = mpc_mpool_pop(srail->net.rma.mem_mp);
                 if (ctx->mem == NULL) {
                         mpc_common_debug_error("LCR PTL: could not allocate memory "
                                                "handle.");
@@ -81,10 +81,10 @@ int lcr_ptl_mem_register(struct sctk_rail_info_s *rail,
                         goto err;
                 }
 
-                rc = lcr_ptl_mem_activate(srail, 
+                rc = lcr_ptl_mem_activate(srail,
                                           LCR_PTL_MEM_STATIC,
-                                          (void *)addr, 
-                                          size, 
+                                          (void *)addr,
+                                          size,
                                           ctx->mem);
                 if (rc != MPC_LOWCOMM_SUCCESS) {
                         goto err;
@@ -99,36 +99,38 @@ int lcr_ptl_mem_register(struct sctk_rail_info_s *rail,
         ctx->match = ctx->mem->match;
 
         mpc_common_debug("LCR PTL: memory registration. "
-                         "addr=%p, size=%llu, match=%llu", 
-                         addr, size, ctx->match);
+                         "srail=%p, mem=%p, addr=%p, size=%llu, match=%llu",
+                         srail, ctx->mem, addr, size, ctx->match);
 err:
         return rc;
 }
 
-int lcr_ptl_mem_unregister(struct sctk_rail_info_s *rail, 
+int lcr_ptl_mem_unregister(struct sctk_rail_info_s *rail,
                             struct sctk_rail_pin_ctx_list *list)
 {
         int rc = MPC_LOWCOMM_SUCCESS;
         lcr_ptl_rail_info_t *srail   = &rail->network.ptl;
         lcr_ptl_mem_ctx_t *ctx = &list->pin.ptl;
-        
+
         mpc_common_debug("LCR PTL: memory deregistration. "
-                         "addr=%p, size=%llu, match=%llu",  
-                         ctx->start, ctx->size, ctx->match);
+                         "srail=%p, mem=%p, addr=%p, size=%llu, match=%llu",
+                         srail, ctx->mem, ctx->start, ctx->size, ctx->match);
 
         if (ctx->mem->lifetime == LCR_PTL_MEM_STATIC) {
+                mpc_common_spinlock_lock(&srail->net.rma.lock);
+                mpc_list_del(&ctx->mem->elem);
+                mpc_common_spinlock_unlock(&srail->net.rma.lock);
+
+                //NOTE: make sure resources associated with the memory are being freed
+                //      after it has been removed from the list.
                 rc = lcr_ptl_mem_deactivate(ctx->mem);
 
                 if (rc != MPC_LOWCOMM_SUCCESS) {
                         goto err;
                 }
 
-                mpc_common_spinlock_lock(&srail->net.rma.lock);
-                mpc_list_del(&ctx->mem->elem);
-                mpc_common_spinlock_unlock(&srail->net.rma.lock);
-
                 mpc_mpool_push(ctx->mem);
-        } 
+        }
 
 err:
         return rc;
@@ -138,7 +140,7 @@ int lcr_ptl_pack_rkey(sctk_rail_info_t *rail,
                       lcr_memp_t *memp, void *dest)
 {
         UNUSED(rail);
-        void *p = dest;	
+        void *p = dest;
 
         /* Serialize data. */
         *(uint64_t *)p = (uint64_t)memp->pin.ptl.start;
@@ -147,14 +149,14 @@ int lcr_ptl_pack_rkey(sctk_rail_info_t *rail,
         p += sizeof(ptl_match_bits_t);
         *(unsigned *)p = memp->pin.ptl.flags;
 
-        return sizeof(uint64_t) + sizeof(ptl_match_bits_t) + sizeof(unsigned); 
+        return sizeof(uint64_t) + sizeof(ptl_match_bits_t) + sizeof(unsigned);
 }
 
 int lcr_ptl_unpack_rkey(sctk_rail_info_t *rail,
                         lcr_memp_t *memp, void *dest)
 {
         UNUSED(rail);
-        void *p = dest;	
+        void *p = dest;
 
         /* deserialize data */
         memp->pin.ptl.start = (void *)(*(uint64_t *)p);
@@ -170,7 +172,7 @@ int lcr_ptl_unpack_rkey(sctk_rail_info_t *rail,
  * Flush operations.
  *################################################*/
 
-int lcr_ptl_flush_txq(lcr_ptl_mem_t *mem, lcr_ptl_txq_t *txq, int64_t completed) 
+int lcr_ptl_flush_txq(lcr_ptl_mem_t *mem, lcr_ptl_txq_t *txq, int64_t completed)
 {
         UNUSED(mem);
         lcr_ptl_op_t *op;
@@ -179,20 +181,20 @@ int lcr_ptl_flush_txq(lcr_ptl_mem_t *mem, lcr_ptl_txq_t *txq, int64_t completed)
         mpc_common_spinlock_lock(&txq->lock);
 
         /* Loop over pending operations and complete if identifier is lower than
-         * number of completed operations. */ 
+         * number of completed operations. */
         mpc_queue_for_each_safe(op, iter, lcr_ptl_op_t, &txq->ops, elem) {
                 if (op->id < completed) {
                         mpc_queue_del_iter(&txq->ops, iter);
                         lcr_ptl_complete_op(op);
                 }
         }
-        
+
         mpc_common_spinlock_unlock(&txq->lock);
 
         return MPC_LOWCOMM_SUCCESS;
 }
 
-int lcr_ptl_exec_flush_mem_ep(lcr_ptl_mem_t *mem, lcr_ptl_ep_info_t *ep, 
+int lcr_ptl_exec_flush_mem_ep(lcr_ptl_mem_t *mem, lcr_ptl_ep_info_t *ep,
                          lcr_ptl_op_t *flush_op)
 {
         int rc = MPC_LOWCOMM_SUCCESS;
@@ -220,7 +222,7 @@ int lcr_ptl_flush_mem_ep(sctk_rail_info_t *rail,
                          _mpc_lowcomm_endpoint_t *ep,
                          struct sctk_rail_pin_ctx_list *list,
                          lcr_completion_t *comp,
-                         unsigned flags) 
+                         unsigned flags)
 {
         UNUSED(flags);
         int rc = MPC_LOWCOMM_SUCCESS;
@@ -241,11 +243,11 @@ int lcr_ptl_flush_mem_ep(sctk_rail_info_t *rail,
 
         assert(mem != NULL && ep != NULL);
 
-        _lcr_ptl_init_op_common(op, 0, lkey->mdh, 
-                                ptl_ep->addr.id, 
-                                ptl_ep->addr.pte.rma, 
-                                LCR_PTL_OP_RMA_FLUSH, 
-                                0, comp, 
+        _lcr_ptl_init_op_common(op, 0, lkey->mdh,
+                                ptl_ep->addr.id,
+                                ptl_ep->addr.pte.rma,
+                                LCR_PTL_OP_RMA_FLUSH,
+                                0, comp,
                                 NULL);
 
         mpc_common_spinlock_lock(&ptl_ep->lock);
@@ -267,8 +269,8 @@ err:
         return rc;
 }
 
-static int lcr_ptl_exec_flush_ep(lcr_ptl_rail_info_t *srail, 
-                                 lcr_ptl_ep_info_t *ep, 
+static int lcr_ptl_exec_flush_ep(lcr_ptl_rail_info_t *srail,
+                                 lcr_ptl_ep_info_t *ep,
                                  lcr_ptl_op_t *flush_op)
 {
         int rc = MPC_LOWCOMM_SUCCESS, i = 0;
@@ -302,7 +304,7 @@ static int lcr_ptl_exec_flush_ep(lcr_ptl_rail_info_t *srail,
 int lcr_ptl_flush_ep(sctk_rail_info_t *rail,
                      _mpc_lowcomm_endpoint_t *ep,
                      lcr_completion_t *comp,
-                     unsigned flags) 
+                     unsigned flags)
 {
         UNUSED(flags);
         int rc = MPC_LOWCOMM_SUCCESS, i = 0;
@@ -320,11 +322,11 @@ int lcr_ptl_flush_ep(sctk_rail_info_t *rail,
         }
         mpc_list_init_head(&op->flush.mem_head);
 
-        _lcr_ptl_init_op_common(op, 0, PTL_INVALID_HANDLE, 
-                                ptl_ep->addr.id, 
-                                ptl_ep->addr.pte.rma, 
-                                LCR_PTL_OP_RMA_FLUSH, 
-                                0, comp, 
+        _lcr_ptl_init_op_common(op, 0, PTL_INVALID_HANDLE,
+                                ptl_ep->addr.id,
+                                ptl_ep->addr.pte.rma,
+                                LCR_PTL_OP_RMA_FLUSH,
+                                0, comp,
                                 NULL);
 
         assert(ep != NULL);
@@ -352,7 +354,7 @@ err:
 }
 
 static int lcr_ptl_exec_flush_mem(lcr_ptl_rail_info_t *srail,
-                      lcr_ptl_mem_t *mem, 
+                      lcr_ptl_mem_t *mem,
                       lcr_ptl_op_t *flush_op)
 {
         int rc = MPC_LOWCOMM_SUCCESS;
@@ -380,7 +382,7 @@ static int lcr_ptl_exec_flush_mem(lcr_ptl_rail_info_t *srail,
 int lcr_ptl_flush_mem(sctk_rail_info_t *rail,
                   struct sctk_rail_pin_ctx_list *list,
                   lcr_completion_t *comp,
-                  unsigned flags) 
+                  unsigned flags)
 {
         UNUSED(flags);
         int rc = MPC_LOWCOMM_SUCCESS;
@@ -399,11 +401,11 @@ int lcr_ptl_flush_mem(sctk_rail_info_t *rail,
         mpc_list_init_head(&op->flush.mem_head);
 
         assert(mem != NULL);
-        _lcr_ptl_init_op_common(op, 0, lkey->mdh, 
-                                LCR_PTL_PROCESS_ANY, 
-                                srail->net.rma.pti, 
-                                LCR_PTL_OP_RMA_FLUSH, 
-                                0, comp, 
+        _lcr_ptl_init_op_common(op, 0, lkey->mdh,
+                                LCR_PTL_PROCESS_ANY,
+                                srail->net.rma.pti,
+                                LCR_PTL_OP_RMA_FLUSH,
+                                0, comp,
                                 NULL);
 
         mpc_common_spinlock_lock(&mem->lock);
@@ -425,8 +427,8 @@ err:
         return rc;
 }
 
-static int lcr_ptl_exec_flush_iface(lcr_ptl_rail_info_t *srail, lcr_ptl_op_t *flush_op) 
-{ 
+static int lcr_ptl_exec_flush_iface(lcr_ptl_rail_info_t *srail, lcr_ptl_op_t *flush_op)
+{
         int rc = MPC_LOWCOMM_SUCCESS;
         int i, it = 0, num_eps = 0;
         int is_pushed = 0;
@@ -464,7 +466,7 @@ static int lcr_ptl_exec_flush_iface(lcr_ptl_rail_info_t *srail, lcr_ptl_op_t *fl
 
 int lcr_ptl_flush_iface(sctk_rail_info_t *rail,
                         lcr_completion_t *comp,
-                        unsigned flags) 
+                        unsigned flags)
 {
         UNUSED(flags);
         int rc = MPC_LOWCOMM_SUCCESS, i = 0;
@@ -482,11 +484,11 @@ int lcr_ptl_flush_iface(sctk_rail_info_t *rail,
         mpc_list_init_head(&op->flush.mem_head);
 
         //FIXME: no need for underscore in function name. To be removed.
-        _lcr_ptl_init_op_common(op, 0, PTL_INVALID_HANDLE, 
-                                LCR_PTL_PROCESS_ANY, 
-                                srail->net.rma.pti, 
-                                LCR_PTL_OP_RMA_FLUSH, 
-                                0, comp, 
+        _lcr_ptl_init_op_common(op, 0, PTL_INVALID_HANDLE,
+                                LCR_PTL_PROCESS_ANY,
+                                srail->net.rma.pti,
+                                LCR_PTL_OP_RMA_FLUSH,
+                                0, comp,
                                 NULL);
 
         op->flush.outstandings = 0;
