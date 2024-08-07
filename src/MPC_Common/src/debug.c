@@ -120,7 +120,7 @@ static void __log_to_file(char *filename, int line, const char *funcname, const 
 
 	double ts = mpc_arch_get_timestamp_gettimeofday();
 
-	(void)fprintf(__log_outfile, "{ \"time\" : %.24g, \"task\" : %d, \"process\" : %d, \"node\" : %d, \"filename\" : \"%s\", \"line\" : %d , \"funcname\" : '%s' , \"verbosity\" : \"%s\", \"module\" : '%s', \"content\" : \"%s\"}\n",
+	(void)fprintf(__log_outfile, "{ \"time\" : %.24g, \"task\" : %d, \"process\" : %d, \"node\" : %d, \"filename\" : \"%s\", \"line\" : %d , \"funcname\" : \"%s\" , \"verbosity\" : \"%s\", \"module\" : \"%s\", \"content\" : \"%s\"}\n",
 	ts,
 	task,
 	process,
