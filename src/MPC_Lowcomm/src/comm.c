@@ -3685,6 +3685,8 @@ int _mpc_lowcomm_isend(int dest, const void *data, size_t size, int tag,
 	if ( req->is_allocated == MPC_LOWCOMM_REQUEST_ALLOC )
 	{
 		param.field_mask |= LCP_REQUEST_USER_REQUEST;
+        } else {
+                req->flags = 0;
         }
 
 	request = lcp_tag_send_nb(ep, task, data, size, &tag_info, &param);
@@ -3771,6 +3773,8 @@ int mpc_lowcomm_irecv(int src, void *data, size_t size, int tag,
         };
         if (req->is_allocated == MPC_LOWCOMM_REQUEST_ALLOC) {
                 param.field_mask |= LCP_REQUEST_USER_REQUEST;
+        } else {
+                req->flags = 0;
         }
 
         request = lcp_tag_recv_nb(lcp_mngr_loc, task, data, size, &tag_info,
