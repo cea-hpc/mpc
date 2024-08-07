@@ -793,7 +793,7 @@ int ____handle_incoming_eager(__UNUSED__ struct _mpc_shm_storage * storage, sctk
 		mpc_common_debug_fatal("LCP: handler id %d not supported.", hdr->am_id);
 	}
 
-	int rc = handler.cb(handler.arg, hdr->data, hdr->length, 0);
+	int rc = handler.cb(handler.arg, hdr->data, hdr->length, LCR_IFACE_AM_LAYOUT_BUFFER);
 
 	if (rc != MPC_LOWCOMM_SUCCESS) {
 		mpc_common_debug_error("LCP: handler id %d failed.", hdr->am_id);

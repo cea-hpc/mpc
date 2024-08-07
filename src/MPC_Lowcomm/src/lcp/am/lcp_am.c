@@ -613,5 +613,5 @@ err:
 
 LCP_DEFINE_AM(LCP_AM_ID_EAGER_AM, lcp_eager_am_handler, 0);
 LCP_DEFINE_AM(LCP_AM_ID_EAGER_AM_SYNC, lcp_eager_am_sync_handler, 0);
-LCP_DEFINE_AM(LCP_AM_ID_ACK_SYNC, lcp_eager_am_sync_ack_handler, 0);
+LCP_DEFINE_AM(LCP_AM_ID_ACK_AM_SYNC, lcp_eager_am_sync_ack_handler, 0);
 LCP_DEFINE_AM(LCP_AM_ID_RTS_AM, lcp_rndv_am_handler, 0);
