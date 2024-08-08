@@ -241,11 +241,9 @@ static int _lcp_context_load_ctx_config(lcp_context_h ctx, lcp_context_param_t *
         }
 
         /* Check offload capabilities. */
-        int has_offload = 0;
         ctx->config.offload = 0;
         for (i = 0; i < num_configs; i++) {
                 if(rail_configs[i]->offload) {
-                        has_offload = 1;
                         ctx->config.offload = 1;
                 }
         }
@@ -297,13 +295,6 @@ static int _lcp_context_load_ctx_config(lcp_context_h ctx, lcp_context_param_t *
                 //      has been sent eagerly.
                 mpc_common_debug_error("LCP CTX: offload must be run in "
                                        "process mode.");
-                rc = MPC_LOWCOMM_ERROR;
-                goto err_free;
-        }
-
-        if (ctx->config.offload && !has_offload) {
-                mpc_common_debug_error("LCP CTX: offload requested but no available "
-                                       "interface to support it");
                 rc = MPC_LOWCOMM_ERROR;
                 goto err_free;
         }

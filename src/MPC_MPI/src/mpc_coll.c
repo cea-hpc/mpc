@@ -1320,7 +1320,7 @@ int PMPI_Ibcast (void *buffer, int count, MPI_Datatype datatype, int root, MPI_C
   if(csize == 1)
   {
     res = PMPI_Bcast (buffer, count, datatype, root, comm);
-    MPI_internal_request_t *tmp = *request;
+    MPI_internal_request_t *tmp = *request = mpc_lowcomm_request_alloc();
     mpc_lowcomm_request_t *mpc_req = _mpc_cl_get_lowcomm_request(tmp);
     //tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
     //tmp->req.completion_flag = MPC_LOWCOMM_MESSAGE_DONE;

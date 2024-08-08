@@ -104,11 +104,20 @@ err:
 }
 
 /**
- * @brief Initialize an endpoint.
+ * Initialize endpoint configuration and thresholds.
+ * //NOTE: Thresholds where initially designed to support non-composable
+ *         heterogenous interfaces that is why we take the minimum between all
+ *         thresholds so that message size is supported by all rail during a striping
+ *         algorithm for example.
+ * //NOTE: Because of the connection establishment algorithm in
+ *         lcp_ep_init_channels, the endpoint available bitmap will be set only
+ *         for a single type of interface (either TBSM, PTL, OFI,...). As
+ *         a consequence, the only case where a endpoint {am,tag,ato,rma}
+ *         bitmap have multiple bits set is the multirail.
+ * //TODO: In the case where heterogeneous multirail need to be supported, then
+ *         modification will probably be needed in the endpoint config
+ *         initialization (threshold min).
  *
- * @param ctx context to retreive the resources
- * @param ep endpoint to initialize
- * @return int MPI_SUCCESS in case of success
  */
 static int lcp_ep_init_config(lcp_manager_h mngr, lcp_ep_h ep)
 {
@@ -174,8 +183,6 @@ static int lcp_ep_init_config(lcp_manager_h mngr, lcp_ep_h ep)
                         ep->config.ato.max_post_size = mpc_common_min(ep->config.ato.max_post_size,
                                                                        attr.iface.cap.ato.max_post_size);
 
-                        //NOTE: first interface is taken. Define a better
-                        //      strategy.
                         if (ep->ato_chnl == LCP_NULL_CHANNEL) {
                                 ep->ato_chnl = i;
                         }
@@ -313,6 +320,9 @@ static int lcp_ep_init_channels(lcp_manager_h mngr, lcp_ep_h ep,
 		}
 
 		/* Set selected rail priority */
+                //NOTE: because rail are already ordered in descending order of
+                //      priority, only the first UID-reachable interface with
+                //      highest priority will be selected.
 		if(iface->priority >= selected_prio)
 		{
 			selected_prio = iface->priority;
