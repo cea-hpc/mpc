@@ -37,6 +37,7 @@
 	#include <pmix.h>
 	#define PMI_SUCCESS PMIX_SUCCESS
 	#define PMI_FAIL PMIX_FAIL
+        #define PMI_ERR_INVALID_KEY PMIX_ERR_INVALID_KEY
 #else
 	#include <pmi.h>
 #include <stddef.h>
