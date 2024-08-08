@@ -1158,6 +1158,8 @@ int mpc_shm_get_attr(__UNUSED__ sctk_rail_info_t *rail,
 
         attr->iface.cap.flags = rail->cap;
 
+        attr->mem.size_packed_mkey = sizeof(_mpc_lowcomm_shm_pinning_ctx_t);
+
 	return MPC_LOWCOMM_SUCCESS;
 }
 
