@@ -465,7 +465,7 @@ int lcp_request_check_status(void *request);
  * @return Error code returned or pointer to request. Use \ref
  *         lcp_request_check_status to check completion.
  */
-lcp_status_ptr_t lcp_tag_send_nb(lcp_ep_h ep, lcp_task_h task, const void *buffer,
+lcp_status_ptr_t lcp_tag_send_nb(lcp_ep_h ep, lcp_task_h task, void *buffer,
                                  size_t count, lcp_tag_info_t *tag_info,
                                  const lcp_request_param_t *param);
 
