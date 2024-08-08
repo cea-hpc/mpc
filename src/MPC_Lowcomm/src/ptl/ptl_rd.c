@@ -196,7 +196,7 @@ int lcr_ptl_iface_open(int mngr_id, const char *device_name, int id,
 		assert(tmp_ret == 0);
 	}
         /* Add new API call */
-	//iface->iface_get_attr      = lcr_ptl_get_attr;
+	iface->iface_get_attr       = lcr_ptl_get_attr;
 
         /* Active message calls */
         iface->send_am_bcopy        = lcr_ptl_send_am_bcopy;

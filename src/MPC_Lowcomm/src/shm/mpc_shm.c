@@ -648,7 +648,7 @@ static inline void __deffered_completion_cb(void *pcomp)
 
 int __get_zcopy_over_frag(_mpc_lowcomm_endpoint_t *ep,
                            uint64_t local_addr,
-                           uint64_t remote_offset,
+                           uint64_t remote_addr,
                            lcr_memp_t *remote_key,
                            size_t size,
                            lcr_completion_t *comp)
@@ -678,7 +678,7 @@ int __get_zcopy_over_frag(_mpc_lowcomm_endpoint_t *ep,
    get->source = mpc_lowcomm_monitor_get_uid();
    get->frag_id = fragment_id;
    get->segment_id = remote_key->pin.shm.id;
-   get->offset = remote_offset;
+   get->offset = remote_addr - (uint64_t)remote_key->pin.shm.addr;
    get->size = size;
 
    _mpc_shm_storage_send_cell(&rail->network.shm.storage,
@@ -691,14 +691,15 @@ int __get_zcopy_over_frag(_mpc_lowcomm_endpoint_t *ep,
 #ifdef MPC_USE_CMA
 int __get_zcopy_over_cma(_mpc_lowcomm_endpoint_t *ep,
                            uint64_t local_addr,
-                           uint64_t remote_offset,
+                           uint64_t remote_addr,
                            lcr_memp_t *remote_key,
                            size_t size,
                            lcr_completion_t *comp)
 {
+   UNUSED(remote_key);
    pid_t target_pid = ep->data.shm.cma_pid;
    assume(0 <= target_pid);
-   int ret = __do_cma_read(target_pid, remote_key->pin.shm.addr + remote_offset, (void*)local_addr, size);
+   int ret = __do_cma_read(target_pid, (void *)remote_addr, (void*)local_addr, size);
    assume(ret == 0);
 
    comp->sent = size;
@@ -709,14 +710,15 @@ int __get_zcopy_over_cma(_mpc_lowcomm_endpoint_t *ep,
 
 int __put_zcopy_over_cma(_mpc_lowcomm_endpoint_t *ep,
                            uint64_t local_addr,
-                           uint64_t remote_offset,
+                           uint64_t remote_addr,
                            lcr_memp_t *remote_key,
                            size_t size,
                            lcr_completion_t *comp)
 {
+   UNUSED(remote_key);
    pid_t target_pid = ep->data.shm.cma_pid;
    assume(0 <= target_pid);
-   int ret = __do_cma_write(target_pid, remote_key->pin.shm.addr + remote_offset, (void*)local_addr, size);
+   int ret = __do_cma_write(target_pid, (void *)remote_addr, (void*)local_addr, size);
    assume(ret == 0);
 
    comp->sent = size;
@@ -730,7 +732,7 @@ int __put_zcopy_over_cma(_mpc_lowcomm_endpoint_t *ep,
 
 int mpc_shm_get_zcopy(_mpc_lowcomm_endpoint_t *ep,
                            uint64_t local_addr,
-                           uint64_t remote_offset,
+                           uint64_t remote_addr,
                            lcr_memp_t *local_key,
                            lcr_memp_t *remote_key,
                            size_t size,
@@ -743,12 +745,12 @@ int mpc_shm_get_zcopy(_mpc_lowcomm_endpoint_t *ep,
 
    if(cma)
    {
-         return __get_zcopy_over_cma(ep, local_addr, remote_offset, remote_key, size, comp);
+         return __get_zcopy_over_cma(ep, local_addr, remote_addr, remote_key, size, comp);
    }
 
 #endif
 
-   return __get_zcopy_over_frag(ep, local_addr, remote_offset, remote_key, size, comp);
+   return __get_zcopy_over_frag(ep, local_addr, remote_addr, remote_key, size, comp);
 }
 
 
@@ -756,7 +758,7 @@ int mpc_shm_get_zcopy(_mpc_lowcomm_endpoint_t *ep,
 
 int mpc_shm_put_zcopy(_mpc_lowcomm_endpoint_t *ep,
                         uint64_t local_addr,
-                        uint64_t remote_offset,
+                        uint64_t remote_addr,
                         lcr_memp_t *local_key,
                         lcr_memp_t *remote_key,
                         size_t size,
@@ -769,7 +771,7 @@ int mpc_shm_put_zcopy(_mpc_lowcomm_endpoint_t *ep,
 
    if(cma)
    {
-         return __put_zcopy_over_cma(ep, local_addr, remote_offset, remote_key, size, comp);
+         return __put_zcopy_over_cma(ep, local_addr, remote_addr, remote_key, size, comp);
    }
 
 #endif
@@ -1153,6 +1155,8 @@ int mpc_shm_get_attr(__UNUSED__ sctk_rail_info_t *rail,
 
 	attr->iface.cap.rndv.max_put_zcopy = INT_MAX;
 	attr->iface.cap.rndv.max_get_zcopy = INT_MAX;
+
+        attr->iface.cap.flags = rail->cap;
 
 	return MPC_LOWCOMM_SUCCESS;
 }

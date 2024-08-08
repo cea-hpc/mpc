@@ -46,6 +46,7 @@
 #include <rndv/lcp_rndv.h>
 
 #include "mpc_common_debug.h"
+#include "mpc_lowcomm_types.h"
 
 /* ============================================== */
 /* Packing                                        */
@@ -188,7 +189,8 @@ static ssize_t lcp_send_tag_rndv_pack(void *dest, void *data)
 /* ============================================== */
 
 /**
- * @brief Complete a request by its tag
+ * @brief Complete a request locally. If remote completion is also flagged, then
+ * release the request.
  *
  * @param comp completion
  */
@@ -197,8 +199,8 @@ static void lcp_tag_send_complete(lcr_completion_t *comp) {
 	lcp_request_t *req = mpc_container_of(comp, lcp_request_t,
 					      state.comp);
 
-        if ((req->flags & LCP_REQUEST_REMOTE_COMPLETED) &&
-            (req->flags & LCP_REQUEST_LOCAL_COMPLETED)) {
+        req->flags |= LCP_REQUEST_LOCAL_COMPLETED;
+        if (req->flags & LCP_REQUEST_REMOTE_COMPLETED) {
                 req->status = MPC_LOWCOMM_SUCCESS;
                 lcp_request_complete(req, send.send_cb, req->status, req->send.length);
         }
@@ -250,7 +252,7 @@ int lcp_send_eager_tag_bcopy(lcp_request_t *req)
 
                 req->msg_id = (uint64_t)req;
                 //NOTE: REMOTE_COMPLETED flag set whenever ack has been
-                //received.
+                //      received.
         } else {
                 pack_cb     = lcp_send_tag_eager_pack;
                 am_id       = LCP_AM_ID_EAGER_TAG;
@@ -263,7 +265,6 @@ int lcp_send_eager_tag_bcopy(lcp_request_t *req)
                 goto err;
         }
 
-        req->flags |= LCP_REQUEST_LOCAL_COMPLETED;
         lcp_tag_send_complete(&(req->state.comp));
 
 err:
@@ -297,8 +298,6 @@ int lcp_send_eager_tag_zcopy(lcp_request_t *req)
                               "dest=%d, tag=%d, length=%d", req->send.tag.comm,
                               req->send.tag.src_tid, req->send.tag.dest_tid,
                               req->send.tag.tag, req->send.length);
-
-        req->flags |= LCP_REQUEST_LOCAL_COMPLETED;
 
         iov[0].iov_base = (void *)req->send.buffer;
         iov[0].iov_len  = req->send.length;
@@ -337,6 +336,10 @@ int lcp_send_eager_tag_zcopy(lcp_request_t *req)
                                   hdr, hdr_size,
                                   iov, iovcnt,
                                   &(req->state.comp));
+        if (rc != MPC_LOWCOMM_SUCCESS) {
+                goto err;
+        }
+err:
 	return rc;
 }
 
@@ -369,7 +372,7 @@ int lcp_send_eager_sync_ack(lcp_request_t *super, void *data)
                          hdr->base.dest_tid);
 
         payload_size = lcp_send_eager_bcopy(ack, lcp_send_ack_pack,
-                                            LCP_AM_ID_ACK_SYNC);
+                                            LCP_AM_ID_ACK_TAG_SYNC);
         if (payload_size < 0) {
                 rc = MPC_LOWCOMM_ERROR;
                 goto err;
@@ -703,7 +706,10 @@ static int lcp_eager_tag_sync_ack_handler(void *arg, void *data,
         /* Set remote flag so that request can be actually completed */
 	req->flags |= LCP_REQUEST_REMOTE_COMPLETED;
 
-	lcp_tag_send_complete(&(req->state.comp));
+        if (req->flags & LCP_REQUEST_LOCAL_COMPLETED) {
+                req->status = MPC_LOWCOMM_SUCCESS;
+                lcp_request_complete(req, send.send_cb, req->status, req->send.length);
+        }
 err:
         return rc;
 }
@@ -775,5 +781,5 @@ err:
 
 LCP_DEFINE_AM(LCP_AM_ID_EAGER_TAG, lcp_eager_tag_handler, 0);
 LCP_DEFINE_AM(LCP_AM_ID_EAGER_TAG_SYNC, lcp_eager_tag_sync_handler, 0);
-LCP_DEFINE_AM(LCP_AM_ID_ACK_SYNC, lcp_eager_tag_sync_ack_handler, 0);
+LCP_DEFINE_AM(LCP_AM_ID_ACK_TAG_SYNC, lcp_eager_tag_sync_ack_handler, 0);
 LCP_DEFINE_AM(LCP_AM_ID_RTS_TAG, lcp_rndv_tag_handler, 0);

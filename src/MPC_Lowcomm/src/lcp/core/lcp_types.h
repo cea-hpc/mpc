@@ -49,7 +49,7 @@ enum {
         LCP_AM_ID_EAGER_TAG_SYNC, /* Eager Tag Synchronize                 */
         LCP_AM_ID_EAGER_AM,       /* Eager Active message                  */
         LCP_AM_ID_EAGER_AM_SYNC,  /* Eager Active message                  */
-        LCP_AM_ID_ACK_SYNC,       /* Ack synchronize                       */
+        LCP_AM_ID_ACK_TAG_SYNC,   /* Ack synchronize                       */
         LCP_AM_ID_ACK_AM_SYNC,    /* Ack synchronize                       */
         LCP_AM_ID_RTS_AM,         /* Ready To Send (RTS) Active Message    */
         LCP_AM_ID_RTS_TAG,        /* Ready To Send (RTS) Tag               */
