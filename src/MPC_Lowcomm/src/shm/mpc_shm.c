@@ -1132,6 +1132,70 @@ void __add_node_local_routes(sctk_rail_info_t *rail)
 
 }
 
+int mpc_shm_flush_mem_ep(sctk_rail_info_t *rail,
+                         _mpc_lowcomm_endpoint_t *ep,
+                         struct sctk_rail_pin_ctx_list *list,
+                         lcr_completion_t *comp,
+                         unsigned flags)
+{
+       UNUSED(rail);
+       UNUSED(ep);
+       UNUSED(list);
+       UNUSED(flags);
+       UNUSED(comp);
+       TODO("To be implemented.");
+
+       comp->comp_cb(comp);
+
+       return MPC_LOWCOMM_SUCCESS;
+}
+
+int mpc_shm_flush_ep(sctk_rail_info_t *rail,
+                      _mpc_lowcomm_endpoint_t *ep,
+                      lcr_completion_t *comp,
+                      unsigned flags)
+{
+       UNUSED(rail);
+       UNUSED(ep);
+       UNUSED(flags);
+       UNUSED(comp);
+       TODO("To be implemented.");
+
+       comp->comp_cb(comp);
+
+       return MPC_LOWCOMM_SUCCESS;
+}
+
+int mpc_shm_flush_mem(sctk_rail_info_t *rail,
+                       struct sctk_rail_pin_ctx_list *list,
+                       lcr_completion_t *comp,
+                       unsigned flags)
+{
+       UNUSED(rail);
+       UNUSED(list);
+       UNUSED(flags);
+       UNUSED(comp);
+       TODO("To be implemented.");
+
+       comp->comp_cb(comp);
+
+       return MPC_LOWCOMM_SUCCESS;
+}
+
+int mpc_shm_flush_iface(sctk_rail_info_t *rail,
+                         lcr_completion_t *comp,
+                         unsigned flags)
+{
+       UNUSED(rail);
+       UNUSED(flags);
+       UNUSED(comp);
+       TODO("To be implemented.");
+
+       comp->comp_cb(comp);
+
+       return MPC_LOWCOMM_SUCCESS;
+}
+
 int mpc_shm_iface_is_reachable(sctk_rail_info_t *rail, uint64_t uid) {
         /* If the transport endpoint hase been created, it means the UID is
          * reachable */
@@ -1238,9 +1302,13 @@ int mpc_shm_iface_open(int mngr_id, const char *device_name, int id,
    rail->get_zcopy = mpc_shm_get_zcopy;
    rail->send_am_zcopy = mpc_shm_send_am_zcopy;
    rail->put_zcopy = mpc_shm_put_zcopy;
+   rail->flush_mem_ep = mpc_shm_flush_mem_ep;
+   rail->flush_ep = mpc_shm_flush_ep;
+   rail->flush_mem = mpc_shm_flush_mem;
+   rail->flush_iface = mpc_shm_flush_iface;
 
 #if 0
-   rail->driver_finalize = _mpc_ofi_release;
+   rail->driver_finalize = mpc_shm_release;
 #endif
 
    /* Init capabilities */
