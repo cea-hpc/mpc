@@ -12,8 +12,8 @@ Privatization in MPC is achieved through compiler-based transformations that ext
 
 **Compiling a Privatized Program**
 
-Privatization in MPC can be achieved by compiling a program with `mpc_cc`, a compiler wrapper 
-similar to `mpicc`. This allows developers to utilize privatization features while still 
+Privatization in MPC can be achieved by compiling a program with `mpc_cc`, a compiler wrapper
+similar to `mpicc`. This allows developers to utilize privatization features while still
 benefiting from the flexibility and scalability of MPI.
 
 To compile a privatized program using `mpc_cc`, you can use this line:
@@ -22,7 +22,7 @@ To compile a privatized program using `mpc_cc`, you can use this line:
 
     mpc_cc -fmpc-privatize myprogram.c -o ./a.out
 
-the :code:`-fmpc-privatize` is not required since privatization is activated by default in MPC unless mpc-compiler-additions is disabled on build. To disable privatization you can use :code:`-fno-mpc-privatize`. Let's try with a C code that would be problematic on thread-based runtime without privatization: 
+the :code:`-fmpc-privatize` is not required since privatization is activated by default in MPC unless mpc-compiler-additions is disabled on build. To disable privatization you can use :code:`-fno-mpc-privatize`. Let's try with a C code that would be problematic on thread-based runtime without privatization:
 
 .. code-block:: c
 
@@ -33,12 +33,12 @@ the :code:`-fmpc-privatize` is not required since privatization is activated by 
 
     int main(int argc, char **argv){
         MPI_Init(&argc, &argv);
-        MPI_Comm_rank(MPI_COMM_WORLD, &rank); 
+        MPI_Comm_rank(MPI_COMM_WORLD, &rank);
         // here rank is not mixed up when running thread-based
         return 0;
     }
 
-The previous compilation command line ensures the following code behaves properly when launched with the following mpcrun options : 
+The previous compilation command line ensures the following code behaves properly when launched with the following mpcrun options :
 
 .. code-block:: bash
 

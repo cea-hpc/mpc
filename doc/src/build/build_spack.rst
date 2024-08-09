@@ -4,7 +4,9 @@ Using spack
 Preamble
 --------
 
-You should be able to use the basics of spack to install MPC using this guide. For extra help on Spack, you can check out `the official Spack documentation <https://spack.readthedocs.io/en/latest/>`_.
+You should be able to use the basics of spack to install MPC using this guide.
+For extra help on Spack, you can check out `the official Spack documentation
+<https://spack.readthedocs.io/en/latest/>`_.
 
 Initial Deploy
 --------------
@@ -32,7 +34,7 @@ Prepare Offline Bootstrap
 	spack bootstrap add --trust local-sources \[XXX\]/spack_bootstrap_mirror/metadata/sources
 	spack bootstrap add --trust local-binaries \[XXX\]/spack_bootstrap_mirror/metadata/sources
 	# Now trigger clingo install
-	spack spec hdf5 
+	spack spec hdf5
 
 Add MPC Repositories
 --------------------
@@ -40,7 +42,7 @@ Add MPC Repositories
 To do so you need access to `\~mpc`
 
 .. code-block:: sh
-		
+
 	# Add MPC repository
 	spack repo add ~mpc/MPC_Spack/mpc_spack_repo
 	# Add MPC mirror (all deps for MPC and Clingo see below)

@@ -1,9 +1,9 @@
-Runtime documentation
-=====================
+================
+Using MPC
+================
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
 
    runtime/runtime_mpcrun
    runtime/runtime_options

@@ -11,7 +11,7 @@ mpcrun provides several options for configuring the launch process. These includ
 * `-n=n`: Total number of tasks (default: 1)
 * `-c=n`: Number of cpus per UNIX process (default: 1)
 
-You can see the hierarchy of tasks and processes in mpc runtime : 
+You can see the hierarchy of tasks and processes in mpc runtime :
 
 .. figure:: ../_static/mpc_task_hierarchy.png
 
@@ -39,8 +39,7 @@ mpcrun provides options for configuring the network:
 	+ `shm`: Use shared memory for inter-process communication
 	+ `tcpshm`: Use TCP/IP with shared memory for inter-process communication
 
-For example ``mpcrun -net shm ./my_mpi_app`` launches `my_mpi_app` using shared memory for inter-process communication. For a complete list of available networks please refer to the :doc:`complete documentation<../networks>`
-
+For example ``mpcrun -net shm ./my_mpi_app`` launches `my_mpi_app` using shared memory for inter-process communication.
 Launcher
 --------
 
@@ -66,7 +65,7 @@ The partition selection is not included directly into mpcrun command. However yo
 Other Options
 -------------
 
-mpcrun provides several other options for customizing the launch process. These 
+mpcrun provides several other options for customizing the launch process. These
 include:
 
 * `-h`, `--help`: Display this help message

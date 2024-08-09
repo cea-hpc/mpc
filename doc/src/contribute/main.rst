@@ -1,6 +1,6 @@
-========================
-How to contribute to MPC
-========================
+===============
+Developer Guide
+===============
 
 How to use Gitlab (MPC-related)?
 The first thing to do is sign up (https://gitlab.paratools.com). Please note
@@ -29,8 +29,8 @@ shortcuts, more to be appended over time :
    :maxdepth: 2
    :caption: Contents:
 
-   contribute/contribute_setup
-   contribute/contribute_commit
-   contribute/contribute_issue
-   contribute/contribute_merge_request
-   contribute/contribute_pipeline
+   contribute_setup
+   contribute_commit
+   contribute_issue
+   contribute_merge_request
+   contribute_pipeline

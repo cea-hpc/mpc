@@ -148,15 +148,16 @@ MPC Documentation
 MPC Documentation is under active development and can be found in the following
 locations:
 
-- The Official website for the whole project: (http://mpc.hpcframework.com/) 
+- The Official website for the whole project: (http://mpc.hpcframework.com/)
 - In-place documentation (within source code), under Doxygen formatting. Please
-note that this is currently in progress and not everything is fully documented. 
-Feel free to contact one of the maintainers mentioned in the MAINTAINERS file.
+  note that this is currently in progress and not everything is fully documented.
+  Feel free to contact one of the maintainers mentioned in the MAINTAINERS file.
 - A complete documentation based on currently-written Doxygen AND Markdown files
-placed in modules that can be generated. Please consult the /doc/Doxyfile.in
-to customize the generation to the needs. Once ready, please run
-``./doc/gen_doc``. Be sure to have Doxygen in your PATH along with Graphviz (not
-mandatory) for drawings.
+  placed in modules that can be generated. Please consult the /doc/Doxyfile.in
+  to customize the generation to the needs. Once ready, please run
+  ``./doc/gen_doc``. Be sure to have Doxygen in your PATH along with Graphviz (not
+  mandatory) for drawings.
+
 
 -----------------
 Table of Contents
@@ -168,22 +169,16 @@ Table of Contents
 
    start
    build
-   runtime
-   networks
+   usage
    faq
    issues
-
-.. toctree::
-   :caption: Advanced
-
-   privatization
-
-.. toctree::
-   :caption: Resources
-
-   contribute
    changelog
-   annex
+
+.. toctree::
+   :caption: MPC-specific
+
+   features/privatization
+   contribute/main
 
 .. toctree::
    :caption: Links
