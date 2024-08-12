@@ -21,12 +21,12 @@
 /* #                                                                      # */
 /* ######################################################################## */
 #include <math.h>
-#include <mpi_conf.h>
 #include <stddef.h>
 
 #include "mpc_keywords.h"
 #include "mpc_mpi.h"
 #include "mpc_mpi_internal.h"
+#include "mpi_conf.h"
 #include "comm_lib.h"
 #include "egreq_nbc.h"
 #include "mpc_coll_weak.h"
@@ -1763,6 +1763,11 @@ int __INTERNAL__collectives_bcast_topo_depth(void *buffer, int count, MPI_Dataty
       MPI_Comm master_comm = info->hardware_info_ptr->rootcomm[k];
 
       res = _mpc_mpi_config()->coll_algorithm_intracomm.bcast(buffer, count, datatype, 0, master_comm, coll_type, schedule, info);
+      if (res != MPI_SUCCESS)
+      {
+      	  mpc_common_debug_error("Bcast topo: Intracomm bcast failed on level %d", k);
+      }
+      MPI_HANDLE_ERROR(res, comm, "Bcast topo: Intracomm bcast failed");
 
       ___collectives_barrier_type(coll_type, schedule, info);
     }
@@ -1827,11 +1832,6 @@ int ___collectives_bcast_topo(void *buffer, int count, MPI_Datatype datatype, in
   int shallowest_level = 0;
 
   res = __INTERNAL__collectives_bcast_topo_depth(buffer, count, datatype, root, comm, coll_type, schedule, info, shallowest_level);
-	  if (res != MPI_SUCCESS)
-	  {
-		  mpc_common_debug_error("Bcast topo: Intracomm bcast failed on level %d", k);
-	  }
-	  MPI_HANDLE_ERROR(res, comm, "Bcast topo: Intracomm bcast failed");
   info->flag = initial_flag;
 
   return res;
@@ -7516,7 +7516,7 @@ int ___collectives_allgather_topo_gather_allgather_broadcast(const void *sendbuf
       // For some reason, we ended up here
       // We cannot create topological and they aren't already created
       // Fallback to non-topological algorithms
-      
+
       mpc_common_debug_log("TOPO ALLG | RANK %d | Fallback to non-topological algorithm\n", rank);
 
       res = _mpc_mpi_config()->coll_algorithm_intracomm.allgather(sendbuf, tmp_sendcount, sendtype, recvbuf, recvcount, recvtype, comm, coll_type, schedule, info);
@@ -7556,7 +7556,7 @@ int ___collectives_allgather_topo_gather_allgather_broadcast(const void *sendbuf
 
   int rank_split;
   _mpc_cl_comm_rank(info->hardware_info_ptr->hwcomm[i + 1], &rank_split);
-  
+
   if(!rank_split) { // Level 0 processes
     MPI_Comm master_comm = info->hardware_info_ptr->rootcomm[i];
 
