@@ -12,7 +12,7 @@ run MPI Processes inside threads, being a thread-based MPI.
 
 MPC supports the MPI 3.1 standard in both thread-based and process-based flavors
 and was optimized for the Infiniband and Portals 4 networks. In MPC,
-**MPI_THREAD_MULTIPLE** is always on enabling the transparent use of shared-memory
+**MPI_THREAD_MULTIPLE** is always on, which allows transparent use of shared-memory
 parallelism with MPI.
 
 MPC comes with a suite of privatizing compilers which enable the transparent

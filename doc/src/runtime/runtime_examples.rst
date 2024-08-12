@@ -1,9 +1,9 @@
 Examples
 ========
 
-Here are a few examples of using mpcrun:
+Here are a few examples of using mpirun:
 
-Example 1:
+Simple run with `mpirun`:
 
 ::
 
@@ -13,10 +13,10 @@ This launches `my_mpi_app` with 4 nodes, each having 2 processes, and each proce
 running 4 tasks. It uses pthreads for multithreading and shared memory for 
 inter-process communication. The launcher is Hydra.
 
-Example 2:
+Debug with GDB:
 
 ::
 
-	mpcrun -dbg=gdb ./my_mpi_app
+	mpirun -N 1 -p 4 -n 4 gdb -ex 'r' ./my_mpi_app
 
 This launches `my_mpi_app` using GDB as the debugger.

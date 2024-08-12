@@ -107,7 +107,7 @@ the install prefix:
 Compiling applications
 ''''''''''''''''''''''
 
-MPC provides mutiples entry-points to build applications. Beyond the classical
+MPC provides mutiple entry-points to build applications. Beyond the classical
 ``mpicc``, ``mpicxx/mpic++`` and ``mpif*`` scripts, MPC comes with its own sets
 of compiler scripts named after the language it targets: ``mpc_cc``, ``mpc_cxx``
 & ``mpc_f77`` (common wrapper for any Fortran standard).

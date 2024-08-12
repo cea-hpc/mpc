@@ -64,10 +64,7 @@ directory mentioned in MPC wrapper output
 **Quickfix:** please ensure to rely on the same version as embedded
 within MPC source base. 
 
-**Explanation:** Because MPC is deepdly dependent of Hwloc types, errors can
-occur if old-fashioned CACHE-related types are not defined. These types are only
-present in old versions of hwloc (before 2.x). A port of MPC with recent hwloc
-in currently in mind.
+**Explanation:** Because MPC depends heavily on hwloc types, mismatching hwloc versions in your environment can lead to undefined symbols.
 
 Error with system header not found when compiling GCC
 '''''''''''''''''''''''''''''''''''''''''''''''''''''
