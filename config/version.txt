@@ -1,5 +1,5 @@
 #PACKAGE                  VERSION
-hwloc                     2.7.0
+hwloc                     2.9.3
 openpa                    1.0.5
 hydra                     3.2
 mpcalloc                  0.3
