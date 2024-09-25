@@ -472,16 +472,18 @@ class MpcRunner:
 				final_cmd += [":"]
 
 		final_cmd = [unicode(x) for x in final_cmd]
-
+		rc = 0
 		if self.show():
 			print(" ".join(final_cmd))
 		else:
-			p = subprocess.call(final_cmd)
+			p = subprocess.run(final_cmd)
+			rc = p.returncode
 		if self._launcher == "srun" and MULTICONF:
 			filesdir = os.path.join(".mpc_multiconf_launch_files")
 			for f in os.listdir(filesdir):
 				os.remove(os.path.join(filesdir, f))
 			os.rmdir(filesdir)
+		return rc
 
 
 #
@@ -535,4 +537,5 @@ if __name__ == "__main__":
 			mpc_args = conf.unfold_to_mpcargs(jargs)
 			run.push(jargs, mpc_args, cmd)
 
-		run.run()
+		rc = run.run()
+		sys.exit(rc)
