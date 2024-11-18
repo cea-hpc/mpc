@@ -644,6 +644,45 @@ typedef int MPI_T_pvar_handle;
  #  NULL delete handlers              #
  ######################################*/
 
+/** MPIT SOURCE EVENT */
+
+typedef enum {
+    MPI_T_SOURCE_ORDERED,
+    MPI_T_SOURCE_UNORDERED
+}MPI_T_source_order;
+
+/** MPIT CALLBACK */
+
+//typedef int MPI_T_event_registration;
+
+typedef struct
+{
+    int index_type;
+    void * ptr_event_registration;
+} MPI_T_event_registration;
+
+//typedef int MPI_T_event_instance;
+
+typedef struct
+{
+    int id; /* global index of instance */
+    MPI_T_event_registration* ptr_event_registration; /* event corresponding to the instance */
+    char * data; /* data of a specific event instance */
+    MPI_Count timestamp; 
+} MPI_T_event_instance;
+
+typedef enum {
+    MPI_T_CB_REQUIRE_NONE, 
+    MPI_T_CB_REQUIRE_MPI_RESTRICTED,
+    MPI_T_CB_REQUIRE_THREAD_SAFE,
+    MPI_T_CB_REQUIRE_ASYNC_SIGNAL_SAFE
+}MPI_T_cb_safety;
+
+typedef void MPI_T_event_cb_function(MPI_T_event_instance event_instance,MPI_T_event_registration event_registration,MPI_T_cb_safety cb_safety, void *user_data);
+
+typedef void MPI_T_event_free_cb_function(MPI_T_event_registration event_registration,MPI_T_cb_safety cb_safety, void *user_data);
+
+typedef void MPI_T_event_dropped_cb_function(MPI_Count count,MPI_T_event_registration event_registration, int source_index,MPI_T_cb_safety cb_safety, void *user_data);
 
 /*****************/
 /*MPI_COMM_DUP_FN*/
@@ -5519,6 +5558,65 @@ int PMPI_T_pvar_stop(MPI_T_pvar_session session, MPI_T_pvar_handle handle);
 int MPI_T_pvar_write(MPI_T_pvar_session session, MPI_T_pvar_handle handle, const void *buf);
 int PMPI_T_pvar_write(MPI_T_pvar_session session, MPI_T_pvar_handle handle, const void *buf);
 
+int MPI_T_source_get_num(int *num_sources);
+int PMPI_T_source_get_num(int *num_sources);
+
+int MPI_T_source_get_info(int source_index, char *name, int *name_len,char *desc, int *desc_len, MPI_T_source_order *ordering,MPI_Count *ticks_per_second, MPI_Count *max_ticks,MPI_Info *info);
+int PMPI_T_source_get_info(int source_index, char *name, int *name_len,char *desc, int *desc_len, MPI_T_source_order *ordering,MPI_Count *ticks_per_second, MPI_Count *max_ticks,MPI_Info *info);
+
+int MPI_T_source_get_timestamp(int source_index, MPI_Count *timestamp);
+int PMPI_T_source_get_timestamp(int source_index, MPI_Count *timestamp);
+
+/*************************
+ * EVENT *
+ *************************/
+ 
+int MPI_T_event_get_num(int *num_events);
+int PMPI_T_event_get_num(int *num_events);
+
+int MPI_T_event_get_info(int event_index, char *name, int *name_len,int *verbosity, MPI_Datatype array_of_datatypes[],MPI_Aint array_of_displacements[], int *num_elements,MPI_T_enum *enumtype, MPI_Info *info, char *desc,int *desc_len, int *bind);
+int PMPI_T_event_get_info(int event_index, char *name, int *name_len,int *verbosity, MPI_Datatype array_of_datatypes[],MPI_Aint array_of_displacements[], int *num_elements,MPI_T_enum *enumtype, MPI_Info *info, char *desc,int *desc_len, int *bind);
+
+int MPI_T_event_get_index(const char *name, int *event_index);
+int PMPI_T_event_get_index(const char *name, int *event_index);
+
+int MPI_T_event_handle_alloc(int event_index, void *obj_handle,MPI_Info info, 
+MPI_T_event_registration *event_registration);
+int PMPI_T_event_handle_alloc(int event_index, void *obj_handle,MPI_Info info, 
+MPI_T_event_registration *event_registration);
+
+int MPI_T_event_handle_set_info(MPI_T_event_registration event_registration, MPI_Info info);
+int PMPI_T_event_handle_set_info(MPI_T_event_registration event_registration, MPI_Info info);
+
+int MPI_T_event_handle_get_info(MPI_T_event_registration event_registration,MPI_Info *info_used);
+int PMPI_T_event_handle_get_info(MPI_T_event_registration event_registration,MPI_Info *info_used);
+
+int MPI_T_event_register_callback(MPI_T_event_registration event_registration,MPI_T_cb_safety cb_safety, MPI_Info info, void *user_data,MPI_T_event_cb_function event_cb_function);
+int PMPI_T_event_register_callback(MPI_T_event_registration event_registration,MPI_T_cb_safety cb_safety, MPI_Info info, void *user_data,MPI_T_event_cb_function event_cb_function);
+
+int MPI_T_event_callback_set_info(MPI_T_event_registration event_registration,MPI_T_cb_safety cb_safety, MPI_Info info);
+int PMPI_T_event_callback_set_info(MPI_T_event_registration event_registration,MPI_T_cb_safety cb_safety, MPI_Info info);
+
+int MPI_T_event_callback_get_info(MPI_T_event_registration event_registration,MPI_T_cb_safety cb_safety, MPI_Info *info_used);
+int PMPI_T_event_callback_get_info(MPI_T_event_registration event_registration,MPI_T_cb_safety cb_safety, MPI_Info *info_used);
+
+int MPI_T_event_handle_free(MPI_T_event_registration event_registration,void *user_data,MPI_T_event_free_cb_function free_cb_function);
+int PMPI_T_event_handle_free(MPI_T_event_registration event_registration,void *user_data,MPI_T_event_free_cb_function free_cb_function);
+
+int MPI_T_event_set_dropped_handler(MPI_T_event_registration event_registration,MPI_T_event_dropped_cb_function dropped_cb_function);
+int PMPI_T_event_set_dropped_handler(MPI_T_event_registration event_registration,MPI_T_event_dropped_cb_function dropped_cb_function);
+
+int MPI_T_event_read(MPI_T_event_instance event_instance,int element_index, void *buffer);
+int PMPI_T_event_read(MPI_T_event_instance event_instance,int element_index, void *buffer);
+
+int MPI_T_event_copy(MPI_T_event_instance event_instance, void *buffer);
+int PMPI_T_event_copy(MPI_T_event_instance event_instance, void *buffer);
+
+int MPI_T_event_get_timestamp(MPI_T_event_instance event_instance,MPI_Count *event_timestamp);
+int PMPI_T_event_get_timestamp(MPI_T_event_instance event_instance,MPI_Count *event_timestamp);
+
+int MPI_T_event_get_source(MPI_T_event_instance event_instance,int *source_index);
+int PMPI_T_event_get_source(MPI_T_event_instance event_instance,int *source_index);
 
 /*MPI_Test*/
 

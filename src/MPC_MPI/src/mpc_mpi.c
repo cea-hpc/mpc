@@ -68,6 +68,8 @@
 
 #include "osc_mpi.h"
 
+#include "mpit.h"
+
 /*******************
 * FORTRAN SUPPORT *
 *******************/
@@ -7924,6 +7926,23 @@ int PMPIX_Exchange(void **send_buf, void **recvbuff, int remote_rank, MPI_Count 
 int PMPI_Send_internal(const void *buf, int count, MPI_Datatype datatype, int dest, int tag,
                        MPI_Comm comm)
 {
+
+	_mpc_mpi_mpit_event_type_t event_type = MPC_MPI_T_SEND;	
+	int is_any = mpc_mpi_mpit_looking_for_event_to_trigger((int)event_type);
+	if(is_any)
+	{
+		void * data;
+		MPI_Aint *array_of_displacements;
+		MPI_Datatype *array_of_datatypes;
+		mpc_mpi_mpit_instance_get_ptr(&data, &array_of_datatypes, &array_of_displacements, (int)event_type);
+		if(data != NULL && array_of_datatypes != NULL && array_of_displacements != NULL)
+		{
+			memcpy(data, &dest, sizeof(array_of_datatypes[0]));
+			memcpy((void *)((char *)data + array_of_displacements[1]), &tag, sizeof(array_of_datatypes[1]));
+		}
+
+		mpc_mpi_mpit_trigger_event((int)event_type);
+	}
 	int res = MPI_ERR_INTERN;
 
 	SCTK_PROFIL_START(MPI_Send);
@@ -8006,6 +8025,25 @@ int PMPI_Send(const void *buf, int count, MPI_Datatype datatype, int dest, int t
 int PMPI_Recv_internal(void *buf, int count, MPI_Datatype datatype, int source, int tag,
                        MPI_Comm comm, MPI_Status *status)
 {
+
+        mpc_mpi_mpit_looking_for_event_to_trigger(0);
+        //__mpit.callbacks[1]->cb(__mpit.callbacks[1]->event_instance, __mpit.callbacks[1]->event_registration, __mpit.callbacks[1]->cb_safety, __mpit.callbacks[1]->user_data);
+	_mpc_mpi_mpit_event_type_t event_type = MPC_MPI_T_RECV;	
+	int is_any = mpc_mpi_mpit_looking_for_event_to_trigger((int)event_type);
+	if(is_any)
+	{
+		void * data;
+		MPI_Aint *array_of_displacements;
+		MPI_Datatype *array_of_datatypes;
+		mpc_mpi_mpit_instance_get_ptr(&data, &array_of_datatypes, &array_of_displacements, (int)event_type);
+		if(data != NULL && array_of_datatypes != NULL && array_of_displacements != NULL)
+		{
+			memcpy(data, &source, sizeof(array_of_datatypes[0]));
+			memcpy((void *)((char *)data + array_of_displacements[1]), &tag, sizeof(array_of_datatypes[1]));
+		}
+
+		mpc_mpi_mpit_trigger_event((int)event_type);
+	}
 	SCTK_PROFIL_START(MPI_Recv);
 
 	int res = MPI_ERR_INTERN;

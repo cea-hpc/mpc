@@ -192,6 +192,7 @@ void _mpi_t_state_release(void);
 void _mpit_state_add_var(_mpc_mpi_mpit_var_t *var);
 void _mpit_state_add_cat(_mpc_mpi_mpit_cat_t *cat);
 _mpc_mpi_mpit_cat_t * _mpit_state_get_cat_by_conf_type(mpc_conf_config_type_t * conf_node);
+
 void mpc_mpi_mpit_alloc_data(void ** data, MPI_Datatype **array_of_datatypes, MPI_Aint **array_of_displacements, int event_type);
 int mpc_mpi_mpit_looking_for_event_to_trigger(int event_index);
 void mpc_mpi_mpit_trigger_event(int event_index);

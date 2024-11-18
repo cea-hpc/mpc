@@ -21,6 +21,7 @@
 /* # - PERACHE Marc marc.perache@cea.fr                                   # */
 /* # - ROUSSEL Adrien adrien.roussel@cea.fr                               # */
 /* # - TABOADA Hugo hugo.taboada@cea.fr                                   # */
+/* # - BOUHROUR Stephane stephane.bouhrour@uvsq.fr                        # */
 /* #                                                                      # */
 /* # Authors:                                                             # */
 /* # - BESNARD Jean-Baptiste jbbesnard@paratools.fr                       # */
@@ -28,10 +29,325 @@
 /* ######################################################################## */
 
 #include "mpit.h"
-#include "mpc_common_spinlock.h"
-#include "mpc_mpi.h"
 #include "mpc_mpi_internal.h"
-#include <sctk_alloc.h>
+#include "mpc_common_spinlock.h"
+
+__thread struct _mpi_t_state __mpit = { 0 };
+
+/*************************
+ * MPIT INIT AND RELEASE *
+ *************************/
+
+static mpc_common_spinlock_t __mpit_init_lock = MPC_COMMON_SPINLOCK_INITIALIZER;
+
+
+static inline void __expandable_array_init(volatile void ***parray, int * psize)
+{
+    *parray = sctk_malloc(sizeof(void *) * 2);
+    assume(*parray != NULL);
+    *psize = 2;
+}
+
+static inline int __expandable_array_add(volatile void ***parray, int *psize, int *pcount, void * ptr)
+{
+    volatile void ** array = *parray;
+
+    int cur_off = *pcount;
+
+    array[cur_off] = ptr;
+    *pcount = cur_off + 1;
+
+    /* Do we need more space ? */
+    if(*psize <= *pcount )
+    {
+        *psize = *psize * 2;
+
+        *parray = sctk_realloc(array, *psize * sizeof(void *));
+        assume(*parray != NULL);
+    }
+
+
+    return cur_off;
+}
+
+static inline void __expandable_array_free(volatile void ***parray, int *pcount)
+{
+    int i;
+    volatile void ** array = *parray;
+
+    for( i = 0 ; i < *pcount; i++)
+    {
+        volatile void *elem = array[i];
+
+        if(elem)
+        {
+            sctk_free((void *)elem);
+            array[i] = NULL;
+        }
+    }
+
+    sctk_free(array);
+
+    *pcount = 0;
+}
+
+static inline void __expandable_array_free_idx(volatile void ***parray, int *pcount, int idx)
+{
+    int i;
+    volatile void ** array = *parray;
+
+    for( i = 0 ; i < *pcount; i++)
+    {
+    	if(i == idx)
+	{
+	    volatile void *elem = array[i];
+
+	    if(elem)
+	    {
+		sctk_free((void *)elem);
+		array[i] = NULL;
+	    }
+	}
+    }
+}
+
+/* Initialize structure event types */
+_mpc_mpi_mpit_event_t * _mpc_mpi_mpit_event_init(int event_index)
+{
+    _mpc_mpi_mpit_event_t * ret = sctk_malloc(sizeof(_mpc_mpi_mpit_event_t));
+    switch(event_index)
+    {
+        case 0://"MPI_Send initiated"
+	    ret->name = "MPI_Send initiated";
+	    ret->event_index = MPC_MPI_T_SEND;
+	    ret->source_index = 0;
+	    ret->doc = "";
+	    ret->len_name = strlen(ret->name);
+	    ret->descr = "source,tag,entering PMPI_Send function";
+	    ret->len_descr = strlen(ret->descr);
+	    /* elements : int (rank dest, tag) */
+	    ret->num_elements_datatype = 2;
+	    ret->array_of_datatypes = sctk_malloc(ret->num_elements_datatype*sizeof(MPI_Datatype));
+	    ret->array_of_displacements = sctk_malloc(ret->num_elements_datatype*sizeof(MPI_Aint));
+	    ret->array_of_datatypes[0] = MPI_INT;
+	    ret->array_of_datatypes[1] = MPI_INT;
+	    ret->array_of_displacements[0] = 0;
+	    ret->array_of_displacements[1] = sizeof(MPI_INT);
+	    ret->info = NULL;
+	    break;
+	case 1://"MPI_Recv initiated"
+	    ret->name = "MPI_Recv initiated";
+	    ret->event_index = MPC_MPI_T_RECV;
+	    ret->source_index = 0;
+	    ret->doc = "";
+	    ret->len_name = strlen(ret->name);
+	    ret->descr = "dest,tag,entering PMPI_Recv function";
+	    ret->len_descr = strlen(ret->descr);
+	    /* elements : int (rank source, tag) */
+	    ret->num_elements_datatype = 2;
+	    ret->array_of_datatypes = sctk_malloc(ret->num_elements_datatype*sizeof(MPI_Datatype));
+	    ret->array_of_displacements = sctk_malloc(ret->num_elements_datatype*sizeof(MPI_Aint));
+	    ret->array_of_datatypes[0] = MPI_INT;
+	    ret->array_of_datatypes[1] = MPI_INT;
+	    ret->array_of_displacements[0] = 0;
+	    ret->array_of_displacements[1] = sizeof(MPI_INT);
+	    ret->info = NULL;
+	    break;
+    }
+    int i;
+    ret->size_data = 0;
+    /* compute size for alloc data */
+    for( i = 0 ; i < ret->num_elements_datatype; i++)
+    {
+	    ret->size_data += sizeof(ret->array_of_datatypes[i]);
+    }
+    return ret;
+}
+
+/* Allocate, initialized and store internal structure event registration */
+_mpc_mpi_mpit_event_registration_t * _mpc_mpi_mpit_event_registration_init(MPI_T_event_registration * event_registration, int event_index, void * obj_handle, MPI_Info info)
+{
+    _mpc_mpi_mpit_event_registration_t * ret = sctk_malloc(sizeof(_mpc_mpi_mpit_event_registration_t));
+    assume(ret != NULL);
+
+    ret->id = -1;
+    ret->event_index = event_index;
+    ret->event_registration = event_registration;
+    ret->info = info;
+    ret->obj_handle = obj_handle;
+    event_registration->index_type = event_index;
+
+    //__expandable_array_init((volatile void ***)&ret->callbacks, &ret->callback_size);
+    ret->callbacks = sctk_malloc(sizeof(_mpc_mpi_mpit_callback_t*) * MPI_T_NB_SAFETY_LEVEL); /* one callback for each safety level */
+    int i;
+    for( i = 0 ; i < MPI_T_NB_SAFETY_LEVEL; i++)
+	    ret->callbacks[i] = NULL;
+    assume(ret->callbacks != NULL);
+    ret->callback_count = 0;
+
+    ret->dropped_callback = sctk_malloc(sizeof(_mpc_mpi_mpit_dropped_callback_t *)); 
+    ret->dropped_callback->dropped_cb = NULL; 
+    ret->dropped_count = 0; 
+
+    return ret;
+}
+
+/* Allocate, initialized and store internal structure callback*/
+_mpc_mpi_mpit_callback_t * _mpc_mpi_mpit_callback_init(MPI_T_event_cb_function event_cb_function, MPI_T_event_instance *event_instance,MPI_T_event_registration event_registration,MPI_T_cb_safety cb_safety, void *user_data)
+{
+    _mpc_mpi_mpit_callback_t * ret = sctk_malloc(sizeof(_mpc_mpi_mpit_callback_t));
+    assume(ret != NULL);
+
+    ret->id = -1;
+    ret->cb = event_cb_function;
+    ret->event_instance.ptr_event_registration = event_instance->ptr_event_registration;
+    ret->event_instance.id = event_instance->id;
+    ret->event_instance.data = event_instance->data;
+    ret->event_registration = event_registration;
+    ret->cb_safety = cb_safety;
+    ret->user_data = user_data;
+    ret->timestamp = 0; 
+
+    return ret;
+}
+
+/* Allocate, initialized and store internal structure dropped callback*/
+_mpc_mpi_mpit_dropped_callback_t *_mpc_mpi_mpit_dropped_callback_init(MPI_T_event_dropped_cb_function event_dropped_cb_function,MPI_T_event_registration event_registration)
+{
+    _mpc_mpi_mpit_dropped_callback_t * ret = sctk_malloc(sizeof(_mpc_mpi_mpit_dropped_callback_t));
+    assume(ret != NULL);
+
+    ret->dropped_cb = event_dropped_cb_function;
+    ret->event_registration = event_registration;
+    ret->timestamp = 0; 
+
+    return ret;
+}
+
+/* Allocate, initialized and store internal structure event instance */
+MPI_T_event_instance * _mpc_mpi_mpit_event_instance_init(MPI_T_event_registration event_registration)
+{
+    MPI_T_event_instance* ret = sctk_malloc(sizeof(MPI_T_event_instance));
+    assume(ret != NULL);
+
+    ret->id = -1;
+    ret->ptr_event_registration = &event_registration;
+    ret->data = sctk_malloc(__mpit.events[event_registration.index_type]->size_data);
+
+    return ret;
+}
+
+/***********************
+ * CALLBACK HANDLING *
+ ***********************/
+
+/* get data ptr of a specific event */
+void mpc_mpi_mpit_instance_get_ptr(void ** data, MPI_Datatype **array_of_datatypes, MPI_Aint **array_of_displacements, int event_type)
+{
+    int i;
+    int j;
+    for(i = 0; i < __mpit.event_registration_count; i++)
+    {
+	if(__mpit.event_registrations[i])
+	{
+	    if(__mpit.event_registrations[i]->event_index == event_type )
+	    {
+		/* for each safety level give ptr of the data event at each instance*/
+		for(j=0; j < MPI_T_NB_SAFETY_LEVEL; j++)
+		{
+		    if(__mpit.event_registrations[i]->callbacks[j] != NULL)
+		    {
+			*data = __mpit.event_registrations[i]->callbacks[j]->event_instance.data;
+			*array_of_displacements = __mpit.events[event_type]->array_of_displacements;
+			*array_of_datatypes = __mpit.events[event_type]->array_of_datatypes;
+			return;
+		    }
+		}
+	    }
+	}
+    }
+    /* no cb found but there is a handle registration */	
+    *data = NULL;
+}
+
+/* looking for callback to trigger for this event */
+int mpc_mpi_mpit_looking_for_event_to_trigger(int event_index)
+{
+    if(__mpit.init_count)
+    {
+        int i;
+        int j;
+        for(i = 0; i < __mpit.event_registration_count; i++)
+        {
+            if(__mpit.event_registrations[i])
+            {
+                if(__mpit.event_registrations[i]->event_index == event_index)
+                {
+                    /* callbacks registered by safety level for this event */
+                    for(j = 0; j < MPI_T_NB_SAFETY_LEVEL; j++) /* parse each safety level */
+                    {
+                        if(__mpit.event_registrations[i]->callbacks[j] || __mpit.event_registrations[i]->dropped_callback->dropped_cb)
+                            return 1;
+                    }
+                }
+            }
+        }
+    }
+    return 0;
+}
+
+/* trigger callbacks for this event */
+void mpc_mpi_mpit_trigger_event(int event_index)
+{
+    int i;
+    int j;
+    /* trigger callback for each event registration handle for this event */
+    for(i = 0; i < __mpit.event_registration_count; i++)
+    {
+	if(__mpit.event_registrations[i])
+	{
+	    if(__mpit.event_registrations[i]->event_index == event_index)
+	    {
+		/* trigger the callback registered for this event with the lowest safety level */
+		for(j= 0; j < MPI_T_NB_SAFETY_LEVEL; j++) /* parse safety level */
+		{
+		    /* if callback registered for this safety level */
+		    if(__mpit.event_registrations[i]->callbacks[j]) 
+		    {
+			/* if drop callback to be called */
+			if (__mpit.event_registrations[i]->dropped_count > 0)
+			{
+			    __mpit.event_registrations[i]->dropped_callback->dropped_cb(__mpit.event_registrations[i]->dropped_count, *__mpit.event_registrations[i]->event_registration, __mpit.event_registrations[i]->source_id, __mpit.event_registrations[i]->callbacks[j]->cb_safety, __mpit.event_registrations[i]->callbacks[j]->user_data);
+
+			    __mpit.event_registrations[i]->dropped_count = 0;
+			}
+			/* get timestamp for the callback */
+			/* overflow of timestamp has to be managed */
+			MPI_Count timestamp = (MPI_Count)mpc_arch_get_timestamp_gettimeofday();
+			__mpit.event_registrations[i]->callbacks[j]->event_instance.timestamp = timestamp;
+			__mpit.event_registrations[i]->callbacks[j]->timestamp = timestamp; 
+			__mpit.event_registrations[i]->callbacks[j]->event_instance.ptr_event_registration->index_type = event_index;
+
+			/* calling callback */
+			__mpit.event_registrations[i]->callbacks[j]->cb(__mpit.event_registrations[i]->callbacks[j]->event_instance, __mpit.event_registrations[i]->callbacks[j]->event_registration, __mpit.event_registrations[i]->callbacks[j]->cb_safety, __mpit.event_registrations[i]->callbacks[j]->user_data);
+			/* one callback has been found for this event registration */
+			break;
+                        fprintf(stderr, "devrait passer 3 fois user_data %p\n", __mpit.event_registrations[i]->callbacks[j]->user_data);
+		    }
+		}
+		/* no callback executed but dropped cb register */
+		if (j == MPI_T_NB_SAFETY_LEVEL && __mpit.event_registrations[i]->dropped_callback != NULL) 
+		{
+		    if (__mpit.event_registrations[i]->dropped_callback->dropped_cb != NULL) 
+		    {
+			__mpit.event_registrations[i]->dropped_count++;
+		    }
+		}
+	    }
+	}
+    }
+}
+
 
 /*********************
  * VARIABLES STORAGE *
@@ -159,66 +475,6 @@ static inline _mpc_mpi_mpit_cat_t * __cat_recursive_scan_conf(mpc_conf_config_ty
     return new_cat;
 }
 
-/*************************
- * MPIT INIT AND RELEASE *
- *************************/
-
-struct _mpi_t_state __mpit = { 0 };
-static mpc_common_spinlock_t __mpit_init_lock = MPC_COMMON_SPINLOCK_INITIALIZER;
-
-
-static inline void __expandable_array_init(volatile void ***parray, int * psize)
-{
-    *parray = sctk_malloc(sizeof(void *) * 2);
-    assume(*parray != NULL);
-    *psize = 2;
-}
-
-static inline int __expandable_array_add(volatile void ***parray, int *psize, int *pcount, void * ptr)
-{
-    volatile void ** array = *parray;
-
-    int cur_off = *pcount;
-
-    array[cur_off] = ptr;
-    *pcount = cur_off + 1;
-
-    /* Do we need more space ? */
-    if(*psize <= *pcount )
-    {
-        *psize = *psize * 2;
-
-        *parray = sctk_realloc(array, *psize * sizeof(void *));
-        assume(*parray != NULL);
-    }
-
-
-    return cur_off;
-}
-
-
-
-static inline void __expandable_array_free(volatile void ***parray, int *pcount)
-{
-    int i = 0;
-    volatile void ** array = *parray;
-
-    for( i = 0 ; i < *pcount; i++)
-    {
-        volatile void *elem = array[i];
-
-        if(elem)
-        {
-            sctk_free((void *)elem);
-            array[i] = NULL;
-        }
-    }
-
-    sctk_free(array);
-
-    *pcount = 0;
-}
-
 void _mpit_state_add_var(_mpc_mpi_mpit_var_t *var)
 {
     mpc_common_debug("ADD VAR %s", var->elem_node->name);
@@ -260,6 +516,34 @@ void _mpit_state_add_cat(_mpc_mpi_mpit_cat_t *cat)
     cat->id = new_id;
 }
 
+/* add event registration to __mpit struct */
+void _mpit_state_add_event_registration(_mpc_mpi_mpit_event_registration_t *event_registration)
+{
+    volatile void ***parray = NULL;
+    int *pcount = NULL;
+    int *psize = NULL;
+
+    parray = (volatile void ***)&__mpit.event_registrations;
+    pcount = &__mpit.event_registration_count;
+    psize = &__mpit.event_registration_size;
+    int new_id = __expandable_array_add(parray,psize, pcount, (void *)event_registration);
+    event_registration->id = new_id;
+}
+
+/* add events to __mpit struct */
+void _mpit_state_add_event(_mpc_mpi_mpit_event_t *event)
+{
+    volatile void ***parray = NULL;
+    int *pcount = NULL;
+    int *psize = NULL;
+
+    parray = (volatile void ***)&__mpit.events;
+    pcount = &__mpit.event_count;
+    psize = &__mpit.event_size;
+    int new_id = __expandable_array_add(parray,psize, pcount, (void *)event);
+    event->id = new_id;
+}
+
 void _mpi_t_state_init(void)
 {
     int did_init = 0;
@@ -290,6 +574,15 @@ void _mpi_t_state_init(void)
     __expandable_array_init((volatile void ***)&__mpit.pvars, &__mpit.pvar_size);
     __mpit.pvar_count = 0;
 
+    __expandable_array_init((volatile void ***)&__mpit.event_sources, &__mpit.event_source_size);
+    __mpit.event_source_count = 0;
+
+    __expandable_array_init((volatile void ***)&__mpit.events, &__mpit.event_size);
+    __mpit.event_count = 0;
+
+    __expandable_array_init((volatile void ***)&__mpit.event_registrations, &__mpit.event_registration_size);
+    __mpit.event_registration_count = 0;
+
     mpc_common_debug("MPIT INIT DONE");
 
 
@@ -313,6 +606,16 @@ void _mpi_t_state_init(void)
     if(prof_conf)
     {
         __cat_recursive_scan_conf(prof_conf, MPC_MPI_T_PVAR);
+    }
+
+    /* index 0 "MPI_Send initiated", index 1 "MPI_Recv intitiated", */
+    int nb_events = 2;
+    int i;
+    for(i = 0; i < nb_events; i++)
+    {
+	    _mpc_mpi_mpit_event_t * new_event = _mpc_mpi_mpit_event_init(i);
+	    assume(new_event != NULL);
+	    _mpit_state_add_event(new_event);
     }
 }
 
@@ -339,6 +642,9 @@ void _mpi_t_state_release(void)
     __expandable_array_free((volatile void***)&__mpit.categories, &__mpit.categories_count);
     __expandable_array_free((volatile void***)&__mpit.cvars, &__mpit.cvar_count);
     __expandable_array_free((volatile void***)&__mpit.pvars, &__mpit.pvar_count);
+    __expandable_array_free((volatile void***)&__mpit.event_sources, &__mpit.event_source_count);
+    __expandable_array_free((volatile void***)&__mpit.events, &__mpit.event_count);
+    __expandable_array_free((volatile void***)&__mpit.event_registrations, &__mpit.event_registration_count);
 }
 
 
@@ -666,11 +972,16 @@ int PMPI_T_cvar_get_info(int cvar_index, char *name, int *name_len, int *verbosi
     *datatype = __conf_type_to_mpi(var->elem_node->type);
 
     /* Not supported yet (needs choices inside the config) */
-    *enumtype = NULL;
+    enumtype = NULL;
 
 
     (void)snprintf(desc, *desc_len, "%s", var->elem_node->doc);
     *desc_len = (int)strlen(var->elem_node->doc);
+    if(desc != NULL)
+    {
+        snprintf(desc, *desc_len, "%s", var->elem_node->doc);
+        *desc_len = strlen(var->elem_node->doc);
+    }
 
     /* Not supported */
     *bind = MPI_T_BIND_NO_OBJECT;
@@ -1055,3 +1366,361 @@ int PMPI_T_pvar_write(MPI_T_pvar_session session, MPI_T_pvar_handle handle, cons
 
     return MPI_SUCCESS;
 }
+
+/*************************
+ * EVENT SOURCE *
+ *************************/
+
+#pragma weak MPI_T_source_get_num = PMPI_T_source_get_num
+
+int PMPI_T_source_get_num(int *num_sources)
+{
+    *num_sources = __mpit.event_source_count;
+    return MPI_SUCCESS;
+}
+
+#pragma weak MPI_T_source_get_info = PMPI_T_source_get_info
+
+int PMPI_T_source_get_info(int source_index, char *name, int *name_len,char *desc, int *desc_len, 
+MPI_T_source_order *ordering, MPI_Count *ticks_per_second, MPI_Count *max_ticks, MPI_Info *info)
+{
+    /* not supported */ 
+    return MPI_T_ERR_NOT_SUPPORTED;
+}
+
+#pragma weak MPI_T_source_get_timestamp = PMPI_T_source_get_timestamp
+
+int PMPI_T_source_get_timestamp(int source_index, MPI_Count *timestamp)
+{
+    if(__mpit.event_source_count <= source_index)
+    {
+        MPI_ERROR_REPORT(MPI_COMM_SELF, MPI_T_ERR_INVALID_INDEX, "Bad source index");
+	return MPI_T_ERR_INVALID_INDEX;
+    }
+
+	/* not supported */ 
+	return MPI_T_ERR_NOT_SUPPORTED;
+}
+
+/*************************
+ * EVENT *
+ *************************/
+ 
+#pragma weak MPI_T_event_get_num = PMPI_T_event_get_num
+
+int PMPI_T_event_get_num(int *num_events)
+{
+    _mpc_mpi_mpit_event_source_t **event_sources;
+    *num_events = __mpit.event_count;
+    return MPI_SUCCESS;
+}
+
+#pragma weak MPI_T_event_get_info = PMPI_T_event_get_info
+
+int PMPI_T_event_get_info(int event_index, char *name, int *name_len,int *verbosity, 
+MPI_Datatype array_of_datatypes[],MPI_Aint array_of_displacements[], 
+int *num_elements,MPI_T_enum *enumtype, MPI_Info *info, char *desc,int *desc_len, int *bind)
+{
+    if(__mpit.event_count <= event_index)
+    {
+        MPI_ERROR_REPORT(MPI_COMM_SELF, MPI_T_ERR_INVALID_INDEX, "Bad event index");
+    }
+
+    _mpc_mpi_mpit_event_t * event = __mpit.events[event_index];
+
+    if(name != NULL)
+    {
+	    snprintf(name, *name_len, event->name);
+    }
+
+    if(name_len != NULL)
+    {
+	    *name_len = strlen(event->name);
+    }
+
+    /* Not supported yet */
+    if(verbosity != NULL) 
+    {
+	    *verbosity = MPI_T_VERBOSITY_USER_ALL;
+    }
+
+    /* Not supported yet (needs choices inside the config) */
+    if(enumtype != NULL) 
+    {
+	    *enumtype = MPI_T_ENUM_NULL;
+    }
+
+    if(desc != NULL) 
+    {
+	    snprintf(desc, *desc_len, event->descr);
+    }
+    if(desc_len != NULL) 
+    {
+	    *desc_len = strlen(event->descr);
+    }
+
+    /* Not supported */
+    if(bind != NULL) 
+    {
+	    *bind = MPI_T_BIND_NO_OBJECT;
+    }
+
+    /* Not supported yet */
+    if(info != NULL) 
+    {
+	    *info = event->info;
+    }
+
+    if (num_elements != NULL) {
+	    int i;
+	    int limit_loop = 0;
+	    if(*num_elements > event->num_elements_datatype)
+	    {
+		    limit_loop = event->num_elements_datatype;
+	    }
+	    else
+	    {
+		    limit_loop = *num_elements;
+	    }
+	    for (int i = 0; i < limit_loop;   i++) {
+		    if (array_of_datatypes != NULL)
+		    {
+			    array_of_datatypes[i] = event->array_of_datatypes[i];
+		    }
+		    if (array_of_displacements != NULL)
+		    {
+			    array_of_displacements[i] = event->array_of_displacements[i];
+		    }
+	    }
+	    *num_elements = event->num_elements_datatype;
+    }
+
+    return MPI_SUCCESS;
+}
+
+#pragma weak MPI_T_event_get_index = PMPI_T_event_get_index
+
+int PMPI_T_event_get_index(const char *name, int *event_index)
+{
+    int i;
+
+    for( i = 0 ; i < __mpit.event_count; i++)
+    {
+        _mpc_mpi_mpit_event_t * event = __mpit.events[i];
+
+        if(!strcmp(event->name, name))
+        {
+            *event_index = i;
+            return MPI_SUCCESS;
+        }
+    }
+
+    MPI_ERROR_REPORT(MPI_COMM_SELF, MPI_T_ERR_INVALID_NAME, "Could not find given event name");
+}
+
+#pragma weak MPI_T_event_handle_alloc = PMPI_T_event_handle_alloc
+
+int PMPI_T_event_handle_alloc(int event_index, void *obj_handle,MPI_Info info, 
+MPI_T_event_registration *event_registration)
+{
+
+    _mpc_mpi_mpit_event_registration_t * new_event_registration = _mpc_mpi_mpit_event_registration_init(event_registration, event_index, obj_handle, info);
+    assume(new_event_registration != NULL);
+    _mpit_state_add_event_registration(new_event_registration);
+
+    event_registration->ptr_event_registration = new_event_registration;
+    event_registration->index_type = event_index;
+    return MPI_SUCCESS;
+}
+
+#pragma weak MPI_T_event_handle_set_info = PMPI_T_event_handle_set_info
+
+int PMPI_T_event_handle_set_info(MPI_T_event_registration event_registration, MPI_Info info)
+{
+    return MPI_SUCCESS;
+}
+
+#pragma weak MPI_T_event_handle_get_info = PMPI_T_event_handle_get_info
+
+int PMPI_T_event_handle_get_info(MPI_T_event_registration event_registration,MPI_Info *info_used)
+{
+    return MPI_SUCCESS;
+}
+
+#pragma weak MPI_T_event_register_callback = PMPI_T_event_register_callback
+
+int PMPI_T_event_register_callback(MPI_T_event_registration event_registration,MPI_T_cb_safety cb_safety, 
+MPI_Info info, void *user_data,MPI_T_event_cb_function event_cb_function)
+{
+
+    int i;
+    for(i= 0; i < __mpit.event_registration_count; i++)
+    {
+	if(__mpit.event_registrations[i])
+	{
+	    if(__mpit.event_registrations[i] == event_registration.ptr_event_registration)
+	    {
+
+		/* decrement callback_count if the callback is the null pointer */
+		if(event_cb_function == NULL)
+		{
+		    __mpit.event_registrations[i]->callbacks[cb_safety] = NULL;
+		    __mpit.event_registrations[i]->callback_count -= 1;
+		    /*TODO free the corresponding instance here ?*/
+		}
+		else
+		{
+		    /* new instance */
+		    MPI_T_event_instance * new_event_instance = _mpc_mpi_mpit_event_instance_init(event_registration);
+		    new_event_instance->id = -1;
+		    new_event_instance->ptr_event_registration = &event_registration;
+		    new_event_instance->data = sctk_malloc(__mpit.events[event_registration.index_type]->size_data);
+		    assume(new_event_instance != NULL);
+		    new_event_instance->ptr_event_registration->index_type = __mpit.event_registrations[i]->event_index;
+		    _mpc_mpi_mpit_event_registration_t *ptr_ev_reg = (_mpc_mpi_mpit_event_registration_t *)event_registration.ptr_event_registration;
+		    new_event_instance->ptr_event_registration->index_type = ptr_ev_reg->event_index;
+
+		    /* new callback */
+		    _mpc_mpi_mpit_callback_t * new_callback = _mpc_mpi_mpit_callback_init(event_cb_function, new_event_instance, event_registration, cb_safety, user_data);
+
+		    assume(new_callback != NULL);
+
+		    __mpit.event_registrations[i]->callbacks[cb_safety] = new_callback;
+		    __mpit.event_registrations[i]->callback_count +=1;
+		}
+	    }
+	}
+    }
+    return MPI_SUCCESS;
+}
+
+#pragma weak MPI_T_event_callback_set_info = PMPI_T_event_callback_set_info
+
+int PMPI_T_event_callback_set_info(MPI_T_event_registration event_registration,MPI_T_cb_safety cb_safety, MPI_Info info)
+{
+    return MPI_SUCCESS;
+}
+
+#pragma weak MPI_T_event_callback_get_info = PMPI_T_event_callback_get_info
+
+int PMPI_T_event_callback_get_info(MPI_T_event_registration event_registration,MPI_T_cb_safety cb_safety, MPI_Info *info_used)
+{
+    return MPI_SUCCESS;
+}
+
+#pragma weak MPI_T_event_handle_free = PMPI_T_event_handle_free
+
+int PMPI_T_event_handle_free(MPI_T_event_registration event_registration,void *user_data,
+MPI_T_event_free_cb_function free_cb_function)
+{
+    int i;
+    for(i = 0; i < __mpit.event_registration_count; i++)
+    {
+    	if(__mpit.event_registrations[i])
+	{
+	    if(__mpit.event_registrations[i] == event_registration.ptr_event_registration)
+	    {
+		if(free_cb_function)
+		{
+		    /* TODO manage cb requirement */
+		    /* TODO check if there is no more callback to be raised for this handle */
+		    free_cb_function(event_registration, MPI_T_CB_REQUIRE_NONE, user_data);
+		}
+		__expandable_array_free_idx((volatile void***)&__mpit.event_registrations, &__mpit.event_registration_count, i);
+		return MPI_SUCCESS;
+	    }
+	}
+    }
+    return MPI_T_ERR_INVALID_HANDLE;
+}
+
+#pragma weak MPI_T_event_set_dropped_handler = PMPI_T_event_set_dropped_handler
+
+int PMPI_T_event_set_dropped_handler(MPI_T_event_registration event_registration,
+MPI_T_event_dropped_cb_function dropped_cb_function)
+{
+
+    int i;
+    for(i= 0; i < __mpit.event_registration_count; i++)
+    {
+	if(__mpit.event_registrations[i])
+	{
+	    /* event registration found */
+	    if(__mpit.event_registrations[i] == event_registration.ptr_event_registration)
+	    {
+		/* nothing to do */
+		if(dropped_cb_function == NULL)
+		{
+		    __mpit.event_registrations[i]->dropped_callback = NULL;
+		    /* initialize or reset dropped_count */
+		    __mpit.event_registrations[i]->dropped_count = 0;
+		    return MPI_SUCCESS;
+		}
+		else
+		{
+		    /* new dropped callback */
+		    _mpc_mpi_mpit_dropped_callback_t * new_dropped_callback = _mpc_mpi_mpit_dropped_callback_init(dropped_cb_function, event_registration);
+		    assume(new_dropped_callback != NULL);
+
+		    __mpit.event_registrations[i]->dropped_callback = new_dropped_callback;
+		    /* initialize or reset dropped_count */
+		    __mpit.event_registrations[i]->dropped_count = 0;
+		    return MPI_SUCCESS;
+		}
+	    }
+	}
+    }
+    return MPI_T_ERR_INVALID_HANDLE;
+}
+
+#pragma weak MPI_T_event_read = PMPI_T_event_read
+
+int PMPI_T_event_read(MPI_T_event_instance event_instance, int element_index, void *buffer)
+{
+    /* TODO error and bad arguments handling */
+    _mpc_mpi_mpit_event_t *event = __mpit.events[event_instance.ptr_event_registration->index_type];
+    MPI_Datatype mpi_type = event->array_of_datatypes[element_index];
+    int displ = event->array_of_displacements[element_index];
+    memcpy((void *)((char*)buffer), (void *)((char*)event_instance.data + displ), sizeof(mpi_type));
+    return MPI_SUCCESS;
+}
+
+#pragma weak MPI_T_event_copy = PMPI_T_event_copy
+
+int PMPI_T_event_copy(MPI_T_event_instance event_instance, void *buffer)
+{
+    /* TODO error and bad arguments handling */
+    _mpc_mpi_mpit_event_t *event = __mpit.events[event_instance.ptr_event_registration->index_type];
+    int num_elems = event->num_elements_datatype;
+    int i;
+    for(i= 0; i < num_elems; i++)
+    {
+    	MPI_Datatype mpi_type = event->array_of_datatypes[i];
+	MPI_Aint displ = event->array_of_displacements[i];
+	//fprintf(stderr, "buffer + displ %d i %d\n",*((char*)event_instance.data + displ), i);
+	if(i == 0)
+	    memcpy(buffer, event_instance.data, sizeof(mpi_type));
+	else
+	    memcpy((void *)((char*)buffer + displ), (void *)((char*)event_instance.data + displ), sizeof(mpi_type));
+    }
+
+    //fprintf(stderr, "first %d second %d num_elems %d\n", (int)*((char*)buffer), (int)*((char*)buffer+4), num_elems);
+    return MPI_SUCCESS;
+}
+
+#pragma weak MPI_T_event_get_timestamp = PMPI_T_event_get_timestamp
+
+int PMPI_T_event_get_timestamp(MPI_T_event_instance event_instance,MPI_Count *event_timestamp)
+{
+    *event_timestamp = event_instance.timestamp;
+    /* not supported */ 
+    return MPI_SUCCESS;
+}
+
+#pragma weak MPI_T_event_get_source = PMPI_T_event_get_source
+
+int PMPI_T_event_get_source(MPI_T_event_instance event_instance, int *source_index)
+{
+    return MPI_SUCCESS;
+}
+
