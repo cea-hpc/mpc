@@ -195,5 +195,6 @@ _mpc_mpi_mpit_cat_t * _mpit_state_get_cat_by_conf_type(mpc_conf_config_type_t * 
 void mpc_mpi_mpit_alloc_data(void ** data, MPI_Datatype **array_of_datatypes, MPI_Aint **array_of_displacements, int event_type);
 int mpc_mpi_mpit_looking_for_event_to_trigger(int event_index);
 void mpc_mpi_mpit_trigger_event(int event_index);
+void mpc_mpi_mpit_instance_get_ptr(void ** data, MPI_Datatype **array_of_datatypes, MPI_Aint **array_of_displacements, int event_type);
 
 #endif /* MPC_MPI_MPIT_H */
