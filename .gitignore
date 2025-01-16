@@ -3,6 +3,7 @@
 BUILD/*
 autom4te.cache/*
 /mpc_config.h.in~
+/mpc_config.h.in
 *.swp
 *.swo
 **/.pcvs-build/

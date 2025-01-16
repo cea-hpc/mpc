@@ -402,7 +402,7 @@ promote_to_rpath()
         # Extract existing RPATH
         for arg in $@
         do
-                if echo "$arg" | grep "^\\-Wl,\\-rpath=" > /dev/null; then
+                if echo "$arg" | grep '^-Wl,-rpath=' > /dev/null; then
                         # Ensure path exists
                         RPATH=$(echo "$arg" | sed s/^-Wl,-rpath=//g)
                         if test -d "${RPATH}"; then
@@ -566,7 +566,7 @@ extract_integer_define_value()
         [AC_LANG_PROGRAM([#include <$1>
                         #include <stdio.h>],
                         [
-                                long long int val = $2;
+                                long long int val = (long long int) $2;
                                 FILE *out = fopen("./conftest.out", "w");
 
                                 if(!out)
@@ -1409,8 +1409,8 @@ AC_SUBST([MPC_HAVE_DMTCP])
 AC_MSG_CHECKING([presence of '__func__' variable])
 
 # Alternative : AX_C_VAR_FUNC
-AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[ ]],
-                                  [[return __func__;]])],
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <stdio.h>]],
+                                  [[printf("%s", __func__);]])],
                 res_macro=yes,res_macro=no)
 
 if test "$res_macro" = "yes" ; then

@@ -158,7 +158,7 @@ apply_configuration_patches()
 	done
 }
 
-apply_configuration_patches
+#apply_configuration_patches
 
 # Here is the patch description
 
