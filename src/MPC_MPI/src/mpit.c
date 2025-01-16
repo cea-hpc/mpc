@@ -1468,7 +1468,7 @@ int *num_elements,MPI_T_enum *enumtype, MPI_Info *info, char *desc,int *desc_len
     /* Not supported yet */
     if(info != NULL) 
     {
-	    *info = event->info;
+	    info = event->info;
     }
 
     if (num_elements != NULL) {
