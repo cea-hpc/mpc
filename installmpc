@@ -794,7 +794,7 @@ locate_tarball()
 	fi
 
 	# All failed now download
-	if ! [ -v COMP_ADD_GIT_BRANCH -a "$PKG" == "mpc-compiler-additions" ]
+	if ! [ "x$COMP_ADD_GIT_BRANCH" != "x" -a "$PKG" = "mpc-compiler-additions" ]
 	then
 		download_package "$PKG" "$VERS"
 	else
@@ -803,9 +803,10 @@ locate_tarball()
 		GIT_URL="https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.paratools.com/cea/autopriv.git"
 		git clone "$GIT_URL" -b "$COMP_ADD_GIT_BRANCH" "$tmpdir"
 
-		pushd "$tmpdir"
+		PPWD="$PWD"
+		cd "$tmpdir"
 		./gen_archive.sh --gcc-version=$GCC_VERSION
-		popd
+		cd "$PPWD"
 
 		mv "$tmpdir"/$(package_filename "$PKG" "${VERSION}") ./
 		TARBALL_PATH=./$(package_filename "$PKG" "${VERSION}")
@@ -1260,7 +1261,7 @@ TBB_PREFIX="disabled"
 CK_PREFIX="disabled"
 
 # Empty means mpc-compiler-additions's default
-[[ ! -v GCC_VERSION ]] && GCC_VERSION=""
+[[ "x$GCC_VERSION" == "x" ]] && GCC_VERSION=""
 WORKSHARE_ENABLED="no"
 
 #
