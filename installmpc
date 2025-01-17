@@ -794,7 +794,25 @@ locate_tarball()
 	fi
 
 	# All failed now download
-	download_package "$PKG" "$VERS"
+	if ! [ -v COMP_ADD_GIT_BRANCH -a "$PKG" == "mpc-compiler-additions" ]
+	then
+		download_package "$PKG" "$VERS"
+	else
+		tmpdir=$(mktemp -d) || exit 42
+		
+		GIT_URL="https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.paratools.com/cea/autopriv.git"
+		git clone "$GIT_URL" -b "$COMP_ADD_GIT_BRANCH" "$tmpdir"
+
+		pushd "$tmpdir"
+		./gen_archive.sh --gcc-version=$GCC_VERSION
+		popd
+
+		mv "$tmpdir"/$(package_filename "$PKG" "${VERSION}") ./
+		TARBALL_PATH=./$(package_filename "$PKG" "${VERSION}")
+
+		rm -rf "$tmpdir"
+	fi
+	
 }
 
 # Download all deps for MPC
@@ -1242,7 +1260,7 @@ TBB_PREFIX="disabled"
 CK_PREFIX="disabled"
 
 # Empty means mpc-compiler-additions's default
-GCC_VERSION=""
+[[ ! -v GCC_VERSION ]] && GCC_VERSION=""
 WORKSHARE_ENABLED="no"
 
 #
@@ -1416,9 +1434,9 @@ do
 		--enable-debug)
 			enable_debug
 			;;
-    --enable-topology-simulation)
+		--enable-topology-simulation)
 			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --enable-topology-simulation"
-      ;;
+			;;
 		--with-pmi1=*)
 			PMIX_PREFIX=""
 			extractParamValue 'PMIX_PREFIX' 'with-pmi1=' "$arg"
