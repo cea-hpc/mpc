@@ -799,8 +799,12 @@ locate_tarball()
 		download_package "$PKG" "$VERS"
 	else
 		tmpdir=$(mktemp -d) || exit 42
-		
-		GIT_URL="https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.paratools.com/cea/autopriv.git"
+	
+		if [ "x$CI_JOB_TOKEN" != "x" ]; then
+			GIT_URL="https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.paratools.com/cea/autopriv.git"
+		else
+			GIT_URL="git@gitlab.paratools.com:cea/autopriv.git"
+		fi
 		git clone "$GIT_URL" -b "$COMP_ADD_GIT_BRANCH" "$tmpdir"
 
 		PPWD="$PWD"
@@ -1261,7 +1265,7 @@ TBB_PREFIX="disabled"
 CK_PREFIX="disabled"
 
 # Empty means mpc-compiler-additions's default
-[[ "x$GCC_VERSION" == "x" ]] && GCC_VERSION=""
+[ "x$GCC_VERSION" = "x" ] && GCC_VERSION=""
 WORKSHARE_ENABLED="no"
 
 #
