@@ -2946,8 +2946,9 @@ __task_larceny(mpc_omp_task_pqueue_type_t type)
             victim = __task_get_victim(rank, j, type);
             if (victim != rank)
             {
-                pqueue = __rank_get_task_pqueue(victim, type);
-                if ((task = __task_pqueue_pop(pqueue)) != NULL) return task;
+                if ((pqueue = __rank_get_task_pqueue(victim, type)) != NULL) {
+                    if ((task = __task_pqueue_pop(pqueue)) != NULL) return task;
+                }
             }
         }
     }
