@@ -25,6 +25,8 @@ variables:
   - export CI_PCVS_DIR="$GL_PIPELINE_PATH/step_$(echo "$CI_JOB_NAME" | sed -e "s/ /_/g")/"
   - test -d "${CI_PCVS_DIR}" && rm -rf "${CI_PCVS_DIR}"
   - mkdir -p "${CI_PCVS_DIR}"
+  - cd "${GL_PIPELINE_PATH}" 
+  - mkdir mpc_ci 2>"/dev/null" && git clone "https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.paratools.com/cea/mpc_ci.git" "mpc_ci"
   - cd "${CI_PCVS_DIR}"
   - echo "Step run from ${CI_PCVS_DIR}"
   - source ${GL_INSTALL_DIR}/mpcvars.sh
@@ -219,7 +221,7 @@ Simple run:
   stage: Basic Testing
   script:
     - *pcvs_prepare
-    - ${PCVS_COMMAND} $HOME/repo/mpc_ci/trivial/
+    - ${PCVS_COMMAND} "${GL_PIPELINE_PATH}/mpc_ci/trivial/"
 
 
 Privatization:
@@ -228,7 +230,7 @@ Privatization:
   stage: Basic Testing
   script:
     - *pcvs_prepare
-    - ${PCVS_COMMAND} $HOME/repo/mpc_ci/privatization/
+    - ${PCVS_COMMAND} "${GL_PIPELINE_PATH}/mpc_ci/privatization/"
 
 #
 ## a regular test, to assess some basic MPC feature
@@ -240,7 +242,7 @@ MPI Simple C:
   stage: Regular Testing
   script:
     - *pcvs_prepare
-    - ${PCVS_COMMAND} $HOME/repo/mpc_ci/MPI/simple/c/
+    - ${PCVS_COMMAND} "${GL_PIPELINE_PATH}/mpc_ci/MPI/simple/c/"
 
 MPI Simple Fortran:
   <<: *run_by_main
@@ -248,7 +250,7 @@ MPI Simple Fortran:
   stage: Regular Testing
   script:
     - *pcvs_prepare
-    - ${PCVS_COMMAND} $HOME/repo/mpc_ci/MPI/simple/fortran/
+    - ${PCVS_COMMAND} "${GL_PIPELINE_PATH}/mpc_ci/MPI/simple/fortran/"
 
 #MPI NBC:
 #  <<: *run_by_main
@@ -256,7 +258,7 @@ MPI Simple Fortran:
 #  stage: Regular Testing
 #  script:
 #    - *pcvs_prepare
-#    - ${PCVS_COMMAND} $HOME/repo/mpc_ci/MPI/NBC/
+#    - ${PCVS_COMMAND} "${GL_PIPELINE_PATH}/mpc_ci/MPI/NBC/"
 
 Lowcomm:
   <<: *run_by_main
@@ -264,7 +266,7 @@ Lowcomm:
   stage: Regular Testing
   script:
     - *pcvs_prepare
-    - ${PCVS_COMMAND} $HOME/repo/mpc_ci/lowcomm/
+    - ${PCVS_COMMAND} "${GL_PIPELINE_PATH}/mpc_ci/lowcomm/"
 
 OpenMP Tasking:
   <<: *run_by_main
@@ -272,7 +274,7 @@ OpenMP Tasking:
   stage: Regular Testing
   script:
     - *pcvs_prepare
-    - ${PCVS_COMMAND} $HOME/repo/mpc_ci/OpenMP/task/examples $HOME/repo/mpc_ci/OpenMP/task/cholesky
+    - ${PCVS_COMMAND} "${GL_PIPELINE_PATH}/mpc_ci/OpenMP/task/examples $HOME/repo/mpc_ci/OpenMP/task/cholesky"
   allow_failure: true
 
 #
@@ -284,7 +286,7 @@ MPI IMB-MPI 2017:
   stage: Benchmarks
   script:
     - *pcvs_prepare
-    - ${PCVS_COMMAND} $HOME/repo/mpc_ci/MPI/IMB_2017/check-mpi/
+    - ${PCVS_COMMAND} "${GL_PIPELINE_PATH}/mpc_ci/MPI/IMB_2017/check-mpi/"
 
 MPI NBC:
   <<: *run_by_main
@@ -292,7 +294,7 @@ MPI NBC:
   stage: Benchmarks
   script:
     - *pcvs_prepare
-    - ${PCVS_COMMAND} $HOME/repo/mpc_ci/MPI/NBC/
+    - ${PCVS_COMMAND} "${GL_PIPELINE_PATH}/mpc_ci/MPI/NBC/"
 
 MPI IMB-NBC 2017:
   <<: *run_by_main
@@ -300,7 +302,7 @@ MPI IMB-NBC 2017:
   stage: Benchmarks
   script:
     - *pcvs_prepare
-    - ${PCVS_COMMAND} $HOME/repo/mpc_ci/MPI/IMB_2017/check-nbc/
+    - ${PCVS_COMMAND} "${GL_PIPELINE_PATH}/mpc_ci/MPI/IMB_2017/check-nbc/"
 
 #
 # Applications
@@ -313,7 +315,7 @@ Lulesh:
   stage: Applications
   script:
     - *pcvs_prepare
-    - ${PCVS_COMMAND} $HOME/repo/mpc_ci/corals/lulesh-2.0.3/
+    - ${PCVS_COMMAND} "${GL_PIPELINE_PATH}/mpc_ci/corals/lulesh-2.0.3/"
 
 miniFe:
   <<: *run_by_main
@@ -321,7 +323,7 @@ miniFe:
   stage: Applications
   script:
     - *pcvs_prepare
-    - ${PCVS_COMMAND} $HOME/repo/mpc_ci/corals/miniFe/
+    - ${PCVS_COMMAND} "${GL_PIPELINE_PATH}/mpc_ci/corals/miniFe/"
 
 NAS-MZ MPI:
   <<: *run_by_main
@@ -329,7 +331,7 @@ NAS-MZ MPI:
   stage: Applications
   script:
     - *pcvs_prepare
-    - ${PCVS_COMMAND} $HOME/repo/mpc_ci/hybrid/NAS/MZ-MPI/
+    - ${PCVS_COMMAND} "${GL_PIPELINE_PATH}/mpc_ci/hybrid/NAS/MZ-MPI/"
 
 NAS-MZ OMP:
   <<: *run_by_main
@@ -337,7 +339,7 @@ NAS-MZ OMP:
   stage: Applications
   script:
     - *pcvs_prepare
-    - ${PCVS_COMMAND} $HOME/repo/mpc_ci/hybrid/NAS/MZ-OMP/
+    - ${PCVS_COMMAND} "${GL_PIPELINE_PATH}/mpc_ci/hybrid/NAS/MZ-OMP/"
 
 
 ###################################
