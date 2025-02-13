@@ -26,7 +26,9 @@ variables:
   - test -d "${CI_PCVS_DIR}" && rm -rf "${CI_PCVS_DIR}"
   - mkdir -p "${CI_PCVS_DIR}"
   - cd "${GL_PIPELINE_PATH}" 
-  - mkdir mpc_ci 2>"/dev/null" && git clone "https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.paratools.com/cea/mpc_ci.git" "mpc_ci"
+  - mkdir mpc_ci 2>"/dev/null"
+      && git clone "https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.paratools.com/cea/mpc_ci.git" -b $(if [ x${CI_BRANCH} != x ]; then echo ${CI_BRANCH}; else echo master; fi) "mpc_ci"
+      || sleep 5s
   - cd "${CI_PCVS_DIR}"
   - echo "Step run from ${CI_PCVS_DIR}"
   - source ${GL_INSTALL_DIR}/mpcvars.sh
