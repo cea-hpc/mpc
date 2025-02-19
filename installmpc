@@ -744,7 +744,7 @@ download_package()
 }
 
 # Build a compiler additions tarball from git repo url pass as env variable
-function build_compiler_additions_tarball()
+build_compiler_additions_tarball()
 {
 	tmpdir=$(mktemp -d) || exit 42
 	git clone "$COMPILER_ADDITIONS_GIT_REPO" -b "$COMPILER_ADDITIONS_GIT_BRANCH" "$tmpdir"
