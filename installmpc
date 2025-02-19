@@ -859,6 +859,12 @@ find_package_prefix()
 		return
 	fi
 
+	have_cmd spack
+	if [ "x${HAVE_CMD}" = "xno" ]
+	then
+		return
+	fi
+
 	# Do not forget to trim as spack has 2 spaces in its separator
 	SPACKFIND=$(spack find -p ${1}@${2} | grep "${1}@${2}" | cut -d " " -f 2- | awk '{$1=$1};1' 2> /dev/null || true)
 
@@ -1838,6 +1844,7 @@ MPC_CONFIGURE_OPTS="--prefix=${PREFIX} $MPCFRAMEWORK_BUILD_PARAMETERS"
 checking "Autogen MPC"
 
 wrap_output "$SCRIPTPATH/autogen.sh" $SCRIPTPATH
+printf "\n"
 
 #
 # Configure MPC
