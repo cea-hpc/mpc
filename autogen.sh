@@ -140,7 +140,9 @@ parse_watermark()
 #   - Named as ORDER-MAGIC.patch
 #      - ORDER is the order of application 000 to 999
 #      - MAGIC is BOTH the patch description and patch watermark
-apply_configuration_patche()
+# Args:
+#   - $1: id of the patch to apply, (number at the start of the name of files in config/conf_patches/)
+apply_configuration_patch()
 {
 	for i in "${SCRIPTPATH}"/config/conf_patches/$1-*.patch
 	do
@@ -158,16 +160,21 @@ apply_configuration_patche()
 	done
 }
 
+
+# libtool version 2.4.6 and below need patching.
+# libtool version 2.5.4 and above can not be patched.
+# Status of other libtool versions in between is unknown,
+# modify version check accordingly
 # is libtool version is under 2.5.4 ?
-if [ $(echo "$(libtool --version | grep -E -o "[0-9]+\.[0-9]+(\.[0-9]+)*")\n2.5.4" | sort -V | head -n 1) == "2.54" ]
+if [ $(echo "$(libtool --version | grep -E -o "[0-9]+\.[0-9]+(\.[0-9]+)*")\n2.5.4" | sort -V | head -n 1) == "2.5.4" ]
 then
 	# apply all patchs
-	apply_configuration_patche "001"
-	apply_configuration_patche "002"
-	apply_configuration_patche "003"
+	apply_configuration_patch "001"
+	apply_configuration_patch "002"
+	apply_configuration_patch "003"
 else
 	# patches for flang and libgfortran are already upstreams, patching will fail
-	apply_configuration_patche "003"
+	apply_configuration_patch "003"
 fi
 
 # Here is the patch description
