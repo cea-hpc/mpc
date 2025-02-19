@@ -754,8 +754,8 @@ function build_compiler_additions_tarball()
 	./gen_archive.sh --gcc-version=$GCC_VERSION
 	cd "$PPWD"
 
-	mv "$tmpdir"/$(package_filename "$PKG" "${VERSION}") ./
-	TARBALL_PATH=./$(package_filename "$PKG" "${VERSION}")
+	mv "$tmpdir"/$(package_filename "mpc-compiler-additions" "${VERSION}") ./
+	TARBALL_PATH=./$(package_filename "mpc-compiler-additions" "${VERSION}")
 
 	rm -rf "$tmpdir"
 }
@@ -768,14 +768,14 @@ function build_compiler_additions_tarball()
 # TARBALL_PATH where the tarball is
 locate_tarball()
 {
+	PKG=$1
+	VERS=$2
+
 	if [ "$PKG" = "mpc-compiler-additions" -a "x$COMPILER_ADDITIONS_GIT_REPO" != "x" -a "x$COMPILER_ADDITIONS_GIT_BRANCH" != "x" ]
 	then
 		build_compiler_additions_tarball
 		return
 	fi
-
-	PKG=$1
-	VERS=$2
 
 	# Now attempt to locate archive
 	tarball="$PKG-$VERS"
