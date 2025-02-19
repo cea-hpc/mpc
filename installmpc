@@ -743,6 +743,22 @@ download_package()
 	TARBALL_PATH="${PWD}/${FNAME}"
 }
 
+# Build a compiler additions tarball from git repo url pass as env variable
+function build_compiler_additions_tarball()
+{
+	tmpdir=$(mktemp -d) || exit 42
+	git clone "$COMPILER_ADDITIONS_GIT_REPO" -b "$COMPILER_ADDITIONS_GIT_BRANCH" "$tmpdir"
+
+	PPWD="$PWD"
+	cd "$tmpdir"
+	./gen_archive.sh --gcc-version=$GCC_VERSION
+	cd "$PPWD"
+
+	mv "$tmpdir"/$(package_filename "$PKG" "${VERSION}") ./
+	TARBALL_PATH=./$(package_filename "$PKG" "${VERSION}")
+
+	rm -rf "$tmpdir"
+}
 
 # Locate tarball for a dependency (or download it)
 # Args:
@@ -752,6 +768,12 @@ download_package()
 # TARBALL_PATH where the tarball is
 locate_tarball()
 {
+	if [ "$PKG" = "mpc-compiler-additions" -a "x$COMPILER_ADDITIONS_GIT_REPO" != "x" -a "x$COMPILER_ADDITIONS_GIT_BRANCH" != "x" ]
+	then
+		build_compiler_additions_tarball
+		return
+	fi
+
 	PKG=$1
 	VERS=$2
 
@@ -793,31 +815,7 @@ locate_tarball()
 		return
 	fi
 
-	# All failed now download
-	if ! [ "x$COMP_ADD_GIT_BRANCH" != "x" -a "$PKG" = "mpc-compiler-additions" ]
-	then
-		download_package "$PKG" "$VERS"
-	else
-		tmpdir=$(mktemp -d) || exit 42
-	
-		if [ "x$CI_JOB_TOKEN" != "x" ]; then
-			GIT_URL="https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.paratools.com/cea/autopriv.git"
-		else
-			GIT_URL="git@gitlab.paratools.com:cea/autopriv.git"
-		fi
-		git clone "$GIT_URL" -b "$COMP_ADD_GIT_BRANCH" "$tmpdir"
-
-		PPWD="$PWD"
-		cd "$tmpdir"
-		./gen_archive.sh --gcc-version=$GCC_VERSION
-		cd "$PPWD"
-
-		mv "$tmpdir"/$(package_filename "$PKG" "${VERSION}") ./
-		TARBALL_PATH=./$(package_filename "$PKG" "${VERSION}")
-
-		rm -rf "$tmpdir"
-	fi
-	
+	download_package "$PKG" "$VERS"
 }
 
 # Download all deps for MPC
