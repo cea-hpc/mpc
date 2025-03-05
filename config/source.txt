@@ -1,9 +1,13 @@
 #PACKAGE                  SOURCE_URL
-hwloc                     https://france.paratools.com/hwloc/hwloc-VERSION.tar.gz
+#hwloc                     https://france.paratools.com/hwloc/hwloc-VERSION.tar.gz
+hwloc                     https://download.open-mpi.org/release/hwloc/vVERSION_SHORT/hwloc-VERSION.tar.gz
 openpa                    https://github.com/pmodels/openpa/releases/download/vVERSION/openpa-VERSION.tar.gz
 hydra                     http://www.mpich.org/static/downloads/3.2/hydra-VERSION.tar.gz
 mpcalloc                  https://github.com/cea-hpc/mpc-allocator/releases/download/VERSION/mpcalloc-VERSION.tar.gz
-mpc-compiler-additions    https://france.paratools.com/mpc/releases/mpc-compiler-additions-VERSION.tar.gz
+#mpc-compiler-additions    https://france.paratools.com/mpc/releases/mpc-compiler-additions-VERSION.tar.gz
+mpc-compiler-additions    
 gdb                       https://ftpmirror.gnu.org/gdb/gdb-7.7.tar.gz
 libfabric                 https://github.com/ofiwg/libfabric/releases/download/vVERSION/libfabric-VERSION.tar.bz2
-concurrency-kit           https://france.paratools.com/concurrency-kit/concurrency-kit-VERSION.tar.gz
+#concurrency-kit           https://france.paratools.com/concurrency-kit/concurrency-kit-VERSION.tar.gz
+concurrency-kit           https://github.com/concurrencykit/ck/archive/refs/tags/VERSION.tar.gz
+
