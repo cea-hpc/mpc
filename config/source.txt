@@ -5,7 +5,6 @@ openpa                    https://github.com/pmodels/openpa/releases/download/vV
 hydra                     http://www.mpich.org/static/downloads/3.2/hydra-VERSION.tar.gz
 mpcalloc                  https://github.com/cea-hpc/mpc-allocator/releases/download/VERSION/mpcalloc-VERSION.tar.gz
 #mpc-compiler-additions    https://france.paratools.com/mpc/releases/mpc-compiler-additions-VERSION.tar.gz
-mpc-compiler-additions    
 gdb                       https://ftpmirror.gnu.org/gdb/gdb-7.7.tar.gz
 libfabric                 https://github.com/ofiwg/libfabric/releases/download/vVERSION/libfabric-VERSION.tar.bz2
 #concurrency-kit           https://france.paratools.com/concurrency-kit/concurrency-kit-VERSION.tar.gz

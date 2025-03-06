@@ -694,7 +694,11 @@ package_version()
 #
 package_download_address()
 {
-	_config_file_clean "${SCRIPTPATH}/config/source.txt" | grep "$1" | cut -d " " -f 2 | sed "s/VERSION/${2}/g"
+	VERSION=${2}
+	VERSION_SHORT=$(echo "${VERSION}" | sed "s/.[0-9]*$//")
+	_config_file_clean "${SCRIPTPATH}/config/source.txt" | grep "$1" | cut -d " " -f 2 \
+	| sed "s/VERSION_SHORT/${VERSION_SHORT}/g" \
+	| sed "s/VERSION/${VERSION}/g"
 }
 
 # Package Filename
