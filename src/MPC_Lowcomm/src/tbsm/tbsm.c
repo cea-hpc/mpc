@@ -112,7 +112,7 @@ int lcr_tbsm_send_am_zcopy(_mpc_lowcomm_endpoint_t *ep,
                 goto err;
         }
 
-        tbsm_iov = alloca(iovcnt + 1);
+        tbsm_iov = alloca((iovcnt + 1) * sizeof(struct iovec));
 
         tbsm_iov[0].iov_len  = header_length;
         tbsm_iov[0].iov_base = (void *)header;
