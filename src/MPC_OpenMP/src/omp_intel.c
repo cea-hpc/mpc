@@ -29,6 +29,8 @@
 /* # - Romain Pereira <romain.pereira@cea.fr>                             # */
 /* #                                                                      # */
 /* ######################################################################## */
+#include <mpc_arch.h>
+
 #include "omp_intel.h"
 #include "mpc_keywords.h"
 #include "mpc_omp_abi.h"

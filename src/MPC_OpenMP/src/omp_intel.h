@@ -369,9 +369,6 @@ void __kmp_release_deps( kmp_int32, kmp_taskdata_t * );
  * WRAPPER FUNTION *
  *******************/
 
-extern int __kmp_invoke_microtask( kmpc_micro pkfn, int gtid, int npr, int argc,
-                                   void *argv[] );
-
 typedef struct mpc_omp_intel_wrapper_s
 {
 	microtask_t f;

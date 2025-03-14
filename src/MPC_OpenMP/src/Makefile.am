@@ -66,9 +66,12 @@ tools_src = tools/src/mpcompt_entryPoints.c tools/src/mpcompt_init.c tools/src/m
 libmpcomp_la_SOURCES += $(tools_src)
 
 libmpcomp_la_LDFLAGS = -Wl,--version-script=$(abs_top_srcdir)/src/MPC_OpenMP/version_gomp.txt
-libmpcomp_la_LIBADD = ../../MPC_Launch/src/libmpclaunch.la $(VMEM_LIBS) $(OPA_LIBS)
+libmpcomp_la_LIBADD = ../../MPC_Launch/src/libmpclaunch.la ../../MPC_Arch/src/libmpcarch.la $(VMEM_LIBS) $(OPA_LIBS)
 
-lib_LTLIBRARIES += libiomp5.la libgomp.la
+# Make sure that we do not link against system omp by providing fake empty libs with the same name
+lib_LTLIBRARIES += libiomp5.la libgomp.la libomp.la
 
 libiomp5_la_SOURCES = ./fakelib/fakelib.c
 libgomp_la_SOURCES = ./fakelib/fakelib.c
+libomp_la_SOURCES = ./fakelib/fakelib.c
+
