@@ -838,8 +838,7 @@ void omp_destroy_lock( omp_lock_t *lock )
     _mpc_omp_ompt_frame_get_infos();
     _mpc_omp_ompt_callback_lock_destroy( ompt_mutex_lock, (ompt_wait_id_t) lock->ompt_wait_id );
 #endif /* OMPT_SUPPORT */
-
-	sctk_free(lock);
+	// lock is USER ALLOCATED and should NOT be free by omp runtime.
 }
 
 void omp_set_lock( omp_lock_t *lock )
