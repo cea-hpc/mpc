@@ -43,6 +43,10 @@ if MPC_MPI_ENABLED
         SUBDIRS += MPC_MPI
 endif
 
+if MPC_OPENSHMEM_ENABLED
+        SUBDIRS += MPC_OpenSHMEM
+endif
+
 if MPC_MPIIO_ENABLED
         SUBDIRS += MPC_IO
 endif

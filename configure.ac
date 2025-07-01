@@ -2265,6 +2265,21 @@ AC_ARG_ENABLE([mpi],
 [MPC_MPI_ENABLED=$enableval],
 [])
 
+#MPC_OPENSHMEM_ENABLED
+MPC_OPENSHMEM_ENABLED=yes
+
+if test "x${MPC_LOWCOMM_ENABLED}" = "xyes" -o "x${MPC_LOWCOMM_MP_ENABLE}" = "xyes"; then
+        AC_DEFINE([MPC_Lowcomm], [1], [MPC_Lowcomm module was enabled])
+        MPC_LOWCOMM_ENABLED="yes"
+else
+        AC_MSG_WARN([Disabling lowcomm means disabling MPC's OpenSHMEM layer])
+        MPC_OPENSHMEM_ENABLED=no
+fi
+
+AM_CONDITIONAL([MPC_LOWCOMM_ENABLED], [test "x${MPC_LOWCOMM_ENABLED}" = "xyes"])
+AC_SUBST([MPC_LOWCOMM_ENABLED])
+
+
 # Modules dependent on MPI
 MPC_FORTRAN_ENABLED=yes
 MPC_MPIIO_ENABLED=yes
@@ -2299,6 +2314,19 @@ fi
 AM_CONDITIONAL([MPC_OPENMP_ENABLED], [test "x${MPC_OPENMP_ENABLED}" = "xyes"])
 AC_SUBST([MPC_OPENMP_ENABLED])
 
+
+AC_ARG_ENABLE([openshmem],
+[AS_HELP_STRING([--enable-openshmem],
+                [Compile MPC OpenSHMEM interface])],
+[MPC_OPENSHMEM_ENABLED=$enableval],
+[])
+
+if test "x${MPC_OPENSHMEM_ENABLED}" = "xyes"; then
+        AC_DEFINE([MPC_OPENSHMEM], [1], [MPC_OpenSHMEM module was enabled])
+fi
+
+AM_CONDITIONAL([MPC_OPENSHMEM_ENABLED], [test "x${MPC_OPENSHMEM_ENABLED}" = "xyes"])
+AC_SUBST([MPC_OPENSHMEM_ENABLED])
 
 #
 # MPC_Fortran
@@ -2835,6 +2863,11 @@ fi
 if test "x${MPC_MPI_ENABLED}" = "xyes"; then
         ALL_MPC_LIBS="${ALL_MPC_LIBS} ${ac_pwd}/src/MPC_MPI/src/libmpcmpi.la"
         MPC_MODULE_LIST="${MPC_MODULE_LIST} MPC_MPI_ENABLED"
+fi
+
+if test "x${MPC_OPENSHMEM_ENABLED}" = "xyes"; then
+        ALL_MPC_LIBS="${ALL_MPC_LIBS} ${ac_pwd}/src/MPC_OpenSHMEM/src/libmpcopenshmem.la"
+        MPC_MODULE_LIST="${MPC_MODULE_LIST} MPC_OPENSHMEM_ENABLED"
 fi
 
 if test "x${MPC_MPIIO_ENABLED}" = "xyes"; then
@@ -3374,6 +3407,7 @@ MPC_CONFIG_RESULT="\
 # MPC_Openmp........... $MPC_OPENMP_ENABLED\n\
 # MPC_Lowcomm.......... $MPC_LOWCOMM_ENABLED\n\
 # MPC_MPI.............. $MPC_MPI_ENABLED\n\
+# MPC_OpenSHMEM........ $MPC_OPENSHMEM_ENABLED\n\
 # MPC_Fortran.......... $MPC_FORTRAN_ENABLED\n\
 # MPC_MPIIO............ $MPC_MPIIO_ENABLED\n\
 #
@@ -3456,6 +3490,8 @@ AC_OUTPUT([Makefile
            src/MPC_Lowcomm/src/Makefile
            src/MPC_MPI/Makefile
            src/MPC_MPI/src/Makefile
+           src/MPC_OpenSHMEM/Makefile
+           src/MPC_OpenSHMEM/src/Makefile
            src/MPC_OpenMP/src/Makefile
            src/MPC_OpenMP/Makefile
            src/MPC_Topology/Makefile
