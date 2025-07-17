@@ -25,8 +25,6 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "mpc_common_types.h"
-
 /**
  * @defgroup MPC_OPENSHMEM MPC OpenSHMEM
  * @{
