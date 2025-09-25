@@ -1,6 +1,6 @@
-===============
-Developer Guide
-===============
+==================
+Contribution Guide
+==================
 
 .. FIXME: What is the procedure for external contributors now that ParaTools GitLab is unavailable
 .. How to use Gitlab (MPC-related)?
