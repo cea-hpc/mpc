@@ -89,6 +89,7 @@
 	#include "mpcomp_core.h"
 #endif
 
+#include "pthread_weak.h"
 
 #define MPC_MODULE "Threads/Threads"
 
@@ -2290,6 +2291,11 @@ int mpc_thread_process_kill(pid_t pid, int sig)
 #endif
 }
 
+int mpc_thread_raise(int sig)
+{
+	return mpc_thread_kill(mpc_thread_self(), sig);
+}
+
 /***********
  * SIGNALS *
  ***********/
@@ -2326,7 +2332,7 @@ int mpc_thread_sigpending(sigset_t *set)
 	return res;
 }
 
-int mpc_thread_sigsuspend(sigset_t *set)
+int mpc_thread_sigsuspend(const sigset_t *set)
 {
 	__check_mpc_initialized();
 	int res;

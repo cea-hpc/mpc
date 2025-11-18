@@ -515,7 +515,7 @@ void mpc_thread_pthread_engine_init(void)
 
 #ifndef WINDOWS_SYS
 		_funcptr_mpc_thread_sigpending = (int (*)(sigset_t *)) sigpending;
-		_funcptr_mpc_thread_sigsuspend = (int (*)(sigset_t *)) sigsuspend;
+		_funcptr_mpc_thread_sigsuspend = (int (*)(const sigset_t *)) sigsuspend;
 #endif
 
 #ifdef HAVE_PTHREAD_SIGMASK

@@ -108,7 +108,7 @@ extern int  (*_funcptr_mpc_thread_getschedparam)(mpc_thread_t __target_thread,
 extern void *(*_funcptr_mpc_thread_getspecific)(mpc_thread_keys_t __key);
 extern int   (*_funcptr_mpc_thread_join)(mpc_thread_t __th, void **__thread_return);
 extern int   (*_funcptr_mpc_thread_kill)(mpc_thread_t thread, int signo);
-extern int   (*_funcptr_mpc_thread_sigsuspend)(sigset_t *set);
+extern int   (*_funcptr_mpc_thread_sigsuspend)(const sigset_t *set);
 extern int   (*_funcptr_mpc_thread_sigpending)(sigset_t *set);
 extern int   (*_funcptr_mpc_thread_sigmask)(int how, const sigset_t *newmask, sigset_t *oldmask);
 extern int   (*_funcptr_mpc_thread_key_create)(mpc_thread_keys_t *__key, void (*__destr_function)(void *));

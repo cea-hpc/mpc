@@ -25,6 +25,7 @@
 #include "mpc_threads_config.h"
 #include "mpc_common_debug.h"
 
+#include <dlfcn.h>
 #include <unistd.h>
 #include <signal.h>
 
@@ -72,7 +73,15 @@ int _mpc_thread_kthread_sigmask(int how, const sigset_t *newmask, sigset_t *oldm
 static inline void kthread_usleep(unsigned long usec)
 {
 #ifndef WINDOWS_SYS
-		usleep(usec);
+		void *dl_handle = dlopen("libc.so.6", RTLD_LAZY);
+		assert(dl_handle != NULL);
+		int (*system_usleep)(unsigned long) = dlsym(dl_handle, "usleep");
+		assert(system_usleep != NULL);
+
+		const int usleep_ierr = system_usleep(usec);
+		assert(usleep_ierr == 0);
+		const int dlclose_ierr = dlclose(dl_handle);
+		assert(dlclose_ierr == 0);
 #else
 		Sleep(usec);
 #endif
