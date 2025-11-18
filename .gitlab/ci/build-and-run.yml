@@ -414,3 +414,4 @@ Resources Relinquishing:
     - echo "Suppressing ${GL_PIPELINE_PATH} data"
   after_script:
     - rm -rf ${GL_PIPELINE_PATH}
+  interruptible: false

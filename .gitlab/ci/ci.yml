@@ -237,3 +237,4 @@ Resource Relinquishing:
     - echo "Suppressing ${CI_BUILDS_DIR} data"
   after_script:
     - rm -rf ${CI_BUILDS_DIR}/*
+  interruptible: false
