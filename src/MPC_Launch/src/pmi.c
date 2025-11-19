@@ -33,6 +33,10 @@
 
 #include "mpc_launch.h"
 
+#ifdef MPC_Threads
+#include <kthread.h>
+#endif
+
 #define MPC_MODULE "Launch/PMI"
 
 
@@ -890,7 +894,12 @@ void mpc_launch_pmi_abort(const int return_code)
 		mpc_common_debug_error("PMI(x)_Abort error: %d. Resuming abortion of this process\n", err);
 	}
 	// Wait for the sigterm to arrive
-	sleep(5);
+	// We want the whole kernel thread to wait
+#if defined(MPC_Threads)
+		kthread_usleep(5000000);
+#else
+		sleep(5);
+#endif
 	// If it doesn't come release all PMI(x) resources and prepare to abort
 	// manually
 	mpc_launch_pmi_finalize();

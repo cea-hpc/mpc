@@ -69,23 +69,53 @@ void _mpc_thread_kthread_exit(void *retval);
 
 int _mpc_thread_kthread_sigmask(int how, const sigset_t *newmask, sigset_t *oldmask);
 
+#ifndef WINDOWS_SYS
+// NOLINTNEXTLINE(clang-diagnostic-unused-function)
+static inline int kthread_usleep(unsigned long usec)
+{
+	static int (*system_usleep)(unsigned long) = NULL;
+	if (system_usleep == NULL)
+	{
+		void *dl_handle = dlopen("libc.so.6", RTLD_LAZY);
+
+		assert(dl_handle != NULL);
+		system_usleep = dlsym(dl_handle, "usleep");
+		assert(system_usleep != NULL);
+
+		const int dlclose_ierr = dlclose(dl_handle);
+		assert(dlclose_ierr == 0);
+	}
+
+	return system_usleep(usec);
+}
+
+// NOLINTNEXTLINE(clang-diagnostic-unused-function)
+static inline int kthread_sched_yield(void)
+{
+	static int (*system_sched_yield)(void) = NULL;
+	if (system_sched_yield == NULL)
+	{
+		void *dl_handle = dlopen("libc.so.6", RTLD_LAZY);
+
+		assert(dl_handle != NULL);
+		system_sched_yield = dlsym(dl_handle, "sched_yield");
+		assert(system_sched_yield != NULL);
+
+		const int dlclose_ierr = dlclose(dl_handle);
+		assert(dlclose_ierr == 0);
+	}
+
+	return system_sched_yield();
+}
+
+#else
 // NOLINTNEXTLINE(clang-diagnostic-unused-function)
 static inline void kthread_usleep(unsigned long usec)
 {
-#ifndef WINDOWS_SYS
-		void *dl_handle = dlopen("libc.so.6", RTLD_LAZY);
-		assert(dl_handle != NULL);
-		int (*system_usleep)(unsigned long) = dlsym(dl_handle, "usleep");
-		assert(system_usleep != NULL);
-
-		const int usleep_ierr = system_usleep(usec);
-		assert(usleep_ierr == 0);
-		const int dlclose_ierr = dlclose(dl_handle);
-		assert(dlclose_ierr == 0);
-#else
-		Sleep(usec);
-#endif
+	Sleep(usec);
 }
+
+#endif
 
 #ifdef __cplusplus
 	}
