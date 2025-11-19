@@ -280,7 +280,7 @@ static inline int ___mpc_thread_ethread_sigmask(_mpc_thread_ethread_per_thread_t
 
 int mpc_thread_yield(void);
 
-static inline int ___mpc_thread_ethread_sigsuspend(_mpc_thread_ethread_per_thread_t *cur, sigset_t *set)
+static inline int ___mpc_thread_ethread_sigsuspend(_mpc_thread_ethread_per_thread_t *cur, const sigset_t *set)
 {
 #ifndef WINDOWS_SYS
 		sigset_t oldmask;

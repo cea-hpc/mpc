@@ -218,7 +218,7 @@ const char * mpc_common_debug_get_basename(const char *path);
 
 
 #if defined(__GNUC__) || defined(__INTEL_COMPILER)
-	#define mpc_common_nodebug(fmt, ...) (void)(0)
+	#define mpc_common_nodebug(fmt, ...) ((void)(0))
 #else
 static inline void mpc_common_nodebug(const char *fmt, ...)
 {
