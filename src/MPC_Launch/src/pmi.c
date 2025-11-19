@@ -418,23 +418,18 @@ static inline void __set_ctx_to_serial(struct mpc_pmi_context *ctx)
 
 static inline int _pmi_initialize(struct mpc_pmi_context *ctx, int *unreachable)
 {
-	char *exename = mpc_common_get_flags()->exename;
+	const int is_mpc_print_config = mpc_common_check_for_print_config();
 
-	if (exename)
+	// If the command is mpc_print_config do not even try to bootstrap PMIx
+	if (is_mpc_print_config == 1)
 	{
-		// If the command is mpc_print_config do not even try to bootstrap PMIx
-		if (strstr(exename, "mpc_print_config"))
-		{
-			goto PMI_INIT_SERIAL;
-		}
+		goto PMI_INIT_SERIAL;
 	}
 
 	#ifdef MPC_USE_PMIX
 		pmix_status_t rc = PMI_SUCCESS;
 
-		rc = PMIx_Init(&ctx->pmix_proc,
-		NULL,
-		0);
+		rc = PMIx_Init(&ctx->pmix_proc, NULL, 0);
 		if ((rc == PMIX_ERR_UNREACH) || (rc == PMIX_ERR_INVALID_NAMESPACE))
 		{
 			mpc_common_debug_error("PMIx was unreachable, falling back to serial execution");

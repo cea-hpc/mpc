@@ -197,14 +197,22 @@ void mpc_common_init_print()
 int mpc_common_check_for_print_config(void)
 {
 	const char *const exename = mpc_common_get_flags()->exename;
-	int retcode = -1;
+	static int        retcode = -1;
 
+	// Check only once using the exename
+	if (retcode != -1)
+	{
+		return retcode;
+	}
+
+	// Does MPC is initialized ?
 	if (exename != NULL)
 	{
 		char *const absolute_path = strdup(exename);
 
 		if (absolute_path != NULL)
 		{
+			// Compute the base name of the executable (mpc_print_config may be called with an absolute_path)
 			char *prev = absolute_path;
 			char *curr = strtok(absolute_path, "/");
 			while (curr != NULL)
