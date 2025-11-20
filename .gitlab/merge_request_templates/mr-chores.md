@@ -9,7 +9,7 @@ runtime**, it may include (but not bound to):
 
 ## Prerequisites
 I ensure the proposed changes:
-- [ ] are up-to-date with the default branch (currently `devel`)
+- [ ] are up-to-date with the default branch (currently `main`)
 - [ ] do not break basic MPC build process: `./installmpc --prefix=$PREFIX`
 - [ ] can still run a simple MPI `main()`
 
