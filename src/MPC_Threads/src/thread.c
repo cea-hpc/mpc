@@ -1093,6 +1093,9 @@ static inline void __thread_base_init(void)
 	/*Check all types */
 }
 
+static unsigned int _thread_sleep(unsigned int seconds);
+static int _thread_usleep(unsigned long useconds);
+
 static inline void __thread_engine_init(void)
 {
 	if (mpc_common_get_flags()->thread_library_init != NULL)
@@ -1104,6 +1107,9 @@ static inline void __thread_engine_init(void)
 		/* assume pthread */
 		mpc_thread_pthread_engine_init();
 	}
+
+	_funcptr_mpc_thread_sleep  = _thread_sleep;
+	_funcptr_mpc_thread_usleep = _thread_usleep;
 }
 
 #ifdef MPC_USE_EXTLS
@@ -1617,15 +1623,7 @@ void mpc_thread_testcancel(void)
 
 int mpc_thread_yield(void)
 {
-	if (_funcptr_mpc_thread_yield != NULL)
-	{
-		__check_mpc_initialized();
-		return _funcptr_mpc_thread_yield();
-	}
-	else
-	{
-		return kthread_sched_yield();
-	}
+	return _funcptr_mpc_thread_yield();
 }
 
 /********
@@ -2278,21 +2276,9 @@ int mpc_thread_kill(mpc_thread_t thread, int signo)
 
 int mpc_thread_process_kill(pid_t pid, int sig)
 {
-	__check_mpc_initialized();
 #ifndef WINDOWS_SYS
-		int        res;
-		static int (*system_kill)(pid_t, int) = NULL;
-		if (system_kill == NULL)
-		{
-#ifdef SCTK_DONOT_REDEFINE_KILL
-				system_kill = kill;
-#else
-				void *dl_handle = dlopen("libc.so.6", RTLD_LAZY);
-				system_kill = dlsym(dl_handle, "kill");
-				dlclose(dl_handle);
-#endif
-		}
-		res = system_kill(pid, sig);
+		int res;
+		res = kthread_kill(pid, sig);
 		sctk_check(res, 0);
 		mpc_thread_yield();
 		return res;
@@ -3090,7 +3076,7 @@ static void __sleep_pool_poll(_mpc_thread_core_sleep_pool_t *wake_time)
 	}
 }
 
-unsigned int mpc_thread_sleep(unsigned int seconds)
+unsigned int _thread_sleep(unsigned int seconds)
 {
 	__check_mpc_initialized();
 	assert(__thread_module_config.thread_timer_enabled);
@@ -3110,39 +3096,41 @@ unsigned int mpc_thread_sleep(unsigned int seconds)
 	return 0;
 }
 
-int mpc_thread_usleep(unsigned int useconds)
+unsigned int mpc_thread_sleep(unsigned int seconds)
 {
-	if (__thread_module_config.thread_timer_enabled)
-	{
-		__check_mpc_initialized();
-		assert(_funcptr_mpc_thread_testcancel != NULL);
-		_funcptr_mpc_thread_testcancel();
-		_mpc_thread_core_sleep_pool_t wake_time;
-		wake_time.done      = 1;
-		wake_time.wake_time = ((( sctk_timer_t )useconds / ( sctk_timer_t )1000)
-		                       / ( sctk_timer_t )__thread_module_config.thread_timer_interval)
-		                      + ___timer_thread_ticks + 1;
-		mpc_thread_yield();
-		assert(_funcptr_mpc_thread_testcancel != NULL);
-		_funcptr_mpc_thread_testcancel();
-		mpc_thread_wait_for_value_and_poll(&(wake_time.done), 0, (void (*)(void *)) __sleep_pool_poll,
-			( void * )&wake_time);
-		assert(_funcptr_mpc_thread_testcancel != NULL);
-		_funcptr_mpc_thread_testcancel();
-		return 0;
-	}
-	else
-	{
-		return kthread_usleep(useconds);
-	}
+	return _funcptr_mpc_thread_sleep(seconds);
+}
+
+int _thread_usleep(unsigned long useconds)
+{
+	__check_mpc_initialized();
+	assert(__thread_module_config.thread_timer_enabled);
+	assert(_funcptr_mpc_thread_testcancel != NULL);
+	_funcptr_mpc_thread_testcancel();
+	_mpc_thread_core_sleep_pool_t wake_time;
+	wake_time.done      = 1;
+	wake_time.wake_time = ((( sctk_timer_t )useconds / ( sctk_timer_t )1000)
+	                       / ( sctk_timer_t )__thread_module_config.thread_timer_interval)
+	                      + ___timer_thread_ticks + 1;
+	mpc_thread_yield();
+	assert(_funcptr_mpc_thread_testcancel != NULL);
+	_funcptr_mpc_thread_testcancel();
+	mpc_thread_wait_for_value_and_poll(&(wake_time.done), 0, (void (*)(void *)) __sleep_pool_poll,
+		( void * )&wake_time);
+	assert(_funcptr_mpc_thread_testcancel != NULL);
+	_funcptr_mpc_thread_testcancel();
+	return 0;
+}
+
+int mpc_thread_usleep(unsigned long useconds)
+{
+	return _funcptr_mpc_thread_usleep(useconds);
 }
 
 /*on ne prend pas en compte la precision en dessous de la micro-second
  * on ne gère pas les interruptions non plus*/
 int mpc_thread_nanosleep(const struct timespec *req, struct timespec *rem)
 {
-	__check_mpc_initialized();
-
 	if (req == NULL)
 	{
 		return EINVAL;

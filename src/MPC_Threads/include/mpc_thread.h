@@ -201,7 +201,7 @@
 	void mpc_thread_testcancel(void);
 	int mpc_thread_yield(void);
 	unsigned int mpc_thread_sleep(unsigned int seconds);
-	int mpc_thread_usleep(unsigned int seconds);
+	int mpc_thread_usleep(unsigned long useconds);
 	int mpc_thread_nanosleep(const struct timespec *req, struct timespec *rem);
 
 	int mpc_thread_getpriority_max(int policy);

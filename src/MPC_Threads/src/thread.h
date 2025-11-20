@@ -79,7 +79,7 @@ int mpc_thread_dump_restore(mpc_thread_t thread, char *type, int vp);
 
 
 int mpc_thread_getattr_np(mpc_thread_t th, mpc_thread_attr_t *attr);
-int mpc_thread_usleep(unsigned int useconds);
+int mpc_thread_usleep(unsigned long useconds);
 
 extern volatile int sctk_multithreading_initialised;
 
