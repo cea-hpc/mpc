@@ -32,6 +32,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <mpc_common_types.h>
+#include "mpc_lowcomm_def.h"
 
 #ifdef __cplusplus
 	extern "C" {
@@ -89,9 +90,6 @@ int _mpc_lowcomm_monitor_teardown();
 /*******************
  * ID MANIPULATION *
  *******************/
-
-typedef uint32_t    mpc_lowcomm_set_uid_t;
-typedef uint64_t    mpc_lowcomm_peer_uid_t;
 
 /**
  * @brief Get the UID of current process

@@ -35,7 +35,7 @@
 
 #include <mpc_lowcomm_group.h>
 #include <mpc_common_types.h>
-#include <mpc_lowcomm_monitor.h>
+#include "mpc_lowcomm_def.h"
 #include <lcp.h>
 
 /*********************************
