@@ -22,7 +22,7 @@
 #ifndef MPC_LOWCOMM_GROUP_INC_H
 #define MPC_LOWCOMM_GROUP_INC_H
 
-#include <mpc_lowcomm_monitor.h>
+#include "mpc_lowcomm_def.h"
 #include <mpc_lowcomm_handle_ctx.h>
 
 #ifdef __cplusplus

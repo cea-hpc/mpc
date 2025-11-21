@@ -24,7 +24,8 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-#include <mpc_lowcomm_communicator.h>
+#include "mpc_lowcomm_communicator.h"
+#include "mpc_lowcomm_def.h"
 
 
 #ifdef __cplusplus

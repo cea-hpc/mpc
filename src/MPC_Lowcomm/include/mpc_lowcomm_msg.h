@@ -5,7 +5,7 @@
 #include <mpc_lowcomm_types.h>
 #include <reorder.h>
 
-#include <mpc_lowcomm_monitor.h>
+#include "mpc_lowcomm_def.h"
 
 #ifdef __cplusplus
 	extern "C" {

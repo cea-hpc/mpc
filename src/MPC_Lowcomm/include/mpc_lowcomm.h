@@ -26,7 +26,8 @@
 	extern "C" {
 #endif
 
-#include <mpc_lowcomm_types.h>
+#include "mpc_lowcomm_types.h"
+#include "mpc_lowcomm_def.h"
 
 /** This file define the low-level communication layer for MPC */
 
