@@ -141,10 +141,11 @@ int mpc_mpi_cl_get_activity(int nb_item, mpc_mpi_cl_activity_t *tab, double *pro
 typedef void (MPC_Handler_function)(void *, int *, ...);
 typedef struct MPI_ABI_Errhandler *MPC_Errhandler;
 
-#define MPC_ERRHANDLER_NULL  ((MPC_Errhandler)0)
-#define MPC_ERRORS_ARE_FATAL ((MPC_Errhandler)1)
-#define MPC_ERRORS_RETURN    ((MPC_Errhandler)2)
-#define MPC_ERRORS_ABORT     ((MPC_Errhandler)3)
+#define MPC_ERRHANDLER_NULL      ((MPC_Errhandler)0)
+#define MPC_ERRORS_ARE_FATAL     ((MPC_Errhandler)1)
+#define MPC_ERRORS_RETURN        ((MPC_Errhandler)2)
+#define MPC_ERRORS_ABORT         ((MPC_Errhandler)3)
+#define MPC_ERRHANDLER_NB_PREDEF 4
 
 #define MPC_MAX_ERROR_STRING 512
 
@@ -173,107 +174,106 @@ enum
 
 	MPC_SUCCESS = MPC_LOWCOMM_SUCCESS,
 
-	MPC_ERR_BUFFER,                                  /* Invalid buffer pointer */
-	MPC_ERR_COUNT,                                   /* Invalid count argument */
-	MPC_ERR_TAG = MPC_ERR_TYPE + 1,                  /* Invalid tag argument */
-	MPC_ERR_COMM,                                    /* Invalid communicator */
-	MPC_ERR_RANK,                                    /* Invalid rank */
-	MPC_ERR_REQUEST,                                 /* Invalid mpc_request handle */
-	MPC_ERR_ROOT,                                    /* Invalid root */
+	MPC_ERR_BUFFER,                       /* Invalid buffer pointer */
+	MPC_ERR_COUNT,                        /* Invalid count argument */
+	MPC_ERR_TAG = MPC_ERR_TYPE + 1,       /* Invalid tag argument */
+	MPC_ERR_COMM,                         /* Invalid communicator */
+	MPC_ERR_RANK,                         /* Invalid rank */
+	MPC_ERR_REQUEST,                      /* Invalid mpc_request handle */
+	MPC_ERR_ROOT,                         /* Invalid root */
 
-	MPC_ERR_GROUP,                                   /* Invalid group */
-	MPC_ERR_OP,                                      /* Invalid operation */
+	MPC_ERR_GROUP,                        /* Invalid group */
+	MPC_ERR_OP,                           /* Invalid operation */
 
-	MPC_ERR_TOPOLOGY,                                /* Invalid topology */
-	MPC_ERR_DIMS,                                    /* Invalid dimension argument */
+	MPC_ERR_TOPOLOGY,                     /* Invalid topology */
+	MPC_ERR_DIMS,                         /* Invalid dimension argument */
 
-	MPC_ERR_ARG,                                     /* Invalid argument */
-	MPC_ERR_UNKNOWN,                                 /* Unknown error */
+	MPC_ERR_ARG,                          /* Invalid argument */
+	MPC_ERR_UNKNOWN,                      /* Unknown error */
 
-	MPC_ERR_OTHER = MPC_ERR_TRUNCATE + 1,            /* Other error; use Error_string */
-	MPC_ERR_INTERN,                                  /* Internal error code */
-	MPC_ERR_PENDING,                                 /* Pending request */
-	MPC_ERR_IN_STATUS,                               /* Look in status for error value */
+	MPC_ERR_OTHER = MPC_ERR_TRUNCATE + 1, /* Other error; use Error_string */
+	MPC_ERR_INTERN,                       /* Internal error code */
+	MPC_ERR_PENDING,                      /* Pending request */
+	MPC_ERR_IN_STATUS,                    /* Look in status for error value */
 
-	MPC_ERR_ACCESS,                                  /* Permission denied */
-	MPC_ERR_AMODE,                                   /* Error related to the amode passed to MPI_FILE_OPEN */
-	MPC_ERR_ASSERT,                                  /* Invalid assert argument */
+	MPC_ERR_ACCESS,                       /* Permission denied */
+	MPC_ERR_AMODE,                        /* Error related to the amode passed to MPI_FILE_OPEN */
+	MPC_ERR_ASSERT,                       /* Invalid assert argument */
 
-	MPC_ERR_BAD_FILE,                                /* Invalid file name (e.g., path name too long) */
-	MPC_ERR_BASE,                                    /* Invalid base passed to MPI_FREE_MEM */
-	MPC_ERR_CONVERSION,                              /* An error occurred in a user supplied data conversion function */
-	MPC_ERR_DISP,                                    /* Invalid disp argument */
-	MPC_ERR_DUP_DATAREP,                             /* Conversion functions could not be registered because a
-	                                                  * data representation identifier that was already define
-	                                                  * was passed to MPI_REGISTER_DATAREP */
+	MPC_ERR_BAD_FILE,                     /* Invalid file name (e.g., path name too long) */
+	MPC_ERR_BASE,                         /* Invalid base passed to MPI_FREE_MEM */
+	MPC_ERR_CONVERSION,                   /* An error occurred in a user supplied data conversion function */
+	MPC_ERR_DISP,                         /* Invalid disp argument */
+	MPC_ERR_DUP_DATAREP,                  /* Conversion functions could not be registered because a data representation
+	                                       * identifier that was already define was passed to MPI_REGISTER_DATAREP */
+	MPC_ERR_FILE_EXISTS,                  /* File exists */
+	MPC_ERR_FILE_IN_USE,                  /* File operation could not completed, as the file is \
+	                                       * currently open by some process */
+	MPC_ERR_FILE,                         /* Invalid file handle */
 
-	// MPC_ERR_ERRHANDLER, /* New constant introduced in the 4.1 standard */
+	MPC_ERR_INFO_KEY,                     /* Key longer than MPI_MAX_INFO_KEY */
+	MPC_ERR_INFO_NOKEY,                   /* Invalid key passed to MPI_INFO_DELETE */
+	MPC_ERR_INFO_VALUE,                   /* Value longer than MPI_MAX_INFO_VAL */
+	MPC_ERR_INFO,                         /* Invalid info argument */
+	MPC_ERR_IO,                           /* Other I/O error */
+	MPC_ERR_KEYVAL,                       /* Invalid keyval has been passed */
+	MPC_ERR_LOCKTYPE,                     /* Invalid locktype argument */
 
-	MPC_ERR_FILE_EXISTS,           /* File exists */
-	MPC_ERR_FILE_IN_USE,           /* File operation could not completed, as the file is \
-	                                * currently open by some process */
-	MPC_ERR_FILE,                  /* Invalid file handle */
+	MPC_ERR_NAME,                         /* Invalid service name passed to MPI_LOOKUP_NAME */
+	MPC_ERR_NO_MEM,                       /* MPI_ALLOC_MEM failed because memory is exhausted */
+	MPC_ERR_NOT_SAME,                     /* Collective argument not identical on all processes, or collective routines
+	                                       * called in a different order by different processes */
+	MPC_ERR_NO_SPACE,                     /* Not enough space */
+	MPC_ERR_NO_SUCH_FILE,                 /* File does not exist */
 
-	MPC_ERR_INFO_KEY,              /* Key longer than MPI_MAX_INFO_KEY */
-	MPC_ERR_INFO_NOKEY,            /* Invalid key passed to MPI_INFO_DELETE */
-	MPC_ERR_INFO_VALUE,            /* Value longer than MPI_MAX_INFO_VAL */
-	MPC_ERR_INFO,                  /* Invalid info argument */
-	MPC_ERR_IO,                    /* Other I/O error */
-	MPC_ERR_KEYVAL,                /* Invalid keyval has been passed */
-	MPC_ERR_LOCKTYPE,              /* Invalid locktype argument */
+	MPC_ERR_PORT,                         /* Invalid port name passed to MPI_COMM_CONNECT */
+	MPC_ERR_QUOTA,                        /* Quota exceeded */
+	MPC_ERR_READ_ONLY,                    /* Read-only file or file system */
 
-	MPC_ERR_NAME,                  /* Invalid service name passed to MPI_LOOKUP_NAME */
-	MPC_ERR_NO_MEM,                /* MPI_ALLOC_MEM failed because memory is exhausted */
-	MPC_ERR_NOT_SAME,              /* Collective argument not identical on all processes, or collective routines called
-	                                * in a different order by different processes */
-	MPC_ERR_NO_SPACE,              /* Not enough space */
-	MPC_ERR_NO_SUCH_FILE,          /* File does not exist */
+	MPC_ERR_RMA_ATTACH,                   /* Memory cannot be attached */
+	MPC_ERR_RMA_CONFLICT,                 /* Conflicting accesses to window */
+	MPC_ERR_RMA_RANGE,                    /* Target memory is not part of the window */
+	MPC_ERR_RMA_SHARED,                   /* Memory cannot be shared */
+	MPC_ERR_RMA_SYNC,                     /* Wrong synchronization of RMA calls */
 
-	MPC_ERR_PORT,                  /* Invalid port name passed to MPI_COMM_CONNECT */
-	MPC_ERR_PROC_ABORTED,          /* Operation failed due to the abortion of a peer process */
-	MPC_ERR_QUOTA,                 /* Quota exceeded */
-	MPC_ERR_READ_ONLY,             /* Read-only file or file system */
-
-	MPC_ERR_RMA_ATTACH,            /* Memory cannot be attached */
-	MPC_ERR_RMA_CONFLICT,          /* Conflicting accesses to window */
-	MPC_ERR_RMA_RANGE,             /* Target memory is not part of the window */
-	MPC_ERR_RMA_SHARED,            /* Memory cannot be shared */
-	MPC_ERR_RMA_SYNC,              /* Wrong synchronization of RMA calls */
-	MPC_ERR_RMA_FLAVOR,            /* Wrong type of RMA window */
-
-	MPC_ERR_SERVICE,               /* Invalid service name passed to MPI_UNPUBLISH_NAME */
-	MPC_ERR_SESSION,               /* Invalid session argument */
-	MPC_ERR_SIZE,                  /* Invalid size argument */
-	MPC_ERR_SPAWN,                 /* Error in spawning processes */
-	MPC_ERR_UNSUPPORTED_DATAREP,   /* Unsupported datarep passed to MPI_FILE_SET_VIEW */
-	MPC_ERR_UNSUPPORTED_OPERATION, /* Unsupported operation, such as seeking on a file which supports sequential access
-	                                * only*/
-	MPC_ERR_VALUE_TOO_LARGE,       /* Value is too large to store */
-	MPC_ERR_WIN,                   /* Invalid win argument */
+	MPC_ERR_SERVICE,                      /* Invalid service name passed to MPI_UNPUBLISH_NAME */
+	MPC_ERR_SIZE,                         /* Invalid size argument */
+	MPC_ERR_SPAWN,                        /* Error in spawning processes */
+	MPC_ERR_UNSUPPORTED_DATAREP,          /* Unsupported datarep passed to MPI_FILE_SET_VIEW */
+	MPC_ERR_UNSUPPORTED_OPERATION,        /* Unsupported operation, such as seeking on a file which supports sequential
+	                                       * access only*/
+	MPC_ERR_WIN,                          /* Invalid win argument */
+	MPC_ERR_RMA_FLAVOR,                   /* Wrong type of RMA window */
+	MPC_ERR_PROC_ABORTED,                 /* Operation failed due to the abortion of a peer process */
+	MPC_ERR_VALUE_TOO_LARGE,              /* Value is too large to store */
+	MPC_ERR_SESSION,                      /* Invalid session argument */
+	MPC_ERR_ERRHANDLER,                   /* New constant introduced in the 5.0 standard */
+	MPC_ERR_ABI,
 
 	/* MPC_T_ERR */
-	MPC_T_ERR_CANNOT_INIT,         /* Interface not in the state to be initialized */
-	MPC_T_ERR_NOT_ACCESSIBLE,      /* User may not access this function at this time */
-	MPC_T_ERR_NOT_INITIALIZED,     /* Interface not initialized */
-	MPC_T_ERR_NOT_SUPPORTED,       /* Requested functionality is not supported */
-	MPC_T_ERR_MEMORY,              /* Out of memory */
-	MPC_T_ERR_INVALID,             /* Item is invalid */
-	MPC_T_ERR_INVALID_INDEX,       /* The index is invalid or has been deleted  */
-	MPC_T_ERR_INVALID_ITEM,        /* Item index queried is out of range */
-	MPC_T_ERR_INVALID_SESSION,     /* Session argument is not valid */
-	MPC_T_ERR_INVALID_HANDLE,      /* The handle is invalid */
-	MPC_T_ERR_INVALID_NAME,        /* Requested name is invalid */
-	MPC_T_ERR_OUT_OF_HANDLES,      /* No more handles available */
-	MPC_T_ERR_OUT_OF_SESSIONS,     /* No more sessions available */
+	MPC_T_ERR_CANNOT_INIT = 1001,         /* Interface not in the state to be initialized */
+	MPC_T_ERR_NOT_ACCESSIBLE,             /* User may not access this function at this time */
+	MPC_T_ERR_NOT_INITIALIZED,            /* Interface not initialized */
+	MPC_T_ERR_NOT_SUPPORTED,              /* Requested functionality is not supported */
+	MPC_T_ERR_MEMORY,                     /* Out of memory */
+	MPC_T_ERR_INVALID,                    /* Item is invalid */
+	MPC_T_ERR_INVALID_INDEX,              /* The index is invalid or has been deleted  */
+	MPC_T_ERR_INVALID_ITEM,               /* Item index queried is out of range */
+	MPC_T_ERR_INVALID_SESSION,            /* Session argument is not valid */
+	MPC_T_ERR_INVALID_HANDLE,             /* The handle is invalid */
+	MPC_T_ERR_INVALID_NAME,               /* Requested name is invalid */
+	MPC_T_ERR_OUT_OF_HANDLES,             /* No more handles available */
+	MPC_T_ERR_OUT_OF_SESSIONS,            /* No more sessions available */
 
-	MPC_T_ERR_CVAR_SET_NOT_NOW,    /* Cvar can't be set at this moment */
-	MPC_T_ERR_CVAR_SET_NEVER,      /* Cvar can't be set until end of execution */
+	MPC_T_ERR_CVAR_SET_NOT_NOW,           /* Cvar can't be set at this moment */
+	MPC_T_ERR_CVAR_SET_NEVER,             /* Cvar can't be set until end of execution */
 
-	MPC_T_ERR_PVAR_NO_WRITE,       /* Pvar can't be written or reset */
-	MPC_T_ERR_PVAR_NO_STARTSTOP,   /* Pvar can't be started or stopped */
-	MPC_T_ERR_PVAR_NO_ATOMIC,      /* Pvar can't be R/W atomically */
+	MPC_T_ERR_PVAR_NO_WRITE,              /* Pvar can't be written or reset */
+	MPC_T_ERR_PVAR_NO_STARTSTOP,          /* Pvar can't be started or stopped */
+	MPC_T_ERR_PVAR_NO_ATOMIC,             /* Pvar can't be R/W atomically */
 
-	MPC_ERR_LASTCODE               /* Last error code: must stay the last of this enum */
+
+	MPC_ERR_LASTCODE = 16383              /* Last error code: must stay the last of this enum */
 };
 
 
