@@ -1,5 +1,3 @@
-#include "error.h"
-
 /* ############################# MPC License ############################## */
 /* # Wed Nov 19 15:19:19 CET 2008                                         # */
 /* # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          # */
@@ -28,6 +26,7 @@
 #include "mpc_common_debug.h"
 #include "mpc_common_datastructure.h"
 #include "mpc_common_spinlock.h"
+#include "mpc_mpi_comm_lib.h"
 #include "mpc_thread.h"
 #include <comm.h>
 
@@ -63,7 +62,7 @@ void mpc_mpi_err_init()
 	if (!init_done)
 	{
 		/* Error handlers */
-		OPA_store_int(&current_errhandler, 4);
+		OPA_store_int(&current_errhandler, MPC_ERRHANDLER_NB_PREDEF);
 		memset(error_handlers, 0, MAX_ERROR_HANDLERS * sizeof(struct MPI_ABI_Errhandler));
 
 		/* Handles */
@@ -72,7 +71,7 @@ void mpc_mpi_err_init()
 
 		/* Error codes */
 		OPA_store_int(&current_error_class, 1024);
-		OPA_store_int(&current_error_code,  4);
+		OPA_store_int(&current_error_code,  MPC_ERRHANDLER_NB_PREDEF);
 		mpc_common_hashtable_init(&error_strings, 8);
 		init_done = 1;
 	}
@@ -127,7 +126,7 @@ long _mpc_mpi_errhandler_to_idx(const _mpc_mpi_errhandler_t errh)
 
 bool _mpc_mpi_errhandler_is_valid(const _mpc_mpi_errhandler_t errh)
 {
-	if (errh == (_mpc_mpi_errhandler_t)1 || errh == (_mpc_mpi_errhandler_t)2 || errh == (_mpc_mpi_errhandler_t)3)
+	if (errh == MPC_ERRORS_ARE_FATAL || errh == MPC_ERRORS_RETURN || errh == MPC_ERRORS_ABORT)
 	{
 		return true;
 	}
@@ -152,7 +151,7 @@ int _mpc_mpi_errhandler_register(_mpc_mpi_generic_errhandler_func_t eh, _mpc_mpi
 	}
 
 	/* Find a new slot */
-	for (int i = 4; i < MAX_ERROR_HANDLERS; i++)
+	for (int i = MPC_ERRHANDLER_NB_PREDEF; i < MAX_ERROR_HANDLERS; i++)
 	{
 		if (error_handlers[i].eh == NULL)
 		{
@@ -165,7 +164,7 @@ int _mpc_mpi_errhandler_register(_mpc_mpi_generic_errhandler_func_t eh, _mpc_mpi
 	}
 
 	mpc_common_spinlock_unlock(&errorhandlers_lock);
-	return 17; /**< MPI_ERR_INTERN */
+	return MPC_ERR_INTERN;
 }
 
 int _mpc_mpi_errhandler_register_on_slot(_mpc_mpi_generic_errhandler_func_t eh,
@@ -206,7 +205,7 @@ _mpc_mpi_generic_errhandler_func_t _mpc_mpi_errhandler_resolve(_mpc_mpi_errhandl
 static inline bool _mpc_mpi_errhandler_can_be_released(const _mpc_mpi_errhandler_t errh)
 {
 	// In the array but not a predefined errhandler
-	return errh >= (error_handlers + 4) && errh < error_handlers + MAX_ERROR_HANDLERS;
+	return errh >= (error_handlers + MPC_ERRHANDLER_NB_PREDEF) && errh < error_handlers + MAX_ERROR_HANDLERS;
 }
 
 int _mpc_mpi_errhandler_free_no_lock(_mpc_mpi_errhandler_t errh)
@@ -216,7 +215,7 @@ int _mpc_mpi_errhandler_free_no_lock(_mpc_mpi_errhandler_t errh)
 	if (!_mpc_mpi_errhandler_is_valid(errh))
 	{
 		/* No then error */
-		return 17; /**< May be MPI_ERR_ERRHANDLER instead or MPI_ERR_ARG*/
+		return MPC_ERR_ERRHANDLER;
 	}
 
 	if (errh->ref_count > 0)
