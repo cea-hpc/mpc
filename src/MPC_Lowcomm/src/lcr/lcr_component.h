@@ -78,6 +78,6 @@ typedef struct lcr_component
 lcr_component_t * lcr_query_component_by_name(const char *name);
 
 int lcr_query_components(lcr_component_h **components_p, unsigned *num_components_p);
-int lcr_free_components(lcr_component_h *components, unsigned num_components, int devices);
+int lcr_free_components(lcr_component_h *components, const unsigned num_components);
 
 #endif

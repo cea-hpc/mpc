@@ -698,7 +698,7 @@ int lcp_context_fini(lcp_context_h ctx)
 	sctk_free(ctx->resources);
 
 	// Free the components
-	lcr_free_components(ctx->components, ctx->num_cmpts, true);
+	lcr_free_components(ctx->components, ctx->num_cmpts);
 	sctk_free(ctx->progress_counter);
 
 	/* Free task table */
