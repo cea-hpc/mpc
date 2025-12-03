@@ -91,9 +91,6 @@ struct lcp_context
 	lcr_component_h *     components;
 	unsigned              num_cmpts;              /* number of components */
 
-	lcr_device_t *        devices;                /* available device descriptors */
-	unsigned              num_devices;            /* number of devices */
-
 	int                   num_resources;          /* number of resources (iface) */
 	lcp_rsc_desc_t *      resources;              /* opened resources (iface) */
 	unsigned int *        progress_counter;       /* Add a counter for priority-based polling */

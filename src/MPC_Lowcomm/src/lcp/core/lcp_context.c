@@ -690,13 +690,15 @@ int lcp_context_fini(lcp_context_h ctx)
 {
 	int i;
 
-	// FIXME: free devices
+	// Free the resources
 	for (i = 0; i < ctx->num_resources; i++)
 	{
-		sctk_free(ctx->devices);
 		sctk_free(ctx->resources[i].name);
 	}
 	sctk_free(ctx->resources);
+
+	// Free the components
+	lcr_free_components(ctx->components, ctx->num_cmpts, true);
 	sctk_free(ctx->progress_counter);
 
 	/* Free task table */
@@ -709,7 +711,11 @@ int lcp_context_fini(lcp_context_h ctx)
 	}
 	sctk_free(ctx->tasks);
 
-	sctk_free(ctx);
+	// Don't try to deallocate the static context
+	if (ctx != static_ctx)
+	{
+		sctk_free(ctx);
+	}
 
 	return MPC_LOWCOMM_SUCCESS;
 }
