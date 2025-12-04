@@ -3859,8 +3859,8 @@ int mpc_lowcomm_irecv(int src, void *data, size_t size, int tag,
 int mpc_lowcomm_sendrecv(const void *sendbuf, size_t size, int dest, int tag, void *recvbuf,
                          int src, mpc_lowcomm_communicator_t comm)
 {
-	mpc_lowcomm_request_t *sendreq = mpc_lowcomm_request_alloc();
-	mpc_lowcomm_request_t *recvreq = mpc_lowcomm_request_alloc();
+	mpc_lowcomm_request_t *sendreq = ((mpc_lowcomm_request_t *)mpc_lowcomm_request_alloc()) - 1;
+	mpc_lowcomm_request_t *recvreq = ((mpc_lowcomm_request_t *)mpc_lowcomm_request_alloc()) - 1;
 
 	mpc_lowcomm_request_init(sendreq, size, NULL, NULL, 0);
 	mpc_lowcomm_request_init(recvreq, size, NULL, NULL, 0);
@@ -3927,7 +3927,7 @@ err:
 	return rc;
 }
 
-int mpc_lowcomm_waitall(int count, mpc_lowcomm_request_t *requests, mpc_lowcomm_status_t *statuses)
+int mpc_lowcomm_waitall(int count, mpc_lowcomm_request_t *requests[], mpc_lowcomm_status_t statuses[])
 {
 	int all_done = 0;
 	int i;
@@ -3945,7 +3945,7 @@ int mpc_lowcomm_waitall(int count, mpc_lowcomm_request_t *requests, mpc_lowcomm_
 				status = &statuses[i];
 			}
 
-			mpc_lowcomm_test(&requests[i], &done, status);
+			mpc_lowcomm_test(requests[i], &done, status);
 			all_done &= done;
 		}
 
@@ -3962,7 +3962,7 @@ int mpc_lowcomm_waitall(int count, mpc_lowcomm_request_t *requests, mpc_lowcomm_
 int mpc_lowcomm_send(int dest, const void *data, size_t size, int tag, mpc_lowcomm_communicator_t comm)
 {
 	int rc = MPC_LOWCOMM_SUCCESS;
-	mpc_lowcomm_request_t *req = mpc_lowcomm_request_alloc();
+	mpc_lowcomm_request_t *req = ((mpc_lowcomm_request_t *)mpc_lowcomm_request_alloc()) - 1;
 
 	mpc_lowcomm_request_init(req, size, NULL, NULL, 0);
 
@@ -3980,7 +3980,7 @@ int mpc_lowcomm_send(int dest, const void *data, size_t size, int tag, mpc_lowco
 int mpc_lowcomm_recv(int src, void *buffer, size_t size, int tag, mpc_lowcomm_communicator_t comm)
 {
 	int rc = MPC_LOWCOMM_SUCCESS;
-	mpc_lowcomm_request_t *req = mpc_lowcomm_request_alloc();
+	mpc_lowcomm_request_t *req = ((mpc_lowcomm_request_t *)mpc_lowcomm_request_alloc()) - 1;
 
 	mpc_lowcomm_request_init(req, size, NULL, NULL, 0);
 

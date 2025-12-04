@@ -256,7 +256,7 @@ int mpc_lowcomm_test(mpc_lowcomm_request_t *request, int *completed, mpc_lowcomm
  * @param requests The array of request to be waited
  * @param status   array of statuses to be filled (can be NULL)
  */
-int mpc_lowcomm_waitall(int count, mpc_lowcomm_request_t *requests, mpc_lowcomm_status_t *statuses);
+int mpc_lowcomm_waitall(int count, mpc_lowcomm_request_t *requests[], mpc_lowcomm_status_t statuses[]);
 
 /** Send an asynchronous message
  *
