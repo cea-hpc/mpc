@@ -2264,6 +2264,7 @@ int _mpc_cl_request_send_complete(mpc_lowcomm_request_t *request)
 	if (request->flags & MPC_LOWCOMM_REQUEST_PACKED)
 	{
 		sctk_free(request->packed_buf);
+		request->flags ^= MPC_LOWCOMM_REQUEST_PACKED;
 	}
 	return 0;
 }
@@ -2272,8 +2273,8 @@ int _mpc_cl_request_recv_complete(mpc_lowcomm_request_t *request)
 {
 	if (request->flags & MPC_LOWCOMM_REQUEST_PACKED)
 	{
-		MPIT_Type_memcpy(request->packed_buf, request->packed_size, request->datatype,
-			request->buffer, MPIT_MEMCPY_TO_USERBUF, 0, request->count);
+		MPIT_Type_memcpy(request->buffer, request->count, request->datatype,
+			request->packed_buf, MPIT_MEMCPY_TO_USERBUF, 0, request->packed_size);
 	}
 	return 0;
 }
@@ -2361,9 +2362,8 @@ int _mpc_cl_irecv(void *buf, mpc_lowcomm_msg_count_t count,
                   mpc_lowcomm_communicator_t comm, mpc_lowcomm_request_t *request)
 {
 	void *tmp_buf;
-	mpc_lowcomm_request_init(request, count, datatype,
-		_mpc_cl_request_recv_complete,
-		MPC_LOWCOMM_REQUEST_CALLBACK);
+	mpc_lowcomm_request_init(request, count, datatype, _mpc_cl_request_recv_complete, MPC_LOWCOMM_REQUEST_CALLBACK);
+	request->buffer = buf;
 	if (source == MPC_PROC_NULL)
 	{
 		MPC_ERROR_SUCCESS();
@@ -2444,16 +2444,18 @@ int _mpc_cl_recv(void *buf, mpc_lowcomm_msg_count_t count, mpc_lowcomm_datatype_
 		MPC_ERROR_SUCCESS();
 	}
 
-	mpc_lowcomm_request_t req;
+	mpc_lowcomm_request_t *req = _mpc_cl_get_lowcomm_request(mpc_lowcomm_request_alloc());
 
-	int ret = _mpc_cl_irecv(buf, count, datatype, source, tag, comm, &req);
+	int ret = _mpc_cl_irecv(buf, count, datatype, source, tag, comm, req);
 
 	if (ret != MPI_SUCCESS)
 	{
 		return ret;
 	}
 
-	_mpc_cl_waitall(1, &req, status);
+	_mpc_cl_waitall(1, req, status);
+
+	mpc_lowcomm_request_free(req);
 
 	if (status->MPI_ERROR != MPI_SUCCESS)
 	{

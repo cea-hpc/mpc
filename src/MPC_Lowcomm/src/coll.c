@@ -263,7 +263,7 @@ __UNUSED__ static void _mpc_coll_free_message(__UNUSED__ void *ptr)
 
 typedef struct
 {
-	mpc_lowcomm_request_t request;
+	mpc_lowcomm_request_t *request;
 } _mpc_coll_messages_t;
 
 /* WARNING: if you change values below
@@ -292,12 +292,8 @@ static void _mpc_coll_message_send(const mpc_lowcomm_communicator_t communicator
                                    _mpc_coll_messages_t *msg_req,
                                    __UNUSED__ int check_msg)
 {
-	UNUSED(check_msg);
-	UNUSED(myself);
-	UNUSED(message_class);
-	mpc_lowcomm_request_init(&msg_req->request,
-		size, NULL, NULL, 0);
-	mpc_lowcomm_isend(dest, buffer, size, tag, communicator, &msg_req->request);
+	mpc_lowcomm_request_init(msg_req->request, size, NULL, NULL, 0);
+	mpc_lowcomm_isend(dest, buffer, size, tag, communicator, msg_req->request);
 }
 
 static void _mpc_coll_message_recv(const mpc_lowcomm_communicator_t communicator,
@@ -310,12 +306,8 @@ static void _mpc_coll_message_recv(const mpc_lowcomm_communicator_t communicator
                                    _mpc_coll_messages_t *msg_req,
                                    __UNUSED__ int check_msg)
 {
-	UNUSED(check_msg);
-	UNUSED(myself);
-	UNUSED(message_class);
-	mpc_lowcomm_request_init(&msg_req->request,
-		size, NULL, NULL, 0);
-	mpc_lowcomm_irecv(src, buffer, size, tag, communicator, &msg_req->request);
+	mpc_lowcomm_request_init(msg_req->request, size, NULL, NULL, 0);
+	mpc_lowcomm_irecv(src, buffer, size, tag, communicator, msg_req->request);
 }
 
 static void _mpc_coll_messages_table_wait(_mpc_coll_messages_table_t *tab)
@@ -325,7 +317,9 @@ static void _mpc_coll_messages_table_wait(_mpc_coll_messages_table_t *tab)
 	for (i = 0; i < tab->nb_used; i++)
 	{
 		mpc_common_nodebug("Wait for message %d", i);
-		mpc_lowcomm_wait(&tab->msg_req[i].request, MPC_LOWCOMM_STATUS_NULL);
+		mpc_lowcomm_wait(tab->msg_req[i].request, MPC_LOWCOMM_STATUS_NULL);
+		mpc_lowcomm_request_free(tab->msg_req[i].request);
+		tab->msg_req[i].request = NULL;
 	}
 
 	tab->nb_used = 0;
@@ -334,15 +328,13 @@ static void _mpc_coll_messages_table_wait(_mpc_coll_messages_table_t *tab)
 static _mpc_coll_messages_t *_mpc_coll_message_table_get_item(_mpc_coll_messages_table_t *tab,
                                                               unsigned int max_async_request)
 {
-	_mpc_coll_messages_t *tmp;
-
 	if (tab->nb_used == max_async_request)
 	{
 		_mpc_coll_messages_table_wait(tab);
 	}
 
-	tmp = &(tab->msg_req[tab->nb_used]);
-	mpc_common_nodebug("tab->nb_used = %d", tab->nb_used);
+	_mpc_coll_messages_t *const tmp = &(tab->msg_req[tab->nb_used]);
+	tmp->request = ((mpc_lowcomm_request_t *)mpc_lowcomm_request_alloc()) - 1;
 	tab->nb_used++;
 	return tmp;
 }
@@ -2282,9 +2274,7 @@ static inline int ___gather_inter(void *sendbuf,
 	int i;
 	int j;
 
-	mpc_lowcomm_request_t *recvrequest = sctk_malloc(sizeof(mpc_lowcomm_request_t) * MPC_MAX_CONCURRENT);
-
-	assume(recvrequest != NULL);
+	mpc_lowcomm_request_t *recvrequest[MPC_MAX_CONCURRENT];
 
 	int comm_size = mpc_lowcomm_communicator_size(comm);
 
@@ -2295,16 +2285,43 @@ static inline int ___gather_inter(void *sendbuf,
 	else if (root == MPC_ROOT)
 	{
 		i = 0;
-		while (i < comm_size)
+
+		if (comm_size > MPC_MAX_CONCURRENT)
 		{
-			for (j = 0; (i < comm_size) && (j < MPC_MAX_CONCURRENT); )
+			for (int index = 0; index < MPC_MAX_CONCURRENT; index++)
 			{
-				mpc_lowcomm_irecv(i, (( char * )recvbuf) + (i * size), size, MPC_GATHER_TAG, comm, &(recvrequest[j]));
-				i++;
-				j++;
+				recvrequest[index] = ((mpc_lowcomm_request_t *)mpc_lowcomm_request_alloc()) - 1;
+				mpc_lowcomm_request_init(recvrequest[index], 0, NULL, NULL, 0);
+			}
+			while (i < comm_size)
+			{
+				for (j = 0; (i < comm_size) && (j < MPC_MAX_CONCURRENT); i++, j++)
+				{
+					mpc_lowcomm_irecv(i, (( char * )recvbuf) + (i * size), size, MPC_GATHER_TAG, comm, recvrequest[j]);
+				}
+
+				mpc_lowcomm_waitall(j, recvrequest, MPC_LOWCOMM_STATUS_NULL);
 			}
 
-			mpc_lowcomm_waitall(j, recvrequest, MPC_LOWCOMM_STATUS_NULL);
+			for (int index = 0; index < MPC_MAX_CONCURRENT; index++)
+			{
+				mpc_lowcomm_request_free(recvrequest[index]);
+			}
+		}
+		else
+		{
+			for (int i = 0; i < comm_size; i++)
+			{
+				recvrequest[i] = ((mpc_lowcomm_request_t *)mpc_lowcomm_request_alloc()) - 1;
+				mpc_lowcomm_irecv(i, (( char * )recvbuf) + (i * size), size, MPC_GATHER_TAG, comm, recvrequest[i]);
+			}
+
+			mpc_lowcomm_waitall(i, recvrequest, MPC_LOWCOMM_STATUS_NULL);
+
+			for (int i = 0; i < comm_size; i++)
+			{
+				mpc_lowcomm_request_free(recvrequest[i]);
+			}
 		}
 	}
 	else
@@ -2312,7 +2329,6 @@ static inline int ___gather_inter(void *sendbuf,
 		mpc_lowcomm_send(root, sendbuf, size, MPC_GATHER_TAG, comm);
 	}
 
-	sctk_free(recvrequest);
 	return MPC_LOWCOMM_SUCCESS;
 }
 
@@ -2421,18 +2437,23 @@ static inline int ___gather_intra(void *sendbuf,
 
 	if (rank < div2_size)
 	{
+		mpc_lowcomm_request_t *round_exchange = ((mpc_lowcomm_request_t *)mpc_lowcomm_request_alloc()) - 1;
+		mpc_lowcomm_request_init(round_exchange, 0, NULL, NULL, 0);
+
 		while (rel_size)
 		{
+			if (round_exchange == &MPC_REQUEST_NULL)
+			{
+				round_exchange = ((mpc_lowcomm_request_t *)mpc_lowcomm_request_alloc()) - 1;
+				mpc_lowcomm_request_init(round_exchange, 0, NULL, NULL, 0);
+			}
 			int will_break = 0;
-			mpc_lowcomm_request_t round_exchange;
 
 			size_t local_size = size_this_round;
 
 			if (rel_rank % 2)
 			{
 				/* SEND */
-				mpc_lowcomm_request_init(&round_exchange, 0, NULL,
-					NULL, 0);
 				int dest_this_round = (rank - (1 << round));
 
 				assume(0 <= dest_this_round);
@@ -2456,12 +2477,8 @@ static inline int ___gather_intra(void *sendbuf,
 				/* Check for read overflow */
 				assert((rank * size + local_size) <= (comm_size * size));
 
-				mpc_lowcomm_isend(dest_this_round,
-					gather_buffer + (rank * size),
-					local_size,
-					MPC_GATHER_TAG,
-					comm,
-					&round_exchange);
+				mpc_lowcomm_isend(dest_this_round, gather_buffer + (rank * size), local_size,
+					MPC_GATHER_TAG, comm, round_exchange);
 
 				will_break = 1;
 			}
@@ -2469,7 +2486,6 @@ static inline int ___gather_intra(void *sendbuf,
 			{
 				/* RECV */
 				int from_this_round = (rank + (1 << round));
-				mpc_lowcomm_request_init(&round_exchange, 0, NULL, NULL, 0);
 
 				if (from_this_round != rank)
 				{
@@ -2496,22 +2512,19 @@ static inline int ___gather_intra(void *sendbuf,
 						assert((from_this_round * size + local_size) <= (comm_size * size));
 
 
-						mpc_lowcomm_irecv(from_this_round,
-							gather_buffer + (from_this_round * size),
-							local_size,
-							MPC_GATHER_TAG,
-							comm,
-							&round_exchange);
+						mpc_lowcomm_irecv(from_this_round, gather_buffer + (from_this_round * size), local_size,
+							MPC_GATHER_TAG, comm, round_exchange);
 					}
 					else
 					{
-						round_exchange = MPC_REQUEST_NULL;
+						mpc_lowcomm_request_free(round_exchange);
+						round_exchange = &MPC_REQUEST_NULL;
 						mpc_common_nodebug("R%d NOPOST %d <-- %d", round, rank, from_this_round);
 					}
 				}
 			}
 
-			mpc_lowcomm_wait(&round_exchange, MPC_LOWCOMM_STATUS_NULL);
+			mpc_lowcomm_wait(round_exchange, MPC_LOWCOMM_STATUS_NULL);
 
 			if (will_break)
 			{
@@ -2530,6 +2543,10 @@ static inline int ___gather_intra(void *sendbuf,
 			rel_rank >>= 1;
 			round++;
 			size_this_round *= 2;
+		}
+		if (round_exchange != &MPC_REQUEST_NULL)
+		{
+			mpc_lowcomm_request_free(round_exchange);
 		}
 	}
 

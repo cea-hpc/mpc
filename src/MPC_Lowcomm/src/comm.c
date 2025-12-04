@@ -3250,7 +3250,6 @@ void mpc_lowcomm_request_init(mpc_lowcomm_request_t *request,
 	request->request_complete = cb;
 	request->flags            = flags;
 	request->dt_magic         = 0;
-	request->is_allocated     = false;
 }
 
 int mpc_lowcomm_request_cancel(mpc_lowcomm_request_t *msg)
@@ -3484,7 +3483,8 @@ void *mpc_lowcomm_request_alloc()
 	{
 		return request;
 	}
-	request->flags = 0;
+	request->flags        = 0;
+	request->is_allocated = MPC_LOWCOMM_REQUEST_ALLOC;
 
 	return request + 1;
 }
@@ -3859,20 +3859,22 @@ int mpc_lowcomm_irecv(int src, void *data, size_t size, int tag,
 int mpc_lowcomm_sendrecv(const void *sendbuf, size_t size, int dest, int tag, void *recvbuf,
                          int src, mpc_lowcomm_communicator_t comm)
 {
-	mpc_lowcomm_request_t sendreq, recvreq;
+	mpc_lowcomm_request_t *sendreq = ((mpc_lowcomm_request_t *)mpc_lowcomm_request_alloc()) - 1;
+	mpc_lowcomm_request_t *recvreq = ((mpc_lowcomm_request_t *)mpc_lowcomm_request_alloc()) - 1;
 
-	mpc_lowcomm_request_init(&sendreq, size, NULL,
-		NULL, 0);
-	mpc_lowcomm_request_init(&recvreq, size, NULL,
-		NULL, 0);
+	mpc_lowcomm_request_init(sendreq, size, NULL, NULL, 0);
+	mpc_lowcomm_request_init(recvreq, size, NULL, NULL, 0);
 
-	mpc_lowcomm_isend(dest, sendbuf, size, tag, comm, &sendreq);
-	mpc_lowcomm_irecv(src, recvbuf, size, tag, comm, &recvreq);
+	mpc_lowcomm_isend(dest, sendbuf, size, tag, comm, sendreq);
+	mpc_lowcomm_irecv(src, recvbuf, size, tag, comm, recvreq);
 
 	mpc_lowcomm_status_t sts, str;
 
-	mpc_lowcomm_wait(&sendreq, &sts);
-	mpc_lowcomm_wait(&recvreq, &str);
+	mpc_lowcomm_wait(sendreq, &sts);
+	mpc_lowcomm_wait(recvreq, &str);
+
+	mpc_lowcomm_request_free(sendreq);
+	mpc_lowcomm_request_free(recvreq);
 
 	CHECK_STATUS_ERROR(&sts);
 	CHECK_STATUS_ERROR(&str);
@@ -3925,7 +3927,7 @@ err:
 	return rc;
 }
 
-int mpc_lowcomm_waitall(int count, mpc_lowcomm_request_t *requests, mpc_lowcomm_status_t *statuses)
+int mpc_lowcomm_waitall(int count, mpc_lowcomm_request_t *requests[], mpc_lowcomm_status_t statuses[])
 {
 	int all_done = 0;
 	int i;
@@ -3943,7 +3945,7 @@ int mpc_lowcomm_waitall(int count, mpc_lowcomm_request_t *requests, mpc_lowcomm_
 				status = &statuses[i];
 			}
 
-			mpc_lowcomm_test(&requests[i], &done, status);
+			mpc_lowcomm_test(requests[i], &done, status);
 			all_done &= done;
 		}
 
@@ -3960,14 +3962,16 @@ int mpc_lowcomm_waitall(int count, mpc_lowcomm_request_t *requests, mpc_lowcomm_
 int mpc_lowcomm_send(int dest, const void *data, size_t size, int tag, mpc_lowcomm_communicator_t comm)
 {
 	int rc = MPC_LOWCOMM_SUCCESS;
-	mpc_lowcomm_request_t req;
+	mpc_lowcomm_request_t *req = ((mpc_lowcomm_request_t *)mpc_lowcomm_request_alloc()) - 1;
 
-	mpc_lowcomm_request_init(&req, size, NULL, NULL, 0);
+	mpc_lowcomm_request_init(req, size, NULL, NULL, 0);
 
-	mpc_lowcomm_isend(dest, data, size, tag, comm, &req);
+	mpc_lowcomm_isend(dest, data, size, tag, comm, req);
 	mpc_lowcomm_status_t status;
 
-	mpc_lowcomm_wait(&req, &status);
+	mpc_lowcomm_wait(req, &status);
+
+	mpc_lowcomm_request_free(req);
 	CHECK_STATUS_ERROR(&status);
 
 	return rc;
@@ -3976,14 +3980,15 @@ int mpc_lowcomm_send(int dest, const void *data, size_t size, int tag, mpc_lowco
 int mpc_lowcomm_recv(int src, void *buffer, size_t size, int tag, mpc_lowcomm_communicator_t comm)
 {
 	int rc = MPC_LOWCOMM_SUCCESS;
-	mpc_lowcomm_request_t req;
+	mpc_lowcomm_request_t *req = ((mpc_lowcomm_request_t *)mpc_lowcomm_request_alloc()) - 1;
 
-	mpc_lowcomm_request_init(&req, size, NULL, NULL, 0);
+	mpc_lowcomm_request_init(req, size, NULL, NULL, 0);
 
-	mpc_lowcomm_irecv(src, buffer, size, tag, comm, &req);
+	mpc_lowcomm_irecv(src, buffer, size, tag, comm, req);
 	mpc_lowcomm_status_t status;
 
-	mpc_lowcomm_wait(&req, &status);
+	mpc_lowcomm_wait(req, &status);
+	mpc_lowcomm_request_free(req);
 	CHECK_STATUS_ERROR(&status);
 
 	return rc;

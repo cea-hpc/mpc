@@ -549,7 +549,9 @@ static inline int __comm_connect_accept(const char *port_name,
 
 	if (rank == retained_root)
 	{
-		mpc_lowcomm_request_t sync_reqs[2];
+		mpc_lowcomm_request_t *sync_reqs[2];
+		sync_reqs[0] = ((mpc_lowcomm_request_t *)mpc_lowcomm_request_alloc()) - 1;
+		sync_reqs[1] = ((mpc_lowcomm_request_t *)mpc_lowcomm_request_alloc()) - 1;
 		int dummy;
 
 		mpc_lowcomm_peer_uid_t sync_peer = -1;
@@ -568,15 +570,17 @@ static inline int __comm_connect_accept(const char *port_name,
 			sizeof(int),
 			port_tag,
 			remote_world,
-			&sync_reqs[0]);
+			sync_reqs[0]);
 		mpc_lowcomm_universe_irecv(sync_peer,
 			&dummy,
 			sizeof(int),
 			port_tag,
-			&sync_reqs[1]);
+			sync_reqs[1]);
 
 
 		mpc_lowcomm_waitall(2, sync_reqs, MPC_LOWCOMM_STATUS_NULL);
+		mpc_lowcomm_request_free(sync_reqs[0]);
+		mpc_lowcomm_request_free(sync_reqs[1]);
 
 		/* We do not need the remote world anymore */
 		mpc_lowcomm_communicator_free(&remote_world);
@@ -2443,9 +2447,11 @@ mpc_lowcomm_communicator_t mpc_lowcomm_communicator_intercomm_create(const mpc_l
 		/* Roots exchange their descriptors */
 		if (local_comm_rank == local_leader)
 		{
-			mpc_lowcomm_request_t reqs[2];
+			mpc_lowcomm_request_t *reqs[2];
+			reqs[0] = ((mpc_lowcomm_request_t *)mpc_lowcomm_request_alloc()) - 1;
+			reqs[1] = ((mpc_lowcomm_request_t *)mpc_lowcomm_request_alloc()) - 1;
 
-			mpc_lowcomm_request_init(&reqs[0],
+			mpc_lowcomm_request_init(reqs[0],
 				local_comm_size * sizeof(_mpc_lowcomm_group_rank_descriptor_t),
 				NULL, NULL, 0);
 			mpc_lowcomm_isend(remote_leader,
@@ -2453,9 +2459,9 @@ mpc_lowcomm_communicator_t mpc_lowcomm_communicator_intercomm_create(const mpc_l
 				local_comm_size * sizeof(_mpc_lowcomm_group_rank_descriptor_t),
 				tag,
 				peer_comm,
-				&reqs[0]);
+				reqs[0]);
 
-			mpc_lowcomm_request_init(&reqs[1],
+			mpc_lowcomm_request_init(reqs[1],
 				local_comm_size * sizeof(_mpc_lowcomm_group_rank_descriptor_t),
 				NULL, NULL, 0);
 			mpc_lowcomm_irecv(remote_leader,
@@ -2463,9 +2469,11 @@ mpc_lowcomm_communicator_t mpc_lowcomm_communicator_intercomm_create(const mpc_l
 				right_comm_size * sizeof(_mpc_lowcomm_group_rank_descriptor_t),
 				tag,
 				peer_comm,
-				&reqs[1]);
+				reqs[1]);
 
 			mpc_lowcomm_waitall(2, reqs, MPC_LOWCOMM_STATUS_NULL);
+			mpc_lowcomm_request_free(reqs[0]);
+			mpc_lowcomm_request_free(reqs[1]);
 		}
 
 		/* Right descriptors are bcast on local comm */
