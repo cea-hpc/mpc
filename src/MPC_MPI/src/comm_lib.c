@@ -2264,6 +2264,7 @@ int _mpc_cl_request_send_complete(mpc_lowcomm_request_t *request)
 	if (request->flags & MPC_LOWCOMM_REQUEST_PACKED)
 	{
 		sctk_free(request->packed_buf);
+		request->flags ^= MPC_LOWCOMM_REQUEST_PACKED;
 	}
 	return 0;
 }
