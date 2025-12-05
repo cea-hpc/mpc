@@ -3655,8 +3655,9 @@ static inline void _mpc_lowcomm_build_send_tag_info(lcp_tag_info_t *tag_info,
 	}
 
 	// FIXME: see fixme below.
-	req->recv_info.src = tag_info->src;
-	req->recv_info.tag = tag;
+	req->recv_info.src  = tag_info->src;
+	req->recv_info.dest = tag_info->dest;
+	req->recv_info.tag  = tag;
 }
 
 static int _mpc_lowcomm_request_send_complete(int status, void *request, size_t length)
@@ -3778,8 +3779,11 @@ static int _mpc_lowcomm_request_recv_complete(int status, void *request,
 
 	req->recv_info.length = tag_info->length;
 	req->recv_info.src    = tag_info->src;
+	req->recv_info.dest   = tag_info->dest;
 	req->recv_info.tag    = tag_info->tag;
 	req->status_error     = status;
+
+	req->header.destination_task = tag_info->dest;
 
 	if (req->flags & MPC_LOWCOMM_REQUEST_CALLBACK)
 	{

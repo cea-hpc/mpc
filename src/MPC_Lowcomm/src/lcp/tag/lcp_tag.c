@@ -222,6 +222,7 @@ static void lcp_tag_recv_complete(lcr_completion_t *comp)
 
 	req->recv.tag.info.length = req->recv.send_length;
 	req->recv.tag.info.src    = req->recv.tag.src_tid;
+	req->recv.tag.info.dest   = req->recv.tag.dest_tid;
 	req->recv.tag.info.tag    = req->recv.tag.tag;
 
 	lcp_request_complete(req, recv.tag.recv_cb, req->status,
