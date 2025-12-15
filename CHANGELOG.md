@@ -2,6 +2,29 @@
 
 All notable changes to this project will be documented in this file. The format is based on [Keep a Changelog].
 
+## [Unreleased]
+
+### Added
+
+### Changed
+
+- **Chore**
+  - Default branch to main (devel and master will not be updated)
+- **LowComm**
+  - Avoid warnings in CPP by changing header inclusion rules
+
+### Removed
+
+### Deprecated
+
+### Fixed
+
+- **MPI**
+  - Active Message handling in Thread-Based
+  - Unpacking of user created datatypes
+- **Low Comm**
+  - Multinic devices initialization
+
 ## [4.3.0] - 2025-11-18
 
 ### Added

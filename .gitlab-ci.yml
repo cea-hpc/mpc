@@ -7,3 +7,7 @@ include:
   - local: '/.gitlab/ci/ci.yml'
     rules:
       - if: '$CI_MERGE_REQUEST_LABELS !~ "/CI::Disabled/"'
+
+default:
+  # Pipeline should be canceled by newer push
+  interruptible: true
