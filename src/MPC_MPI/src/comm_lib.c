@@ -2282,7 +2282,8 @@ static int _mpc_cl_request_recv_complete(mpc_lowcomm_request_t *request)
 
 	if ((need_to_disguise))
 	{
-		MPCX_Disguise(MPC_COMM_WORLD, request->header.destination_task);
+		const int ierr = MPCX_Disguise(MPC_COMM_WORLD, request->header.destination_task);
+		assert(ierr == MPC_SUCCESS && "Already disguised! Impossible to disguise again");
 		is_disguised = true;
 	}
 	if (request->flags & MPC_LOWCOMM_REQUEST_PACKED)
@@ -2292,7 +2293,8 @@ static int _mpc_cl_request_recv_complete(mpc_lowcomm_request_t *request)
 	}
 	if ((is_disguised))
 	{
-		MPCX_Undisguise();
+		const int ierr = MPCX_Undisguise();
+		assert(ierr == MPC_SUCCESS && "Not disguised! Impossible to put the mask down");
 	}
 	return 0;
 }
