@@ -85,13 +85,13 @@ err:
 	return rc;
 }
 
-int lcr_free_components(lcr_component_h *components, unsigned num_components, int devices)
+int lcr_free_components(lcr_component_h *components, const unsigned num_components)
 {
-	int i;
+	unsigned int i;
 
-	if (devices)
+	for (i = 0; i < num_components; i++)
 	{
-		for (i = 0; i < (int)num_components; i++)
+		if (components[i]->num_devices > 0)
 		{
 			sctk_free(components[i]->devices);
 		}

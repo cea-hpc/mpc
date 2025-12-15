@@ -476,7 +476,7 @@ static int _lcp_context_devices_load_and_filter(lcp_context_h ctx)
 
 		if (strcmp(ctx->components[i]->rail_config->device, "any") == 0)
 		{
-			for (int j = 0; j < ctx->components[i]->rail_config->max_ifaces; j++)
+			for (unsigned int j = 0; j < ctx->components[i]->num_devices; j++)
 			{
 				mpc_common_debug("Registering device %s for component %s, 'any' devices requested",
 					ctx->components[i]->devices[j].name,
@@ -516,13 +516,13 @@ static int _lcp_context_devices_load_and_filter(lcp_context_h ctx)
 	int rsc_count = 0;
 	ctx->num_resources = nb_dev;
 	ctx->resources     = sctk_malloc(nb_dev * sizeof(lcp_rsc_desc_t));
-	for (unsigned int i = 0; (unsigned int)i < ctx->num_cmpts; i++)
+	for (unsigned int i = 0; i < ctx->num_cmpts; i++)
 	{
-		for (unsigned int j = 0 ; (unsigned int)j < ctx->components[i]->num_devices; j++)
+		mpc_common_debug("Initializing resources for %s", ctx->components[i]->name);
+		for (unsigned int j = 0 ; j < ctx->components[i]->num_devices; j++)
 		{
 			if (MPC_BITMAP_GET(dev_map, i))
 			{
-				mpc_common_debug("Initializing resources for %s", ctx->components[i]->name);
 				_lcp_context_resource_init(&ctx->resources[rsc_count],
 					ctx->components[i],
 					&ctx->components[i]->devices[j]);
@@ -530,6 +530,7 @@ static int _lcp_context_devices_load_and_filter(lcp_context_h ctx)
 			}
 		}
 	}
+	assert(rsc_count == nb_dev);
 
 	return rc;
 
@@ -690,13 +691,15 @@ int lcp_context_fini(lcp_context_h ctx)
 {
 	int i;
 
-	// FIXME: free devices
+	// Free the resources
 	for (i = 0; i < ctx->num_resources; i++)
 	{
-		sctk_free(ctx->devices);
 		sctk_free(ctx->resources[i].name);
 	}
 	sctk_free(ctx->resources);
+
+	// Free the components
+	lcr_free_components(ctx->components, ctx->num_cmpts);
 	sctk_free(ctx->progress_counter);
 
 	/* Free task table */
@@ -709,7 +712,11 @@ int lcp_context_fini(lcp_context_h ctx)
 	}
 	sctk_free(ctx->tasks);
 
-	sctk_free(ctx);
+	// Don't try to deallocate the static context
+	if (ctx != static_ctx)
+	{
+		sctk_free(ctx);
+	}
 
 	return MPC_LOWCOMM_SUCCESS;
 }
