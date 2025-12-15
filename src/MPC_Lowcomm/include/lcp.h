@@ -360,6 +360,7 @@ typedef struct lcp_tag_recv_info
 	size_t   length; /**< Length of the data received by the matched request */
 	int32_t  tag;    /**< Tag of the matched request */
 	int32_t  src;    /**< Source of the matched request */
+	int32_t  dest;   /**< Destination of the matched request */
 	unsigned found;  /**< Has request been found in matching list or not */
 	unsigned flags;  /**< Flags containing info from LCP (truncation, ...) */
 } lcp_tag_recv_info_t;

@@ -673,33 +673,21 @@ _mpc_lowcomm_general_datatype_t *_mpc_cl_per_mpi_process_ctx_general_datatype_ge
 	return _mpc_dt_storage_get_general_datatype(task_specific->datatype_array, datatype_idx);
 }
 
-/** \brief This function allows the retrieval of a data-type context
- *  \param datatype Target datatype
- *  \return NULL on error the context otherwise
+/** @brief This function allows the retrieval of a data-type context
+ * @warning The input is considered valid: all checks must be performed before calling this function.
+ * Invalid datatype is considered Undefined Behavior.
+ *
+ * @param[in] datatype Target datatype
+ * @return             NULL on error the context otherwise
  */
-static inline struct _mpc_dt_footprint *__mpc_cl_datatype_get_ctx(mpc_lowcomm_datatype_t datatype)
+static inline struct _mpc_dt_footprint *__mpc_cl_datatype_get_ctx(const mpc_lowcomm_datatype_t datatype)
 {
-	switch (_mpc_dt_get_kind(datatype))
+	// NOTE: The datatype is valid so it is either common or user-created
+	if (mpc_lowcomm_datatype_is_common(datatype))
 	{
-	case MPC_DATATYPES_COMMON:
-		/* Nothing to do here */
 		return NULL;
-
-		break;
-
-	case MPC_DATATYPES_USER:
-		/* Get a pointer to the type of interest */
-		return datatype->context;
-
-		break;
-
-	case MPC_DATATYPES_UNKNOWN:
-		return NULL;
-
-		break;
 	}
-
-	return NULL;
+	return datatype->context;
 }
 
 /** \brief This function spinlock on the datatype storage lock
@@ -1213,8 +1201,7 @@ int _mpc_cl_type_get_envelope(mpc_lowcomm_datatype_t datatype, int *num_integers
 	*num_datatypes = 0;
 
 	/* Handle the common data-type case */
-	if (mpc_lowcomm_datatype_is_common(datatype)
-	    || _mpc_dt_is_boundary(datatype))
+	if (mpc_lowcomm_datatype_is_common(datatype) || _mpc_dt_is_boundary(datatype))
 	{
 		*combiner      = MPC_COMBINER_NAMED;
 		*num_integers  = 0;
@@ -1227,12 +1214,10 @@ int _mpc_cl_type_get_envelope(mpc_lowcomm_datatype_t datatype, int *num_integers
 
 	if (!dctx)
 	{
-		MPC_ERROR_REPORT(MPC_COMM_WORLD, MPC_ERR_INTERN,
-			"This datatype is unknown");
+		MPC_ERROR_REPORT(MPC_COMM_WORLD, MPC_ERR_INTERN, "This datatype is unknown");
 	}
 
-	_mpc_dt_fill_envelope(dctx, num_integers, num_addresses, num_datatypes,
-		combiner);
+	_mpc_dt_fill_envelope(dctx, num_integers, num_addresses, num_datatypes, combiner);
 	MPC_ERROR_SUCCESS();
 }
 
@@ -2259,7 +2244,12 @@ int _mpc_cl_get_processor_name(char *name, int *resultlen)
 /* Point to point communications                                        */
 /************************************************************************/
 
-int _mpc_cl_request_send_complete(mpc_lowcomm_request_t *request)
+/** @brief Callback function to call on send completion
+ *
+ * @param[in] request Request associated with the receive operation
+ * @return            0 on success
+ */
+static int _mpc_cl_request_send_complete(mpc_lowcomm_request_t *request)
 {
 	if (request->flags & MPC_LOWCOMM_REQUEST_PACKED)
 	{
@@ -2269,12 +2259,42 @@ int _mpc_cl_request_send_complete(mpc_lowcomm_request_t *request)
 	return 0;
 }
 
-int _mpc_cl_request_recv_complete(mpc_lowcomm_request_t *request)
+/** @brief Callback function to call on receive completion
+ *
+ * In this function, we need to handle the thread-based case. If this function is called by an AM in thread-based, the
+ * executor is not the destination thread who posted the receive request. In which case, the retrieving of the datatype
+ * (handled per mpi process) needs a disguise to be correct. The calling thread disguises itself as the destination if
+ * needed to access the correct datatype storage.
+ *
+ * @note progress threads cannot disguise themself
+ *
+ * @param[in] request Request associated with the receive operation
+ * @return            0 on success
+ */
+static int _mpc_cl_request_recv_complete(mpc_lowcomm_request_t *request)
 {
+	const bool need_to_disguise =
+		// Here, we need to disguise if we are not the destination task
+		((mpc_common_get_task_rank() != request->header.destination_task)
+		 // Progress threads (tid < 0) can not disguise themself
+		 && (mpc_common_get_task_rank() >= 0));
+	bool is_disguised = false;
+
+	if ((need_to_disguise))
+	{
+		const int ierr = MPCX_Disguise(MPC_COMM_WORLD, request->header.destination_task);
+		assert(ierr == MPC_SUCCESS && "Already disguised! Impossible to disguise again");
+		is_disguised = true;
+	}
 	if (request->flags & MPC_LOWCOMM_REQUEST_PACKED)
 	{
 		MPIT_Type_memcpy(request->buffer, request->count, request->datatype,
 			request->packed_buf, MPIT_MEMCPY_TO_USERBUF, 0, request->packed_size);
+	}
+	if ((is_disguised))
+	{
+		const int ierr = MPCX_Undisguise();
+		assert(ierr == MPC_SUCCESS && "Not disguised! Impossible to put the mask down");
 	}
 	return 0;
 }
