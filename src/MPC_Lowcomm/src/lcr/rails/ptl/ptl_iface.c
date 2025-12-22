@@ -1064,10 +1064,12 @@ err:
 		attr->iface.cap.rndv.max_get_zcopy  = config->max_get;
 		attr->iface.cap.rndv.min_frag_size  = config->min_frag_size;
 
-		attr->iface.cap.rma.max_put_bcopy = 0; // FIXME: put_bcopy not supported for now
+		// FIXME: RMA bcopy not supported for now
+		attr->iface.cap.rma.max_put_bcopy = 0;
+		attr->iface.cap.rma.max_get_bcopy = 0;
+
 		attr->iface.cap.rma.max_put_zcopy = config->max_put;
-		attr->iface.cap.rma.max_get_bcopy = 0; // FIXME: get_bcopy not supported for now
-		attr->iface.cap.rma.max_get_zcopy = config->max_put;
+		attr->iface.cap.rma.max_get_zcopy = config->max_get;
 		attr->iface.cap.rma.min_frag_size = config->min_frag_size;
 
 		attr->iface.cap.ato.max_post_size  = config->max_limits.max_atomic_size;

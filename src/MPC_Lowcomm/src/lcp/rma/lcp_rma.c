@@ -201,6 +201,7 @@ static int lcp_rma_progress_zcopy(lcp_request_t *req)
 		frag_length = req->send.rma.is_get
 		              ? attr.iface.cap.rma.max_get_zcopy
 		              : attr.iface.cap.rma.max_put_zcopy;
+		assert(frag_length > 0 && "Null fragment length will lead to 0 bytes messages exchanged indefinitely");
 		length = (remaining < frag_length) ? remaining : frag_length;
 
 		if (req->send.rma.is_get)

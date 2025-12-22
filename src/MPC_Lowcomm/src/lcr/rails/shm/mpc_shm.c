@@ -1250,6 +1250,11 @@ int mpc_shm_get_attr(__UNUSED__ sctk_rail_info_t *rail,
 	attr->iface.cap.rndv.max_put_zcopy = INT_MAX;
 	attr->iface.cap.rndv.max_get_zcopy = INT_MAX;
 
+	attr->iface.cap.rma.max_put_bcopy = 0;
+	attr->iface.cap.rma.max_get_bcopy = 0;
+	attr->iface.cap.rma.max_put_zcopy = INT_MAX;
+	attr->iface.cap.rma.max_get_zcopy = INT_MAX;
+
 	attr->iface.cap.flags = rail->cap;
 
 	attr->mem.size_packed_mkey = sizeof(_mpc_lowcomm_shm_pinning_ctx_t);
@@ -1318,15 +1323,17 @@ int mpc_shm_iface_open(int mngr_id, const char *device_name, int id,
 
 	rail->connect_on_demand    = mpc_shm_connect_on_demand;
 	rail->send_am_bcopy        = mpc_shm_send_am_bcopy;
+	rail->send_am_zcopy        = mpc_shm_send_am_zcopy;
 	rail->iface_progress       = mpc_shm_progress;
 	rail->iface_is_reachable   = mpc_shm_iface_is_reachable;
 	rail->iface_register_mem   = mpc_shm_pin;
 	rail->iface_unregister_mem = mpc_shm_unpin;
 	rail->iface_pack_memp      = mpc_shm_pack_rkey;
 	rail->iface_unpack_memp    = mpc_shm_unpack_rkey;
-	rail->get_zcopy            = mpc_shm_get_zcopy;
-	rail->send_am_zcopy        = mpc_shm_send_am_zcopy;
+	rail->put_bcopy            = NULL;
+	rail->get_bcopy            = NULL;
 	rail->put_zcopy            = mpc_shm_put_zcopy;
+	rail->get_zcopy            = mpc_shm_get_zcopy;
 	rail->flush_mem_ep         = mpc_shm_flush_mem_ep;
 	rail->flush_ep             = mpc_shm_flush_ep;
 	rail->flush_mem            = mpc_shm_flush_mem;
