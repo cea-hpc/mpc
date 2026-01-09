@@ -24,6 +24,7 @@ All notable changes to this project will be documented in this file. The format 
   - Unpacking of user created datatypes
 - **Low Comm**
   - Multinic devices initialization
+  - Interface capabilities initialization
 
 ## [4.3.0] - 2025-11-18
 
