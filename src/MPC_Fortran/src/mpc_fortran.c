@@ -12184,7 +12184,7 @@ void pmpi_file_create_errhandler_(MPI_File_errhandler_function *errhandler_fn, M
 #pragma weak mpi_file_create_errhandler__ = pmpi_file_create_errhandler__
 void pmpi_file_create_errhandler__(MPI_File_errhandler_function *errhandler_fn, MPI_Fint *errhandler, int *ierror)
 {
-	pmpi_file_create_errhandler__(errhandler_fn, errhandler, ierror);
+	pmpi_file_create_errhandler_(errhandler_fn, errhandler, ierror);
 }
 
 MPI_File PMPI_File_f2c(int file);
