@@ -445,7 +445,7 @@ typedef union
 	struct
 	{
 		uint64_t               peers_count; /**< Remote connectivity peer count */
-		mpc_lowcomm_peer_uid_t peers[0];    /**< Remote connectivity peer list */
+		mpc_lowcomm_peer_uid_t peers[];     /**< Remote connectivity peer list */
 	}connectivity;
 
 	/**
@@ -475,7 +475,7 @@ typedef union
 		char                                 port_name[MPC_LOWCOMM_ONDEMAND_TARGET_LEN]; /** Value of the key (only for
 		                                                                                  * PUT/GET) */
 		mpc_lowcomm_monitor_retcode_t        retcode;                                    /**< Remote retcode */
-		char                                 name_list[0];                               /** List of key names (only for
+		char                                 name_list[];                                /** List of key names (only for
 		                                                                                  * list) */
 	}naming;
 }mpc_lowcomm_monitor_args_t;
