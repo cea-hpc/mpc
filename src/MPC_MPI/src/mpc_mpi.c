@@ -8051,10 +8051,8 @@ int PMPI_Send_internal(const void *buf, int count, MPI_Datatype datatype, int de
 		mpc_mpi_mpit_instance_get_ptr(&data, &array_of_datatypes, &array_of_displacements, (int)event_type);
 		if (data != NULL && array_of_datatypes != NULL && array_of_displacements != NULL)
 		{
-			assert(sizeof(array_of_datatypes[0]) <= sizeof(int));
-			memcpy(data, &dest, sizeof(array_of_datatypes[0]));
-			assert(sizeof(array_of_datatypes[1]) <= sizeof(int));
-			memcpy((void *)((char *)data + array_of_displacements[1]), &tag, sizeof(array_of_datatypes[1]));
+			memcpy(data,                                               &dest, sizeof(dest));
+			memcpy((void *)((char *)data + array_of_displacements[1]), &tag,  sizeof(tag));
 		}
 
 		mpc_mpi_mpit_trigger_event((int)event_type);
@@ -8159,8 +8157,8 @@ int PMPI_Recv_internal(void *buf, int count, MPI_Datatype datatype, int source, 
 		mpc_mpi_mpit_instance_get_ptr(&data, &array_of_datatypes, &array_of_displacements, (int)event_type);
 		if (data != NULL && array_of_datatypes != NULL && array_of_displacements != NULL)
 		{
-			memcpy(data,                                               &source, sizeof(array_of_datatypes[0]));
-			memcpy((void *)((char *)data + array_of_displacements[1]), &tag,    sizeof(array_of_datatypes[1]));
+			memcpy(data,                                               &source, sizeof(source));
+			memcpy((void *)((char *)data + array_of_displacements[1]), &tag,    sizeof(tag));
 		}
 
 		mpc_mpi_mpit_trigger_event((int)event_type);
