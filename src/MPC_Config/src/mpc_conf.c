@@ -256,12 +256,14 @@ int mpc_conf_config_elem_set_from_elem(mpc_conf_config_elem_t *elem, mpc_conf_co
 
 int mpc_conf_config_elem_set(mpc_conf_config_elem_t *elem, mpc_conf_type_t type, void *ptr)
 {
+	// We need to escape the following blocks to avoid dangling pointers
+	int int_storage  = 0;
+	int long_storage = *((int *)ptr);
+
 	if ((elem->type == MPC_CONF_INT) && (type == MPC_CONF_LONG_INT))
 	{
 		/* Handle LONG to int conversion if it fits */
 		long source_value = *((long *)ptr);
-		int  int_storage  = 0;
-
 
 		if (source_value <= INT_MAX)
 		{
@@ -282,7 +284,6 @@ int mpc_conf_config_elem_set(mpc_conf_config_elem_t *elem, mpc_conf_type_t type,
 	else if ((elem->type == MPC_CONF_LONG_INT) && (type == MPC_CONF_INT))
 	{
 		/* Promote int to long when needed */
-		int long_storage = *((int *)ptr);
 		_utils_verbose_output(2, "ELEM: set %ld to %s (INT -> LONG conversion)\n", long_storage, elem->name);
 		ptr = &long_storage;
 	}
