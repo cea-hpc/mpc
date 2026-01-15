@@ -46,12 +46,27 @@
  * @{
  */
 
+/** @brief Union of the possible replies types */
+typedef union lcp_atomic_reply_data_u
+{
+	int8_t   i8;  /**< 1 byte  signed integer */
+	int16_t  i16; /**< 2 bytes signed integer */
+	int32_t  i32; /**< 4 bytes signed integer */
+	int64_t  i64; /**< 8 bytes signed integer */
+	uint8_t  u8;  /**< 1 byte  unsigned integer */
+	uint16_t u16; /**< 2 bytes unsigned integer */
+	uint32_t u32; /**< 4 bytes unsigned integer */
+	uint64_t u64; /**< 8 bytes unsigned integer */
+	float    f32; /**< 4 bytes floating point number */
+	double   f64; /**< 8 bytes floating point number */
+} lcp_atomic_reply_data_t;
+
 /** @brief Structured data to describe the reply to a fetch-like atomic operation */
 typedef struct lcp_atomic_reply
 {
-	uint64_t dest_uid; /**< UID of the initiator */
-	uint64_t msg_id;   /**< ID of the operation */
-	uint64_t result;   /**< Fetched data */
+	uint64_t                dest_uid; /**< UID of the initiator */
+	uint64_t                msg_id;   /**< ID of the operation */
+	lcp_atomic_reply_data_t result;   /**< Fetched data */
 } lcp_atomic_reply_t;
 
 /**
@@ -201,7 +216,7 @@ static int lcp_atomic_reply(lcp_manager_h mngr, lcp_task_h task, lcp_atomic_repl
 		mpc_common_debug_error("LCP ATO SW: could not allocate reply request.");
 		goto err;
 	}
-	reply_req->send.reply_ato.result = ato_reply->result;
+	reply_req->send.reply_ato.result = *(uint64_t *)&ato_reply->result;
 	reply_req->send.reply_ato.msg_id = ato_reply->msg_id;
 	reply_req->send.ep = ep;
 
@@ -257,468 +272,344 @@ static int lcp_atomic_handler(void *arg, void *data, size_t length, unsigned fla
 
 	reply.dest_uid = hdr->src_uid;
 	reply.msg_id   = hdr->msg_id;
+	const lcp_atomic_reply_data_t value   = *(lcp_atomic_reply_data_t *)&hdr->value;
+	lcp_atomic_reply_data_t       compare = *(lcp_atomic_reply_data_t *)&hdr->compare;
 
-	// NOTE: In the following, we use conversion-less bitcast to retrieve the underlying datatype
+	// NOTE: In the following, we use reinterpret cast to retrieve the underlying data
 	switch (hdr->op)
 	{
-	case LCP_ATOMIC_OP_ADD:
+	case LCP_ATOMIC_OP_ADD: {
 		switch (hdr->datatype)
 		{
 #if __clang__
-			case LCP_ATOMIC_DT_FLOAT: {
-				const float result = atomic_fetch_add((_Atomic float *)hdr->remote_addr, *(float *)&hdr->value);
-				reply.result = *(uint64_t *)&result;
+			case LCP_ATOMIC_DT_FLOAT:
+				reply.result.f32 = atomic_fetch_add((_Atomic float *)hdr->remote_addr, value.f32);
 				break;
-			}
 
-			case LCP_ATOMIC_DT_DOUBLE: {
-				const double result = atomic_fetch_add((_Atomic double *)hdr->remote_addr, *(double *)&hdr->value);
-				reply.result = *(uint64_t *)&result;
+			case LCP_ATOMIC_DT_DOUBLE:
+				reply.result.f64 = atomic_fetch_add((_Atomic double *)hdr->remote_addr, value.f64);
 				break;
-			}
 #endif
 
-		case LCP_ATOMIC_DT_INT8: {
-			const int8_t result = atomic_fetch_add((_Atomic int8_t *)hdr->remote_addr, *(int8_t *)&hdr->value);
-			reply.result = *(uint64_t *)&result;
+		case LCP_ATOMIC_DT_INT8:
+			reply.result.i8 = atomic_fetch_add((_Atomic int8_t *)hdr->remote_addr, value.i8);
 			break;
-		}
 
-		case LCP_ATOMIC_DT_INT16: {
-			const int16_t result = atomic_fetch_add((_Atomic int16_t *)hdr->remote_addr, *(int16_t *)&hdr->value);
-			reply.result = *(uint64_t *)&result;
+		case LCP_ATOMIC_DT_INT16:
+			reply.result.i16 = atomic_fetch_add((_Atomic int16_t *)hdr->remote_addr, value.i16);
 			break;
-		}
 
-		case LCP_ATOMIC_DT_INT32: {
-			const int32_t result = atomic_fetch_add((_Atomic int32_t *)hdr->remote_addr, *(int32_t *)&hdr->value);
-			reply.result = *(uint64_t *)&result;
+		case LCP_ATOMIC_DT_INT32:
+			reply.result.i32 = atomic_fetch_add((_Atomic int32_t *)hdr->remote_addr, value.i32);
 			break;
-		}
 
-		case LCP_ATOMIC_DT_INT64: {
-			const int64_t result = atomic_fetch_add((_Atomic int64_t *)hdr->remote_addr, *(int64_t *)&hdr->value);
-			reply.result = *(uint64_t *)&result;
+		case LCP_ATOMIC_DT_INT64:
+			reply.result.i64 = atomic_fetch_add((_Atomic int64_t *)hdr->remote_addr, value.i64);
 			break;
-		}
 
-		case LCP_ATOMIC_DT_UINT8: {
-			const uint8_t result = atomic_fetch_add((_Atomic uint8_t *)hdr->remote_addr, *(uint8_t *)&hdr->value);
-			reply.result = *(uint64_t *)&result;
+		case LCP_ATOMIC_DT_UINT8:
+			reply.result.u8 = atomic_fetch_add((_Atomic uint8_t *)hdr->remote_addr, value.u8);
 			break;
-		}
 
-		case LCP_ATOMIC_DT_UINT16: {
-			const uint16_t result = atomic_fetch_add((_Atomic uint16_t *)hdr->remote_addr, *(uint16_t *)&hdr->value);
-			reply.result = *(uint64_t *)&result;
+		case LCP_ATOMIC_DT_UINT16:
+			reply.result.u16 = atomic_fetch_add((_Atomic uint16_t *)hdr->remote_addr, value.u16);
 			break;
-		}
 
-		case LCP_ATOMIC_DT_UINT32: {
-			const uint32_t result = atomic_fetch_add((_Atomic uint32_t *)hdr->remote_addr, *(uint32_t *)&hdr->value);
-			reply.result = *(uint64_t *)&result;
+		case LCP_ATOMIC_DT_UINT32:
+			reply.result.u32 = atomic_fetch_add((_Atomic uint32_t *)hdr->remote_addr, value.u32);
 			break;
-		}
 
-		case LCP_ATOMIC_DT_UINT64: {
-			const uint64_t result = atomic_fetch_add((_Atomic uint64_t *)hdr->remote_addr, *(uint64_t *)&hdr->value);
-			reply.result = *(uint64_t *)&result;
+		case LCP_ATOMIC_DT_UINT64:
+			reply.result.u64 = atomic_fetch_add((_Atomic uint64_t *)hdr->remote_addr, value.u64);
 			break;
-		}
 
-		default: {
+		default:
 			mpc_common_debug_fatal("LCP ATO SW: datatype not supported for ADD operation with the current compiler");
 			break;
 		}
-		}
 		break;
+	}
 
-	case LCP_ATOMIC_OP_SUB:
+	case LCP_ATOMIC_OP_SUB: {
 		switch (hdr->datatype)
 		{
 #if __clang__
-			case LCP_ATOMIC_DT_FLOAT: {
-				const float result = atomic_fetch_sub((_Atomic float *)hdr->remote_addr, *(float *)&hdr->value);
-				reply.result = *(uint64_t *)&result;
+			case LCP_ATOMIC_DT_FLOAT:
+				reply.result.f32 = atomic_fetch_sub((_Atomic float *)hdr->remote_addr, value.f32);
 				break;
-			}
 
-			case LCP_ATOMIC_DT_DOUBLE: {
-				const double result = atomic_fetch_sub((_Atomic double *)hdr->remote_addr, *(double *)&hdr->value);
-				reply.result = *(uint64_t *)&result;
+			case LCP_ATOMIC_DT_DOUBLE:
+				reply.result.f64 = atomic_fetch_sub((_Atomic double *)hdr->remote_addr, value.f64);
 				break;
-			}
 #endif
 
-		case LCP_ATOMIC_DT_INT8: {
-			const int8_t result = atomic_fetch_sub((_Atomic int8_t *)hdr->remote_addr, *(int8_t *)&hdr->value);
-			reply.result = *(uint64_t *)&result;
+		case LCP_ATOMIC_DT_INT8:
+			reply.result.i8 = atomic_fetch_sub((_Atomic int8_t *)hdr->remote_addr, value.i8);
 			break;
-		}
 
-		case LCP_ATOMIC_DT_INT16: {
-			const int16_t result = atomic_fetch_sub((_Atomic int16_t *)hdr->remote_addr, *(int16_t *)&hdr->value);
-			reply.result = *(uint64_t *)&result;
+		case LCP_ATOMIC_DT_INT16:
+			reply.result.i16 = atomic_fetch_sub((_Atomic int16_t *)hdr->remote_addr, value.i16);
 			break;
-		}
 
-		case LCP_ATOMIC_DT_INT32: {
-			const int32_t result = atomic_fetch_sub((_Atomic int32_t *)hdr->remote_addr, *(int32_t *)&hdr->value);
-			reply.result = *(uint64_t *)&result;
+		case LCP_ATOMIC_DT_INT32:
+			reply.result.i32 = atomic_fetch_sub((_Atomic int32_t *)hdr->remote_addr, value.i32);
 			break;
-		}
 
-		case LCP_ATOMIC_DT_INT64: {
-			const int64_t result = atomic_fetch_sub((_Atomic int64_t *)hdr->remote_addr, *(int64_t *)&hdr->value);
-			reply.result = *(uint64_t *)&result;
+		case LCP_ATOMIC_DT_INT64:
+			reply.result.i64 = atomic_fetch_sub((_Atomic int64_t *)hdr->remote_addr, value.i64);
 			break;
-		}
 
-		case LCP_ATOMIC_DT_UINT8: {
-			const uint8_t result = atomic_fetch_sub((_Atomic uint8_t *)hdr->remote_addr, *(uint8_t *)&hdr->value);
-			reply.result = *(uint64_t *)&result;
+		case LCP_ATOMIC_DT_UINT8:
+			reply.result.u8 = atomic_fetch_sub((_Atomic uint8_t *)hdr->remote_addr, value.u8);
 			break;
-		}
 
-		case LCP_ATOMIC_DT_UINT16: {
-			const uint16_t result = atomic_fetch_sub((_Atomic uint16_t *)hdr->remote_addr, *(uint16_t *)&hdr->value);
-			reply.result = *(uint64_t *)&result;
+		case LCP_ATOMIC_DT_UINT16:
+			reply.result.u16 = atomic_fetch_sub((_Atomic uint16_t *)hdr->remote_addr, value.u16);
 			break;
-		}
 
-		case LCP_ATOMIC_DT_UINT32: {
-			const uint32_t result = atomic_fetch_sub((_Atomic uint32_t *)hdr->remote_addr, *(uint32_t *)&hdr->value);
-			reply.result = *(uint64_t *)&result;
+		case LCP_ATOMIC_DT_UINT32:
+			reply.result.u32 = atomic_fetch_sub((_Atomic uint32_t *)hdr->remote_addr, value.u32);
 			break;
-		}
 
-		case LCP_ATOMIC_DT_UINT64: {
-			const uint64_t result = atomic_fetch_sub((_Atomic uint64_t *)hdr->remote_addr, *(uint64_t *)&hdr->value);
-			reply.result = *(uint64_t *)&result;
+		case LCP_ATOMIC_DT_UINT64:
+			reply.result.u64 = atomic_fetch_sub((_Atomic uint64_t *)hdr->remote_addr, value.u64);
 			break;
-		}
 
-		default: {
+		default:
 			mpc_common_debug_fatal("LCP ATO SW: datatype not supported for SUB operation with the current compiler");
 			break;
 		}
-		}
 		break;
+	}
 
-	case LCP_ATOMIC_OP_AND:
+	case LCP_ATOMIC_OP_AND: {
 		switch (hdr->datatype)
 		{
-		case LCP_ATOMIC_DT_INT8: {
-			const int8_t result = atomic_fetch_and((_Atomic int8_t *)hdr->remote_addr, *(int8_t *)&hdr->value);
-			reply.result = *(uint64_t *)&result;
+		case LCP_ATOMIC_DT_INT8:
+			reply.result.i8 = atomic_fetch_and((_Atomic int8_t *)hdr->remote_addr, value.i8);
 			break;
-		}
 
-		case LCP_ATOMIC_DT_INT16: {
-			const int16_t result = atomic_fetch_and((_Atomic int16_t *)hdr->remote_addr, *(int16_t *)&hdr->value);
-			reply.result = *(uint64_t *)&result;
+		case LCP_ATOMIC_DT_INT16:
+			reply.result.i16 = atomic_fetch_and((_Atomic int16_t *)hdr->remote_addr, value.i16);
 			break;
-		}
 
-		case LCP_ATOMIC_DT_INT32: {
-			const int32_t result = atomic_fetch_and((_Atomic int32_t *)hdr->remote_addr, *(int32_t *)&hdr->value);
-			reply.result = *(uint64_t *)&result;
+		case LCP_ATOMIC_DT_INT32:
+			reply.result.i32 = atomic_fetch_and((_Atomic int32_t *)hdr->remote_addr, value.i32);
 			break;
-		}
 
-		case LCP_ATOMIC_DT_INT64: {
-			const int64_t result = atomic_fetch_and((_Atomic int64_t *)hdr->remote_addr, *(int64_t *)&hdr->value);
-			reply.result = *(uint64_t *)&result;
+		case LCP_ATOMIC_DT_INT64:
+			reply.result.i64 = atomic_fetch_and((_Atomic int64_t *)hdr->remote_addr, value.i64);
 			break;
-		}
 
-		case LCP_ATOMIC_DT_UINT8: {
-			const uint8_t result = atomic_fetch_and((_Atomic uint8_t *)hdr->remote_addr, *(uint8_t *)&hdr->value);
-			reply.result = *(uint64_t *)&result;
+		case LCP_ATOMIC_DT_UINT8:
+			reply.result.u8 = atomic_fetch_and((_Atomic uint8_t *)hdr->remote_addr, value.u8);
 			break;
-		}
 
-		case LCP_ATOMIC_DT_UINT16: {
-			const uint16_t result = atomic_fetch_and((_Atomic uint16_t *)hdr->remote_addr, *(uint16_t *)&hdr->value);
-			reply.result = *(uint64_t *)&result;
+		case LCP_ATOMIC_DT_UINT16:
+			reply.result.u16 = atomic_fetch_and((_Atomic uint16_t *)hdr->remote_addr, value.u16);
 			break;
-		}
 
-		case LCP_ATOMIC_DT_UINT32: {
-			const uint32_t result = atomic_fetch_and((_Atomic uint32_t *)hdr->remote_addr, *(uint32_t *)&hdr->value);
-			reply.result = *(uint64_t *)&result;
+		case LCP_ATOMIC_DT_UINT32:
+			reply.result.u32 = atomic_fetch_and((_Atomic uint32_t *)hdr->remote_addr, value.u32);
 			break;
-		}
 
-		case LCP_ATOMIC_DT_UINT64: {
-			const uint64_t result = atomic_fetch_and((_Atomic uint64_t *)hdr->remote_addr, *(uint64_t *)&hdr->value);
-			reply.result = *(uint64_t *)&result;
+		case LCP_ATOMIC_DT_UINT64:
+			reply.result.u64 = atomic_fetch_and((_Atomic uint64_t *)hdr->remote_addr, value.u64);
 			break;
-		}
 
-		default: {
+		default:
 			mpc_common_debug_fatal("LCP ATO SW: datatype not supported for bitwise AND operation");
 			break;
 		}
-		}
 		break;
+	}
 
-	case LCP_ATOMIC_OP_OR:
+	case LCP_ATOMIC_OP_OR: {
 		switch (hdr->datatype)
 		{
-		case LCP_ATOMIC_DT_INT8: {
-			const int8_t result = atomic_fetch_or((_Atomic int8_t *)hdr->remote_addr, *(int8_t *)&hdr->value);
-			reply.result = *(uint64_t *)&result;
+		case LCP_ATOMIC_DT_INT8:
+			reply.result.i8 = atomic_fetch_or((_Atomic int8_t *)hdr->remote_addr, value.i8);
 			break;
-		}
 
-		case LCP_ATOMIC_DT_INT16: {
-			const int16_t result = atomic_fetch_or((_Atomic int16_t *)hdr->remote_addr, *(int16_t *)&hdr->value);
-			reply.result = *(uint64_t *)&result;
+		case LCP_ATOMIC_DT_INT16:
+			reply.result.i16 = atomic_fetch_or((_Atomic int16_t *)hdr->remote_addr, value.i16);
 			break;
-		}
 
-		case LCP_ATOMIC_DT_INT32: {
-			const int32_t result = atomic_fetch_or((_Atomic int32_t *)hdr->remote_addr, *(int32_t *)&hdr->value);
-			reply.result = *(uint64_t *)&result;
+		case LCP_ATOMIC_DT_INT32:
+			reply.result.i32 = atomic_fetch_or((_Atomic int32_t *)hdr->remote_addr, value.i32);
 			break;
-		}
 
-		case LCP_ATOMIC_DT_INT64: {
-			const int64_t result = atomic_fetch_or((_Atomic int64_t *)hdr->remote_addr, *(int64_t *)&hdr->value);
-			reply.result = *(uint64_t *)&result;
+		case LCP_ATOMIC_DT_INT64:
+			reply.result.i64 = atomic_fetch_or((_Atomic int64_t *)hdr->remote_addr, value.i64);
 			break;
-		}
 
-		case LCP_ATOMIC_DT_UINT8: {
-			const uint8_t result = atomic_fetch_or((_Atomic uint8_t *)hdr->remote_addr, *(uint8_t *)&hdr->value);
-			reply.result = *(uint64_t *)&result;
+		case LCP_ATOMIC_DT_UINT8:
+			reply.result.u8 = atomic_fetch_or((_Atomic uint8_t *)hdr->remote_addr, value.u8);
 			break;
-		}
 
-		case LCP_ATOMIC_DT_UINT16: {
-			const uint16_t result = atomic_fetch_or((_Atomic uint16_t *)hdr->remote_addr, *(uint16_t *)&hdr->value);
-			reply.result = *(uint64_t *)&result;
+		case LCP_ATOMIC_DT_UINT16:
+			reply.result.u16 = atomic_fetch_or((_Atomic uint16_t *)hdr->remote_addr, value.u16);
 			break;
-		}
 
-		case LCP_ATOMIC_DT_UINT32: {
-			const uint32_t result = atomic_fetch_or((_Atomic uint32_t *)hdr->remote_addr, *(uint32_t *)&hdr->value);
-			reply.result = *(uint64_t *)&result;
+		case LCP_ATOMIC_DT_UINT32:
+			reply.result.u32 = atomic_fetch_or((_Atomic uint32_t *)hdr->remote_addr, value.u32);
 			break;
-		}
 
-		case LCP_ATOMIC_DT_UINT64: {
-			const uint64_t result = atomic_fetch_or((_Atomic uint64_t *)hdr->remote_addr, *(uint64_t *)&hdr->value);
-			reply.result = *(uint64_t *)&result;
+		case LCP_ATOMIC_DT_UINT64:
+			reply.result.u64 = atomic_fetch_or((_Atomic uint64_t *)hdr->remote_addr, value.u64);
 			break;
-		}
 
-		default: {
+		default:
 			mpc_common_debug_fatal("LCP ATO SW: datatype not supported for bitwise OR operation");
 			break;
 		}
-		}
 		break;
+	}
 
-	case LCP_ATOMIC_OP_XOR:
+	case LCP_ATOMIC_OP_XOR: {
 		switch (hdr->datatype)
 		{
-		case LCP_ATOMIC_DT_INT8: {
-			const int8_t result = atomic_fetch_xor((_Atomic int8_t *)hdr->remote_addr, *(int8_t *)&hdr->value);
-			reply.result = *(uint64_t *)&result;
+		case LCP_ATOMIC_DT_INT8:
+			reply.result.i8 = atomic_fetch_xor((_Atomic int8_t *)hdr->remote_addr, value.i8);
 			break;
-		}
 
-		case LCP_ATOMIC_DT_INT16: {
-			const int16_t result = atomic_fetch_xor((_Atomic int16_t *)hdr->remote_addr, *(int16_t *)&hdr->value);
-			reply.result = *(uint64_t *)&result;
+		case LCP_ATOMIC_DT_INT16:
+			reply.result.i16 = atomic_fetch_xor((_Atomic int16_t *)hdr->remote_addr, value.i16);
 			break;
-		}
 
-		case LCP_ATOMIC_DT_INT32: {
-			const int32_t result = atomic_fetch_xor((_Atomic int32_t *)hdr->remote_addr, *(int32_t *)&hdr->value);
-			reply.result = *(uint64_t *)&result;
+		case LCP_ATOMIC_DT_INT32:
+			reply.result.i32 = atomic_fetch_xor((_Atomic int32_t *)hdr->remote_addr, value.i32);
 			break;
-		}
 
-		case LCP_ATOMIC_DT_INT64: {
-			const int64_t result = atomic_fetch_xor((_Atomic int64_t *)hdr->remote_addr, *(int64_t *)&hdr->value);
-			reply.result = *(uint64_t *)&result;
+		case LCP_ATOMIC_DT_INT64:
+			reply.result.i64 = atomic_fetch_xor((_Atomic int64_t *)hdr->remote_addr, value.i64);
 			break;
-		}
 
-		case LCP_ATOMIC_DT_UINT8: {
-			const uint8_t result = atomic_fetch_xor((_Atomic uint8_t *)hdr->remote_addr, *(uint8_t *)&hdr->value);
-			reply.result = *(uint64_t *)&result;
+		case LCP_ATOMIC_DT_UINT8:
+			reply.result.u8 = atomic_fetch_xor((_Atomic uint8_t *)hdr->remote_addr, value.u8);
 			break;
-		}
 
-		case LCP_ATOMIC_DT_UINT16: {
-			const uint16_t result = atomic_fetch_xor((_Atomic uint16_t *)hdr->remote_addr, *(uint16_t *)&hdr->value);
-			reply.result = *(uint64_t *)&result;
+		case LCP_ATOMIC_DT_UINT16:
+			reply.result.u16 = atomic_fetch_xor((_Atomic uint16_t *)hdr->remote_addr, value.u16);
 			break;
-		}
 
-		case LCP_ATOMIC_DT_UINT32: {
-			const uint32_t result = atomic_fetch_xor((_Atomic uint32_t *)hdr->remote_addr, *(uint32_t *)&hdr->value);
-			reply.result = *(uint64_t *)&result;
+		case LCP_ATOMIC_DT_UINT32:
+			reply.result.u32 = atomic_fetch_xor((_Atomic uint32_t *)hdr->remote_addr, value.u32);
 			break;
-		}
 
-		case LCP_ATOMIC_DT_UINT64: {
-			const uint64_t result = atomic_fetch_xor((_Atomic uint64_t *)hdr->remote_addr, *(uint64_t *)&hdr->value);
-			reply.result = *(uint64_t *)&result;
+		case LCP_ATOMIC_DT_UINT64:
+			reply.result.u64 = atomic_fetch_xor((_Atomic uint64_t *)hdr->remote_addr, value.u64);
 			break;
-		}
 
-		default: {
+		default:
 			mpc_common_debug_fatal("LCP ATO SW: datatype not supported for bitwise XOR operation");
 			break;
 		}
-		}
 		break;
+	}
 
-	case LCP_ATOMIC_OP_SWAP:
+	case LCP_ATOMIC_OP_SWAP: {
 		switch (hdr->datatype)
 		{
-		case LCP_ATOMIC_DT_FLOAT: {
-			const float result = atomic_exchange((_Atomic float *)hdr->remote_addr, *(float *)&hdr->value);
-			reply.result = *(uint64_t *)&result;
+		case LCP_ATOMIC_DT_FLOAT:
+			reply.result.f32 = atomic_exchange((_Atomic float *)hdr->remote_addr, value.f32);
 			break;
-		}
 
-		case LCP_ATOMIC_DT_DOUBLE: {
-			const double result = atomic_exchange((_Atomic double *)hdr->remote_addr, *(double *)&hdr->value);
-			reply.result = *(uint64_t *)&result;
+		case LCP_ATOMIC_DT_DOUBLE:
+			reply.result.f64 = atomic_exchange((_Atomic double *)hdr->remote_addr, value.f64);
 			break;
-		}
 
-		case LCP_ATOMIC_DT_INT8: {
-			const int8_t result = atomic_exchange((_Atomic int8_t *)hdr->remote_addr, *(int8_t *)&hdr->value);
-			reply.result = *(uint64_t *)&result;
+		case LCP_ATOMIC_DT_INT8:
+			reply.result.i8 = atomic_exchange((_Atomic int8_t *)hdr->remote_addr, value.i8);
 			break;
-		}
 
-		case LCP_ATOMIC_DT_INT16: {
-			const int16_t result = atomic_exchange((_Atomic int16_t *)hdr->remote_addr, *(int16_t *)&hdr->value);
-			reply.result = *(uint64_t *)&result;
+		case LCP_ATOMIC_DT_INT16:
+			reply.result.i16 = atomic_exchange((_Atomic int16_t *)hdr->remote_addr, value.i16);
 			break;
-		}
 
-		case LCP_ATOMIC_DT_INT32: {
-			const int32_t result = atomic_exchange((_Atomic int32_t *)hdr->remote_addr, *(int32_t *)&hdr->value);
-			reply.result = *(uint64_t *)&result;
+		case LCP_ATOMIC_DT_INT32:
+			reply.result.i32 = atomic_exchange((_Atomic int32_t *)hdr->remote_addr, value.i32);
 			break;
-		}
 
-		case LCP_ATOMIC_DT_INT64: {
-			const int64_t result = atomic_exchange((_Atomic int64_t *)hdr->remote_addr, *(int64_t *)&hdr->value);
-			reply.result = *(uint64_t *)&result;
+		case LCP_ATOMIC_DT_INT64:
+			reply.result.i64 = atomic_exchange((_Atomic int64_t *)hdr->remote_addr, value.i64);
 			break;
-		}
 
-		case LCP_ATOMIC_DT_UINT8: {
-			const uint8_t result = atomic_exchange((_Atomic uint8_t *)hdr->remote_addr, *(uint8_t *)&hdr->value);
-			reply.result = *(uint64_t *)&result;
+		case LCP_ATOMIC_DT_UINT8:
+			reply.result.u8 = atomic_exchange((_Atomic uint8_t *)hdr->remote_addr, value.u8);
 			break;
-		}
 
-		case LCP_ATOMIC_DT_UINT16: {
-			const uint16_t result = atomic_exchange((_Atomic uint16_t *)hdr->remote_addr, *(uint16_t *)&hdr->value);
-			reply.result = *(uint64_t *)&result;
+		case LCP_ATOMIC_DT_UINT16:
+			reply.result.u16 = atomic_exchange((_Atomic uint16_t *)hdr->remote_addr, value.u16);
 			break;
-		}
 
-		case LCP_ATOMIC_DT_UINT32: {
-			const uint32_t result = atomic_exchange((_Atomic uint32_t *)hdr->remote_addr, *(uint32_t *)&hdr->value);
-			reply.result = *(uint64_t *)&result;
+		case LCP_ATOMIC_DT_UINT32:
+			reply.result.u32 = atomic_exchange((_Atomic uint32_t *)hdr->remote_addr, value.u32);
 			break;
-		}
 
-		case LCP_ATOMIC_DT_UINT64: {
-			const uint64_t result = atomic_exchange((_Atomic uint64_t *)hdr->remote_addr, *(uint64_t *)&hdr->value);
-			reply.result = *(uint64_t *)&result;
+		case LCP_ATOMIC_DT_UINT64:
+			reply.result.u64 = atomic_exchange((_Atomic uint64_t *)hdr->remote_addr, value.u64);
 			break;
-		}
 		}
 		break;
+	}
 
-	case LCP_ATOMIC_OP_CSWAP:
+	case LCP_ATOMIC_OP_CSWAP: {
 		switch (hdr->datatype)
 		{
-		case LCP_ATOMIC_DT_FLOAT: {
-			atomic_compare_exchange_strong((_Atomic float *)hdr->remote_addr,
-				(float *)&hdr->compare, *(float *)hdr->value);
-			reply.result = *(float *)&hdr->compare;
+		case LCP_ATOMIC_DT_FLOAT:
+			atomic_compare_exchange_strong((_Atomic float *)hdr->remote_addr, &compare.f32, value.f32);
+			reply.result.f32 = compare.f32;
 			break;
-		}
 
-		case LCP_ATOMIC_DT_DOUBLE: {
-			atomic_compare_exchange_strong((_Atomic double *)hdr->remote_addr,
-				(double *)&hdr->compare, *(double *)hdr->value);
-			reply.result = *(double *)&hdr->compare;
+		case LCP_ATOMIC_DT_DOUBLE:
+			atomic_compare_exchange_strong((_Atomic double *)hdr->remote_addr, &compare.f64, value.f64);
+			reply.result.f64 = compare.f64;
 			break;
-		}
 
-		case LCP_ATOMIC_DT_INT8: {
-			atomic_compare_exchange_strong((_Atomic int8_t *)hdr->remote_addr,
-				(int8_t *)&hdr->compare, *(int8_t *)&hdr->value);
-			reply.result = *(uint64_t *)&hdr->compare;
+		case LCP_ATOMIC_DT_INT8:
+			atomic_compare_exchange_strong((_Atomic int8_t *)hdr->remote_addr, &compare.i8, value.i8);
+			reply.result.i8 = compare.i8;
 			break;
-		}
 
-		case LCP_ATOMIC_DT_INT16: {
-			atomic_compare_exchange_strong((_Atomic int16_t *)hdr->remote_addr,
-				(int16_t *)&hdr->compare, *(int16_t *)&hdr->value);
-			reply.result = *(uint64_t *)&hdr->compare;
+		case LCP_ATOMIC_DT_INT16:
+			atomic_compare_exchange_strong((_Atomic int16_t *)hdr->remote_addr, &compare.i16, value.i16);
+			reply.result.i16 = compare.i16;
 			break;
-		}
 
-		case LCP_ATOMIC_DT_INT32: {
-			atomic_compare_exchange_strong((_Atomic int32_t *)hdr->remote_addr,
-				(int32_t *)&hdr->compare, *(int32_t *)&hdr->value);
-			reply.result = *(uint64_t *)&hdr->compare;
+		case LCP_ATOMIC_DT_INT32:
+			atomic_compare_exchange_strong((_Atomic int32_t *)hdr->remote_addr, &compare.i32, value.i32);
+			reply.result.i32 = compare.i32;
 			break;
-		}
 
-		case LCP_ATOMIC_DT_INT64: {
-			atomic_compare_exchange_strong((_Atomic int64_t *)hdr->remote_addr,
-				(int64_t *)&hdr->compare, *(int64_t *)&hdr->value);
-			reply.result = *(uint64_t *)&hdr->compare;
+		case LCP_ATOMIC_DT_INT64:
+			atomic_compare_exchange_strong((_Atomic int64_t *)hdr->remote_addr, &compare.i64, value.i64);
+			reply.result.i64 = compare.i64;
 			break;
-		}
 
-		case LCP_ATOMIC_DT_UINT8: {
-			atomic_compare_exchange_strong((_Atomic uint8_t *)hdr->remote_addr,
-				(uint8_t *)&hdr->compare, *(uint8_t *)&hdr->value);
-			reply.result = *(uint64_t *)&hdr->compare;
+		case LCP_ATOMIC_DT_UINT8:
+			atomic_compare_exchange_strong((_Atomic uint8_t *)hdr->remote_addr, &compare.u8, value.u8);
+			reply.result.u8 = compare.u8;
 			break;
-		}
 
-		case LCP_ATOMIC_DT_UINT16: {
-			atomic_compare_exchange_strong((_Atomic uint16_t *)hdr->remote_addr,
-				(uint16_t *)&hdr->compare, *(uint16_t *)&hdr->value);
-			reply.result = *(uint64_t *)&hdr->compare;
+		case LCP_ATOMIC_DT_UINT16:
+			atomic_compare_exchange_strong((_Atomic uint16_t *)hdr->remote_addr, &compare.u16, value.u16);
+			reply.result.u16 = compare.u16;
 			break;
-		}
 
-		case LCP_ATOMIC_DT_UINT32: {
-			atomic_compare_exchange_strong((_Atomic uint32_t *)hdr->remote_addr,
-				(uint32_t *)&hdr->compare, *(uint32_t *)&hdr->value);
-			reply.result = *(uint64_t *)&hdr->compare;
+		case LCP_ATOMIC_DT_UINT32:
+			atomic_compare_exchange_strong((_Atomic uint32_t *)hdr->remote_addr, &compare.u32, value.u32);
+			reply.result.u32 = compare.u32;
 			break;
-		}
 
-		case LCP_ATOMIC_DT_UINT64: {
-			atomic_compare_exchange_strong((_Atomic uint64_t *)hdr->remote_addr,
-				(uint64_t *)&hdr->compare, *(uint64_t *)&hdr->value);
-			reply.result = *(uint64_t *)&hdr->compare;
+		case LCP_ATOMIC_DT_UINT64:
+			atomic_compare_exchange_strong((_Atomic uint64_t *)hdr->remote_addr, &compare.u64, value.u64);
+			reply.result.u64 = compare.u64;
 			break;
 		}
 
 		break;
-		}
+	}
 	}
 
 	if (hdr->msg_id != 0)
