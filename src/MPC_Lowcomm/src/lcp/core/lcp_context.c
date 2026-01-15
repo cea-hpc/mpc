@@ -149,10 +149,9 @@ int __sort_rails_by_priority(const void *pa, const void *pb)
 }
 
 /**
- * This function generates the listing of the network configuration when passing -v to mpcrun
+ * @brief Generates the listing of the network configuration when passing -v to mpcrun
  *
- * ctx the context to generate the description of
- * int 0 on success
+ * @param[in] ctx Context to generate the description of
  */
 #define NETWORK_DESC_BUFFER_SIZE (8 * 1024llu)
 static inline void _lcp_context_log_resource_config_summary(lcp_context_h ctx)
@@ -164,40 +163,55 @@ static inline void _lcp_context_log_resource_config_summary(lcp_context_h ctx)
 	{
 		sctk_free(mpc_common_get_flags()->sctk_network_description_string);
 	}
-	mpc_common_get_flags()->sctk_network_description_string =
-		sctk_malloc(NETWORK_DESC_BUFFER_SIZE);
+	char *name =
+		mpc_common_get_flags()->sctk_network_description_string = sctk_calloc(NETWORK_DESC_BUFFER_SIZE, sizeof(char));
+	assert(name != NULL);
 
-	/* Initialize network description string. */
-	char *name = mpc_common_get_flags()->sctk_network_description_string;
-	*name = '\0';
+	// Updated available space to write in name string
+	size_t available_space_name = NETWORK_DESC_BUFFER_SIZE - 1;
+	// Maximum number of char to concatenate (min of tmp size and available space left in name)
+	size_t max_char_to_cat;
 
-	char tmp[512];
+	char tmp[512] = {};
 
+	// List available network components
 	for (i = 0 ; i < ctx->num_cmpts; i++)
 	{
 		lcr_component_h cmt = ctx->components[i];
 
-		(void)snprintf(tmp, 512, "\n - %s\n", cmt->name);
-		strncat(name, tmp, NETWORK_DESC_BUFFER_SIZE - 1);
+		available_space_name -= snprintf(tmp, 512, "\n - %s\n", cmt->name);
+		max_char_to_cat       = (available_space_name > 512 ? 512 : available_space_name);
+		strncat(name, tmp, max_char_to_cat);
 
-		for (j = 0 ; j < cmt->num_devices; j++)
+		// List available devices for each components
+		for (j = 0 ; j < cmt->num_devices && available_space_name > 0; j++)
 		{
-			(void)snprintf(tmp, 512, " \t* %s\n", cmt->devices[j].name);
-			strncat(name, tmp, NETWORK_DESC_BUFFER_SIZE - 1);
+			available_space_name -= snprintf(tmp, 512, " \t* %s\n", cmt->devices[j].name);
+			max_char_to_cat       = (available_space_name > 512 ? 512 : available_space_name);
+			strncat(name, tmp, max_char_to_cat);
 		}
 	}
 
-	strncat(name, "\nInitialized resources:\n", NETWORK_DESC_BUFFER_SIZE - 1);
+	static const size_t constant_string_size = strlen("\nInitialized resources:\n");
+	assert(available_space_name > constant_string_size);
+	strcat(name, "\nInitialized resources:\n");
 
 	int k = 0;
-	for (k = 0; k < ctx->num_resources; k++)
+	// List initialized devices (and associated interfaces)
+	for (k = 0; k < ctx->num_resources && available_space_name > 0; k++)
 	{
 		lcp_rsc_desc_t *res = &ctx->resources[k];
-		(void)snprintf(tmp, 512, " - [%d] %s %s (%s, %s)\n", res->priority,
-			res->name, res->component->name, res->iface_config->name,
-			res->driver_config->name);
-		strncat(name, tmp, NETWORK_DESC_BUFFER_SIZE - 1);
+
+		available_space_name -= snprintf(tmp, 512, " - [%d] %s %s (%s, %s)\n",
+			res->priority, res->name, res->component->name,
+			res->iface_config->name, res->driver_config->name);
+
+		max_char_to_cat = (available_space_name > 512 ? 512 : available_space_name);
+		strncat(name, tmp, max_char_to_cat);
 	}
+
+	// Should be triggered only on truncation -> increase NETWORK_DESC_BUFFER_SIZE
+	assert(available_space_name > 0 && "Please increase string size to print context");
 }
 
 static int _lcp_context_load_ctx_config(lcp_context_h ctx, lcp_context_param_t *param)
