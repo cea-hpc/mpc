@@ -280,11 +280,13 @@ static inline void __mpc_dt_keyval_hit_delete(const int type_keyval, void *attri
 	(kv->delete)(type, type_keyval, attribute_val, kv->extra_state);
 }
 
-/** \brief Trigger copy handler (if present) on a given data-type
- *  \param type_keyval Target KEYVAL
- *  \param oldtype old data-type
- *  \param attribute_val_in old data-type value
- *  \param attribute_val_out new data-type value
+/**
+ * @brief Trigger copy handler (if present) on a given data-type
+ * @param[in]  type_keyval       Target KEYVAL
+ * @param[in]  oldtype           old data-type
+ * @param[in]  attribute_val_in  old data-type value
+ * @param[out] attribute_val_out new data-type value
+ * @param[out] flag              1 if the copy succeed 0 otherwise
  */
 static inline void __mpc_dt_keyval_hit_copy(const int type_keyval, mpc_lowcomm_datatype_t oldtype,
                                             void **attribute_val_in, void **attribute_val_out,
@@ -299,20 +301,19 @@ static inline void __mpc_dt_keyval_hit_copy(const int type_keyval, mpc_lowcomm_d
 
 	*flag = 0;
 
-	if (kv->delete == MPC_TYPE_NULL_COPY_FN)
+	if (kv->copy == MPC_TYPE_NULL_COPY_FN)
 	{
 		return;
 	}
 
-	if (kv->delete == MPC_TYPE_NULL_DUP_FN)
+	if (kv->copy == MPC_TYPE_NULL_DUP_FN)
 	{
 		*flag = 1;
 		*attribute_val_out = *attribute_val_in;
 		return;
 	}
 
-	(kv->copy)(oldtype, type_keyval, kv->extra_state, attribute_val_in,
-		attribute_val_out, flag);
+	(kv->copy)(oldtype, type_keyval, kv->extra_state, attribute_val_in, attribute_val_out, flag);
 }
 
 /** \brief Create a new data-type keyval
