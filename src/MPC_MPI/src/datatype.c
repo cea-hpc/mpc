@@ -424,8 +424,7 @@ static inline int __mpc_dt_attr_store_release(struct __mpc_dt_attr_store *store,
 	if (pattr)
 	{
 		struct __mpc_dt_attr *attr = (struct __mpc_dt_attr *)pattr;
-		__mpc_dt_keyval_hit_delete(attr->type_keyval, attr->attribute_val,
-			container_type);
+		__mpc_dt_keyval_hit_delete(attr->type_keyval, attr->attribute_val, container_type);
 		sctk_free(attr);
 	}
 
@@ -561,9 +560,9 @@ static inline void __mpc_composed_common_types_init()
 	_mpc_cl_type_commit(&tmp);
 
 	/* MPC_C_COMPLEX (29) */
-	mpc_float_float foo_0;
+	const mpc_float_float foo_0;
 
-	disp = ((char *)&foo_0.b - (char *)&foo_0.a);
+	disp = ((ptrdiff_t)&foo_0.b - (ptrdiff_t)&foo_0.a);
 
 	___mpc_init_composed_common_type(MPC_C_COMPLEX, disp, MPC_LOWCOMM_FLOAT, MPC_LOWCOMM_FLOAT,
 		sizeof(mpc_float_float));
@@ -600,9 +599,9 @@ static inline void __mpc_composed_common_types_init()
 	_mpc_cl_type_commit(&tmp);
 
 	/* MPC_C_DOUBLE_COMPLEX (31) */
-	mpc_double_double foo_1;
+	const mpc_double_double foo_1;
 
-	disp = ((char *)&foo_1.b - (char *)&foo_1.a);
+	disp = ((ptrdiff_t)&foo_1.b - (ptrdiff_t)&foo_1.a);
 
 	___mpc_init_composed_common_type(MPC_C_DOUBLE_COMPLEX, disp, MPC_LOWCOMM_DOUBLE,
 		MPC_LOWCOMM_DOUBLE, sizeof(mpc_double_double));
@@ -643,9 +642,9 @@ static inline void __mpc_composed_common_types_init()
 	_mpc_cl_type_commit(&tmp);
 
 	/* MPC_C_LONG_DOUBLE_COMPLEX (32) */
-	mpc_longdouble_longdouble foo_2;
+	const mpc_longdouble_longdouble foo_2;
 
-	disp = ((char *)&foo_2.b - (char *)&foo_2.a);
+	disp = ((ptrdiff_t)&foo_2.b - (ptrdiff_t)&foo_2.a);
 
 	___mpc_init_composed_common_type(MPC_C_LONG_DOUBLE_COMPLEX, disp, MPC_LOWCOMM_LONG_DOUBLE,
 		MPC_LOWCOMM_LONG_DOUBLE,
@@ -671,18 +670,18 @@ static inline void __mpc_composed_common_types_init()
 	_mpc_cl_type_commit(&tmp);
 
 	/* MPC_FLOAT_INT (59) */
-	mpc_float_int foo_3;
+	const mpc_float_int foo_3;
 
-	disp = ((char *)&foo_3.b - (char *)&foo_3.a);
+	disp = ((ptrdiff_t)&foo_3.b - (ptrdiff_t)&foo_3.a);
 	___mpc_init_composed_common_type(MPC_FLOAT_INT, disp, MPC_LOWCOMM_FLOAT, MPC_LOWCOMM_INT, sizeof(mpc_float_int));
 	__mpc_common_dt_set_name(MPC_FLOAT_INT, "MPI_FLOAT_INT");
 	tmp = _mpc_dt_get_datatype(MPC_FLOAT_INT);
 	_mpc_cl_type_commit(&tmp);
 
 	/* MPC_DOUBLE_INT  (60) */
-	mpc_double_int foo_4;
+	const mpc_double_int foo_4;
 
-	disp = ((char *)&foo_4.b - (char *)&foo_4.a);
+	disp = ((ptrdiff_t)&foo_4.b - (ptrdiff_t)&foo_4.a);
 	___mpc_init_composed_common_type(MPC_DOUBLE_INT, disp, MPC_LOWCOMM_DOUBLE,
 		MPC_LOWCOMM_INT, sizeof(mpc_double_int));
 	__mpc_common_dt_set_name(MPC_DOUBLE_INT, "MPI_DOUBLE_INT");
@@ -690,9 +689,9 @@ static inline void __mpc_composed_common_types_init()
 	_mpc_cl_type_commit(&tmp);
 
 	/* MPC_LONG_INT (61) */
-	mpc_long_int foo_5;
+	const mpc_long_int foo_5;
 
-	disp = ((char *)&foo_5.b - (char *)&foo_5.a);
+	disp = ((ptrdiff_t)&foo_5.b - (ptrdiff_t)&foo_5.a);
 	___mpc_init_composed_common_type(MPC_LONG_INT, disp, MPC_LOWCOMM_LONG, MPC_LOWCOMM_INT,
 		sizeof(mpc_long_int));
 	__mpc_common_dt_set_name(MPC_LONG_INT, "MPI_LONG_INT");
@@ -700,9 +699,9 @@ static inline void __mpc_composed_common_types_init()
 	_mpc_cl_type_commit(&tmp);
 
 	/* MPC_2INT (62) */
-	mpc_int_int foo_6;
+	const mpc_int_int foo_6;
 
-	disp = ((char *)&foo_6.b - (char *)&foo_6.a);
+	disp = ((ptrdiff_t)&foo_6.b - (ptrdiff_t)&foo_6.a);
 	___mpc_init_composed_common_type(MPC_2INT, disp, MPC_LOWCOMM_INT, MPC_LOWCOMM_INT,
 		sizeof(mpc_int_int));
 	__mpc_common_dt_set_name(MPC_2INT, "MPI_2INT");
@@ -710,9 +709,9 @@ static inline void __mpc_composed_common_types_init()
 	_mpc_cl_type_commit(&tmp);
 
 	/* MPC_SHORT_INT (63) */
-	mpc_short_int foo_7;
+	const mpc_short_int foo_7;
 
-	disp = ((char *)&foo_7.b - (char *)&foo_7.a);
+	disp = ((ptrdiff_t)&foo_7.b - (ptrdiff_t)&foo_7.a);
 	___mpc_init_composed_common_type(MPC_SHORT_INT, disp, MPC_LOWCOMM_SHORT, MPC_LOWCOMM_INT,
 		sizeof(mpc_short_int));
 	__mpc_common_dt_set_name(MPC_SHORT_INT, "MPI_SHORT_INT");
@@ -720,9 +719,9 @@ static inline void __mpc_composed_common_types_init()
 	_mpc_cl_type_commit(&tmp);
 
 	/* MPC_LONG_DOUBLE_INT  (64) */
-	mpc_long_double_int foo_8;
+	const mpc_long_double_int foo_8;
 
-	disp = ((char *)&foo_8.b - (char *)&foo_8.a);
+	disp = ((ptrdiff_t)&foo_8.b - (ptrdiff_t)&foo_8.a);
 	___mpc_init_composed_common_type(MPC_LONG_DOUBLE_INT, disp,
 		MPC_LOWCOMM_LONG_DOUBLE, MPC_LOWCOMM_INT,
 		sizeof(mpc_long_double_int));
@@ -732,11 +731,11 @@ static inline void __mpc_composed_common_types_init()
 	_mpc_cl_type_commit(&tmp);
 
 	/* MPC_COMPLEX  (42) */
-	mpc_real_real foo_9;
+	const mpc_real_real foo_9;
 
-	disp = ((char *)&foo_9.b - (char *)&foo_9.a);
+	disp = ((ptrdiff_t)&foo_9.b - (ptrdiff_t)&foo_9.a);
 	___mpc_init_composed_common_type(MPC_COMPLEX, disp, MPC_LOWCOMM_REAL, MPC_LOWCOMM_REAL,
-		sizeof(mpc_float_float));
+		sizeof(mpc_real_real));
 	__mpc_common_dt_set_name(MPC_COMPLEX, "MPI_COMPLEX");
 	tmp = _mpc_dt_get_datatype(MPC_COMPLEX);
 	_mpc_cl_type_commit(&tmp);
@@ -749,11 +748,10 @@ static inline void __mpc_composed_common_types_init()
 	_mpc_cl_type_commit(&tmp);
 
 	/* MPC_2INTEGER  (67) */
-	mpc_integer_integer foo_10;
+	const mpc_integer_integer foo_10;
 
-	disp = ((char *)&foo_10.b - (char *)&foo_10.a);
-	___mpc_init_composed_common_type(MPC_2INTEGER, disp, MPC_LOWCOMM_INTEGER,
-		MPC_LOWCOMM_INTEGER,
+	disp = ((ptrdiff_t)&foo_10.b - (ptrdiff_t)&foo_10.a);
+	___mpc_init_composed_common_type(MPC_2INTEGER, disp, MPC_LOWCOMM_INTEGER, MPC_LOWCOMM_INTEGER,
 		sizeof(mpc_integer_integer));
 	__mpc_common_dt_set_name(MPC_2INTEGER, "MPI_2INTEGER");
 	tmp = _mpc_dt_get_datatype(MPC_2INTEGER);
