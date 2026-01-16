@@ -69,6 +69,7 @@ typedef struct lcr_component
 	unsigned              flags;
 	struct lcr_component *next;  /* Next component in the list */
 	int (*query_devices)(struct lcr_component *component, lcr_device_t **device_list, unsigned int *num_devices);
+	int (*query_device_nearest)(lcr_device_t **device_list, unsigned int *num_devices);
 	int (*iface_open)(int mngr_id, const char *device_name, int id, lcr_rail_config_t *rail_config,
 	                  lcr_driver_config_t *driver_config, sctk_rail_info_t **iface_p,
 	                  unsigned fflags /* feature flags */);

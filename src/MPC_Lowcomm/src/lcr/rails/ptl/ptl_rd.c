@@ -27,6 +27,7 @@
 
 #ifdef MPC_USE_PORTALS
 
+#include "mpc_topology.h"
 #include "ptl.h"
 #include "mpc_launch_pmi.h"
 #include "rail.h"
@@ -44,10 +45,8 @@
 		UNUSED(component);
 		int           rc = MPC_LOWCOMM_SUCCESS;
 		lcr_device_t *devices;
-		int           num_devices;
 
-		devices     = NULL;
-		num_devices = 0;
+		devices = NULL;
 
 		mpc_topology_device_t **device_list =
 			mpc_topology_device_get_from_handle_regexp("^bxi*", (signed *)num_devices_p);
@@ -55,16 +54,59 @@
 		devices = sctk_malloc(sizeof(*devices) * (*num_devices_p));
 		for (unsigned int i = 0; i < *num_devices_p; i++)
 		{
-			strncpy(devices[i].name, device_list[i]->name, LCR_DEVICE_NAME_MAX);
+			strncpy(devices[i].name, device_list[i]->name, LCR_DEVICE_NAME_MAX - 1);
 		}
 
-		// FIXME: hack to be sure the ptl device have correct id in iface_open
-		max_num_devices = num_devices;
+		// HACK: To be sure the ptl device have correct id in iface_open
+		max_num_devices = *num_devices_p;
 		*devices_p      = devices;
 
 		sctk_free(device_list);
 
 		return rc;
+	}
+
+	int lcr_ptl_query_device_nearest(lcr_device_t **devices_p, unsigned int *num_devices_p)
+	{
+		if (*num_devices_p == 1)
+		{
+			return MPC_LOWCOMM_SUCCESS;
+		}
+
+		const int cpu_id      = mpc_topology_get_current_cpu();
+		int       num_devices = 0;
+
+		mpc_topology_device_t **device_list =
+			mpc_topology_device_matrix_get_list_closest_from_pu(cpu_id, "^bxi*", &num_devices);
+		if (device_list == NULL)
+		{
+			return MPC_LOWCOMM_ERROR;
+		}
+
+		mpc_topology_device_t *device = NULL;
+		if (num_devices == 1)
+		{
+			device = device_list[0];
+		}
+		else
+		{
+			// WARN: The idea to take to least used device is not bad but it is unsure if this function is able to
+			//       know the global usage of the device not just within the current process
+			device = mpc_topology_device_attach_freest_device_from(device_list, num_devices);
+		}
+
+		if (device == NULL)
+		{
+			sctk_free(device_list);
+			return MPC_LOWCOMM_ERROR;
+		}
+
+		*devices_p = sctk_realloc(*devices_p, sizeof(lcr_device_t));
+		strncpy((*devices_p)->name, device->name, LCR_DEVICE_NAME_MAX - 1);
+		*num_devices_p = 1;
+
+		sctk_free(device_list);
+		return MPC_LOWCOMM_SUCCESS;
 	}
 
 	int lcr_ptl_iface_open(int mngr_id, const char *device_name, int id,
@@ -193,25 +235,27 @@ err:
 
 	lcr_component_t ptl_component =
 	{
-		.name          = { "portalsmpi" },
-		.query_devices = lcr_ptl_query_devices,
-		.iface_open    = lcr_ptl_iface_open,
-		.devices       = NULL,
-		.num_devices   = 0,
-		.flags         = 0,
-		.next          = NULL
+		.name                 = { "portalsmpi" },
+		.query_devices        = lcr_ptl_query_devices,
+		.query_device_nearest = lcr_ptl_query_device_nearest,
+		.iface_open           = lcr_ptl_iface_open,
+		.devices              = NULL,
+		.num_devices          = 0,
+		.flags                = 0,
+		.next                 = NULL
 	};
 	LCR_COMPONENT_REGISTER(&ptl_component)
 
 	lcr_component_t mptl_component =
 	{
-		.name          = { "mportalsmpi" },
-		.query_devices = lcr_ptl_query_devices,
-		.iface_open    = lcr_ptl_iface_open,
-		.devices       = NULL,
-		.num_devices   = 0,
-		.flags         = 0,
-		.next          = NULL
+		.name                 = { "mportalsmpi" },
+		.query_devices        = lcr_ptl_query_devices,
+		.query_device_nearest = lcr_ptl_query_device_nearest,
+		.iface_open           = lcr_ptl_iface_open,
+		.devices              = NULL,
+		.num_devices          = 0,
+		.flags                = 0,
+		.next                 = NULL
 	};
 	LCR_COMPONENT_REGISTER(&mptl_component)
 

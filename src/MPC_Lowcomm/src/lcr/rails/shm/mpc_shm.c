@@ -1283,6 +1283,14 @@ int mpc_shm_query_devices(__UNUSED__ lcr_component_t *component,
 	return MPC_LOWCOMM_SUCCESS;
 }
 
+int mpc_shm_query_device_nearest(lcr_device_t **devices_p, unsigned int *num_devices_p)
+{
+	UNUSED(devices_p);
+	UNUSED(num_devices_p);
+	// Should never be called it is made for non-composable rail
+	not_implemented();
+}
+
 int mpc_shm_iface_open(int mngr_id, const char *device_name, int id,
                        lcr_rail_config_t *rail_config,
                        lcr_driver_config_t *driver_config,
@@ -1360,12 +1368,13 @@ err:
 
 lcr_component_t shm_component =
 {
-	.name          = { "shmmpi" },
-	.query_devices = mpc_shm_query_devices,
-	.iface_open    = mpc_shm_iface_open,
-	.devices       = NULL,
-	.num_devices   = 0,
-	.flags         = 0,
+	.name                 = { "shmmpi" },
+	.query_devices        = mpc_shm_query_devices,
+	.query_device_nearest = mpc_shm_query_device_nearest,
+	.iface_open           = mpc_shm_iface_open,
+	.devices              = NULL,
+	.num_devices          = 0,
+	.flags                = 0,
 };
 
 LCR_COMPONENT_REGISTER(&shm_component)
