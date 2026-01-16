@@ -30,6 +30,7 @@
 #include "ptl.h"
 #include "mpc_launch_pmi.h"
 #include "rail.h"
+#include "mpc_topology_device.h" // For device discovery
 
 #include <lcr_component.h>
 
@@ -41,84 +42,27 @@
 	int lcr_ptl_query_devices(lcr_component_t *component, lcr_device_t **devices_p, unsigned int *num_devices_p)
 	{
 		UNUSED(component);
-		int rc = MPC_LOWCOMM_SUCCESS;
-		static const char *bxi_dir = "/sys/class/bxi";
-		lcr_device_t *     devices;
-		int            is_up;
-		int            num_devices;
-		struct dirent *entry;
-		DIR *          dir;
+		int           rc = MPC_LOWCOMM_SUCCESS;
+		lcr_device_t *devices;
+		int           num_devices;
 
 		devices     = NULL;
 		num_devices = 0;
 
-		/* First, try simulator */
-		const char *ptl_iface_name;
-		if ((ptl_iface_name = getenv("PTL_IFACE_NAME")) != NULL)
+		mpc_topology_device_t **device_list =
+			mpc_topology_device_get_from_handle_regexp("^bxi*", (signed *)num_devices_p);
+
+		devices = sctk_malloc(sizeof(*devices) * (*num_devices_p));
+		for (unsigned int i = 0; i < *num_devices_p; i++)
 		{
-			devices = sctk_malloc(sizeof(lcr_device_t));
-			strcpy(devices[0].name, ptl_iface_name);
-			num_devices = 1;
-			goto out;
+			strncpy(devices[i].name, device_list[i]->name, LCR_DEVICE_NAME_MAX);
 		}
 
-		/* Then, check if bxi are available in with sysfs */
-		dir = opendir(bxi_dir);
-		if (dir == NULL)
-		{
-			mpc_common_debug_warning("LCR PTL: could not find any ptl device.");
-			goto out;
-		}
-
-		for (;;)
-		{
-			errno = 0;
-			entry = readdir(dir);
-			if (entry == NULL)
-			{
-				if (errno != 0)
-				{
-					mpc_common_debug_error("LCR PTL: bxi directory exists but no entry found.");
-					rc = MPC_LOWCOMM_ERROR;
-					goto close_dir;
-				}
-				break;
-			}
-
-			/* avoid reading entry like . and .. */
-			if (entry->d_type != DT_LNK)
-			{
-				continue;
-			}
-
-			is_up = 1;
-			// TODO: check if interface is up with bixnic -i <iface> info LINK_STATUS
-			if (!is_up)
-			{
-				continue;
-			}
-
-			devices = sctk_realloc(devices, sizeof(*devices) * (num_devices + 1));
-			if (devices == NULL)
-			{
-				mpc_common_debug_error("PTL: could not allocate devices");
-				rc = MPC_LOWCOMM_ERROR;
-				goto close_dir;
-			}
-
-			// FIXME: interface name should always be of the form: bxi<id> with id, 0 < id < 9
-			strcpy(devices[num_devices].name, entry->d_name);
-			++num_devices;
-		}
-
-close_dir:
-		closedir(dir);
-
-out:
 		// FIXME: hack to be sure the ptl device have correct id in iface_open
 		max_num_devices = num_devices;
 		*devices_p      = devices;
-		*num_devices_p  = num_devices;
+
+		sctk_free(device_list);
 
 		return rc;
 	}
