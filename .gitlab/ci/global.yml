@@ -5,10 +5,27 @@ variables:
   GIT_DEPTH: 1
   # MORE COLUMNS in the log (default is 80)
   COLUMNS: 150
+  # Spack env in which is located the dependencies (i.e. pcvs) in case we need a backup
+  MPC_SPACK_ENV:
+    value: 'default'
+    options: ['default', 'backup']
+    description: 'Which spack env to use for testing'
 
 .load_pcvs:
   before_script:
-    - source "$(ccc_home -u mpc)"/gitlab-runner/spack_organizer_inti/setup.sh
+    - |
+      case $MPC_SPACK_ENV in
+        "backup")
+          source "$(ccc_home -u mpc)"/gitlab-runner-backup/spack_organizer_inti/setup.sh inti8-gcc12
+          ;;
+        "default")
+          source "$(ccc_home -u mpc)"/gitlab-runner/spack_organizer_inti/setup.sh
+          ;;
+        *)
+          >&2 echo "Invalid spack env requested"
+          exit 1
+          ;;
+      esac
     - spack env activate mpc-runner-deps
     # Sanity check
     - pcvs --version
