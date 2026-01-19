@@ -33,7 +33,7 @@ variables:
   # PCVS Benchmarks top level path
   GL_PCVS_BENCHMARKS_ROOT_PATH: '$CI_BUILDS_DIR/pcvs-benchmarks'
   # PCVS Basic run command
-  PCVS_RUN: pcvs -v run --override --profile-path ${GL_MPC_CI_ROOT_PATH}/utils/profile/mpc.yml
+  PCVS_RUN: pcvs -v run --override
   # PCVS Common command used
   PCVS_COMMAND: ${PCVS_RUN} --print errors -S
   # PCVS Command used to print benchmarks results
@@ -85,6 +85,7 @@ Installation:
     - test -d "${CI_PCVS_DIR}" || mkdir -p "${CI_PCVS_DIR}"
     - cd "${CI_PCVS_DIR}"
     - echo "Step run from ${CI_PCVS_DIR}"
+    - cp -r ${GL_MPC_CI_ROOT_PATH}/.pcvs .
 
 .regular_testing_rules:
   rules:
