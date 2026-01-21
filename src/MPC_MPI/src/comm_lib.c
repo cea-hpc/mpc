@@ -44,6 +44,7 @@
 #include "mpc_lowcomm_types.h"
 
 #include "mpc_reduction.h"
+#include "mpc_common_progress.h"
 
 #include "mpitypes.h"
 
@@ -231,7 +232,7 @@ static inline void __mpc_cl_request_progress(mpc_lowcomm_request_t *request)
 		return;
 	}
 
-	mpc_lowcomm_request_wait(request);
+	mpc_common_progress();
 	// struct mpc_lowcomm_ptp_msg_progress_s _wait;
 
 	// mpc_lowcomm_ptp_msg_wait_init(&_wait, request, 0);
@@ -2531,16 +2532,18 @@ int _mpc_cl_sendrecv(void *sendbuf, mpc_lowcomm_msg_count_t sendcount, mpc_lowco
  * MESSAGE WAIT *
  ****************/
 
-static inline int __mpc_cl_test_light(mpc_lowcomm_request_t *request)
+static inline bool __mpc_cl_test_light(mpc_lowcomm_request_t *request)
 {
-	if (mpc_lowcomm_request_get_completion(request) != MPC_LOWCOMM_MESSAGE_PENDING)
-	{
-		return 1;
-	}
-
 	__mpc_cl_request_progress(request);
 
-	return mpc_lowcomm_request_get_completion(request);
+	bool finished = true;
+
+	if (mpc_lowcomm_request_get_completion(request) == MPC_LOWCOMM_MESSAGE_PENDING)
+	{
+		finished = false;
+	}
+
+	return finished;
 }
 
 struct wfv_waitall_s
@@ -2554,16 +2557,16 @@ struct wfv_waitall_s
 static inline void wfv_waitall(void *arg)
 {
 	struct wfv_waitall_s *args = ( struct wfv_waitall_s * )arg;
-	int flag = 1;
-	int i    = 0;
+	bool all_requests_received = true;
+	int  i = 0;
 
 	for (i = 0; i < args->count; i++)
 	{
-		flag = flag & __mpc_cl_test_light(args->array_of_requests[i]);
+		all_requests_received = all_requests_received && __mpc_cl_test_light(args->array_of_requests[i]);
 	}
 
 	/* All requests received */
-	if (flag)
+	if (all_requests_received)
 	{
 		for (i = 0; i < args->count; i++)
 		{
