@@ -999,6 +999,8 @@ int _mpc_shm_storage_init(struct _mpc_shm_storage *storage)
 {
 	unsigned int process_count = mpc_common_get_local_process_count();
 
+	assume(storage != NULL);
+
 	storage->cma_state = MPC_SHM_CMA_UNCHECKED;
 
 	storage->process_count = process_count;
@@ -1013,7 +1015,6 @@ int _mpc_shm_storage_init(struct _mpc_shm_storage *storage)
 	storage->segment_size = segment_size;
 	storage->shm_buffer   = mpc_launch_shm_map(segment_size, MPC_LAUNCH_SHM_USE_PMI, NULL);
 
-	assume(storage != NULL);
 	assume(0 < storage->freelist_count);
 
 	storage->per_process = storage->shm_buffer;
