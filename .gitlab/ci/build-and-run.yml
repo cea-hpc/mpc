@@ -184,7 +184,7 @@ OpenMP:
   needs: ['Simple Run']
   extends: ['.prepare_mpc_ci', '.regular_testing_rules']
   script:
-    - module load lapack/mkl
+    - module load lapack/mkl llvm
     - ${PCVS_COMMAND} "${GL_MPC_CI_ROOT_PATH}/OpenMP/task/examples" "${GL_MPC_CI_ROOT_PATH}/OpenMP/task/cholesky"
 
 .MPI_deps:
