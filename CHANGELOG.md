@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file. The format 
   - Default branch to main (devel and master will not be updated)
 - **LowComm**
   - Avoid warnings in CPP by changing header inclusion rules
+  - Improve selection of the network devices to initialize
 - **Pthread**
   - Avoid redefinition of standard libc symbols in process-mode
 
