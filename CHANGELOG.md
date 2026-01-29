@@ -22,9 +22,11 @@ All notable changes to this project will be documented in this file. The format 
 - **MPI**
   - Active Message handling in Thread-Based
   - Unpacking of user created datatypes
+  - Deadlock in `MPI_Waitall` in Thread-Based
 - **Low Comm**
   - Multinic devices initialization
   - Interface capabilities initialization
+  - Deadlock in backend releasing
 
 ## [4.3.0] - 2025-11-18
 
