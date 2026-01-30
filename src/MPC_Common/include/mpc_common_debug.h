@@ -173,7 +173,7 @@ int mpc_common_debug_print(char *filename,
 				mpc_common_debug_print(__FILE__, \
 	__LINE__,                                    \
 	__func__,                                    \
-	MPC_COLOR_CHAR_BOLD_WHITE,                   \
+	MPC_COLOR_CHAR_DEFAULT,                      \
 	MPC_COMMON_LOG_LEVEL_DEBUG,                  \
 	xstr(MPC_MODULE),                            \
 	s,                                           \

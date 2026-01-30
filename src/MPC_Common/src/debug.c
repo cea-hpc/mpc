@@ -154,11 +154,11 @@ static inline char *__debug_print_info(char *buffer)
 			"%s[%sT%4d %sP%4d %sN%4d%s]%s ", // Task, Process & Node rank
 
 			// Task process & node rank
-			MPC_COLOR_CHAR_BOLD_WHITE,
+			MPC_COLOR_CHAR_BOLD_DEFAULT,
 			MPC_COLOR_CHAR_RED, mpc_common_get_task_rank(),
 			MPC_COLOR_CHAR_BLUE, mpc_common_get_process_rank(),
 			MPC_COLOR_CHAR_GREEN, mpc_common_get_node_rank(),
-			MPC_COLOR_CHAR_BOLD_WHITE, MPC_COLOR_CHAR_DEFAULT);
+			MPC_COLOR_CHAR_BOLD_DEFAULT, MPC_COLOR_CHAR_DEFAULT);
 	}
 	else
 	{
@@ -352,22 +352,22 @@ void __mpcprintf(char *messagebuffer,
 			"%s%s%s\n",                     // Message
 
 			// Task process & node rank
-			MPC_COLOR_CHAR_BOLD_WHITE,
+			MPC_COLOR_CHAR_BOLD_DEFAULT,
 			MPC_COLOR_CHAR_RED, mpc_common_get_task_rank(),
 			MPC_COLOR_CHAR_BLUE, mpc_common_get_process_rank(),
 			MPC_COLOR_CHAR_GREEN, mpc_common_get_node_rank(),
-			MPC_COLOR_CHAR_BOLD_WHITE, MPC_COLOR_CHAR_DEFAULT,
+			MPC_COLOR_CHAR_BOLD_DEFAULT, MPC_COLOR_CHAR_DEFAULT,
 
 			// Verbosity Level
-			MPC_COLOR_CHAR_BOLD_WHITE,
+			MPC_COLOR_CHAR_BOLD_DEFAULT,
 			color, verbosity_level,
-			MPC_COLOR_CHAR_BOLD_WHITE,
+			MPC_COLOR_CHAR_BOLD_DEFAULT,
 			MPC_COLOR_CHAR_DEFAULT,
 
 			// Module
-			MPC_COLOR_CHAR_BOLD_WHITE,
+			MPC_COLOR_CHAR_BOLD_DEFAULT,
 			MPC_COLOR_CHAR_CYAN, modulename,
-			MPC_COLOR_CHAR_BOLD_WHITE,
+			MPC_COLOR_CHAR_BOLD_DEFAULT,
 			MPC_COLOR_CHAR_DEFAULT,
 
 			// Message
