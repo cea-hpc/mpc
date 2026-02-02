@@ -83,7 +83,9 @@
 	#include "mpcomp_core.h"
 #endif
 
+#ifdef MPC_IN_PROCESS_MODE
 #include "pthread_weak.h"
+#endif
 
 #define MPC_MODULE "Threads/Threads"
 

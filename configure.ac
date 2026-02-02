@@ -2951,13 +2951,16 @@ if test "x$enable_mpc_process_mode" = "xno"; then
 fi
 
 MPC_IN_PROCESS_MODE="no"
+MPC_IN_PROCESS_MODE_INT=0
 
 if test "x${enable_mpc_process_mode}" = "xyes"; then
         AC_DEFINE([MPC_IN_PROCESS_MODE], [1], [MPC compiled in process mode])
         MPC_IN_PROCESS_MODE="yes"
+        MPC_IN_PROCESS_MODE_INT=1
 fi
 
 AC_SUBST([MPC_IN_PROCESS_MODE])
+AC_SUBST([MPC_IN_PROCESS_MODE_INT])
 
 # One last sanity check (extls but no privatizing compilers)
 if test "x${autopriv_support_found}" = "xyes"; then
