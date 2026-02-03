@@ -141,11 +141,13 @@ const char * _mpc_ofi_decode_endpoint_type(enum fi_ep_type type)
 	case FI_EP_RDM:
 		return "FI_EP_RDM";
 
-	case FI_EP_SOCK_STREAM:
-		return "FI_EP_SOCK_STREAM";
+#if FI_VERSION_LT(FI_VERSION(FI_MAJOR_VERSION, FI_MINOR_VERSION), FI_VERSION(1, 21))
+			case FI_EP_SOCK_STREAM:
+				return "FI_EP_SOCK_STREAM";
 
-	case FI_EP_SOCK_DGRAM:
-		return "FI_EP_SOCK_DGRAM";
+			case FI_EP_SOCK_DGRAM:
+				return "FI_EP_SOCK_DGRAM";
+#endif
 	}
 
 	return "UNKNOWN Endpoint type";
@@ -173,15 +175,17 @@ enum fi_ep_type _mpc_ofi_encode_endpoint_type(const char *type)
 		return FI_EP_RDM;
 	}
 
-	if (!strcmp(type, "FI_EP_SOCK_STREAM"))
-	{
-		return FI_EP_SOCK_STREAM;
-	}
+#if FI_VERSION_LT(FI_VERSION(FI_MAJOR_VERSION, FI_MINOR_VERSION), FI_VERSION(1, 21))
+		if (!strcmp(type, "FI_EP_SOCK_STREAM"))
+		{
+			return FI_EP_SOCK_STREAM;
+		}
 
-	if (!strcmp(type, "FI_EP_SOCK_DGRAM"))
-	{
-		return FI_EP_SOCK_DGRAM;
-	}
+		if (!strcmp(type, "FI_EP_SOCK_DGRAM"))
+		{
+			return FI_EP_SOCK_DGRAM;
+		}
+#endif
 
 	mpc_common_debug_fatal("Failed to decode OFI endpoint type from '%s'", type);
 }
@@ -273,7 +277,11 @@ struct fi_info * _mpc_ofi_get_requested_hints(const char *provider, const char *
 		}
 	}
 
-	hints->mode                          = FI_CONTEXT | FI_LOCAL_MR;
+#if FI_VERSION_GE(FI_VERSION(FI_MAJOR_VERSION, FI_MINOR_VERSION), FI_VERSION(1, 5))
+		hints->mode = FI_CONTEXT;
+#else
+		hints->mode = FI_CONTEXT | FI_LOCAL_MR;
+#endif
 	hints->caps                          = FI_MSG | FI_RMA;
 	hints->ep_attr->type                 = _mpc_ofi_encode_endpoint_type(endpoint_type);
 	hints->fabric_attr->prov_name        = provider ? strdup(provider) : NULL;
