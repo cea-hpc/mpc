@@ -2747,6 +2747,8 @@ __task_get_victim_random_order(int globalRank, int index,
 	int *order;
 	mpc_omp_thread_t *thread;
 
+	assert(index > 0);
+
 	/* Retrieve the information (microthread structure and current region) */
 	assert(mpc_omp_tls);
 	thread = ( mpc_omp_thread_t * )mpc_omp_tls;
@@ -2758,6 +2760,7 @@ __task_get_victim_random_order(int globalRank, int index,
 
 	order = MPC_OMP_TASK_THREAD_GET_LARCENY_ORDER(thread);
 	assert(order);
+	// NOLINTNEXTLINE
 	return order[index - 1];
 }
 

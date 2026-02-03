@@ -1163,6 +1163,7 @@ _mpc_omp_places_env_variable_parsing(const int nb_mvps)
 		free(named_str);
 	}
 
+	free(string);
 	free(prev_env);
 	return list;
 }
