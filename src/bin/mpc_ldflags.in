@@ -104,7 +104,7 @@ FLAGS="$FLAGS -ldl"
 
 if test "x${MPC_THREAD_ENABLED}" = "xyes"; then
 	# MPC_Thread
-	FLAGS="$FLAGS  -lmpcthread -lpthread ${EXTLS_LDFLAGS}"
+	FLAGS="$FLAGS -lmpcthread ${EXTLS_LDFLAGS}"
 fi
 
 if test "x${MPC_OPENMP_ENABLED}" = "xyes"; then
