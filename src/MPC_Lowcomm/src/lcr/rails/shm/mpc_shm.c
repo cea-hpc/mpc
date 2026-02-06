@@ -999,6 +999,8 @@ int _mpc_shm_storage_init(struct _mpc_shm_storage *storage)
 {
 	unsigned int process_count = mpc_common_get_local_process_count();
 
+	assume(storage != NULL);
+
 	storage->cma_state = MPC_SHM_CMA_UNCHECKED;
 
 	storage->process_count = process_count;
@@ -1013,7 +1015,6 @@ int _mpc_shm_storage_init(struct _mpc_shm_storage *storage)
 	storage->segment_size = segment_size;
 	storage->shm_buffer   = mpc_launch_shm_map(segment_size, MPC_LAUNCH_SHM_USE_PMI, NULL);
 
-	assume(storage != NULL);
 	assume(0 < storage->freelist_count);
 
 	storage->per_process = storage->shm_buffer;
@@ -1266,16 +1267,17 @@ int mpc_shm_query_devices(__UNUSED__ lcr_component_t *component,
                           lcr_device_t **devices_p,
                           unsigned int *num_devices_p)
 {
-#if 0
-		if (mpc_common_get_local_process_count() == 1)
-		{
-			*num_devices_p = 0;
-			return MPC_LOWCOMM_SUCCESS;
-		}
-#endif
+	lcr_device_t *const device = sctk_malloc(sizeof(lcr_device_t));
 
-	*devices_p = sctk_malloc(sizeof(lcr_device_t));
-	(void)snprintf((*devices_p)->name, LCR_DEVICE_NAME_MAX, "shmsegment");
+	if (device == NULL)
+	{
+		mpc_common_debug_error("LCR: could not allocate SHM rail");
+		return MPC_LOWCOMM_ERROR;
+	}
+
+	(void)snprintf(device->name, LCR_DEVICE_NAME_MAX, "shmsegment");
+
+	*devices_p     = device;
 	*num_devices_p = 1;
 
 	return MPC_LOWCOMM_SUCCESS;

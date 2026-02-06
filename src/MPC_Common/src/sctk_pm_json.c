@@ -365,7 +365,7 @@ void ObjectHT_init(struct ObjectHT *ht, int pow2_size)
 
 	ht->pow2_size = pow2_size;
 
-	ht->entries = (struct ObjectHT_entry **)calloc(sizeof(struct ObjectHT_entry *), size);
+	ht->entries = (struct ObjectHT_entry **)calloc(size, sizeof(struct ObjectHT_entry *));
 
 	if (!ht->entries)
 	{
@@ -939,7 +939,8 @@ void __json_dump(char *tmp_buff, struct string_buff *out, json_t *json, int dept
 			if (is_first != 0)
 			{
 				/* WRITE KEY */
-				snprintf(tmp_buff, 4096, " \"%s\" : %s", json_object_iterator_key(&it), c_newline(newline));
+				const char *const key = json_object_iterator_key(&it);
+				snprintf(tmp_buff, 4096, " \"%s\" : %s", key == NULL ? "" : key, c_newline(newline));
 				string_buff_push(out, tmp_buff);
 				/* WRITE ENTITY */
 				__json_dump(tmp_buff, out, json_object_iterator_elem(&it), depth + 1, indent, newline, lock);

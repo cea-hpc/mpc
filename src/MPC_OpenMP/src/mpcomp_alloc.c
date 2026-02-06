@@ -155,7 +155,7 @@ omp_init_allocator(
 {
   mpc_omp_init();
 
-  omp_allocator_handle_t idx = -1;
+  omp_allocator_handle_t idx = omp_null_allocator;
 
 	mpc_common_spinlock_lock( &mpcomp_global_allocators.lock );
 

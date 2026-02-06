@@ -27,6 +27,9 @@ All notable changes to this project will be documented in this file. The format 
   - Multinic devices initialization
   - Interface capabilities initialization
   - Deadlock in backend releasing
+- **Fortran**
+  - Non standard code generation
+- Memory related potential bugs in MPI, Low Comm, Common and Config
 
 ## [4.3.0] - 2025-11-18
 

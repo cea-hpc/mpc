@@ -39,8 +39,9 @@
 
 #ifdef MPC_ENABLE_SHELL_COLORS
 
-	#define MPC_COLOR_ESC          "\033["
-	#define MPC_COLOR_CHAR_DEFAULT MPC_COLOR_ESC "0m"
+	#define MPC_COLOR_ESC               "\033["
+	#define MPC_COLOR_CHAR_DEFAULT      MPC_COLOR_ESC "0m"
+	#define MPC_COLOR_CHAR_BOLD_DEFAULT MPC_COLOR_CHAR_DEFAULT MPC_COLOR_ESC "1m"
 
 	/* Normal colors */
 	#define MPC_COLOR_RED(txt)    MPC_COLOR_ESC "31m"#txt MPC_COLOR_CHAR_DEFAULT
@@ -84,8 +85,9 @@
 
 #else
 
-	#define MPC_COLOR_ESC          ""
-	#define MPC_COLOR_CHAR_DEFAULT MPC_COLOR_ESC ""
+	#define MPC_COLOR_ESC               ""
+	#define MPC_COLOR_CHAR_DEFAULT      MPC_COLOR_ESC ""
+	#define MPC_COLOR_CHAR_BOLD_DEFAULT MPC_COLOR_ESC ""
 
 	/* Normal colors */
 	#define MPC_COLOR_RED(txt)    MPC_COLOR_ESC ""#txt MPC_COLOR_CHAR_DEFAULT

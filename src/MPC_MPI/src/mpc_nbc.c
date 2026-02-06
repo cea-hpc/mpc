@@ -260,7 +260,7 @@ static inline int __NBC_Progress( NBC_Handle *handle, int depth )
 	{
 		if ( handle->is_persistent )
 		{
-			if ( ( /*handle->req_count*/ handle->req_count_persistent[handle->num_rounds] > 0 ) && ( &handle->req_array[handle->array_offset] /*handle->req_array*/ != NULL ) )
+			if ( (handle->req_count_persistent[handle->num_rounds] > 0 ) && ( handle->req_array[handle->array_offset] != NULL ) )
 			{
 				// sctk_debug("INSIDE THE PROGRESS THREAD");
 

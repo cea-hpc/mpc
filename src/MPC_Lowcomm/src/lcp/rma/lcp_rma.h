@@ -56,18 +56,18 @@ typedef struct lcp_atomic_proto
 } lcp_atomic_proto_t;
 
 /** Extent of the atomic datatypes */
-static size_t lcp_atomic_dt_size[] =
+static const size_t lcp_atomic_dt_size[] =
 {
-	[LCP_ATOMIC_DT_FLOAT]  = 4,
-	[LCP_ATOMIC_DT_DOUBLE] = 8,
-	[LCP_ATOMIC_DT_INT8]   = 1,
-	[LCP_ATOMIC_DT_INT16]  = 2,
-	[LCP_ATOMIC_DT_INT32]  = 4,
-	[LCP_ATOMIC_DT_INT64]  = 8,
-	[LCP_ATOMIC_DT_UINT8]  = 1,
-	[LCP_ATOMIC_DT_UINT16] = 2,
-	[LCP_ATOMIC_DT_UINT32] = 4,
-	[LCP_ATOMIC_DT_UINT64] = 8,
+	[LCP_ATOMIC_DT_FLOAT]  = sizeof(float),
+	[LCP_ATOMIC_DT_DOUBLE] = sizeof(double),
+	[LCP_ATOMIC_DT_INT8]   = sizeof(int8_t),
+	[LCP_ATOMIC_DT_INT16]  = sizeof(int16_t),
+	[LCP_ATOMIC_DT_INT32]  = sizeof(int32_t),
+	[LCP_ATOMIC_DT_INT64]  = sizeof(int64_t),
+	[LCP_ATOMIC_DT_UINT8]  = sizeof(uint8_t),
+	[LCP_ATOMIC_DT_UINT16] = sizeof(uint16_t),
+	[LCP_ATOMIC_DT_UINT32] = sizeof(uint32_t),
+	[LCP_ATOMIC_DT_UINT64] = sizeof(uint64_t),
 };
 
 // NOLINTBEGIN(clang-diagnostic-unused-function)

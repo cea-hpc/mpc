@@ -127,7 +127,7 @@ void __mpc_launch_pmi_context_clear(void)
 #if defined(MPC_USE_PMIX)
 static inline pmix_status_t __pmix_get_attribute(int rank_level, const char key[], pmix_data_type_t type, void *out)
 {
-	int          ret  = -1;
+	UNUSED(type);
 	pmix_proc_t *proc = &pmi_context.pmix_proc;
 
 	pmix_proc_t wproc;
@@ -135,7 +135,7 @@ static inline pmix_status_t __pmix_get_attribute(int rank_level, const char key[
 	if (!rank_level)
 	{
 		PMIX_PROC_CONSTRUCT(&wproc);
-		(void)strncpy(wproc.nspace, pmi_context.pmix_proc.nspace, PMIX_MAX_NSLEN);
+		(void)strncpy(wproc.nspace, pmi_context.pmix_proc.nspace, PMIX_MAX_NSLEN - 1);
 		wproc.rank = PMIX_RANK_WILDCARD;
 		proc       = &wproc;
 	}
@@ -418,23 +418,18 @@ static inline void __set_ctx_to_serial(struct mpc_pmi_context *ctx)
 
 static inline int _pmi_initialize(struct mpc_pmi_context *ctx, int *unreachable)
 {
-	char *exename = mpc_common_get_flags()->exename;
+	const int is_mpc_print_config = mpc_common_check_for_print_config();
 
-	if (exename)
+	// If the command is mpc_print_config do not even try to bootstrap PMIx
+	if (is_mpc_print_config == 1)
 	{
-		// If the command is mpc_print_config do not even try to bootstrap PMIx
-		if (strstr(exename, "mpc_print_config"))
-		{
-			goto PMI_INIT_SERIAL;
-		}
+		goto PMI_INIT_SERIAL;
 	}
 
 	#ifdef MPC_USE_PMIX
 		pmix_status_t rc = PMI_SUCCESS;
 
-		rc = PMIx_Init(&ctx->pmix_proc,
-		NULL,
-		0);
+		rc = PMIx_Init(&ctx->pmix_proc, NULL, 0);
 		if ((rc == PMIX_ERR_UNREACH) || (rc == PMIX_ERR_INVALID_NAMESPACE))
 		{
 			mpc_common_debug_error("PMIx was unreachable, falling back to serial execution");
@@ -669,7 +664,7 @@ static inline void __pmix_process_layout_init()
 		layout->process_list = sctk_malloc(nprocs * sizeof(int));
 		assume(layout->process_list);
 
-		int i;
+		size_t i;
 		for (i = 0; i < nprocs; i++)
 		{
 			layout->process_list[i] = procs[i].rank;
@@ -1028,13 +1023,14 @@ int mpc_launch_pmi_get_global_rank_from_local(const int remote)
 int mpc_launch_pmi_get(char *value, size_t size, char *key, int remote)
 {
 #if defined(MPC_USE_PMIX)
+		UNUSED(size);
 		pmix_status_t rc;
 		pmix_value_t *val = NULL;
 
 		pmix_proc_t proc;
 
 		PMIX_PROC_CONSTRUCT(&proc);
-		(void)strncpy(proc.nspace, pmi_context.pmix_proc.nspace, PMIX_MAX_NSLEN);
+		(void)strncpy(proc.nspace, pmi_context.pmix_proc.nspace, PMIX_MAX_NSLEN - 1);
 		proc.rank = remote;
 		mpc_common_debug("GET %s from %d", key, remote);
 		rc = PMIx_Get(&proc, key, NULL, 0, &val);
@@ -1063,7 +1059,7 @@ int mpc_launch_pmi_get_as_rank(char *value, size_t size, int tag, int rank)
 
 	// Build the key
 	key = ( char * )sctk_malloc(mpc_launch_pmi_get_max_key_len() * sizeof(char));
-	(void)snprintf(key, mpc_launch_pmi_get_max_key_len(), "MPC_KEYS_%d_%d", tag, rank);
+	(void)snprintf(key, mpc_launch_pmi_get_max_key_len() - 1, "MPC_KEYS_%d_%d", tag, rank);
 	// Get the value associated to the given key
 	rc = mpc_launch_pmi_get(value, size, key, rank);
 	sctk_free(key);
@@ -1196,14 +1192,17 @@ int mpc_launch_pmi_get_pset(char **pset)
 		#if PMIX_VERSION_MAJOR >= 4
 			pmix_value_t *val;
 			pmix_status_t ret;
-			char *        my_set;
 
 			ret = PMIx_Get(&pmi_context.pmix_proc, PMIX_PSET_NAMES, NULL, 0, &val); // fonctionne pas ?
 			if (ret == PMIX_SUCCESS)
 			{
-				my_set = val->data.string;
+				*pset = val->data.string;
 			}
-			// else printf("get pmix_pset_names returned %d", ret);
+			else
+			{
+				mpc_common_debug_warning("get pmix_pset_names returned %d", ret);
+				*pset = NULL;
+			}
 			return ret == PMIX_SUCCESS;
 		#endif
 	#else
@@ -1218,7 +1217,6 @@ int mpc_launch_pmi_get_pset_list(char **psetlist)
 {
 	#if defined(MPC_USE_PMIX) && defined(PMIx_VERSION_H)
 		#if PMIX_VERSION_MAJOR >= 4
-			pmix_value_t *val;
 			pmix_status_t ret;
 			pmix_query_t  query;
 

@@ -66,15 +66,13 @@ _mpc_lowcomm_monitor_wrap_t *_mpc_lowcomm_monitor_wrap_new(mpc_lowcomm_monitor_c
                                                            uint64_t match_key,
                                                            size_t size);
 
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunused-function"
-
+// NOLINTBEGIN(-Wunused-function)
 static inline size_t _mpc_lowcomm_monitor_wrap_total_size(_mpc_lowcomm_monitor_wrap_t *wr)
 {
 	return sizeof(_mpc_lowcomm_monitor_wrap_t) + wr->size;
 }
 
-#pragma clang diagnostic pop
+// NOLINTEND
 
 int _mpc_lowcomm_monitor_wrap_free(_mpc_lowcomm_monitor_wrap_t *wr);
 char * _mpc_lowcomm_monitor_wrap_debug(_mpc_lowcomm_monitor_wrap_t *wrap, char *state, char *buffer, int len);
