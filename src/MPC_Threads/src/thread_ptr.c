@@ -23,6 +23,7 @@
 #include <mpc_common_debug.h>
 #include <mpc_thread.h>
 
+#include "kthread.h"
 #include "thread_ptr.h"
 
 
@@ -108,15 +109,16 @@ int  (*_funcptr_mpc_thread_getschedparam)(mpc_thread_t __target_thread, int *__p
 int (*_funcptr_mpc_thread_sched_get_priority_max)(int policy) = NULL;
 int (*_funcptr_mpc_thread_sched_get_priority_min)(int policy) = NULL;
 
-void *(*_funcptr_mpc_thread_getspecific)(mpc_thread_keys_t __key) = NULL;
-int   (*_funcptr_mpc_thread_join)(mpc_thread_t __th, void **__thread_return) = NULL;
-int   (*_funcptr_mpc_thread_kill)(mpc_thread_t thread, int signo) = NULL;
-int   (*_funcptr_mpc_thread_sigsuspend)(sigset_t *set) = NULL;
-int   (*_funcptr_mpc_thread_sigpending)(sigset_t *set) = NULL;
-int   (*_funcptr_mpc_thread_sigmask)(int how, const sigset_t *newmask, sigset_t *oldmask) = NULL;
-int   (*_funcptr_mpc_thread_key_create)(mpc_thread_keys_t *__key, void (*__destr_function)(void *)) = NULL;
-int   (*_funcptr_mpc_thread_key_delete)(mpc_thread_keys_t __key) = NULL;
-int   (*_funcptr_mpc_thread_mutexattr_destroy)(mpc_thread_mutexattr_t *__attr) = NULL;
+void * (*_funcptr_mpc_thread_getspecific)(mpc_thread_keys_t __key) = NULL;
+int    (*_funcptr_mpc_thread_join)(mpc_thread_t __th, void **__thread_return) = NULL;
+int    (*_funcptr_mpc_thread_kill)(mpc_thread_t thread, int signo) = NULL;
+int    (*_funcptr_mpc_thread_sigsuspend)(const sigset_t *set) = kthread_sigsuspend;
+int    (*_funcptr_mpc_thread_sigpending)(sigset_t *set) = kthread_sigpending;
+int    (*_funcptr_mpc_thread_sigwait)(const sigset_t *set, int *sig) = kthread_sigwait;
+int    (*_funcptr_mpc_thread_sigmask)(int how, const sigset_t *newmask, sigset_t *oldmask) = NULL;
+int    (*_funcptr_mpc_thread_key_create)(mpc_thread_keys_t *__key, void (*__destr_function)(void *)) = NULL;
+int    (*_funcptr_mpc_thread_key_delete)(mpc_thread_keys_t __key) = NULL;
+int    (*_funcptr_mpc_thread_mutexattr_destroy)(mpc_thread_mutexattr_t *__attr) = NULL;
 
 int (*_funcptr_mpc_thread_mutexattr_getprioceiling)(const mpc_thread_mutexattr_t *__attr, int *__prioceiling) = NULL;
 int (*_funcptr_mpc_thread_mutexattr_setprioceiling)(mpc_thread_mutexattr_t *__attr, int __prioceiling) = NULL;
@@ -193,7 +195,7 @@ int (*_funcptr_mpc_thread_spin_trylock)(mpc_thread_spinlock_t *__lock) = NULL;
 int (*_funcptr_mpc_thread_spin_unlock)(mpc_thread_spinlock_t *__lock) = NULL;
 
 void (*_funcptr_mpc_thread_testcancel)(void) = NULL;
-int  (*_funcptr_mpc_thread_yield)(void) = NULL;
+int  (*_funcptr_mpc_thread_yield)(void) = kthread_sched_yield;
 int  (*_funcptr_mpc_thread_dump)(char *file) = NULL;
 int  (*_funcptr_mpc_thread_migrate)(void) = NULL;
 int  (*_funcptr_mpc_thread_restore)(mpc_thread_t thread, char *type, int vp) = NULL;
@@ -212,4 +214,7 @@ int (*_funcptr_mpc_thread_rwlockattr_setkind_np)(mpc_thread_rwlockattr_t *attr, 
 
 void (*_funcptr_mpc_thread_kill_other_threads_np)(void) = NULL;
 
-int (*_funcptr_mpc_thread_futex)(void *addr1, int op, int val1, struct timespec *timeout, void *addr2, int val3);
+int (*_funcptr_mpc_thread_futex)(void *addr1, int op, int val1, struct timespec *timeout, void *addr2, int val3) = NULL;
+
+unsigned int (*_funcptr_mpc_thread_sleep)(unsigned int seconds) = kthread_sleep;
+int          (*_funcptr_mpc_thread_usleep)(unsigned long useconds) = kthread_usleep;

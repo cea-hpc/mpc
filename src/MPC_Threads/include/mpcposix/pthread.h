@@ -28,6 +28,7 @@
 
 #include <mpc.h>
 #include <mpc_thread.h>
+#include <mpc_threads_config.h>
 #include <sched.h>
 
 #define sem_t               mpc_thread_sem_t
@@ -559,20 +560,43 @@
  * OTHER THREAD RELATED REDIRECTS *
  **********************************/
 
-#define sched_yield mpc_thread_yield
-#define raise(a) mpc_thread_kill(mpc_thread_self(), a)
+
+#if MPC_THREAD_IN_PROCESS_MODE == 0
+
+	#define sched_yield mpc_thread_yield
+	#define raise(a) mpc_thread_kill(mpc_thread_self(), a)
 
 #ifndef SCTK_DONOT_REDEFINE_KILL
-	#define kill mpc_thread_process_kill
+		#define kill mpc_thread_process_kill
 #endif
 
-#define sigpending mpc_thread_sigpending
-#define sigsuspend mpc_thread_sigsuspend
-#define sigwait    mpc_thread_sigwait
+	#define sigpending mpc_thread_sigpending
+	#define sigsuspend mpc_thread_sigsuspend
+	#define sigwait    mpc_thread_sigwait
 
-#define sleep     mpc_thread_sleep
-#define usleep    mpc_thread_usleep
-#define nanosleep mpc_thread_nanosleep
+	#define sleep     mpc_thread_sleep
+	#define usleep    mpc_thread_usleep
+	#define nanosleep mpc_thread_nanosleep
+
+#else
+
+	int sched_yield(void);
+	int raise(int sig);
+
+#ifndef SCTK_DONOT_REDEFINE_KILL
+		int kill(pid_t pid, int sig);
+
+#endif
+
+	int sigpending(sigset_t *set);
+	int sigsuspend(const sigset_t *set);
+	int sigwait(const sigset_t *set, int *sig);
+
+	unsigned int sleep(unsigned int seconds);
+	int usleep(unsigned int useconds);
+	int nanosleep(const struct timespec *req, struct timespec *rem);
+
+#endif
 
 /* Futex */
 

@@ -813,7 +813,7 @@ static int _mpc_thread_ethread_mxn_engine_sigpending(sigset_t *set)
 	return res;
 }
 
-static int _mpc_thread_ethread_mxn_engine_sigsuspend(sigset_t *set)
+static int _mpc_thread_ethread_mxn_engine_sigsuspend(const sigset_t *set)
 {
 	int res = 0;
 	_mpc_thread_ethread_per_thread_t *cur = NULL;
@@ -1010,7 +1010,7 @@ void mpc_thread_ethread_mxn_engine_init(void)
 	sctk_add_func_type(_mpc_thread_ethread_mxn_engine, exit,           void (*)(void *));
 	sctk_add_func_type(_mpc_thread_ethread_mxn_engine, kill,           int (*)(mpc_thread_t, int));
 	sctk_add_func_type(_mpc_thread_ethread_mxn_engine, sigpending,     int (*)(sigset_t *));
-	sctk_add_func_type(_mpc_thread_ethread_mxn_engine, sigsuspend,     int (*)(sigset_t *));
+	sctk_add_func_type(_mpc_thread_ethread_mxn_engine, sigsuspend,     int (*)(const sigset_t *));
 
 
 	sctk_add_func_type(_mpc_thread_ethread_mxn_engine, mutex_lock,     int (*)(mpc_thread_mutex_t *));

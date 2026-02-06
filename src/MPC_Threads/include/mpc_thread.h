@@ -127,8 +127,9 @@
 	int mpc_thread_getschedparam(mpc_thread_t __target_thread, int *__policy, struct sched_param *__param);
 	void *mpc_thread_getspecific(mpc_thread_keys_t __key);
 	int mpc_thread_join(mpc_thread_t __th, void **__thread_return);
+	int mpc_thread_raise(int sig);
 	int mpc_thread_kill(mpc_thread_t thread, int signo);
-	int mpc_thread_sigsuspend(sigset_t *set);
+	int mpc_thread_sigsuspend(const sigset_t *set);
 	int mpc_thread_process_kill(pid_t pid, int sig);
 	int mpc_thread_sigpending(sigset_t *set);
 	int mpc_thread_sigmask(int how, const sigset_t *newmask, sigset_t *oldmask);
@@ -200,7 +201,7 @@
 	void mpc_thread_testcancel(void);
 	int mpc_thread_yield(void);
 	unsigned int mpc_thread_sleep(unsigned int seconds);
-	int mpc_thread_usleep(unsigned int seconds);
+	int mpc_thread_usleep(unsigned long useconds);
 	int mpc_thread_nanosleep(const struct timespec *req, struct timespec *rem);
 
 	int mpc_thread_getpriority_max(int policy);

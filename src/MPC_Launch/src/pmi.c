@@ -33,6 +33,10 @@
 
 #include "mpc_launch.h"
 
+#ifdef MPC_Threads
+#include <kthread.h>
+#endif
+
 #define MPC_MODULE "Launch/PMI"
 
 
@@ -427,9 +431,14 @@ static inline int _pmi_initialize(struct mpc_pmi_context *ctx, int *unreachable)
 	}
 
 	#ifdef MPC_USE_PMIX
+		mpc_common_debug("Ca construit dur");
+		PMIX_PROC_CONSTRUCT(&ctx->pmix_proc);
+		mpc_common_debug("C'est fini");
 		pmix_status_t rc = PMI_SUCCESS;
 
+		mpc_common_debug("Init...");
 		rc = PMIx_Init(&ctx->pmix_proc, NULL, 0);
+		mpc_common_debug("%d", rc);
 		if ((rc == PMIX_ERR_UNREACH) || (rc == PMIX_ERR_INVALID_NAMESPACE))
 		{
 			mpc_common_debug_error("PMIx was unreachable, falling back to serial execution");
@@ -890,7 +899,12 @@ void mpc_launch_pmi_abort(const int return_code)
 		mpc_common_debug_error("PMI(x)_Abort error: %d. Resuming abortion of this process\n", err);
 	}
 	// Wait for the sigterm to arrive
-	sleep(5);
+	// We want the whole kernel thread to wait
+#if defined(MPC_Threads)
+		kthread_usleep(5000000);
+#else
+		sleep(5);
+#endif
 	// If it doesn't come release all PMI(x) resources and prepare to abort
 	// manually
 	mpc_launch_pmi_finalize();

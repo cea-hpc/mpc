@@ -307,3 +307,108 @@ void _mpc_thread_kthread_exit(void *retval)
 {
 	pthread_exit(retval);
 }
+
+__attribute__((cold))
+static void *_kthread_get_libc_symbol(const char *const symbol)
+{
+	void *dl_handle = dlopen("libc.so.6", RTLD_LAZY);
+
+	assert(dl_handle != NULL);
+
+	void *system_symbol = dlsym(dl_handle, symbol);
+	assert(system_symbol != NULL);
+
+	const int dlclose_ierr = dlclose(dl_handle);
+	assert(dlclose_ierr == 0);
+
+	return system_symbol;
+}
+
+int kthread_sched_yield(void)
+{
+	static int (*system_sched_yield)(void) = NULL;
+	if (system_sched_yield == NULL)
+	{
+		system_sched_yield = _kthread_get_libc_symbol("sched_yield");
+		assert(system_sched_yield != mpc_thread_yield);
+	}
+	return system_sched_yield();
+}
+
+int kthread_raise(int sig)
+{
+	static int (*system_raise)(int) = NULL;
+	if (system_raise == NULL)
+	{
+		system_raise = _kthread_get_libc_symbol("raise");
+		assert(system_raise != mpc_thread_raise);
+	}
+	return system_raise(sig);
+}
+
+int kthread_kill(pid_t pid, int sig)
+{
+	static int (*system_kill)(pid_t, int) = NULL;
+	if (system_kill == NULL)
+	{
+		system_kill = _kthread_get_libc_symbol("kill");
+		assert(system_kill != mpc_thread_process_kill);
+	}
+	return system_kill(pid, sig);
+}
+
+int kthread_sigpending(sigset_t *set)
+{
+	static int (*system_sigpending)(sigset_t *) = NULL;
+	if (system_sigpending == NULL)
+	{
+		system_sigpending = _kthread_get_libc_symbol("sigpending");
+		assert(system_sigpending != mpc_thread_sigpending);
+	}
+	return system_sigpending(set);
+}
+
+int kthread_sigsuspend(const sigset_t *set)
+{
+	static int (*system_sigsuspend)(const sigset_t *) = NULL;
+	if (system_sigsuspend == NULL)
+	{
+		system_sigsuspend = _kthread_get_libc_symbol("sigsuspend");
+		assert(system_sigsuspend != mpc_thread_sigsuspend);
+	}
+	return system_sigsuspend(set);
+}
+
+int kthread_sigwait(const sigset_t *set, int *sig)
+{
+	static int (*system_sigwait)(const sigset_t *, int *) = NULL;
+	if (system_sigwait == NULL)
+	{
+		system_sigwait = _kthread_get_libc_symbol("sigwait");
+		assert(system_sigwait != mpc_thread_sigwait);
+	}
+	return system_sigwait(set, sig);
+}
+
+unsigned int kthread_sleep(unsigned int seconds)
+{
+	static unsigned int (*system_sleep)(unsigned int) = NULL;
+
+	if (system_sleep == NULL)
+	{
+		system_sleep = _kthread_get_libc_symbol("sleep");
+		assert(system_sleep != mpc_thread_sleep);
+	}
+	return system_sleep(seconds);
+}
+
+int kthread_usleep(unsigned long usec)
+{
+	static int (*system_usleep)(unsigned long) = NULL;
+	if (system_usleep == NULL)
+	{
+		system_usleep = _kthread_get_libc_symbol("usleep");
+		assert(system_usleep != mpc_thread_usleep);
+	}
+	return system_usleep(usec);
+}

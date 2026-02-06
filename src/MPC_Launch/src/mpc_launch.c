@@ -44,6 +44,7 @@
 #include <mpc_topology.h>
 #ifdef MPC_Threads
 #include <mpc_thread.h>
+#include <kthread.h>
 #endif
 
 #include <mpc_launch_pmi.h>
@@ -492,7 +493,12 @@ static void *___auto_kill_func(void *arg)
 			mpc_common_io_noalloc_fprintf(stderr, "Autokill in %ds\n", timeout);
 		}
 
-		sleep(timeout);
+#ifdef MPC_Threads
+			const unsigned long timeout_usec = ((unsigned long)timeout) * (1000000);
+			kthread_usleep(timeout_usec);
+#else
+			sleep(timeout);
+#endif
 
 		if (!mpc_common_get_flags()->is_fortran)
 		{
@@ -766,8 +772,10 @@ void mpc_launch_init_runtime()
 
 	__create_autokill_thread();
 
+	mpc_common_debug("Tout va bien");
 	/* As a first step initialize the PMI */
 	mpc_launch_pmi_init();
+	mpc_common_debug("Rien ne va plus");
 
 	__topology_init();
 

@@ -178,6 +178,8 @@ typedef void *mpc_thread_t;
 	#define SCTK_THREAD_STACK_MIN @MPC_CONFIG_PTHREAD_STACK_MIN@
 #endif
 
+#define MPC_THREAD_IN_PROCESS_MODE @MPC_IN_PROCESS_MODE_INT@
+
 /****************************************
  * PTHREAD PUSH AND POP INTERNAL STRUCT *
  ****************************************/

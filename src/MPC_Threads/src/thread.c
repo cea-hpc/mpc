@@ -28,12 +28,6 @@
  * MACROS *
  **********/
 
-#define SCTK_DONOT_REDEFINE_KILL
-
-#undef sleep
-#undef usleep
-
-
 /* #define SCTK_CHECK_CODE_RETURN */
 #ifdef SCTK_CHECK_CODE_RETURN
 	#define sctk_check(res, val) assume(res == val)
@@ -89,6 +83,9 @@
 	#include "mpcomp_core.h"
 #endif
 
+#ifdef MPC_IN_PROCESS_MODE
+#include "pthread_weak.h"
+#endif
 
 #define MPC_MODULE "Threads/Threads"
 
@@ -1098,6 +1095,9 @@ static inline void __thread_base_init(void)
 	/*Check all types */
 }
 
+static unsigned int _thread_sleep(unsigned int seconds);
+static int _thread_usleep(unsigned long useconds);
+
 static inline void __thread_engine_init(void)
 {
 	if (mpc_common_get_flags()->thread_library_init != NULL)
@@ -1109,6 +1109,9 @@ static inline void __thread_engine_init(void)
 		/* assume pthread */
 		mpc_thread_pthread_engine_init();
 	}
+
+	_funcptr_mpc_thread_sleep  = _thread_sleep;
+	_funcptr_mpc_thread_usleep = _thread_usleep;
 }
 
 #ifdef MPC_USE_EXTLS
@@ -1622,8 +1625,6 @@ void mpc_thread_testcancel(void)
 
 int mpc_thread_yield(void)
 {
-	__check_mpc_initialized();
-	assert(_funcptr_mpc_thread_yield != NULL);
 	return _funcptr_mpc_thread_yield();
 }
 
@@ -2277,10 +2278,9 @@ int mpc_thread_kill(mpc_thread_t thread, int signo)
 
 int mpc_thread_process_kill(pid_t pid, int sig)
 {
-	__check_mpc_initialized();
 #ifndef WINDOWS_SYS
 		int res;
-		res = kill(pid, sig);
+		res = kthread_kill(pid, sig);
 		sctk_check(res, 0);
 		mpc_thread_yield();
 		return res;
@@ -2288,6 +2288,11 @@ int mpc_thread_process_kill(pid_t pid, int sig)
 		not_available();
 		return 1;
 #endif
+}
+
+int mpc_thread_raise(int sig)
+{
+	return mpc_thread_kill(mpc_thread_self(), sig);
 }
 
 /***********
@@ -2326,7 +2331,7 @@ int mpc_thread_sigpending(sigset_t *set)
 	return res;
 }
 
-int mpc_thread_sigsuspend(sigset_t *set)
+int mpc_thread_sigsuspend(const sigset_t *set)
 {
 	__check_mpc_initialized();
 	int res;
@@ -3073,7 +3078,7 @@ static void __sleep_pool_poll(_mpc_thread_core_sleep_pool_t *wake_time)
 	}
 }
 
-unsigned int mpc_thread_sleep(unsigned int seconds)
+unsigned int _thread_sleep(unsigned int seconds)
 {
 	__check_mpc_initialized();
 	assert(__thread_module_config.thread_timer_enabled);
@@ -3093,7 +3098,12 @@ unsigned int mpc_thread_sleep(unsigned int seconds)
 	return 0;
 }
 
-int mpc_thread_usleep(unsigned int useconds)
+unsigned int mpc_thread_sleep(unsigned int seconds)
+{
+	return _funcptr_mpc_thread_sleep(seconds);
+}
+
+int _thread_usleep(unsigned long useconds)
 {
 	__check_mpc_initialized();
 	assert(__thread_module_config.thread_timer_enabled);
@@ -3102,7 +3112,8 @@ int mpc_thread_usleep(unsigned int useconds)
 	_mpc_thread_core_sleep_pool_t wake_time;
 	wake_time.done      = 1;
 	wake_time.wake_time = ((( sctk_timer_t )useconds / ( sctk_timer_t )1000)
-	                       / ( sctk_timer_t )__thread_module_config.thread_timer_interval) + ___timer_thread_ticks + 1;
+	                       / ( sctk_timer_t )__thread_module_config.thread_timer_interval)
+	                      + ___timer_thread_ticks + 1;
 	mpc_thread_yield();
 	assert(_funcptr_mpc_thread_testcancel != NULL);
 	_funcptr_mpc_thread_testcancel();
@@ -3113,12 +3124,15 @@ int mpc_thread_usleep(unsigned int useconds)
 	return 0;
 }
 
+int mpc_thread_usleep(unsigned long useconds)
+{
+	return _funcptr_mpc_thread_usleep(useconds);
+}
+
 /*on ne prend pas en compte la precision en dessous de la micro-second
  * on ne gère pas les interruptions non plus*/
 int mpc_thread_nanosleep(const struct timespec *req, struct timespec *rem)
 {
-	__check_mpc_initialized();
-
 	if (req == NULL)
 	{
 		return EINVAL;

@@ -108,8 +108,9 @@ extern int  (*_funcptr_mpc_thread_getschedparam)(mpc_thread_t __target_thread,
 extern void *(*_funcptr_mpc_thread_getspecific)(mpc_thread_keys_t __key);
 extern int   (*_funcptr_mpc_thread_join)(mpc_thread_t __th, void **__thread_return);
 extern int   (*_funcptr_mpc_thread_kill)(mpc_thread_t thread, int signo);
-extern int   (*_funcptr_mpc_thread_sigsuspend)(sigset_t *set);
+extern int   (*_funcptr_mpc_thread_sigsuspend)(const sigset_t *set);
 extern int   (*_funcptr_mpc_thread_sigpending)(sigset_t *set);
+extern int   (*_funcptr_mpc_thread_sigwait)(const sigset_t *set, int *sig);
 extern int   (*_funcptr_mpc_thread_sigmask)(int how, const sigset_t *newmask, sigset_t *oldmask);
 extern int   (*_funcptr_mpc_thread_key_create)(mpc_thread_keys_t *__key, void (*__destr_function)(void *));
 extern int   (*_funcptr_mpc_thread_key_delete)(mpc_thread_keys_t __key);
@@ -206,6 +207,10 @@ extern int  (*_funcptr_mpc_thread_rwlockattr_setkind_np)(mpc_thread_rwlockattr_t
 extern void (*_funcptr_mpc_thread_kill_other_threads_np)(void);
 
 extern int (*_funcptr_mpc_thread_futex)(void *addr1, int op, int val1, struct timespec *timeout, void *addr2, int val3);
+
+
+extern unsigned int (*_funcptr_mpc_thread_sleep)(unsigned int seconds);
+extern int          (*_funcptr_mpc_thread_usleep)(unsigned long useconds);
 
 #define sctk_add_func(newlib, func)         _funcptr_mpc_thread_ ## func = newlib ## _ ## func
 #define sctk_add_func_type(newlib, func, t) _funcptr_mpc_thread_ ## func = (t)newlib ## _ ## func

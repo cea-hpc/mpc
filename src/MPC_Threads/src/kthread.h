@@ -25,6 +25,7 @@
 #include "mpc_threads_config.h"
 #include "mpc_common_debug.h"
 
+#include <dlfcn.h>
 #include <unistd.h>
 #include <signal.h>
 
@@ -68,15 +69,26 @@ void _mpc_thread_kthread_exit(void *retval);
 
 int _mpc_thread_kthread_sigmask(int how, const sigset_t *newmask, sigset_t *oldmask);
 
+#ifndef WINDOWS_SYS
+	int kthread_sched_yield(void);
+	int kthread_raise(int sig);
+	int kthread_kill(pid_t pid, int sig);
+
+	int kthread_sigpending(sigset_t *set);
+	int kthread_sigsuspend(const sigset_t *set);
+	int kthread_sigwait(const sigset_t *set, int *sig);
+
+	unsigned int kthread_sleep(unsigned int seconds);
+	int kthread_usleep(unsigned long usec);
+
+#else
 // NOLINTNEXTLINE(clang-diagnostic-unused-function)
 static inline void kthread_usleep(unsigned long usec)
 {
-#ifndef WINDOWS_SYS
-		usleep(usec);
-#else
-		Sleep(usec);
-#endif
+	Sleep(usec);
 }
+
+#endif
 
 #ifdef __cplusplus
 	}

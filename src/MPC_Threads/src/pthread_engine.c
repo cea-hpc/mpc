@@ -478,7 +478,7 @@ void mpc_thread_pthread_engine_init(void)
 	/*   assume (memcmp (&loc, &glob, sizeof (pthread_mutex_t)) == 0); */
 
 	/*   sctk_add_func (pthread, yield); */
-	_funcptr_mpc_thread_yield = sched_yield;
+	_funcptr_mpc_thread_yield = kthread_sched_yield;
 
 	        MPC_PTHREAD_ADD_FUNC_TYPE_FORCE_CAST(pthread,             join,          int (*)(mpc_thread_t, void **));
 	        MPC_PTHREAD_ADD_FUNC_TYPE_FORCE_CAST(pthread,             attr_init,     int (*)(mpc_thread_attr_t *));
@@ -514,8 +514,9 @@ void mpc_thread_pthread_engine_init(void)
 #endif
 
 #ifndef WINDOWS_SYS
-		_funcptr_mpc_thread_sigpending = (int (*)(sigset_t *)) sigpending;
-		_funcptr_mpc_thread_sigsuspend = (int (*)(sigset_t *)) sigsuspend;
+		_funcptr_mpc_thread_sigpending = (int (*)(sigset_t *)) kthread_sigpending;
+		_funcptr_mpc_thread_sigsuspend = (int (*)(const sigset_t *)) kthread_sigsuspend;
+		_funcptr_mpc_thread_sigwait    = (int (*)(const sigset_t *, int *)) kthread_sigwait;
 #endif
 
 #ifdef HAVE_PTHREAD_SIGMASK
