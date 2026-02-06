@@ -456,6 +456,14 @@ err:
 	return rc;
 }
 
+int lcr_tbsm_query_device_nearest(lcr_device_t **devices_p, unsigned int *num_devices_p)
+{
+	UNUSED(devices_p);
+	UNUSED(num_devices_p);
+	// Should never be called -> it is made for non-composable rail
+	not_implemented();
+}
+
 int lcr_tbsm_iface_open(int mngr_id, __UNUSED__ const char *device_name, int id,
                         lcr_rail_config_t *rail_config,
                         lcr_driver_config_t *driver_config,
@@ -487,12 +495,13 @@ err:
 
 lcr_component_t tbsm_component =
 {
-	.name          = { "tbsmmpi" },
-	.query_devices = lcr_tbsm_query_devices,
-	.iface_open    = lcr_tbsm_iface_open,
-	.devices       = NULL,
-	.num_devices   = 0,
-	.flags         = 0,
-	.next          = NULL
+	.name                 = { "tbsmmpi" },
+	.query_devices        = lcr_tbsm_query_devices,
+	.query_device_nearest = lcr_tbsm_query_device_nearest,
+	.iface_open           = lcr_tbsm_iface_open,
+	.devices              = NULL,
+	.num_devices          = 0,
+	.flags                = 0,
+	.next                 = NULL
 };
 LCR_COMPONENT_REGISTER(&tbsm_component)

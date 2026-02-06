@@ -466,13 +466,18 @@ static int _lcp_context_devices_load_and_filter(lcp_context_h ctx)
 		if (ctx->components[i]->rail_config->composable)
 		{
 			// Skip shm if no need for it
-			if ((strncmp("shm", ctx->components[i]->name, 3) == 0)
-			    && (node_number == process_number))
+			if ((strncmp("shm", ctx->components[i]->name, 3) == 0) && (node_number == process_number))
 			{
 				mpc_common_debug("Skipping registration for %s as only one process per node was requested",
 					ctx->components[i]->name);
 				continue;
 			}
+			// // May have multiple devices select only one
+			// if (ctx->components[i]->num_devices > 1)
+			// {
+			// 	ctx->components[i]->query_device_nearest(&ctx->components[i]->devices,
+			// 		&ctx->components[i]->num_devices);
+			// }
 			mpc_common_debug("Registering %s as composable component", ctx->components[i]->name);
 			/* There can be only one iface for composable rail such as tbsm or shm. */
 			MPC_BITMAP_SET(dev_map, i);
@@ -490,11 +495,36 @@ static int _lcp_context_devices_load_and_filter(lcp_context_h ctx)
 
 		if (strcmp(ctx->components[i]->rail_config->device, "any") == 0)
 		{
-			for (unsigned int j = 0; j < ctx->components[i]->num_devices; j++)
+			if (ctx->config.multirail_enabled)
 			{
-				mpc_common_debug("Registering device %s for component %s, 'any' devices requested",
-					ctx->components[i]->devices[j].name,
-					ctx->components[i]->name);
+				for (unsigned int j = 0; j < ctx->components[i]->num_devices; j++)
+				{
+					mpc_common_debug("Registering device %s for component %s, 'any' devices requested",
+						ctx->components[i]->devices[j].name,
+						ctx->components[i]->name);
+					MPC_BITMAP_SET(dev_map, i);
+					nb_dev++;
+				}
+			}
+			else
+			{
+				const int ierr = ctx->components[i]->query_device_nearest(
+					&ctx->components[i]->devices, &ctx->components[i]->num_devices);
+				if (ierr != MPC_LOWCOMM_SUCCESS)
+				{
+					mpc_common_debug(
+						"Failed to elect nearest device for component %s, 'any' devices requested and no multirail"
+						": taking first in list %s",
+						ctx->components[i]->name,
+						ctx->components[i]->devices[0].name);
+					ctx->components[i]->num_devices = 1;
+				}
+				else
+				{
+					mpc_common_debug("Registering device %s for component %s, 'any' devices requested and no multirail",
+						ctx->components[i]->devices[0].name,
+						ctx->components[i]->name);
+				}
 				MPC_BITMAP_SET(dev_map, i);
 				nb_dev++;
 			}
@@ -537,9 +567,12 @@ static int _lcp_context_devices_load_and_filter(lcp_context_h ctx)
 		{
 			if (MPC_BITMAP_GET(dev_map, i))
 			{
-				_lcp_context_resource_init(&ctx->resources[rsc_count],
-					ctx->components[i],
+				mpc_common_debug("Initializing resource %s for %s",
+					ctx->components[i]->devices[j].name, ctx->components[i]->name);
+
+				_lcp_context_resource_init(&ctx->resources[rsc_count], ctx->components[i],
 					&ctx->components[i]->devices[j]);
+
 				rsc_count++;
 			}
 		}

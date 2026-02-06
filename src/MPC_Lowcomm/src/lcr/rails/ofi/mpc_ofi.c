@@ -862,6 +862,22 @@ int _mpc_ofi_query_devices(lcr_component_t *component,
 	return MPC_LOWCOMM_SUCCESS;
 }
 
+int _mpc_ofi_query_device_nearest(lcr_device_t **devices_p, unsigned int *num_devices_p)
+{
+	// FIXME: OFI provides LOTS of devices which correspond to different configuration of the same physical device.
+	//        As such, we only keep the first device and trust OFI and the underlying provider to have the best one.
+	//        So, Multirail capabilities are off and we should never come into this function.
+
+	// We only keep the first device -- trusting OFI
+	// *devices_p     = sctk_realloc(*devices_p, sizeof(lcr_device_t));
+	// *num_devices_p = 1;
+
+	UNUSED(devices_p);
+	UNUSED(num_devices_p);
+
+	return MPC_LOWCOMM_SUCCESS;
+}
+
 int _mpc_ofi_progress(sctk_rail_info_t *rail)
 {
 	_mpc_ofi_domain_poll(rail->network.ofi.ctx.domain, 0);
@@ -983,36 +999,39 @@ err:
 
 lcr_component_t tcpofi_component =
 {
-	.name          = { "tcpofirail" },
-	.query_devices = _mpc_ofi_query_devices,
-	.iface_open    = _mpc_ofi_iface_open,
-	.devices       = NULL,
-	.num_devices   = 0,
-	.flags         = 0,
-	.next          = NULL
+	.name                 = { "tcpofirail" },
+	.query_devices        = _mpc_ofi_query_devices,
+	.query_device_nearest = _mpc_ofi_query_device_nearest,
+	.iface_open           = _mpc_ofi_iface_open,
+	.devices              = NULL,
+	.num_devices          = 0,
+	.flags                = 0,
+	.next                 = NULL
 };
 LCR_COMPONENT_REGISTER(&tcpofi_component)
 
 lcr_component_t shmofi_component =
 {
-	.name          = { "shmofirail" },
-	.query_devices = _mpc_ofi_query_devices,
-	.iface_open    = _mpc_ofi_iface_open,
-	.devices       = NULL,
-	.num_devices   = 0,
-	.flags         = 0,
-	.next          = NULL
+	.name                 = { "shmofirail" },
+	.query_devices        = _mpc_ofi_query_devices,
+	.query_device_nearest = _mpc_ofi_query_device_nearest,
+	.iface_open           = _mpc_ofi_iface_open,
+	.devices              = NULL,
+	.num_devices          = 0,
+	.flags                = 0,
+	.next                 = NULL
 };
 LCR_COMPONENT_REGISTER(&shmofi_component)
 
 lcr_component_t verbsofi_component =
 {
-	.name          = { "verbsofirail" },
-	.query_devices = _mpc_ofi_query_devices,
-	.iface_open    = _mpc_ofi_iface_open,
-	.devices       = NULL,
-	.num_devices   = 0,
-	.flags         = 0,
-	.next          = NULL
+	.name                 = { "verbsofirail" },
+	.query_devices        = _mpc_ofi_query_devices,
+	.query_device_nearest = _mpc_ofi_query_device_nearest,
+	.iface_open           = _mpc_ofi_iface_open,
+	.devices              = NULL,
+	.num_devices          = 0,
+	.flags                = 0,
+	.next                 = NULL
 };
 LCR_COMPONENT_REGISTER(&verbsofi_component)
