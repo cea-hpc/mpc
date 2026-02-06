@@ -33,18 +33,29 @@ variables:
   # PCVS Benchmarks top level path
   GL_PCVS_BENCHMARKS_ROOT_PATH: '$CI_BUILDS_DIR/pcvs-benchmarks'
   # PCVS Basic run command
-  PCVS_RUN: pcvs -v run --override --profile-path ${GL_MPC_CI_ROOT_PATH}/utils/profile/mpc.yml
-  # PCVS Common command used
-  PCVS_COMMAND: ${PCVS_RUN} --print errors -S
-  # PCVS Command used to print benchmarks results
-  PCVS_COMMAND_BENCH: ${PCVS_RUN} --print all -S
+  PCVS_RUN: 'pcvs -v run --override'
+  # PCVS command used with process mode profile
+  PCVS_COMMAND_PROCESS_MODE: '${PCVS_RUN}  -p local:mpc-processmode --print errors -S'
+  # PCVS command used with thread-based profile
+  PCVS_COMMAND_THREAD_BASED: '${PCVS_RUN}  -p local:mpc-threadbased --print errors -S'
+  # PCVS command used with process mode profile to print benchmarks results
+  PCVS_COMMAND_BENCH_PROCESS_MODE: '${PCVS_RUN}  -p local:mpc-processmode --print all -S'
+  # PCVS command used with thread-based profile to print benchmarks results
+  PCVS_COMMAND_BENCH_THREAD_BASED: '${PCVS_RUN}  -p local:mpc-threadbased --print all -S'
   # MPC CI job specific path
   CI_PCVS_DIR: '$GL_PIPELINE_PATH/step_$CI_JOB_NAME_SLUG'
 
 workflow:
   name: ${CHILD_PIPELINE_NAME}
   rules:
-    - if: '$CI_PIPELINE_SOURCE == "parent_pipeline"'
+    - if: '$CI_PIPELINE_SOURCE == "parent_pipeline" && $HAS_PRIVATIZATION == "false"'
+      variables:
+        PCVS_COMMAND: ${PCVS_COMMAND_PROCESS_MODE}
+        PCVS_COMMAND_BENCH: ${PCVS_COMMAND_BENCH_PROCESS_MODE}
+    - if: '$CI_PIPELINE_SOURCE == "parent_pipeline" && $HAS_PRIVATIZATION == "true"'
+      variables:
+        PCVS_COMMAND: ${PCVS_COMMAND_THREAD_BASED}
+        PCVS_COMMAND_BENCH: ${PCVS_COMMAND_BENCH_THREAD_BASED}
 
 ############################################
 ############## Installation ################
@@ -85,6 +96,7 @@ Installation:
     - test -d "${CI_PCVS_DIR}" || mkdir -p "${CI_PCVS_DIR}"
     - cd "${CI_PCVS_DIR}"
     - echo "Step run from ${CI_PCVS_DIR}"
+    - cp -r ${GL_MPC_CI_ROOT_PATH}/.pcvs .
 
 .regular_testing_rules:
   rules:
@@ -172,7 +184,7 @@ OpenMP:
   needs: ['Simple Run']
   extends: ['.prepare_mpc_ci', '.regular_testing_rules']
   script:
-    - module load lapack/mkl
+    - module load lapack/mkl llvm
     - ${PCVS_COMMAND} "${GL_MPC_CI_ROOT_PATH}/OpenMP/task/examples" "${GL_MPC_CI_ROOT_PATH}/OpenMP/task/cholesky"
 
 .MPI_deps:

@@ -61,7 +61,7 @@
 
 #define MPC_MODULE "Lowcomm/Monitor/cplane"
 
-static volatile int __monitor_running = 0;
+static OPA_int_t __monitor_running = { 0 };
 
 
 const char * mpc_lowcomm_monitor_command_tostring(mpc_lowcomm_monitor_command_t cmd)
@@ -682,6 +682,13 @@ _mpc_lowcomm_client_ctx_t *__accept_incoming(struct _mpc_lowcomm_monitor_s *moni
 	}
 
 	mpc_common_spinlock_lock_yield(&monitor->connect_accept_lock);
+	if (OPA_load_int(&__monitor_running) == 0)
+	{
+		shutdown(new_fd, SHUT_RDWR);
+		close(new_fd);
+		mpc_common_spinlock_unlock(&monitor->connect_accept_lock);
+		return NULL;
+	}
 
 	int flag = 1;
 	setsockopt(new_fd, IPPROTO_TCP, TCP_NODELAY, (char *)&flag, sizeof(int));
@@ -692,21 +699,18 @@ _mpc_lowcomm_client_ctx_t *__accept_incoming(struct _mpc_lowcomm_monitor_s *moni
 	int ret = mpc_common_io_safe_read(new_fd, &uid, sizeof(uint64_t));
 	if (ret == 0)
 	{
-		mpc_common_spinlock_unlock(&monitor->connect_accept_lock);
 		close(new_fd);
+		mpc_common_spinlock_unlock(&monitor->connect_accept_lock);
 		return NULL;
 	}
 
 #ifdef MONITOR_DEBUG
 		char bx[128];
-		mpc_common_debug_error("[IN] %s INCOMING from %s", mpc_lowcomm_peer_format_r(mpc_lowcomm_monitor_get_uid(),
-		bx,
-		128), mpc_lowcomm_peer_format(uid));
+		mpc_common_debug("[IN] %s INCOMING from %s",
+		mpc_lowcomm_peer_format_r(mpc_lowcomm_monitor_get_uid(), bx, 128), mpc_lowcomm_peer_format(uid));
 #endif
 
-	/* Set UID is non-zero if we receive 0 we skip the
-	 * already connected set check as we have a temporary
-	 * client */
+	/* Set UID is non-zero if we receive 0 we skip the already connected set check as we have a temporary client */
 	if (uid)
 	{
 		/* Now make sure this UID is not already known */
@@ -719,7 +723,7 @@ _mpc_lowcomm_client_ctx_t *__accept_incoming(struct _mpc_lowcomm_monitor_s *moni
 			{
 #ifdef MONITOR_DEBUG
 					char b1[128];
-					mpc_common_debug_error("[REJECT] %s UID %s is already connected, closing",
+					mpc_common_debug("[REJECT] %s UID %s is already connected, closing",
 					mpc_lowcomm_peer_format_r(mpc_lowcomm_monitor_get_uid(), b1, 128),
 					mpc_lowcomm_peer_format(uid));
 #endif
@@ -736,9 +740,8 @@ _mpc_lowcomm_client_ctx_t *__accept_incoming(struct _mpc_lowcomm_monitor_s *moni
 	_mpc_lowcomm_monitor_client_add(monitor, new);
 #ifdef MONITOR_DEBUG
 		char meb[128];
-		mpc_common_debug_error("%s UID %s now connected", mpc_lowcomm_peer_format_r(mpc_lowcomm_monitor_get_uid(),
-		meb,
-		128), mpc_lowcomm_peer_format(uid));
+		mpc_common_debug("%s UID %s now connected",
+		mpc_lowcomm_peer_format_r(mpc_lowcomm_monitor_get_uid(), meb, 128), mpc_lowcomm_peer_format(uid));
 #endif
 	mpc_common_spinlock_unlock(&monitor->connect_accept_lock);
 	return new;
@@ -890,7 +893,7 @@ static void *__server_loop(void *pmonitor)
 {
 	struct _mpc_lowcomm_monitor_s *monitor = (struct _mpc_lowcomm_monitor_s *)pmonitor;
 
-	while (1)
+	while (OPA_load_int(&__monitor_running) == 1)
 	{
 		_mpc_lowcomm_client_ctx_t *new_ctx = NULL;
 		/* Accept incoming connection */
@@ -898,14 +901,6 @@ static void *__server_loop(void *pmonitor)
 		{
 			/* new client */
 			__start_client_loop(new_ctx);
-		}
-		else
-		{
-			/* Was refused or error */
-			if (!__monitor_running)
-			{
-				break;
-			}
 		}
 	}
 
@@ -1096,7 +1091,7 @@ mpc_lowcomm_monitor_retcode_t _mpc_lowcomm_monitor_init(struct _mpc_lowcomm_moni
 		mpc_common_debug_fatal("Failed to start the cplane monitor server");
 	}
 
-	__monitor_running = 1;
+	OPA_store_int(&__monitor_running, 1);
 
 	/* Now start the server thread */
 	int rc = _mpc_lowcomm_kernel_thread_create(&monitor->server_thread, __server_loop, (void *)monitor);
@@ -1114,11 +1109,10 @@ mpc_lowcomm_monitor_retcode_t _mpc_lowcomm_monitor_init(struct _mpc_lowcomm_moni
 
 mpc_lowcomm_monitor_retcode_t _mpc_lowcomm_monitor_release(struct _mpc_lowcomm_monitor_s *monitor)
 {
-	pthread_mutex_lock(&monitor->client_lock);
+	mpc_common_spinlock_lock_yield(&monitor->connect_accept_lock);
 	__monitor_worker_release();
 
-	__monitor_running = 0;
-
+	OPA_store_int(&__monitor_running, 0);
 
 	/* Disconnect all */
 	_mpc_lowcomm_monitor_disconnect(monitor);
@@ -1126,13 +1120,15 @@ mpc_lowcomm_monitor_retcode_t _mpc_lowcomm_monitor_release(struct _mpc_lowcomm_m
 	shutdown(monitor->server_socket, SHUT_RDWR);
 	close(monitor->server_socket);
 
+	// NOTE: we have to unlock the mutex to allow the server thread to exit properly
+	//       otherwise, the thread_join deadlocks
+	mpc_common_spinlock_unlock(&monitor->connect_accept_lock);
 	_mpc_lowcomm_kernel_thread_join(&monitor->server_thread);
+	mpc_common_spinlock_lock_yield(&monitor->connect_accept_lock);
 
 	mpc_common_hashtable_release(&monitor->client_contexts);
-	// mutex should not be destroy,
-	// other threads may still try to lock it to remove client.
-	pthread_mutex_unlock(&monitor->client_lock);
-	// pthread_mutex_destroy(&monitor->client_lock);
+	// mutex should not be destroy, other threads may still try to lock it to remove client.
+	mpc_common_spinlock_unlock(&monitor->connect_accept_lock);
 
 	return 0;
 }
@@ -1164,7 +1160,7 @@ int _mpc_lowcomm_monitor_client_remove(struct _mpc_lowcomm_monitor_s *monitor,
                                        uint64_t uid)
 {
 	pthread_mutex_lock(&monitor->client_lock);
-	if (!__monitor_running)
+	if (OPA_load_int(&__monitor_running) == 0)
 	{
 		pthread_mutex_unlock(&monitor->client_lock);
 		return -1;

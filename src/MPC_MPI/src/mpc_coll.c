@@ -13868,7 +13868,7 @@ int ___collectives_alltoall_topo(const void *sendbuf,
 	// We fetch the topological communicators if we can, if not we create them
 	int root = 0;
 	info->hardware_info_ptr = mpc_lowcomm_topo_comm_get(comm, root);
-	if (!(info->hardware_info_ptr) && !(info->hardware_info_ptr))
+	if (!(info->hardware_info_ptr))
 	{
 		if (!(initial_flag & SCHED_INFO_TOPO_COMM_ALLOWED))
 		{
@@ -14226,7 +14226,6 @@ int ___collectives_alltoall_topo(const void *sendbuf,
 					master_comm = info->hardware_info_ptr->rootcomm[i + 1];
 				}
 				_mpc_cl_comm_size(master_comm, &size_master);
-				// Mute clang-tidy warnings about potential overflows when reading displs[j]
 				assert(size_master <= size);
 
 				// Here the data is organized as follow:
@@ -14250,6 +14249,8 @@ int ___collectives_alltoall_topo(const void *sendbuf,
 						int keep_data_count = info->hardware_info_ptr->send_data_count[i]
 						                      - info->hardware_info_ptr->children_data_count[i + 1][j];
 
+						// Deactivate the lint, the size is checked in the assert above
+						// NOLINTNEXTLINE
 						void *keep_data_start = tmpbuf + displs[j] * recvext
 						                        + ((MPI_Aint)k * packet_count + info->hardware_info_ptr->topo_rank)
 						                        * recvcount * recvext;
