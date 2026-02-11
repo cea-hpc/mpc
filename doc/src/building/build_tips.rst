@@ -10,10 +10,10 @@ case loading and installing dependencies is to be done manually.
 
 MPC can build with the following REQUIRED dependencies:
 
-- OpenPA (spack install openpa or `from source <https://github.com/pmodels/openpa/>`_)
-- HWLOC 1.11.x (spack install hwloc or `from source <http://www.open-mpi.org/software/hwloc/v1.11/>`_)
+- OpenPA (``spack install openpa`` or `from source <https://github.com/pmodels/openpa/>`_)
+- HWLOC 1.11.x (``spack install hwloc`` or `using source <http://www.open-mpi.org/software/hwloc/v1.11/>`_)
 - A launcher:
-   - Hydra (spack install hydra or `from source <http://www.mpich.org/static/downloads/3.2/>`_)
+   - Hydra (``spack install hydra`` or `with the sources <http://www.mpich.org/static/downloads/3.2/>`_)
    - PMI (requires libpmi.so ``--with-slurm / --with-pmi1``)
    - PMIx (requires libpmix.so ``--with-pmix``)
 

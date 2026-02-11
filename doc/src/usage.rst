@@ -2,37 +2,14 @@
 Using MPC
 =========
 
-Sourcing MPC
-------------
-
-In order to start using MPC you have to first source it into your environment.
-If we consider *$PREFIX* as the prefix to your MPC installation, You can proceed like :
-
-.. code-block:: sh
-
-	# for any bash, zsh, dash shells
-	$ source $PREFIX/mpcvars.sh
-
-It will load in your current environment the whole MPC setup, impling a
-modification of the following :
-- __PATH__
-- __LD_LIBRARY_PATH__
-- __MANPATH__
-
-By setting the **PATH** variable, the following commands will then be accessible from the shell :
-
-- ``mpc_cc``: the compiler for C
-- ``mpc_cxx``: the compiler for C++
-- ``mpc_f77``: the compiler for F77
-- ``mprcun`` ``mpirun`` with MPC's extended semantic
-- ``mpc_status`` will provide the configuration information of this mpc instance.
-- ``mpc_print_config`` the configuration printer for MPC
-- Any mpi\* derivative from the commands above (``mpicc``, ``mpicxx``, ``mpif*``, ``mpirun``...)
+The usage of MPC is typically split into three steps:
+1. Sourcing the framework
+2. Compiling your application with MPC
+3. Running your application
 
 .. toctree::
    :maxdepth: 2
 
-   runtime/runtime_mpcrun
+   runtime/sourcing
    runtime/runtime_options
-   runtime/runtime_tips
    runtime/runtime_examples

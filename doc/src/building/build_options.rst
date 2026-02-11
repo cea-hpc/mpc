@@ -16,7 +16,7 @@ commands :
 
 In case you are building MPC offline you should place the external modules
 sources in the BUILD directory or in the $HOME/.mpc-deps. You can get all
-dependencies sources zipped archives with :code:``installmpc --download``. MPC
+dependencies sources zipped archives with ``installmpc --download``. MPC
 installed dependencies are the following :
 
 - openpa
@@ -29,8 +29,8 @@ installed dependencies are the following :
 
 
 MPC will look for pre-installed modules although you can specify paths for
-system modules. The option to specify a module path is :code:``--with-[module]=``.
-The option to disable a module is :code:``--disable-[module]``
+system modules. The option to specify a module path is ``--with-[module]=``.
+The option to disable a module is ``--disable-[module]``
 
 Additionally you can specify paths for :
 

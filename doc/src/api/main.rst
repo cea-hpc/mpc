@@ -17,7 +17,7 @@ Modules Documentation
    io
    launch/launch
    lowcomm/lowcomm
-   mpi
+   mpi/mpi
    openmp
    threads
    topology
@@ -26,4 +26,7 @@ Modules Documentation
 Code Documentation
 ------------------
 
-.. doxygenindex::
+.. toctree::
+   :maxdepth: 1
+
+   whole_index

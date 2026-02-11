@@ -15,7 +15,8 @@ Download, install and source the latest version:
    $ INSTALL_PREFIX=$PWD/INSTALL curl -k https://github.com/cea-hpc/mpc/archive/refs/tags/MPC_4.3.0.tar.gz
    $ tar xf MPC_4.3.0 && cd mpc
    $ mkdir BUILD && cd BUILD
-   $ ../installmpc --prefix=${INSTALL_PREFIX} source ${INSTALL_PREFIX}/mpcvars.sh
+   $ ../installmpc --prefix=${INSTALL_PREFIX}
+   $ source ${INSTALL_PREFIX}/mpcvars.sh
 
 
 -------------
