@@ -9,6 +9,10 @@
 #include <stdlib.h>
 #include <stdint.h>
 
+	/**
+	 * @defgroup MPC_Arch MPC_Arch Module API
+	 */
+
 #if defined(MPC_I686_ARCH) || defined(MPC_X86_64_ARCH)
 
 		/*****************************

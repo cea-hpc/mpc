@@ -5,6 +5,13 @@
 
 #include "mpc_conf_types.h"
 
+/**
+ * @defgroup MPC_Config MPC Configuration API
+ * @{
+ * Description of the MPC_Config API
+ * @}
+ */
+
 /***************
  * OUTPUT KIND *
  ***************/

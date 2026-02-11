@@ -10,6 +10,13 @@
 #include <mpio.h>
 #endif
 
+/**
+ * @defgroup MPC_Fortran MPC Fortran API
+ * @{
+ * Description of the MPC_Fortran Module API
+ * @}
+ */
+
 static inline char *char_fortran_to_c(char *buf, int size, char **free_ptr)
 {
 	char *   tmp;

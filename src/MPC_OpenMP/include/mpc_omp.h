@@ -52,6 +52,10 @@
 #include "omp.h"
 #include "omp_gomp_constants.h"
 
+/**
+ * @defgroup MPC_OpenMP MPC_OpenMP Module API
+ */
+
 /* OpenMP 2.5 API - For backward compatibility with old patched GCC */
 int mpc_omp_get_num_threads(void);
 int mpc_omp_get_thread_num(void);

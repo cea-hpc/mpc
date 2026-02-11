@@ -27,6 +27,11 @@
 #include <mpc_common_types.h>
 #include <mpc_lowcomm_group.h>
 
+/**
+ * @defgroup COMM_LIB CommLib API
+ * @ingroup MPC_MPI
+ */
+
 /************************************************************************/
 /* Per thread context                                                   */
 /************************************************************************/
