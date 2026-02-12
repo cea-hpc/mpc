@@ -3,10 +3,13 @@
 include:
   - local: '/.gitlab/ci/ci-disabled.yml'
     rules:
-      - if: '$CI_MERGE_REQUEST_LABELS =~ "/CI::Disabled/"'
+      - if: '$CI_MERGE_REQUEST_LABELS =~ "/CI::Disabled/" && $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH'
   - local: '/.gitlab/ci/ci.yml'
     rules:
-      - if: '$CI_MERGE_REQUEST_LABELS !~ "/CI::Disabled/"'
+      - if: '$CI_MERGE_REQUEST_LABELS !~ "/CI::Disabled/" && $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH'
+  - local: '/.gitlab/ci/documentation.yml'
+    rules:
+      - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
 
 default:
   # Pipeline should be canceled by newer push

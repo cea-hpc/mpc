@@ -1,0 +1,31 @@
+# Describe a pipeline to build and deploy the documentation
+# The pipeline is run after the main branch have been updated
+# The documentation is only generated and deploy for the current main branch
+---
+# Common variables and scripts
+include:
+  local: '/.gitlab/ci/global.yml'
+
+stages:
+  - Documentation
+
+workflow:
+  name: 'Build and Deploy documentation'
+
+Documentation:
+  stage: 'Documentation'
+  needs: []
+  before_script:
+    - !reference ['.load_pcvs', before_script]
+  script:
+    - cd ${CI_PROJECT_DIR}/doc && ./gen_doc -v
+  after_script:
+    - mv ${CI_PROJECT_DIR}/doc/build/sphinx/html public
+  pages: true
+
+# NOTE:
+# - We can separate building and deploying the documentation in two jobs
+#   It will allow us to build the doc in any pipeline we want while keeping the deployment for a specific event
+# - We can and maybe should add a documentation coverage job
+#   At least, it would report the state of the in-code documentation
+#   It may fail if the coverage goes lower meaning some changes haven't been documented
