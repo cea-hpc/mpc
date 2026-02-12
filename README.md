@@ -347,9 +347,7 @@ $ mpcrun --help
 
 <!-- > Then, we should in priority lead users to the deployed documentation -->
 
-> [!WARNING]
-> The documentation is not deployed for now,
-> It will be in a near future release
+The main documentation can be found [here](https://cea-hpc.github.io/mpc/)
 
 The documentation is composed of three main parts
 
