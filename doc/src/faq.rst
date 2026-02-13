@@ -38,7 +38,7 @@ To enable debug mode within MPC (and some of its dependencies), the
     This option enable debug mode for *autopriv*, *libfabric* & MPC. Debug only implies debug symbols a specific options has been made to enable debug 'messages'.
 
 .. note::
-    When privatisation is enabled (=default) a patched debugger is provided to make user-level threads available through GDB. To install it, please use the ``--enable-gdb`` option (experimental).
+    When privatisation is enabled (with ``--thread-based``) a patched debugger is provided to make user-level threads available through GDB. To install it, please use the ``--enable-gdb`` option (experimental).
 
 To avoid re-running the whole ``installmpc`` script, MPC provides a set of
 options to be given to the ``reconfigure`` script:

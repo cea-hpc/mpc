@@ -165,7 +165,7 @@ clang-tidy cannot found compile_commands.json
 
 ``clang-tidy`` requires a ``compile_commands.json`` file to provide diagnostics.
 To generate this file, you need ``bear``.
-The easiest way is to use the ``installmpc`` script with the ``--enable-lsp`` option to generate the compile_commands file.
+The easiest way is to use the ``installmpc`` script with the ``--enable-lsp`` option to generate the ``compile_commands.json`` file.
 
 False positive from typos
 '''''''''''''''''''''''''

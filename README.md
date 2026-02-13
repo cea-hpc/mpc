@@ -90,8 +90,10 @@ The most commonly used are
 
 - `--prefix` to specify the installation path
 - `--enable-lsp` to run *bear* and produce a `compile_commands.json` file
-- `--with-slurm` to activate the support of *SLURM* using *PMI*
+- `--with-slurm` to activate the support of *SLURM* using *PMIx*
+- `--with-hydra` to force *Hydra* support and deactivate *SLURM* support
 - `--process-mode` to deactivate the privatization features and remove the dependency on [MPC Compiler Additions]
+- `--thread-based` to activate the privatization features
 - `--enable-debug` to build in Debug mode
 - `--disable-<module|dep>` to disable certain module or dependency provided features
 - `--with-cuda` to enable CUDA support
