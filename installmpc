@@ -141,9 +141,22 @@ show_run_cmd()
 	fi
 }
 
+
+#Print a debug messages if the level of verbosity is 3 or higher
+#Args :
+# -$1 : Message to print
+debug()
+{
+	if [ $STEP_WRAPPER_VERBOSE -gt 2 ]; then
+		printf "${colGRAY}[debug] $1${colRESET}\n"
+	fi
+}
+
 info()
 {
-	printf "==>${colGRAY} $1${colRESET}\n"
+	if [ $STEP_WRAPPER_VERBOSE -gt 0 ]; then
+		printf "==>${colGRAY} $1${colRESET}\n"
+	fi
 }
 
 LAST_RESULT=""
@@ -205,7 +218,7 @@ check_for_commands()
 		if test "x$?" = "x0"; then
 			LIST_OF_FOUND_CMD="$LIST_OF_FOUND_CMD $c"
 		else
-			checking "locate '$c' command in PATH"
+			debug "locate '$c' command in PATH"
 			nok
 		fi
 	done
