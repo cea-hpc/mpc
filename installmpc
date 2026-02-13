@@ -160,12 +160,22 @@ info()
 }
 
 LAST_RESULT=""
+LOTS_OF_DOTS="................................................................."
 
-checking()
-{
+checking() {
 	LAST_RESULT=""
 	PENDING_LB="yes"
-	printf "==>${colMAGENTA} $1... ${colRESET}"
+
+	local msg="$1"
+	local msg_length=${#msg}
+	local dot_len
+
+	if [ $msg_length -le 63 ]; then
+		dot_len=$((66 - $msg_length))
+	else
+		dot_len=3
+	fi
+	printf "==>${colMAGENTA} %s%s ${colRESET}" "${msg:0:63}" "${LOTS_OF_DOTS:0:$dot_len}"
 }
 
 ok()
@@ -218,8 +228,7 @@ check_for_commands()
 		if test "x$?" = "x0"; then
 			LIST_OF_FOUND_CMD="$LIST_OF_FOUND_CMD $c"
 		else
-			debug "locate '$c' command in PATH"
-			nok
+			debug "locate '$c' command in PATH FAILED"
 		fi
 	done
 
@@ -1048,6 +1057,7 @@ build_configure_based_package()
 		checking "Installing $package-$version"
 		wrap_output make install
 		ok
+		printf "\n"
 	else
 		die "Could not locate ./configure in ${PKG_SOURCE_DIR}"
 	fi
@@ -1939,7 +1949,7 @@ propagate_build_env
 BUILD_CONF_PATH=${PROJECT_BUILD_DIR}/src/bin/mpc_build_env.sh
 
 if test -f "${BUILD_CONF_PATH}" ; then
-	checking "remove previous MPC configuration state"
+	checking "Remove previous MPC configuration state"
 	show_run_cmd "rm -fr $BUILD_CONF_PATH"
 	rm -fr "${BUILD_CONF_PATH}"
 	ok
@@ -1954,7 +1964,7 @@ MPC_CONFIGURE_OPTS="--prefix=${PREFIX} $MPCFRAMEWORK_BUILD_PARAMETERS"
 checking "Autogen MPC"
 
 wrap_output "$SCRIPTPATH/autogen.sh" $SCRIPTPATH
-printf "\n"
+ok
 
 #
 # Configure MPC
