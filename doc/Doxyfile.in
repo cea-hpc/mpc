@@ -1024,7 +1024,8 @@ EXCLUDE                = $(MPC_SOURCE_DIRECTORY)/mpcframework/MPC_Tests/ \
                          $(MPC_SOURCE_DIRECTORY)/packaging-dev/ \
                          $(MPC_SOURCE_DIRECTORY)/sctk_arch/ \
                          $(MPC_SOURCE_DIRECTORY)/spack_packages/ \
-                         $(MPC_SOURCE_DIRECTORY)/tools/
+                         $(MPC_SOURCE_DIRECTORY)/tools/ \
+                         $(MPC_SOURCE_DIRECTORY)/src/MPC_Fortran/src/pregenerated/
 
 # The EXCLUDE_SYMLINKS tag can be used to select whether or not files or
 # directories that are symbolic links (a Unix file system feature) are excluded
