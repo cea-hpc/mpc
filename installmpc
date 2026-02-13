@@ -190,7 +190,7 @@ notapplicable()
 #
 
 LIST_OF_FOUND_CMD=""
-COMMON_CMD="bear cmake spack patch cut ls pwd grep rm rev basename dirname make bzip2 gcc g++ ldd pkg-config mktemp getconf nproc lscpu wget curl"
+COMMON_CMD="bear cmake spack patch cut ls pwd grep rm rev basename dirname make bzip2 gcc g++ ldd pkg-config mktemp getconf nproc lscpu wget curl mpiexec.hydra srun"
 check_for_commands()
 {
 	# Check already done
@@ -1195,7 +1195,8 @@ You may track issued commands using the "-v" flag.
   --disable-lsp                           : Do not generate a compile_commands.json file (default)
 
 # Features
-  --with-slurm[=prefix]                   : Build MPC with PMI support (detect 1 and x)
+  --with-hydra                            : Build MPC with Hydra launcher support
+  --with-slurm[=prefix]                   : Build MPC with PMI support (detect 1 and x) (default)
   --with-pmi1[=prefix]                    : Build MPC with PMI1 support
   --with-pmix[=prefix]                    : Build MPC with PMIX support
   --thread-based                          : Build MPC in thread-based (multiple MPI task per UNIX process)
@@ -1328,6 +1329,10 @@ enable_debug()
 
 # Compile MPC in process-mode by default
 MPC_COMP_ADD_PREFIX="disabled"
+# Use Slurm as launcher by default
+ENABLE_SLURM="yes"
+HYDRA_PREFIX='disabled'
+
 #
 # Locate common tools ahead of time
 #
@@ -1338,11 +1343,18 @@ for arg in "$@"
 do
 	case "$arg" in
 		################# HYDRA #################
+		--with-hydra)
+			HYDRA_PREFIX="enabled"
+			ENABLE_SLURM="no"
+			;;
 		--with-hydra=*)
+			ENABLE_SLURM="no"
 			extractParamValue 'HYDRA_PREFIX' 'with-hydra' "$arg"
 			;;
 		--hydra=*)
+			ENABLE_SLURM="no"
 			extractAndAddPackageOption 'HYDRA_BUILD_PARAMETERS' 'hydra=' "$arg"
+			HYDRA_PREFIX="enabled"
 			;;
 		--disable-mpc-hydra|--disable-hydra)
 			HYDRA_PREFIX='disabled'
@@ -1522,37 +1534,27 @@ do
 			PMIX_PREFIX=""
 			extractParamValue 'PMIX_PREFIX' 'with-pmi1=' "$arg"
 			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} ${PMIX_PREFIX}"
-			# No need for hydra
-			HYDRA_PREFIX='disabled'
+			ENABLE_SLURM='no'
 			;;
 		--with-pmi1)
 			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --with-pmi1"
-			# No need for hydra
-			HYDRA_PREFIX='disabled'
+			ENABLE_SLURM='no'
 			;;
 		--with-pmix=*)
 			PMIX_PREFIX=""
 			extractParamValue 'PMIX_PREFIX' 'with-pmix=' "$arg"
 			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} ${PMIX_PREFIX}"
-			# No need for hydra
-			HYDRA_PREFIX='disabled'
+			ENABLE_SLURM='no'
 			;;
 		--with-pmix)
 			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --with-pmix"
-			# No need for hydra
-			HYDRA_PREFIX='disabled'
+			ENABLE_SLURM='no'
 			;;
 		--with-slurm=*)
 			SLURM_PREFIX=""
 			extractParamValue 'SLURM_PREFIX' 'with-slurm=' "$arg"
-			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} ${SLURM_PREFIX}"
-			# No need for hydra
-			HYDRA_PREFIX='disabled'
 			;;
 		--with-slurm)
-			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --with-slurm"
-			# No need for hydra
-			HYDRA_PREFIX='disabled'
 			;;
 		--disable-MPC_MPI|--lib-mode)
 			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --disable-mpi"
@@ -1766,6 +1768,24 @@ if test "x${DEP_FOUND}" = "xno"; then
 	# hwloc has bugs on inti when building with rocm at least from hwloc 2.7.0 to 2.9.0. the --without-rocm flag make build crash with
 	build_configure_based_package "hwloc" "$(package_version "hwloc")" "$HWLOC_BUILD_PARAMETERS"
 	HWLOC_PREFIX="${PREFIX}"
+fi
+
+# By default, we want to build with slurm support as it is the most spread launcher
+if [ "$ENABLE_SLURM" == "yes" ]; then
+	have_cmd "srun"
+
+	if [ "${HAVE_CMD}" == "no" ]; then
+		# If slurm is not available, default to hydra build and use
+		info "SLURM not found defaulting to Hydra"
+		HYDRA_PREFIX="enabled"
+		ENABLE_SLURM="no"
+	else
+		if [ -z ${SLURM_PREFIX} ]; then
+			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --with-slurm"
+		else
+			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} ${SLURM_PREFIX}"
+		fi
+	fi
 fi
 
 # We cannot use spack as the spack package uses an internal hwloc of previous version
