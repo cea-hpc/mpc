@@ -1198,7 +1198,8 @@ You may track issued commands using the "-v" flag.
   --with-slurm[=prefix]                   : Build MPC with PMI support (detect 1 and x)
   --with-pmi1[=prefix]                    : Build MPC with PMI1 support
   --with-pmix[=prefix]                    : Build MPC with PMIX support
-  --process-mode                          : Build MPC in process-mode (1 MPI process = 1 UNIX process)
+  --thread-based                          : Build MPC in thread-based (multiple MPI task per UNIX process)
+  --process-mode                          : Build MPC in process-mode (1 MPI process = 1 UNIX process) (default)
   --{enable,disable}-mpc-ft               : Activate/Deactivate checkpoint/restart support
   --{enable,disable}-color                : Disable colors in display
   --enable-debug                          : Enable maximum debug (symbols, messages)
@@ -1325,6 +1326,8 @@ enable_debug()
 	enable_src_fixes
 }
 
+# Compile MPC in process-mode by default
+MPC_COMP_ADD_PREFIX="disabled"
 #
 # Locate common tools ahead of time
 #
@@ -1376,17 +1379,22 @@ do
 			extractParamValue 'MPC_COMP_ADD_PREFIX' 'with-autopriv' "$arg"
 			;;
 		--mpc-comp=*)
+			MPC_COMP_ADD_PREFIX='enabled'
 			extractAndAddPackageOption 'MPC_COMP_ADD_BUILD_PARAMETERS' 'mpc-comp=' "$arg"
 			;;
 		--mpc-autopriv=*)
+			MPC_COMP_ADD_PREFIX='enabled'
 			extractAndAddPackageOption 'MPC_COMP_ADD_BUILD_PARAMETERS' 'mpc-autopriv=' "$arg"
 			;;
 		--autopriv=*)
+			MPC_COMP_ADD_PREFIX='enabled'
 			extractAndAddPackageOption 'MPC_COMP_ADD_BUILD_PARAMETERS' 'autopriv=' "$arg"
+			;;
+		--enable-mpc-gcc|--enable-mpc-comp|--enable-autopriv|--enable-mpc-autopriv|--thread-based|--enable-thread-base)
+			MPC_COMP_ADD_PREFIX='enabled'
 			;;
 		--disable-mpc-gcc|--disable-mpc-comp|--disable-autopriv|--disable-mpc-autopriv|--process-mode|--mpc-process-mode)
 			MPC_COMP_ADD_PREFIX='disabled'
-			add_process_mode_flag_to_mpc
 			;;
 		################# FORTRAN GCC ###############
 		--disable-mpc-fortran|--disable-fortran)
@@ -1880,6 +1888,10 @@ if test "x${DEP_FOUND}" = "xno"; then
 	fi
 	# Could not use spack now installing manually
 	build_configure_based_package "mpc-compiler-additions" "${VERSION}" "$MPC_COMP_ADD_BUILD_PARAMETERS $GCC_VERSION_ARG $AUTOPRIV_HWLOC_BUILD_PARAMETERS"
+fi
+
+if [ "${MPC_COMP_ADD_PREFIX}" == "disabled" ]; then
+	add_process_mode_flag_to_mpc
 fi
 
 
