@@ -107,12 +107,12 @@ Then, consider a script like this named `gdb.sh`:
 
 .. code-block:: sh
 
-	nodename="inti"
+   nodename="inti"
    nodeset="1000 10001 10003 10004"
    for i in $nodeset; do
-	   cat<<EOF > R$i target remote $nodename$i:8080 continue EOF
-		xterm -e gdb --command R$i &
-	done
+      cat <<EOF R$i target remote $nodename$i:8080 continue EOF
+      xterm -e gdb --command R$i &
+   done
 
 
 It will start an XTerm session for each process, each running on a separate

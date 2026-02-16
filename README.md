@@ -57,7 +57,8 @@ Other dependencies are automatically fetched by the `installmpc` helper script.
 
 2. Choose an installation directory.
 
-   > [!WARNING] Using the default `/usr/local/` will overwrite legacy headers
+   > [!WARNING]
+   > Using the default `/usr/local/` will overwrite legacy headers
 
    Create a build directory
 
@@ -72,7 +73,8 @@ Other dependencies are automatically fetched by the `installmpc` helper script.
    $ <path/to/mpc>/installmpc --prefix=<path/to/installation/directory>
    ```
 
-   > [!NOTE] Use the flag `-jX` to specify a parallel installation.
+   > [!NOTE]
+   > Use the flag `-jX` to specify a parallel installation.
    > `X` should be a number and is the total amount of processes launched by *Make*.
    > By default the `X` is the number of cores of the machine.
 
@@ -275,7 +277,8 @@ To launch a simple program with 2 process
 $ mpirun -n 2 <your/application>
 ```
 
-> [!IMPORTANT] MPC is not yet MPI 5.0 ABI compliant
+> [!IMPORTANT]
+> MPC is not yet MPI 5.0 ABI compliant,
 > Compiling and running a program with different MPI implementation is an undefined behavior
 >
 > Please make sure the program you try to run has been compiled using *MPC* compilers
@@ -335,7 +338,8 @@ For more information about the options to launch an application using MPC, pleas
 $ mpcrun --help
 ```
 
-> [!NOTE] This command also provides the list of available multithreading and network modes
+> [!NOTE]
+> This command also provides the list of available multithreading and network modes
 
 ## Documentation
 
@@ -343,8 +347,7 @@ $ mpcrun --help
 
 <!-- > Then, we should in priority lead users to the deployed documentation -->
 
-> [!WARNING] The documentation is not deployed for now
-> It will be in a near future release
+The main documentation can be found [here](https://cea-hpc.github.io/mpc/)
 
 The documentation is composed of three main parts
 
@@ -352,7 +355,8 @@ The documentation is composed of three main parts
 - **Contributor Guide**: Providing rules and tips on how to contribute and the developer tools used
 - **Code Documentation**: Providing code-level documentation though in-code Doxygen comments
 
-> [!CAUTION] Code documentation is under heavy work
+> [!CAUTION]
+> Code documentation is under heavy work
 > The information contained in it may be incomplete and/or inaccurate
 
 ### Build the documentation

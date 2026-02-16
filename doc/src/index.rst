@@ -165,21 +165,26 @@ Table of Contents
 
 .. toctree::
    :maxdepth: 2
-   :caption: Basics
+   :caption: User Guide
 
    start
    build
    usage
+   features
    faq
    issues
    changelog
 
 .. toctree::
-   :caption: MPC-specific
+   :caption: Contribution Guide
 
-   features/privatization
-   features/launching_options
    contribute/main
+
+.. toctree::
+   :caption: Developer Documentation
+   :maxdepth: 2
+
+   api/main
 
 .. toctree::
    :caption: Links

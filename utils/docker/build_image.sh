@@ -5,7 +5,7 @@ SRC="`dirname $SRC`"
 CUR=$PWD
 MPC_ENV="debian-stretch centos-7"
 MPC_PATH=$SRC/..
-MPC_VERSION=4.3.0
+MPC_VERSION=$($MPC_PATH/utils/get_version)
 
 function die()
 {

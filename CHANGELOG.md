@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file. The format 
 
 - **Chore**
   - Default branch to main (devel and master will not be updated)
+  - Refactor Documentation and deployment through GitHub pages
 - **LowComm**
   - Avoid warnings in CPP by changing header inclusion rules
   - Improve selection of the network devices to initialize

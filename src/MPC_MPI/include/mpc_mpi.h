@@ -36,6 +36,10 @@
 #endif
 
 /**
+ * @defgroup MPC_MPI MPC_MPI Module API
+ */
+
+/**
  * @brief This Macro Informs the MPI Code that it is running in MPC
  */
 #define MPC_MESSAGE_PASSING_INTERFACE 1

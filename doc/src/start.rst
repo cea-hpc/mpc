@@ -4,20 +4,6 @@ Getting started
 
 .. title:: Getting started
 
------
-TL;DR
------
-
-Download, install and source the latest version:
-
-.. code-block:: console
-
-   $ INSTALL_PREFIX=$PWD/INSTALL curl -k https://github.com/cea-hpc/mpc/archive/refs/tags/MPC_4.3.0.tar.gz
-   $ tar xf MPC_4.3.0 && cd mpc
-   $ mkdir BUILD && cd BUILD
-   $ ../installmpc --prefix=${INSTALL_PREFIX} source ${INSTALL_PREFIX}/mpcvars.sh
-
-
 -------------
 Prerequisites
 -------------
@@ -44,20 +30,21 @@ Get MPC Source code
 -------------------
 
 Two ways to retrieve MPC sources:
-.. FIXME: change the website - From a release (`release page <https://mpc.hpcframework.com/download>`_)
+
+.. TODO: change the website - From a release (https://mpc.hpcframework.com/download)
+
 - From a release (`release page <https://github.com/cea-hpc/mpc/releases/releases>`_)
+   .. parsed-literal::
+
+      # Get the last tarball
+      curl -k \https://github.com/cea-hpc/mpc/archive/refs/tags/MPC\_\ |version|\ .tar.gz
+      # Extract the tarball
+      tar xf MPC\_\ |version|\ .tar.gz
+
 - From the Git repository on `Github <https://github.com/cea-hpc/mpc>`_
+   .. code-block:: console
 
-.. code-block:: sh
-
-   # Get the last tarball
-   curl -k https://github.com/cea-hpc/mpc/archive/refs/tags/MPC_4.3.0.tar.gz
-   # Extract the tarball
-   tar xf MPC_4.3.0.tar.gz
-
-   # Or use git
-   git clone https://github.com/cea-hpc/mpc.git
-
+      $ git clone https://github.com/cea-hpc/mpc.git
 
 ------------
 Building MPC

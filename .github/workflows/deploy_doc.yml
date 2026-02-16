@@ -1,0 +1,29 @@
+name: 'Deploy Documentation'
+
+on: 'push'
+
+jobs:
+  doc:
+    name: 'Build Documentation'
+    runs-on: 'ubuntu-latest'
+    permissions:
+      contents: 'write'
+    steps:
+      - uses: 'actions/checkout@v4'
+        with:
+          persist-credentials: false
+      - name: 'Retrieve dependencies'
+        run: 'pip install -r doc/requirements.txt && sudo apt install doxygen'
+      - name: 'Build HTML'
+        run: 'cd doc && ./gen_doc'
+      - name: 'Upload artifacts'
+        uses: 'actions/upload-artifact@v4'
+        with:
+          name: 'html-docs'
+          path: 'doc/build/sphinx/html/'
+      - name: 'Deploy documentation'
+        uses: 'peaceiris/actions-gh-pages@v3'
+        if: 'githb.ref == "refs/heads/main"'
+        with:
+          github_token: '${{ secrets.GITHUB_TOKEN }}'
+          publish_dir: 'doc/build/sphinx/html'

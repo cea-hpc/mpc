@@ -22,49 +22,70 @@
 #   - JAEGER Julien julien.jaeger@cea.fr                               #
 #                                                                      #
 ########################################################################
-RED="`printf "\033[1;31m"`"
-GRE="`printf "\033[1;32m"`"
-DEF="`printf "\033[0;0m"`"
+RED="$(printf "\033[1;31m")"
+GRE="$(printf "\033[1;32m")"
+DEF="$(printf "\033[0;0m")"
 
-print_error()
-{
+verbose=0
+
+print_error() {
 	printf "${RED}ERROR: ${1}\n${DEF}"
 }
 
-safe_exec()
-{
-	text="${1}"; shift
+safe_exec() {
+	local text="${1}"
+	shift
 	comm="$@"
-	${comm}
-	if test "$?" != "0";
-	then
-		print_error "${comm} failed ! Abort"
+	printf "${text}..."
+
+	if [ $verbose -eq 1 ]; then
+		${comm}
+	else
+		${comm} 1>/dev/null 2>/dev/null
+	fi
+
+	if test "$?" != "0"; then
+		print_error "\r${comm} failed ! Abort"
 		exit 1
 	fi
-	printf "${GRE}${text} : OK${DEF}\n"
+	printf "\r${GRE}${text} : OK${DEF}\n"
 
 }
 
-CURRENT_PATH="`dirname $0`"
+if [ $# -gt 1 ]; then
+	print_error "Usage: $0 [-v]"
+	exit 2
+elif [ $# -eq 1 ]; then
+	if [ $1 == "-v" ]; then
+		verbose=1
+	else
+		print_error "Usage: $0 [-v]"
+		exit 2
+	fi
+fi
 
+CURRENT_PATH="$(dirname $0)"
+
+MPC_DOC_DIRECTORY="${CURRENT_PATH}/"
 MPC_SOURCE_DIRECTORY="${CURRENT_PATH}/../"
 
+export MPC_DOC_DIRECTORY
 export MPC_SOURCE_DIRECTORY
 
-safe_exec "Create buildir" mkdir -p ${MPC_SOURCE_DIRECTORY}/doc/build/doxygen ${MPC_SOURCE_DIRECTORY}/doc/build/sphinx
-if test -z "`which doxygen 2> /dev/null`";
-then
+safe_exec "Create buildir" mkdir -p ${MPC_DOC_DIRECTORY}build/doxygen ${MPC_DOC_DIRECTORY}build/sphinx
+if test -z "$(which doxygen 2>/dev/null)"; then
 	print_error "Skipping Doxygen: not found IN PATH"
 	print_error "Please install it and re-run."
+	exit 10
 else
-	safe_exec "Generating doxygen" doxygen ${MPC_SOURCE_DIRECTORY}/doc/Doxyfile.in
+	safe_exec "Generating doxygen" doxygen ${MPC_DOC_DIRECTORY}Doxyfile.in
 fi
 
-if test -z "`which sphinx-build 2> /dev/null`";
-then
+if test -z "$(which sphinx-build 2>/dev/null)"; then
 	print_error "Skipping RTD-compliant Sphinx Documentation: sphinx-build not found in PATH"
 	print_error "Please install it and re-run."
+	exit 11
 else
-	safe_exec "Generating RTD-compliant Sphinx" make -f ${MPC_SOURCE_DIRECTORY}/doc/Makefile.sphinx html
+	safe_exec "Generating RTD-compliant Sphinx" make -f ${MPC_DOC_DIRECTORY}Makefile.sphinx html
 fi
-echo "Documentation generated under ${MPC_SOURCE_DIRECTORY}/doc/build/{doxygen,sphinx}"
+printf "${GRE}Documentation generated under ${MPC_DOC_DIRECTORY}build/sphinx${DEF}\n"

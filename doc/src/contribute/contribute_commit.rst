@@ -69,6 +69,19 @@ Installation of the tool is a simple pip installation
 
 Then, the setup is a simple command launch in the MPC root directory
 
+.. note::
+
+   Alternatively, you can use `prek`_ which is a Rust rewrite of pre-commit and is fully compatible
+
+   .. code-block:: sh
+
+      # using pip
+      $ pip install prek
+      # using cargo
+      $ cargo install --locked prek
+
+.. _prek: https://prek.j178.dev/
+
 .. code-block:: console
 
    $ pre-commit install
