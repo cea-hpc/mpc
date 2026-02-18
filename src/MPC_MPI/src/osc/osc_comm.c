@@ -83,7 +83,12 @@ static int _mpc_osc_request_send_complete(int status, void *request, size_t leng
 {
 	mpc_lowcomm_request_t *req = (mpc_lowcomm_request_t *)request;
 
-	assert(req->completion_flag != MPC_LOWCOMM_MESSAGE_DONE);
+	// The message may have been completed beforehand on certain circumstances (zero length RMA op...)
+	if (req->completion_flag == MPC_LOWCOMM_MESSAGE_DONE)
+	{
+		return MPC_LOWCOMM_SUCCESS;
+	}
+
 	if (status != MPC_LOWCOMM_SUCCESS)
 	{
 		mpc_common_debug_fatal("COMM: request failed.");
