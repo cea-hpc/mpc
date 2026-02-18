@@ -6,6 +6,9 @@ All notable changes to this project will be documented in this file. The format 
 
 ### Added
 
+- **LowComm**
+  - Support for floating point numbers in atomic operations
+
 ### Changed
 
 - **Build**
@@ -34,6 +37,7 @@ All notable changes to this project will be documented in this file. The format 
   - Multinic devices initialization
   - Interface capabilities initialization
   - Deadlock in backend releasing
+  - Deadlock in flush operation with no pending communications
 - **Fortran**
   - Non standard code generation
 - Memory related potential bugs in MPI, Low Comm, Common and Config
