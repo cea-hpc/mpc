@@ -328,8 +328,7 @@ static int mpc_osc_get_remote_memory(mpc_osc_module_t *module, lcp_ep_h ep,
 
 	if (win_flavor == MPI_WIN_FLAVOR_DYNAMIC)
 	{
-		rc = get_dynamic_win_info(ep, task, remote_addr, module, target,
-			&rmem);
+		rc = get_dynamic_win_info(ep, task, remote_addr, module, target, &rmem);
 		if (rc != MPC_LOWCOMM_SUCCESS)
 		{
 			goto err;
@@ -812,17 +811,22 @@ int mpc_osc_rput(const void *origin_addr,
 
 	*request = MPI_REQUEST_NULL;
 
-	MPI_internal_request_t *req = mpc_mpi_alloc_request();
+	MPI_internal_request_t *req = *request = mpc_mpi_alloc_request();
 
-	status = mpc_osc_put_common(origin_addr, origin_count, origin_dt, target,
-		target_disp, target_count, target_dt, win,
-		req);
-	if (LCP_PTR_IS_ERR(status))
+	// We do not need to do the comm if target == MPC_PROC_NULL but we have to complete the request
+	if (target != MPC_PROC_NULL)
 	{
-		rc = MPC_LOWCOMM_ERROR;
+		status = mpc_osc_put_common(origin_addr, origin_count, origin_dt, target,
+			target_disp, target_count, target_dt, win, req);
+		if (LCP_PTR_IS_ERR(status))
+		{
+			rc = MPC_LOWCOMM_ERROR;
+		}
 	}
-
-	*request = req;
+	else
+	{
+		_mpc_osc_request_send_complete(MPC_LOWCOMM_SUCCESS, _mpc_cl_get_lowcomm_request(request), origin_count);
+	}
 
 	return rc;
 }
@@ -858,17 +862,23 @@ int mpc_osc_rget(void *origin_addr, int origin_count,
 
 	*request = MPI_REQUEST_NULL;
 
-	MPI_internal_request_t *req = mpc_mpi_alloc_request();
+	MPI_internal_request_t *req = *request = mpc_mpi_alloc_request();
 
-	status = mpc_osc_get_common(origin_addr, origin_count, origin_dt, target,
-		target_disp, target_count, target_dt, win,
-		req);
-	if (LCP_PTR_IS_ERR(status))
+	// We do not need to do the comm if target == MPC_PROC_NULL but we have to complete the request
+	if (target != MPC_PROC_NULL)
 	{
-		rc = MPC_LOWCOMM_ERROR;
+		status = mpc_osc_get_common(origin_addr, origin_count, origin_dt, target,
+			target_disp, target_count, target_dt, win,
+			req);
+		if (LCP_PTR_IS_ERR(status))
+		{
+			rc = MPC_LOWCOMM_ERROR;
+		}
 	}
-
-	*request = req;
+	else
+	{
+		_mpc_osc_request_send_complete(MPC_LOWCOMM_SUCCESS, _mpc_cl_get_lowcomm_request(request), origin_count);
+	}
 
 	return rc;
 }
@@ -1053,18 +1063,21 @@ int mpc_osc_raccumulate(const void *origin_addr, int origin_count,
                         mpc_win_t *win, MPI_Request *request)
 {
 	int rc = MPI_SUCCESS;
-	MPI_internal_request_t *req;
 
-	req = mpc_mpi_alloc_request();
+	*request = mpc_mpi_alloc_request();
 
-	rc = mpc_osc_accumulate(origin_addr, origin_count, origin_dt, target,
-		target_disp, target_count, target_dt, op, win);
-	if (rc != MPC_LOWCOMM_SUCCESS)
+	// We do not need to do the comm if target == MPC_PROC_NULL but we still need to complete the request
+	if (target != MPC_PROC_NULL)
 	{
-		goto err;
+		rc = mpc_osc_accumulate(origin_addr, origin_count, origin_dt, target,
+			target_disp, target_count, target_dt, op, win);
+		if (rc != MPC_LOWCOMM_SUCCESS)
+		{
+			goto err;
+		}
 	}
+	_mpc_osc_request_send_complete(MPC_LOWCOMM_SUCCESS, _mpc_cl_get_lowcomm_request(*request), origin_count);
 
-	*request = req;
 err:
 	return rc;
 }
@@ -1250,20 +1263,22 @@ int mpc_osc_rget_accumulate(const void *origin_addr, int origin_count,
 {
 	int rc = MPI_SUCCESS;
 
-	MPI_internal_request_t *mpi_req = *request = mpc_lowcomm_request_alloc();
+	*request = mpc_mpi_alloc_request();
 
-	rc = mpc_osc_get_accumulate(origin_addr, origin_count, origin_datatype,
-		result_addr, result_count, result_datatype,
-		target, target_disp, target_count,
-		target_datatype, op, win);
-	if (rc != MPC_LOWCOMM_SUCCESS)
+	// We do not need to do the comm if target == MPC_PROC_NULL but we still need to complete the request
+	if (target != MPC_PROC_NULL)
 	{
-		goto err;
+		rc = mpc_osc_get_accumulate(origin_addr, origin_count, origin_datatype,
+			result_addr, result_count, result_datatype,
+			target, target_disp, target_count,
+			target_datatype, op, win);
+		if (rc != MPC_LOWCOMM_SUCCESS)
+		{
+			goto err;
+		}
 	}
 
-	_mpc_osc_request_send_complete(MPC_LOWCOMM_SUCCESS,
-		_mpc_cl_get_lowcomm_request(mpi_req),
-		origin_count);
+	_mpc_osc_request_send_complete(MPC_LOWCOMM_SUCCESS, _mpc_cl_get_lowcomm_request(*request), origin_count);
 
 err:
 	return rc;

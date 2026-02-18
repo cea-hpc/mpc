@@ -16229,12 +16229,7 @@ int PMPI_Rput(const void *origin_addr, int origin_count,
               MPI_Aint target_disp, int target_count,
               MPI_Datatype target_datatype, MPI_Win win, MPI_Request *request)
 {
-	if (target_rank == MPI_PROC_NULL)
-	{
-		*request = mpc_mpi_request_empty;
-		return MPI_SUCCESS;
-	}
-
+	// We will handle the target == MPI_PROC_NULL below to have a valid request
 	return mpc_osc_rput(origin_addr, origin_count, origin_datatype,
 		target_rank, target_disp, target_count,
 		target_datatype, win, request);
@@ -16244,12 +16239,7 @@ int PMPI_Rget(void *origin_addr, int origin_count, MPI_Datatype origin_datatype,
               int target_rank, MPI_Aint target_disp, int target_count,
               MPI_Datatype target_datatype, MPI_Win win, MPI_Request *request)
 {
-	if (target_rank == MPI_PROC_NULL)
-	{
-		*request = mpc_mpi_request_empty;
-		return MPI_SUCCESS;
-	}
-
+	// We will handle the target == MPI_PROC_NULL below to have a valid request
 	return mpc_osc_rget(origin_addr, origin_count, origin_datatype,
 		target_rank, target_disp, target_count,
 		target_datatype, win, request);
@@ -16407,12 +16397,7 @@ int PMPI_Raccumulate(const void *origin_addr, int origin_count,
                      MPI_Datatype target_datatype, MPI_Op op, MPI_Win win,
                      MPI_Request *request)
 {
-	if (target_rank == MPI_PROC_NULL)
-	{
-		*request = mpc_mpi_request_empty;
-		return MPI_SUCCESS;
-	}
-
+	// We will handle the target == MPI_PROC_NULL below to have a valid request
 	return mpc_osc_raccumulate(origin_addr, origin_count, origin_datatype,
 		target_rank, target_disp, target_count,
 		target_datatype, op, win, request);
@@ -16443,12 +16428,7 @@ int PMPI_Rget_accumulate(const void *origin_addr, int origin_count,
                          int target_count, MPI_Datatype target_datatype,
                          MPI_Op op, MPI_Win win, MPI_Request *request)
 {
-	if (target_rank == MPI_PROC_NULL)
-	{
-		*request = mpc_mpi_request_empty;
-		return MPI_SUCCESS;
-	}
-
+	// We will handle the target == MPI_PROC_NULL below to have a valid request
 	return mpc_osc_rget_accumulate(origin_addr, origin_count,
 		origin_datatype, result_addr,
 		result_count, result_datatype,
