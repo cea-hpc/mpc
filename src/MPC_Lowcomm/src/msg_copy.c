@@ -22,7 +22,7 @@
 
 #include "comm.h"
 #include "mpc_common_debug.h"
-#include "msg_cpy.h"
+#include "msg_copy.h"
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -32,7 +32,7 @@
 #include <sys/uio.h>
 
 struct iovec *
-_mpc_lowcomm_msg_cpy_to_iovec(mpc_lowcomm_ptp_message_t *msg, int *iovlen, size_t max_size)
+_mpc_lowcomm_msg_copy_to_iovec(mpc_lowcomm_ptp_message_t *msg, int *iovlen, size_t max_size)
 {
 	struct iovec *result = NULL;
 
@@ -151,8 +151,8 @@ _mpc_lowcomm_msg_cpy_to_iovec(mpc_lowcomm_ptp_message_t *msg, int *iovlen, size_
 	return result;
 }
 
-void _mpc_lowcomm_msg_cpy_from_iovec(mpc_lowcomm_ptp_message_content_to_copy_t *tmp,
-                                     _mpc_lowcomm_msg_cpy_iovec_t driver_func)
+void _mpc_lowcomm_msg_copy_from_iovec(mpc_lowcomm_ptp_message_content_to_copy_t *tmp,
+                                      _mpc_lowcomm_msg_copy_iovec_t driver_func)
 {
 	int iovlen;
 	mpc_lowcomm_ptp_message_t *send;
@@ -170,14 +170,14 @@ void _mpc_lowcomm_msg_cpy_from_iovec(mpc_lowcomm_ptp_message_content_to_copy_t *
 
 	if (SCTK_MSG_SIZE(send) > 0)
 	{
-		result = _mpc_lowcomm_msg_cpy_to_iovec(recv, &iovlen, SCTK_MSG_SIZE(recv));
+		result = _mpc_lowcomm_msg_copy_to_iovec(recv, &iovlen, SCTK_MSG_SIZE(recv));
 		driver_func(result, iovlen, send);
 		sctk_free(result);
 	}
 	_mpc_comm_ptp_message_commit_request(send, recv);
 }
 
-void _mpc_lowcomm_msg_cpy_from_fd(mpc_lowcomm_ptp_message_t *msg, int fd)
+void _mpc_lowcomm_msg_copy_from_fd(mpc_lowcomm_ptp_message_t *msg, int fd)
 {
 	TODO("Deal with partial reception")
 
@@ -263,7 +263,7 @@ void _mpc_lowcomm_msg_cpy_from_fd(mpc_lowcomm_ptp_message_t *msg, int fd)
 	}
 }
 
-void _mpc_lowcomm_msg_cpy_in_fd(mpc_lowcomm_ptp_message_t *msg, int fd)
+void _mpc_lowcomm_msg_copy_in_fd(mpc_lowcomm_ptp_message_t *msg, int fd)
 {
 	switch (msg->tail.message_type)
 	{
@@ -375,7 +375,7 @@ void sctk_get_iovec_in_buffer(mpc_lowcomm_ptp_message_t *msg, struct iovec **iov
 	}
 }
 
-void _mpc_lowcomm_msg_cpy_in_buffer(mpc_lowcomm_ptp_message_t *msg, char *buffer)
+void _mpc_lowcomm_msg_copy_in_buffer(mpc_lowcomm_ptp_message_t *msg, char *buffer)
 {
 	switch (msg->tail.message_type)
 	{
@@ -464,12 +464,12 @@ void *sctk_net_if_one_msg_in_buffer(__UNUSED__ mpc_lowcomm_ptp_message_t *msg)
 	return NULL;
 }
 
-size_t _mpc_lowcomm_msg_cpy_size(mpc_lowcomm_ptp_message_t *msg)
+size_t _mpc_lowcomm_msg_copy_size(mpc_lowcomm_ptp_message_t *msg)
 {
 	return SCTK_MSG_SIZE(msg);
 }
 
-int _mpc_lowcomm_msg_cpy_frag(
+int _mpc_lowcomm_msg_copy_frag(
 	const mpc_lowcomm_ptp_message_t *msg,
 	char *buffer,
 	const size_t curr_copy,
@@ -564,7 +564,7 @@ int _mpc_lowcomm_msg_cpy_frag(
 	return 0;
 }
 
-void _mpc_lowcomm_msg_cpy(mpc_lowcomm_ptp_message_content_to_copy_t *tmp)
+void _mpc_lowcomm_msg_copy(mpc_lowcomm_ptp_message_content_to_copy_t *tmp)
 {
 	mpc_lowcomm_ptp_message_t *send;
 	mpc_lowcomm_ptp_message_t *recv;
@@ -718,7 +718,7 @@ void _mpc_lowcomm_msg_cpy(mpc_lowcomm_ptp_message_content_to_copy_t *tmp)
 	}
 }
 
-void _mpc_lowcomm_msg_cpy_from_buffer(char *body, mpc_lowcomm_ptp_message_content_to_copy_t *tmp, char free_headers)
+void _mpc_lowcomm_msg_copy_from_buffer(char *body, mpc_lowcomm_ptp_message_content_to_copy_t *tmp, char free_headers)
 {
 	mpc_lowcomm_ptp_message_t *send;
 	mpc_lowcomm_ptp_message_t *recv;

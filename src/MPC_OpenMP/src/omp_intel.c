@@ -3602,8 +3602,8 @@ int __kmp_default_tp_capacity()
 	return nth;
 }
 
-void __kmpc_copyprivate(__UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 global_tid, __UNUSED__ size_t cpy_size,
-                        void *cpy_data, void (*cpy_func)(void *, void *),
+void __kmpc_copyprivate(__UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 global_tid, __UNUSED__ size_t copy_size,
+                        void *copy_data, void (*copy_func)(void *, void *),
                         kmp_int32 didit)
 {
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
@@ -3624,14 +3624,14 @@ void __kmpc_copyprivate(__UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 global_tid
 
 	if (didit)
 	{
-		*data_ptr = cpy_data;
+		*data_ptr = copy_data;
 	}
 
 	mpc_omp_barrier(ompt_sync_region_barrier_implementation);
 
 	if (!didit)
 	{
-		(*cpy_func)(cpy_data, *data_ptr);
+		(*copy_func)(copy_data, *data_ptr);
 	}
 
 	mpc_omp_barrier(ompt_sync_region_barrier_implementation);

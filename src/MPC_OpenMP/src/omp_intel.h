@@ -225,7 +225,7 @@ struct private_common *kmp_threadprivate_insert(kmp_int32, void *, void *, size_
 void *__kmpc_threadprivate(ident_t *, kmp_int32, void *, size_t);
 kmp_int32 __kmp_default_tp_capacity(void);
 
-void  __kmpc_copyprivate(ident_t *, kmp_int32, size_t, void *, void (*cpy_func)(void *, void *), kmp_int32);
+void  __kmpc_copyprivate(ident_t *, kmp_int32, size_t, void *, void (*copy_func)(void *, void *), kmp_int32);
 void *__kmpc_threadprivate_cached(ident_t *, kmp_int32, void *, size_t, void ***);
 void  __kmpc_threadprivate_register(ident_t *, void *, kmpc_ctor, kmpc_cctor, kmpc_dtor);
 void  __kmpc_threadprivate_register_vec(ident_t *, void *, kmpc_ctor_vec, kmpc_cctor_vec, kmpc_dtor_vec, size_t);

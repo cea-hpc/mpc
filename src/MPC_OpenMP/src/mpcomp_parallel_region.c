@@ -125,7 +125,7 @@ _mpc_omp_internal_begin_parallel_region(mpc_omp_parallel_region_t *info, const u
 		instance_info->icvs.active_levels_var = t->info.icvs.active_levels_var + 1;
 	}
 
-	_mpc_omp_loop_gen_loop_infos_cpy(&(info->loop_infos), &(instance_info->loop_infos));
+	_mpc_omp_loop_gen_loop_infos_copy(&(info->loop_infos), &(instance_info->loop_infos));
 	instance_info->nb_sections = info->nb_sections;
 
 	instance->team->depth = t->instance->team->depth + 1;

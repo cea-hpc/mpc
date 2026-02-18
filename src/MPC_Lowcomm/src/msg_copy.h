@@ -32,31 +32,31 @@
 
 /* IOVEC NET FUNCS */
 /* Copy function for net driver copy */
-typedef void (*_mpc_lowcomm_msg_cpy_iovec_t)(struct iovec *, int, mpc_lowcomm_ptp_message_t *);
+typedef void (*_mpc_lowcomm_msg_copy_iovec_t)(struct iovec *, int, mpc_lowcomm_ptp_message_t *);
 /* Convert sctk_thread_ptp_msg_t to struct iovec */
-struct iovec *_mpc_lowcomm_msg_cpy_to_iovec(mpc_lowcomm_ptp_message_t *, int *, size_t);
+struct iovec *_mpc_lowcomm_msg_copy_to_iovec(mpc_lowcomm_ptp_message_t *, int *, size_t);
 
 /* sctk_net_copy for iovec */
-void _mpc_lowcomm_msg_cpy_from_iovec(mpc_lowcomm_ptp_message_content_to_copy_t *, _mpc_lowcomm_msg_cpy_iovec_t);
+void _mpc_lowcomm_msg_copy_from_iovec(mpc_lowcomm_ptp_message_content_to_copy_t *, _mpc_lowcomm_msg_copy_iovec_t);
 
-void _mpc_lowcomm_msg_cpy_in_buffer(mpc_lowcomm_ptp_message_t *msg, char *buffer);
-void _mpc_lowcomm_msg_cpy_from_buffer(char *body, mpc_lowcomm_ptp_message_content_to_copy_t *tmp, char free_headers);
+void _mpc_lowcomm_msg_copy_in_buffer(mpc_lowcomm_ptp_message_t *msg, char *buffer);
+void _mpc_lowcomm_msg_copy_from_buffer(char *body, mpc_lowcomm_ptp_message_content_to_copy_t *tmp, char free_headers);
 
 void mpc_lowcomm_request_pack(void *request, void *buffer);
 void mpc_lowcomm_request_unpack(void *request, void *buffer);
 
-size_t _mpc_lowcomm_msg_cpy_size(mpc_lowcomm_ptp_message_t *msg);
+size_t _mpc_lowcomm_msg_copy_size(mpc_lowcomm_ptp_message_t *msg);
 
-int _mpc_lowcomm_msg_cpy_frag(const mpc_lowcomm_ptp_message_t *msg,
-                              char *buffer,
-                              const size_t curr_copy,
-                              const size_t max_copy);
+int _mpc_lowcomm_msg_copy_frag(const mpc_lowcomm_ptp_message_t *msg,
+                               char *buffer,
+                               const size_t curr_copy,
+                               const size_t max_copy);
 
 
-void _mpc_lowcomm_msg_cpy(mpc_lowcomm_ptp_message_content_to_copy_t *tmp);
+void _mpc_lowcomm_msg_copy(mpc_lowcomm_ptp_message_content_to_copy_t *tmp);
 
-void _mpc_lowcomm_msg_cpy_in_fd(mpc_lowcomm_ptp_message_t *msg, int fd);
-void _mpc_lowcomm_msg_cpy_from_fd(mpc_lowcomm_ptp_message_t *msg, int fd);
+void _mpc_lowcomm_msg_copy_in_fd(mpc_lowcomm_ptp_message_t *msg, int fd);
+void _mpc_lowcomm_msg_copy_from_fd(mpc_lowcomm_ptp_message_t *msg, int fd);
 
 
 #ifdef __cplusplus
