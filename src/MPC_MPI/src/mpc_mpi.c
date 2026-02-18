@@ -16090,7 +16090,13 @@ int PMPI_Win_set_info(MPI_Win win, MPI_Info info)
 		return MPI_ERR_ARG;
 	}
 
-	win->info = info;
+	if (win->info != MPI_INFO_NULL)
+	{
+		PMPI_Info_free(&win->info);
+	}
+
+	// The created info object may be released before the Window: the handle must stay valid
+	PMPI_Info_dup(info, &win->info);
 
 	return MPI_SUCCESS;
 }
