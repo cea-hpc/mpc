@@ -34,6 +34,7 @@
 #include "osc_module.h"
 
 #include <sctk_alloc.h>
+#include <mpc_common_progress.h>
 
 static uint64_t one      = 1;
 static uint64_t minusone = -1;
@@ -347,6 +348,11 @@ int mpc_osc_sync(mpc_win_t *win)
 	mpc_osc_module_t *module = &win->win_module;
 	lcp_task_h        task;
 
+	// NOTE: whenever an interface is used but does not support RMA and/or
+	//       atomic operation. It is needed to progress the communication.
+	//       The solution is to have a progress thread
+	mpc_common_progress();
+
 	if (module->epoch.access != PASSIVE_EPOCH
 	    && module->epoch.access != PASSIVE_ALL_EPOCH)
 	{
@@ -356,10 +362,6 @@ int mpc_osc_sync(mpc_win_t *win)
 	task = lcp_context_task_get(module->ctx, mpc_common_get_task_rank());
 
 	rc = mpc_osc_perform_flush_op(module, task, NULL, module->lkey_data);
-
-	// FIXME: whenever an interface is used but does not support RMA and/or
-	//       atomic operation. It is needed to progress the communication.
-	lcp_progress(module->mngr);
 
 	return rc;
 }
@@ -371,6 +373,11 @@ int mpc_osc_flush(int target, mpc_win_t *win)
 	lcp_ep_h          ep;
 	lcp_task_h        task = NULL;
 
+	// NOTE: whenever an interface is used but does not support RMA and/or
+	//       atomic operation. It is needed to progress the communication.
+	//       The solution is to have a progress thread
+	mpc_common_progress();
+
 	if (module->epoch.access != PASSIVE_EPOCH
 	    && module->epoch.access != PASSIVE_ALL_EPOCH)
 	{
@@ -381,10 +388,6 @@ int mpc_osc_flush(int target, mpc_win_t *win)
 	mpc_osc_get_comm_info(module, target, win->comm, &ep);
 
 	rc = mpc_osc_perform_flush_op(module, task, ep, NULL);
-
-	// FIXME: whenever an interface is used but does not support RMA and/or
-	//       atomic operation. It is needed to progress the communication.
-	lcp_progress(module->mngr);
 
 	return rc;
 }

@@ -26,6 +26,7 @@
 #include "mpc_mpi_internal.h"
 #include "osc_module.h"
 #include <lcp.h>
+#include <mpc_common_progress.h>
 
 int mpc_osc_perform_atomic_op(mpc_osc_module_t *mod, lcp_ep_h ep,
                               lcp_task_h task, uint64_t value, lcp_atomic_dt_t atomic_datatype,
@@ -62,7 +63,7 @@ int mpc_osc_perform_atomic_op(mpc_osc_module_t *mod, lcp_ep_h ep,
 
 	while (lcp_request_check_status(req) != MPC_LOWCOMM_SUCCESS)
 	{
-		rc = lcp_progress(mod->mngr);
+		rc = mpc_common_progress();
 	}
 
 	lcp_request_free(req);
@@ -102,7 +103,7 @@ int mpc_osc_perform_flush_op(mpc_osc_module_t *mod, lcp_task_h task, lcp_ep_h ep
 
 	while (lcp_request_check_status(req) != MPC_LOWCOMM_SUCCESS)
 	{
-		rc = lcp_progress(mod->mngr);
+		rc = mpc_common_progress();
 		if (rc != MPC_LOWCOMM_SUCCESS)
 		{
 			goto err;
@@ -160,7 +161,7 @@ int mpc_osc_start_exclusive(mpc_osc_module_t *module, lcp_task_h task,
 		{
 			/* Reset lock value. */
 			lock_state = OSC_LOCK_UNLOCK;
-			rc         = lcp_progress(module->mngr);
+			rc         = mpc_common_progress();
 			if (rc != MPC_LOWCOMM_SUCCESS)
 			{
 				goto err;

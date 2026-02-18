@@ -31,6 +31,7 @@
 #include <mpitypes.h>
 #include "mpc_mpi_internal.h"
 #include "comm_lib.h"
+#include <mpc_common_progress.h>
 
 /** Translation table from MPI to LCP atomic datatypes */
 static const lcp_atomic_dt_t lcp_atomic_dt_table[] =
@@ -182,7 +183,7 @@ static int start_atomic_lock(mpc_osc_module_t *module, lcp_ep_h ep,
 			/* Reset compare value. */
 			lock_state = 0;
 
-			rc = lcp_progress(module->mngr);
+			rc = mpc_common_progress();
 			if (rc != MPC_LOWCOMM_SUCCESS)
 			{
 				goto err;
