@@ -69,6 +69,9 @@ typedef struct lcp_atomic_reply
 	lcp_atomic_reply_data_t result;   /**< Fetched data */
 } lcp_atomic_reply_t;
 
+/** Lock used for the fallback when atomic operation is not available */
+mpc_common_spinlock_t lcp_atomic_global_lock = MPC_COMMON_SPINLOCK_INITIALIZER;
+
 /**
  * @brief Packs a software atomic operation into an atomic header
  *
@@ -289,43 +292,58 @@ static int lcp_atomic_handler(void *arg, void *data, size_t length, unsigned fla
 			case LCP_ATOMIC_DT_DOUBLE:
 				reply.result.f64 = atomic_fetch_add((_Atomic double *)hdr->remote_addr, value.f64);
 				break;
+#else
+			case LCP_ATOMIC_DT_FLOAT:
+				mpc_common_spinlock_lock(&lcp_atomic_global_lock);
+				reply.result.f32 = *(volatile float *)hdr->remote_addr;
+				*(volatile float *)hdr->remote_addr += value.f32;
+				mpc_common_spinlock_unlock(&lcp_atomic_global_lock);
+				break;
+
+			case LCP_ATOMIC_DT_DOUBLE:
+				mpc_common_spinlock_lock(&lcp_atomic_global_lock);
+				reply.result.f64 = *(volatile float *)hdr->remote_addr;
+				*(volatile float *)hdr->remote_addr += value.f64;
+				mpc_common_spinlock_unlock(&lcp_atomic_global_lock);
+				break;
 #endif
 
-		case LCP_ATOMIC_DT_INT8:
-			reply.result.i8 = atomic_fetch_add((_Atomic int8_t *)hdr->remote_addr, value.i8);
-			break;
+			case LCP_ATOMIC_DT_INT8:
+				reply.result.i8 = atomic_fetch_add((_Atomic int8_t *)hdr->remote_addr, value.i8);
+				break;
 
-		case LCP_ATOMIC_DT_INT16:
-			reply.result.i16 = atomic_fetch_add((_Atomic int16_t *)hdr->remote_addr, value.i16);
-			break;
+			case LCP_ATOMIC_DT_INT16:
+				reply.result.i16 = atomic_fetch_add((_Atomic int16_t *)hdr->remote_addr, value.i16);
+				break;
 
-		case LCP_ATOMIC_DT_INT32:
-			reply.result.i32 = atomic_fetch_add((_Atomic int32_t *)hdr->remote_addr, value.i32);
-			break;
+			case LCP_ATOMIC_DT_INT32:
+				reply.result.i32 = atomic_fetch_add((_Atomic int32_t *)hdr->remote_addr, value.i32);
+				break;
 
-		case LCP_ATOMIC_DT_INT64:
-			reply.result.i64 = atomic_fetch_add((_Atomic int64_t *)hdr->remote_addr, value.i64);
-			break;
+			case LCP_ATOMIC_DT_INT64:
+				reply.result.i64 = atomic_fetch_add((_Atomic int64_t *)hdr->remote_addr, value.i64);
+				break;
 
-		case LCP_ATOMIC_DT_UINT8:
-			reply.result.u8 = atomic_fetch_add((_Atomic uint8_t *)hdr->remote_addr, value.u8);
-			break;
+			case LCP_ATOMIC_DT_UINT8:
+				reply.result.u8 = atomic_fetch_add((_Atomic uint8_t *)hdr->remote_addr, value.u8);
+				break;
 
-		case LCP_ATOMIC_DT_UINT16:
-			reply.result.u16 = atomic_fetch_add((_Atomic uint16_t *)hdr->remote_addr, value.u16);
-			break;
+			case LCP_ATOMIC_DT_UINT16:
+				reply.result.u16 = atomic_fetch_add((_Atomic uint16_t *)hdr->remote_addr, value.u16);
+				break;
 
-		case LCP_ATOMIC_DT_UINT32:
-			reply.result.u32 = atomic_fetch_add((_Atomic uint32_t *)hdr->remote_addr, value.u32);
-			break;
+			case LCP_ATOMIC_DT_UINT32:
+				reply.result.u32 = atomic_fetch_add((_Atomic uint32_t *)hdr->remote_addr, value.u32);
+				break;
 
-		case LCP_ATOMIC_DT_UINT64:
-			reply.result.u64 = atomic_fetch_add((_Atomic uint64_t *)hdr->remote_addr, value.u64);
-			break;
+			case LCP_ATOMIC_DT_UINT64:
+				reply.result.u64 = atomic_fetch_add((_Atomic uint64_t *)hdr->remote_addr, value.u64);
+				break;
 
-		default:
-			mpc_common_debug_fatal("LCP ATO SW: datatype not supported for ADD operation with the current compiler");
-			break;
+			default:
+				mpc_common_debug_fatal(
+					"LCP ATO SW: datatype not supported for ADD operation with the current compiler");
+				break;
 		}
 		break;
 	}
@@ -341,43 +359,58 @@ static int lcp_atomic_handler(void *arg, void *data, size_t length, unsigned fla
 			case LCP_ATOMIC_DT_DOUBLE:
 				reply.result.f64 = atomic_fetch_sub((_Atomic double *)hdr->remote_addr, value.f64);
 				break;
+#else
+			case LCP_ATOMIC_DT_FLOAT:
+				mpc_common_spinlock_lock(&lcp_atomic_global_lock);
+				reply.result.f32 = *(volatile float *)hdr->remote_addr;
+				*(volatile float *)hdr->remote_addr -= value.f32;
+				mpc_common_spinlock_unlock(&lcp_atomic_global_lock);
+				break;
+
+			case LCP_ATOMIC_DT_DOUBLE:
+				mpc_common_spinlock_lock(&lcp_atomic_global_lock);
+				reply.result.f64 = *(volatile float *)hdr->remote_addr;
+				*(volatile float *)hdr->remote_addr -= value.f64;
+				mpc_common_spinlock_unlock(&lcp_atomic_global_lock);
+				break;
 #endif
 
-		case LCP_ATOMIC_DT_INT8:
-			reply.result.i8 = atomic_fetch_sub((_Atomic int8_t *)hdr->remote_addr, value.i8);
-			break;
+			case LCP_ATOMIC_DT_INT8:
+				reply.result.i8 = atomic_fetch_sub((_Atomic int8_t *)hdr->remote_addr, value.i8);
+				break;
 
-		case LCP_ATOMIC_DT_INT16:
-			reply.result.i16 = atomic_fetch_sub((_Atomic int16_t *)hdr->remote_addr, value.i16);
-			break;
+			case LCP_ATOMIC_DT_INT16:
+				reply.result.i16 = atomic_fetch_sub((_Atomic int16_t *)hdr->remote_addr, value.i16);
+				break;
 
-		case LCP_ATOMIC_DT_INT32:
-			reply.result.i32 = atomic_fetch_sub((_Atomic int32_t *)hdr->remote_addr, value.i32);
-			break;
+			case LCP_ATOMIC_DT_INT32:
+				reply.result.i32 = atomic_fetch_sub((_Atomic int32_t *)hdr->remote_addr, value.i32);
+				break;
 
-		case LCP_ATOMIC_DT_INT64:
-			reply.result.i64 = atomic_fetch_sub((_Atomic int64_t *)hdr->remote_addr, value.i64);
-			break;
+			case LCP_ATOMIC_DT_INT64:
+				reply.result.i64 = atomic_fetch_sub((_Atomic int64_t *)hdr->remote_addr, value.i64);
+				break;
 
-		case LCP_ATOMIC_DT_UINT8:
-			reply.result.u8 = atomic_fetch_sub((_Atomic uint8_t *)hdr->remote_addr, value.u8);
-			break;
+			case LCP_ATOMIC_DT_UINT8:
+				reply.result.u8 = atomic_fetch_sub((_Atomic uint8_t *)hdr->remote_addr, value.u8);
+				break;
 
-		case LCP_ATOMIC_DT_UINT16:
-			reply.result.u16 = atomic_fetch_sub((_Atomic uint16_t *)hdr->remote_addr, value.u16);
-			break;
+			case LCP_ATOMIC_DT_UINT16:
+				reply.result.u16 = atomic_fetch_sub((_Atomic uint16_t *)hdr->remote_addr, value.u16);
+				break;
 
-		case LCP_ATOMIC_DT_UINT32:
-			reply.result.u32 = atomic_fetch_sub((_Atomic uint32_t *)hdr->remote_addr, value.u32);
-			break;
+			case LCP_ATOMIC_DT_UINT32:
+				reply.result.u32 = atomic_fetch_sub((_Atomic uint32_t *)hdr->remote_addr, value.u32);
+				break;
 
-		case LCP_ATOMIC_DT_UINT64:
-			reply.result.u64 = atomic_fetch_sub((_Atomic uint64_t *)hdr->remote_addr, value.u64);
-			break;
+			case LCP_ATOMIC_DT_UINT64:
+				reply.result.u64 = atomic_fetch_sub((_Atomic uint64_t *)hdr->remote_addr, value.u64);
+				break;
 
-		default:
-			mpc_common_debug_fatal("LCP ATO SW: datatype not supported for SUB operation with the current compiler");
-			break;
+			default:
+				mpc_common_debug_fatal(
+					"LCP ATO SW: datatype not supported for SUB operation with the current compiler");
+				break;
 		}
 		break;
 	}
