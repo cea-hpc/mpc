@@ -66,6 +66,7 @@ static const lcp_atomic_dt_t lcp_atomic_dt_table[] =
 	[(uint64_t)MPI_UNSIGNED_LONG]      = LCP_ATOMIC_DT_UINT64,
 	[(uint64_t)MPI_UNSIGNED_LONG_LONG] = LCP_ATOMIC_DT_UINT64,
 	[(uint64_t)MPI_UINT64_T]           = LCP_ATOMIC_DT_UINT64,
+	[(uint64_t)MPI_AINT]               = LCP_ATOMIC_DT_UINT64,
 };
 
 static lcp_status_ptr_t mpc_osc_discontig_common(lcp_ep_h ep, lcp_task_h task,
