@@ -139,7 +139,7 @@ Privatization:
   stage: 'Build & Run'
   extends: ['.build_and_run']
   variables:
-    GL_INSTALL_OPTS: '${GL_INSTALL_COMMON_OPTS} --thread-based --disable-spack'
+    GL_INSTALL_OPTS: '--thread-based --disable-spack -j32'
     DO_REGULAR_TESTING: true
     HAS_PRIVATIZATION: true
     HAS_MPI: true
