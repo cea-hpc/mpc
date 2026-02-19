@@ -52,6 +52,7 @@ HYDRA_BUILD_PARAMETERS=""
 MPC_DMTCP_BUILD_PARAMETERS="--enable-pthread-mutex-wrappers"
 MPC_GDB_BUILD_PARAMETERS="--without-zlib --disable-werror"
 DEBUG="no"
+MPC_OPTIM_OPTION_SPECIFIED="no"
 
 # Stop on error
 set -e
@@ -1542,12 +1543,15 @@ do
 			USE_COLOR="no"
 			;;
 		--enable-debug)
+			MPC_OPTIM_OPTION_SPECIFIED="yes"
 			enable_debug
 			;;
 		--debug)
+			MPC_OPTIM_OPTION_SPECIFIED="yes"
 			enable_debug
 			;;
 		--relwithdebinfo)
+			MPC_OPTIM_OPTION_SPECIFIED="yes"
 			enable_real_with_debug
 			;;
 		--enable-topology-simulation)
@@ -1953,6 +1957,11 @@ if test -f "${BUILD_CONF_PATH}" ; then
 	show_run_cmd "rm -fr $BUILD_CONF_PATH"
 	rm -fr "${BUILD_CONF_PATH}"
 	ok
+fi
+
+# Enable native march to have the more release build by default
+if [ $MPC_OPTIM_OPTION_SPECIFIED == "no" ]; then
+	MPCFRAMEWORK_BUILD_PARAMETERS="$MPCFRAMEWORK_BUILD_PARAMETERS --enable-opt-native"
 fi
 
 MPC_CONFIGURE_OPTS="--prefix=${PREFIX} $MPCFRAMEWORK_BUILD_PARAMETERS"
