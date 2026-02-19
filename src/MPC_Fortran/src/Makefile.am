@@ -30,6 +30,7 @@ MPCFORT_FILES= mpi_constants.f90 mpi_f08_c.f90 mpi_f08_constants.f90 mpi_f08_cty
 # We can generate, so generate and save (should not produce diff)
 genfortraniface: genmod.py preparsed_mpih.dat constants.json
 	$(srcdir)/genmod.py -m $(builddir)/preparsed_mpih.dat
+	@mkdir -p $(srcdir)/pregenerated
 	@cp mpif.h $(MPCFORT_FILES) $(srcdir)/pregenerated/
 	@touch genfortraniface
 
