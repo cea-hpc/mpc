@@ -485,14 +485,6 @@ static int _lcp_context_devices_load_and_filter(lcp_context_h ctx)
 			continue;
 		}
 
-		if (node_number == 1)
-		{
-			// Skipping the Network devices if only intranode is requested
-			mpc_common_debug("Skipping registration for component %s as only one node was requested",
-				ctx->components[i]->name);
-			continue;
-		}
-
 		if (strcmp(ctx->components[i]->rail_config->device, "any") == 0)
 		{
 			if (ctx->config.multirail_enabled)
