@@ -1,6 +1,11 @@
-.gitlab-ci.yml
 **/.vscode/**
 BUILD/*
+build/*
+doc/build/*
+builddir/*
+INSTALL/*
+install/*
+installdir/*
 autom4te.cache/*
 /mpc_config.h.in~
 /mpc_config.h.in
@@ -9,6 +14,7 @@ autom4te.cache/*
 **/.pcvs-build/
 **/.pcvs/
 *~
+**/pregenerated/
 
 tags
 cscope.*
