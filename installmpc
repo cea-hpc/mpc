@@ -1689,7 +1689,7 @@ do
       	;;
 		# Build wrappers
 		--version)
-			printf "%s\n" "$("$SCRIPTPATH/utils/get_version")"
+			printf "%s\n" "$("$SCRIPTPATH/config/mpc_get_version.sh" --all)"
 			exit 0
 			;;
 		clean)

@@ -797,7 +797,7 @@ SHOW_NAMESPACES        = NO
 # by Doxygen. Whatever the program writes to standard output is used as the file
 # version. For an example see the documentation.
 
-FILE_VERSION_FILTER    = $(MPC_SOURCE_DIRECTORY)utils/get_version
+FILE_VERSION_FILTER    = $(MPC_SOURCE_DIRECTORY)config/mpc_get_version.sh
 
 # The LAYOUT_FILE tag can be used to specify a layout file which will be parsed
 # by Doxygen. The layout file controls the global structure of the generated

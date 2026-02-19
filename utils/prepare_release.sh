@@ -362,7 +362,7 @@ if test -z "$DISTRIB"; then
 fi
 
 if test -z "$VERSION"; then
-    VERSION="$($SCRIPTPATH/../utils/get_version)"
+    VERSION="$($SCRIPTPATH/../config/mpc_get_version.sh)"
     echo "setting version to current ..... ($VERSION)"
 fi
 

@@ -52,7 +52,7 @@
 
 #Autoconf initialization w/ project name, version, bug report email, package name & website
 AC_INIT([Multi-Processor Computing Framework],
-        [m4_esyscmd_s([./utils/get_version])],
+        [m4_esyscmd_s([./config/mpc_get_version.sh])],
         [france@paratools.com], [mpcframework], [https://mpc.hpcframework.com])
 
 
@@ -162,11 +162,11 @@ fi
 #
 # Compute version
 #
-MPC_VERSION_MAJOR="$($CONFIGURE_SCRIPT_PATH/utils/get_version --major)"
-MPC_VERSION_MINOR="$($CONFIGURE_SCRIPT_PATH/utils/get_version --minor)"
-MPC_VERSION_PATCH="$($CONFIGURE_SCRIPT_PATH/utils/get_version --patch)"
-MPC_VERSION_TAINT="$($CONFIGURE_SCRIPT_PATH/utils/get_version --taint)"
-MPC_VERSION_STRING="$($CONFIGURE_SCRIPT_PATH/utils/get_version --all)"
+MPC_VERSION_MAJOR="$($CONFIGURE_SCRIPT_PATH/config/mpc_get_version.sh --major)"
+MPC_VERSION_MINOR="$($CONFIGURE_SCRIPT_PATH/config/mpc_get_version.sh --minor)"
+MPC_VERSION_PATCH="$($CONFIGURE_SCRIPT_PATH/config/mpc_get_version.sh --patch)"
+MPC_VERSION_TAINT="$($CONFIGURE_SCRIPT_PATH/config/mpc_get_version.sh --taint)"
+MPC_VERSION_STRING="$($CONFIGURE_SCRIPT_PATH/config/mpc_get_version.sh --all)"
 
 # define macros in mpc_config.h for proper use from sources
 AC_DEFINE_UNQUOTED([MPC_VERSION_MAJOR], [$MPC_VERSION_MAJOR], [MPC Major Version])
