@@ -637,8 +637,8 @@ void ___mpc_lowcomm_driver_conf_validate()
 	/* Here we merge new driver config with defaults from the driver */
 	for (i = 0; i < mpc_conf_config_entry_count(all_configs); i++)
 	{
-		mpc_conf_config_elem_t * confige = mpc_conf_config_entry_nth(all_configs, i);
-		mpc_conf_config_entry_t *config  = mpc_conf_config_elem_get_inner(confige);
+		mpc_conf_config_elem_t * config_elem = mpc_conf_config_entry_nth(all_configs, i);
+		mpc_conf_config_entry_t *config      = mpc_conf_config_elem_get_inner(config_elem);
 
 		struct _mpc_lowcomm_config_struct_net_driver_config *unfold =
 			_mpc_lowcomm_conf_driver_unfolded_get(config->name);
@@ -1054,6 +1054,7 @@ static mpc_conf_config_entry_t *__mpc_lowcomm_cli_conf_init(void)
 		PARAM("shm",         ___mpc_lowcomm_cli_conf_option_init("shm",         "tbsmmpi",     "shmmpi",       NULL),                                 MPC_CONF_TYPE, "Combination of TBSM and SHM"),
 #if MPC_USE_OFI && MPC_USE_PORTALS
 		PARAM("ptlverbsshm", ___mpc_lowcomm_cli_conf_option_init("ptlverbsshm", "tbsmmpi",     "shmmpi",       "portalsmpi",   "verbsofirail", NULL), MPC_CONF_TYPE, "Default: Combination of Portals, Open Fabric Interface with Verbs and SHM"),
+		PARAM("ptlverbs",    ___mpc_lowcomm_cli_conf_option_init("ptlverbs",    "portalsmpi",  "verbsofirail", NULL),                                 MPC_CONF_TYPE, "Combination of Portals and OFI with Verbs with no shm capabilities"),
 #endif
 #ifdef MPC_USE_PORTALS
 		PARAM("ptlshm",      ___mpc_lowcomm_cli_conf_option_init("ptlshm",      "tbsmmpi",     "shmmpi",       "portalsmpi",   NULL),                 MPC_CONF_TYPE, "Combination of Portals and SHM"),
