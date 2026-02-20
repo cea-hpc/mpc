@@ -35,6 +35,7 @@
 
 #include "mpc_thread_accessor.h"
 #include "sctk_alloc.h"
+#include <mpc_common_progress.h>
 
 int mpc_osc_fence(int mpi_assert, mpc_win_t *win)
 {
@@ -177,7 +178,7 @@ int mpc_osc_start(mpc_lowcomm_group_t *group, int mpi_assert, mpc_win_t *win)
 					ranks_in_grp_win, grp_size);
 			}
 
-			lcp_progress(win->win_module.mngr);
+			mpc_common_progress();
 			if (rc != MPC_LOWCOMM_SUCCESS)
 			{
 				goto err;
@@ -302,7 +303,7 @@ int mpc_osc_post(mpc_lowcomm_group_t *group, int mpi_assert, mpc_win_t *win)
 					&module->state->post_state[j],
 					ranks_in_grp_win, grp_size);
 
-				lcp_progress(module->mngr);
+				mpc_common_progress();
 				usleep(100);
 			}
 		} while (1);
@@ -368,8 +369,7 @@ err:
 
 int mpc_osc_wait(mpc_win_t *win)
 {
-	mpc_osc_module_t *module = &win->win_module;
-	int grp_size             = mpc_lowcomm_group_size(win->win_module.post_group);
+	int grp_size = mpc_lowcomm_group_size(win->win_module.post_group);
 
 	if (win->win_module.epoch.exposure != POST_WAIT_EPOCH)
 	{
@@ -377,7 +377,7 @@ int mpc_osc_wait(mpc_win_t *win)
 	}
 	while (win->win_module.state->completion_counter != (uint64_t)grp_size)
 	{
-		lcp_progress(module->mngr);
+		mpc_common_progress();
 		mpc_thread_yield();
 	}
 
@@ -396,15 +396,14 @@ int mpc_osc_wait(mpc_win_t *win)
 
 int mpc_osc_test(mpc_win_t *win, int *flag)
 {
-	mpc_osc_module_t *module = &win->win_module;
-	int grp_size             = mpc_lowcomm_group_size(win->win_module.post_group);
+	int grp_size = mpc_lowcomm_group_size(win->win_module.post_group);
 
 	if (win->win_module.epoch.exposure != POST_WAIT_EPOCH)
 	{
 		return MPC_LOWCOMM_ERROR;
 	}
 
-	lcp_progress(module->mngr);
+	mpc_common_progress();
 
 	if (win->win_module.state->completion_counter == (uint64_t)grp_size)
 	{

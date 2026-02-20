@@ -772,10 +772,8 @@ void mpc_launch_init_runtime()
 
 	__create_autokill_thread();
 
-	mpc_common_debug("Tout va bien");
 	/* As a first step initialize the PMI */
 	mpc_launch_pmi_init();
-	mpc_common_debug("Rien ne va plus");
 
 	__topology_init();
 

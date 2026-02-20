@@ -3229,22 +3229,22 @@ int __INTERNAL__PMPI_Gatherv_intra_shm(const void *sendbuf, int sendcnt,
 			 * in the target buffer as the type is contig
 			 * we just have to look for the right disp */
 
-			void * to     = NULL;
-			size_t to_cpy = 0;
+			void * to      = NULL;
+			size_t to_copy = 0;
 
 			if (!gv_ctx->disps)
 			{
 				/* Gather case */
-				to_cpy = gv_ctx->counts[0];
-				to     = gv_ctx->target_buff + (to_cpy * gv_ctx->rtype_size) * rank;
+				to_copy = gv_ctx->counts[0];
+				to      = gv_ctx->target_buff + (to_copy * gv_ctx->rtype_size) * rank;
 			}
 			else
 			{
-				to_cpy = gv_ctx->counts[rank];
-				to     = gv_ctx->target_buff + (gv_ctx->disps[rank] * gv_ctx->rtype_size);
+				to_copy = gv_ctx->counts[rank];
+				to      = gv_ctx->target_buff + (gv_ctx->disps[rank] * gv_ctx->rtype_size);
 			}
 
-			memcpy(to, sendbuf, to_cpy * gv_ctx->rtype_size);
+			memcpy(to, sendbuf, to_copy * gv_ctx->rtype_size);
 		}
 	}
 
@@ -3774,7 +3774,7 @@ int __INTERNAL__PMPI_Scatterv_intra_shm(void *sendbuf, int *sendcnts,
 		if (sv_ctx->was_packed)
 		{
 			void * from    = NULL;
-			size_t to_cpy  = 0;
+			size_t to_copy = 0;
 			int    do_free = 0;
 
 			/* Root packed it all for us
@@ -3788,8 +3788,8 @@ int __INTERNAL__PMPI_Scatterv_intra_shm(void *sendbuf, int *sendcnts,
 					sv_ctx->stype_size);
 				/* We are a Scatter only data in [0] */
 				void *data = OPA_load_ptr(&sv_ctx->src_buffs[0]);
-				from   = data + rank * sv_ctx->counts[0] * sv_ctx->stype_size;
-				to_cpy = sv_ctx->counts[0] * sv_ctx->stype_size;
+				from    = data + rank * sv_ctx->counts[0] * sv_ctx->stype_size;
+				to_copy = sv_ctx->counts[0] * sv_ctx->stype_size;
 
 				/* Will be freed by root */
 			}
@@ -3797,12 +3797,12 @@ int __INTERNAL__PMPI_Scatterv_intra_shm(void *sendbuf, int *sendcnts,
 			{
 				/* We are a ScatterV data in the whole array */
 				from    = OPA_load_ptr(&sv_ctx->src_buffs[rank]);
-				to_cpy  = sv_ctx->counts[rank] * sv_ctx->stype_size;
+				to_copy = sv_ctx->counts[rank] * sv_ctx->stype_size;
 				do_free = 1;
 			}
 
 			int cnt = 0;
-			PMPI_Unpack(from, to_cpy, &cnt, recvbuf, recvcnt, recvtype, comm);
+			PMPI_Unpack(from, to_copy, &cnt, recvbuf, recvcnt, recvtype, comm);
 
 			if (do_free)
 			{
@@ -3814,34 +3814,34 @@ int __INTERNAL__PMPI_Scatterv_intra_shm(void *sendbuf, int *sendcnts,
 			/* If we are here we can directly read
 			 * in the target buffer as the type is contig
 			 * we just have to look for the right disp */
-			void * from   = NULL;
-			size_t to_cpy = 0;
+			void * from    = NULL;
+			size_t to_copy = 0;
 
 			if (!sv_ctx->disps)
 			{
 				/* Scatter case */
 				void *data = OPA_load_ptr(&sv_ctx->src_buffs[0]);
-				from   = data + sv_ctx->counts[0] * rank * sv_ctx->stype_size;
-				to_cpy = sv_ctx->counts[0] * sv_ctx->stype_size;
+				from    = data + sv_ctx->counts[0] * rank * sv_ctx->stype_size;
+				to_copy = sv_ctx->counts[0] * sv_ctx->stype_size;
 			}
 			else
 			{
 				/* ScatterV case */
 				void *data = OPA_load_ptr(&sv_ctx->src_buffs[0]);
-				from   = data + sv_ctx->disps[rank] * sv_ctx->stype_size;
-				to_cpy = sv_ctx->counts[rank] * sv_ctx->stype_size;
+				from    = data + sv_ctx->disps[rank] * sv_ctx->stype_size;
+				to_copy = sv_ctx->counts[rank] * sv_ctx->stype_size;
 			}
 
 			if (!_mpc_dt_is_contig_mem(recvtype))
 			{
 				/* Recvtype is non-contig */
 				int cnt = 0;
-				PMPI_Unpack(from, to_cpy, &cnt, recvbuf, recvcnt, recvtype, comm);
+				PMPI_Unpack(from, to_copy, &cnt, recvbuf, recvcnt, recvtype, comm);
 			}
 			else
 			{
 				/* Recvtype is contiguous */
-				memcpy(recvbuf, from, to_cpy);
+				memcpy(recvbuf, from, to_copy);
 			}
 		}
 	}
@@ -4338,22 +4338,22 @@ int __INTERNAL__PMPI_Alltoallv_intra_shm(const void *sendbuf, const int *sendcnt
 		info.disps  = rdispls;
 		info.counts = recvcnts;
 		is_in_place = 1;
-		size_t to_cpy = 0;
+		size_t to_copy = 0;
 		if (sdispls)
 		{
 			int i;
 			for (i = 0; i < coll->comm_size; i++)
 			{
-				to_cpy += info.stype_size * rdispls[i];
+				to_copy += info.stype_size * rdispls[i];
 			}
-			to_cpy += recvcnts[coll->comm_size - 1] * info.stype_size;
+			to_copy += recvcnts[coll->comm_size - 1] * info.stype_size;
 		}
 		else
 		{
-			to_cpy = coll->comm_size * recvcnts[0] * info.stype_size;
+			to_copy = coll->comm_size * recvcnts[0] * info.stype_size;
 		}
-		info.source_buff = malloc(to_cpy);
-		memcpy((void *)info.source_buff, recvbuf, to_cpy);
+		info.source_buff = malloc(to_copy);
+		memcpy((void *)info.source_buff, recvbuf, to_copy);
 	}
 	else
 	{
@@ -4381,31 +4381,31 @@ int __INTERNAL__PMPI_Alltoallv_intra_shm(const void *sendbuf, const int *sendcnt
 
 		for (i = 0; i < coll->comm_size; i++)
 		{
-			size_t to_cpy = 0;
-			void * from   = NULL;
-			int    scnt   = 0;
+			size_t to_copy = 0;
+			void * from    = NULL;
+			int    scnt    = 0;
 
 			if (!sdispls)
 			{
 				/* Alltoall */
-				from   = (void *)sendbuf + sendcnts[0] * i * info.stype_size;
-				to_cpy = info.stype_size * sendcnts[0];
-				scnt   = sendcnts[0];
+				from    = (void *)sendbuf + sendcnts[0] * i * info.stype_size;
+				to_copy = info.stype_size * sendcnts[0];
+				scnt    = sendcnts[0];
 			}
 			else
 			{
 				/* Alltoallv */
-				from   = (void *)sendbuf + sdispls[i] * info.stype_size;
-				to_cpy = info.stype_size * sendcnts[i];
-				scnt   = sendcnts[i];
+				from    = (void *)sendbuf + sdispls[i] * info.stype_size;
+				to_copy = info.stype_size * sendcnts[i];
+				scnt    = sendcnts[i];
 			}
 
 			/* Sendtype is non-contig */
-			info.packed_buff[i] = sctk_malloc(to_cpy);
+			info.packed_buff[i] = sctk_malloc(to_copy);
 			assume(info.source_buff != NULL);
 
 			int cnt = 0;
-			PMPI_Pack(from, scnt, sendtype, info.packed_buff[i], to_cpy, &cnt, comm);
+			PMPI_Pack(from, scnt, sendtype, info.packed_buff[i], to_copy, &cnt, comm);
 		}
 	}
 	else
@@ -4445,27 +4445,27 @@ int __INTERNAL__PMPI_Alltoallv_intra_shm(const void *sendbuf, const int *sendcnt
 
 		/* Get data from each rank */
 
-		void * from   = NULL;
-		void * to     = NULL;
-		size_t to_cpy = 0;
-		int    rcount = 0;
+		void * from    = NULL;
+		void * to      = NULL;
+		size_t to_copy = 0;
+		int    rcount  = 0;
 
 		/* Choose dest and size */
 		if (sdispls && rdispls)
 		{
 			/* This is All2Allv */
-			// to_cpy = aa_ctx->infos[i]->counts[i] * aa_ctx->infos[i]->stype_size;
-			to_cpy = recvcnts[i] * rtsize;
-			to     = recvbuf + (rdispls[i] * rtsize);
-			rcount = recvcnts[i];
+			// to_copy = aa_ctx->infos[i]->counts[i] * aa_ctx->infos[i]->stype_size;
+			to_copy = recvcnts[i] * rtsize;
+			to      = recvbuf + (rdispls[i] * rtsize);
+			rcount  = recvcnts[i];
 		}
 		else
 		{
 			/* This is All2All */
-			// to_cpy = aa_ctx->infos[i]->counts[0] * aa_ctx->infos[i]->stype_size;
-			to_cpy = recvcnts[0] * rtsize;
-			to     = recvbuf + (recvcnts[0] * rtsize) * i;
-			rcount = recvcnts[0];
+			// to_copy = aa_ctx->infos[i]->counts[0] * aa_ctx->infos[i]->stype_size;
+			to_copy = recvcnts[0] * rtsize;
+			to      = recvbuf + (recvcnts[0] * rtsize) * i;
+			rcount  = recvcnts[0];
 		}
 
 		if (aa_ctx->infos[i]->packed_buff)
@@ -4483,7 +4483,7 @@ int __INTERNAL__PMPI_Alltoallv_intra_shm(const void *sendbuf, const int *sendcnt
 			else
 			{
 				/* Alltoall */
-				from = (void *)aa_ctx->infos[i]->source_buff + to_cpy * rank;
+				from = (void *)aa_ctx->infos[i]->source_buff + to_copy * rank;
 			}
 		}
 
@@ -4491,12 +4491,12 @@ int __INTERNAL__PMPI_Alltoallv_intra_shm(const void *sendbuf, const int *sendcnt
 		{
 			/* Recvtype is non-contig */
 			int cnt = 0;
-			PMPI_Unpack(from, to_cpy, &cnt, to, rcount, recvtype, comm);
+			PMPI_Unpack(from, to_copy, &cnt, to, rcount, recvtype, comm);
 		}
 		else
 		{
 			/* We can memcpy */
-			memcpy(to, from, to_cpy);
+			memcpy(to, from, to_copy);
 		}
 	}
 
@@ -7395,11 +7395,11 @@ static int SCTK__MPI_Attr_communicator_dup(MPI_Comm prev, MPI_Comm newcomm)
 			{
 				void *arg  = NULL;
 				int   flag = 0;
-				void *cpy  = tmp->attrs_fn[i].copy_fn;
+				void *copy = tmp->attrs_fn[i].copy_fn;
 
 				if (tmp->attrs_fn[i].fortran_key == 0)
 				{
-					MPI_Copy_function *copy_fn = (MPI_Copy_function *)cpy;
+					MPI_Copy_function *copy_fn = (MPI_Copy_function *)copy;
 					res =
 						copy_fn(prev, i + MPI_MAX_KEY_DEFINED,
 							tmp->attrs_fn[i].extra_state,
@@ -7414,7 +7414,7 @@ static int SCTK__MPI_Attr_communicator_dup(MPI_Comm prev, MPI_Comm newcomm)
 					int  val      = (int)long_val;
 
 					mpc_common_nodebug("%d val",     val);
-					((MPI_Copy_function_fortran *)cpy)(&prev, &fort_key, ext, &val, &val_out, &flag, &res);
+					((MPI_Copy_function_fortran *)copy)(&prev, &fort_key, ext, &val, &val_out, &flag, &res);
 					mpc_common_nodebug("%d val_out", val_out);
 					arg = &val_out;
 				}
@@ -16090,7 +16090,13 @@ int PMPI_Win_set_info(MPI_Win win, MPI_Info info)
 		return MPI_ERR_ARG;
 	}
 
-	win->info = info;
+	if (win->info != MPI_INFO_NULL)
+	{
+		PMPI_Info_free(&win->info);
+	}
+
+	// The created info object may be released before the Window: the handle must stay valid
+	PMPI_Info_dup(info, &win->info);
 
 	return MPI_SUCCESS;
 }
@@ -16223,12 +16229,7 @@ int PMPI_Rput(const void *origin_addr, int origin_count,
               MPI_Aint target_disp, int target_count,
               MPI_Datatype target_datatype, MPI_Win win, MPI_Request *request)
 {
-	if (target_rank == MPI_PROC_NULL)
-	{
-		*request = mpc_mpi_request_empty;
-		return MPI_SUCCESS;
-	}
-
+	// We will handle the target == MPI_PROC_NULL below to have a valid request
 	return mpc_osc_rput(origin_addr, origin_count, origin_datatype,
 		target_rank, target_disp, target_count,
 		target_datatype, win, request);
@@ -16238,12 +16239,7 @@ int PMPI_Rget(void *origin_addr, int origin_count, MPI_Datatype origin_datatype,
               int target_rank, MPI_Aint target_disp, int target_count,
               MPI_Datatype target_datatype, MPI_Win win, MPI_Request *request)
 {
-	if (target_rank == MPI_PROC_NULL)
-	{
-		*request = mpc_mpi_request_empty;
-		return MPI_SUCCESS;
-	}
-
+	// We will handle the target == MPI_PROC_NULL below to have a valid request
 	return mpc_osc_rget(origin_addr, origin_count, origin_datatype,
 		target_rank, target_disp, target_count,
 		target_datatype, win, request);
@@ -16401,12 +16397,7 @@ int PMPI_Raccumulate(const void *origin_addr, int origin_count,
                      MPI_Datatype target_datatype, MPI_Op op, MPI_Win win,
                      MPI_Request *request)
 {
-	if (target_rank == MPI_PROC_NULL)
-	{
-		*request = mpc_mpi_request_empty;
-		return MPI_SUCCESS;
-	}
-
+	// We will handle the target == MPI_PROC_NULL below to have a valid request
 	return mpc_osc_raccumulate(origin_addr, origin_count, origin_datatype,
 		target_rank, target_disp, target_count,
 		target_datatype, op, win, request);
@@ -16437,12 +16428,7 @@ int PMPI_Rget_accumulate(const void *origin_addr, int origin_count,
                          int target_count, MPI_Datatype target_datatype,
                          MPI_Op op, MPI_Win win, MPI_Request *request)
 {
-	if (target_rank == MPI_PROC_NULL)
-	{
-		*request = mpc_mpi_request_empty;
-		return MPI_SUCCESS;
-	}
-
+	// We will handle the target == MPI_PROC_NULL below to have a valid request
 	return mpc_osc_rget_accumulate(origin_addr, origin_count,
 		origin_datatype, result_addr,
 		result_count, result_datatype,

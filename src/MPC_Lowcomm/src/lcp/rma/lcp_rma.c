@@ -104,13 +104,11 @@ static void lcp_rma_request_complete(lcr_completion_t *comp)
 
 static void lcp_flush_request_complete(lcr_completion_t *comp)
 {
-	lcp_request_t *req = mpc_container_of(comp, lcp_request_t,
-		state.comp);
+	lcp_request_t *req = mpc_container_of(comp, lcp_request_t, state.comp);
 
 	if (--req->state.comp.count == 0)
 	{
-		req->flags |= LCP_REQUEST_REMOTE_COMPLETED
-		              | LCP_REQUEST_LOCAL_COMPLETED;
+		req->flags |= LCP_REQUEST_REMOTE_COMPLETED | LCP_REQUEST_LOCAL_COMPLETED;
 		req->status = MPC_LOWCOMM_SUCCESS;
 		lcp_request_complete(req, send.send_cb, req->status, 0);
 	}
@@ -424,6 +422,15 @@ static int lcp_flush_ep_nb(lcp_request_t *req)
 
 	req->state.comp.count = mpc_bitmap_popcount(ep->rma_bmap);
 
+	// If nothing to flush, we need to complete the request
+	if (req->state.comp.count == 0)
+	{
+		// The completion function is in charge of decrementing the pending comms
+		req->state.comp.count++;
+		req->state.comp.comp_cb(&req->state.comp);
+		goto err;
+	}
+
 	for (i = 0; i < ep->num_chnls; i++)
 	{
 		if (!MPC_BITMAP_GET(ep->rma_bmap, i))
@@ -451,6 +458,15 @@ static int lcp_flush_mem_nb(lcp_request_t *req)
 
 	req->state.comp.count = mpc_bitmap_popcount(mem->bm);
 
+	// If nothing to flush, we need to complete the request
+	if (req->state.comp.count == 0)
+	{
+		// The completion function is in charge of decrementing the pending comms
+		req->state.comp.count++;
+		req->state.comp.comp_cb(&req->state.comp);
+		goto err;
+	}
+
 	for (i = 0; i < req->mngr->num_ifaces; i++)
 	{
 		if (!MPC_BITMAP_GET(mem->bm, i))
@@ -458,8 +474,7 @@ static int lcp_flush_mem_nb(lcp_request_t *req)
 			continue;
 		}
 
-		rc = lcp_do_flush_mem(req->mngr->ifaces[i], &mem->mems[i],
-			&req->state.comp, 0);
+		rc = lcp_do_flush_mem(req->mngr->ifaces[i], &mem->mems[i], &req->state.comp, 0);
 		if (rc != MPC_LOWCOMM_SUCCESS)
 		{
 			goto err;
@@ -550,8 +565,7 @@ lcp_status_ptr_t lcp_flush_nb(lcp_manager_h mngr, lcp_task_h task,
 	req = lcp_request_get_param(task, param);
 	if (req == NULL)
 	{
-		mpc_common_debug_error("LCP RMA: could not allocate flush "
-			                   "request.");
+		mpc_common_debug_error("LCP RMA: could not allocate flush request.");
 		return LCP_STATUS_PTR(MPC_LOWCOMM_ERROR);
 	}
 
