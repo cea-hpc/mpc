@@ -52,20 +52,22 @@ typedef struct mpc_lowcomm_topo_comms
 typedef struct MPI_ABI_Comm
 {
 	mpc_lowcomm_communicator_id_t id;             /**< Integer unique identifier of the comm */
-	int                           linear_comm_id; /** Linear communicator id on int32 used for FORTRAN */
-	mpc_lowcomm_group_t *         group;          /**< Group supporting the comm */
-	OPA_int_t                     refcount;       /**< Number of ref to the comm freed when 0 */
+	int                           linear_comm_id; /**< Linear communicator id on int32 used for FORTRAN */
 
+	OPA_int_t                     refcount;       /**< Number of ref to the comm freed when 0 */
 	OPA_int_t                     free_count;     /**< Local synchronization for free */
 
-	unsigned int                  process_span;   /**< Number of UNIX processes in the group */
+	mpc_lowcomm_group_t *         group;          /**< Group supporting the comm */
+
 	int *                         process_array;  /**< Array of the processes in the group */
+	unsigned int                  process_span;   /**< Number of UNIX processes in the group */
 
 	int                           is_comm_self;   /**< 1 if the group is comm_self */
+	int                           coll_counter;
+	mpc_common_spinlock_t         coll_counter_lock;
 
 	/* Collective comm */
 	struct mpc_lowcomm_coll_s *   coll;           /**< This holds the collectives for this comm */
-	struct sctk_comm_coll *       shm_coll;       /**< This holds the SHM collectives for this comm */
 
 	/* Intercomms */
 
@@ -92,14 +94,20 @@ typedef struct MPI_ABI_Comm
 /**
  * @brief Initialize base communicators (WORLD and SELF)
  *
+ * @param[in] my_rank Rank of the task
  */
-void _mpc_lowcomm_communicator_init(void);
+void _mpc_lowcomm_communicator_init_task(int my_rank);
 
 /**
- * @brief Release the base communicators
+ * @brief Release the base communicators arrays
  *
  */
 void _mpc_lowcomm_communicator_release(void);
+
+/**
+ * @brief Release the base communicators per task
+ */
+void _mpc_lowcomm_communicator_release_task(void);
 
 /**
  * @brief Increment refcounting on a comm

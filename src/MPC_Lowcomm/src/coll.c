@@ -42,6 +42,32 @@
 
 #define MPC_MODULE "Lowcomm/Coll"
 
+/*****************
+ * Simple helper *
+ *****************/
+
+int mpc_lowcomm_generate_unique_tag(const int upper_bits, mpc_lowcomm_communicator_t comm)
+{
+	mpc_lowcomm_communicator_t local_comm = __mpc_lowcomm_communicator_from_predefined(comm);
+
+	mpc_common_spinlock_lock_yield(&local_comm->coll_counter_lock);
+	const int counter = local_comm->coll_counter;
+
+	// If needed reinitialize the counter
+	if (counter < 0 || counter > 0x00FFFFFF)
+	{
+		local_comm->coll_counter = 0;
+	}
+	else
+	{
+		local_comm->coll_counter++;
+	}
+
+	mpc_common_spinlock_unlock(&local_comm->coll_counter_lock);
+
+	return counter | upper_bits;
+}
+
 /************************************************************************/
 /*collective communication implementation                               */
 /************************************************************************/
@@ -1519,6 +1545,8 @@ static void _mpc_coll_noalloc_barrier(const mpc_lowcomm_communicator_t communica
 		total_max = total_max * barrier_arity;
 	}
 
+	const int tag = mpc_lowcomm_generate_unique_tag(MPC_LOWCOMM_BARRIER_TAG, communicator);
+
 	assume(total_max >= total);
 
 	for (i = barrier_arity; i <= total_max; i = i * barrier_arity)
@@ -1535,13 +1563,9 @@ static void _mpc_coll_noalloc_barrier(const mpc_lowcomm_communicator_t communica
 					if ((src + (j * (i / barrier_arity))) < total)
 					{
 						int dest = src + (j * (i / barrier_arity));
-						mpc_common_nodebug("Receive barrier message %d -> %d (l.%d)...",
-							src, dest, __LINE__);
-						_mpc_coll_message_recv(
-							communicator, dest,
-							myself, MPC_BARRIER_TAG, &c, 1, MPC_LOWCOMM_BARRIER_MESSAGE,
-							_mpc_coll_message_table_get_item(&table, OPT_NOALLOC_MAX_ASYNC),
-							0);
+						mpc_common_nodebug("Receive barrier message %d -> %d (l.%d)...", src, dest, __LINE__);
+						_mpc_coll_message_recv(communicator, dest, myself, tag, &c, 1, MPC_LOWCOMM_BARRIER_MESSAGE,
+							_mpc_coll_message_table_get_item(&table, OPT_NOALLOC_MAX_ASYNC), 0);
 					}
 				}
 
@@ -1557,14 +1581,10 @@ static void _mpc_coll_noalloc_barrier(const mpc_lowcomm_communicator_t communica
 				if (dest >= 0)
 				{
 					mpc_common_nodebug("Send barrier message %d -> %d (l.%d)...", myself, dest, __LINE__);
-					_mpc_coll_message_send(
-						communicator, myself, dest, MPC_BARRIER_TAG, &c, 1,
-						MPC_LOWCOMM_BARRIER_MESSAGE,
+					_mpc_coll_message_send(communicator, myself, dest, tag, &c, 1, MPC_LOWCOMM_BARRIER_MESSAGE,
 						_mpc_coll_message_table_get_item(&table, OPT_NOALLOC_MAX_ASYNC), 0);
 					mpc_common_debug("Receive barrier message %d -> %d (l.%d)...", dest, myself, __LINE__);
-					_mpc_coll_message_recv(
-						communicator, dest, myself, MPC_BARRIER_TAG, &c, 1,
-						MPC_LOWCOMM_BARRIER_MESSAGE,
+					_mpc_coll_message_recv(communicator, dest, myself, tag, &c, 1, MPC_LOWCOMM_BARRIER_MESSAGE,
 						_mpc_coll_message_table_get_item(&table, OPT_NOALLOC_MAX_ASYNC),
 						0);
 					mpc_common_nodebug("Wait for messages (l.%d)...", __LINE__);
@@ -1595,11 +1615,9 @@ static void _mpc_coll_noalloc_barrier(const mpc_lowcomm_communicator_t communica
 				{
 					mpc_common_nodebug("Send barrier message %d -> %d (l.%d)...",
 						myself, dest + (j * (i / barrier_arity)), __LINE__);
-					_mpc_coll_message_send(
-						communicator, myself,
-						dest + (j * (i / barrier_arity)), MPC_BARRIER_TAG, &c, 1,
-						MPC_LOWCOMM_BARRIER_MESSAGE,
-						_mpc_coll_message_table_get_item(&table, OPT_NOALLOC_MAX_ASYNC), 0);
+					_mpc_coll_message_send(communicator, myself, dest + (j * (i / barrier_arity)), tag, &c, 1,
+						MPC_LOWCOMM_BARRIER_MESSAGE, _mpc_coll_message_table_get_item(&table, OPT_NOALLOC_MAX_ASYNC),
+						0);
 				}
 			}
 		}
@@ -2040,9 +2058,7 @@ void mpc_lowcomm_termination_barrier(void)
 	static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 	static pthread_cond_t  cond = PTHREAD_COND_INITIALIZER;
 
-	/* DO NOT USE mpc_common_get_local_task_count() here
-	 * as this value is computed as threads start ! */
-	local = mpc_lowcomm_communicator_local_task_count(MPC_COMM_WORLD);
+	local = mpc_common_get_local_task_count();
 	pthread_mutex_lock(&lock);
 	done++;
 	mpc_common_nodebug("mpc_lowcomm_termination_barrier %d %d", done, local);
@@ -2087,7 +2103,6 @@ int mpc_lowcomm_barrier_shm_on_context(struct shared_mem_barrier *barrier_ctx,
 {
 	int my_phase = !OPA_load_int(&barrier_ctx->phase);
 
-
 	if (OPA_fetch_and_decr_int(&barrier_ctx->counter) == 1)
 	{
 		OPA_store_int(&barrier_ctx->counter, comm_size);
@@ -2127,7 +2142,8 @@ int __intercomm_barrier(const mpc_lowcomm_communicator_t communicator)
 	/* Sync A-B */
 	if (rank == 0)
 	{
-		mpc_lowcomm_sendrecv(&buf, sizeof(int), 0, MPC_BARRIER_TAG, &buf, 0, communicator);
+		const int tag = mpc_lowcomm_generate_unique_tag(MPC_LOWCOMM_BARRIER_TAG, communicator);
+		mpc_lowcomm_sendrecv(&buf, sizeof(int), 0, tag, &buf, 0, communicator);
 	}
 
 	/* Sync Local */
@@ -2211,15 +2227,17 @@ int mpc_lowcomm_bcast(void *buffer, const size_t size,
 		}
 		else if (root == MPC_ROOT)
 		{
-			mpc_lowcomm_send(0, buffer, size, MPC_BROADCAST_TAG, communicator);
+			const int tag = mpc_lowcomm_generate_unique_tag(MPC_LOWCOMM_BROADCAST_TAG, communicator);
+			mpc_lowcomm_send(0, buffer, size, tag, communicator);
 		}
 		else
 		{
-			int rank = mpc_lowcomm_communicator_rank(communicator);
+			const int tag  = mpc_lowcomm_generate_unique_tag(MPC_LOWCOMM_BROADCAST_TAG, communicator);
+			int       rank = mpc_lowcomm_communicator_rank(communicator);
 
 			if (rank == 0)
 			{
-				mpc_lowcomm_recv(root, buffer, size, MPC_BROADCAST_TAG, communicator);
+				mpc_lowcomm_recv(root, buffer, size, tag, communicator);
 			}
 
 			mpc_lowcomm_bcast(buffer, size, 0, mpc_lowcomm_communicator_get_local(communicator));
@@ -2282,7 +2300,10 @@ static inline int ___gather_inter(void *sendbuf,
 	{
 		return MPC_LOWCOMM_SUCCESS;
 	}
-	else if (root == MPC_ROOT)
+
+	const int tag = mpc_lowcomm_generate_unique_tag(MPC_LOWCOMM_GATHER_TAG, comm);
+
+	if (root == MPC_ROOT)
 	{
 		i = 0;
 
@@ -2297,7 +2318,7 @@ static inline int ___gather_inter(void *sendbuf,
 			{
 				for (j = 0; (i < comm_size) && (j < MPC_MAX_CONCURRENT); i++, j++)
 				{
-					mpc_lowcomm_irecv(i, (( char * )recvbuf) + (i * size), size, MPC_GATHER_TAG, comm, recvrequest[j]);
+					mpc_lowcomm_irecv(i, (( char * )recvbuf) + (i * size), size, tag, comm, recvrequest[j]);
 				}
 
 				mpc_lowcomm_waitall(j, recvrequest, MPC_LOWCOMM_STATUS_NULL);
@@ -2313,7 +2334,7 @@ static inline int ___gather_inter(void *sendbuf,
 			for (int i = 0; i < comm_size; i++)
 			{
 				recvrequest[i] = ((mpc_lowcomm_request_t *)mpc_lowcomm_request_alloc()) - 1;
-				mpc_lowcomm_irecv(i, (( char * )recvbuf) + (i * size), size, MPC_GATHER_TAG, comm, recvrequest[i]);
+				mpc_lowcomm_irecv(i, (( char * )recvbuf) + (i * size), size, tag, comm, recvrequest[i]);
 			}
 
 			mpc_lowcomm_waitall(i, recvrequest, MPC_LOWCOMM_STATUS_NULL);
@@ -2326,7 +2347,7 @@ static inline int ___gather_inter(void *sendbuf,
 	}
 	else
 	{
-		mpc_lowcomm_send(root, sendbuf, size, MPC_GATHER_TAG, comm);
+		mpc_lowcomm_send(root, sendbuf, size, tag, comm);
 	}
 
 	return MPC_LOWCOMM_SUCCESS;
@@ -2435,6 +2456,8 @@ static inline int ___gather_intra(void *sendbuf,
 	int    rel_size        = div2_size;
 	size_t size_this_round = size;
 
+	const int tag = mpc_lowcomm_generate_unique_tag(MPC_LOWCOMM_GATHER_TAG, comm);
+
 	if (rank < div2_size)
 	{
 		mpc_lowcomm_request_t *round_exchange = ((mpc_lowcomm_request_t *)mpc_lowcomm_request_alloc()) - 1;
@@ -2477,8 +2500,8 @@ static inline int ___gather_intra(void *sendbuf,
 				/* Check for read overflow */
 				assert((rank * size + local_size) <= (comm_size * size));
 
-				mpc_lowcomm_isend(dest_this_round, gather_buffer + (rank * size), local_size,
-					MPC_GATHER_TAG, comm, round_exchange);
+				mpc_lowcomm_isend(dest_this_round, gather_buffer + (rank * size), local_size, tag, comm,
+					round_exchange);
 
 				will_break = 1;
 			}
@@ -2513,7 +2536,7 @@ static inline int ___gather_intra(void *sendbuf,
 
 
 						mpc_lowcomm_irecv(from_this_round, gather_buffer + (from_this_round * size), local_size,
-							MPC_GATHER_TAG, comm, round_exchange);
+							tag, comm, round_exchange);
 					}
 					else
 					{
@@ -2558,11 +2581,11 @@ static inline int ___gather_intra(void *sendbuf,
 		if (rank == 0)
 		{
 			/* We need to receive from the last rank directly */
-			mpc_lowcomm_recv(last_rank, gather_buffer + (last_rank * size), size, MPC_GATHER_TAG, comm);
+			mpc_lowcomm_recv(last_rank, gather_buffer + (last_rank * size), size, tag, comm);
 		}
 		else if (rank == last_rank)
 		{
-			mpc_lowcomm_send(0, sendbuf, size, MPC_GATHER_TAG, comm);
+			mpc_lowcomm_send(0, sendbuf, size, tag, comm);
 		}
 	}
 
@@ -2572,11 +2595,11 @@ static inline int ___gather_intra(void *sendbuf,
 	{
 		if (rank == 0)
 		{
-			mpc_lowcomm_send(root, gather_buffer, comm_size * size, MPC_GATHER_TAG, comm);
+			mpc_lowcomm_send(root, gather_buffer, comm_size * size, tag, comm);
 		}
 		else if (rank == root)
 		{
-			mpc_lowcomm_recv(0, gather_buffer, comm_size * size, MPC_GATHER_TAG, comm);
+			mpc_lowcomm_recv(0, gather_buffer, comm_size * size, tag, comm);
 		}
 	}
 

@@ -2705,7 +2705,7 @@ static inline int ___collectives_ibcast(void *buffer,
 
 	___collectives_sched_info_init(&info, MPC_COLL_TYPE_NONBLOCKING, _mpc_mpi_config()->coll_opts.topo.bcast);
 
-	res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
+	res = NBC_Init_handle(handle, comm, MPC_IBROADCAST_TAG);
 	MPI_HANDLE_ERROR(res, comm, "Ibcast: NBC_Init_handle failed");
 
 	handle->tmpbuf = NULL;
@@ -2825,7 +2825,7 @@ static inline int ___collectives_bcast_init(void *buffer,
 	Sched_info    info;
 
 	___collectives_sched_info_init(&info, MPC_COLL_TYPE_PERSISTENT, _mpc_mpi_config()->coll_opts.topo.bcast);
-	res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
+	res = NBC_Init_handle(handle, comm, MPC_IBROADCAST_TAG);
 	MPI_HANDLE_ERROR(res, comm, "Bcast: NBC_Init_handle failed");
 
 	handle->tmpbuf = NULL;
@@ -3021,8 +3021,9 @@ int ___collectives_bcast_linear(void *buffer,
 	int size = 0;
 
 	_mpc_cl_comm_size(comm, &size);
-	_mpc_cl_comm_rank(comm,
-		&rank);
+	_mpc_cl_comm_rank(comm, &rank);
+
+	const int tag = mpc_lowcomm_generate_unique_tag(MPC_BROADCAST_TAG, comm);
 
 	int res = MPI_SUCCESS;
 
@@ -3049,8 +3050,7 @@ int ___collectives_bcast_linear(void *buffer,
 	// if rank != root, wait for data from root
 	if (rank != root)
 	{
-		res = ___collectives_recv_type(buffer, count, datatype, root, MPC_BROADCAST_TAG, comm, coll_type, schedule,
-			info);
+		res = ___collectives_recv_type(buffer, count, datatype, root, tag, comm, coll_type, schedule, info);
 		if (res != MPI_SUCCESS)
 		{
 			return res;
@@ -3067,15 +3067,7 @@ int ___collectives_bcast_linear(void *buffer,
 				continue;
 			}
 
-			res = ___collectives_send_type(buffer,
-				count,
-				datatype,
-				i,
-				MPC_BROADCAST_TAG,
-				comm,
-				coll_type,
-				schedule,
-				info);
+			res = ___collectives_send_type(buffer, count, datatype, i, tag, comm, coll_type, schedule, info);
 			if (res != MPI_SUCCESS)
 			{
 				return res;
@@ -3113,6 +3105,7 @@ int ___collectives_bcast_binomial(void *buffer,
 
 	_mpc_cl_comm_size(comm, &size);
 	_mpc_cl_comm_rank(comm, &rank);
+	const int tag = mpc_lowcomm_generate_unique_tag(MPC_BROADCAST_TAG, comm);
 
 	// Get max number of steps
 	int maxr, vrank, peer;
@@ -3132,7 +3125,7 @@ int ___collectives_bcast_binomial(void *buffer,
 	{
 		VRANK2RANK(peer, vrank ^ (1 << rmb), root);
 
-		___collectives_recv_type(buffer, count, datatype, peer, MPC_BROADCAST_TAG, comm, coll_type, schedule, info);
+		___collectives_recv_type(buffer, count, datatype, peer, tag, comm, coll_type, schedule, info);
 
 		if (rmb != 0)
 		{
@@ -3160,7 +3153,7 @@ int ___collectives_bcast_binomial(void *buffer,
 			continue;
 		}
 
-		___collectives_send_type(buffer, count, datatype, peer, MPC_BROADCAST_TAG, comm, coll_type, schedule, info);
+		___collectives_send_type(buffer, count, datatype, peer, tag, comm, coll_type, schedule, info);
 	}
 
 	return MPI_SUCCESS;
@@ -3983,6 +3976,8 @@ int ___collectives_reduce_binomial(const void *sendbuf,
 	_mpc_cl_comm_rank(comm, &rank);
 	PMPI_Type_extent(datatype, &ext);
 
+	const int tag = mpc_lowcomm_generate_unique_tag(MPC_REDUCE_TAG, comm);
+
 	void *tmpbuf = NULL;
 
 	sctk_Op    mpc_op;
@@ -4067,15 +4062,13 @@ int ___collectives_reduce_binomial(const void *sendbuf,
 		if (vpeer < vrank)
 		{
 			// send reduce data to rank-2^i
-			___collectives_send_type(tmp_sendbuf, count, datatype, peer, MPC_REDUCE_TAG, comm, coll_type, schedule,
-				info);
+			___collectives_send_type(tmp_sendbuf, count, datatype, peer, tag, comm, coll_type, schedule, info);
 			break;
 		}
 		else if (peer < size)
 		{
 			// wait data from rank+2^i
-			___collectives_recv_type(tmp_recvbuf, count, datatype, peer, MPC_REDUCE_TAG, comm, coll_type, schedule,
-				info);
+			___collectives_recv_type(tmp_recvbuf, count, datatype, peer, tag, comm, coll_type, schedule, info);
 			___collectives_barrier_type(coll_type, schedule, info);
 			// reduce data
 			___collectives_op_type(NULL,
@@ -4106,12 +4099,12 @@ int ___collectives_reduce_binomial(const void *sendbuf,
 	{
 		if (rank == 0)
 		{
-			___collectives_send_type(tmp_sendbuf, count, datatype, root, MPC_REDUCE_TAG, comm, coll_type, schedule,
+			___collectives_send_type(tmp_sendbuf, count, datatype, root, tag, comm, coll_type, schedule,
 				info);
 		}
 		else if (rank == root)
 		{
-			___collectives_recv_type(recvbuf, count, datatype, 0, MPC_REDUCE_TAG, comm, coll_type, schedule, info);
+			___collectives_recv_type(recvbuf, count, datatype, 0, tag, comm, coll_type, schedule, info);
 		}
 	}
 	else if (rank == root)
@@ -4964,6 +4957,7 @@ int ___collectives_allreduce_distance_doubling(const void *sendbuf,
 	_mpc_cl_comm_size(comm, &size);
 	_mpc_cl_comm_rank(comm, &rank);
 	PMPI_Type_extent(datatype, &ext);
+	const int tag = mpc_lowcomm_generate_unique_tag(MPC_ALLREDUCE_TAG, comm);
 
 	void *tmpbuf = NULL;
 
@@ -5028,37 +5022,13 @@ int ___collectives_allreduce_distance_doubling(const void *sendbuf,
 
 		if (rank & 1)
 		{
-			___collectives_send_type(tmp_sendbuf,
-				count,
-				datatype,
-				peer,
-				MPC_ALLREDUCE_TAG,
-				comm,
-				coll_type,
-				schedule,
-				info);
+			___collectives_send_type(tmp_sendbuf, count, datatype, peer, tag, comm, coll_type, schedule, info);
 		}
 		else
 		{
-			___collectives_recv_type(tmp_recvbuf,
-				count,
-				datatype,
-				peer,
-				MPC_ALLREDUCE_TAG,
-				comm,
-				coll_type,
-				schedule,
-				info);
+			___collectives_recv_type(tmp_recvbuf, count, datatype, peer, tag, comm, coll_type, schedule, info);
 			___collectives_barrier_type(coll_type, schedule, info);
-			___collectives_op_type(NULL,
-				tmp_sendbuf,
-				tmp_recvbuf,
-				count,
-				datatype,
-				op,
-				mpc_op,
-				coll_type,
-				schedule,
+			___collectives_op_type(NULL, tmp_sendbuf, tmp_recvbuf, count, datatype, op, mpc_op, coll_type, schedule,
 				info);
 
 			if (first_access)
@@ -5090,45 +5060,13 @@ int ___collectives_allreduce_distance_doubling(const void *sendbuf,
 			// Prevent deadlock
 			if (peer > rank)
 			{
-				___collectives_send_type(tmp_sendbuf,
-					count,
-					datatype,
-					peer,
-					MPC_ALLREDUCE_TAG,
-					comm,
-					coll_type,
-					schedule,
-					info);
-				___collectives_recv_type(tmp_recvbuf,
-					count,
-					datatype,
-					peer,
-					MPC_ALLREDUCE_TAG,
-					comm,
-					coll_type,
-					schedule,
-					info);
+				___collectives_send_type(tmp_sendbuf, count, datatype, peer, tag, comm, coll_type, schedule, info);
+				___collectives_recv_type(tmp_recvbuf, count, datatype, peer, tag, comm, coll_type, schedule, info);
 			}
 			else
 			{
-				___collectives_recv_type(tmp_recvbuf,
-					count,
-					datatype,
-					peer,
-					MPC_ALLREDUCE_TAG,
-					comm,
-					coll_type,
-					schedule,
-					info);
-				___collectives_send_type(tmp_sendbuf,
-					count,
-					datatype,
-					peer,
-					MPC_ALLREDUCE_TAG,
-					comm,
-					coll_type,
-					schedule,
-					info);
+				___collectives_recv_type(tmp_recvbuf, count, datatype, peer, tag, comm, coll_type, schedule, info);
+				___collectives_send_type(tmp_sendbuf, count, datatype, peer, tag, comm, coll_type, schedule, info);
 			}
 			___collectives_barrier_type(coll_type, schedule, info);
 
@@ -5179,29 +5117,12 @@ int ___collectives_allreduce_distance_doubling(const void *sendbuf,
 
 		if (rank & 1)
 		{
-			___collectives_recv_type(recvbuf, count, datatype, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule,
-				info);
+			___collectives_recv_type(recvbuf, count, datatype, peer, tag, comm, coll_type, schedule, info);
 		}
 		else
 		{
-			___collectives_send_type(tmp_sendbuf,
-				count,
-				datatype,
-				peer,
-				MPC_ALLREDUCE_TAG,
-				comm,
-				coll_type,
-				schedule,
-				info);
-			___collectives_copy_type(tmp_sendbuf,
-				count,
-				datatype,
-				recvbuf,
-				count,
-				datatype,
-				comm,
-				coll_type,
-				schedule,
+			___collectives_send_type(tmp_sendbuf, count, datatype, peer, tag, comm, coll_type, schedule, info);
+			___collectives_copy_type(tmp_sendbuf, count, datatype, recvbuf, count, datatype, comm, coll_type, schedule,
 				info);
 		}
 	}
@@ -5256,6 +5177,7 @@ int ___collectives_allreduce_vector_halving_distance_doubling(const void *sendbu
 	_mpc_cl_comm_size(comm, &size);
 	_mpc_cl_comm_rank(comm, &rank);
 	PMPI_Type_extent(datatype, &ext);
+	const int tag = mpc_lowcomm_generate_unique_tag(MPC_ALLREDUCE_TAG, comm);
 
 	#define OLDRANK(new, r) ((new) < r ? (new) * 2 : (new) + r)
 
@@ -5303,24 +5225,15 @@ int ___collectives_allreduce_vector_halving_distance_doubling(const void *sendbu
 			// and collect the receive the reduced second-half buffer from the odd process rank + 1
 			int peer = rank + 1;
 			___collectives_send_type(tmp_sendbuf + (count / 2) * ext, count - count / 2, datatype, peer,
-				MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
-			___collectives_recv_type(tmp_recvbuf, count / 2, datatype, peer,
-				MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
+				tag, comm, coll_type, schedule, info);
+			___collectives_recv_type(tmp_recvbuf, count / 2, datatype, peer, tag, comm, coll_type, schedule, info);
 			___collectives_barrier_type(coll_type, schedule, info);
 
-			___collectives_op_type(NULL,
-				tmp_sendbuf,
-				tmp_recvbuf,
-				count / 2,
-				datatype,
-				op,
-				mpc_op,
-				coll_type,
-				schedule,
+			___collectives_op_type(NULL, tmp_sendbuf, tmp_recvbuf, count / 2, datatype, op, mpc_op, coll_type, schedule,
 				info);
 
 			___collectives_recv_type(tmp_recvbuf + (count / 2) * ext, count - count / 2,
-				datatype, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
+				datatype, peer, tag, comm, coll_type, schedule, info);
 			___collectives_barrier_type(coll_type, schedule, info);
 
 			pointer_swap(tmp_sendbuf, tmp_recvbuf, swap);
@@ -5332,9 +5245,8 @@ int ___collectives_allreduce_vector_halving_distance_doubling(const void *sendbu
 			int peer = rank - 1;
 
 			___collectives_recv_type(tmp_recvbuf + (count / 2) * ext, count - count / 2, datatype, peer,
-				MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
-			___collectives_send_type(tmp_sendbuf, count / 2, datatype, peer,
-				MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
+				tag, comm, coll_type, schedule, info);
+			___collectives_send_type(tmp_sendbuf, count / 2, datatype, peer, tag, comm, coll_type, schedule, info);
 			___collectives_barrier_type(coll_type, schedule, info);
 
 			___collectives_op_type(NULL,
@@ -5343,7 +5255,7 @@ int ___collectives_allreduce_vector_halving_distance_doubling(const void *sendbu
 				count - count / 2, datatype, op, mpc_op, coll_type, schedule, info);
 
 			___collectives_send_type(tmp_sendbuf + (count / 2) * ext, count - count / 2,
-				datatype, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
+				datatype, peer, tag, comm, coll_type, schedule, info);
 		}
 	}
 
@@ -5387,9 +5299,9 @@ int ___collectives_allreduce_vector_halving_distance_doubling(const void *sendbu
 				x_count = count_even[i];
 
 				___collectives_send_type(tmp_sendbuf + start_odd[i] * ext, count_odd[i],
-					datatype, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
+					datatype, peer, tag, comm, coll_type, schedule, info);
 				___collectives_recv_type(tmp_recvbuf + x_start * ext, x_count,
-					datatype, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
+					datatype, peer, tag, comm, coll_type, schedule, info);
 				___collectives_barrier_type(coll_type, schedule, info);
 
 				___collectives_op_type(NULL,
@@ -5405,9 +5317,9 @@ int ___collectives_allreduce_vector_halving_distance_doubling(const void *sendbu
 				x_count = count_odd[i];
 
 				___collectives_recv_type(tmp_recvbuf + x_start * ext, x_count,
-					datatype, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
+					datatype, peer, tag, comm, coll_type, schedule, info);
 				___collectives_send_type(tmp_sendbuf + start_even[i] * ext, count_even[i],
-					datatype, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
+					datatype, peer, tag, comm, coll_type, schedule, info);
 				___collectives_barrier_type(coll_type, schedule, info);
 
 				___collectives_op_type(NULL,
@@ -5431,17 +5343,17 @@ int ___collectives_allreduce_vector_halving_distance_doubling(const void *sendbu
 			if ((vrank & (1 << i)) == 0) /* Even */
 			{
 				___collectives_send_type(recvbuf + start_even[i] * ext, count_even[i],
-					datatype, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
+					datatype, peer, tag, comm, coll_type, schedule, info);
 				___collectives_recv_type(recvbuf + start_odd[i] * ext, count_odd[i],
-					datatype, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
+					datatype, peer, tag, comm, coll_type, schedule, info);
 				___collectives_barrier_type(coll_type, schedule, info);
 			}
 			else /* Odd */
 			{
 				___collectives_recv_type(recvbuf + start_even[i] * ext, count_even[i],
-					datatype, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
+					datatype, peer, tag, comm, coll_type, schedule, info);
 				___collectives_send_type(recvbuf + start_odd[i] * ext, count_odd[i],
-					datatype, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
+					datatype, peer, tag, comm, coll_type, schedule, info);
 				___collectives_barrier_type(coll_type, schedule, info);
 			}
 		}
@@ -5457,14 +5369,12 @@ int ___collectives_allreduce_vector_halving_distance_doubling(const void *sendbu
 		if ((rank & 1) == 0) /* Even */
 		{
 			peer = rank + 1;
-			___collectives_send_type(recvbuf, count, datatype, peer, MPC_ALLREDUCE_TAG,
-				comm, coll_type, schedule, info);
+			___collectives_send_type(recvbuf, count, datatype, peer, tag, comm, coll_type, schedule, info);
 		}
 		else /* Odd */
 		{
 			peer = rank - 1;
-			___collectives_recv_type(recvbuf, count, datatype, peer, MPC_ALLREDUCE_TAG,
-				comm, coll_type, schedule, info);
+			___collectives_recv_type(recvbuf, count, datatype, peer, tag, comm, coll_type, schedule, info);
 		}
 
 		___collectives_barrier_type(coll_type, schedule, info);
@@ -5509,6 +5419,7 @@ int ___collectives_allreduce_binary_block(const void *sendbuf,
 	_mpc_cl_comm_size(comm, &size);
 	_mpc_cl_comm_rank(comm, &rank);
 	PMPI_Type_extent(datatype, &ext);
+	const int tag = mpc_lowcomm_generate_unique_tag(MPC_ALLREDUCE_TAG, comm);
 
 	void *tmpbuf = NULL;
 
@@ -5645,39 +5556,17 @@ int ___collectives_allreduce_binary_block(const void *sendbuf,
 
 			if (send_bufsize)
 			{
-				___collectives_send_type(tmp_sendbuf,
-					send_bufsize,
-					datatype,
-					peer,
-					MPC_ALLREDUCE_TAG,
-					comm,
-					coll_type,
-					schedule,
+				___collectives_send_type(tmp_sendbuf, send_bufsize, datatype, peer, tag, comm, coll_type, schedule,
 					info);
 			}
 
 			if (recv_bufsize)
 			{
-				___collectives_recv_type(tmp_recvbuf,
-					recv_bufsize,
-					datatype,
-					peer,
-					MPC_ALLREDUCE_TAG,
-					comm,
-					coll_type,
-					schedule,
+				___collectives_recv_type(tmp_recvbuf, recv_bufsize, datatype, peer, tag, comm, coll_type, schedule,
 					info);
 				___collectives_barrier_type(coll_type, schedule, info);
-				___collectives_op_type(NULL,
-					tmp_opbuf,
-					tmp_recvbuf,
-					recv_bufsize,
-					datatype,
-					op,
-					mpc_op,
-					coll_type,
-					schedule,
-					info);
+				___collectives_op_type(NULL, tmp_opbuf, tmp_recvbuf, recv_bufsize, datatype, op, mpc_op, coll_type,
+					schedule, info);
 
 				pointer_swap(resbuf, recv_resbuf, swap);
 			}
@@ -5695,38 +5584,16 @@ int ___collectives_allreduce_binary_block(const void *sendbuf,
 
 			if (recv_bufsize)
 			{
-				___collectives_recv_type(tmp_recvbuf,
-					recv_bufsize,
-					datatype,
-					peer,
-					MPC_ALLREDUCE_TAG,
-					comm,
-					coll_type,
-					schedule,
+				___collectives_recv_type(tmp_recvbuf, recv_bufsize, datatype, peer, tag, comm, coll_type, schedule,
 					info);
 				___collectives_barrier_type(coll_type, schedule, info);
-				___collectives_op_type(NULL,
-					tmp_recvbuf,
-					tmp_opbuf,
-					recv_bufsize,
-					datatype,
-					op,
-					mpc_op,
-					coll_type,
-					schedule,
-					info);
+				___collectives_op_type(NULL, tmp_recvbuf, tmp_opbuf, recv_bufsize, datatype, op, mpc_op, coll_type,
+					schedule, info);
 			}
 
 			if (send_bufsize)
 			{
-				___collectives_send_type(tmp_sendbuf,
-					send_bufsize,
-					datatype,
-					peer,
-					MPC_ALLREDUCE_TAG,
-					comm,
-					coll_type,
-					schedule,
+				___collectives_send_type(tmp_sendbuf, send_bufsize, datatype, peer, tag, comm, coll_type, schedule,
 					info);
 			}
 
@@ -5775,26 +5642,11 @@ int ___collectives_allreduce_binary_block(const void *sendbuf,
 		next_block_peer = vrank % next_block_size + first_rank_of_next_block;
 
 
-		___collectives_recv_type(tmp_recvbuf,
-			recv_bufsize,
-			datatype,
-			next_block_peer,
-			MPC_ALLREDUCE_TAG,
-			comm,
-			coll_type,
-			schedule,
-			info);
+		___collectives_recv_type(tmp_recvbuf, recv_bufsize, datatype, next_block_peer, tag, comm, coll_type,
+			schedule, info);
 		___collectives_barrier_type(coll_type, schedule, info);
-		___collectives_op_type(NULL,
-			tmp_opbuf,
-			tmp_recvbuf,
-			recv_bufsize,
-			datatype,
-			op,
-			mpc_op,
-			coll_type,
-			schedule,
-			info);
+		___collectives_op_type(NULL, tmp_opbuf, tmp_recvbuf, recv_bufsize, datatype, op, mpc_op, coll_type,
+			schedule, info);
 
 		pointer_swap(resbuf, recv_resbuf, swap);
 	}
@@ -5835,15 +5687,7 @@ int ___collectives_allreduce_binary_block(const void *sendbuf,
 			tmp_sendbuf  = (recvbuf) + peer_start * ext;
 			send_bufsize = peer_end - peer_start;
 
-			___collectives_send_type(tmp_sendbuf,
-				send_bufsize,
-				datatype,
-				peer,
-				MPC_ALLREDUCE_TAG,
-				comm,
-				coll_type,
-				schedule,
-				info);
+			___collectives_send_type(tmp_sendbuf, send_bufsize, datatype, peer, tag, comm, coll_type, schedule, info);
 		}
 
 		for (j = 0; j < target_count; j++)
@@ -5872,15 +5716,7 @@ int ___collectives_allreduce_binary_block(const void *sendbuf,
 			tmp_sendbuf  = (recvbuf) + peer_start * ext;
 			send_bufsize = peer_end - peer_start;
 
-			___collectives_recv_type(tmp_sendbuf,
-				send_bufsize,
-				datatype,
-				peer,
-				MPC_ALLREDUCE_TAG,
-				comm,
-				coll_type,
-				schedule,
-				info);
+			___collectives_recv_type(tmp_sendbuf, send_bufsize, datatype, peer, tag, comm, coll_type, schedule, info);
 		}
 
 		___collectives_barrier_type(coll_type, schedule, info);
@@ -5892,15 +5728,8 @@ int ___collectives_allreduce_binary_block(const void *sendbuf,
 		tmp_sendbuf  = ((void *)recvbuf) + start * ext;
 		send_bufsize = end - start;
 
-		___collectives_send_type(tmp_sendbuf,
-			send_bufsize,
-			datatype,
-			next_block_peer,
-			MPC_ALLREDUCE_TAG,
-			comm,
-			coll_type,
-			schedule,
-			info);
+		___collectives_send_type(tmp_sendbuf, send_bufsize, datatype, next_block_peer, tag, comm, coll_type,
+			schedule, info);
 	}
 
 
@@ -5923,24 +5752,8 @@ int ___collectives_allreduce_binary_block(const void *sendbuf,
 		{
 			tmp_recvbuf = (recvbuf) + end * ext;
 
-			___collectives_send_type(tmp_sendbuf,
-				send_bufsize,
-				datatype,
-				peer,
-				MPC_ALLREDUCE_TAG,
-				comm,
-				coll_type,
-				schedule,
-				info);
-			___collectives_recv_type(tmp_recvbuf,
-				recv_bufsize,
-				datatype,
-				peer,
-				MPC_ALLREDUCE_TAG,
-				comm,
-				coll_type,
-				schedule,
-				info);
+			___collectives_send_type(tmp_sendbuf, send_bufsize, datatype, peer, tag, comm, coll_type, schedule, info);
+			___collectives_recv_type(tmp_recvbuf, recv_bufsize, datatype, peer, tag, comm, coll_type, schedule, info);
 			___collectives_barrier_type(coll_type, schedule, info);
 
 			end += recv_bufsize;
@@ -5949,24 +5762,8 @@ int ___collectives_allreduce_binary_block(const void *sendbuf,
 		{
 			tmp_recvbuf = (recvbuf) + (start - recv_bufsize) * ext;
 
-			___collectives_recv_type(tmp_recvbuf,
-				recv_bufsize,
-				datatype,
-				peer,
-				MPC_ALLREDUCE_TAG,
-				comm,
-				coll_type,
-				schedule,
-				info);
-			___collectives_send_type(tmp_sendbuf,
-				send_bufsize,
-				datatype,
-				peer,
-				MPC_ALLREDUCE_TAG,
-				comm,
-				coll_type,
-				schedule,
-				info);
+			___collectives_recv_type(tmp_recvbuf, recv_bufsize, datatype, peer, tag, comm, coll_type, schedule, info);
+			___collectives_send_type(tmp_sendbuf, send_bufsize, datatype, peer, tag, comm, coll_type, schedule, info);
 			___collectives_barrier_type(coll_type, schedule, info);
 
 			start -= recv_bufsize;
@@ -6167,7 +5964,7 @@ static inline int ___collectives_iscatter(const void *sendbuf,
 
 	___collectives_sched_info_init(&info, MPC_COLL_TYPE_NONBLOCKING, _mpc_mpi_config()->coll_opts.topo.scatter);
 
-	res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
+	res = NBC_Init_handle(handle, comm, MPC_ISCATTER_TAG);
 	MPI_HANDLE_ERROR(res, comm, "Iscatter: NBC_Init_handle failed");
 
 	handle->tmpbuf = NULL;
@@ -6308,7 +6105,7 @@ static inline int ___collectives_scatter_init(const void *sendbuf,
 	Sched_info    info;
 
 	___collectives_sched_info_init(&info, MPC_COLL_TYPE_PERSISTENT, _mpc_mpi_config()->coll_opts.topo.scatter);
-	res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
+	res = NBC_Init_handle(handle, comm, MPC_ISCATTER_TAG);
 	MPI_HANDLE_ERROR(res, comm, "Scatter: NBC_Init_handle failed");
 
 	handle->tmpbuf = NULL;
@@ -6567,6 +6364,8 @@ int ___collectives_scatter_linear(const void *sendbuf,
 	_mpc_cl_comm_rank(comm, &rank);
 	PMPI_Type_extent(sendtype, &ext);
 
+	const int tag = mpc_lowcomm_generate_unique_tag(MPC_SCATTER_TAG, comm);
+
 	int res = MPI_SUCCESS;
 
 	switch (coll_type)
@@ -6593,15 +6392,7 @@ int ___collectives_scatter_linear(const void *sendbuf,
 	// if rank != root, receive data from root
 	if (rank != root)
 	{
-		res = ___collectives_recv_type(recvbuf,
-			recvcount,
-			recvtype,
-			root,
-			MPC_SCATTER_TAG,
-			comm,
-			coll_type,
-			schedule,
-			info);
+		res = ___collectives_recv_type(recvbuf, recvcount, recvtype, root, tag, comm, coll_type, schedule, info);
 		if (res != MPI_SUCCESS)
 		{
 			return res;
@@ -6618,15 +6409,8 @@ int ___collectives_scatter_linear(const void *sendbuf,
 				continue;
 			}
 
-			res = ___collectives_send_type(sendbuf + i * ext * sendcount,
-				sendcount,
-				sendtype,
-				i,
-				MPC_SCATTER_TAG,
-				comm,
-				coll_type,
-				schedule,
-				info);
+			res = ___collectives_send_type(sendbuf + i * ext * sendcount, sendcount, sendtype, i, tag, comm, coll_type,
+				schedule, info);
 			if (res != MPI_SUCCESS)
 			{
 				return res;
@@ -6635,16 +6419,8 @@ int ___collectives_scatter_linear(const void *sendbuf,
 
 		if (recvbuf != MPI_IN_PLACE)
 		{
-			___collectives_copy_type(sendbuf + rank * ext * sendcount,
-				sendcount,
-				sendtype,
-				recvbuf,
-				recvcount,
-				recvtype,
-				comm,
-				coll_type,
-				schedule,
-				info);
+			___collectives_copy_type(sendbuf + rank * ext * sendcount, sendcount, sendtype, recvbuf, recvcount,
+				recvtype, comm, coll_type, schedule, info);
 		}
 	}
 
@@ -6716,6 +6492,8 @@ int ___collectives_scatter_binomial(const void *sendbuf,
 	int peer_range, count;
 
 	void *tmpbuf = NULL;
+
+	const int tag = mpc_lowcomm_generate_unique_tag(MPC_SCATTER_TAG, comm);
 
 	switch (coll_type)
 	{
@@ -6789,7 +6567,7 @@ int ___collectives_scatter_binomial(const void *sendbuf,
 			count = (size - peer) * tmp_recvcount;
 		}
 
-		___collectives_recv_type(tmpbuf, count, tmp_recvtype, peer, MPC_BROADCAST_TAG, comm, coll_type, schedule, info);
+		___collectives_recv_type(tmpbuf, count, tmp_recvtype, peer, tag, comm, coll_type, schedule, info);
 		___collectives_barrier_type(coll_type, schedule, info);
 	}
 
@@ -6829,29 +6607,14 @@ int ___collectives_scatter_binomial(const void *sendbuf,
 			count = (size - peer_vrank) * tmp_recvcount;
 		}
 
-		___collectives_send_type(tmpbuf + (1 << i) * tmp_recvcount * recvext,
-			count,
-			tmp_recvtype,
-			peer,
-			MPC_BROADCAST_TAG,
-			comm,
-			coll_type,
-			schedule,
-			info);
+		___collectives_send_type(tmpbuf + (1 << i) * tmp_recvcount * recvext, count, tmp_recvtype, peer, tag, comm,
+			coll_type, schedule, info);
 	}
 
 	if (recvbuf != MPI_IN_PLACE)
 	{
-		___collectives_copy_type(tmpbuf,
-			tmp_recvcount,
-			recvtype,
-			recvbuf,
-			tmp_recvcount,
-			tmp_recvtype,
-			comm,
-			coll_type,
-			schedule,
-			info);
+		___collectives_copy_type(tmpbuf, tmp_recvcount, recvtype, recvbuf, tmp_recvcount, tmp_recvtype, comm,
+			coll_type, schedule, info);
 	}
 
 
@@ -7220,7 +6983,7 @@ static inline int ___collectives_iscatterv(const void *sendbuf,
 
 	___collectives_sched_info_init(&info, MPC_COLL_TYPE_NONBLOCKING, _mpc_mpi_config()->coll_opts.topo.scatterv);
 
-	res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
+	res = NBC_Init_handle(handle, comm, MPC_ISCATTERV_TAG);
 	MPI_HANDLE_ERROR(res, comm, "Iscatterv: NBC_Init_handle failed");
 
 	handle->tmpbuf = NULL;
@@ -7381,7 +7144,7 @@ static inline int ___collectives_scatterv_init(const void *sendbuf,
 
 	___collectives_sched_info_init(&info, MPC_COLL_TYPE_PERSISTENT, _mpc_mpi_config()->coll_opts.topo.scatterv);
 
-	res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
+	res = NBC_Init_handle(handle, comm, MPC_ISCATTERV_TAG);
 	MPI_HANDLE_ERROR(res, comm, "Scatterv: NBC_Init_handle failed");
 
 	handle->tmpbuf = NULL;
@@ -7600,6 +7363,7 @@ int ___collectives_scatterv_linear(const void *sendbuf,
 
 	MPI_Aint sendext;
 	PMPI_Type_extent(sendtype, &sendext);
+	const int tag = mpc_lowcomm_generate_unique_tag(MPC_SCATTERV_TAG, comm);
 
 	int res = MPI_SUCCESS;
 
@@ -7627,15 +7391,7 @@ int ___collectives_scatterv_linear(const void *sendbuf,
 	// if rank != root, receive data from root
 	if (rank != root)
 	{
-		res = ___collectives_recv_type(recvbuf,
-			recvcount,
-			recvtype,
-			root,
-			MPC_SCATTER_TAG,
-			comm,
-			coll_type,
-			schedule,
-			info);
+		res = ___collectives_recv_type(recvbuf, recvcount, recvtype, root, tag, comm, coll_type, schedule, info);
 		if (res != MPI_SUCCESS)
 		{
 			return res;
@@ -7652,15 +7408,8 @@ int ___collectives_scatterv_linear(const void *sendbuf,
 				continue;
 			}
 
-			res = ___collectives_send_type(sendbuf + displs[i] * sendext,
-				sendcounts[i],
-				sendtype,
-				i,
-				MPC_SCATTER_TAG,
-				comm,
-				coll_type,
-				schedule,
-				info);
+			res = ___collectives_send_type(sendbuf + displs[i] * sendext, sendcounts[i], sendtype, i, tag, comm,
+				coll_type, schedule, info);
 			if (res != MPI_SUCCESS)
 			{
 				return res;
@@ -7818,7 +7567,7 @@ static inline int ___collectives_igather(const void *sendbuf,
 	Sched_info    info;
 
 	___collectives_sched_info_init(&info, MPC_COLL_TYPE_NONBLOCKING, _mpc_mpi_config()->coll_opts.topo.gather);
-	res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
+	res = NBC_Init_handle(handle, comm, MPC_IGATHER_TAG);
 	MPI_HANDLE_ERROR(res, comm, "Igather: NBC_Init_handle failed");
 
 	handle->tmpbuf = NULL;
@@ -7970,7 +7719,7 @@ static inline int ___collectives_gather_init(const void *sendbuf,
 	Sched_info    info;
 
 	___collectives_sched_info_init(&info, MPC_COLL_TYPE_PERSISTENT, _mpc_mpi_config()->coll_opts.topo.gather);
-	res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
+	res = NBC_Init_handle(handle, comm, MPC_IGATHER_TAG);
 	MPI_HANDLE_ERROR(res, comm, "Gather: NBC_Init_handle failed");
 
 	handle->tmpbuf = NULL;
@@ -8229,6 +7978,7 @@ int ___collectives_gather_linear(const void *sendbuf,
 	{
 		PMPI_Type_extent(recvtype, &ext);
 	}
+	const int tag = mpc_lowcomm_generate_unique_tag(MPC_GATHER_TAG, comm);
 
 	int res = MPI_SUCCESS;
 
@@ -8262,15 +8012,7 @@ int ___collectives_gather_linear(const void *sendbuf,
 	// if rank != root, send data to root
 	if (rank != root)
 	{
-		res = ___collectives_send_type(sendbuf,
-			sendcount,
-			sendtype,
-			root,
-			MPC_GATHER_TAG,
-			comm,
-			coll_type,
-			schedule,
-			info);
+		res = ___collectives_send_type(sendbuf, sendcount, sendtype, root, tag, comm, coll_type, schedule, info);
 	}
 	else
 	{
@@ -8283,15 +8025,8 @@ int ___collectives_gather_linear(const void *sendbuf,
 				continue;
 			}
 
-			res = ___collectives_recv_type(recvbuf + i * ext * recvcount,
-				recvcount,
-				recvtype,
-				i,
-				MPC_GATHER_TAG,
-				comm,
-				coll_type,
-				schedule,
-				info);
+			res = ___collectives_recv_type(recvbuf + i * ext * recvcount, recvcount, recvtype, i, tag, comm, coll_type,
+				schedule, info);
 			if (res != MPI_SUCCESS)
 			{
 				return res;
@@ -8365,6 +8100,7 @@ int ___collectives_gather_binomial(const void *sendbuf,
 	{
 		PMPI_Type_extent(recvtype, &recvext);
 	}
+	const int tag = mpc_lowcomm_generate_unique_tag(MPC_GATHER_TAG, comm);
 
 	int maxr, vrank, peer, peer_vrank;
 	maxr = ___collectives_ceiled_log2(size);
@@ -8453,7 +8189,7 @@ int ___collectives_gather_binomial(const void *sendbuf,
 			}
 
 			___collectives_barrier_type(coll_type, schedule, info);
-			___collectives_send_type(tmpbuf, count, tmp_sendtype, peer, MPC_REDUCE_TAG, comm, coll_type, schedule,
+			___collectives_send_type(tmpbuf, count, tmp_sendtype, peer, tag, comm, coll_type, schedule,
 				info);
 
 			break;
@@ -8485,15 +8221,8 @@ int ___collectives_gather_binomial(const void *sendbuf,
 				count = (size - peer_vrank) * tmp_sendcount;
 			}
 
-			___collectives_recv_type(tmpbuf + (1 << i) * tmp_sendcount * sendext,
-				count,
-				tmp_sendtype,
-				peer,
-				MPC_REDUCE_TAG,
-				comm,
-				coll_type,
-				schedule,
-				info);
+			___collectives_recv_type(tmpbuf + (1 << i) * tmp_sendcount * sendext, count, tmp_sendtype, peer, tag, comm,
+				coll_type, schedule, info);
 		}
 	}
 
@@ -8941,7 +8670,7 @@ static inline int ___collectives_igatherv(const void *sendbuf,
 
 	___collectives_sched_info_init(&info, MPC_COLL_TYPE_NONBLOCKING, _mpc_mpi_config()->coll_opts.topo.gatherv);
 
-	res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
+	res = NBC_Init_handle(handle, comm, MPC_IGATHERV_TAG);
 	MPI_HANDLE_ERROR(res, comm, "Igatherv: NBC_Init_handle failed");
 
 	handle->tmpbuf = NULL;
@@ -9098,7 +8827,7 @@ static inline int ___collectives_gatherv_init(const void *sendbuf,
 
 	___collectives_sched_info_init(&info, MPC_COLL_TYPE_PERSISTENT, _mpc_mpi_config()->coll_opts.topo.gatherv);
 
-	res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
+	res = NBC_Init_handle(handle, comm, MPC_IGATHERV_TAG);
 	MPI_HANDLE_ERROR(res, comm, "Gatherv: NBC_Init_handle failed");
 
 	handle->tmpbuf = NULL;
@@ -9316,6 +9045,7 @@ int ___collectives_gatherv_linear(const void *sendbuf,
 	_mpc_cl_comm_size(comm, &size);
 	_mpc_cl_comm_rank(comm, &rank);
 	PMPI_Type_extent(recvtype, &ext);
+	const int tag = mpc_lowcomm_generate_unique_tag(MPC_GATHERV_TAG, comm);
 
 	int res = MPI_SUCCESS;
 
@@ -9360,15 +9090,7 @@ int ___collectives_gatherv_linear(const void *sendbuf,
 	// if rank != root, send data to root
 	if (rank != root)
 	{
-		res = ___collectives_send_type(sendbuf,
-			sendcount,
-			sendtype,
-			root,
-			MPC_GATHER_TAG,
-			comm,
-			coll_type,
-			schedule,
-			info);
+		res = ___collectives_send_type(sendbuf, sendcount, sendtype, root, tag, comm, coll_type, schedule, info);
 		if (res != MPI_SUCCESS)
 		{
 			return res;
@@ -9385,15 +9107,8 @@ int ___collectives_gatherv_linear(const void *sendbuf,
 				continue;
 			}
 
-			res = ___collectives_recv_type(recvbuf + displs[i] * ext,
-				recvcounts[i],
-				recvtype,
-				i,
-				MPC_GATHER_TAG,
-				comm,
-				coll_type,
-				schedule,
-				info);
+			res = ___collectives_recv_type(recvbuf + displs[i] * ext, recvcounts[i], recvtype, i, tag, comm, coll_type,
+				schedule, info);
 			if (res != MPI_SUCCESS)
 			{
 				return res;
@@ -9540,7 +9255,7 @@ static inline int ___collectives_ireduce_scatter_block(const void *sendbuf,
 		MPC_COLL_TYPE_NONBLOCKING,
 		_mpc_mpi_config()->coll_opts.topo.reduce_scatter_block);
 
-	res = NBC_Init_handle(handle, comm, MPC_IALLREDUCE_TAG);
+	res = NBC_Init_handle(handle, comm, MPC_IREDUCE_SCATTER_BLOCK_TAG);
 	MPI_HANDLE_ERROR(res, comm, "Ireduce: NBC_Init_handle failed");
 
 	handle->tmpbuf = NULL;
@@ -9666,7 +9381,7 @@ static inline int ___collectives_reduce_scatter_block_init(const void *sendbuf,
 	___collectives_sched_info_init(&info,
 		MPC_COLL_TYPE_PERSISTENT,
 		_mpc_mpi_config()->coll_opts.topo.reduce_scatter_block);
-	res = NBC_Init_handle(handle, comm, MPC_IALLREDUCE_TAG);
+	res = NBC_Init_handle(handle, comm, MPC_IREDUCE_SCATTER_BLOCK_TAG);
 	MPI_HANDLE_ERROR(res, comm, "Reduce_scatter_block: NBC_Init_handle failed");
 
 	handle->tmpbuf = NULL;
@@ -10047,6 +9762,7 @@ int ___collectives_reduce_scatter_block_pairwise(const void *sendbuf,
 	_mpc_cl_comm_size(comm, &size);
 	_mpc_cl_comm_rank(comm, &rank);
 	PMPI_Type_extent(datatype, &ext);
+	const int tag = mpc_lowcomm_generate_unique_tag(MPC_REDUCE_SCATTER_BLOCK_TAG, comm);
 
 	int send_peer, recv_peer;
 
@@ -10106,24 +9822,9 @@ int ___collectives_reduce_scatter_block_pairwise(const void *sendbuf,
 		send_peer = (rank + i) % size;
 		recv_peer = (rank - i + size) % size;
 
-		___collectives_send_type(initial_buf + send_peer * ext * count,
-			count,
-			datatype,
-			send_peer,
-			MPC_REDUCE_SCATTER_BLOCK_TAG,
-			comm,
-			coll_type,
-			schedule,
-			info);
-		___collectives_recv_type(tmp_recvbuf,
-			count,
-			datatype,
-			recv_peer,
-			MPC_REDUCE_SCATTER_BLOCK_TAG,
-			comm,
-			coll_type,
-			schedule,
-			info);
+		___collectives_send_type(initial_buf + send_peer * ext * count, count, datatype, send_peer, tag,
+			comm, coll_type, schedule, info);
+		___collectives_recv_type(tmp_recvbuf, count, datatype, recv_peer, tag, comm, coll_type, schedule, info);
 
 		___collectives_barrier_type(coll_type, schedule, info);
 
@@ -10298,7 +9999,7 @@ static inline int ___collectives_ireduce_scatter(const void *sendbuf,
 
 	___collectives_sched_info_init(&info, MPC_COLL_TYPE_NONBLOCKING, _mpc_mpi_config()->coll_opts.topo.reduce_scatter);
 
-	res = NBC_Init_handle(handle, comm, MPC_IALLREDUCE_TAG);
+	res = NBC_Init_handle(handle, comm, MPC_IREDUCE_SCATTER_TAG);
 	MPI_HANDLE_ERROR(res, comm, "Ireduce_scatter: NBC_Init_handle failed");
 
 	handle->tmpbuf = NULL;
@@ -10430,7 +10131,7 @@ static inline int ___collectives_reduce_scatter_init(const void *sendbuf,
 	Sched_info    info;
 
 	___collectives_sched_info_init(&info, MPC_COLL_TYPE_PERSISTENT, _mpc_mpi_config()->coll_opts.topo.reduce_scatter);
-	res = NBC_Init_handle(handle, comm, MPC_IALLREDUCE_TAG);
+	res = NBC_Init_handle(handle, comm, MPC_IREDUCE_SCATTER_TAG);
 	MPI_HANDLE_ERROR(res, comm, "Reduce_scatter: NBC_Init_handle failed");
 
 	handle->tmpbuf = NULL;
@@ -11041,7 +10742,7 @@ static inline int ___collectives_allgather_init(const void *sendbuf,
 	Sched_info    info;
 
 	___collectives_sched_info_init(&info, MPC_COLL_TYPE_PERSISTENT, _mpc_mpi_config()->coll_opts.topo.allgather);
-	res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
+	res = NBC_Init_handle(handle, comm, MPC_IALLGATHER_TAG);
 	MPI_HANDLE_ERROR(res, comm, "Allgather: NBC_Init_handle failed");
 
 	handle->tmpbuf = NULL;
@@ -11397,6 +11098,7 @@ int ___collectives_allgather_distance_doubling(const void *sendbuf,
 	_mpc_cl_comm_rank(comm, &rank);
 	PMPI_Type_extent(tmp_sendtype, &sendext);
 	PMPI_Type_extent(recvtype,     &recvext);
+	const int tag = mpc_lowcomm_generate_unique_tag(MPC_ALLGATHER_TAG, comm);
 
 	int          vrank      = 0;
 	int          vsize      = 0;
@@ -11469,27 +11171,13 @@ int ___collectives_allgather_distance_doubling(const void *sendbuf,
 
 		if (rank & 1)
 		{
-			___collectives_send_type(initial_buf,
-				tmp_sendcount,
-				tmp_sendtype,
-				peer,
-				MPC_ALLGATHER_TAG,
-				comm,
-				coll_type,
-				schedule,
-				info);
+			___collectives_send_type(initial_buf, tmp_sendcount, tmp_sendtype, peer, tag, comm,
+				coll_type, schedule, info);
 		}
 		else
 		{
-			___collectives_recv_type(recvbuf + peer * recvcount * recvext,
-				recvcount,
-				recvtype,
-				peer,
-				MPC_ALLGATHER_TAG,
-				comm,
-				coll_type,
-				schedule,
-				info);
+			___collectives_recv_type(recvbuf + peer * recvcount * recvext, recvcount, recvtype, peer, tag, comm,
+				coll_type, schedule, info);
 			___collectives_barrier_type(coll_type, schedule, info);
 		}
 	}
@@ -11533,46 +11221,18 @@ int ___collectives_allgather_distance_doubling(const void *sendbuf,
 			// To avoid deadlocks
 			if (peer < rank)
 			{
-				___collectives_send_type(tmpbuf,
-					count * recvcount,
-					recvtype,
-					peer,
-					MPC_ALLGATHER_TAG,
-					comm,
-					coll_type,
-					schedule,
+				___collectives_send_type(tmpbuf, count * recvcount, recvtype, peer, tag, comm, coll_type, schedule,
 					info);
-				___collectives_recv_type(tmpbuf - peer_count * recvcount * recvext,
-					peer_count * recvcount,
-					recvtype,
-					peer,
-					MPC_ALLGATHER_TAG,
-					comm,
-					coll_type,
-					schedule,
-					info);
+				___collectives_recv_type(tmpbuf - peer_count * recvcount * recvext, peer_count * recvcount, recvtype,
+					peer, tag, comm, coll_type, schedule, info);
 
 				tmpbuf -= peer_count * recvcount * recvext;
 			}
 			else
 			{
-				___collectives_recv_type(tmpbuf + count * recvcount * recvext,
-					peer_count * recvcount,
-					recvtype,
-					peer,
-					MPC_ALLGATHER_TAG,
-					comm,
-					coll_type,
-					schedule,
-					info);
-				___collectives_send_type(tmpbuf,
-					count * recvcount,
-					recvtype,
-					peer,
-					MPC_ALLGATHER_TAG,
-					comm,
-					coll_type,
-					schedule,
+				___collectives_recv_type(tmpbuf + count * recvcount * recvext, peer_count * recvcount, recvtype,
+					peer, tag, comm, coll_type, schedule, info);
+				___collectives_send_type(tmpbuf, count * recvcount, recvtype, peer, tag, comm, coll_type, schedule,
 					info);
 			}
 
@@ -11601,27 +11261,11 @@ int ___collectives_allgather_distance_doubling(const void *sendbuf,
 
 		if (rank & 1)
 		{
-			___collectives_recv_type(recvbuf,
-				recvcount * size,
-				recvtype,
-				peer,
-				MPC_ALLGATHER_TAG,
-				comm,
-				coll_type,
-				schedule,
-				info);
+			___collectives_recv_type(recvbuf, recvcount * size, recvtype, peer, tag, comm, coll_type, schedule, info);
 		}
 		else
 		{
-			___collectives_send_type(recvbuf,
-				recvcount * size,
-				recvtype,
-				peer,
-				MPC_ALLGATHER_TAG,
-				comm,
-				coll_type,
-				schedule,
-				info);
+			___collectives_send_type(recvbuf, recvcount * size, recvtype, peer, tag, comm, coll_type, schedule, info);
 		}
 	}
 
@@ -11822,6 +11466,8 @@ int ___collectives_allgather_ring(const void *sendbuf,
 	PMPI_Type_extent(sendtype, &sendext);
 	PMPI_Type_extent(recvtype, &recvext);
 
+	const int tag = mpc_lowcomm_generate_unique_tag(MPC_ALLGATHER_TAG, comm);
+
 	switch (coll_type)
 	{
 	case MPC_COLL_TYPE_BLOCKING:
@@ -11858,30 +11504,16 @@ int ___collectives_allgather_ring(const void *sendbuf,
 		if (rank & 1)
 		{
 			___collectives_recv_type(recvbuf + ((rank - i - 1 + size) % size) * recvcount * recvext,
-				recvcount,
-				recvtype,
-				(rank - 1 + size) % size,
-				MPC_ALLGATHER_TAG,
-				comm,
-				coll_type,
-				schedule,
-				info);
-			___collectives_send_type(recvbuf + ((rank - i + size) % size) * recvcount * recvext, recvcount, recvtype,
-				(rank + 1) % size, MPC_ALLGATHER_TAG, comm, coll_type, schedule, info);
+				recvcount, recvtype, (rank - 1 + size) % size, tag, comm, coll_type, schedule, info);
+			___collectives_send_type(recvbuf + ((rank - i + size) % size) * recvcount * recvext,
+				recvcount, recvtype, (rank + 1) % size, tag, comm, coll_type, schedule, info);
 		}
 		else
 		{
-			___collectives_send_type(recvbuf + ((rank - i + size) % size) * recvcount * recvext, recvcount, recvtype,
-				(rank + 1) % size, MPC_ALLGATHER_TAG, comm, coll_type, schedule, info);
+			___collectives_send_type(recvbuf + ((rank - i + size) % size) * recvcount * recvext,
+				recvcount, recvtype, (rank + 1) % size, tag, comm, coll_type, schedule, info);
 			___collectives_recv_type(recvbuf + ((rank - i - 1 + size) % size) * recvcount * recvext,
-				recvcount,
-				recvtype,
-				(rank - 1 + size) % size,
-				MPC_ALLGATHER_TAG,
-				comm,
-				coll_type,
-				schedule,
-				info);
+				recvcount, recvtype, (rank - 1 + size) % size, tag, comm, coll_type, schedule, info);
 		}
 
 		___collectives_barrier_type(coll_type, schedule, info);
@@ -12273,7 +11905,7 @@ static inline int ___collectives_iallgatherv(const void *sendbuf,
 	Sched_info    info;
 	___collectives_sched_info_init(&info, MPC_COLL_TYPE_NONBLOCKING, _mpc_mpi_config()->coll_opts.topo.allgatherv);
 
-	res = NBC_Init_handle(handle, comm, MPC_IALLGATHER_TAG);
+	res = NBC_Init_handle(handle, comm, MPC_IALLGATHERV_TAG);
 	MPI_HANDLE_ERROR(res, comm, "Iallgatherv: NBC_Init_handle failed");
 
 	handle->tmpbuf = NULL;
@@ -12428,7 +12060,7 @@ static inline int ___collectives_allgatherv_init(const void *sendbuf,
 	Sched_info    info;
 	___collectives_sched_info_init(&info, MPC_COLL_TYPE_PERSISTENT, _mpc_mpi_config()->coll_opts.topo.allgatherv);
 
-	res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
+	res = NBC_Init_handle(handle, comm, MPC_IALLGATHERV_TAG);
 	MPI_HANDLE_ERROR(res, comm, "Allgatherv: NBC_Init_handle failed");
 
 	handle->tmpbuf = NULL;
@@ -12882,7 +12514,7 @@ static inline int ___collectives_ialltoall(const void *sendbuf,
 	Sched_info    info;
 	___collectives_sched_info_init(&info, MPC_COLL_TYPE_NONBLOCKING, _mpc_mpi_config()->coll_opts.topo.alltoall);
 
-	res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
+	res = NBC_Init_handle(handle, comm, MPC_IALLTOALL_TAG);
 	MPI_HANDLE_ERROR(res, comm, "Ialltoall: NBC_Init_handle failed");
 
 	handle->tmpbuf = NULL;
@@ -13014,7 +12646,7 @@ static inline int ___collectives_alltoall_init(const void *sendbuf,
 	Sched_info    info;
 	___collectives_sched_info_init(&info, MPC_COLL_TYPE_PERSISTENT, _mpc_mpi_config()->coll_opts.topo.alltoall);
 
-	res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
+	res = NBC_Init_handle(handle, comm, MPC_IALLTOALL_TAG);
 	MPI_HANDLE_ERROR(res, comm, "Alltoall: NBC_Init_handle failed");
 
 	handle->tmpbuf = NULL;
@@ -13278,6 +12910,7 @@ int ___collectives_alltoall_cluster(const void *sendbuf,
 	_mpc_cl_comm_rank(comm, &rank);
 	PMPI_Type_extent(tmp_sendtype, &tmp_sendext);
 	PMPI_Type_extent(recvtype,     &recvext);
+	const int tag = mpc_lowcomm_generate_unique_tag(MPC_ALLTOALL_TAG, comm);
 
 	switch (coll_type)
 	{
@@ -13346,45 +12979,17 @@ int ___collectives_alltoall_cluster(const void *sendbuf,
 		}
 		else if (rank < i)
 		{
-			___collectives_send_type(tmp_sendbuf + i * tmp_sendcount * tmp_sendext,
-				tmp_sendcount,
-				tmp_sendtype,
-				i,
-				MPC_ALLTOALL_TAG,
-				comm,
-				coll_type,
-				schedule,
-				info);
-			___collectives_recv_type(recvbuf + i * recvcount * recvext,
-				recvcount,
-				recvtype,
-				i,
-				MPC_ALLTOALL_TAG,
-				comm,
-				coll_type,
-				schedule,
-				info);
+			___collectives_send_type(tmp_sendbuf + i * tmp_sendcount * tmp_sendext, tmp_sendcount, tmp_sendtype, i,
+				tag, comm, coll_type, schedule, info);
+			___collectives_recv_type(recvbuf + i * recvcount * recvext, recvcount, recvtype, i,
+				tag, comm, coll_type, schedule, info);
 		}
 		else
 		{
-			___collectives_recv_type(recvbuf + i * recvcount * recvext,
-				recvcount,
-				recvtype,
-				i,
-				MPC_ALLTOALL_TAG,
-				comm,
-				coll_type,
-				schedule,
-				info);
-			___collectives_send_type(tmp_sendbuf + i * tmp_sendcount * tmp_sendext,
-				tmp_sendcount,
-				tmp_sendtype,
-				i,
-				MPC_ALLTOALL_TAG,
-				comm,
-				coll_type,
-				schedule,
-				info);
+			___collectives_recv_type(recvbuf + i * recvcount * recvext, recvcount, recvtype, i,
+				tag, comm, coll_type, schedule, info);
+			___collectives_send_type(tmp_sendbuf + i * tmp_sendcount * tmp_sendext, tmp_sendcount, tmp_sendtype, i,
+				tag, comm, coll_type, schedule, info);
 		}
 	}
 
@@ -13453,6 +13058,7 @@ int ___collectives_alltoall_bruck(const void *sendbuf,
 	_mpc_cl_comm_rank(comm, &rank);
 	PMPI_Type_extent(tmp_sendtype, &tmp_sendext);
 	PMPI_Type_extent(recvtype,     &recvext);
+	const int tag = mpc_lowcomm_generate_unique_tag(MPC_ALLTOALL_TAG, comm);
 
 	void *tmp_buf1 = NULL,
 	     *tmp_buf2 = NULL;
@@ -13493,45 +13099,17 @@ int ___collectives_alltoall_bruck(const void *sendbuf,
 	{
 		if (rank < (rank + (1 << i)) % size)
 		{
-			___collectives_send_type(tmp_buf1,
-				size * recvcount,
-				recvtype,
-				(rank + (1 << i)) % size,
-				MPC_ALLTOALL_TAG,
-				comm,
-				coll_type,
-				schedule,
-				info);
-			___collectives_recv_type(tmp_buf2,
-				size * recvcount,
-				recvtype,
-				(rank - (1 << i) + size) % size,
-				MPC_ALLTOALL_TAG,
-				comm,
-				coll_type,
-				schedule,
-				info);
+			___collectives_send_type(tmp_buf1, size * recvcount, recvtype, (rank + (1 << i)) % size,
+				tag, comm, coll_type, schedule, info);
+			___collectives_recv_type(tmp_buf2, size * recvcount, recvtype, (rank - (1 << i) + size) % size,
+				tag, comm, coll_type, schedule, info);
 		}
 		else
 		{
-			___collectives_recv_type(tmp_buf2,
-				size * recvcount,
-				recvtype,
-				(rank - (1 << i) + size) % size,
-				MPC_ALLTOALL_TAG,
-				comm,
-				coll_type,
-				schedule,
-				info);
-			___collectives_send_type(tmp_buf1,
-				size * recvcount,
-				recvtype,
-				(rank + (1 << i)) % size,
-				MPC_ALLTOALL_TAG,
-				comm,
-				coll_type,
-				schedule,
-				info);
+			___collectives_recv_type(tmp_buf2, size * recvcount, recvtype, (rank - (1 << i) + size) % size,
+				tag, comm, coll_type, schedule, info);
+			___collectives_send_type(tmp_buf1, size * recvcount, recvtype, (rank + (1 << i)) % size,
+				tag, comm, coll_type, schedule, info);
 		}
 
 		___collectives_barrier_type(coll_type, schedule, info);
@@ -13613,6 +13191,7 @@ int ___collectives_alltoall_pairwise(const void *sendbuf,
 	_mpc_cl_comm_rank(comm, &rank);
 	PMPI_Type_extent(tmp_sendtype, &tmp_sendext);
 	PMPI_Type_extent(recvtype,     &recvext);
+	const int tag = mpc_lowcomm_generate_unique_tag(MPC_ALLTOALL_TAG, comm);
 
 	switch (coll_type)
 	{
@@ -13683,37 +13262,23 @@ int ___collectives_alltoall_pairwise(const void *sendbuf,
 				tmp_sendcount,
 				tmp_sendtype,
 				dest,
-				MPC_ALLTOALL_TAG,
+				tag,
 				comm,
 				coll_type,
 				schedule,
 				info);
-			___collectives_recv_type(recvbuf + src * recvcount * recvext,
-				recvcount,
-				recvtype,
-				src,
-				MPC_ALLTOALL_TAG,
-				comm,
-				coll_type,
-				schedule,
-				info);
+			___collectives_recv_type(recvbuf + src * recvcount * recvext, recvcount, recvtype, src,
+				tag, comm, coll_type, schedule, info);
 		}
 		else
 		{
-			___collectives_recv_type(recvbuf + src * recvcount * recvext,
-				recvcount,
-				recvtype,
-				src,
-				MPC_ALLTOALL_TAG,
-				comm,
-				coll_type,
-				schedule,
-				info);
+			___collectives_recv_type(recvbuf + src * recvcount * recvext, recvcount, recvtype, src,
+				tag, comm, coll_type, schedule, info);
 			___collectives_send_type(tmp_sendbuf + dest * tmp_sendcount * tmp_sendext,
 				tmp_sendcount,
 				tmp_sendtype,
 				dest,
-				MPC_ALLTOALL_TAG,
+				tag,
 				comm,
 				coll_type,
 				schedule,
@@ -15125,7 +14690,7 @@ static inline int ___collectives_ialltoallv(const void *sendbuf,
 	Sched_info    info;
 	___collectives_sched_info_init(&info, MPC_COLL_TYPE_NONBLOCKING, _mpc_mpi_config()->coll_opts.topo.alltoallv);
 
-	res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
+	res = NBC_Init_handle(handle, comm, MPC_IALLTOALLV_TAG);
 	MPI_HANDLE_ERROR(res, comm, "Ialltoallv: NBC_Init_handle failed");
 
 	handle->tmpbuf = NULL;
@@ -15292,7 +14857,7 @@ static inline int ___collectives_alltoallv_init(const void *sendbuf,
 	Sched_info    info;
 	___collectives_sched_info_init(&info, MPC_COLL_TYPE_PERSISTENT, _mpc_mpi_config()->coll_opts.topo.alltoallv);
 
-	res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
+	res = NBC_Init_handle(handle, comm, MPC_IALLTOALLV_TAG);
 	MPI_HANDLE_ERROR(res, comm, "Alltoallv: NBC_Init_handle failed");
 
 	handle->tmpbuf = NULL;
@@ -15524,6 +15089,7 @@ int ___collectives_alltoallv_cluster(const void *sendbuf,
 	_mpc_cl_comm_rank(comm, &rank);
 	PMPI_Type_extent(sendtype, &sendext);
 	PMPI_Type_extent(recvtype, &recvext);
+	const int tag = mpc_lowcomm_generate_unique_tag(MPC_ALLTOALLV_TAG, comm);
 
 	void *tmpbuf = NULL;
 
@@ -15578,24 +15144,10 @@ int ___collectives_alltoallv_cluster(const void *sendbuf,
 				continue;
 			}
 
-			___collectives_send_type(tmpbuf + rdispls[i] * recvext,
-				recvcounts[i],
-				recvtype,
-				i,
-				MPC_ALLTOALL_TAG,
-				comm,
-				coll_type,
-				schedule,
-				info);
-			___collectives_recv_type(recvbuf + rdispls[i] * recvext,
-				recvcounts[i],
-				recvtype,
-				i,
-				MPC_ALLTOALL_TAG,
-				comm,
-				coll_type,
-				schedule,
-				info);
+			___collectives_send_type(tmpbuf + rdispls[i] * recvext, recvcounts[i], recvtype, i,
+				tag, comm, coll_type, schedule, info);
+			___collectives_recv_type(recvbuf + rdispls[i] * recvext, recvcounts[i], recvtype, i,
+				tag, comm, coll_type, schedule, info);
 		}
 	}
 	else
@@ -15609,24 +15161,10 @@ int ___collectives_alltoallv_cluster(const void *sendbuf,
 				continue;
 			}
 
-			___collectives_send_type(sendbuf + sdispls[i] * sendext,
-				sendcounts[i],
-				sendtype,
-				i,
-				MPC_ALLTOALL_TAG,
-				comm,
-				coll_type,
-				schedule,
-				info);
-			___collectives_recv_type(recvbuf + rdispls[i] * recvext,
-				recvcounts[i],
-				recvtype,
-				i,
-				MPC_ALLTOALL_TAG,
-				comm,
-				coll_type,
-				schedule,
-				info);
+			___collectives_send_type(sendbuf + sdispls[i] * sendext, sendcounts[i], sendtype, i,
+				tag, comm, coll_type, schedule, info);
+			___collectives_recv_type(recvbuf + rdispls[i] * recvext, recvcounts[i], recvtype, i,
+				tag, comm, coll_type, schedule, info);
 		}
 		// Copy our own data in the recvbuf
 		___collectives_copy_type(sendbuf + sdispls[rank] * sendext,
@@ -15761,6 +15299,7 @@ int ___collectives_alltoallv_pairwise(const void *sendbuf,
 	_mpc_cl_comm_rank(comm, &rank);
 	PMPI_Type_extent(sendtype, &sendext);
 	PMPI_Type_extent(recvtype, &recvext);
+	const int tag = mpc_lowcomm_generate_unique_tag(MPC_ALLTOALLV_TAG, comm);
 
 	// Total number of elements received by the current MPI process, different for each. DIFFERENT FROM NORMAL ALLTOALL
 	// RECVCOUNT!!
@@ -15829,45 +15368,17 @@ int ___collectives_alltoallv_pairwise(const void *sendbuf,
 			if ((rank / distance) % 2 == 0)
 			{
 				// We don't forget to jump displs[proc] ELEMENTS in the buffer
-				___collectives_send_type(tmpbuf + rdispls[dest] * recvext,
-					recvcounts[dest],
-					recvtype,
-					dest,
-					MPC_ALLTOALL_TAG,
-					comm,
-					coll_type,
-					schedule,
-					info);
-				___collectives_recv_type(recvbuf + rdispls[src] * recvext,
-					recvcounts[src],
-					recvtype,
-					src,
-					MPC_ALLTOALL_TAG,
-					comm,
-					coll_type,
-					schedule,
-					info);
+				___collectives_send_type(tmpbuf + rdispls[dest] * recvext, recvcounts[dest], recvtype, dest,
+					tag, comm, coll_type, schedule, info);
+				___collectives_recv_type(recvbuf + rdispls[src] * recvext, recvcounts[src], recvtype, src,
+					tag, comm, coll_type, schedule, info);
 			}
 			else
 			{
-				___collectives_recv_type(recvbuf + rdispls[src] * recvext,
-					recvcounts[src],
-					recvtype,
-					src,
-					MPC_ALLTOALL_TAG,
-					comm,
-					coll_type,
-					schedule,
-					info);
-				___collectives_send_type(tmpbuf + rdispls[dest] * recvext,
-					recvcounts[dest],
-					recvtype,
-					dest,
-					MPC_ALLTOALL_TAG,
-					comm,
-					coll_type,
-					schedule,
-					info);
+				___collectives_recv_type(recvbuf + rdispls[src] * recvext, recvcounts[src], recvtype, src,
+					tag, comm, coll_type, schedule, info);
+				___collectives_send_type(tmpbuf + rdispls[dest] * recvext, recvcounts[dest], recvtype, dest,
+					tag, comm, coll_type, schedule, info);
 			}
 		}
 
@@ -15883,45 +15394,17 @@ int ___collectives_alltoallv_pairwise(const void *sendbuf,
 
 			if ((rank / distance) % 2 == 0)
 			{
-				___collectives_send_type(sendbuf + sdispls[dest] * sendext,
-					sendcounts[dest],
-					sendtype,
-					dest,
-					MPC_ALLTOALL_TAG,
-					comm,
-					coll_type,
-					schedule,
-					info);
-				___collectives_recv_type(recvbuf + rdispls[src] * recvext,
-					recvcounts[src],
-					recvtype,
-					src,
-					MPC_ALLTOALL_TAG,
-					comm,
-					coll_type,
-					schedule,
-					info);
+				___collectives_send_type(sendbuf + sdispls[dest] * sendext, sendcounts[dest], sendtype, dest,
+					tag, comm, coll_type, schedule, info);
+				___collectives_recv_type(recvbuf + rdispls[src] * recvext, recvcounts[src], recvtype, src,
+					tag, comm, coll_type, schedule, info);
 			}
 			else
 			{
-				___collectives_recv_type(recvbuf + rdispls[src] * recvext,
-					recvcounts[src],
-					recvtype,
-					src,
-					MPC_ALLTOALL_TAG,
-					comm,
-					coll_type,
-					schedule,
-					info);
-				___collectives_send_type(sendbuf + sdispls[dest] * sendext,
-					sendcounts[dest],
-					sendtype,
-					dest,
-					MPC_ALLTOALL_TAG,
-					comm,
-					coll_type,
-					schedule,
-					info);
+				___collectives_recv_type(recvbuf + rdispls[src] * recvext, recvcounts[src], recvtype, src,
+					tag, comm, coll_type, schedule, info);
+				___collectives_send_type(sendbuf + sdispls[dest] * sendext, sendcounts[dest], sendtype, dest,
+					tag, comm, coll_type, schedule, info);
 			}
 		}
 
@@ -16051,7 +15534,7 @@ static inline int ___collectives_ialltoallw(const void *sendbuf,
 	Sched_info    info;
 	___collectives_sched_info_init(&info, MPC_COLL_TYPE_NONBLOCKING, _mpc_mpi_config()->coll_opts.topo.alltoallw);
 
-	res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
+	res = NBC_Init_handle(handle, comm, MPC_IALLTOALLW_TAG);
 	MPI_HANDLE_ERROR(res, comm, "Ialltoallw: NBC_Init_handle failed");
 
 	handle->tmpbuf = NULL;
@@ -16223,7 +15706,7 @@ static inline int ___collectives_alltoallw_init(const void *sendbuf,
 	Sched_info    info;
 	___collectives_sched_info_init(&info, MPC_COLL_TYPE_PERSISTENT, _mpc_mpi_config()->coll_opts.topo.alltoallw);
 
-	res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
+	res = NBC_Init_handle(handle, comm, MPC_IALLTOALLW_TAG);
 	MPI_HANDLE_ERROR(res, comm, "Alltoallw: NBC_Init_handle failed");
 
 	handle->tmpbuf = NULL;
@@ -16475,6 +15958,7 @@ int ___collectives_alltoallw_cluster(const void *sendbuf,
 
 		totalext += recvcounts[i] * ext;
 	}
+	const int tag = mpc_lowcomm_generate_unique_tag(MPC_ALLTOALLW_TAG, comm);
 
 	switch (coll_type)
 	{
@@ -16515,24 +15999,10 @@ int ___collectives_alltoallw_cluster(const void *sendbuf,
 				continue;
 			}
 
-			___collectives_send_type(tmpbuf + rdispls[i],
-				recvcounts[i],
-				recvtypes[i],
-				i,
-				MPC_ALLTOALL_TAG,
-				comm,
-				coll_type,
-				schedule,
-				info);
-			___collectives_recv_type(recvbuf + rdispls[i],
-				recvcounts[i],
-				recvtypes[i],
-				i,
-				MPC_ALLTOALL_TAG,
-				comm,
-				coll_type,
-				schedule,
-				info);
+			___collectives_send_type(tmpbuf + rdispls[i], recvcounts[i], recvtypes[i], i,
+				tag, comm, coll_type, schedule, info);
+			___collectives_recv_type(recvbuf + rdispls[i], recvcounts[i], recvtypes[i], i,
+				tag, comm, coll_type, schedule, info);
 		}
 	}
 	else
@@ -16546,24 +16016,10 @@ int ___collectives_alltoallw_cluster(const void *sendbuf,
 				continue;
 			}
 
-			___collectives_send_type(sendbuf + sdispls[i],
-				sendcounts[i],
-				sendtypes[i],
-				i,
-				MPC_ALLTOALL_TAG,
-				comm,
-				coll_type,
-				schedule,
-				info);
-			___collectives_recv_type(recvbuf + rdispls[i],
-				recvcounts[i],
-				recvtypes[i],
-				i,
-				MPC_ALLTOALL_TAG,
-				comm,
-				coll_type,
-				schedule,
-				info);
+			___collectives_send_type(sendbuf + sdispls[i], sendcounts[i], sendtypes[i], i,
+				tag, comm, coll_type, schedule, info);
+			___collectives_recv_type(recvbuf + rdispls[i], recvcounts[i], recvtypes[i], i,
+				tag, comm, coll_type, schedule, info);
 		}
 		// Copy our own data in the recvbuf
 		___collectives_copy_type(sendbuf + sdispls[rank],
@@ -16676,6 +16132,7 @@ int ___collectives_alltoallw_pairwise(const void *sendbuf,
 		PMPI_Type_extent(sendtypes[i], &(sendexts[i]));
 		PMPI_Type_extent(recvtypes[i], &(recvexts[i]));
 	}
+	const int tag = mpc_lowcomm_generate_unique_tag(MPC_ALLTOALLW_TAG, comm);
 
 	// We somehow need to account for the different extents of all the different datatypes
 	// The solution found here is to just get the total amount of bytes.
@@ -16741,45 +16198,17 @@ int ___collectives_alltoallw_pairwise(const void *sendbuf,
 
 			if ((rank / distance) % 2 == 0)
 			{
-				___collectives_send_type(tmpbuf + rdispls[dest],
-					recvcounts[dest],
-					recvtypes[dest],
-					dest,
-					MPC_ALLTOALL_TAG,
-					comm,
-					coll_type,
-					schedule,
-					info);
-				___collectives_recv_type(recvbuf + rdispls[src],
-					recvcounts[src],
-					recvtypes[src],
-					src,
-					MPC_ALLTOALL_TAG,
-					comm,
-					coll_type,
-					schedule,
-					info);
+				___collectives_send_type(tmpbuf + rdispls[dest], recvcounts[dest], recvtypes[dest], dest,
+					tag, comm, coll_type, schedule, info);
+				___collectives_recv_type(recvbuf + rdispls[src], recvcounts[src], recvtypes[src], src,
+					tag, comm, coll_type, schedule, info);
 			}
 			else
 			{
-				___collectives_recv_type(recvbuf + rdispls[src],
-					recvcounts[src],
-					recvtypes[src],
-					src,
-					MPC_ALLTOALL_TAG,
-					comm,
-					coll_type,
-					schedule,
-					info);
-				___collectives_send_type(tmpbuf + rdispls[dest],
-					recvcounts[dest],
-					recvtypes[dest],
-					dest,
-					MPC_ALLTOALL_TAG,
-					comm,
-					coll_type,
-					schedule,
-					info);
+				___collectives_recv_type(recvbuf + rdispls[src], recvcounts[src], recvtypes[src], src,
+					tag, comm, coll_type, schedule, info);
+				___collectives_send_type(tmpbuf + rdispls[dest], recvcounts[dest], recvtypes[dest], dest,
+					tag, comm, coll_type, schedule, info);
 			}
 		}
 
@@ -16795,45 +16224,17 @@ int ___collectives_alltoallw_pairwise(const void *sendbuf,
 
 			if ((rank / distance) % 2 == 0)
 			{
-				___collectives_send_type(sendbuf + sdispls[dest],
-					sendcounts[dest],
-					sendtypes[dest],
-					dest,
-					MPC_ALLTOALL_TAG,
-					comm,
-					coll_type,
-					schedule,
-					info);
-				___collectives_recv_type(recvbuf + rdispls[src],
-					recvcounts[src],
-					recvtypes[src],
-					src,
-					MPC_ALLTOALL_TAG,
-					comm,
-					coll_type,
-					schedule,
-					info);
+				___collectives_send_type(sendbuf + sdispls[dest], sendcounts[dest], sendtypes[dest], dest,
+					tag, comm, coll_type, schedule, info);
+				___collectives_recv_type(recvbuf + rdispls[src], recvcounts[src], recvtypes[src], src,
+					tag, comm, coll_type, schedule, info);
 			}
 			else
 			{
-				___collectives_recv_type(recvbuf + rdispls[src],
-					recvcounts[src],
-					recvtypes[src],
-					src,
-					MPC_ALLTOALL_TAG,
-					comm,
-					coll_type,
-					schedule,
-					info);
-				___collectives_send_type(sendbuf + sdispls[dest],
-					sendcounts[dest],
-					sendtypes[dest],
-					dest,
-					MPC_ALLTOALL_TAG,
-					comm,
-					coll_type,
-					schedule,
-					info);
+				___collectives_recv_type(recvbuf + rdispls[src], recvcounts[src], recvtypes[src], src,
+					tag, comm, coll_type, schedule, info);
+				___collectives_send_type(sendbuf + sdispls[dest], sendcounts[dest], sendtypes[dest], dest,
+					tag, comm, coll_type, schedule, info);
 			}
 		}
 
@@ -16941,7 +16342,7 @@ static inline int ___collectives_iscan(const void *sendbuf,
 	Sched_info    info;
 	___collectives_sched_info_init(&info, MPC_COLL_TYPE_NONBLOCKING, _mpc_mpi_config()->coll_opts.topo.scan);
 
-	res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
+	res = NBC_Init_handle(handle, comm, MPC_ISCAN_TAG);
 	MPI_HANDLE_ERROR(res, comm, "Iscan: NBC_Init_handle failed");
 
 	handle->tmpbuf = NULL;
@@ -17067,7 +16468,7 @@ static inline int ___collectives_scan_init(const void *sendbuf,
 	Sched_info    info;
 	___collectives_sched_info_init(&info, MPC_COLL_TYPE_PERSISTENT, _mpc_mpi_config()->coll_opts.topo.scan);
 
-	res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
+	res = NBC_Init_handle(handle, comm, MPC_ISCAN_TAG);
 	MPI_HANDLE_ERROR(res, comm, "Scan: NBC_Init_handle failed");
 
 	handle->tmpbuf = NULL;
@@ -17240,6 +16641,7 @@ int ___collectives_scan_linear(const void *sendbuf,
 	_mpc_cl_comm_size(comm, &size);
 	_mpc_cl_comm_rank(comm, &rank);
 	PMPI_Type_extent(datatype, &ext);
+	const int tag = mpc_lowcomm_generate_unique_tag(MPC_SCAN_TAG, comm);
 
 	int res = MPI_SUCCESS;
 
@@ -17276,7 +16678,7 @@ int ___collectives_scan_linear(const void *sendbuf,
 	// recv & reduce data from rank-1
 	if (rank > 0)
 	{
-		___collectives_recv_type(tmpbuf, count, datatype, rank - 1, MPC_SCAN_TAG, comm, coll_type, schedule, info);
+		___collectives_recv_type(tmpbuf, count, datatype, rank - 1, tag, comm, coll_type, schedule, info);
 		___collectives_barrier_type(coll_type, schedule, info);
 		___collectives_op_type(NULL, tmpbuf, recvbuf, count, datatype, op, mpc_op, coll_type, schedule, info);
 	}
@@ -17284,7 +16686,7 @@ int ___collectives_scan_linear(const void *sendbuf,
 	// send data to rank+1
 	if (rank + 1 < size)
 	{
-		___collectives_send_type(recvbuf, count, datatype, rank + 1, MPC_SCAN_TAG, comm, coll_type, schedule, info);
+		___collectives_send_type(recvbuf, count, datatype, rank + 1, tag, comm, coll_type, schedule, info);
 	}
 
 
@@ -17484,7 +16886,7 @@ static inline int ___collectives_iexscan(const void *sendbuf,
 	Sched_info    info;
 	___collectives_sched_info_init(&info, MPC_COLL_TYPE_NONBLOCKING, _mpc_mpi_config()->coll_opts.topo.exscan);
 
-	res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
+	res = NBC_Init_handle(handle, comm, MPC_IEXSCAN_TAG);
 	MPI_HANDLE_ERROR(res, comm, "Iexscan: NBC_Init_handle failed");
 
 	handle->tmpbuf = NULL;
@@ -17609,7 +17011,7 @@ static inline int ___collectives_exscan_init(const void *sendbuf,
 	Sched_info    info;
 	___collectives_sched_info_init(&info, MPC_COLL_TYPE_PERSISTENT, _mpc_mpi_config()->coll_opts.topo.exscan);
 
-	res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
+	res = NBC_Init_handle(handle, comm, MPC_IEXSCAN_TAG);
 	MPI_HANDLE_ERROR(res, comm, "Exscan: NBC_Init_handle failed");
 
 	handle->tmpbuf = NULL;
@@ -17777,6 +17179,7 @@ int ___collectives_exscan_linear(const void *sendbuf,
 	_mpc_cl_comm_size(comm, &size);
 	_mpc_cl_comm_rank(comm, &rank);
 	PMPI_Type_extent(datatype, &ext);
+	const int tag = mpc_lowcomm_generate_unique_tag(MPC_EXSCAN_TAG, comm);
 
 	int res = MPI_SUCCESS;
 
@@ -17817,7 +17220,7 @@ int ___collectives_exscan_linear(const void *sendbuf,
 			info);
 
 		// recv data from rank-1
-		___collectives_recv_type(recvbuf, count, datatype, rank - 1, MPC_SCAN_TAG, comm, coll_type, schedule, info);
+		___collectives_recv_type(recvbuf, count, datatype, rank - 1, tag, comm, coll_type, schedule, info);
 
 		___collectives_barrier_type(coll_type, schedule, info);
 
@@ -17833,19 +17236,11 @@ int ___collectives_exscan_linear(const void *sendbuf,
 	{
 		if (rank == 0)
 		{
-			___collectives_send_type(initial_buf,
-				count,
-				datatype,
-				rank + 1,
-				MPC_SCAN_TAG,
-				comm,
-				coll_type,
-				schedule,
-				info);
+			___collectives_send_type(initial_buf, count, datatype, rank + 1, tag, comm, coll_type, schedule, info);
 		}
 		else
 		{
-			___collectives_send_type(tmpbuf, count, datatype, rank + 1, MPC_SCAN_TAG, comm, coll_type, schedule, info);
+			___collectives_send_type(tmpbuf, count, datatype, rank + 1, tag, comm, coll_type, schedule, info);
 		}
 	}
 
@@ -18024,7 +17419,7 @@ static inline int ___collectives_ibarrier(MPI_Comm comm, NBC_Handle *handle)
 	Sched_info    info;
 	___collectives_sched_info_init(&info, MPC_COLL_TYPE_NONBLOCKING, _mpc_mpi_config()->coll_opts.topo.barrier);
 
-	res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
+	res = NBC_Init_handle(handle, comm, MPC_IBARRIER_TAG);
 	MPI_HANDLE_ERROR(res, comm, "Ibarrier: NBC_Init_handle failed");
 
 	handle->tmpbuf = NULL;
@@ -18102,7 +17497,7 @@ static inline int ___collectives_barrier_init(MPI_Comm comm, NBC_Handle *handle)
 	Sched_info    info;
 	___collectives_sched_info_init(&info, MPC_COLL_TYPE_PERSISTENT, _mpc_mpi_config()->coll_opts.topo.barrier);
 
-	res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
+	res = NBC_Init_handle(handle, comm, MPC_IBARRIER_TAG);
 	MPI_HANDLE_ERROR(res, comm, "Barrier: NBC_Init_handle failed");
 
 	handle->tmpbuf = NULL;
@@ -18208,6 +17603,7 @@ int ___collectives_barrier_reduce_broadcast(MPI_Comm comm,
 
 	_mpc_cl_comm_size(comm, &size);
 	_mpc_cl_comm_rank(comm, &rank);
+	const int tag = mpc_lowcomm_generate_unique_tag(MPC_BARRIER_TAG, comm);
 
 	unsigned int maxr = ___collectives_ceiled_log2(size);
 	int          peer = 0;
@@ -18223,7 +17619,7 @@ int ___collectives_barrier_reduce_broadcast(MPI_Comm comm,
 	if (rank != 0)
 	{
 		peer = rank ^ (1 << rmb);
-		___collectives_recv_type(&bar, 1, MPI_CHAR, peer, MPC_BROADCAST_TAG, comm, coll_type, schedule, info);
+		___collectives_recv_type(&bar, 1, MPI_CHAR, peer, tag, comm, coll_type, schedule, info);
 
 		if (rmb != 0)
 		{
@@ -18239,7 +17635,7 @@ int ___collectives_barrier_reduce_broadcast(MPI_Comm comm,
 			continue;
 		}
 
-		___collectives_send_type(&bar, 1, MPI_CHAR, peer, MPC_BROADCAST_TAG, comm, coll_type, schedule, info);
+		___collectives_send_type(&bar, 1, MPI_CHAR, peer, tag, comm, coll_type, schedule, info);
 	}
 
 
@@ -18252,7 +17648,7 @@ int ___collectives_barrier_reduce_broadcast(MPI_Comm comm,
 		{
 			peer = rank ^ (1 << i);
 			___collectives_barrier_type(coll_type, schedule, info);
-			___collectives_send_type(&bar, 1, MPI_CHAR, peer, MPC_REDUCE_TAG, comm, coll_type, schedule, info);
+			___collectives_send_type(&bar, 1, MPI_CHAR, peer, tag, comm, coll_type, schedule, info);
 
 			break;
 		}
@@ -18260,7 +17656,7 @@ int ___collectives_barrier_reduce_broadcast(MPI_Comm comm,
 		if ((rank | (1 << i)) < size)
 		{
 			peer = rank | (1 << i);
-			___collectives_recv_type(&bar, 1, MPI_CHAR, peer, MPC_REDUCE_TAG, comm, coll_type, schedule, info);
+			___collectives_recv_type(&bar, 1, MPI_CHAR, peer, tag, comm, coll_type, schedule, info);
 		}
 	}
 

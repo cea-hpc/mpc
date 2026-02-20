@@ -31,6 +31,7 @@
 
 #include "mpc_lowcomm_types.h"
 #include "peer.h"
+#include "shm_coll.h"
 
 
 #define MPC_MODULE "Lowcomm/Group"
@@ -414,6 +415,12 @@ uint32_t _mpc_lowcomm_group_rank_descriptor_hash(_mpc_lowcomm_group_rank_descrip
 
 static inline void __group_free(mpc_lowcomm_group_t *g)
 {
+	/* Clear the SHM data */
+	if (g->shm_coll)
+	{
+		sctk_comm_coll_release(g->shm_coll);
+	}
+
 	sctk_free(g->ranks);
 	g->ranks = NULL;
 	sctk_free(g->global_to_local);
@@ -986,6 +993,7 @@ mpc_lowcomm_group_t *_mpc_lowcomm_group_create(unsigned int size,
 	ret->local_leader           = MPC_PROC_NULL;
 	ret->extra_ctx_ptr          = MPC_LOWCOMM_HANDLE_CTX_NULL;
 	ret->is_a_copy = 0;
+	ret->shm_coll  = NULL;
 
 	// FIXME: groups seems to be local to each task. Thus maybe not required
 	//       to alloc with task_count size. Check world group special case.
@@ -1028,6 +1036,12 @@ mpc_lowcomm_group_t *_mpc_lowcomm_group_create(unsigned int size,
 		ret->my_rank[mpc_common_get_local_task_rank()] = mpc_lowcomm_group_rank(ret);
 	}
 
+	/* SET SHM Collective context if needed */
+	if (ret->process_count == 1 && ret->size > 1)
+	{
+		mpc_common_debug("initializing shm colls with %d", ret->size);
+		ret->shm_coll = sctk_comm_coll_init(ret->size);
+	}
 
 	return ret;
 }

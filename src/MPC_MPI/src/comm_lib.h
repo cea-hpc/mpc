@@ -40,40 +40,56 @@
  * SPECIALIZED MESSAGE TAGS *
  ****************************/
 
-#define MPC_GATHERV_TAG (-2)
+/**
+ * Specialized tags are constants used to form the final tag with a counter (See mpc_lowcomm_generate_unique_tag).
+ * They are the upper 8 bits of a 32 bits integer and will be ORed to form a unique tag for each collective.
+ * The bits have the following meaning:
+ * - 0bx0000000 Set the tag to negative for internal use
+ * - 0b0x000000 Characterize a non-blocking collective tag
+ * - 0b00x00000 Characterize a V type collective tag
+ * - 0b0000xxxx Used to encode the basic collectives
+ */
 
-#define MPC_SCATTERV_TAG              (-4)
-#define MPC_SCATTER_TAG               (-5)
-#define MPC_ALLTOALL_TAG              (-6)
-#define MPC_ALLTOALLV_TAG             (-7)
-#define MPC_ALLTOALLW_TAG             (-8)
-#define MPC_ALLGATHERV_TAG            (-12)
-#define MPC_REDUCE_TAG                (-13)
-#define MPC_ALLREDUCE_TAG             (-14)
-#define MPC_REDUCE_SCATTER_TAG        (-15)
-#define MPC_REDUCE_SCATTER_BLOCK_TAG  (-16)
-#define MPC_SCAN_TAG                  (-17)
-#define MPC_EXSCAN_TAG                (-18)
-#define MPC_IBARRIER_TAG              (-19)
-#define MPC_IBCAST_TAG                (-20)
-#define MPC_IGATHER_TAG               (-21)
-#define MPC_IGATHERV_TAG              (-22)
-#define MPC_ISCATTER_TAG              (-23)
-#define MPC_ISCATTERV_TAG             (-24)
-#define MPC_IALLGATHER_TAG            (-25)
-#define MPC_IALLGATHERV_TAG           (-26)
-#define MPC_IALLTOALL_TAG             (-27)
-#define MPC_IALLTOALLV_TAG            (-28)
-#define MPC_IALLTOALLW_TAG            (-29)
-#define MPC_IREDUCE_TAG               (-30)
-#define MPC_IALLREDUCE_TAG            (-31)
-#define MPC_IREDUCE_SCATTER_TAG       (-32)
-#define MPC_IREDUCE_SCATTER_BLOCK_TAG (-33)
-#define MPC_ISCAN_TAG                 (-34)
-#define MPC_IEXSCAN_TAG               (-35)
-#define MPC_COPY_TAG                  (-36)
-/* TAG of minimum value */
-#define MPC_LAST_TAG (-37)
+// Blocking collectives
+#define MPC_BARRIER_TAG              MPC_LOWCOMM_BARRIER_TAG
+#define MPC_BROADCAST_TAG            MPC_LOWCOMM_BROADCAST_TAG
+#define MPC_GATHER_TAG               MPC_LOWCOMM_GATHER_TAG
+#define MPC_SCATTER_TAG              ((3 << 24) | 0x80000000)
+#define MPC_ALLGATHER_TAG            MPC_LOWCOMM_ALLGATHER_TAG
+#define MPC_ALLTOALL_TAG             ((5 << 24) | 0x80000000)
+#define MPC_ALLTOALLW_TAG            ((6 << 24) | 0x80000000)
+#define MPC_REDUCE_TAG               ((7 << 24) | 0x80000000)
+#define MPC_ALLREDUCE_TAG            ((8 << 24) | 0x80000000)
+#define MPC_REDUCE_SCATTER_BLOCK_TAG ((9 << 24) | 0x80000000)
+#define MPC_REDUCE_SCATTER_TAG       ((10 << 24) | 0x80000000)
+#define MPC_SCAN_TAG                 ((11 << 24) | 0x80000000)
+#define MPC_EXSCAN_TAG               ((12 << 24) | 0x80000000)
+// V blocking collectives
+#define MPC_GATHERV_TAG    (MPC_GATHER_TAG | 0x20000000)
+#define MPC_SCATTERV_TAG   (MPC_SCATTER_TAG | 0x20000000)
+#define MPC_ALLTOALLV_TAG  (MPC_ALLTOALL_TAG | 0x20000000)
+#define MPC_ALLGATHERV_TAG (MPC_ALLGATHER_TAG | 0x20000000)
+// Non blocking collectives
+#define MPC_IBARRIER_TAG              (MPC_BARRIER_TAG | 0x40000000)
+#define MPC_IBROADCAST_TAG            (MPC_BROADCAST_TAG | 0x40000000)
+#define MPC_IGATHER_TAG               (MPC_GATHER_TAG | 0x40000000)
+#define MPC_ISCATTER_TAG              (MPC_SCATTER_TAG | 0x40000000)
+#define MPC_IALLGATHER_TAG            (MPC_ALLGATHER_TAG | 0x40000000)
+#define MPC_IALLTOALL_TAG             (MPC_ALLTOALL_TAG | 0x40000000)
+#define MPC_IALLTOALLW_TAG            (MPC_ALLTOALLW_TAG | 0x40000000)
+#define MPC_IREDUCE_TAG               (MPC_REDUCE_TAG | 0x40000000)
+#define MPC_IALLREDUCE_TAG            (MPC_ALLREDUCE_TAG | 0x40000000)
+#define MPC_IREDUCE_SCATTER_BLOCK_TAG (MPC_REDUCE_SCATTER_BLOCK_TAG | 0x40000000)
+#define MPC_IREDUCE_SCATTER_TAG       (MPC_REDUCE_SCATTER_TAG | 0x40000000)
+#define MPC_ISCAN_TAG                 (MPC_SCAN_TAG | 0x40000000)
+#define MPC_IEXSCAN_TAG               (MPC_EXSCAN_TAG | 0x40000000)
+// V Non blocking collectives
+#define MPC_IGATHERV_TAG    (MPC_GATHERV_TAG | 0x40000000)
+#define MPC_ISCATTERV_TAG   (MPC_SCATTERV_TAG | 0x40000000)
+#define MPC_IALLGATHERV_TAG (MPC_ALLGATHERV_TAG | 0x40000000)
+#define MPC_IALLTOALLV_TAG  (MPC_ALLTOALLV_TAG | 0x40000000)
+// Specific tags
+#define MPC_COPY_TAG (0xFF000000)
 
 /********************
  * INIT AND RELEASE *

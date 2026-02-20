@@ -76,6 +76,8 @@ typedef struct MPI_ABI_Group
 	int *                                 process_list;
 	int                                   tasks_count_in_process;
 	int *                                 my_rank;
+	struct sctk_comm_coll *               shm_coll; /**< This holds the SHM collectives for this comm
+	                                                 * It needs to be in the group as the communicator is not shared*/
 
 	int                                   local_leader;
 
