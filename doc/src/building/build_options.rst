@@ -64,7 +64,7 @@ squashing source and build altogether.
 	$ mkdir BUILD && cd BUILD
 	$ ../installmpc --prefix=$PREFIX
 
-The compiler will be detected by default a privatizing compiler is compiled. To
+The compiler will be detected by default if a privatizing compiler is compiled. To
 avoid any ambiguous detection, one can specify the specific compiler to use
 through the ``--compiler`` option. For example, using such command with the Intel
 compiler will avoid MPC to build the embedded patched GCC compiler.
@@ -87,7 +87,7 @@ dependencies, one can use ``--<dep>-<arg>``. Here two examples for HWLOC support
 
 Beyond these basic options, some useful others are listed and detailed below :
 
-* ``--disable-autopriv`` if you are not intending on running MPI processes inside
+* ``--disable-autopriv`` or ``--process-mode`` if you are not intending on running MPI processes inside
   threads and therefore do not need the privatization support
 * ``--enable-debug`` to enable full debugging for MPC purpose. Will build
   MPC in debug mode *AND* will build the GDB support for MPC.
@@ -96,9 +96,10 @@ Beyond these basic options, some useful others are listed and detailed below :
   overrides.
 * ``--enable-color`` if MPC should be build with terminal color support.
 
-.. warning::
+.. note::
 
-   if you intend to rely on SLURM you should build MPC as follows (by default MPC is build with hydra support):
+   By default, MPC tries to build with slurm support. If slurm is not fount, it will default to using Hydra.
+   If you want to build with slurm support, you have to make sure that PMIx is available.
 
 .. code-block:: console
 

@@ -8,6 +8,9 @@ All notable changes to this project will be documented in this file. The format 
 
 ### Changed
 
+- **Build**
+  - Enable process-mode by default when using `installmpc`
+  - Search *SLURM* as default launcher in `installmpc` and fallback to *Hydra* if not found
 - **Chore**
   - Default branch to main (devel and master will not be updated)
   - Refactor Documentation and deployment through GitHub pages

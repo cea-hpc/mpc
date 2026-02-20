@@ -23,7 +23,7 @@ variables:
   # pcvs-benchmarks path
   GL_PCVS_BENCHMARKS_PATH: '$CI_BUILDS_DIR/pcvs-benchmarks'
   # Installation option used by all configuration
-  GL_INSTALL_COMMON_OPTS: --relwithdebinfo --with-pmix -j32
+  GL_INSTALL_COMMON_OPTS: --relwithdebinfo -j32
   # Default pipeline name for the workflow
   GL_PIPELINE_NAME: 'Manually launched on $CI_COMMIT_BRANCH'
   # Enable the extended CI testings
@@ -139,7 +139,7 @@ Privatization:
   stage: 'Build & Run'
   extends: ['.build_and_run']
   variables:
-    GL_INSTALL_OPTS: '${GL_INSTALL_COMMON_OPTS} --disable-spack'
+    GL_INSTALL_OPTS: '--thread-based --disable-spack -j32'
     DO_REGULAR_TESTING: true
     HAS_PRIVATIZATION: true
     HAS_MPI: true
@@ -148,7 +148,7 @@ No MPCAlloc:
   stage: 'Build & Run'
   extends: ['.build_and_run']
   variables:
-    GL_INSTALL_OPTS: '${GL_INSTALL_COMMON_OPTS} --disable-spack --disable-mpcalloc'
+    GL_INSTALL_OPTS: '${GL_INSTALL_COMMON_OPTS} --thread-based --disable-spack --disable-mpcalloc'
     DO_REGULAR_TESTING: true
     HAS_PRIVATIZATION: true
     HAS_MPI: true
@@ -181,14 +181,14 @@ Without PMIx:
   stage: 'Build Only'
   extends: ['.build_only']
   variables:
-    GL_INSTALL_OPTS: '--process-mode --relwithdebinfo -j32'
+    GL_INSTALL_OPTS: '--process-mode --relwithdebinfo -j32 --with-hydra'
     HAS_PRIVATIZATION: false
     HAS_MPI: true
 
 Without MPCAlloc:
   extends: ['.build_only']
   variables:
-    GL_INSTALL_OPTS: '${GL_INSTALL_COMMON_OPTS} --disable-mpcalloc'
+    GL_INSTALL_OPTS: '${GL_INSTALL_COMMON_OPTS} --thread-based --disable-mpcalloc'
     HAS_PRIVATIZATION: true
     HAS_MPI: true
   rules:
@@ -198,7 +198,7 @@ Without MPCAlloc:
 # Workshare:
 #   extends: ['.build_only']
 #   variables:
-#     GL_INSTALL_OPTS: --enable-workshare --relwithdebinfo -j32
+#     GL_INSTALL_OPTS: --enable-workshare --relwithdebinfo --thread-based -j32
 #     HAS_PRIVATIZATION: true
 #     HAS_MPI: true
 #   allow_failure: true

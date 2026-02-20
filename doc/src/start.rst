@@ -66,7 +66,7 @@ these files should be already provided.
    ../installmpc --prefix=${INSTALL_PREFIX}
 
 This will build MPC and its dependencies and may take a while, especially if the
-*thread-based* support is enabled (default). To build MPC only in process mode,
+*thread-based* support is enabled (with ``--thread-based``). To build MPC only in process mode (default),
 one may uses the ``--process-mode`` to the ``installmpc`` script. MPC supports
 Spack to reuse already installed packages to shorten the time to build. This
 behavior is the default and can be customized with ``--enable/disable-spack``.
@@ -121,12 +121,12 @@ compilation flag, it can be done through environment variables:
    mpc_cc main.c mpc_cc -fmpc-privatize main.c
    mpicc -fmpc-privatize main.c MPI_PRIV=1 mpicc main.c
 
-Without providing any further option, MPC is installed with the *thread-based
-MPI* support, implying multiple MPI processes can live within the same UNIX
-process. The privatization is implied and any applications
+Without providing any further option, MPC is installed with no *thread-based
+MPI* support, implying multiple MPI processes can not live within the same UNIX
+process. The privatization is implied if the ``--thread-based`` installation parameter was passed.
 
 .. note::
-   MPC can be installed in *process-based* configuration by using the ``--process-mode`` option the the ``installmpc`` script.
+   MPC can be installed in *thread-based* configuration by using the ``--thread-based`` option to the ``installmpc`` script.
 
 
 ''''''''''''''''''''

@@ -52,6 +52,7 @@ HYDRA_BUILD_PARAMETERS=""
 MPC_DMTCP_BUILD_PARAMETERS="--enable-pthread-mutex-wrappers"
 MPC_GDB_BUILD_PARAMETERS="--without-zlib --disable-werror"
 DEBUG="no"
+MPC_OPTIM_OPTION_SPECIFIED="no"
 
 # Stop on error
 set -e
@@ -141,18 +142,41 @@ show_run_cmd()
 	fi
 }
 
+
+#Print a debug messages if the level of verbosity is 3 or higher
+#Args :
+# -$1 : Message to print
+debug()
+{
+	if [ $STEP_WRAPPER_VERBOSE -gt 2 ]; then
+		printf "${colGRAY}[debug] $1${colRESET}\n"
+	fi
+}
+
 info()
 {
-	printf "==>${colGRAY} $1${colRESET}\n"
+	if [ $STEP_WRAPPER_VERBOSE -gt 0 ]; then
+		printf "==>${colGRAY} $1${colRESET}\n"
+	fi
 }
 
 LAST_RESULT=""
+LOTS_OF_DOTS="................................................................."
 
-checking()
-{
+checking() {
 	LAST_RESULT=""
 	PENDING_LB="yes"
-	printf "==>${colMAGENTA} $1... ${colRESET}"
+
+	local msg="$1"
+	local msg_length=${#msg}
+	local dot_len
+
+	if [ $msg_length -le 63 ]; then
+		dot_len=$((66 - $msg_length))
+	else
+		dot_len=3
+	fi
+	printf "==>${colMAGENTA} %s%s ${colRESET}" "${msg:0:63}" "${LOTS_OF_DOTS:0:$dot_len}"
 }
 
 ok()
@@ -190,7 +214,7 @@ notapplicable()
 #
 
 LIST_OF_FOUND_CMD=""
-COMMON_CMD="bear cmake spack patch cut ls pwd grep rm rev basename dirname make bzip2 gcc g++ ldd pkg-config mktemp getconf nproc lscpu wget curl"
+COMMON_CMD="bear cmake spack patch cut ls pwd grep rm rev basename dirname make bzip2 gcc g++ ldd pkg-config mktemp getconf nproc lscpu wget curl mpiexec.hydra srun"
 check_for_commands()
 {
 	# Check already done
@@ -205,8 +229,7 @@ check_for_commands()
 		if test "x$?" = "x0"; then
 			LIST_OF_FOUND_CMD="$LIST_OF_FOUND_CMD $c"
 		else
-			checking "locate '$c' command in PATH"
-			nok
+			debug "locate '$c' command in PATH FAILED"
 		fi
 	done
 
@@ -1035,6 +1058,7 @@ build_configure_based_package()
 		checking "Installing $package-$version"
 		wrap_output make install
 		ok
+		printf "\n"
 	else
 		die "Could not locate ./configure in ${PKG_SOURCE_DIR}"
 	fi
@@ -1195,10 +1219,12 @@ You may track issued commands using the "-v" flag.
   --disable-lsp                           : Do not generate a compile_commands.json file (default)
 
 # Features
-  --with-slurm[=prefix]                   : Build MPC with PMI support (detect 1 and x)
+  --with-hydra                            : Build MPC with Hydra launcher support
+  --with-slurm[=prefix]                   : Build MPC with PMI support (detect 1 and x) (default)
   --with-pmi1[=prefix]                    : Build MPC with PMI1 support
   --with-pmix[=prefix]                    : Build MPC with PMIX support
-  --process-mode                          : Build MPC in process-mode (1 MPI process = 1 UNIX process)
+  --thread-based                          : Build MPC in thread-based (multiple MPI task per UNIX process)
+  --process-mode                          : Build MPC in process-mode (1 MPI process = 1 UNIX process) (default)
   --{enable,disable}-mpc-ft               : Activate/Deactivate checkpoint/restart support
   --{enable,disable}-color                : Disable colors in display
   --enable-debug                          : Enable maximum debug (symbols, messages)
@@ -1325,6 +1351,12 @@ enable_debug()
 	enable_src_fixes
 }
 
+# Compile MPC in process-mode by default
+MPC_COMP_ADD_PREFIX="disabled"
+# Use Slurm as launcher by default
+ENABLE_SLURM="yes"
+HYDRA_PREFIX='disabled'
+
 #
 # Locate common tools ahead of time
 #
@@ -1335,11 +1367,18 @@ for arg in "$@"
 do
 	case "$arg" in
 		################# HYDRA #################
+		--with-hydra)
+			HYDRA_PREFIX="enabled"
+			ENABLE_SLURM="no"
+			;;
 		--with-hydra=*)
+			ENABLE_SLURM="no"
 			extractParamValue 'HYDRA_PREFIX' 'with-hydra' "$arg"
 			;;
 		--hydra=*)
+			ENABLE_SLURM="no"
 			extractAndAddPackageOption 'HYDRA_BUILD_PARAMETERS' 'hydra=' "$arg"
+			HYDRA_PREFIX="enabled"
 			;;
 		--disable-mpc-hydra|--disable-hydra)
 			HYDRA_PREFIX='disabled'
@@ -1376,17 +1415,22 @@ do
 			extractParamValue 'MPC_COMP_ADD_PREFIX' 'with-autopriv' "$arg"
 			;;
 		--mpc-comp=*)
+			MPC_COMP_ADD_PREFIX='enabled'
 			extractAndAddPackageOption 'MPC_COMP_ADD_BUILD_PARAMETERS' 'mpc-comp=' "$arg"
 			;;
 		--mpc-autopriv=*)
+			MPC_COMP_ADD_PREFIX='enabled'
 			extractAndAddPackageOption 'MPC_COMP_ADD_BUILD_PARAMETERS' 'mpc-autopriv=' "$arg"
 			;;
 		--autopriv=*)
+			MPC_COMP_ADD_PREFIX='enabled'
 			extractAndAddPackageOption 'MPC_COMP_ADD_BUILD_PARAMETERS' 'autopriv=' "$arg"
+			;;
+		--enable-mpc-gcc|--enable-mpc-comp|--enable-autopriv|--enable-mpc-autopriv|--thread-based|--enable-thread-base)
+			MPC_COMP_ADD_PREFIX='enabled'
 			;;
 		--disable-mpc-gcc|--disable-mpc-comp|--disable-autopriv|--disable-mpc-autopriv|--process-mode|--mpc-process-mode)
 			MPC_COMP_ADD_PREFIX='disabled'
-			add_process_mode_flag_to_mpc
 			;;
 		################# FORTRAN GCC ###############
 		--disable-mpc-fortran|--disable-fortran)
@@ -1499,12 +1543,15 @@ do
 			USE_COLOR="no"
 			;;
 		--enable-debug)
+			MPC_OPTIM_OPTION_SPECIFIED="yes"
 			enable_debug
 			;;
 		--debug)
+			MPC_OPTIM_OPTION_SPECIFIED="yes"
 			enable_debug
 			;;
 		--relwithdebinfo)
+			MPC_OPTIM_OPTION_SPECIFIED="yes"
 			enable_real_with_debug
 			;;
 		--enable-topology-simulation)
@@ -1514,37 +1561,27 @@ do
 			PMIX_PREFIX=""
 			extractParamValue 'PMIX_PREFIX' 'with-pmi1=' "$arg"
 			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} ${PMIX_PREFIX}"
-			# No need for hydra
-			HYDRA_PREFIX='disabled'
+			ENABLE_SLURM='no'
 			;;
 		--with-pmi1)
 			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --with-pmi1"
-			# No need for hydra
-			HYDRA_PREFIX='disabled'
+			ENABLE_SLURM='no'
 			;;
 		--with-pmix=*)
 			PMIX_PREFIX=""
 			extractParamValue 'PMIX_PREFIX' 'with-pmix=' "$arg"
 			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} ${PMIX_PREFIX}"
-			# No need for hydra
-			HYDRA_PREFIX='disabled'
+			ENABLE_SLURM='no'
 			;;
 		--with-pmix)
 			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --with-pmix"
-			# No need for hydra
-			HYDRA_PREFIX='disabled'
+			ENABLE_SLURM='no'
 			;;
 		--with-slurm=*)
 			SLURM_PREFIX=""
 			extractParamValue 'SLURM_PREFIX' 'with-slurm=' "$arg"
-			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} ${SLURM_PREFIX}"
-			# No need for hydra
-			HYDRA_PREFIX='disabled'
 			;;
 		--with-slurm)
-			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --with-slurm"
-			# No need for hydra
-			HYDRA_PREFIX='disabled'
 			;;
 		--disable-MPC_MPI|--lib-mode)
 			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --disable-mpi"
@@ -1760,6 +1797,24 @@ if test "x${DEP_FOUND}" = "xno"; then
 	HWLOC_PREFIX="${PREFIX}"
 fi
 
+# By default, we want to build with slurm support as it is the most spread launcher
+if [ "$ENABLE_SLURM" == "yes" ]; then
+	have_cmd "srun"
+
+	if [ "${HAVE_CMD}" == "no" ]; then
+		# If slurm is not available, default to hydra build and use
+		info "SLURM not found defaulting to Hydra"
+		HYDRA_PREFIX="enabled"
+		ENABLE_SLURM="no"
+	else
+		if [ -z ${SLURM_PREFIX} ]; then
+			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --with-slurm"
+		else
+			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} ${SLURM_PREFIX}"
+		fi
+	fi
+fi
+
 # We cannot use spack as the spack package uses an internal hwloc of previous version
 if check_and_then_load_prefix "$HYDRA_PREFIX"; then
 	# Make sure hydra seems to be in the path
@@ -1882,6 +1937,10 @@ if test "x${DEP_FOUND}" = "xno"; then
 	build_configure_based_package "mpc-compiler-additions" "${VERSION}" "$MPC_COMP_ADD_BUILD_PARAMETERS $GCC_VERSION_ARG $AUTOPRIV_HWLOC_BUILD_PARAMETERS"
 fi
 
+if [ "${MPC_COMP_ADD_PREFIX}" == "disabled" ]; then
+	add_process_mode_flag_to_mpc
+fi
+
 
 # Make sure to load libunwind after compiler-additions (https://trac.macports.org/ticket/43869)
 find_in_prefix_or_use_spack_optional "libunwind" "" "spackonly" "${LIBUNWIND_PREFIX}"
@@ -1894,10 +1953,15 @@ propagate_build_env
 BUILD_CONF_PATH=${PROJECT_BUILD_DIR}/src/bin/mpc_build_env.sh
 
 if test -f "${BUILD_CONF_PATH}" ; then
-	checking "remove previous MPC configuration state"
+	checking "Remove previous MPC configuration state"
 	show_run_cmd "rm -fr $BUILD_CONF_PATH"
 	rm -fr "${BUILD_CONF_PATH}"
 	ok
+fi
+
+# Enable native march to have the more release build by default
+if [ $MPC_OPTIM_OPTION_SPECIFIED == "no" ]; then
+	MPCFRAMEWORK_BUILD_PARAMETERS="$MPCFRAMEWORK_BUILD_PARAMETERS --enable-opt-native"
 fi
 
 MPC_CONFIGURE_OPTS="--prefix=${PREFIX} $MPCFRAMEWORK_BUILD_PARAMETERS"
@@ -1909,7 +1973,7 @@ MPC_CONFIGURE_OPTS="--prefix=${PREFIX} $MPCFRAMEWORK_BUILD_PARAMETERS"
 checking "Autogen MPC"
 
 wrap_output "$SCRIPTPATH/autogen.sh" $SCRIPTPATH
-printf "\n"
+ok
 
 #
 # Configure MPC
