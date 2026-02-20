@@ -135,6 +135,16 @@ Process Mode:
     HAS_PRIVATIZATION: false
     HAS_MPI: true
 
+Process Mode (network only):
+  stage: 'Build & Run'
+  extends: ['.build_and_run']
+  variables:
+    GL_INSTALL_OPTS: '${GL_INSTALL_COMMON_OPTS} --process-mode --disable-spack'
+    DO_REGULAR_TESTING: true
+    HAS_PRIVATIZATION: false
+    HAS_MPI: true
+    USE_ONLY_NETWORK: true
+
 Privatization:
   stage: 'Build & Run'
   extends: ['.build_and_run']

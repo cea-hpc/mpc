@@ -97,6 +97,11 @@ Installation:
     - cd "${CI_PCVS_DIR}"
     - echo "Step run from ${CI_PCVS_DIR}"
     - cp -r ${GL_MPC_CI_ROOT_PATH}/.pcvs .
+    - |
+      if [ $USE_ONLY_NETWORK == "true" ]; then
+        echo "args: '-net=ptlverbs'" >> .pcvs/runtime/mpc.yml
+        cat .pcvs/runtime/mpc.yml
+      fi
 
 .regular_testing_rules:
   rules:
@@ -186,15 +191,24 @@ OpenMP:
   script:
     - module load lapack/mkl llvm
     - ${PCVS_COMMAND} "${GL_MPC_CI_ROOT_PATH}/OpenMP/task/examples" "${GL_MPC_CI_ROOT_PATH}/OpenMP/task/cholesky"
+  rules:
+    - if: '$USE_ONLY_NETWORK != "true" && $DO_REGULAR_TESTING == "true"'
 
 .MPI_deps:
   needs: ['Lowcomm', 'MPI']
 
 .OMP_deps:
-  needs: ['OpenMP']
+  needs:
+    - job: 'OpenMP'
+  rules:
+    - if: '$USE_ONLY_NETWORK != "true" && $DO_REGULAR_TESTING == "true"'
 
 .all_deps:
-  needs: ['Lowcomm', 'MPI', 'OpenMP']
+  needs:
+    - job: 'Lowcomm'
+    - job: 'MPI'
+    - job: 'OpenMP'
+      optional: true
 
 
 ############################################
@@ -269,12 +283,15 @@ MPI NBC:
     - job: 'OpenMP'
     - pipeline: $PARENT_PIPELINE_ID
       job: 'Retrieve Benchmarks'
+  rules:
+    - if: '$USE_ONLY_NETWORK != "true" && $DO_REGULAR_TESTING == "true" && $EXTENDED == "true"'
 
 .extended_all_deps:
   needs:
     - job: 'Lowcomm'
     - job: 'MPI'
     - job: 'OpenMP'
+      optional: true
     - pipeline: $PARENT_PIPELINE_ID
       job: 'Retrieve Benchmarks'
 
