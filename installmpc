@@ -562,7 +562,12 @@ find_dep_with_spack()
 	set +e
 
 	LOAD_CMD=$(spack load --sh $TO_LOAD_NAME 2> /dev/null)
-	check_retcode "$?"
+	retcode=$?
+	if [ $retcode != "0" ]; then
+		notapplicable
+	else
+		ok
+	fi
 
 	set -e
 
