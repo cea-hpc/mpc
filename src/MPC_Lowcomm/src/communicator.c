@@ -645,12 +645,16 @@ int mpc_lowcomm_communicator_is_shared_mem(const mpc_lowcomm_communicator_t comm
 {
 	mpc_lowcomm_communicator_t local_comm = __mpc_lowcomm_communicator_from_predefined(comm);
 
+	assert(local_comm->group != NULL);
+
 	return local_comm->group->shm_coll != NULL;
 }
 
 struct sctk_comm_coll *mpc_communicator_shm_coll_get(const mpc_lowcomm_communicator_t comm)
 {
 	mpc_lowcomm_communicator_t local_comm = __mpc_lowcomm_communicator_from_predefined(comm);
+
+	assert(local_comm->group != NULL);
 
 	return local_comm->group->shm_coll;
 }
@@ -668,8 +672,9 @@ int mpc_lowcomm_communicator_attributes(const mpc_lowcomm_communicator_t comm,
 {
 	mpc_lowcomm_communicator_t local_comm = __mpc_lowcomm_communicator_from_predefined(comm);
 
-	*is_intercomm   = mpc_lowcomm_communicator_is_intercomm(local_comm);
-	*is_shm         = mpc_lowcomm_communicator_is_shared_mem(local_comm);
+	*is_intercomm = mpc_lowcomm_communicator_is_intercomm(local_comm);
+	// Intercomm has no group
+	*is_shm         = *is_intercomm ? 0 : mpc_lowcomm_communicator_is_shared_mem(local_comm);
 	*is_shared_node = mpc_lowcomm_communicator_is_shared_node(local_comm);
 
 	return MPC_LOWCOMM_SUCCESS;
