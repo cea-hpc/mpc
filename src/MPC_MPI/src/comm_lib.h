@@ -55,11 +55,11 @@
 #define MPC_BROADCAST_TAG            MPC_LOWCOMM_BROADCAST_TAG
 #define MPC_GATHER_TAG               MPC_LOWCOMM_GATHER_TAG
 #define MPC_SCATTER_TAG              ((3 << 24) | 0x80000000)
-#define MPC_ALLGATHER_TAG            MPC_LOWCOMM_ALLGATHER_TAG
+#define MPC_ALLGATHER_TAG            ((4 << 24) | 0x80000000)
 #define MPC_ALLTOALL_TAG             ((5 << 24) | 0x80000000)
 #define MPC_ALLTOALLW_TAG            ((6 << 24) | 0x80000000)
 #define MPC_REDUCE_TAG               ((7 << 24) | 0x80000000)
-#define MPC_ALLREDUCE_TAG            ((8 << 24) | 0x80000000)
+#define MPC_ALLREDUCE_TAG            MPC_LOWCOMM_ALLREDUCE_TAG
 #define MPC_REDUCE_SCATTER_BLOCK_TAG ((9 << 24) | 0x80000000)
 #define MPC_REDUCE_SCATTER_TAG       ((10 << 24) | 0x80000000)
 #define MPC_SCAN_TAG                 ((11 << 24) | 0x80000000)

@@ -353,7 +353,7 @@ typedef enum sctk_ft_state_e
 #define MPC_LOWCOMM_GATHER_TAG    ((0 << 24) | 0x80000000)
 #define MPC_LOWCOMM_BROADCAST_TAG ((1 << 24) | 0x80000000)
 #define MPC_LOWCOMM_BARRIER_TAG   ((2 << 24) | 0x80000000)
-#define MPC_LOWCOMM_ALLGATHER_TAG ((4 << 24) | 0x80000000)
+#define MPC_LOWCOMM_ALLREDUCE_TAG ((8 << 24) | 0x80000000)
 
 
 #ifdef __cplusplus
