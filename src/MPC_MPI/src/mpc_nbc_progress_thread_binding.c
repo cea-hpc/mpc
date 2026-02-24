@@ -53,8 +53,6 @@ int sctk_get_progress_thread_binding_numa_iter(void)
 	int task_nb = mpc_common_get_local_task_count();
 	int numa_node_per_node_nb = mpc_topology_get_numa_node_count();
 
-	int current_cpu = mpc_topology_get_current_cpu();
-
 	int nbVp;
 	int global_id   = mpc_common_get_local_task_rank();
 	int proc_global = mpc_thread_get_task_placement_and_count(global_id, &nbVp);
@@ -71,6 +69,7 @@ int sctk_get_progress_thread_binding_numa_iter(void)
 		             / numa_node_per_node_nb);
 
 	// DEBUG
+	// int current_cpu = mpc_topology_get_current_cpu();
 	// char hostname[1024];
 	// gethostname(hostname,1024);
 	// FILE *hostname_fd = fopen(strcat(hostname,".log"),"a");
@@ -93,7 +92,7 @@ int sctk_get_progress_thread_binding_numa_iter(void)
 	// fclose(hostname_fd);
 	// ENDDEBUG
 
-	assert(proc_global == current_cpu);
+	assert(proc_global == mpc_topology_get_current_cpu());
 
 	// if we have a free slot to bind the progress thread
 	if (nbVp > 1)
@@ -143,8 +142,6 @@ int sctk_get_progress_thread_binding_numa(void)
 
 	int cpu_per_numa_node = cpu_per_node / numa_node_per_node_nb;
 
-	int current_cpu = mpc_topology_get_current_cpu();
-
 	int nbVp;
 
 	int global_id = mpc_common_get_local_task_rank();
@@ -158,7 +155,7 @@ int sctk_get_progress_thread_binding_numa(void)
 		-
 		(((numa_node_id) * task_nb + numa_node_per_node_nb - 1) / numa_node_per_node_nb);
 
-	assert(proc_global == current_cpu);
+	assert(proc_global == mpc_topology_get_current_cpu());
 
 	// compas2016 articlempc commit 82e59e3b049a67bcfe2e9a1889fc3d7e5adb50bd
 	if (task_per_numa_node >= cpu_per_numa_node)

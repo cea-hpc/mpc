@@ -80,12 +80,17 @@ static inline unsigned long long __loop_get_num_iters_ull(unsigned long long sta
 {
 	unsigned long long ret = ( unsigned long long )0;
 
+	// NOLINTBEGIN(clang-analyzer-core.DivideZero)
+	assert(step != 0);
+
 	ret = (up && start < end)
 	      ? (end - start + step - ( unsigned long long )1) / step
 	      : ret;
 	ret = (!up && start > end)
 	      ? (start - end - step - ( unsigned long long )1) / -step
 	      : ret;
+	// NOLINTEND(clang-analyzer-core.DivideZero)
+
 	return ret;
 }
 

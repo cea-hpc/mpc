@@ -78,8 +78,11 @@ mpc_omp_callback(
 		mpc_common_spinlock_lock(lock);
 	}
 
+	// NOLINTBEGIN(clang-analyzer-core.NullDereference)
+	assert(master);
 	callback->next = master->callbacks[callback->when];
 	master->callbacks[callback->when] = callback;
+	// NOLINTEND(clang-analyzer-core.NullDereference)
 
 	if (lock)
 	{
@@ -118,7 +121,9 @@ _mpc_omp_callback_run(mpc_omp_callback_scope_t scope, mpc_omp_callback_when_t wh
 
 	if (lock == NULL || mpc_common_spinlock_trylock(lock) == 0)
 	{
-		mpc_omp_callback_t *prev     = NULL;
+		mpc_omp_callback_t *prev = NULL;
+		// NOLINTBEGIN(clang-analyzer-core.NullDereference)
+		assert(master);
 		mpc_omp_callback_t *callback = master->callbacks[when];
 		while (callback)
 		{
@@ -166,6 +171,7 @@ _mpc_omp_callback_run(mpc_omp_callback_scope_t scope, mpc_omp_callback_when_t wh
 
 			/* process next callback for this event */
 		}
+		// NOLINTEND(clang-analyzer-core.NullDereference)
 		if (lock)
 		{
 			mpc_common_spinlock_unlock(lock);

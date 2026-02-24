@@ -812,7 +812,7 @@ static hwloc_obj_t hwloc_get_core_by_os_index(hwloc_topology_t hwtopology, unsig
 }
 
 /* determine the lower logical index pu used for text placement option */
-static int determine_lower_logical(int *os_index, int length)
+static int determine_lower_logical(unsigned int length, int os_index[static length])
 {
 	int         i;
 	int         lower_logical   = hwloc_get_nbobjs_by_type(topology_compute_node, HWLOC_OBJ_PU);
@@ -847,7 +847,7 @@ static int determine_lower_logical(int *os_index, int length)
 }
 
 /* determine the higher logical index pu used for text placement option */
-static int sctk_determine_higher_logical(int *os_index, int length)
+static int sctk_determine_higher_logical(const unsigned int length, int os_index[static length])
 {
 	int         i;
 	int         higher_logical  = -1;
@@ -955,8 +955,7 @@ void _mpc_topology_render_init(void)
 
 		hwloc_cpuset_t newset;
 		newset = hwloc_bitmap_alloc();
-		int ret = hwloc_get_last_cpu_location(mpc_topology_get(), newset, HWLOC_CPUBIND_THREAD);
-		assert(ret == 0);
+		assume(hwloc_get_last_cpu_location(mpc_topology_get(), newset, HWLOC_CPUBIND_THREAD) == 0);
 		hwloc_obj_t obj;
 		obj = hwloc_get_obj_inside_cpuset_by_type(mpc_topology_get(), newset, HWLOC_OBJ_PU, 0);
 		hwloc_obj_t cluster = hwloc_get_ancestor_obj_by_type(topology_compute_node, HWLOC_OBJ_MACHINE, obj);
@@ -1055,9 +1054,9 @@ void topology_graph_enable_text_placement(void)
 	{
 		struct sctk_text_option_s *tab_option;
 
-		sctk_init_text_option(&tab_option, max_length);
+		sctk_init_text_option(&tab_option, length);
 
-		sctk_read_format_option_text_placement(f_textual, tab_option, max_length);
+		sctk_read_format_option_text_placement(f_textual, tab_option, length);
 
 		const char *HostName = hwloc_obj_get_info_by_name(cluster, "HostName");
 
@@ -1072,8 +1071,8 @@ void topology_graph_enable_text_placement(void)
 			fprintf(f,
 				"|------------------------------HOST                 %s------------------------------|\n",
 				HostName);
-			int higher_logical = sctk_determine_higher_logical(tab_option->os_index, length);
-			int lower_logical  = determine_lower_logical(tab_option->os_index, length);
+			int higher_logical = sctk_determine_higher_logical(length, tab_option->os_index);
+			int lower_logical  = determine_lower_logical(length, tab_option->os_index);
 			if (1)
 			{ // TODO one proc among nodes
 				fprintf(stdout,
@@ -1082,7 +1081,7 @@ void topology_graph_enable_text_placement(void)
 				fflush(stdout);
 			}
 			print_children(
-				mpc_topology_get(), root, 0, tab_option, max_length, higher_logical, lower_logical, HostName, f, 0, 0);
+				mpc_topology_get(), root, 0, tab_option, length, higher_logical, lower_logical, HostName, f, 0, 0);
 			fclose(f);
 		}
 		/* remove temp files */

@@ -33,9 +33,7 @@
 	_mpc_omp_ompt_thread_set_state(__UNUSED__ ompt_state_t state,
 	                               __UNUSED__ ompt_wait_id_t wait_id)
 	{
-		mpc_omp_thread_t *thread = (mpc_omp_thread_t *)mpc_omp_tls;
-
-		assert(thread);
+		assert((mpc_omp_thread_t *)mpc_omp_tls);
 
 		/* TODO */
 
@@ -45,9 +43,7 @@
 	__UNUSED__ static inline int
 	_mpc_omp_ompt_thread_get_state(__UNUSED__ ompt_wait_id_t *wait_id)
 	{
-		mpc_omp_thread_t *thread = (mpc_omp_thread_t *)mpc_omp_tls;
-
-		assert(thread);
+		assert((mpc_omp_thread_t *)mpc_omp_tls);
 
 		ompt_state_t ret = ompt_state_overhead;
 

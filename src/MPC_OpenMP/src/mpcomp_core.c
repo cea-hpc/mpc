@@ -559,8 +559,7 @@ __prepare_omp_task_tree_init(const int num_mvps, const int *cpus_order)
 	int err;
 	hwloc_topology_t restrictedTopology;
 
-	err = __restrict_topology_for_mpc_omp(&restrictedTopology, num_mvps, cpus_order);
-	assert(!err);
+	assume(__restrict_topology_for_mpc_omp(&restrictedTopology, num_mvps, cpus_order) == 0);
 	assert(restrictedTopology);
 	return restrictedTopology;
 }

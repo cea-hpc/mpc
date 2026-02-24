@@ -14183,8 +14183,12 @@ int ___collectives_alltoall_topo(const void *sendbuf,
 #endif
 
 	// TODO: could be smaller than 'size'
+
+	// NOLINTBEGIN(clang-analyzer-core.VLASize)
+	assert(size > 0);
 	int displs[size];
 	int counts[size];
+	// NOLINTEND(clang-analyzer-core.VLASize)
 
 	displs[0] = 0;
 	counts[0] = (size - 1) * recvcount;

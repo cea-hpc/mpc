@@ -309,29 +309,26 @@ static inline void __gomp_end_parallel_region(void)
 		ompt_task_implicit);
 #endif /* OMPT_SUPPORT */
 
-	mpc_omp_free(t);
-
 	t_prev = mvp->threads->next;
+
+	// NOLINTBEGIN(clang-analyzer-core.NullDereference)
 	assert(t_prev != NULL);
 	assert(t_prev->instance != NULL);
-
-	if (t_prev)
-	{
 #if OMPT_SUPPORT
-			_mpc_omp_ompt_callback_task_schedule(
-			&MPC_OMP_TASK_THREAD_GET_CURRENT_TASK(t)->ompt_task_data,
-			ompt_task_complete,
-			&MPC_OMP_TASK_THREAD_GET_CURRENT_TASK(t_prev)->ompt_task_data);
+		_mpc_omp_ompt_callback_task_schedule(
+		&MPC_OMP_TASK_THREAD_GET_CURRENT_TASK(t)->ompt_task_data,
+		ompt_task_complete,
+		&MPC_OMP_TASK_THREAD_GET_CURRENT_TASK(t_prev)->ompt_task_data);
 #endif /* OMPT_SUPPORT */
 
-		mvp->threads = t_prev;
-		// mpc_omp_free( t );
-	}
+	mpc_omp_free(t);
+	mvp->threads = t_prev;
 
 	mvp->instance = t_prev->instance;
 	mpc_omp_tls   = t_prev;
 
 	_mpc_omp_internal_end_parallel_region(t_prev->instance);
+	// NOLINTEND(clang-analyzer-core.NullDereference)
 }
 
 /* GOMP Parallel Region */
@@ -1980,11 +1977,12 @@ ___gomp_convert_flags(bool if_clause, int flags)
 static inline void
 __task_data_copy(void (*cpyfn)(void *, void *), void *data_storage, void *data, size_t data_size)
 {
-	assert(data_storage);
-	assert(data_size == 0 || data);
+	// NOLINTBEGIN(clang-analyzer-core.NonNullParamChecker)
+	assert(data_storage != NULL);
+	assert(data_size == 0 || data != NULL);
 	if (data_size > 0)
 	{
-		if (cpyfn)
+		if (cpyfn != NULL)
 		{
 			cpyfn(data_storage, data);
 		}
@@ -1993,6 +1991,7 @@ __task_data_copy(void (*cpyfn)(void *, void *), void *data_storage, void *data, 
 			memcpy(data_storage, data, data_size);
 		}
 	}
+	// NOLINTEND(clang-analyzer-core.NonNullParamChecker)
 }
 
 /**

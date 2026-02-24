@@ -156,11 +156,14 @@ __task_list_push_to_tail(
 	else
 	{
 		/* List is not empty, tail should be non-null */
+		// The null dereference of tail is checked by the assert
+		// NOLINTBEGIN(clang-analyzer-core.NullDereference)
 		assert(list->tail);
 		task->prev[t]       = list->tail;
 		task->next[t]       = NULL;
 		list->tail->next[t] = task;
 		list->tail          = task;
+		// NOLINTEND(clang-analyzer-core.NullDereference)
 	}
 }
 
@@ -1630,6 +1633,7 @@ __task_process_deps(mpc_omp_task_t *task, void **depend)
 	for (unsigned int i = 0 ; i < ndependencies ; ++i)
 	{
 		/* dependencies should be non-NULL since ndependencies > 0 */
+		// NOLINTBEGIN(clang-analyzer-core.NullDereference)
 		assert(dependencies);
 
 		mpc_omp_task_dependency_t *dependency = dependencies + i;
@@ -1637,6 +1641,7 @@ __task_process_deps(mpc_omp_task_t *task, void **depend)
 		{
 			__task_process_mpc_dep(task, dependency->addrs[j], dependency->type);
 		}
+		// NOLINTEND(clang-analyzer-core.NullDereference)
 	}
 
 	// 'depend' ABI array
@@ -3279,7 +3284,12 @@ _mpc_omp_task_team_info_init(struct mpc_omp_team_s *team, int depth)
 
 int mpc_omp_task_parse_larceny_mode(char *mode)
 {
-	if (!strcmp(mode, "hierarchical"))
+	if (mode[0] == '\0')
+	{
+		// Default when the larceny mode is not set yet
+		return MPC_OMP_TASK_LARCENY_MODE_HIERARCHICAL;
+	}
+	else if (!strcmp(mode, "hierarchical"))
 	{
 		return MPC_OMP_TASK_LARCENY_MODE_HIERARCHICAL;
 	}
