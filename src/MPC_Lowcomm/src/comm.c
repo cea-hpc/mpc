@@ -4026,11 +4026,10 @@ int mpc_lowcomm_iprobe_src_dest(const int world_source, const int world_destinat
 		mpc_common_debug_fatal("LCP: Could not find task with tid %d.", world_destination);
 	}
 
-	rc = lcp_tag_probe_nb(lcp_mngr_loc, task, world_source, tag,
-		comm_id, &recv_info);
+	mpc_common_progress();
 
-	// FIXME: should it be before probe?
-	/* Progress communications to check if event has been raised. */
+	rc = lcp_tag_probe_nb(lcp_mngr_loc, task, world_source, tag, comm_id, &recv_info);
+
 	mpc_common_progress();
 
 	if ((*flag = recv_info.found))

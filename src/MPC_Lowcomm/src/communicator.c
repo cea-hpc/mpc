@@ -1561,16 +1561,22 @@ mpc_lowcomm_communicator_t mpc_lowcomm_communicator_world()
 {
 	const int my_local_rank = mpc_common_get_local_task_rank();
 
-	assume(__comm_world != NULL && __comm_world[my_local_rank] != NULL);
-	return __comm_world[my_local_rank];
+	// HACK: Which communicator to return for progress threads ?
+	const int used_rank = my_local_rank >= 0 ? my_local_rank : 0;
+
+	assume(__comm_world != NULL && __comm_world[used_rank] != NULL);
+	return __comm_world[used_rank];
 }
 
 mpc_lowcomm_communicator_t mpc_lowcomm_communicator_self()
 {
 	const int my_local_rank = mpc_common_get_local_task_rank();
 
-	assume(__comm_self != NULL);
-	return __comm_self[my_local_rank];
+	// HACK: Which communicator to return for progress threads ?
+	const int used_rank = my_local_rank >= 0 ? my_local_rank : 0;
+
+	assume(__comm_self != NULL && __comm_self[used_rank] != NULL);
+	return __comm_self[used_rank];
 }
 
 mpc_lowcomm_communicator_id_t mpc_lowcomm_get_comm_world_id_gid(mpc_lowcomm_set_uid_t gid)
