@@ -318,8 +318,10 @@ static void *_kthread_get_libc_symbol(const char *const symbol)
 	void *system_symbol = dlsym(dl_handle, symbol);
 	assert(system_symbol != NULL);
 
+	// NOLINTBEGIN(clang-analyzer-deadcode.DeadStores)
 	const int dlclose_ierr = dlclose(dl_handle);
 	assert(dlclose_ierr == 0);
+	// NOLINTEND(clang-analyzer-deadcode.DeadStores)
 
 	return system_symbol;
 }

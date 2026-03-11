@@ -23,26 +23,26 @@
 #                                                                      #
 ########################################################################
 
-UTILS_DIR="$(dirname "`readlink -f $0`")"
+CONFIG_DIR="$(dirname "`readlink -f $0`")"
 
 MAJOR_VERSION=
 MINOR_VERSION=
 PATCH_VERSION=
 TAINT_VERSION=
 
-if test -n "$(command -v git)" -a -e "$UTILS_DIR/../.git"; then
-	res=$(git -C $UTILS_DIR describe --abbrev=0 2>/dev/null | grep -o -E "[0-9]+\.[0-9]+\.[0-9]+$")
+if test -n "$(command -v git)" -a -e "$CONFIG_DIR/../.git"; then
+	res=$(git -C $CONFIG_DIR describe --abbrev=0 2>/dev/null | grep -o -E "[0-9]+\.[0-9]+\.[0-9]+$")
 	MAJOR_VERSION=$(echo "$res" | cut -f1 -d".")
 	MINOR_VERSION=$(echo "$res" | cut -f2 -d".")
 	PATCH_VERSION=$(echo "$res" | cut -f3 -d".")
-	TAINT_VERSION="@$(git -C $UTILS_DIR rev-parse --short HEAD)"
-	git -C $UTILS_DIR diff --quiet || TAINT_VERSION="$TAINT_VERSION-dirty"
+	TAINT_VERSION="@$(git -C $CONFIG_DIR rev-parse --short HEAD)"
+	git -C $CONFIG_DIR diff --quiet || TAINT_VERSION="$TAINT_VERSION-dirty"
 fi
 
 #two scenarios: no Git repo OR issues with fetching tags
 # -> rollback
 if test -z "$MAJOR_VERSION"; then
-	. $UTILS_DIR/../VERSION
+	. $CONFIG_DIR/../.VERSION
 	MAJOR_VERSION=$major
 	MINOR_VERSION=$minor
 	PATCH_VERSION=$patch

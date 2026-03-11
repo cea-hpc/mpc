@@ -91,8 +91,8 @@ _mpc_omp_loop_gen_infos_init_ull(mpc_omp_loop_gen_info_t *loop_infos,
 }
 
 static inline void
-_mpc_omp_loop_gen_loop_infos_cpy(mpc_omp_loop_gen_info_t *in,
-                                 mpc_omp_loop_gen_info_t *out)
+_mpc_omp_loop_gen_loop_infos_copy(mpc_omp_loop_gen_info_t *in,
+                                  mpc_omp_loop_gen_info_t *out)
 {
 	memcpy(out, in, sizeof(mpc_omp_loop_gen_info_t));
 }

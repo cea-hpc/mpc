@@ -122,7 +122,7 @@ done
 
 
 if test -z "${VERSION}"; then
-	VERSION=$(./utils/get_version)
+	VERSION=$(./config/mpc_get_version.sh)
 fi
 
 

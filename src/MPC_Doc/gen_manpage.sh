@@ -23,7 +23,7 @@ target=$2
 version=$3
 test -z "$source" && die "Need a source file (Markdown) as first argument"
 test -z "$target" && die "Need a destination file (man) as second argument"
-test -z "$version" && version=$(${SCRIPTPATH}/../../utils/get_version --all)
+test -z "$version" && version=$(${SCRIPTPATH}/../../config/mpc_get_version.sh --all)
 
 which pandoc >/dev/null 2>&1 || error "Failed to find 'pandoc' to build static man-pages"
 

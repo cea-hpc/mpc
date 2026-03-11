@@ -136,6 +136,8 @@ int mpc_omp_tree_array_get_neighbor(const int globalRank, const int index)
 	int id          = 0;
 	int firstRank   = 0;
 	int nbSubleaves = 1;
+	// currentDepth is checked by assert above
+	// NOLINTNEXTLINE(clang-analyzer-core.VLASize)
 	int v[currentDepth], res[currentDepth];
 
 	for (i = 0; i < currentDepth; i++)

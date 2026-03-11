@@ -535,7 +535,7 @@ int mpc_lowcomm_is_remote_rank(int dest)
 	struct __mpc_lowcomm_copy_task_s
 	{
 		mpc_common_spinlock_t                      lock;
-		mpc_lowcomm_ptp_message_content_to_copy_t *cpy;
+		mpc_lowcomm_ptp_message_content_to_copy_t *copy;
 		char                                       pad[128];
 	};
 
@@ -555,7 +555,7 @@ int mpc_lowcomm_is_remote_rank(int dest)
 
 		for (i = 0; i <= PTP_TASKING_QUEUE_COUNT; i++)
 		{
-			__mpc_ptp_task_list[i].cpy = NULL;
+			__mpc_ptp_task_list[i].copy = NULL;
 			mpc_common_spinlock_init(&__mpc_ptp_task_list[i].lock, 0);
 		}
 
@@ -580,12 +580,12 @@ int mpc_lowcomm_is_remote_rank(int dest)
 
 			if (mpc_common_spinlock_trylock(&(__mpc_ptp_task_list[target_list].lock)) == 0)
 			{
-				tmp = __mpc_ptp_task_list[target_list].cpy;
+				tmp = __mpc_ptp_task_list[target_list].copy;
 
 				if (tmp != NULL)
 				{
 					/* Message found, we remove it from the list */
-					DL_DELETE(__mpc_ptp_task_list[target_list].cpy, tmp);
+					DL_DELETE(__mpc_ptp_task_list[target_list].copy, tmp);
 				}
 
 				mpc_common_spinlock_unlock(&(__mpc_ptp_task_list[target_list].lock));
@@ -629,7 +629,7 @@ int mpc_lowcomm_is_remote_rank(int dest)
 		int key = pair->key.rank & PTP_TASKING_QUEUE_COUNT;
 
 		mpc_common_spinlock_lock(&(__mpc_ptp_task_list[key].lock));
-		DL_APPEND(__mpc_ptp_task_list[key].cpy, tmp);
+		DL_APPEND(__mpc_ptp_task_list[key].copy, tmp);
 		mpc_common_spinlock_unlock(&(__mpc_ptp_task_list[key].lock));
 	}
 

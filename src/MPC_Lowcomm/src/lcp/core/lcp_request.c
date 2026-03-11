@@ -104,8 +104,9 @@ int lcp_request_init_unexp_ctnr(lcp_task_h task, lcp_unexp_ctnr_t **ctnr_p,
 		return MPC_LOWCOMM_ERROR;
 	}
 
-	size_t    elem_size = mpc_mpool_get_elem_size(&task->unexp_mp);
-	ptrdiff_t offset    = 0;
+	// NOLINTNEXTLINE(clang-analyzer-deadcode.DeadStores)
+	const size_t elem_size = mpc_mpool_get_elem_size(&task->unexp_mp);
+	ptrdiff_t    offset    = 0;
 
 	for (i = 0; i < (int)iovcnt; i++)
 	{

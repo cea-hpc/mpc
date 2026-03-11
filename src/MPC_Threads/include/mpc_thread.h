@@ -27,6 +27,7 @@
 
 #include <unistd.h>
 #include <sys/types.h>
+#include <stddef.h> // For size_t
 #include <signal.h>
 #include <time.h>
 

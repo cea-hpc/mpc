@@ -1,7 +1,7 @@
 #!/bin/sh
 
 #last version
-version=$(./get_version)
+version=$(../config/mpc_get_version.sh)
 output=""
 path=""
 host=x86_64

@@ -468,9 +468,7 @@ mpc_omp_barrier(ompt_sync_region_t kind)
 		_mpc_omp_ompt_callback_sync_region_wait(kind, ompt_scope_begin);
 #endif /* OMPT_SUPPORT */
 
-	/* retrieve mvp */
-	mpc_omp_mvp_t *mvp = thread->mvp;
-	assert(mvp);
+	assert(thread->mvp);
 
 	/* retrieve current thread team */
 	mpc_omp_team_t *           team   = thread->instance->team;
@@ -566,6 +564,8 @@ mpc_omp_barrier(ompt_sync_region_t kind)
 
 			/* tree implementation */
 #else /* MPC_OMP_NAIVE_BARRIER */
+			/* retrieve mvp */
+			mpc_omp_mvp_t * mvp      = thread->mvp;
 			mpc_omp_node_t *c        = mvp->father;
 			mpc_omp_node_t *new_root = thread->instance->root;
 

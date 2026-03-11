@@ -14,7 +14,7 @@ current_year = date.today().year
 project = "MPC"
 author = "Commissariat à l'Énergie Atomique et aux Énergies Alternatives"
 copyright = str(current_year) + ", " + author
-version = subprocess.run(["../../utils/get_version"], text=True, capture_output=True).stdout
+version = subprocess.run(["../../config/mpc_get_version.sh"], text=True, capture_output=True).stdout
 release = version
 
 # -- General configuration ---------------------------------------------------

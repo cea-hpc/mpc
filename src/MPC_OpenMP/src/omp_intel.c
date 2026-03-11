@@ -2029,6 +2029,8 @@ void __kmpc_for_static_init_8u(__UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 gti
 		*plastiter, *pstride);
 	unsigned long long trip_count;
 
+	// NOLINTBEGIN(clang-analyzer-core.DivideZero)
+	assert(incr);
 	if (incr > 0)
 	{
 		trip_count = ((*pupper - *plower) / incr) + 1;
@@ -2037,6 +2039,7 @@ void __kmpc_for_static_init_8u(__UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 gti
 	{
 		trip_count = ((*plower - *pupper) / (-incr)) + 1;
 	}
+	// NOLINTEND(clang-analyzer-core.DivideZero)
 
 #if OMPT_SUPPORT
 		ompt_work_t ompt_work_type = ompt_work_loop;
@@ -2167,9 +2170,7 @@ void __kmpc_for_static_fini(__UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 global
 	mpc_common_nodebug("[REDIRECT KMP]: %s -> None", __func__);
 
 #if OMPT_SUPPORT
-		mpc_omp_thread_t *t;
-		t = ( mpc_omp_thread_t * )mpc_omp_tls;
-		assert(t != NULL);
+		assert(( mpc_omp_thread_t * )mpc_omp_tls != NULL);
 
 		ompt_work_t ompt_work_type = ompt_work_loop;
 
@@ -2190,7 +2191,7 @@ void __kmpc_for_static_fini(__UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 global
 			else
 			{
 				mpc_common_nodebug("[%d] %s: WARNING! Unknown work type %d",
-					t->rank, __func__, loc->flags);
+					( mpc_omp_thread_t * )mpc_omp_tls->rank, __func__, loc->flags);
 			}
 		}
 
@@ -2202,7 +2203,7 @@ void __kmpc_for_static_fini(__UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 global
  * DISPATCH *
  ************/
 
-static inline void __intel_dispatch_init_long(mpc_omp_thread_t __UNUSED__ *t, long lb,
+static inline void __intel_dispatch_init_long(mpc_omp_thread_t *t, long lb,
                                               long b, long incr,
                                               long chunk)
 {
@@ -2841,8 +2842,7 @@ __kmpc_omp_task(__UNUSED__ ident_t *loc_ref, __UNUSED__ kmp_int32 gtid, kmp_task
 		_mpc_omp_ompt_frame_get_wrapper_infos(MPC_OMP_INTEL);
 #endif /* OMPT_SUPPORT */
 
-	mpc_omp_thread_t *thread = (mpc_omp_thread_t *)mpc_omp_tls;
-	assert(thread);
+	assert((mpc_omp_thread_t *)mpc_omp_tls);
 
 	mpc_omp_task_t *task = (mpc_omp_task_t *)((char *)kmp_task - sizeof(mpc_omp_task_t));
 
@@ -3045,8 +3045,7 @@ __kmpc_omp_task_complete_if0(
 		_mpc_omp_ompt_frame_get_wrapper_infos(MPC_OMP_INTEL);
 #endif /* OMPT_SUPPORT */
 
-	mpc_omp_thread_t *thread = (mpc_omp_thread_t *)mpc_omp_tls;
-	assert(thread);
+	assert((mpc_omp_thread_t *)mpc_omp_tls);
 
 	mpc_omp_task_t *task = (mpc_omp_task_t *)((char *)kmp_task - sizeof(mpc_omp_task_t));
 	assert(task);
@@ -3602,8 +3601,8 @@ int __kmp_default_tp_capacity()
 	return nth;
 }
 
-void __kmpc_copyprivate(__UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 global_tid, __UNUSED__ size_t cpy_size,
-                        void *cpy_data, void (*cpy_func)(void *, void *),
+void __kmpc_copyprivate(__UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 global_tid, __UNUSED__ size_t copy_size,
+                        void *copy_data, void (*copy_func)(void *, void *),
                         kmp_int32 didit)
 {
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
@@ -3624,14 +3623,14 @@ void __kmpc_copyprivate(__UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 global_tid
 
 	if (didit)
 	{
-		*data_ptr = cpy_data;
+		*data_ptr = copy_data;
 	}
 
 	mpc_omp_barrier(ompt_sync_region_barrier_implementation);
 
 	if (!didit)
 	{
-		(*cpy_func)(cpy_data, *data_ptr);
+		(*copy_func)(copy_data, *data_ptr);
 	}
 
 	mpc_omp_barrier(ompt_sync_region_barrier_implementation);
@@ -3651,13 +3650,15 @@ void *__kmpc_threadprivate_cached(ident_t *loc, kmp_int32 global_tid,
 		{
 			// handle cache to be dealt with later
 			void **my_cache;
-			my_cache = ( void ** )malloc(sizeof(void *) * __kmp_tp_capacity
-				+ sizeof(kmp_cached_addr_t));
-			memset(my_cache, 0,
-				sizeof(void *) * __kmp_tp_capacity + sizeof(kmp_cached_addr_t));
+
+			// __kmp_tp_capacity is tainted by being extracted from OMP_NUM_THREADS env variable
+			// NOLINTNEXTLINE(clang-analyzer-optin.taint.TaintedAlloc)
+			my_cache = ( void ** )malloc(sizeof(void *) * __kmp_tp_capacity + sizeof(kmp_cached_addr_t));
+
+			memset(my_cache, 0, sizeof(void *) * __kmp_tp_capacity + sizeof(kmp_cached_addr_t));
 			kmp_cached_addr_t *tp_cache_addr;
-			tp_cache_addr = ( kmp_cached_addr_t * )(( char * )my_cache
-			                                        + sizeof(void *) * __kmp_tp_capacity);
+			tp_cache_addr = ( kmp_cached_addr_t * )(( char * )my_cache + sizeof(void *)
+			                                        * __kmp_tp_capacity);
 			tp_cache_addr->addr         = my_cache;
 			tp_cache_addr->next         = __kmp_threadpriv_cache_list;
 			__kmp_threadpriv_cache_list = tp_cache_addr;

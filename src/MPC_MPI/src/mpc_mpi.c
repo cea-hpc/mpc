@@ -335,6 +335,8 @@ void PMPI_internal_free_request(MPI_Request *request)
 
 	assert(*request);
 
+	// The nullability of the request is checked by the above assert
+	// NOLINTNEXTLINE(clang-analyzer-core.NullDereference)
 	req->is_nbc = 0;
 	mpc_lowcomm_request_free(_mpc_cl_get_lowcomm_request(req));
 
@@ -11109,8 +11111,6 @@ int PMPI_Type_struct(int count,
 
 	/* Padding DONE HERE */
 
-
-
 	/* Set its context */
 	struct _mpc_dt_context dtctx;
 	_mpc_dt_context_clear(&dtctx);
@@ -11120,17 +11120,9 @@ int PMPI_Type_struct(int count,
 	dtctx.array_of_displacements_addr = indices;
 	dtctx.array_of_types              = old_types;
 
-	res = _mpc_cl_general_datatype(newtype,
-		begins_out,
-		ends_out,
-		datatypes,
-		glob_count_out,
-		new_lb,
-		new_is_lb,
-		new_ub,
-		new_is_ub,
-		&dtctx);
-	assert(res == MPI_SUCCESS);
+	res = _mpc_cl_general_datatype(newtype, begins_out, ends_out,
+		datatypes, glob_count_out, new_lb, new_is_lb, new_ub, new_is_ub, &dtctx);
+	MPI_HANDLE_ERROR(res, MPI_COMM_WORLD, "Failed to create a struct datatype");
 
 
 	/* Set the struct type as padded to return the UB in MPI_Type_size */
@@ -11139,15 +11131,6 @@ int PMPI_Type_struct(int count,
 	{
 		_mpc_cl_type_flag_padded(*newtype);
 	}
-
-	/*   mpc_common_nodebug("new_type %d",* newtype); */
-	/*   mpc_common_nodebug("final new_lb %d,%d new_ub %d %d",new_lb,new_is_lb,new_ub,new_is_ub); */
-	/*   { */
-	/*     int i ;  */
-	/*     for(i = 0; i < glob_count_out; i++){ */
-	/*       mpc_common_nodebug("%d begins %lu ends %lu",i,begins_out[i],ends_out[i]); */
-	/*     } */
-	/*   } */
 
 	sctk_free(begins_out);
 	sctk_free(ends_out);

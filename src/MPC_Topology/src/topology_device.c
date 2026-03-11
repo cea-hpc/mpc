@@ -659,11 +659,8 @@ static inline void __topology_device_enrich_topology()
 			int   name_size = strlen(name_prefix) + 4;
 			char *name      = sctk_malloc(sizeof(char) * name_size);
 			// Creating one single string
-			int check = snprintf(name, name_size,
-				"%s%d", name_prefix, device_id);
-			assert(check < name_size);
-			mpc_common_debug("Detected GPU: %s -> %s (%s)\n",
-				device->name, name, busid_str);
+			assume(snprintf(name, name_size, "%s%d", name_prefix, device_id) < name_size);
+			mpc_common_debug("Detected GPU: %s -> %s (%s)\n", device->name, name, busid_str);
 			device->name      = name;
 			device->device_id = device_id;
 		}

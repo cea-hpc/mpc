@@ -562,7 +562,12 @@ find_dep_with_spack()
 	set +e
 
 	LOAD_CMD=$(spack load --sh $TO_LOAD_NAME 2> /dev/null)
-	check_retcode "$?"
+	retcode=$?
+	if [ $retcode != "0" ]; then
+		notapplicable
+	else
+		ok
+	fi
 
 	set -e
 
@@ -1689,7 +1694,7 @@ do
       	;;
 		# Build wrappers
 		--version)
-			printf "%s\n" "$("$SCRIPTPATH/utils/get_version")"
+			printf "%s\n" "$("$SCRIPTPATH/config/mpc_get_version.sh" --all)"
 			exit 0
 			;;
 		clean)
