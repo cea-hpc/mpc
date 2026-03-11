@@ -111,6 +111,10 @@ scan_and_patch_o_file()
 	# In this case, we need FORTRAN_MAIN_OBJ but not to rename the main() symbol
 		has_symbol "${1}" "mpc_user_main_"
 		test "x${HAS_SYMBOL}" = "xyes" && MAIN_NEEDED="yes"
+
+		# In case main is defined without MAIN__, rename it to mpc_user_main_
+		has_symbol "${1}" "main"
+		test "x${HAS_SYMBOL}" = "xyes" && rename_sym "${1}" "main" "mpc_user_main_" && MAIN_NEEDED="yes"
 	fi
 }
 
