@@ -1,9 +1,11 @@
 #ifndef LCP_MEMPOOL_H
 #define LCP_MEMPOOL_H
 
-#include <stdio.h>
-#include <sctk_alloc.h>
-#include <mpc_common_spinlock.h>
+#include <stdbool.h>             // For bool, true, false
+#include <stddef.h>              // For size_t
+#include <stdint.h>              // For uint32_t
+
+#include <mpc_common_spinlock.h> // For mpc_common_spinlock_t
 
 enum
 {
@@ -29,6 +31,7 @@ struct mpc_mempool_elem
 {
 	struct mpc_mempool_elem *next;
 	char                     canary;
+	char                     is_in_use;
 	mpc_mempool_t *          mp;
 };
 
