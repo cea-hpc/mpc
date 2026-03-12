@@ -8795,7 +8795,7 @@ static inline int __check_unified_handle_ctx(int count, MPI_Request array_of_req
 
 	for (i = 0; i < count; i++)
 	{
-		if (array_of_requests[i] == MPI_REQUEST_NULL)
+		if (array_of_requests[i] == MPI_REQUEST_NULL || NULL == array_of_requests[i])
 		{
 			continue;
 		}
@@ -8828,10 +8828,7 @@ static inline int __check_unified_handle_ctx(int count, MPI_Request array_of_req
 	MPI_ERROR_SUCCESS();
 }
 
-int PMPI_Waitany(int count,
-                 MPI_Request array_of_requests[],
-                 int *index,
-                 MPI_Status *status)
+int PMPI_Waitany(int count, MPI_Request array_of_requests[], int *index, MPI_Status *status)
 {
 	mpc_common_nodebug("entering PMPI_Waitany");
 
@@ -8845,13 +8842,6 @@ int PMPI_Waitany(int count,
 	MPI_Comm comm = MPI_COMM_WORLD;
 	int      res  = MPI_SUCCESS;
 
-	res = __check_unified_handle_ctx(count, array_of_requests);
-	if (res != MPI_SUCCESS)
-	{
-		/* Note error handler is already called in __check_unified_handle_ctx */
-		return res;
-	}
-
 	int flag = 0;
 
 	while (!flag)
@@ -8860,6 +8850,7 @@ int PMPI_Waitany(int count,
 
 		if (res != MPI_SUCCESS)
 		{
+			MPI_HANDLE_ERROR(res, comm, "Failed on invalid request");
 			break;
 		}
 	}
@@ -8899,7 +8890,6 @@ int PMPI_Testany(int count,
 	{
 		return MPI_SUCCESS;
 	}
-
 
 	res = __check_unified_handle_ctx(count, array_of_requests);
 	if (res != MPI_SUCCESS)
