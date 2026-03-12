@@ -11579,7 +11579,7 @@ int PMPI_Get_elements_x(const MPI_Status *status, MPI_Datatype datatype, MPI_Cou
 	return PMPI_Type_get_elements_x(status, datatype, elements);
 }
 
-int PMPI_Type_get_elements(MPI_Status *status, MPI_Datatype datatype, int *elements)
+int PMPI_Type_get_elements(const MPI_Status *status, MPI_Datatype datatype, int *elements)
 {
 	MPI_Comm comm = MPI_COMM_WORLD;
 	int      res  = MPI_ERR_INTERN;
@@ -11596,7 +11596,7 @@ int PMPI_Type_get_elements(MPI_Status *status, MPI_Datatype datatype, int *eleme
 	MPI_HANDLE_RETURN_VAL(res, comm);
 }
 
-int PMPI_Get_elements(MPI_Status *status, MPI_Datatype datatype, int *elements)
+int PMPI_Get_elements(const MPI_Status *status, MPI_Datatype datatype, int *elements)
 {
 	return PMPI_Type_get_elements(status, datatype, elements);
 }

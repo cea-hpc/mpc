@@ -7822,8 +7822,8 @@ int PMPI_Get_elements_x(const MPI_Status *status, MPI_Datatype datatype, MPI_Cou
  *
  * @return          int MPI_SUCCESS on success other MPI_* error code otherwise
  */
-int MPI_Get_elements(MPI_Status *status, MPI_Datatype datatype, int *elements);
-int PMPI_Get_elements(MPI_Status *status, MPI_Datatype datatype, int *elements);
+int MPI_Get_elements(const MPI_Status *status, MPI_Datatype datatype, int *elements);
+int PMPI_Get_elements(const MPI_Status *status, MPI_Datatype datatype, int *elements);
 
 /*MPI_Type_get_elements*/
 
@@ -7836,8 +7836,8 @@ int PMPI_Get_elements(MPI_Status *status, MPI_Datatype datatype, int *elements);
  *
  * @return          int MPI_SUCCESS on success other MPI_* error code otherwise
  */
-int MPI_Type_get_elements(MPI_Status *status, MPI_Datatype datatype, int *count);
-int PMPI_Type_get_elements(MPI_Status *status, MPI_Datatype datatype, int *count);
+int MPI_Type_get_elements(const MPI_Status *status, MPI_Datatype datatype, int *count);
+int PMPI_Type_get_elements(const MPI_Status *status, MPI_Datatype datatype, int *count);
 
 
 /*MPI_Type_get_elements_x*/
