@@ -16173,7 +16173,12 @@ int PMPI_Win_detach(MPI_Win, const void *);
 
 int PMPI_Win_free(MPI_Win *win)
 {
-	return mpc_win_free(*win);
+	const MPI_Comm comm = ((mpc_win_t *)*win)->comm;
+	const int      rc   = mpc_win_free(*win);
+
+	*win = MPI_WIN_NULL;
+
+	MPI_HANDLE_RETURN_VAL(rc, comm);
 }
 
 /* RDMA Operations */

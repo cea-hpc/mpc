@@ -702,9 +702,7 @@ err:
 // FIXME: what append if a memory could not get registered ? Miss error handling:
 //       if a subset could not be registered, perform the communication on the
 //       successful memory pins ?
-int lcp_mem_provision(lcp_manager_h mngr,
-                      lcp_mem_h *mem_p,
-                      lcp_mem_param_t *param)
+int lcp_mem_provision(lcp_manager_h mngr, lcp_mem_h *mem_p, lcp_mem_param_t *param)
 {
 	int       rc = MPC_LOWCOMM_SUCCESS;
 	lcp_mem_h mem;
@@ -742,7 +740,7 @@ int lcp_mem_provision(lcp_manager_h mngr,
 			                     "be overwritten.");
 	}
 
-	if (param->size == 0)
+	if (param->size == 0 && param->address == NULL)
 	{
 		*mem_p = &lcp_mem_dummy_handle;
 		return MPC_LOWCOMM_SUCCESS;
