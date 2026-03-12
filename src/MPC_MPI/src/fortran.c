@@ -301,6 +301,10 @@ void mpc_fortran_group_delete(__UNUSED__ MPI_Fint *group)
 MPI_Request PMPI_Request_f2c(MPI_Fint request)
 {
 #if 1
+		if (request == (MPI_Fint)((intptr_t)MPI_REQUEST_NULL))
+		{
+			return MPI_REQUEST_NULL;
+		}
 		_fortran_handle_storage_t prequest = NULL;
 		prequest = _mpc_handle_factory_get(&__requests_factory, request);
 
@@ -316,6 +320,10 @@ MPI_Request PMPI_Request_f2c(MPI_Fint request)
 MPI_Fint PMPI_Request_c2f(MPI_Request request)
 {
 #if 1
+		if (request == MPI_REQUEST_NULL)
+		{
+			return (MPI_Fint)((intptr_t)MPI_REQUEST_NULL);
+		}
 		_fortran_handle_storage_t prequest = NULL;
 		memcpy(&prequest, &request, sizeof(MPI_Request));
 
@@ -339,6 +347,10 @@ void mpc_fortran_request_delete(__UNUSED__ MPI_Fint request)
 MPI_Win PMPI_Win_f2c(MPI_Fint win)
 {
 #if 1
+		if (win == (MPI_Fint)((intptr_t)MPI_WIN_NULL))
+		{
+			return MPI_WIN_NULL;
+		}
 		_fortran_handle_storage_t pwin = NULL;
 		pwin = _mpc_handle_factory_get(&__wins_factory, win);
 
@@ -354,6 +366,10 @@ MPI_Win PMPI_Win_f2c(MPI_Fint win)
 MPI_Fint PMPI_Win_c2f(MPI_Win win)
 {
 #if 1
+		if (win == MPI_WIN_NULL)
+		{
+			return (MPI_Fint)((intptr_t)MPI_WIN_NULL);
+		}
 		_fortran_handle_storage_t pwin = NULL;
 		memcpy(&pwin, &win, sizeof(MPI_Win));
 
