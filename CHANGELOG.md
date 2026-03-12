@@ -6,6 +6,8 @@ All notable changes to this project will be documented in this file. The format 
 
 ### Added
 
+- **Common**
+  - Debug assertion in the mempool to detect bad behavior
 - **LowComm**
   - Support for floating point numbers in atomic operations
 
@@ -20,6 +22,8 @@ All notable changes to this project will be documented in this file. The format 
 - **LowComm**
   - Avoid warnings in CPP by changing header inclusion rules
   - Improve selection of the network devices to initialize
+- **MPCRUN**
+  - Optimize launching time by removing one `mpc_print_config` invocation
 - **Pthread**
   - Avoid redefinition of standard libc symbols in process-mode
 
@@ -29,17 +33,25 @@ All notable changes to this project will be documented in this file. The format 
 
 ### Fixed
 
+- **Build**
+  - Export missing build necessary files in the archive
+- **Common**
+  - Set visibility attributes of user main to default
+- **Fortran**
+  - Non standard code generation
+  - Properly convert MPI NULL handles and indexes from C
 - **MPI**
   - Active Message handling in Thread-Based
   - Unpacking of user created datatypes
   - Deadlock in `MPI_Waitall` in Thread-Based
+  - Possible double frees in Window creation and freeing
+  - Add missing qualifiers and Fortran constants to the exported API
 - **Low Comm**
   - Multinic devices initialization
   - Interface capabilities initialization
   - Deadlock in backend releasing
   - Deadlock in flush operation with no pending communications
-- **Fortran**
-  - Non standard code generation
+  - Potential error in PTL finalization in multithreaded context
 - Memory related potential bugs in MPI, Low Comm, Common and Config
 
 ## [4.3.0] - 2025-11-18
