@@ -10886,6 +10886,8 @@ void pmpi_waitany_(int *count, MPI_Fint array_of_requests[], int *index, MPI_Sta
 	}
 
 	*ierror = MPI_Waitany(*count, c_array_of_requests, index, status);
+	// 1 indexing in Fortran
+	*index += 1;
 
 	int outcnt_array_of_requests = 0;
 
@@ -10913,6 +10915,8 @@ void pmpi_waitany__(int *count, MPI_Fint array_of_requests[], int *index, MPI_St
 	}
 
 	*ierror = MPI_Waitany(*count, c_array_of_requests, index, status);
+	// 1 indexing in Fortran
+	*index += 1;
 
 	int outcnt_array_of_requests = 0;
 
@@ -10946,6 +10950,13 @@ void pmpi_waitsome_(int *incount,
 
 	*ierror = MPI_Waitsome(*incount, c_array_of_requests, outcount, array_of_indices, array_of_statuses);
 
+	int outcnt_array_of_indices = 0;
+	for (outcnt_array_of_indices = 0; outcnt_array_of_indices < *outcount; outcnt_array_of_indices++)
+	{
+		// 1 indexing in Fortran
+		array_of_indices[outcnt_array_of_indices] += 1;
+	}
+
 	int outcnt_array_of_requests = 0;
 
 	for (outcnt_array_of_requests = 0; outcnt_array_of_requests < *incount; outcnt_array_of_requests++)
@@ -10977,6 +10988,13 @@ void pmpi_waitsome__(int *incount,
 	}
 
 	*ierror = MPI_Waitsome(*incount, c_array_of_requests, outcount, array_of_indices, array_of_statuses);
+
+	int outcnt_array_of_indices = 0;
+	for (outcnt_array_of_indices = 0; outcnt_array_of_indices < *outcount; outcnt_array_of_indices++)
+	{
+		// 1 indexing in Fortran
+		array_of_indices[outcnt_array_of_indices] += 1;
+	}
 
 	int outcnt_array_of_requests = 0;
 
