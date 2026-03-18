@@ -96,11 +96,12 @@
 				_hdr |= (_op_type & 0xff);
 #endif
 
-	#define _lcr_ptl_init_op_common(_op, _id, _mdh, _addr, _pti, \
+	#define _lcr_ptl_init_op_common(_op, _id, _mdh, _success, _addr, _pti, \
 									_type, _size, _comp, _txq)   \
 			(_op)->id   = _id;                                   \
 			(_op)->hdr  = 0;                                     \
 			(_op)->mdh  = _mdh;                                  \
+			(_op)->success  = _success;                          \
 			(_op)->addr = _addr;                                 \
 			(_op)->pti  = _pti;                                  \
 			(_op)->type = _type;                                 \
@@ -207,8 +208,8 @@
 		lcr_ptl_mem_lifetime_t lifetime; /**< When the memory should be destroyed */
 		ptl_match_bits_t       match;    /**< Matching tag of the ME */
 		mpc_list_elem_t        elem;     /**< Element in list. */
-		ptl_handle_ct_t        cth;      /**< Portals Counter handle. */
 		ptl_handle_md_t        mdh;      /**< Portals Memory Descriptor handle.*/
+		uint64_t               success;  /**< Counter for operations completed successfully on the Memory Descriptor. */
 		ptl_handle_me_t        meh;      /**< Portals Matching List Entry handle */
 		lcr_ptl_txq_t *        txqt;     /**< List of operations associated with this memory */
 		uint64_t               op_count; /**< Sequence number of the last pushed op. */
@@ -263,6 +264,7 @@
 		size_t            size; /**< Data size of the operation */
 		lcr_completion_t *comp; /**< Completion callback */
 		lcr_ptl_txq_t *   txq;  /**< TX Queue where the operation was pushed. */
+		uint64_t *        success;  /**< Counter for operations completed successfully on the Memory Descriptor. */
 
 		union
 		{

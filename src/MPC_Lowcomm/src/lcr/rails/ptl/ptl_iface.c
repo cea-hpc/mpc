@@ -460,16 +460,7 @@ err:
 	// NOTE: must be called with mem lock
 	ptl_size_t lcr_ptl_poll_mem(lcr_ptl_mem_t *mem)
 	{
-		ptl_ct_event_t ct_ev;
-
-		/* Poll CT and update operation count atomically. */
-		lcr_ptl_chk(PtlCTGet(mem->cth, &ct_ev));
-		if (ct_ev.failure > 0)
-		{
-			/* Failure will be treated with full events. */
-			mpc_common_debug_warning("LCR PTL: %llu event failures.", ct_ev.failure);
-		}
-		return ct_ev.success;
+		return mem->success;
 	}
 
 	/** @brief Progress the pending queues and flush ops on all registered memories
@@ -536,6 +527,11 @@ err:
 					ev.start,
 					ev.remote_offset,
 					srail->net.nih);
+
+				if ((op->success != NULL))
+				{
+					(*(op->success))++;
+				}
 
 				if (ev.type == PTL_EVENT_PT_DISABLED)
 				{
@@ -866,22 +862,20 @@ err:
 		ptl_md_t md;
 		ptl_me_t me;
 
-		lcr_ptl_chk(PtlCTAlloc(srail->net.nih, &mem->cth));
-
 		// FIXME: For now, the MD attached to the memory is not used by any of
 		//       the upper layer calls. Maybe this could be removed?
 		md = (ptl_md_t) {
-			.ct_handle = mem->cth,
+			.ct_handle = PTL_CT_NONE,
 			.eq_handle = srail->net.eqh,
 			.length    = length,
 			.start     = (void *)start,
 			.options   = PTL_MD_EVENT_SEND_DISABLE
-			             | PTL_MD_EVENT_CT_ACK
-			             | PTL_MD_EVENT_CT_REPLY,
 		};
 		lcr_ptl_chk(PtlMDBind(srail->net.nih, &md, &mem->mdh));
 
-		mem->match = atomic_fetch_add(&srail->net.rma.mem_uid, 0);
+		mem->success = 0;
+
+		mem->match = atomic_fetch_add(&srail->net.rma.mem_uid, 1);
 
 		me = (ptl_me_t) {
 			.ct_handle   = PTL_CT_NONE,
@@ -931,8 +925,6 @@ err:
 	int lcr_ptl_mem_deactivate(lcr_ptl_mem_t *mem)
 	{
 		sctk_free(mem->txqt);
-
-		lcr_ptl_chk(PtlCTFree(mem->cth));
 
 		lcr_ptl_chk(PtlMDRelease(mem->mdh));
 

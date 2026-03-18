@@ -86,7 +86,7 @@
 			size = -1;
 			goto err;
 		}
-		_lcr_ptl_init_op_common(op, 0, srail->net.am.mdh,
+		_lcr_ptl_init_op_common(op, 0, srail->net.am.mdh, NULL,
 			ptl_ep->addr.id,
 			ptl_ep->addr.pte.am,
 			LCR_PTL_OP_AM_BCOPY,
@@ -173,7 +173,7 @@ err:
 			goto err;
 		}
 		/* Memory Descriptor handle and size are set later. */
-		_lcr_ptl_init_op_common(op, 0, srail->net.am.mdh,
+		_lcr_ptl_init_op_common(op, 0, srail->net.am.mdh, NULL,
 			ptl_ep->addr.id,
 			ptl_ep->addr.pte.am,
 			LCR_PTL_OP_AM_ZCOPY,
@@ -314,7 +314,7 @@ err:
 			size = MPC_LOWCOMM_NO_RESOURCE;
 			goto err;
 		}
-		_lcr_ptl_init_op_common(op, 0, srail->net.tag.mdh,
+		_lcr_ptl_init_op_common(op, 0, srail->net.tag.mdh, NULL,
 			ptl_ep->addr.id,
 			ptl_ep->addr.pte.tag,
 			LCR_PTL_OP_TAG_BCOPY,
@@ -364,7 +364,7 @@ err:
 			rc = MPC_LOWCOMM_NO_RESOURCE;
 			goto err;
 		}
-		_lcr_ptl_init_op_common(op, 0, srail->net.tag.mdh,
+		_lcr_ptl_init_op_common(op, 0, srail->net.tag.mdh, NULL,
 			ptl_ep->addr.id,
 			ptl_ep->addr.pte.tag,
 			LCR_PTL_OP_TAG_ZCOPY,
@@ -437,7 +437,7 @@ err:
 			rc = MPC_LOWCOMM_NO_RESOURCE;
 			goto err;
 		}
-		_lcr_ptl_init_op_common(op, 0, srail->net.tag.mdh,
+		_lcr_ptl_init_op_common(op, 0, srail->net.tag.mdh, NULL,
 			LCR_PTL_PROCESS_ANY,
 			srail->net.tag.pti,
 			search ? LCR_PTL_OP_TAG_SEARCH
@@ -531,6 +531,7 @@ err:
 			goto err;
 		}
 		_lcr_ptl_init_op_common(op, 0, lctx->mem->mdh,
+			&lctx->mem->success,
 			ptl_ep->addr.id,
 			ptl_ep->addr.pte.rma,
 			LCR_PTL_OP_RMA_PUT,
@@ -561,11 +562,10 @@ err:
 		mpc_common_spinlock_unlock(&txq->lock);
 
 		mpc_common_nodebug("LCR PTL: local key. lkey size=%llu, addr=%p, "
-			               "local offset=%llu, remote offset=%llu, "
-			               "cth=%llu, mdh=%llu.", lctx->size,
+			             "local offset=%llu, remote offset=%llu, "
+			             "mdh=%llu.", lctx->size,
 			lctx->start, op->rma.local_offset,
 			op->rma.remote_offset,
-			op->rma.lkey->cth,
 			op->rma.lkey->mdh);
 		mpc_common_nodebug("LCR PTL: remote key. addr=%p, match=%llu", rctx->start,
 			(uint64_t)op->rma.match);
@@ -603,6 +603,7 @@ err:
 			goto err;
 		}
 		_lcr_ptl_init_op_common(op, 0, lctx->mem->mdh,
+			&lctx->mem->success,
 			ptl_ep->addr.id,
 			ptl_ep->addr.pte.rma,
 			LCR_PTL_OP_RMA_GET,
@@ -746,6 +747,7 @@ err:
 			goto err;
 		}
 		_lcr_ptl_init_op_common(op, 0, lkey->mdh,
+			&lkey->success,
 			ptl_ep->addr.id,
 			ptl_ep->addr.pte.rma,
 			LCR_PTL_OP_ATOMIC_POST,
@@ -770,10 +772,10 @@ err:
 		mpc_common_spinlock_unlock(&txq->lock);
 		mpc_common_nodebug(
 			"LCR PTL: atomic post operation. type=%s, lkey=%p"
-			"op size=%llu, value=%llu, remote offset=%llu, cth=%llu, mdh=%llu, match=%llu.",
+			"op size=%llu, value=%llu, remote offset=%llu, mdh=%llu, match=%llu.",
 			lcr_ptl_decode_atomic_op(op->ato.op),
 			lkey, size, op->ato.post.value,
-			op->ato.remote_offset, op->ato.lkey->cth,
+			op->ato.remote_offset,
 			op->ato.lkey->mdh, (uint64_t)op->ato.match);
 		rc = lcr_ptl_do_op(op);
 		mpc_common_spinlock_unlock(&lkey->lock);
@@ -812,6 +814,7 @@ err:
 			goto err;
 		}
 		_lcr_ptl_init_op_common(op, 0, lkey->mdh,
+			&lkey->success,
 			ptl_ep->addr.id,
 			ptl_ep->addr.pte.rma,
 			LCR_PTL_OP_ATOMIC_FETCH,
@@ -838,10 +841,10 @@ err:
 
 		mpc_common_nodebug(
 			"LCR PTL: atomic fetch operation. type=%s, lkey=%p, op size=%llu, result=%p, "
-			"value=%llu, remote offset=%llu, cth=%llu, mdh=%llu, match=%llu.",
+			"value=%llu, remote offset=%llu, mdh=%llu, match=%llu.",
 			lcr_ptl_decode_atomic_op(op->ato.op),
 			lkey, size, op->ato.fetch.result, op->ato.fetch.value,
-			op->ato.remote_offset, op->ato.lkey->cth,
+			op->ato.remote_offset,
 			op->ato.lkey->mdh, (uint64_t)op->ato.match);
 		rc = lcr_ptl_do_op(op);
 		mpc_common_spinlock_unlock(&lkey->lock);
@@ -879,6 +882,7 @@ err:
 			goto err;
 		}
 		_lcr_ptl_init_op_common(op, 0, lkey->mdh,
+			&lkey->success,
 			ptl_ep->addr.id,
 			ptl_ep->addr.pte.rma,
 			LCR_PTL_OP_ATOMIC_CSWAP,
@@ -907,10 +911,10 @@ err:
 
 		mpc_common_nodebug(
 			"LCR PTL: atomic cswap operation. type=%s, lkey=%p, op size=%llu, result=%p, "
-			"value=%llu, remote offset=%llu, cth=%llu, mdh=%llu, match=%llu.",
+			"value=%llu, remote offset=%llu, mdh=%llu, match=%llu.",
 			lcr_ptl_decode_atomic_op(op->ato.op),
 			lkey, size, op->ato.fetch.result, op->ato.fetch.value,
-			op->ato.remote_offset, op->ato.lkey->cth,
+			op->ato.remote_offset,
 			op->ato.lkey->mdh, (uint64_t)op->ato.match);
 		rc = lcr_ptl_do_op(op);
 		mpc_common_spinlock_unlock(&lkey->lock);
