@@ -40,6 +40,10 @@
 #include <sctk_alloc.h>
 #include <mpc_launch_pmi.h>
 #include <mpc_common_rank.h>
+#include <mpc_common_progress.h>
+#ifdef MPC_Threads
+	#include <mpc_thread.h>
+#endif
 #include <rail.h>
 
 	static inline void __ptl_set_limits(ptl_ni_limits_t *l)
@@ -939,7 +943,20 @@ err:
 
 		lcr_ptl_chk(PtlMDRelease(mem->mdh));
 
-		lcr_ptl_chk(PtlMEUnlink(mem->meh));
+		int rc = PtlMEUnlink(mem->meh);
+		if (rc == PTL_IN_USE)
+		{
+			// In a multithreaded context, the PT may still be in use by other threads
+			while (rc == PTL_IN_USE)
+			{
+#ifdef MPC_Threads
+					mpc_thread_yield();
+#endif
+				mpc_common_progress();
+				rc = PtlMEUnlink(mem->meh);
+			}
+		}
+		lcr_ptl_chk(rc);
 		return MPC_LOWCOMM_SUCCESS;
 	}
 
@@ -1007,7 +1024,20 @@ err:
 	{
 		lcr_ptl_mem_deactivate(srail->net.rma.dynamic_mem);
 
-		lcr_ptl_chk(PtlPTFree(srail->net.nih, srail->net.rma.pti));
+		int rc = PtlPTFree(srail->net.nih, srail->net.rma.pti);
+		if (rc == PTL_IN_USE)
+		{
+			// In a multithreaded context, the PT may still be in use by other threads
+			while (rc == PTL_IN_USE)
+			{
+#ifdef MPC_Threads
+					mpc_thread_yield();
+#endif
+				mpc_common_progress();
+				rc = PtlPTFree(srail->net.nih, srail->net.rma.pti);
+			}
+		}
+		lcr_ptl_chk(rc);
 
 		// TODO: ongoing request management.
 		return MPC_LOWCOMM_SUCCESS;

@@ -43,6 +43,7 @@
 #include <mpc_common_spinlock.h>
 #include <mpc_common_helper.h>
 #include <lowcomm_config.h>
+#include <sctk_alloc.h> // For sctk_malloc, sctk_free
 
 #include <portals4.h>
 
