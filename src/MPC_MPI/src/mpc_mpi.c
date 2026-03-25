@@ -8680,7 +8680,7 @@ int PMPI_Wait(MPI_Request *request, MPI_Status *status)
 
 		if (mpcreq->request_type == REQUEST_GENERALIZED)
 		{
-			res = _mpc_cl_waitall(1, mpcreq, mpc_status);
+			res = _mpc_cl_waitall(1, &mpcreq, mpc_status);
 		}
 		else
 		{

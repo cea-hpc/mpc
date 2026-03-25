@@ -268,7 +268,7 @@ int _mpc_cl_recv(void *buf, mpc_lowcomm_msg_count_t count, mpc_lowcomm_datatype_
 int _mpc_cl_waitallp(mpc_lowcomm_msg_count_t count, mpc_lowcomm_request_t *parray_of_requests[],
                      mpc_lowcomm_status_t array_of_statuses[]);
 
-int _mpc_cl_waitall(mpc_lowcomm_msg_count_t count, mpc_lowcomm_request_t array_of_requests[],
+int _mpc_cl_waitall(mpc_lowcomm_msg_count_t count, mpc_lowcomm_request_t *array_of_requests[],
                     mpc_lowcomm_status_t array_of_statuses[]);
 
 int _mpc_cl_waitsome(mpc_lowcomm_msg_count_t incount, mpc_lowcomm_request_t array_of_requests[],
