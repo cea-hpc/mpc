@@ -210,7 +210,11 @@
 		mpc_list_elem_t        elem;     /**< Element in list. */
 		ptl_handle_md_t        mdh;      /**< Portals Memory Descriptor handle.*/
 		uint64_t               success;  /**< Counter for operations completed successfully on the Memory Descriptor. */
+#ifdef BXI_VERSION_3_R6_LITE
+		ptl_handle_le_t        leh;      /**< Portals List Entry handle */
+#else
 		ptl_handle_me_t        meh;      /**< Portals Matching List Entry handle */
+#endif
 		lcr_ptl_txq_t *        txqt;     /**< List of operations associated with this memory */
 		uint64_t               op_count; /**< Sequence number of the last pushed op. */
 		mpc_common_spinlock_t  lock;     /**< Critical section lock for the memory */

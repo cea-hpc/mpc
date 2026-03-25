@@ -860,7 +860,6 @@ err:
 		int      rc = MPC_LOWCOMM_SUCCESS;
 		int      i;
 		ptl_md_t md;
-		ptl_me_t me;
 
 		// FIXME: For now, the MD attached to the memory is not used by any of
 		//       the upper layer calls. Maybe this could be removed?
@@ -877,28 +876,43 @@ err:
 
 		mem->match = atomic_fetch_add(&srail->net.rma.mem_uid, 1);
 
-		me = (ptl_me_t) {
-			.ct_handle   = PTL_CT_NONE,
-			.ignore_bits = 0,
-			.match_bits  = mem->match,
-			.match_id    =
-			{
-				.phys.nid = PTL_NID_ANY,
-				.phys.pid = PTL_PID_ANY
-			},
-			.uid      = PTL_UID_ANY,
-			.min_free = 0,
-			.options  = PTL_ME_OP_PUT
-			            | PTL_ME_OP_GET
-			            | PTL_ME_EVENT_LINK_DISABLE
-			            | PTL_ME_EVENT_UNLINK_DISABLE
-			            | PTL_ME_EVENT_SUCCESS_DISABLE,
-			.start  = 0,
-			.length = PTL_SIZE_MAX
-		};
+#ifdef BXI_VERSION_3_R6_LITE
+			ptl_le_t le = (ptl_le_t) {
+				.ct_handle = PTL_CT_NONE,
+				.uid       = PTL_UID_ANY,
+				.options   = PTL_LE_OP_PUT
+				             | PTL_LE_OP_GET
+				             | PTL_LE_EVENT_LINK_DISABLE
+				             | PTL_LE_EVENT_UNLINK_DISABLE
+				             | PTL_LE_EVENT_SUCCESS_DISABLE,
+				.start  = 0,
+				.length = PTL_SIZE_MAX
+			};
 
-		lcr_ptl_chk(PtlMEAppend(srail->net.nih, srail->net.rma.pti, &me, PTL_PRIORITY_LIST, srail, &mem->meh));
+			lcr_ptl_chk(PtlLEAppend(srail->net.nih, srail->net.rma.pti, &le, PTL_PRIORITY_LIST, srail, &mem->leh));
+#else
+			ptl_me_t me = (ptl_me_t) {
+				.ct_handle   = PTL_CT_NONE,
+				.ignore_bits = 0,
+				.match_bits  = mem->match,
+				.match_id    =
+				{
+					.phys.nid = PTL_NID_ANY,
+					.phys.pid = PTL_PID_ANY
+				},
+				.uid      = PTL_UID_ANY,
+				.min_free = 0,
+				.options  = PTL_ME_OP_PUT
+				            | PTL_ME_OP_GET
+				            | PTL_ME_EVENT_LINK_DISABLE
+				            | PTL_ME_EVENT_UNLINK_DISABLE
+				            | PTL_ME_EVENT_SUCCESS_DISABLE,
+				.start  = 0,
+				.length = PTL_SIZE_MAX
+			};
 
+			lcr_ptl_chk(PtlMEAppend(srail->net.nih, srail->net.rma.pti, &me, PTL_PRIORITY_LIST, srail, &mem->meh));
+#endif
 		mem->start    = (uint64_t)start;
 		mem->lifetime = lt;
 		mpc_common_spinlock_init(&mem->lock, 0);
@@ -928,7 +942,11 @@ err:
 
 		lcr_ptl_chk(PtlMDRelease(mem->mdh));
 
-		int rc = PtlMEUnlink(mem->meh);
+#ifdef BXI_VERSION_3_R6_LITE
+			int rc = PtlLEUnlink(mem->leh);
+#else
+			int rc = PtlMEUnlink(mem->meh);
+#endif
 		if (rc == PTL_IN_USE)
 		{
 			// In a multithreaded context, the PT may still be in use by other threads
@@ -938,7 +956,11 @@ err:
 					mpc_thread_yield();
 #endif
 				mpc_common_progress();
-				rc = PtlMEUnlink(mem->meh);
+#ifdef BXI_VERSION_3_R6_LITE
+					rc = PtlLEUnlink(mem->leh);
+#else
+					rc = PtlMEUnlink(mem->meh);
+#endif
 			}
 		}
 		lcr_ptl_chk(rc);
