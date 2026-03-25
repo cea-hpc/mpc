@@ -2859,6 +2859,38 @@ AC_SUBST([ALL_MPC_LIBS])
 AC_SUBST([MPC_MODULE_LIST])
 AC_SUBST([MPC_MODULE_DEFINES])
 
+#
+# BXI version
+#
+
+AC_ARG_WITH([bxi],
+		[AS_HELP_STRING([--with-bxi], [Enable BXI specific features when using Portals])],
+		[bxi_version=$withval], [])
+
+if [[ -v bxi_version ]]
+then
+	printf "Configure with BXI specialization\n"
+	AC_DEFINE([USE_BXI], [], [BXI is used for Portals])
+
+	# Can't make this work. Define shows in config.log and config.status
+	# but not in mpc_config.h. Instead, check if MPC has specialization
+	# for the provided BXI version.
+	#AC_DEFINE_UNQUOTED([BXI_VERSION_$bxi_version], [], [BXI version used for Portals])
+	if [[ $bxi_version == "2" ]]
+	then
+		printf "Configure with BXI version 2 specialization\n"
+		AC_DEFINE([BXI_VERSION_2], [], [BXI version 2 used for Portals])
+	elif [[ $bxi_version == "3_R6_LITE" ]]
+	then
+		printf "Configure with BXI version 3 R6-LITE specialization\n"
+		AC_DEFINE([BXI_VERSION_3_R6_LITE], [], [BXI version 3 R6-LITE used for Portals])
+	else
+		printf "Warning: No specialization for BXI version $bxi_version\n"
+	fi
+else
+	printf "Configure without BXI specialization\n"
+fi
+
 ################################
 ###### COMPILER DETECTION ###### {sec:compilers}
 ################################
