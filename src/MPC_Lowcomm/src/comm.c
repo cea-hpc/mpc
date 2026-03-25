@@ -353,7 +353,8 @@ int _mpc_lowcomm_comm_get_lists(int rank, mpc_lowcomm_ptp_message_lists_t **list
 	UNUSED(rank);
 	UNUSED(lists);
 	UNUSED(list_count);
-	not_reachable();
+	return ~MPC_LOWCOMM_SUCCESS;
+
 #if 0
 		int i;
 		int ret_cnt = 0;
