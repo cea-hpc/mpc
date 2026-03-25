@@ -276,7 +276,11 @@
 			{
 				lcr_tag_context_t *tag_ctx;
 				void *             bcopy_buf;
+#ifdef BXI_VERSION_3_R6_LITE
+				ptl_handle_le_t    leh;
+#else
 				ptl_handle_me_t    meh;
+#endif
 			} tag;
 			struct
 			{

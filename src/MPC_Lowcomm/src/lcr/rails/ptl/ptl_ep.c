@@ -399,31 +399,43 @@ err:
 	                           unsigned flags,
 	                           lcr_tag_context_t *ctx)
 	{
-		int                  rc = MPC_LOWCOMM_SUCCESS;
-		ptl_me_t             me;
+		int                  rc     = MPC_LOWCOMM_SUCCESS;
 		unsigned int         search = flags & LCR_IFACE_TM_SEARCH;
 		lcr_ptl_rail_info_t *srail  = &rail->network.ptl;
 
 		assert(iov && iovcnt == 1);
 
-		/* complete the ME data, this ME will be appended to the PRIORITY_LIST */
-		me = (ptl_me_t) {
-			.ct_handle   = PTL_CT_NONE,
-			.ignore_bits = ign_tag.t,
-			.match_bits  = tag.t,
-			.match_id    =
-			{
-				.phys.nid = PTL_NID_ANY,
-				.phys.pid = PTL_PID_ANY
-			},
-			.min_free = 0,
-			.length   = iov[iovcnt - 1].iov_len,
-			.start    = iov[iovcnt - 1].iov_base,
-			.uid      = PTL_UID_ANY,
-			.options  = PTL_ME_OP_PUT
-			            | PTL_ME_OP_GET
-			            | PTL_ME_USE_ONCE,
-		};
+#ifdef BXI_VERSION_3_R6_LITE
+			/* complete the LE data, this LE will be appended to the PRIORITY_LIST */
+			ptl_le_t le = (ptl_le_t) {
+				.ct_handle = PTL_CT_NONE,
+				.length    = iov[iovcnt - 1].iov_len,
+				.start     = iov[iovcnt - 1].iov_base,
+				.uid       = PTL_UID_ANY,
+				.options   = PTL_LE_OP_PUT
+				             | PTL_LE_OP_GET
+				             | PTL_LE_USE_ONCE,
+			};
+#else
+			/* complete the ME data, this ME will be appended to the PRIORITY_LIST */
+			ptl_me_t me = (ptl_me_t) {
+				.ct_handle   = PTL_CT_NONE,
+				.ignore_bits = ign_tag.t,
+				.match_bits  = tag.t,
+				.match_id    =
+				{
+					.phys.nid = PTL_NID_ANY,
+					.phys.pid = PTL_PID_ANY
+				},
+				.min_free = 0,
+				.length   = iov[iovcnt - 1].iov_len,
+				.start    = iov[iovcnt - 1].iov_base,
+				.uid      = PTL_UID_ANY,
+				.options  = PTL_ME_OP_PUT
+				            | PTL_ME_OP_GET
+				            | PTL_ME_USE_ONCE,
+			};
+#endif
 
 		mpc_common_debug_info("LCR PTL: post recv zcopy to %p (idx=%d, tag=%llu, "
 			                  "sz=%llu, buf=%p)", rail, srail->net.tag.pti, tag.t,
@@ -448,21 +460,39 @@ err:
 		// FIXME: move to _lcr_ptl_do_op
 		if (search)
 		{
-			lcr_ptl_chk(PtlMESearch(srail->net.nih,
+#ifdef BXI_VERSION_3_R6_LITE
+				lcr_ptl_chk(PtlLESearch(srail->net.nih,
+				srail->net.tag.pti,
+				&le,
+				PTL_SEARCH_ONLY,
+				op));
+#else
+				lcr_ptl_chk(PtlMESearch(srail->net.nih,
 				srail->net.tag.pti,
 				&me,
 				PTL_SEARCH_ONLY,
 				op));
+#endif
 		}
 		else
 		{
-			lcr_ptl_chk(PtlMEAppend(srail->net.nih,
+#ifdef BXI_VERSION_3_R6_LITE
+				lcr_ptl_chk(PtlLEAppend(srail->net.nih,
+				srail->net.tag.pti,
+				&le,
+				PTL_PRIORITY_LIST,
+				op,
+				&op->tag.leh
+				));
+#else
+				lcr_ptl_chk(PtlMEAppend(srail->net.nih,
 				srail->net.tag.pti,
 				&me,
 				PTL_PRIORITY_LIST,
 				op,
 				&op->tag.meh
 				));
+#endif
 		}
 
 err:
