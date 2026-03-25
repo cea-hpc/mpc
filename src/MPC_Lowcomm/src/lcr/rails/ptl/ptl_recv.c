@@ -67,7 +67,11 @@
 			goto err;
 		}
 
-		block->meh = PTL_INVALID_HANDLE;
+#ifdef BXI_VERSION_3_R6_LITE
+			block->leh = PTL_INVALID_HANDLE;
+#else
+			block->meh = PTL_INVALID_HANDLE;
+#endif
 
 		*block_p = block;
 err:
@@ -76,9 +80,6 @@ err:
 
 	int lcr_ptl_recv_block_activate(lcr_ptl_recv_block_t *block, ptl_pt_index_t pte, ptl_list_t list)
 	{
-		ptl_me_t             me;
-		ptl_match_bits_t     match = 0;
-		ptl_match_bits_t     ign   = ~0;
 		lcr_ptl_rail_info_t *srail = block->rail;
 
 		if (block->start == NULL)
@@ -86,33 +87,60 @@ err:
 			return MPC_LOWCOMM_ERROR;
 		}
 
-		me = (ptl_me_t) {
-			.ct_handle   = PTL_CT_NONE,
-			.match_bits  = match,
-			.ignore_bits = ign,
-			.match_id    =
-			{
-				.phys.nid = PTL_NID_ANY,
-				.phys.pid = PTL_PID_ANY,
-			},
-			.min_free = block->rail->config.eager_limit,
-			.options  = PTL_ME_OP_PUT
-			            | PTL_ME_MANAGE_LOCAL
-			            | PTL_ME_EVENT_LINK_DISABLE
-			            | PTL_ME_MAY_ALIGN,
-			.uid    = PTL_UID_ANY,
-			.start  = block->start,
-			.length = block->size
-		};
+#ifdef BXI_VERSION_3_R6_LITE
+			ptl_le_t le;
 
-		lcr_ptl_chk(PtlMEAppend(srail->net.nih,
+
+			le = (ptl_le_t) {
+				.ct_handle = PTL_CT_NONE,
+				.options   = PTL_LE_OP_PUT
+				             | PTL_LE_MANAGE_LOCAL
+				             | PTL_LE_EVENT_LINK_DISABLE
+				             | PTL_LE_MAY_ALIGN,
+				.uid    = PTL_UID_ANY,
+				.start  = block->start,
+				.length = block->size
+			};
+
+			lcr_ptl_chk(PtlLEAppend(srail->net.nih,
+			pte,
+			&le,
+			list,
+			&block->op,
+			&block->leh
+			));
+#else
+			ptl_me_t         me;
+			ptl_match_bits_t match = 0;
+			ptl_match_bits_t ign   = ~0;
+
+			me = (ptl_me_t) {
+				.ct_handle   = PTL_CT_NONE,
+				.match_bits  = match,
+				.ignore_bits = ign,
+				.match_id    =
+				{
+					.phys.nid = PTL_NID_ANY,
+					.phys.pid = PTL_PID_ANY,
+				},
+				.min_free = block->rail->config.eager_limit,
+				.options  = PTL_ME_OP_PUT
+				            | PTL_ME_MANAGE_LOCAL
+				            | PTL_ME_EVENT_LINK_DISABLE
+				            | PTL_ME_MAY_ALIGN,
+				.uid    = PTL_UID_ANY,
+				.start  = block->start,
+				.length = block->size
+			};
+
+			lcr_ptl_chk(PtlMEAppend(srail->net.nih,
 			pte,
 			&me,
 			list,
 			&block->op,
 			&block->meh
 			));
-
+#endif
 		return MPC_LOWCOMM_SUCCESS;
 	}
 
@@ -151,7 +179,11 @@ err:
 
 	void lcr_ptl_recv_block_free(lcr_ptl_recv_block_t *block)
 	{
-		PtlMEUnlink(block->meh);
+#ifdef BXI_VERSION_3_R6_LITE
+			PtlLEUnlink(block->leh);
+#else
+			PtlMEUnlink(block->meh);
+#endif
 
 		mpc_mpool_push(block);
 	}
