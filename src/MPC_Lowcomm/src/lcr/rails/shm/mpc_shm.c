@@ -562,6 +562,9 @@ void _mpc_shm_storage_free_cell(struct _mpc_shm_storage *storage,
 
 	int did_push = 0;
 
+	memset(cell, 0, sizeof(*cell));
+	cell->prev = NULL;
+
 	do
 	{
 		if (_mpc_shm_list_head_try_push(&storage->free_lists[dest], cell, storage->shm_buffer) == 0)
