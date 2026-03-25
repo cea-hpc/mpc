@@ -491,7 +491,9 @@
 
 		case PTL_NI_NO_MATCH: return "PTL_NI_NO_MATCH"; break;
 
+#ifdef BXI_VERSION_2
 		case PTL_NI_TARGET_INVALID: return "PTL_NI_TARGET_INVALID"; break; // NOTE: BXI specific error
+#endif
 
 		case PTL_NI_OP_VIOLATION: return "PTL_NI_OP_VIOLATION"; break;
 
