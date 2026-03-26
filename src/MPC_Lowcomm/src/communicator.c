@@ -927,14 +927,6 @@ static inline int __is_comm_global_lead(mpc_lowcomm_communicator_t comm, int lea
 	return my_rank == lead_rank;
 }
 
-static inline int __get_comm_world_lead(mpc_lowcomm_communicator_t comm)
-{
-	comm = __mpc_lowcomm_communicator_from_predefined(comm);
-	int group_local_lead = mpc_lowcomm_group_get_local_leader(comm->group);
-
-	return mpc_lowcomm_communicator_world_rank_of(comm, group_local_lead);
-}
-
 struct __communicator_id_factory
 {
 	unsigned int                first_local;
