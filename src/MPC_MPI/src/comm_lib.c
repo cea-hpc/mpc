@@ -2859,7 +2859,7 @@ int _mpc_cl_waitall(mpc_lowcomm_msg_count_t count, mpc_lowcomm_request_t *array_
 	return res;
 }
 
-int _mpc_cl_waitsome(mpc_lowcomm_msg_count_t incount, mpc_lowcomm_request_t array_of_requests[],
+int _mpc_cl_waitsome(mpc_lowcomm_msg_count_t incount, mpc_lowcomm_request_t *array_of_requests[],
                      mpc_lowcomm_msg_count_t *outcount, mpc_lowcomm_msg_count_t array_of_indices[],
                      mpc_lowcomm_status_t array_of_statuses[])
 {
@@ -2872,15 +2872,14 @@ int _mpc_cl_waitsome(mpc_lowcomm_msg_count_t incount, mpc_lowcomm_request_t arra
 	{
 		for (i = 0; i < incount; i++)
 		{
-			if (!mpc_lowcomm_request_is_null(&(array_of_requests[i])))
+			if (!mpc_lowcomm_request_is_null(array_of_requests[i]))
 			{
 				int tmp_flag = 0;
-				mpc_lowcomm_test(&(array_of_requests[i]), &tmp_flag,
-					&(array_of_statuses[done]));
+				mpc_lowcomm_test(array_of_requests[i], &tmp_flag, &(array_of_statuses[done]));
 
 				if (tmp_flag)
 				{
-					mpc_lowcomm_request_set_null(&(array_of_requests[i]), 1);
+					mpc_lowcomm_request_set_null(array_of_requests[i], 1);
 					array_of_indices[done] = i;
 					done++;
 				}
@@ -2899,7 +2898,7 @@ int _mpc_cl_waitsome(mpc_lowcomm_msg_count_t incount, mpc_lowcomm_request_t arra
 	MPC_ERROR_SUCCESS();
 }
 
-int _mpc_cl_waitany(mpc_lowcomm_msg_count_t count, mpc_lowcomm_request_t array_of_requests[],
+int _mpc_cl_waitany(mpc_lowcomm_msg_count_t count, mpc_lowcomm_request_t *array_of_requests[],
                     mpc_lowcomm_msg_count_t *index, mpc_lowcomm_status_t *status)
 {
 	int i = 0;
@@ -2911,14 +2910,14 @@ int _mpc_cl_waitany(mpc_lowcomm_msg_count_t count, mpc_lowcomm_request_t array_o
 	{
 		for (i = 0; i < count; i++)
 		{
-			if (mpc_lowcomm_request_is_null(&(array_of_requests[i])) != 1)
+			if (mpc_lowcomm_request_is_null(array_of_requests[i]) != 1)
 			{
 				int tmp_flag = 0;
-				mpc_lowcomm_test(&(array_of_requests[i]), &tmp_flag, status);
+				mpc_lowcomm_test(array_of_requests[i], &tmp_flag, status);
 
 				if (tmp_flag)
 				{
-					mpc_lowcomm_wait(&(array_of_requests[i]), status);
+					mpc_lowcomm_wait(array_of_requests[i], status);
 					*index = count;
 					SCTK_PROFIL_END(MPC_Waitany);
 					MPC_ERROR_SUCCESS();
