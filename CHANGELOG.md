@@ -22,6 +22,7 @@ All notable changes to this project will be documented in this file. The format 
 - **LowComm**
   - Avoid warnings in CPP by changing header inclusion rules
   - Improve selection of the network devices to initialize
+  - Generate and use unique tags for internal communications (avoiding incorrect matches)
 - **MPCRUN**
   - Optimize launching time by removing one `mpc_print_config` invocation
 - **Pthread**
@@ -53,6 +54,7 @@ All notable changes to this project will be documented in this file. The format 
   - Deadlock in flush operation with no pending communications
   - Potential error in PTL finalization in multithreaded context
   - Rendezvous Active Message user headers not reaching the target
+  - Release the PTL backend in the right order
 - Memory related potential bugs in MPI, Low Comm, Common and Config
 
 ## [4.3.0] - 2025-11-18
