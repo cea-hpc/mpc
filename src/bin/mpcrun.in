@@ -26,39 +26,18 @@ mpcrun_msg(){
 	echo "================ $1 ================"
 	shift
 	echo "$@"
-	echo "======================================="
+	echo "==========================================="
 }
 
 
 
 mpcrun_error(){
-	mpcrun_msg "ERROR" "$@"
+	mpcrun_msg " ERROR " "$@"
 	exit 1
 }
 
 mpcrun_warning(){
 	mpcrun_msg "WARNING" "$@"
-}
-
-
-_MPC_PRINT_CONFIG_WORKS=""
-
-mpc_print_config_works(){
-	if test -z "${_MPC_PRINT_CONFIG_WORKS}"; then
-		mpc_print_config > /dev/null 2>&1
-
-		if test "$?" = "0"; then
-			_MPC_PRINT_CONFIG_WORKS="yes"
-		else
-			_MPC_PRINT_CONFIG_WORKS="no"
-		fi
-	fi
-
-	if test "${_MPC_PRINT_CONFIG_WORKS}" = "yes"; then
-		return 0
-	else
-		return 1
-	fi
 }
 
 #########################
@@ -238,8 +217,9 @@ assert_have_dmtcp()
 # Load MPC's Configuration Files #
 ##################################
 
-load_mpc_configuration()
-{
+_MPC_PRINT_CONFIG_WORKS=false
+
+load_mpc_configuration() {
 	# Load config files options
 	CONF_VALID=false
 
@@ -254,11 +234,12 @@ load_mpc_configuration()
 
 	LAUNCHER_PLUGIN="none"
 
-	if mpc_print_config_works; then
-		config_files_vars="$(${MPC_BIN_DIR}/mpc_print_config --conf conf mpcframework.launch 2>/dev/null)"
+	config_files_vars="$(${MPC_BIN_DIR}/mpc_print_config --conf conf mpcframework.launch 2>/dev/null)"
 
+	if [ $? == "0" ]; then
 		# Load configuration variables
-		test "$?" = "0" && eval "${config_files_vars}"
+		_MPC_PRINT_CONFIG_WORKS=true
+		eval "${config_files_vars}"
 
 		if test -n "${ASAN_OPTION}"; then
 			export ASAN_OPTION="${SAVED_ASAN}"
@@ -368,9 +349,8 @@ fi
 # Display MPC's Help #
 ######################
 
-print_network_list()
-{
-	if mpc_print_config_works; then
+print_network_list() {
+	if [ $_MPC_PRINT_CONFIG_WORKS = true ]; then
 		mpc_print_config --cli
 	else
 		mpcrun_warning "WARNING: Could not run 'mpc_print_config --cli' on this node"

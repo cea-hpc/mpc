@@ -2,6 +2,8 @@
 #include "mpc_common_debug.h"
 #include "mpc_common_spinlock.h"
 #include "mpc_common_helper.h"
+
+#include <sctk_alloc.h> // For sctk_malloc, sctk_free
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
@@ -24,10 +26,11 @@ mpc_mempool_elem_t *mpc_mempool_elem_shift_back(void *buf)
 
 void _mpc_mempool_add(mpc_mempool_t *mp, mpc_mempool_elem_t *elem)
 {
-	elem->next    = mp->free_list;
-	elem->mp      = mp;
-	elem->canary  = 'c';
-	mp->free_list = elem;
+	elem->next      = mp->free_list;
+	elem->mp        = mp;
+	elem->canary    = 'c';
+	elem->is_in_use = false;
+	mp->free_list   = elem;
 	mp->data->available++;
 }
 
@@ -49,6 +52,7 @@ mpc_mempool_elem_t *_mpc_mempool_pop(mpc_mempool_t *mp)
 
 	mp->free_list = mp->free_list->next;
 	mp->data->available--;
+	elem->is_in_use = true;
 	return elem;
 }
 
@@ -87,7 +91,7 @@ int mpc_mempool_empty(mpc_mempool_t *mp)
 		mp->data->free_func(head);
 	}
 #ifdef MPC_MP_LOG
-		fclose(mp->logfile);
+		fclose(mp->data->logfile);
 #endif
 	return 0;
 }
@@ -127,7 +131,7 @@ int mpc_mempool_init(mpc_mempool_t *mp,
 
 	mpc_common_spinlock_init(&mp->data->lock, 0);
 #ifdef MPC_MP_LOG
-		mpc_common_spinlock_lock(&mp_lock);
+		mpc_common_spinlock_lock(&mp->data->lock);
 		char title[50];
 		sprintf(title, "log_m%d_M%d_i%d_%d.csv", min, max, mp->data->max_inertia, mempool_number);
 		printf("initializing mempool %s file descriptor %p\n", title, mp->data->logfile);
@@ -135,7 +139,7 @@ int mpc_mempool_init(mpc_mempool_t *mp,
 		mp->data->logfile = fopen(title, "w+");
 		char *header = "type,allocated,available,inertia\n";
 		fprintf(mp->data->logfile, "%s", header);
-		mpc_common_spinlock_unlock(&mp_lock);
+		mpc_common_spinlock_unlock(&mp->data->lock);
 #endif
 
 	for (i = 0; i < (int)mp->data->min_elems; i++)
@@ -219,7 +223,7 @@ void mpc_mempool_free(mpc_mempool_t *mp, void *obj)
 		}
 	}
 #ifdef MPC_MP_LOG
-		fprintf(mp->logfile, "free,%d,%d,%d,%d\n", mp->data->allocated,
+		fprintf(mp->data->logfile, "free,%d,%d,%d\n",
 		mp->data->available, mp->data->inertia, effective_free);
 #endif
 	mpc_common_spinlock_unlock(&mp->data->lock);
@@ -313,8 +317,11 @@ void mpc_mpool_grow(mpc_mempool_t *mp)
 #if MPC_USE_CK
 			ck_stack_push_mpmc(mp->ck_free_list, (ck_stack_entry_t *)elem);
 #else
-			elem->next    = mp->free_list;
-			mp->free_list = elem;
+			elem->next      = mp->free_list;
+			mp->free_list   = elem;
+			elem->canary    = 'c';
+			elem->is_in_use = false;
+			elem->mp        = mp;
 #endif
 		if (mp->data->obj_init_func != NULL)
 		{
@@ -375,7 +382,9 @@ void *mpc_mpool_pop(mpc_mempool_t *mp)
 #endif
 	}
 
-	elem->mp = mp;
+	assert(elem->canary == 'c' && "Mempool memory corrupted");
+	elem->mp        = mp;
+	elem->is_in_use = true;
 #if !MPC_USE_CK
 		mp->free_list = mp->free_list->next;
 		mpc_common_spinlock_unlock(&mp->data->lock);
@@ -391,10 +400,14 @@ void mpc_mpool_push(void *obj)
 #if MPC_USE_CK
 		ck_stack_push_mpmc(elem->mp->ck_free_list, (ck_stack_entry_t *)elem);
 #else
+		assert(elem->canary == 'c' && "Memory corruption detected in mempool elem header");
+		assert(elem->is_in_use == true && "Double free detected in mempool usage");
+
 		mpc_mempool_t *mp = elem->mp;
 		mpc_common_spinlock_lock(&mp->data->lock);
-		elem->next    = mp->free_list;
-		mp->free_list = elem;
+		elem->next      = mp->free_list;
+		mp->free_list   = elem;
+		elem->is_in_use = false;
 		mpc_common_spinlock_unlock(&mp->data->lock);
 #endif
 }

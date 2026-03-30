@@ -814,10 +814,10 @@ static hwloc_obj_t hwloc_get_core_by_os_index(hwloc_topology_t hwtopology, unsig
 /* determine the lower logical index pu used for text placement option */
 static int determine_lower_logical(unsigned int length, int os_index[static length])
 {
-	int         i;
-	int         lower_logical   = hwloc_get_nbobjs_by_type(topology_compute_node, HWLOC_OBJ_PU);
-	int         current_logical = 0;
-	hwloc_obj_t pu;
+	unsigned int i;
+	int          lower_logical   = hwloc_get_nbobjs_by_type(topology_compute_node, HWLOC_OBJ_PU);
+	int          current_logical = 0;
+	hwloc_obj_t  pu;
 
 	for (i = 0; i < length; i++)
 	{
@@ -849,10 +849,10 @@ static int determine_lower_logical(unsigned int length, int os_index[static leng
 /* determine the higher logical index pu used for text placement option */
 static int sctk_determine_higher_logical(const unsigned int length, int os_index[static length])
 {
-	int         i;
-	int         higher_logical  = -1;
-	int         current_logical = 0;
-	hwloc_obj_t pu;
+	unsigned int i;
+	int          higher_logical  = -1;
+	int          current_logical = 0;
+	hwloc_obj_t  pu;
 
 	for (i = 0; i < length; i++)
 	{

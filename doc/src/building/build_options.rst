@@ -98,7 +98,7 @@ Beyond these basic options, some useful others are listed and detailed below :
 
 .. note::
 
-   By default, MPC tries to build with slurm support. If slurm is not fount, it will default to using Hydra.
+   By default, MPC tries to build with slurm support. If slurm is not found, it will default to using Hydra.
    If you want to build with slurm support, you have to make sure that PMIx is available.
 
 .. code-block:: console

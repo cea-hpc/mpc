@@ -128,7 +128,7 @@ Hello World:
   extends: ['.prepare_mpc_ci']
   script:
     - cp -r "${GL_MPC_CI_ROOT_PATH}/trivial" .
-    - rm trivial/main.cpp trivial/test01.c
+    - rm trivial/main.cpp
     - mpc_cc --help && mpcrun --help
     - ${PCVS_COMMAND} "trivial"
   rules:
@@ -153,6 +153,20 @@ Privatization:
   rules:
     - if: '$HAS_PRIVATIZATION == "true" && $DO_REGULAR_TESTING == "true"'
 
+Process Mode Specific:
+  stage: 'Additional Testing'
+  needs:
+    - job: 'Installation'
+    - pipeline: $PARENT_PIPELINE_ID
+      job: 'Retrieve Tests'
+  extends: ['.prepare_mpc_ci']
+  variables:
+    REPRODUCERS_PATH: '${GL_MPC_CI_ROOT_PATH}/reproducers'
+  script:
+    - ${PCVS_COMMAND} "REPRODUCERS:${REPRODUCERS_PATH}/basics" --run-filter NoSleepDefine
+  rules:
+    - if: '$HAS_PRIVATIZATION == "false" && $DO_REGULAR_TESTING == "true"'
+
 Reproducers:
   stage: 'Additional Testing'
   needs:
@@ -163,7 +177,7 @@ Reproducers:
   variables:
     REPRODUCERS_PATH: '${GL_MPC_CI_ROOT_PATH}/reproducers'
   script:
-    - ${PCVS_COMMAND} "${REPRODUCERS_PATH}/basics" "${REPRODUCERS_PATH}/lowcomm" "${REPRODUCERS_PATH}/MPI"
+    - ${PCVS_COMMAND} "${REPRODUCERS_PATH}/basics" "${REPRODUCERS_PATH}/lowcomm" "${REPRODUCERS_PATH}/MPI" --run-filter \!NoSleepDefine
 
 
 ############################################
@@ -244,17 +258,11 @@ OpenMP NAS-MZ:
 ################ Benchmarks ################
 ############################################
 
-MPI IMB-MPI 2017:
+MPI IMB:
   stage: 'Benchmarks'
   extends: ['.prepare_mpc_ci', '.regular_testing_rules', '.MPI_deps']
   script:
-    - ${PCVS_COMMAND} "${GL_MPC_CI_ROOT_PATH}/MPI/IMB_2017/check-mpi/"
-
-MPI IMB-NBC 2017:
-  stage: 'Benchmarks'
-  extends: ['.prepare_mpc_ci', '.regular_testing_rules', '.MPI_deps']
-  script:
-    - ${PCVS_COMMAND} "${GL_MPC_CI_ROOT_PATH}/MPI/IMB_2017/check-nbc/"
+    - ${PCVS_COMMAND} "${GL_MPC_CI_ROOT_PATH}/MPI/IMB_2017"
 
 MPI NBC:
   stage: 'Benchmarks'
@@ -418,18 +426,17 @@ Corals:
       ${PCVS_COMMAND} "${GL_PCVS_BENCHMARKS_ROOT_PATH}/applications/Corals/AMG2013"\
                       "${GL_PCVS_BENCHMARKS_ROOT_PATH}/applications/Corals/UMT2013"\
                       "${GL_PCVS_BENCHMARKS_ROOT_PATH}/applications/Corals/graph500-2.1.4"\
-                      "${GL_PCVS_BENCHMARKS_ROOT_PATH}/applications/Corals/mcb-20130723"\
-                      "${GL_PCVS_BENCHMARKS_ROOT_PATH}/applications/Corals/nekbone-2.3.4"
+                      "${GL_PCVS_BENCHMARKS_ROOT_PATH}/applications/Corals/mcb-20130723"
 
 Mantevo:
   stage: 'Applications'
   extends: ['.prepare_mpc_ci', '.extended_testing_rules', '.extended_all_deps']
   script:
     - |
-      ${PCVS_COMMAND} "${GL_PCVS_BENCHMARKS_ROOT_PATH}/applications/Mantevo/CloverLeaf-master"\
-                      "${GL_PCVS_BENCHMARKS_ROOT_PATH}/applications/Mantevo/HPCCG-master"\
-                      "${GL_PCVS_BENCHMARKS_ROOT_PATH}/applications/Mantevo/miniAMR-master"\
-                      "${GL_PCVS_BENCHMARKS_ROOT_PATH}/applications/Mantevo/miniGhost-1.0.1"
+      ${PCVS_COMMAND} "${GL_PCVS_BENCHMARKS_ROOT_PATH}/applications/Mantevo/CloverLeaf"\
+                      "${GL_PCVS_BENCHMARKS_ROOT_PATH}/applications/Mantevo/HPCCG"\
+                      "${GL_PCVS_BENCHMARKS_ROOT_PATH}/applications/Mantevo/miniAMR"\
+                      "${GL_PCVS_BENCHMARKS_ROOT_PATH}/applications/Mantevo/miniGhost"
 
 
 ############################################

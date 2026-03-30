@@ -65,6 +65,24 @@ void *lcp_search_umqueue(mpc_queue_head_t *umqs,
 
 void lcp_append_umqueue(mpc_queue_head_t *umqs, mpc_queue_elem_t *elem, uint16_t comm_id)
 {
+#ifndef NDEBUG
+		lcp_unexp_ctnr_t *cntr;
+		mpc_queue_head_t *queue;
+		mpc_queue_iter_t  iter;
+
+		queue = &umqs[comm_id];
+
+		lcp_unexp_ctnr_t *to_append = mpc_container_of(elem, lcp_unexp_ctnr_t, elem);
+
+		mpc_queue_for_each_safe(cntr, iter, lcp_unexp_ctnr_t, queue, elem)
+		{
+			if (cntr == to_append)
+			{
+				mpc_common_debug_fatal("Container %p is already in the umqueue", elem);
+			}
+		}
+#endif
+
 	mpc_queue_push(&umqs[comm_id], elem);
 }
 
@@ -96,6 +114,24 @@ void *lcp_match_umqueue(mpc_queue_head_t *umqs,
 
 void lcp_append_prqueue(mpc_queue_head_t *prqs, mpc_queue_elem_t *elem, uint16_t comm_id)
 {
+#ifndef NDEBUG
+		lcp_request_t *   req;
+		mpc_queue_head_t *queue;
+		mpc_queue_iter_t  iter;
+
+		queue = &prqs[comm_id];
+
+		lcp_request_t *to_append = mpc_container_of(elem, lcp_request_t, match);
+
+		mpc_queue_for_each_safe(req, iter, lcp_request_t, queue, match)
+		{
+			if (req == to_append)
+			{
+				mpc_common_debug_fatal("Req %p is already in the prqueue", req);
+			}
+		}
+#endif
+
 	mpc_queue_push(&prqs[comm_id], elem);
 }
 

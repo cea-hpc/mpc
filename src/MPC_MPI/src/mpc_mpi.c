@@ -8680,7 +8680,7 @@ int PMPI_Wait(MPI_Request *request, MPI_Status *status)
 
 		if (mpcreq->request_type == REQUEST_GENERALIZED)
 		{
-			res = _mpc_cl_waitall(1, mpcreq, mpc_status);
+			res = _mpc_cl_waitall(1, &mpcreq, mpc_status);
 		}
 		else
 		{
@@ -8795,7 +8795,7 @@ static inline int __check_unified_handle_ctx(int count, MPI_Request array_of_req
 
 	for (i = 0; i < count; i++)
 	{
-		if (array_of_requests[i] == MPI_REQUEST_NULL)
+		if (array_of_requests[i] == MPI_REQUEST_NULL || NULL == array_of_requests[i])
 		{
 			continue;
 		}
@@ -8828,10 +8828,7 @@ static inline int __check_unified_handle_ctx(int count, MPI_Request array_of_req
 	MPI_ERROR_SUCCESS();
 }
 
-int PMPI_Waitany(int count,
-                 MPI_Request array_of_requests[],
-                 int *index,
-                 MPI_Status *status)
+int PMPI_Waitany(int count, MPI_Request array_of_requests[], int *index, MPI_Status *status)
 {
 	mpc_common_nodebug("entering PMPI_Waitany");
 
@@ -8845,13 +8842,6 @@ int PMPI_Waitany(int count,
 	MPI_Comm comm = MPI_COMM_WORLD;
 	int      res  = MPI_SUCCESS;
 
-	res = __check_unified_handle_ctx(count, array_of_requests);
-	if (res != MPI_SUCCESS)
-	{
-		/* Note error handler is already called in __check_unified_handle_ctx */
-		return res;
-	}
-
 	int flag = 0;
 
 	while (!flag)
@@ -8860,6 +8850,7 @@ int PMPI_Waitany(int count,
 
 		if (res != MPI_SUCCESS)
 		{
+			MPI_HANDLE_ERROR(res, comm, "Failed on invalid request");
 			break;
 		}
 	}
@@ -8899,7 +8890,6 @@ int PMPI_Testany(int count,
 	{
 		return MPI_SUCCESS;
 	}
-
 
 	res = __check_unified_handle_ctx(count, array_of_requests);
 	if (res != MPI_SUCCESS)
@@ -11579,7 +11569,7 @@ int PMPI_Get_elements_x(const MPI_Status *status, MPI_Datatype datatype, MPI_Cou
 	return PMPI_Type_get_elements_x(status, datatype, elements);
 }
 
-int PMPI_Type_get_elements(MPI_Status *status, MPI_Datatype datatype, int *elements)
+int PMPI_Type_get_elements(const MPI_Status *status, MPI_Datatype datatype, int *elements)
 {
 	MPI_Comm comm = MPI_COMM_WORLD;
 	int      res  = MPI_ERR_INTERN;
@@ -11596,7 +11586,7 @@ int PMPI_Type_get_elements(MPI_Status *status, MPI_Datatype datatype, int *eleme
 	MPI_HANDLE_RETURN_VAL(res, comm);
 }
 
-int PMPI_Get_elements(MPI_Status *status, MPI_Datatype datatype, int *elements)
+int PMPI_Get_elements(const MPI_Status *status, MPI_Datatype datatype, int *elements)
 {
 	return PMPI_Type_get_elements(status, datatype, elements);
 }
@@ -16173,7 +16163,12 @@ int PMPI_Win_detach(MPI_Win, const void *);
 
 int PMPI_Win_free(MPI_Win *win)
 {
-	return mpc_win_free(*win);
+	const MPI_Comm comm = ((mpc_win_t *)*win)->comm;
+	const int      rc   = mpc_win_free(*win);
+
+	*win = MPI_WIN_NULL;
+
+	MPI_HANDLE_RETURN_VAL(rc, comm);
 }
 
 /* RDMA Operations */

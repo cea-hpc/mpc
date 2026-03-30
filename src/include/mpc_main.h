@@ -47,7 +47,15 @@
 #ifndef MPC_NO_AUTO_MAIN_REDEF
 	#undef main
 	#ifdef __cplusplus
-		#define main(...) long mpc_user_main_dummy__(); extern "C" int mpc_user_main__(__VA_ARGS__)
+#if __has_attribute(visibility)
+			#define main(...)                     \
+					long mpc_user_main_dummy__(); \
+					extern "C" __attribute__((visibility("default"))) int mpc_user_main__(__VA_ARGS__)
+#else
+			#define main(...)                     \
+					long mpc_user_main_dummy__(); \
+					extern "C" int mpc_user_main__(__VA_ARGS__)
+#endif
 	#else
 		#define main(...) mpc_user_main__(__VA_ARGS__)
 		#if defined(MPC_TLS_DLWRAP) && defined(MPC_USE_EXTLS)

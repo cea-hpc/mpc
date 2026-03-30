@@ -204,8 +204,8 @@ static ssize_t lcp_send_tag_rndv_pack(void *dest, void *data)
  */
 static void lcp_tag_send_complete(lcr_completion_t *comp)
 {
-	lcp_request_t *req = mpc_container_of(comp, lcp_request_t,
-		state.comp);
+	assert(comp != NULL);
+	lcp_request_t *req = mpc_container_of(comp, lcp_request_t, state.comp);
 
 	req->flags |= LCP_REQUEST_LOCAL_COMPLETED;
 	if (req->flags & LCP_REQUEST_REMOTE_COMPLETED)
@@ -217,16 +217,15 @@ static void lcp_tag_send_complete(lcr_completion_t *comp)
 
 static void lcp_tag_recv_complete(lcr_completion_t *comp)
 {
-	lcp_request_t *req = mpc_container_of(comp, lcp_request_t,
-		state.comp);
+	assert(comp != NULL);
+	lcp_request_t *req = mpc_container_of(comp, lcp_request_t, state.comp);
 
 	req->recv.tag.info.length = req->recv.send_length;
 	req->recv.tag.info.src    = req->recv.tag.src_tid;
 	req->recv.tag.info.dest   = req->recv.tag.dest_tid;
 	req->recv.tag.info.tag    = req->recv.tag.tag;
 
-	lcp_request_complete(req, recv.tag.recv_cb, req->status,
-		&req->recv.tag.info);
+	lcp_request_complete(req, recv.tag.recv_cb, req->status, &req->recv.tag.info);
 }
 
 /* ============================================== */
@@ -262,8 +261,7 @@ int lcp_send_eager_tag_bcopy(lcp_request_t *req)
 		am_id   = LCP_AM_ID_EAGER_TAG_SYNC;
 
 		req->msg_id = (uint64_t)req;
-		// NOTE: REMOTE_COMPLETED flag set whenever ack has been
-		//      received.
+		// NOTE: REMOTE_COMPLETED flag set whenever ack has been received.
 	}
 	else
 	{
@@ -464,9 +462,8 @@ static inline size_t lcp_recv_set_truncate(lcp_request_t *req)
 	{
 		length      = req->recv.length;
 		req->status = MPC_LOWCOMM_ERR_TRUNCATE;
-		mpc_common_debug_warning("LCP TAG: request truncated. req=%p, send length=%d, "
-			                     "recv length=%d", req, req->recv.send_length,
-			req->recv.length);
+		mpc_common_debug_warning("LCP TAG: request truncated. req=%p, send length=%d, recv length=%d",
+			req, req->recv.send_length, req->recv.length);
 	}
 	else
 	{
@@ -647,8 +644,7 @@ static int lcp_eager_tag_handler(void *arg, void *data,
 	lcp_task_h        task     = NULL;
 	struct iovec *    data_iov = alloca(2 * sizeof(struct iovec));
 
-	build_eager_tag_handler_iov(data, length, sizeof(lcp_tag_hdr_t),
-		flags, data_iov, &iovcnt);
+	build_eager_tag_handler_iov(data, length, sizeof(lcp_tag_hdr_t), flags, data_iov, &iovcnt);
 	assert(iovcnt == 2);
 
 	/* Header is first place in the iovec. */
@@ -657,8 +653,7 @@ static int lcp_eager_tag_handler(void *arg, void *data,
 	task = lcp_context_task_get(mngr->ctx, hdr->dest_tid);
 	if (task == NULL)
 	{
-		mpc_common_errorpoint_fmt("LCP TAG: could not find task with "
-			                      "tid=%d", hdr->dest_tid);
+		mpc_common_errorpoint_fmt("LCP TAG: could not find task with tid=%d", hdr->dest_tid);
 		rc = MPC_LOWCOMM_ERROR;
 		goto err;
 	}
@@ -666,27 +661,19 @@ static int lcp_eager_tag_handler(void *arg, void *data,
 
 	LCP_TASK_LOCK(task);
 	/* Try to match it with a posted message */
-	req = lcp_match_prqueue(task->tcct[mngr->id]->tag.prqs,
-		hdr->comm,
-		hdr->tag,
-		hdr->src_tid);
+	req = lcp_match_prqueue(task->tcct[mngr->id]->tag.prqs, hdr->comm, hdr->tag, hdr->src_tid);
 	/* if request is not matched */
 	if (req == NULL)
 	{
-		mpc_common_debug("LCP TAG: recv unexp tag src=%d, tag=%d, "
-			             "dest=%d, length=%d, sequence=%d",
-			hdr->src_tid, hdr->tag, hdr->dest_tid,
-			data_iov[1].iov_len,
-			hdr->seqn);
-		rc = lcp_request_init_unexp_ctnr(task, &ctnr, data_iov, iovcnt,
-			LCP_RECV_CONTAINER_UNEXP_EAGER_TAG);
+		mpc_common_debug("LCP TAG: recv unexp tag src=%d, tag=%0#x, dest=%d, length=%d, sequence=%d",
+			hdr->src_tid, hdr->tag, hdr->dest_tid, data_iov[1].iov_len, hdr->seqn);
+		rc = lcp_request_init_unexp_ctnr(task, &ctnr, data_iov, iovcnt, LCP_RECV_CONTAINER_UNEXP_EAGER_TAG);
 		if (rc != MPC_LOWCOMM_SUCCESS)
 		{
 			goto err;
 		}
 		// add the request to the unexpected messages
-		lcp_append_umqueue(task->tcct[mngr->id]->tag.umqs, &ctnr->elem,
-			hdr->comm);
+		lcp_append_umqueue(task->tcct[mngr->id]->tag.umqs, &ctnr->elem, hdr->comm);
 
 		LCP_TASK_UNLOCK(task);
 		return MPC_LOWCOMM_SUCCESS;

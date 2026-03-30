@@ -134,9 +134,7 @@ static int _win_setup(mpc_win_t *win, void **base, size_t size,
 
 		module->disp_units[win->comm_rank] = disp_unit;
 
-		PMPI_Allgather(&disp_unit, 1, MPI_INT,
-			module->disp_units, 1, MPI_INT,
-			comm);
+		PMPI_Allgather(&disp_unit, 1, MPI_INT, module->disp_units, 1, MPI_INT, comm);
 	}
 
 	/* Register memory according to flavor. */
@@ -144,12 +142,10 @@ static int _win_setup(mpc_win_t *win, void **base, size_t size,
 	{
 		lcp_mem_param_t param =
 		{
-			.field_mask = LCP_MEM_ADDR_FIELD
-			              | LCP_MEM_SIZE_FIELD,
-			.flags      = LCP_MEM_REGISTER_CREATE
-			              | LCP_MEM_REGISTER_STATIC,
-			.address = *base,
-			.size    = size
+			.field_mask = LCP_MEM_ADDR_FIELD | LCP_MEM_SIZE_FIELD,
+			.flags      = LCP_MEM_REGISTER_CREATE | LCP_MEM_REGISTER_STATIC,
+			.address    = *base,
+			.size       = size
 		};
 
 		rc = lcp_mem_provision(module->mngr, &w_mem_data, &param);
@@ -160,8 +156,7 @@ static int _win_setup(mpc_win_t *win, void **base, size_t size,
 		}
 		module->lkey_data = w_mem_data;
 
-		attr.field_mask = LCP_MEM_ADDR_FIELD
-		                  | LCP_MEM_SIZE_FIELD;
+		attr.field_mask = LCP_MEM_ADDR_FIELD | LCP_MEM_SIZE_FIELD;
 		rc = lcp_mem_query(w_mem_data, &attr);
 		if (rc != MPC_LOWCOMM_SUCCESS)
 		{
@@ -832,6 +827,7 @@ int mpc_win_free(mpc_win_t *win)
 	if (win->flavor == MPI_WIN_FLAVOR_CREATE || win->flavor == MPI_WIN_FLAVOR_ALLOCATE)
 	{
 		rc = lcp_mem_deprovision(win->win_module.mngr, win->win_module.lkey_data);
+		win->win_module.lkey_data = NULL;
 		if (rc != MPC_LOWCOMM_SUCCESS)
 		{
 			mpc_common_debug_error("WIN: could not deregister local data memory.");
@@ -840,8 +836,8 @@ int mpc_win_free(mpc_win_t *win)
 
 		for (i = 0; i < win->comm_size; i++)
 		{
-			rc = lcp_mem_deprovision(win->win_module.mngr,
-				win->win_module.rdata_win_info[i].rkey);
+			rc = lcp_mem_deprovision(win->win_module.mngr, win->win_module.rdata_win_info[i].rkey);
+			win->win_module.rdata_win_info[i].rkey = NULL;
 			if (rc != MPC_LOWCOMM_SUCCESS)
 			{
 				goto err;
@@ -852,8 +848,8 @@ int mpc_win_free(mpc_win_t *win)
 	/* Detach all attached memory. */
 	for (i = 0; i < (int)win->win_module.state->dynamic_win_count; i++)
 	{
-		rc = lcp_mem_deprovision(win->win_module.mngr,
-			win->win_module.local_dynamic_win_infos[i].memh);
+		rc = lcp_mem_deprovision(win->win_module.mngr, win->win_module.local_dynamic_win_infos[i].memh);
+		win->win_module.local_dynamic_win_infos[i].memh = NULL;
 		if (rc != MPC_LOWCOMM_SUCCESS)
 		{
 			goto err;
@@ -862,6 +858,7 @@ int mpc_win_free(mpc_win_t *win)
 	win->win_module.state->dynamic_win_count = 0;
 
 	rc = lcp_mem_deprovision(win->win_module.mngr, win->win_module.lkey_state);
+	win->win_module.lkey_state = NULL;
 	if (rc != MPC_LOWCOMM_SUCCESS)
 	{
 		mpc_common_debug_error("WIN: could not deregister local state memory.");

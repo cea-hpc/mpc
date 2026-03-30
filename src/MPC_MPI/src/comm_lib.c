@@ -2418,7 +2418,7 @@ int _mpc_cl_irecv(void *buf, mpc_lowcomm_msg_count_t count,
 int _mpc_cl_ssend(const void *buf, mpc_lowcomm_msg_count_t count, mpc_lowcomm_datatype_t datatype,
                   int dest, int tag, mpc_lowcomm_communicator_t comm)
 {
-	mpc_lowcomm_request_t request;
+	mpc_lowcomm_request_t *request = _mpc_cl_get_lowcomm_request(mpc_lowcomm_request_alloc());
 
 	if (dest == MPC_PROC_NULL)
 	{
@@ -2427,20 +2427,26 @@ int _mpc_cl_ssend(const void *buf, mpc_lowcomm_msg_count_t count, mpc_lowcomm_da
 
 	size_t msg_size = count * __mpc_cl_datatype_get_size(datatype);
 
-	mpc_lowcomm_ssend(dest, buf, msg_size, tag, comm, &request);
-	mpc_lowcomm_request_wait(&request);
-	MPC_ERROR_SUCCESS();
+	mpc_lowcomm_status_t status = {};
+	mpc_lowcomm_ssend(dest, buf, msg_size, tag, comm, request);
+	mpc_lowcomm_wait(request, &status);
+	mpc_lowcomm_request_free(request);
+
+	return status.MPC_ERROR;
 }
 
 int _mpc_cl_send(const void *buf, mpc_lowcomm_msg_count_t count,
                  mpc_lowcomm_datatype_t datatype, int dest, int tag, mpc_lowcomm_communicator_t comm)
 {
-	mpc_lowcomm_request_t request;
+	mpc_lowcomm_request_t *request = _mpc_cl_get_lowcomm_request(mpc_lowcomm_request_alloc());
 
-	_mpc_cl_isend(buf, count, datatype, dest, tag, comm, &request);
-	mpc_lowcomm_request_wait(&request);
+	_mpc_cl_isend(buf, count, datatype, dest, tag, comm, request);
 
-	MPC_ERROR_SUCCESS();
+	mpc_lowcomm_status_t status = {};
+	mpc_lowcomm_wait(request, &status);
+	mpc_lowcomm_request_free(request);
+
+	return status.MPC_ERROR;
 }
 
 int _mpc_cl_recv(void *buf, mpc_lowcomm_msg_count_t count, mpc_lowcomm_datatype_t datatype, int source,
@@ -2477,7 +2483,7 @@ int _mpc_cl_recv(void *buf, mpc_lowcomm_msg_count_t count, mpc_lowcomm_datatype_
 		return ret;
 	}
 
-	_mpc_cl_waitall(1, req, status);
+	_mpc_cl_waitall(1, &req, status);
 
 	mpc_lowcomm_request_free(req);
 
@@ -2494,20 +2500,18 @@ int _mpc_cl_sendrecv(void *sendbuf, mpc_lowcomm_msg_count_t sendcount, mpc_lowco
                      mpc_lowcomm_datatype_t recvtype, int source, int recvtag, mpc_lowcomm_communicator_t comm,
                      mpc_lowcomm_status_t *status)
 {
-	mpc_lowcomm_request_t reqs[2];
+	mpc_lowcomm_request_t *reqs[2];
+	reqs[0] = _mpc_cl_get_lowcomm_request(mpc_lowcomm_request_alloc());
+	reqs[1] = _mpc_cl_get_lowcomm_request(mpc_lowcomm_request_alloc());
 
-	mpc_lowcomm_request_init(&reqs[0], recvcount,
-		recvtype, NULL, 0);
-	mpc_lowcomm_request_init(&reqs[1], sendcount,
-		recvtype, NULL, 0);
+	mpc_lowcomm_request_init(reqs[0], recvcount, recvtype, NULL, 0);
+	mpc_lowcomm_request_init(reqs[1], sendcount, recvtype, NULL, 0);
 
 	// mpc_common_debug_error("SEND %p CNT %d DEST %d TAG %d", sendbuf, sendcount, dest, sendtag);
 	// mpc_common_debug_error("RECV %p CNT %d SRC %d TAG %d", recvbuf, recvcount, source, recvtag);
 
-	_mpc_cl_irecv(recvbuf, recvcount, recvtype, source, recvtag, comm,
-		&reqs[0]);
-	_mpc_cl_isend(sendbuf, sendcount, sendtype, dest, sendtag, comm,
-		&reqs[1]);
+	_mpc_cl_irecv(recvbuf, recvcount, recvtype, source, recvtag, comm, reqs[0]);
+	_mpc_cl_isend(sendbuf, sendcount, sendtype, dest, sendtag, comm, reqs[1]);
 
 	MPI_Status st[2];
 
@@ -2527,6 +2531,9 @@ int _mpc_cl_sendrecv(void *sendbuf, mpc_lowcomm_msg_count_t sendcount, mpc_lowco
 	{
 		return st[1].MPI_ERROR;
 	}
+
+	mpc_lowcomm_request_free(reqs[0]);
+	mpc_lowcomm_request_free(reqs[1]);
 
 	MPC_ERROR_SUCCESS();
 }
@@ -2808,7 +2815,7 @@ int _mpc_cl_waitallp(mpc_lowcomm_msg_count_t count, mpc_lowcomm_request_t *parra
 
 #define PMPC_WAIT_ALL_STATIC_TRSH 32
 
-int _mpc_cl_waitall(mpc_lowcomm_msg_count_t count, mpc_lowcomm_request_t array_of_requests[],
+int _mpc_cl_waitall(mpc_lowcomm_msg_count_t count, mpc_lowcomm_request_t *array_of_requests[],
                     mpc_lowcomm_status_t array_of_statuses[])
 {
 	int res = 0;
@@ -2836,7 +2843,7 @@ int _mpc_cl_waitall(mpc_lowcomm_msg_count_t count, mpc_lowcomm_request_t array_o
 	/* Fill in the array of requests */
 	for (i = 0; i < count; i++)
 	{
-		parray_of_requests[i] = &(array_of_requests[i]);
+		parray_of_requests[i] = array_of_requests[i];
 	}
 
 	/* Call the pointer based waitall */
@@ -2852,7 +2859,7 @@ int _mpc_cl_waitall(mpc_lowcomm_msg_count_t count, mpc_lowcomm_request_t array_o
 	return res;
 }
 
-int _mpc_cl_waitsome(mpc_lowcomm_msg_count_t incount, mpc_lowcomm_request_t array_of_requests[],
+int _mpc_cl_waitsome(mpc_lowcomm_msg_count_t incount, mpc_lowcomm_request_t *array_of_requests[],
                      mpc_lowcomm_msg_count_t *outcount, mpc_lowcomm_msg_count_t array_of_indices[],
                      mpc_lowcomm_status_t array_of_statuses[])
 {
@@ -2865,15 +2872,14 @@ int _mpc_cl_waitsome(mpc_lowcomm_msg_count_t incount, mpc_lowcomm_request_t arra
 	{
 		for (i = 0; i < incount; i++)
 		{
-			if (!mpc_lowcomm_request_is_null(&(array_of_requests[i])))
+			if (!mpc_lowcomm_request_is_null(array_of_requests[i]))
 			{
 				int tmp_flag = 0;
-				mpc_lowcomm_test(&(array_of_requests[i]), &tmp_flag,
-					&(array_of_statuses[done]));
+				mpc_lowcomm_test(array_of_requests[i], &tmp_flag, &(array_of_statuses[done]));
 
 				if (tmp_flag)
 				{
-					mpc_lowcomm_request_set_null(&(array_of_requests[i]), 1);
+					mpc_lowcomm_request_set_null(array_of_requests[i], 1);
 					array_of_indices[done] = i;
 					done++;
 				}
@@ -2892,7 +2898,7 @@ int _mpc_cl_waitsome(mpc_lowcomm_msg_count_t incount, mpc_lowcomm_request_t arra
 	MPC_ERROR_SUCCESS();
 }
 
-int _mpc_cl_waitany(mpc_lowcomm_msg_count_t count, mpc_lowcomm_request_t array_of_requests[],
+int _mpc_cl_waitany(mpc_lowcomm_msg_count_t count, mpc_lowcomm_request_t *array_of_requests[],
                     mpc_lowcomm_msg_count_t *index, mpc_lowcomm_status_t *status)
 {
 	int i = 0;
@@ -2904,14 +2910,14 @@ int _mpc_cl_waitany(mpc_lowcomm_msg_count_t count, mpc_lowcomm_request_t array_o
 	{
 		for (i = 0; i < count; i++)
 		{
-			if (mpc_lowcomm_request_is_null(&(array_of_requests[i])) != 1)
+			if (mpc_lowcomm_request_is_null(array_of_requests[i]) != 1)
 			{
 				int tmp_flag = 0;
-				mpc_lowcomm_test(&(array_of_requests[i]), &tmp_flag, status);
+				mpc_lowcomm_test(array_of_requests[i], &tmp_flag, status);
 
 				if (tmp_flag)
 				{
-					mpc_lowcomm_wait(&(array_of_requests[i]), status);
+					mpc_lowcomm_wait(array_of_requests[i], status);
 					*index = count;
 					SCTK_PROFIL_END(MPC_Waitany);
 					MPC_ERROR_SUCCESS();
