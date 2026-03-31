@@ -46,6 +46,9 @@
 #include <sctk_alloc.h> // For sctk_malloc, sctk_free
 
 #include <portals4.h>
+#ifdef BXI_VERSION_3_R6_LITE
+#include <portals4_bxiext.h>
+#endif
 
 	// NOTE: BXI specific constant
 #ifndef PTL_SIZE_MAX

@@ -65,8 +65,12 @@
 			.max_waw_ordered_size  = PTL_SIZE_MAX, /* Max length for ordering-guarantee */
 			.max_war_ordered_size  = PTL_SIZE_MAX, /* max length for ordering guarantee */
 			.max_volatile_size     = PTL_SIZE_MAX, /* Max length for MD w/ VOLATILE flag */
-			.features = 0                          /* could be a combination or TARGET_BIND_INACCESSIBLE |
+#ifdef BXI_VERSION_3_R6_LITE
+				.features = PTL_BXI3_LE_EXTENSION
+#else
+				.features = 0                      /* could be a combination or TARGET_BIND_INACCESSIBLE |
 		                                            * TOTAL_DATA_ORDERING | COHERENT_ATOMIC */
+#endif
 		};
 	}
 
@@ -661,12 +665,16 @@ err:
 
 		/* init one physical interface */
 		lcr_ptl_chk(PtlNIInit(
-			iface,                             /* Type of interface */
-			PTL_NI_MATCHING | PTL_NI_PHYSICAL, /* physical NI, w/ matching enabled */
-			PTL_PID_ANY,                       /* Let Portals decide process's PID */
-			&l,                                /* desired Portals boundaries */
-			&res.config.max_limits,            /* effective Portals limits */
-			&res.net.nih                       /* THE handler */
+			iface,                                    /* Type of interface */
+#ifdef BXI_VERSION_3_R6_LITE
+				PTL_NI_NO_MATCHING | PTL_NI_PHYSICAL, /* physical NI, w/o matching enabled */
+#else
+				PTL_NI_MATCHING | PTL_NI_PHYSICAL,    /* physical NI, w/ matching enabled */
+#endif
+			PTL_PID_ANY,                              /* Let Portals decide process's PID */
+			&l,                                       /* desired Portals boundaries */
+			&res.config.max_limits,                   /* effective Portals limits */
+			&res.net.nih                              /* THE handler */
 			));
 		/* retrieve the process identifier */
 		lcr_ptl_chk(PtlGetPhysId(
