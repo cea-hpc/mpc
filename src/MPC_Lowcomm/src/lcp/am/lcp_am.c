@@ -133,7 +133,7 @@ static ssize_t lcp_send_am_rndv_pack(void *dest, void *data)
 	packed_length += lcp_rndv_rts_pack(req, hdr);
 
 	/* Pack user header */
-	ptr = (char *)(hdr + 1) + packed_length;
+	ptr = (char *)hdr + packed_length;
 	memcpy(ptr, req->send.am.hdr, req->send.am.hdr_size);
 	packed_length += req->send.am.hdr_size;
 

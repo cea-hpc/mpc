@@ -52,6 +52,7 @@ All notable changes to this project will be documented in this file. The format 
   - Deadlock in backend releasing
   - Deadlock in flush operation with no pending communications
   - Potential error in PTL finalization in multithreaded context
+  - Rendezvous Active Message user headers not reaching the target
 - Memory related potential bugs in MPI, Low Comm, Common and Config
 
 ## [4.3.0] - 2025-11-18
