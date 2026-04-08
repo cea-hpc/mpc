@@ -406,6 +406,19 @@ int mpc_lowcomm_probe(int source, int tag, mpc_lowcomm_communicator_t comm, mpc_
 /* Collective Operations                                                */
 /************************************************************************/
 
+/**
+ * @brief Generates a unique tag based on a global counter.
+ * The integer passed as parameter is ORed with the counter to help with differentiation through masking.
+ *
+ * @note The common usage is to use the 8 most significant bits to make the masking
+ * as the counter is limited to 0x00FFFFFF
+ *
+ * @param[in] upper_bits User input to OR with the counter
+ * @param[in] comm       Communicator used for the following communications using the returned tag
+ * @returns Generated tag
+ */
+int mpc_lowcomm_generate_unique_tag(int upper_bits, mpc_lowcomm_communicator_t comm);
+
 /** These functions are the low-level collective operations */
 
 /** Do a barrier on a communicator

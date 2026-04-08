@@ -1075,7 +1075,7 @@ inline int NBC_Init_handle( NBC_Handle *handle, MPI_Comm comm, int tag )
 	/* first int is the schedule size */
 	handle->row_offset = sizeof( int );
 
-	handle->tag = tag;
+	handle->tag = mpc_lowcomm_generate_unique_tag(tag, comm);
 	handle->mycomm = comm;
 
 	return NBC_OK;

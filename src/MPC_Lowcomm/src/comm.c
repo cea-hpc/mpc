@@ -57,6 +57,7 @@
 #include "lowcomm_config.h"
 #include "monitor.h"
 #include "pset.h"
+#include "group.h"
 
 /* Forward declaration. */
 static int mpc_comm_progress();
@@ -4025,11 +4026,10 @@ int mpc_lowcomm_iprobe_src_dest(const int world_source, const int world_destinat
 		mpc_common_debug_fatal("LCP: Could not find task with tid %d.", world_destination);
 	}
 
-	rc = lcp_tag_probe_nb(lcp_mngr_loc, task, world_source, tag,
-		comm_id, &recv_info);
+	mpc_common_progress();
 
-	// FIXME: should it be before probe?
-	/* Progress communications to check if event has been raised. */
+	rc = lcp_tag_probe_nb(lcp_mngr_loc, task, world_source, tag, comm_id, &recv_info);
+
 	mpc_common_progress();
 
 	if ((*flag = recv_info.found))
@@ -4383,10 +4383,6 @@ static void __lowcomm_init_per_task()
 	 * progress threads may need buffered headers */
 	if (task_rank >= 0)
 	{
-		mpc_lowcomm_termination_barrier();
-
-		// mpc_lowcomm_init_per_task(task_rank);
-
 		_mpc_lowcomm_datatype_init_common();
 
 		lcp_task_h task;
@@ -4402,6 +4398,8 @@ static void __lowcomm_init_per_task()
 			mpc_common_debug_fatal("LCP: could not associate task. tid=%d.", task_rank);
 		}
 
+		// Create Self and World communicators first !
+		mpc_lowcomm_termination_barrier();
 		_mpc_lowcomm_communicator_init_task(task_rank);
 		mpc_lowcomm_termination_barrier();
 
@@ -4428,6 +4426,8 @@ static void __lowcomm_release_per_task()
 			mpc_common_debug_fatal("LCP: Could not find task with tid %d.", task_rank);
 		}
 		lcp_task_dissociate(task, lcp_mngr_loc);
+
+		_mpc_lowcomm_communicator_release_task();
 
 		mpc_common_nodebug("mpc_lowcomm_termination_barrier done");
 		_mpc_lowcomm_monitor_teardown_per_task();
@@ -4547,13 +4547,15 @@ static void __initialize_drivers()
 
 	__init_request_null();
 
-	_mpc_lowcomm_communicator_init();
+	/* This creates the world group */
+	_mpc_lowcomm_group_create_world();
 }
 
 static void __finalize_driver()
 {
 	// FIXME: error checking
 	_mpc_lowcomm_communicator_release();
+	_mpc_lowcomm_group_release_world();
 	lcp_manager_fini(lcp_mngr_loc);
 	lcp_context_fini(lcp_ctx_loc);
 	_mpc_lowcomm_monitor_teardown();

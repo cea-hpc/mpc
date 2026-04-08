@@ -57,7 +57,6 @@ typedef uint64_t               mpc_lowcomm_communicator_id_t;
 
 /* Expose communicator init needed for unit test */
 void _mpc_lowcomm_communicator_init_task(int my_rank);
-void _mpc_lowcomm_communicator_init(void);
 void _mpc_lowcomm_communicator_release(void);
 
 /**

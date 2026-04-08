@@ -82,7 +82,7 @@ lcp_status_ptr_t lcp_tag_recv_nb(lcp_manager_h mngr, lcp_task_h task, void *buff
 		return (lcp_status_ptr_t)(int64_t)rc;
 	}
 
-	mpc_common_debug("LCP: post recv tag task=%p, comm=%d, src=%d, tag=%d, length=%d, buf=%p, req=%p",
+	mpc_common_debug("LCP: post recv tag task=%p, comm=%d, src=%d, tag=%0#x, length=%d, buf=%p, req=%p",
 		task, req->recv.tag.comm, req->recv.tag.src_tid,
 		req->recv.tag.tag, count, buffer, req);
 

@@ -645,14 +645,18 @@ int mpc_lowcomm_communicator_is_shared_mem(const mpc_lowcomm_communicator_t comm
 {
 	mpc_lowcomm_communicator_t local_comm = __mpc_lowcomm_communicator_from_predefined(comm);
 
-	return local_comm->shm_coll != NULL;
+	assert(local_comm->group != NULL);
+
+	return local_comm->group->shm_coll != NULL;
 }
 
 struct sctk_comm_coll *mpc_communicator_shm_coll_get(const mpc_lowcomm_communicator_t comm)
 {
 	mpc_lowcomm_communicator_t local_comm = __mpc_lowcomm_communicator_from_predefined(comm);
 
-	return local_comm->shm_coll;
+	assert(local_comm->group != NULL);
+
+	return local_comm->group->shm_coll;
 }
 
 int mpc_lowcomm_communicator_is_shared_node(const mpc_lowcomm_communicator_t comm)
@@ -668,8 +672,9 @@ int mpc_lowcomm_communicator_attributes(const mpc_lowcomm_communicator_t comm,
 {
 	mpc_lowcomm_communicator_t local_comm = __mpc_lowcomm_communicator_from_predefined(comm);
 
-	*is_intercomm   = mpc_lowcomm_communicator_is_intercomm(local_comm);
-	*is_shm         = mpc_lowcomm_communicator_is_shared_mem(local_comm);
+	*is_intercomm = mpc_lowcomm_communicator_is_intercomm(local_comm);
+	// Intercomm has no group
+	*is_shm         = *is_intercomm ? 0 : mpc_lowcomm_communicator_is_shared_mem(local_comm);
 	*is_shared_node = mpc_lowcomm_communicator_is_shared_node(local_comm);
 
 	return MPC_LOWCOMM_SUCCESS;
@@ -844,7 +849,6 @@ static inline mpc_lowcomm_internal_communicator_t *__init_communicator_with_id(m
 	ret->id             = comm_id;
 	ret->group          = group;
 	ret->process_span   = 1;
-	ret->shm_coll       = NULL;
 	ret->linear_comm_id = -1;
 	ret->extra_ctx_ptr  = MPC_LOWCOMM_HANDLE_CTX_NULL;
 
@@ -893,17 +897,13 @@ static inline mpc_lowcomm_internal_communicator_t *__init_communicator_with_id(m
 		_mpc_lowcomm_group_acquire(group);
 
 		ret->process_span = _mpc_lowcomm_group_process_count(group);
-
-		/* SET SHM Collective context if needed */
-		if (ret->process_span == 1 && (mpc_lowcomm_group_size(group) > 1))
-		{
-			ret->shm_coll = sctk_comm_coll_init(group->size);
-		}
 	}
 
 	/* The comm is initialized with one reference to it */
 	OPA_store_int(&ret->refcount,   1);
 	OPA_store_int(&ret->free_count, 0);
+	mpc_common_spinlock_init(&ret->coll_counter_lock, 0);
+	ret->coll_counter = 0;
 	__communicator_id_register(ret, forced_linear_id);
 
 	/* Initialize coll for this comm */
@@ -933,56 +933,69 @@ struct __communicator_id_factory
 	unsigned int                local_count;
 	unsigned int                local_used;
 	mpc_common_spinlock_t       lock;
+	uint32_t                    linear_id;
 	struct mpc_common_hashtable id_table;
 	struct mpc_common_hashtable int_id_table;
 	struct mpc_common_hashtable comm_table;
 	struct mpc_common_bit_array comm_bit_array;
 };
 
-struct __communicator_id_factory __id_factory = { 0 };
+static mpc_common_spinlock_t             __id_factories_lock = MPC_COMMON_SPINLOCK_INITIALIZER;
+static struct __communicator_id_factory *__id_factories      = NULL;
+
+/**
+ * @brief Get the id_factory of the current task
+ *
+ * @returns A pointer on the task local  communicator ID factory
+ */
+static struct __communicator_id_factory *__communicator_get_local_id_factory(void)
+{
+	const int local_task_rank = mpc_common_get_local_task_rank();
+
+	return __id_factories + local_task_rank;
+}
 
 #define COMM_ID_TO_SKIP 5
 
-static inline void __communicator_id_factory_init(void)
+static inline void __communicator_id_factory_init(struct __communicator_id_factory *id_factory)
 {
-	int process_count = mpc_common_get_process_count();
+	const int task_count = mpc_common_get_task_count();
+	const int task_rank  = mpc_common_get_task_rank();
 
 	/* We have the whole range except two */
 	uint32_t global_dynamic = (((uint32_t)-1) - COMM_ID_TO_SKIP);
 
 	/* Ensure it can be divided evenly */
-	if (global_dynamic % process_count)
+	if (global_dynamic % task_count)
 	{
-		global_dynamic -= (global_dynamic % process_count);
+		global_dynamic -= (global_dynamic % task_count);
 	}
 
-	__id_factory.local_count = global_dynamic / process_count;
+	id_factory->local_count = global_dynamic / task_count;
 
-	int process_rank = mpc_common_get_process_rank();
+	id_factory->first_local = COMM_ID_TO_SKIP + task_rank * id_factory->local_count;
+	id_factory->local_used  = 0;
+	id_factory->linear_id   = 1000;
 
-	__id_factory.first_local = COMM_ID_TO_SKIP + process_rank * __id_factory.local_count;
-	__id_factory.local_used  = 0;
+	mpc_common_spinlock_init(&id_factory->lock, 0);
 
-	mpc_common_spinlock_init(&__id_factory.lock, 0);
-
-	mpc_common_hashtable_init(&__id_factory.id_table,     4096);
-	mpc_common_hashtable_init(&__id_factory.int_id_table, 4096);
-	mpc_common_hashtable_init(&__id_factory.comm_table,   4096);
-	mpc_common_bit_array_init(&__id_factory.comm_bit_array, 8192);
+	mpc_common_hashtable_init(&id_factory->id_table,     4096);
+	mpc_common_hashtable_init(&id_factory->int_id_table, 4096);
+	mpc_common_hashtable_init(&id_factory->comm_table,   4096);
+	mpc_common_bit_array_init(&id_factory->comm_bit_array, 8192);
 }
 
-static inline void __communicator_id_factory_release(void)
+static inline void __communicator_id_factory_release(struct __communicator_id_factory *id_factory)
 {
-	mpc_common_hashtable_release(&__id_factory.id_table);
-	mpc_common_hashtable_release(&__id_factory.int_id_table);
-	mpc_common_hashtable_release(&__id_factory.comm_table);
-	mpc_common_bit_array_release(&__id_factory.comm_bit_array);
+	mpc_common_hashtable_release(&id_factory->id_table);
+	mpc_common_hashtable_release(&id_factory->int_id_table);
+	mpc_common_hashtable_release(&id_factory->comm_table);
+	mpc_common_bit_array_release(&id_factory->comm_bit_array);
 }
 
-static inline void __communicator_id_register(mpc_lowcomm_communicator_t comm, int forced_linear_id)
+static inline void __communicator_id_register(mpc_lowcomm_communicator_t comm, const int forced_linear_id)
 {
-	static uint32_t __linear_comm_id = 1000;
-	static mpc_common_spinlock_t __linear_comm_id_lock = MPC_COMMON_SPINLOCK_INITIALIZER;
+	struct __communicator_id_factory *id_factory = __communicator_get_local_id_factory();
 
 	comm = __mpc_lowcomm_communicator_from_predefined(comm);
 
@@ -992,11 +1005,11 @@ static inline void __communicator_id_register(mpc_lowcomm_communicator_t comm, i
 	}
 	else
 	{
-		mpc_common_spinlock_lock(&__linear_comm_id_lock);
+		mpc_common_spinlock_lock(&id_factory->lock);
 		/* Acquire and save a linear comm id */
-		comm->linear_comm_id = __linear_comm_id;
-		__linear_comm_id++;
-		mpc_common_spinlock_unlock(&__linear_comm_id_lock);
+		comm->linear_comm_id = id_factory->linear_id;
+		id_factory->linear_id++;
+		mpc_common_spinlock_unlock(&id_factory->lock);
 	}
 
 	uint64_t key = comm->id;
@@ -1006,90 +1019,95 @@ static inline void __communicator_id_register(mpc_lowcomm_communicator_t comm, i
 
 	mpc_common_debug_info("COMM: register key=%llu, int key=%d, linear key=%llu", key, key, linear_key);
 
-
 	/* It is forbidden to add an existing comm */
-	assume(mpc_common_hashtable_get(&__id_factory.id_table, key) == NULL);
-	mpc_common_hashtable_set(&__id_factory.int_id_table, linear_key,     (void *)comm);
-	mpc_common_hashtable_set(&__id_factory.id_table,     key,            (void *)comm);
-	mpc_common_hashtable_set(&__id_factory.comm_table,   (uint64_t)comm, (void *)comm);
-	mpc_common_bit_array_set(&__id_factory.comm_bit_array, (uint64_t)comm, 1);
+	assume(mpc_common_hashtable_get(&id_factory->id_table, key) == NULL);
+	mpc_common_hashtable_set(&id_factory->int_id_table, linear_key,     (void *)comm);
+	mpc_common_hashtable_set(&id_factory->id_table,     key,            (void *)comm);
+	mpc_common_hashtable_set(&id_factory->comm_table,   (uint64_t)comm, (void *)comm);
+	mpc_common_bit_array_set(&id_factory->comm_bit_array, (uint64_t)comm, 1);
 }
 
 static inline void __communicator_id_release(mpc_lowcomm_communicator_t comm)
 {
+	struct __communicator_id_factory *id_factory = __communicator_get_local_id_factory();
+
 	comm = __mpc_lowcomm_communicator_from_predefined(comm);
 	uint64_t key        = comm->id;
 	uint64_t linear_key = comm->linear_comm_id;
 
 	mpc_common_debug_info("COMM: release key=%llu, int key=%d, linear key=%llu", key, key, linear_key);
 
-	mpc_common_hashtable_delete(&__id_factory.id_table,     key);
-	mpc_common_hashtable_delete(&__id_factory.int_id_table, linear_key);
-	mpc_common_hashtable_delete(&__id_factory.comm_table,   (uint64_t)comm);
-	mpc_common_bit_array_set(&__id_factory.comm_bit_array, (uint64_t)comm, 0);
+	mpc_common_hashtable_delete(&id_factory->id_table,     key);
+	mpc_common_hashtable_delete(&id_factory->int_id_table, linear_key);
+	mpc_common_hashtable_delete(&id_factory->comm_table,   (uint64_t)comm);
+	mpc_common_bit_array_set(&id_factory->comm_bit_array, (uint64_t)comm, 0);
 }
 
 mpc_lowcomm_communicator_t mpc_lowcomm_get_communicator_from_linear_id(int linear_id)
 {
-	mpc_lowcomm_communicator_t ret = NULL;
+	struct __communicator_id_factory *id_factory = __communicator_get_local_id_factory();
+	mpc_lowcomm_communicator_t        ret        = NULL;
 
 	assume(0 <= linear_id);
 	uint64_t key = linear_id;
 
-	ret = (mpc_lowcomm_communicator_t)mpc_common_hashtable_get(&__id_factory.int_id_table, key);
+	ret = (mpc_lowcomm_communicator_t)mpc_common_hashtable_get(&id_factory->int_id_table, key);
 	return ret;
 }
 
 mpc_lowcomm_communicator_t mpc_lowcomm_get_communicator_from_id(mpc_lowcomm_communicator_id_t id)
 {
-	mpc_lowcomm_communicator_t ret = MPC_COMM_NULL;
+	struct __communicator_id_factory *id_factory = __communicator_get_local_id_factory();
+	mpc_lowcomm_communicator_t        ret        = MPC_COMM_NULL;
 
-	ret = (mpc_lowcomm_communicator_t)mpc_common_hashtable_get(&__id_factory.id_table, id);
+	ret = (mpc_lowcomm_communicator_t)mpc_common_hashtable_get(&id_factory->id_table, id);
 	return ret;
 }
 
-int mpc_lowcomm_communicator_scan(void (*callback)(mpc_lowcomm_communicator_t comm, void *arg), void *arg)
+int mpc_lowcomm_communicator_scan(void (*callback)(mpc_lowcomm_communicator_t comm,
+	void *arg), void *arg)
 {
 	if (!callback)
 	{
 		return MPC_LOWCOMM_ERROR;
 	}
+	struct __communicator_id_factory *id_factory = __communicator_get_local_id_factory();
 
 	void *tmp = NULL;
 
-	MPC_HT_ITER(&__id_factory.id_table, tmp)
+	MPC_HT_ITER(&id_factory->id_table, tmp)
 	{
 		(callback)(tmp, arg);
 	}
-	MPC_HT_ITER_END(&__id_factory.id_table)
+	MPC_HT_ITER_END(&id_factory->id_table)
 
 	return MPC_LOWCOMM_SUCCESS;
 }
 
 int mpc_lowcomm_communicator_exists(mpc_lowcomm_communicator_t comm)
 {
-	return 1;
+	struct __communicator_id_factory *const local_id_factory = __communicator_get_local_id_factory();
 
 	comm = __mpc_lowcomm_communicator_from_predefined(comm);
 	/* In debug we actually check */
-	return mpc_common_hashtable_get(&__id_factory.comm_table, (uint64_t)comm) != NULL;
+	return mpc_common_hashtable_get(&local_id_factory->comm_table, (uint64_t)comm) != NULL;
 }
 
 static inline mpc_lowcomm_communicator_id_t __communicator_id_new(void)
 {
-	mpc_lowcomm_communicator_id_t ret = 0;
+	struct __communicator_id_factory *id_factory = __communicator_get_local_id_factory();
+	mpc_lowcomm_communicator_id_t     ret        = 0;
 
-	mpc_common_spinlock_lock_yield(&__id_factory.lock);
+	mpc_common_spinlock_lock_yield(&id_factory->lock);
 
-	if (__id_factory.local_used == __id_factory.local_count)
+	if (id_factory->local_used == id_factory->local_count)
 	{
 		mpc_common_debug_fatal("You exhausted communicator id dynamic (up to %d) communicators on rank %d",
-			__id_factory.local_count,
-			mpc_common_get_task_rank());
+			id_factory->local_count, mpc_common_get_task_rank());
 	}
 
-	ret = __id_factory.first_local + __id_factory.local_used;
-	__id_factory.local_used++;
+	ret = id_factory->first_local + id_factory->local_used;
+	id_factory->local_used++;
 
 	uint64_t gid = mpc_lowcomm_monitor_get_gid();
 
@@ -1097,8 +1115,7 @@ static inline mpc_lowcomm_communicator_id_t __communicator_id_new(void)
 	ret |= gid << 32;
 	mpc_common_nodebug("AFTER %lu",  ret);
 
-
-	mpc_common_spinlock_unlock(&__id_factory.lock);
+	mpc_common_spinlock_unlock(&id_factory->lock);
 
 	return ret;
 }
@@ -1214,12 +1231,6 @@ static inline void __comm_free(mpc_lowcomm_communicator_t comm)
 	if (!exists)
 	{
 		return;
-	}
-
-	/* Clear the SHM data */
-	if (comm->shm_coll)
-	{
-		sctk_comm_coll_release(comm->shm_coll);
 	}
 
 	/* Relax the groups */
@@ -1389,39 +1400,27 @@ static inline mpc_lowcomm_communicator_t __new_communicator(mpc_lowcomm_communic
 
 	if (at_least_one_local_rank_belongs || !check_if_current_rank_belongs)
 	{
-		// mpc_common_debug_error("LOCAL LEAD %d MY RANK %d", comm_local_lead, my_rank);
+		/* I take the lock to see if the new communicator is known */
+		mpc_common_spinlock_lock_yield(&lock);
 
-		if (comm_local_lead == my_rank)
+		ret = mpc_lowcomm_get_communicator_from_id(new_id);
+
+		/* It is not known so I do create it I'm sure I'm the only as I hold the creation lock */
+		if (ret == MPC_COMM_NULL)
 		{
-			/* I am a local lead in my comm I take the lock
-			 * to see if the new communicator is known */
-			mpc_common_spinlock_lock_yield(&lock);
+			/* We can then directly create a new group using the current group */
+			ret = __init_communicator_with_id(new_id, group, is_comm_self, left_comm, right_comm, -1);
+			/* Make sure that dups of comm self behave as comm self */
 
-			ret = mpc_lowcomm_get_communicator_from_id(new_id);
-
-			/* It is not known so I do create it I'm sure I'm the only
-			 * as I hold the creation lock */
-			if (ret == MPC_COMM_NULL)
+			/* If parent has a ctx pointer make sure to propagate */
+			if (comm->extra_ctx_ptr)
 			{
-				/* We can then directly create a new group using the current group */
-				ret = __init_communicator_with_id(new_id,
-					group,
-					is_comm_self,
-					left_comm,
-					right_comm,
-					-1);
-				/* Make sure that dups of comm self behave as comm self */
-
-				/* If parent has a ctx pointer make sure to propagate */
-				if (comm->extra_ctx_ptr)
-				{
-					ret->extra_ctx_ptr = comm->extra_ctx_ptr;
-				}
+				ret->extra_ctx_ptr = comm->extra_ctx_ptr;
 			}
-
-			mpc_common_spinlock_unlock(&lock);
 		}
 	}
+
+	mpc_common_spinlock_unlock(&lock);
 
 	/* Do a barrier when done to ensure new comm is posted */
 	mpc_lowcomm_barrier(comm);
@@ -1552,20 +1551,32 @@ mpc_lowcomm_communicator_t mpc_lowcomm_communicator_create(const mpc_lowcomm_com
  * COMMON COMMUNICATORS *
  ************************/
 
-static mpc_lowcomm_internal_communicator_t *__comm_world = NULL;
-static mpc_lowcomm_internal_communicator_t *__comm_self  = NULL;
+// NOTE: We need the communicators to be task-local for the collective counter
+static mpc_lowcomm_internal_communicator_t **__comm_world = NULL;
+static mpc_lowcomm_internal_communicator_t **__comm_self  = NULL;
+
 static lcp_ep_h __comm_self_ep = NULL;
 
 mpc_lowcomm_communicator_t mpc_lowcomm_communicator_world()
 {
-	assume(__comm_world != NULL);
-	return __comm_world;
+	const int my_local_rank = mpc_common_get_local_task_rank();
+
+	// HACK: Which communicator to return for progress threads ?
+	const int used_rank = my_local_rank >= 0 ? my_local_rank : 0;
+
+	assume(__comm_world != NULL && __comm_world[used_rank] != NULL);
+	return __comm_world[used_rank];
 }
 
 mpc_lowcomm_communicator_t mpc_lowcomm_communicator_self()
 {
-	assume(__comm_self != NULL);
-	return __comm_self;
+	const int my_local_rank = mpc_common_get_local_task_rank();
+
+	// HACK: Which communicator to return for progress threads ?
+	const int used_rank = my_local_rank >= 0 ? my_local_rank : 0;
+
+	assume(__comm_self != NULL && __comm_self[used_rank] != NULL);
+	return __comm_self[used_rank];
 }
 
 mpc_lowcomm_communicator_id_t mpc_lowcomm_get_comm_world_id_gid(mpc_lowcomm_set_uid_t gid)
@@ -1594,37 +1605,58 @@ mpc_lowcomm_communicator_id_t mpc_lowcomm_get_comm_self_id(void)
 
 void _mpc_lowcomm_communicator_init_task(int my_rank)
 {
-	__comm_world->group->my_rank[mpc_common_get_local_task_rank()] = my_rank;
-}
+	const int my_local_rank = mpc_common_get_local_task_rank();
+	const int local_size    = mpc_common_get_local_task_count();
 
-void _mpc_lowcomm_communicator_init(void)
-{
-	__communicator_id_factory_init();
-	/* This creates the world group */
-	_mpc_lowcomm_group_create_world();
-	mpc_lowcomm_group_t *cw_group = _mpc_lowcomm_group_world();
+	// We have to allocate here as we don't know the number of local task beforehand
+	// Only the first task taking the lock will allocate the arrays
+	mpc_common_spinlock_lock(&__id_factories_lock);
+	if (__id_factories == NULL)
+	{
+		__id_factories = sctk_calloc(local_size, sizeof(struct __communicator_id_factory));
+	}
 
-	assume(__comm_world == NULL);
-	__comm_world = __init_communicator_with_id(MPC_LOWCOMM_COMM_WORLD_ID,
-		cw_group,
-		0,
-		MPC_COMM_NULL,
-		MPC_COMM_NULL,
-		MPC_LOWCOMM_COMM_WORLD_NUMERIC_ID);
+	if (__comm_world == NULL)
+	{
+		__comm_world = sctk_calloc(local_size, sizeof(mpc_lowcomm_internal_communicator_t *));
+	}
 
-	assume(__comm_self == NULL);
-	__comm_self = __init_communicator_with_id(MPC_LOWCOMM_COMM_SELF_ID,
-		NULL,
-		1,
-		MPC_COMM_NULL,
-		MPC_COMM_NULL,
-		MPC_LOWCOMM_COMM_SELF_NUMERIC_ID);
+	if (__comm_self == NULL)
+	{
+		__comm_self = sctk_calloc(local_size, sizeof(mpc_lowcomm_internal_communicator_t *));
+	}
+	mpc_common_spinlock_unlock(&__id_factories_lock);
+
+	// Initialize the per task ID factory
+	__communicator_id_factory_init(__communicator_get_local_id_factory());
+
+	mpc_lowcomm_group_t *const cw_group = _mpc_lowcomm_group_world();
+
+	__comm_world[my_local_rank] = __init_communicator_with_id(MPC_LOWCOMM_COMM_WORLD_ID,
+		cw_group, 0, MPC_COMM_NULL, MPC_COMM_NULL, MPC_LOWCOMM_COMM_WORLD_NUMERIC_ID);
+
+	__comm_world[my_local_rank]->group->my_rank[my_local_rank] = my_rank;
+
+	__comm_self[my_local_rank] = __init_communicator_with_id(MPC_LOWCOMM_COMM_SELF_ID,
+		NULL, 1, MPC_COMM_NULL, MPC_COMM_NULL, MPC_LOWCOMM_COMM_SELF_NUMERIC_ID);
 }
 
 void _mpc_lowcomm_communicator_release(void)
 {
-	_mpc_lowcomm_group_release_world();
-	__communicator_id_factory_release();
+	// Global release of the arrays
+	sctk_free(__comm_world);
+	sctk_free(__comm_self);
+	sctk_free(__id_factories);
+}
+
+void _mpc_lowcomm_communicator_release_task(void)
+{
+	const int local_task_rank = mpc_common_get_local_task_rank();
+
+	__comm_free(__comm_world[local_task_rank]);
+	sctk_free(__comm_world[local_task_rank]);
+
+	__communicator_id_factory_release(__communicator_get_local_id_factory());
 }
 
 /*************
@@ -1999,57 +2031,65 @@ mpc_lowcomm_communicator_t mpc_lowcomm_communicator_split(mpc_lowcomm_communicat
 
 	mpc_common_nodebug("%d colors", color_number);
 
-	/*We need on comm_create per color */
-	for (k = 0; k < color_number; k++)
+	// No need to create a new communicator if the group is the same
+	if (color_number == 1)
 	{
-		int group_size = 0;
-		int tmp_color  = color_tab[k];
-
-		if (tmp_color != MPC_UNDEFINED)
+		_mpc_lowcomm_communicator_acquire(comm);
+		comm_out = comm;
+	}
+	else
+	{
+		/*We need a comm_create per color */
+		for (k = 0; k < color_number; k++)
 		{
-			group_size = 0;
+			int group_size = 0;
+			int tmp_color  = color_tab[k];
 
-			for (i = 0; i < size; i++)
+			if (tmp_color != MPC_UNDEFINED)
 			{
-				if (tab[i].color == tmp_color)
+				group_size = 0;
+
+				for (i = 0; i < size; i++)
 				{
-					group_size++;
+					if (tab[i].color == tmp_color)
+					{
+						group_size++;
+					}
 				}
-			}
 
-			mpc_common_nodebug("GROUP is %d", group_size);
+				mpc_common_nodebug("GROUP is %d", group_size);
 
+				_mpc_lowcomm_group_rank_descriptor_t *group_descriptor =
+					(_mpc_lowcomm_group_rank_descriptor_t * )sctk_malloc(group_size
+						* sizeof(_mpc_lowcomm_group_rank_descriptor_t));
+				assume(group_descriptor != NULL);
 
-			_mpc_lowcomm_group_rank_descriptor_t *group_descriptor =
-				(_mpc_lowcomm_group_rank_descriptor_t * )sctk_malloc(group_size
-					* sizeof(_mpc_lowcomm_group_rank_descriptor_t));
-			assume(group_descriptor != NULL);
+				j = 0;
 
-			j = 0;
-
-			for (i = 0; i < size; i++)
-			{
-				if (tab[i].color == tmp_color)
+				for (i = 0; i < size; i++)
 				{
-					group_descriptor[j] = comm->group->ranks[tab[i].rank];
-					// mpc_common_debug_error("Thread %d color (%d) size %d on %d rank %d", tmp_color,
-					//                   k, j, group_size, tab[i].rank);
-					j++;
+					if (tab[i].color == tmp_color)
+					{
+						group_descriptor[j] = comm->group->ranks[tab[i].rank];
+						// mpc_common_debug_error("Thread %d color (%d) size %d on %d rank %d", tmp_color,
+						//                   k, j, group_size, tab[i].rank);
+						j++;
+					}
 				}
+
+				mpc_lowcomm_group_t *comm_group = _mpc_lowcomm_group_create(group_size, group_descriptor, 1);
+
+				mpc_lowcomm_communicator_t new_comm = mpc_lowcomm_communicator_from_group(comm, comm_group);
+
+				if (tmp_color == color)
+				{
+					comm_out = new_comm;
+				}
+
+				/* We free here as the comm now holds a ref */
+				mpc_lowcomm_group_free(&comm_group);
+				// mpc_common_debug_error("Split color %d done", tmp_color);
 			}
-
-			mpc_lowcomm_group_t *comm_group = _mpc_lowcomm_group_create(group_size, group_descriptor, 1);
-
-			mpc_lowcomm_communicator_t new_comm = mpc_lowcomm_communicator_from_group(comm, comm_group);
-
-			if (tmp_color == color)
-			{
-				comm_out = new_comm;
-			}
-
-			/* We free here as the comm now holds a ref */
-			mpc_lowcomm_group_free(&comm_group);
-			// mpc_common_debug_error("Split color %d done", tmp_color);
 		}
 	}
 

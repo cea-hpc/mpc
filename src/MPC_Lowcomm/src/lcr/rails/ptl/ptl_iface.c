@@ -1268,8 +1268,6 @@ err:
 		int i;
 		lcr_ptl_rail_info_t *srail = &rail->network.ptl;
 
-		lcr_ptl_chk(PtlEQFree(srail->net.eqh));
-
 		if (srail->config.features & LCR_PTL_FEATURE_AM)
 		{
 			rc = _lcr_ptl_iface_fini_am(srail);
@@ -1318,6 +1316,8 @@ err:
 			mpc_mpool_fini(srail->ept[i]->ops_pool);
 		}
 		sctk_free(srail->ept);
+
+		lcr_ptl_chk(PtlEQFree(srail->net.eqh));
 
 		/* tear down the interface */
 		lcr_ptl_chk(PtlNIFini(srail->net.nih));

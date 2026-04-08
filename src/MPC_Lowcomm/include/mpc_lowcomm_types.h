@@ -350,10 +350,10 @@ typedef enum sctk_ft_state_e
  ****************************/
 
 /* Ensure sync with comm_lib.h */
-#define MPC_GATHER_TAG    -3
-#define MPC_BROADCAST_TAG -9
-#define MPC_BARRIER_TAG   -10
-#define MPC_ALLGATHER_TAG -11
+#define MPC_LOWCOMM_GATHER_TAG    ((0 << 24) | 0x80000000)
+#define MPC_LOWCOMM_BROADCAST_TAG ((1 << 24) | 0x80000000)
+#define MPC_LOWCOMM_BARRIER_TAG   ((2 << 24) | 0x80000000)
+#define MPC_LOWCOMM_ALLREDUCE_TAG ((8 << 24) | 0x80000000)
 
 
 #ifdef __cplusplus

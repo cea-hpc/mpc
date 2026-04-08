@@ -246,7 +246,7 @@ int lcp_send_eager_tag_bcopy(lcp_request_t *req)
 	int rc = MPC_LOWCOMM_SUCCESS;
 
 	mpc_common_debug("LCP TAG: send eager tag bcopy comm=%d, src=%d, "
-		             "dest=%d, length=%d, tag=%d, seqn=%d, buf=%p, req=%p.",
+		             "dest=%d, length=%d, tag=%0#x, seqn=%d, buf=%p, req=%p.",
 		req->send.tag.comm, req->send.tag.src_tid,
 		req->send.tag.dest_tid, req->send.length,
 		req->send.tag.tag, req->seqn, req->send.buffer, req);
@@ -305,10 +305,8 @@ int lcp_send_eager_tag_zcopy(lcp_request_t *req)
 		.comp_cb = lcp_tag_send_complete
 	};
 
-	mpc_common_debug("LCP TAG: send am eager tag zcopy comm=%d, src=%d, "
-		             "dest=%d, tag=%d, length=%d", req->send.tag.comm,
-		req->send.tag.src_tid, req->send.tag.dest_tid,
-		req->send.tag.tag, req->send.length);
+	mpc_common_debug("LCP TAG: send am eager tag zcopy comm=%d, src=%d, dest=%d, tag=%0#x, length=%d",
+		req->send.tag.comm, req->send.tag.src_tid, req->send.tag.dest_tid, req->send.tag.tag, req->send.length);
 
 	iov[0].iov_base = (void *)req->send.buffer;
 	iov[0].iov_len  = req->send.length;
@@ -410,7 +408,7 @@ static int lcp_send_rndv_tag_rts_progress(lcp_request_t *req)
 	ssize_t payload_size;
 
 	mpc_common_debug("LCP TAG: send rndv ready-to-send bcopy (uses am). comm=%d, src=%d, "
-		             "dest=%d, tag=%d, length=%d, seqn=%d, buf=%p, req=%p",
+		             "dest=%d, tag=%0#x, length=%d, seqn=%d, buf=%p, req=%p",
 		req->send.tag.comm, req->send.tag.src_tid,
 		req->send.tag.dest_tid, req->send.tag.tag,
 		req->send.length, req->seqn, req->send.buffer, req);
@@ -479,10 +477,8 @@ int lcp_recv_eager_tag_data(lcp_request_t *req, void *data)
 	int     rc           = MPC_LOWCOMM_SUCCESS;
 	ssize_t unpacked_len = 0;
 
-	mpc_common_debug("LCP TAG: recv tag data req=%p, src=%d, dest=%d, "
-		             "tag=%d, comm=%d, length=%d, seqn=%d", req,
-		req->recv.tag.src_tid, req->recv.tag.dest_tid,
-		req->recv.tag.tag, req->recv.tag.comm,
+	mpc_common_debug("LCP TAG: recv tag data req=%p, src=%d, dest=%d, tag=%0#x, comm=%d, length=%d, seqn=%d",
+		req, req->recv.tag.src_tid, req->recv.tag.dest_tid, req->recv.tag.tag, req->recv.tag.comm,
 		req->recv.send_length, req->seqn);
 
 	/* Overwrite send length in case truncation is needed. */
@@ -680,9 +676,8 @@ static int lcp_eager_tag_handler(void *arg, void *data,
 	}
 	LCP_TASK_UNLOCK(task);
 
-	mpc_common_debug("LCP TAG: recv exp eager tag req=%p, src=%d, comm=%d, "
-		             "tag=%d, length=%d, seqn=%d", req, hdr->src_tid,
-		hdr->comm, hdr->tag, data_iov[1].iov_len, hdr->seqn);
+	mpc_common_debug("LCP TAG: recv exp eager tag req=%p, src=%d, comm=%d, tag=%0#x, length=%d, seqn=%d",
+		req, hdr->src_tid, hdr->comm, hdr->tag, data_iov[1].iov_len, hdr->seqn);
 
 	/* Set variables for MPI status */
 	req->recv.tag.src_tid  = hdr->src_tid;
@@ -773,9 +768,8 @@ static int lcp_rndv_tag_handler(void *arg, void *data,
 		hdr->tag.src_tid);
 	if (req == NULL)
 	{
-		mpc_common_debug("LCP TAG: recv unexp rndv tag src=%d, comm=%d, tag=%d, length=%d, seqn=%d",
-			hdr->tag.src_tid, hdr->tag.comm,
-			hdr->tag.tag, hdr->size, hdr->tag.seqn);
+		mpc_common_debug("LCP TAG: recv unexp rndv tag src=%d, comm=%d, tag=%0#x, length=%d, seqn=%d",
+			hdr->tag.src_tid, hdr->tag.comm, hdr->tag.tag, hdr->size, hdr->tag.seqn);
 		rc = lcp_request_init_unexp_ctnr(task, &ctnr, data_iov, iovcnt,
 			LCP_RECV_CONTAINER_UNEXP_RNDV_TAG);
 		if (rc != MPC_LOWCOMM_SUCCESS)
@@ -791,9 +785,8 @@ static int lcp_rndv_tag_handler(void *arg, void *data,
 	}
 	LCP_TASK_UNLOCK(task);
 
-	mpc_common_debug("LCP TAG: recv exp rndv tag req=%p, src=%d, comm=%d, tag=%d, length=%d, seqn=%d",
-		req, hdr->tag.src_tid, hdr->tag.comm,
-		hdr->tag.tag, hdr->size, hdr->tag.seqn);
+	mpc_common_debug("LCP TAG: recv exp rndv tag req=%p, src=%d, comm=%d, tag=%0#x, length=%d, seqn=%d",
+		req, hdr->tag.src_tid, hdr->tag.comm, hdr->tag.tag, hdr->size, hdr->tag.seqn);
 
 	/* Fill up receive request */
 	lcp_recv_rndv_tag_data(req, data_iov[0].iov_base);
