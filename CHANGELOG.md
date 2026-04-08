@@ -6,6 +6,18 @@ All notable changes to this project will be documented in this file. The format 
 
 ### Added
 
+### Changed
+
+### Removed
+
+### Deprecated
+
+### Fixed
+
+## [4.3.1] - 2026-04-08
+
+### Added
+
 - **Common**
   - Debug assertion in the mempool to detect bad behavior
 - **LowComm**
@@ -27,10 +39,6 @@ All notable changes to this project will be documented in this file. The format 
   - Optimize launching time by removing one `mpc_print_config` invocation
 - **Pthread**
   - Avoid redefinition of standard libc symbols in process-mode
-
-### Removed
-
-### Deprecated
 
 ### Fixed
 
@@ -566,4 +574,5 @@ Note that some components are dependent and cannot be installed if the dependenc
 [4.1.0]: https://github.com/cea-hpc/mpc/releases/tag/MPC_4.1.0
 [4.2.0]: https://github.com/cea-hpc/mpc/releases/tag/MPC_4.2.0
 [4.3.0]: https://github.com/cea-hpc/mpc/releases/tag/MPC_4.3.0
+[4.3.1]: https://github.com/cea-hpc/mpc/releases/tag/MPC_4.3.1
 [keep a changelog]: https://keepachangelog.com/
