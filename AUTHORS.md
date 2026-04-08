@@ -78,3 +78,4 @@ please send a email to the maintainers of the project (section above).
 | TCHIBOUKDJIAN Marc              | <marc.tchiboukdjian@exascale-computing.eu>    |
 | VALAT Sebastien                 | <sebastien.valat@cea.fr>                      |
 | VET Jean-Yves                   | <jean-yves.vet@cea.fr>                        |
+| VIDON Thomas                    | <thomas.vidon@cea.fr>                         |
