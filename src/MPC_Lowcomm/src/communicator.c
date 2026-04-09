@@ -1532,11 +1532,9 @@ mpc_lowcomm_communicator_t mpc_lowcomm_communicator_create(const mpc_lowcomm_com
  * COMMON COMMUNICATORS *
  ************************/
 
-// NOTE: We need the communicators to be task-local for the collective counter
 static mpc_lowcomm_internal_communicator_t **__comm_world = NULL;
 static mpc_lowcomm_internal_communicator_t **__comm_self  = NULL;
-
-static lcp_ep_h __comm_self_ep = NULL;
+static mpc_lowcomm_ep_t __comm_self_ep = NULL;
 
 mpc_lowcomm_communicator_t mpc_lowcomm_communicator_world()
 {
@@ -1645,7 +1643,7 @@ void _mpc_lowcomm_communicator_release_task(void)
  * ACCESSORS *
  *************/
 
-void * mpc_lowcomm_communicator_lookup(mpc_lowcomm_communicator_t comm, int rank)
+mpc_lowcomm_ep_t mpc_lowcomm_communicator_lookup(mpc_lowcomm_communicator_t comm, int rank)
 {
 	mpc_lowcomm_communicator_t tcomm = __mpc_lowcomm_communicator_from_predefined(comm);
 
@@ -1664,7 +1662,7 @@ void * mpc_lowcomm_communicator_lookup(mpc_lowcomm_communicator_t comm, int rank
 	}
 }
 
-void mpc_lowcomm_communicator_add_ep(mpc_lowcomm_communicator_t comm, int rank, void *ep)
+void mpc_lowcomm_communicator_add_ep(mpc_lowcomm_communicator_t comm, int rank, mpc_lowcomm_ep_t ep)
 {
 	lcp_ep_h lcp_ep = (lcp_ep_h)ep;
 	mpc_lowcomm_communicator_t tcomm = __mpc_lowcomm_communicator_from_predefined(comm);
@@ -2470,7 +2468,7 @@ mpc_lowcomm_communicator_t mpc_lowcomm_communicator_intercomm_create(const mpc_l
 				local_comm_size * sizeof(_mpc_lowcomm_group_rank_descriptor_t),
 				tag,
 				peer_comm,
-				reqs[0]);
+				reqs[0], MPC_LOWCOMM_SEND_STANDARD);
 
 			mpc_lowcomm_request_init(reqs[1],
 				local_comm_size * sizeof(_mpc_lowcomm_group_rank_descriptor_t),

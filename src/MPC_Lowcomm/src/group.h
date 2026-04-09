@@ -29,6 +29,7 @@
 #include <mpc_common_debug.h>
 
 #include <mpc_lowcomm_monitor.h>
+#include "mpc_lowcomm_ep.h"
 
 /****************************************
  * _MPC_LOWCOMM_GROUP_RANK_DESCRIPTOR_S *
@@ -67,7 +68,7 @@ typedef struct MPI_ABI_Group
 
 	unsigned int                          size;
 	_mpc_lowcomm_group_rank_descriptor_t *ranks;
-	lcp_ep_h *                            eps;
+	mpc_lowcomm_ep_t *                    eps;
 
 	int *                                 global_to_local;
 

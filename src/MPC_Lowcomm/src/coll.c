@@ -319,7 +319,7 @@ static void _mpc_coll_message_send(const mpc_lowcomm_communicator_t communicator
                                    __UNUSED__ int check_msg)
 {
 	mpc_lowcomm_request_init(msg_req->request, size, NULL, NULL, 0);
-	mpc_lowcomm_isend(dest, buffer, size, tag, communicator, msg_req->request);
+	mpc_lowcomm_isend(dest, buffer, size, tag, communicator, msg_req->request, MPC_LOWCOMM_SEND_STANDARD);
 }
 
 static void _mpc_coll_message_recv(const mpc_lowcomm_communicator_t communicator,
@@ -2413,6 +2413,7 @@ static inline int ___gather_intra(void *sendbuf,
 
 		if (sendbuf != MPC_IN_PLACE)
 		{
+			// NOLINTNEXTLINE
 			memcpy(recvbuf, sendbuf, size);
 		}
 
@@ -2445,6 +2446,7 @@ static inline int ___gather_intra(void *sendbuf,
 
 		/* If not in PLACE we need to copy the
 		 * contrib to the given slot */
+		// NOLINTNEXTLINE
 		memcpy(gather_buffer + size * rank, sendbuf, size);
 	}
 	else
@@ -2507,8 +2509,8 @@ static inline int ___gather_intra(void *sendbuf,
 				/* Check for read overflow */
 				assert((rank * size + local_size) <= (comm_size * size));
 
-				mpc_lowcomm_isend(dest_this_round, gather_buffer + (rank * size), local_size, tag, comm,
-					round_exchange);
+				mpc_lowcomm_isend(dest_this_round, gather_buffer + (rank * size), local_size,
+					tag, comm, round_exchange, MPC_LOWCOMM_SEND_STANDARD);
 
 				will_break = 1;
 			}

@@ -2346,7 +2346,7 @@ int _mpc_cl_isend(const void *buf, mpc_lowcomm_msg_count_t count,
 		tmp_buf = (void *)buf;
 	}
 
-	mpc_lowcomm_isend(dest, tmp_buf, msg_size, tag, comm, request);
+	mpc_lowcomm_isend(dest, tmp_buf, msg_size, tag, comm, request, MPC_LOWCOMM_SEND_STANDARD);
 
 	MPC_ERROR_SUCCESS();
 }
@@ -2364,7 +2364,7 @@ int _mpc_cl_issend(const void *buf, mpc_lowcomm_msg_count_t count,
 	}
 
 	// FIXME: check if really sync
-	mpc_lowcomm_isend(dest, buf, count, tag, comm, request);
+	mpc_lowcomm_isend(dest, buf, count, tag, comm, request, MPC_LOWCOMM_SEND_SYNCHRONIZED);
 
 	MPC_ERROR_SUCCESS();
 }
@@ -2428,7 +2428,7 @@ int _mpc_cl_ssend(const void *buf, mpc_lowcomm_msg_count_t count, mpc_lowcomm_da
 	size_t msg_size = count * __mpc_cl_datatype_get_size(datatype);
 
 	mpc_lowcomm_status_t status = {};
-	mpc_lowcomm_ssend(dest, buf, msg_size, tag, comm, request);
+	mpc_lowcomm_isend(dest, buf, msg_size, tag, comm, request, MPC_LOWCOMM_SEND_SYNCHRONIZED);
 	mpc_lowcomm_wait(request, &status);
 	mpc_lowcomm_request_free(request);
 
@@ -3605,7 +3605,7 @@ int mpc_mpi_cl_isend_pack(int dest, int tag, mpc_lowcomm_communicator_t comm, mp
 		MPC_ERROR_REPORT(comm, MPC_ERR_REQUEST, "");
 	}
 
-	mpc_lowcomm_isend(dest, NULL, request->header.msg_size, tag, comm, request);
+	mpc_lowcomm_isend(dest, NULL, request->header.msg_size, tag, comm, request, MPC_LOWCOMM_SEND_STANDARD);
 
 	SCTK_PROFIL_END(MPC_Isend_pack);
 	MPC_ERROR_SUCCESS();

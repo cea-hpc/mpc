@@ -419,6 +419,42 @@ typedef struct lcp_request_param
 	lcp_ep_h                     ep;           /**< Endpoint to be flushed. */
 } lcp_request_param_t;
 
+
+
+/**
+ * @ingroup LCP_COMM
+ * @brief Initialize lcp.
+ *
+ * This must be called once before using lcp.
+ *
+ */
+void lcp_init_driver(void);
+
+/**
+ * @ingroup LCP_COMM
+ * @brief Finalize lcp.
+ *
+ * This must be called once to properly release lcp.
+ */
+void lcp_finalize_driver(void);
+
+/**
+ * @ingroup LCP_COMM
+ * @brief Initialize lcp for the current task.
+ *
+ * This must be called for each task during initialization
+ *
+ */
+void lcp_init_per_task(void);
+
+/**
+ * @ingroup LCP_COMM
+ * @brief Release lcp for the current task.
+ *
+ * This must be called for each task during the finalize
+ */
+void lcp_release_per_task(void);
+
 /**
  * @ingroup LCP_COMM
  * @brief Initialize a request.

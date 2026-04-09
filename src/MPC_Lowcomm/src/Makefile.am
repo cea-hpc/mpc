@@ -49,7 +49,7 @@ lib_LTLIBRARIES = libmpclowcomm.la
 
 # low-level communication #
 libmpclowcomm_la_SOURCES = coll.c comm.c checksum.c ft.c group.c communicator.c shm_coll.c lowcomm_config.c alloc_mem.c
-libmpclowcomm_la_SOURCES += lowcomm.c msg_copy.c lowcomm_thread.c mqd.c datatypes_common.c
+libmpclowcomm_la_SOURCES += lowcomm.c lowcomm_comm.c msg_copy.c lowcomm_thread.c mqd.c datatypes_common.c lowcomm_request.c
 libmpclowcomm_la_SOURCES += rail.c reorder.c endpoint.c pset.c handle_ctx.c
 
 if ENABLE_WORKSHARE
@@ -71,6 +71,7 @@ libmpclowcomm_la_LIBADD =  $(ALLOC_LIBS) ../../MPC_Launch/src/libmpclaunch.la -l
 # LCP #
 AM_CPPFLAGS += -I$(abs_srcdir)/lcr/rails/tbsm/
 AM_CPPFLAGS += -I$(abs_srcdir)/lcp/ -I$(abs_srcdir)/lcr/
+libmpclowcomm_la_SOURCES += ./lcp/lcp_init.c ./lcp/lowcomm_lcp.c
 libmpclowcomm_la_SOURCES += ./lcr/rails/tbsm/tbsm.c
 # LCP core files
 libmpclowcomm_la_SOURCES += ./lcp/core/lcp_context.c ./lcp/core/lcp_ep.c ./lcp/core/lcp_progress.c \
