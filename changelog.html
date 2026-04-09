@@ -1,0 +1,1081 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Changelog &mdash; MPC 4.3.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+
+  
+    <link rel="shortcut icon" href="_static/mpc_logo.png"/>
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=0503a316"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Contribution Guide" href="contribute/main.html" />
+    <link rel="prev" title="Known issues" href="issues.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html">
+            
+              <img src="_static/mpc_logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="start.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="build.html">Building &amp; Installing MPC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage.html">Using MPC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="features.html">Advanced Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="faq.html">Frequently Asked Questions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="issues.html">Known issues</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Changelog</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#unreleased">[Unreleased]</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#added">Added</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#changed">Changed</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#removed">Removed</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#deprecated">Deprecated</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fixed">Fixed</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id1">4.3.1 - 2026-04-08</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id2">Added</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id3">Changed</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id4">Fixed</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id5">4.3.0 - 2025-11-18</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id6">Added</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id7">Changed</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id8">Removed</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id9">Deprecated</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id10">Fixed</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id11">4.2.0 - 2023-06-13</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id12">Added</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id13">Changed</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id14">Fixed</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id15">4.1.0 - 2021-08-03</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id16">Added</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id17">Changed</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id18">Fixed</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id19">4.0.0 - 2020-12-16</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#modularity">Modularity</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id20">Added</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id21">Changed</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id22">Deprecated</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id23">Removed</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id24">Fixed</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id25">3.4.0 - 2020-04-27</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id26">Added</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id27">Changed</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id28">Fixed</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id29">3.3.1 - 2019-06-03</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id30">Changed</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id31">Fixed</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id32">3.3.0 - 2018-12-18</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id33">Added</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id34">Changed</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id35">Fixed</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id36">3.2.0 - 2017-07-04</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id37">Added</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id38">Changed</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id39">Removed</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id40">Fixed</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id41">3.1.0 - 2016-06-27</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id42">Added</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id43">3.0.0 - 2016-02-18</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id44">Added</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id45">Changed</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id46">Fixed</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id47">2.5.2 - 2015-01-20</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id48">Added</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id49">Fixed</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id50">2.5.1</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id51">Added</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id52">Changed</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id53">Fixed</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id54">2.5.0 - 2014-01-30</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id55">Added</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id56">Changed</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id57">Fixed</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id58">2.4.1 - 2012-12-21</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id59">Added</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id60">Changed</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id61">Fixed</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id62">2.4.0 - 2012-09-25</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id63">Added</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id64">Changed</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id65">Fixed</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id66">2.3.1 - 2011-12-09</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id67">Fixed</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id68">2.3.0 - 2011-11-23</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id69">Added</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id70">Fixed</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id71">2.2.0 - 2011-06-14</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id72">Added</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id73">Changed</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id74">Fixed</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id75">2.1.0 - 2011-04-29</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id76">Added</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id77">Fixed</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id78">1.1.0</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id79">Added</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id80">Fixed</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Contribution Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="contribute/main.html">Contribution Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer Documentation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="api/main.html">Multi-Processor Computing (MPC) Framework Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/main.html#modules-documentation">Modules Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/main.html#code-documentation">Code Documentation</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Links</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference external" href="https://mpc.hpcframework.com">Official Website (mpc.hpcframework.com)</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/cea-hpc/mpc">Repository (github.com)</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://mpc.hpcframework.com/publications-2/">Publications (mpc.hpcframework.com)</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">MPC</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Changelog</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/changelog.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="changelog">
+<h1>Changelog<a class="headerlink" href="#changelog" title="Link to this heading"></a></h1>
+<p>All notable changes to this project will be documented in this file. The format is based on <a class="reference external" href="https://keepachangelog.com/">Keep a Changelog</a>.</p>
+<section id="unreleased">
+<h2>[Unreleased]<a class="headerlink" href="#unreleased" title="Link to this heading"></a></h2>
+<section id="added">
+<h3>Added<a class="headerlink" href="#added" title="Link to this heading"></a></h3>
+</section>
+<section id="changed">
+<h3>Changed<a class="headerlink" href="#changed" title="Link to this heading"></a></h3>
+</section>
+<section id="removed">
+<h3>Removed<a class="headerlink" href="#removed" title="Link to this heading"></a></h3>
+</section>
+<section id="deprecated">
+<h3>Deprecated<a class="headerlink" href="#deprecated" title="Link to this heading"></a></h3>
+</section>
+<section id="fixed">
+<h3>Fixed<a class="headerlink" href="#fixed" title="Link to this heading"></a></h3>
+</section>
+</section>
+<section id="id1">
+<h2><a class="reference external" href="https://github.com/cea-hpc/mpc/releases/tag/MPC_4.3.1">4.3.1</a> - 2026-04-08<a class="headerlink" href="#id1" title="Link to this heading"></a></h2>
+<section id="id2">
+<h3>Added<a class="headerlink" href="#id2" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><strong>Common</strong></p>
+<ul>
+<li><p>Debug assertion in the mempool to detect bad behavior</p></li>
+</ul>
+</li>
+<li><p><strong>LowComm</strong></p>
+<ul>
+<li><p>Support for floating point numbers in atomic operations</p></li>
+</ul>
+</li>
+</ul>
+</section>
+<section id="id3">
+<h3>Changed<a class="headerlink" href="#id3" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><strong>Build</strong></p>
+<ul>
+<li><p>Enable process-mode by default when using <code class="docutils literal notranslate"><span class="pre">installmpc</span></code></p></li>
+<li><p>Search <em>SLURM</em> as default launcher in <code class="docutils literal notranslate"><span class="pre">installmpc</span></code> and fallback to <em>Hydra</em> if not found</p></li>
+</ul>
+</li>
+<li><p><strong>Chore</strong></p>
+<ul>
+<li><p>Default branch to main (devel and master will not be updated)</p></li>
+<li><p>Refactor Documentation and deployment through GitHub pages</p></li>
+</ul>
+</li>
+<li><p><strong>LowComm</strong></p>
+<ul>
+<li><p>Avoid warnings in CPP by changing header inclusion rules</p></li>
+<li><p>Improve selection of the network devices to initialize</p></li>
+<li><p>Generate and use unique tags for internal communications (avoiding incorrect matches)</p></li>
+</ul>
+</li>
+<li><p><strong>MPCRUN</strong></p>
+<ul>
+<li><p>Optimize launching time by removing one <code class="docutils literal notranslate"><span class="pre">mpc_print_config</span></code> invocation</p></li>
+</ul>
+</li>
+<li><p><strong>Pthread</strong></p>
+<ul>
+<li><p>Avoid redefinition of standard libc symbols in process-mode</p></li>
+</ul>
+</li>
+</ul>
+</section>
+<section id="id4">
+<h3>Fixed<a class="headerlink" href="#id4" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><strong>Build</strong></p>
+<ul>
+<li><p>Export missing build necessary files in the archive</p></li>
+</ul>
+</li>
+<li><p><strong>Common</strong></p>
+<ul>
+<li><p>Set visibility attributes of user main to default</p></li>
+</ul>
+</li>
+<li><p><strong>Fortran</strong></p>
+<ul>
+<li><p>Non standard code generation</p></li>
+<li><p>Properly convert MPI NULL handles and indexes from C</p></li>
+</ul>
+</li>
+<li><p><strong>MPI</strong></p>
+<ul>
+<li><p>Active Message handling in Thread-Based</p></li>
+<li><p>Unpacking of user created datatypes</p></li>
+<li><p>Deadlock in <code class="docutils literal notranslate"><span class="pre">MPI_Waitall</span></code> in Thread-Based</p></li>
+<li><p>Possible double frees in Window creation and freeing</p></li>
+<li><p>Add missing qualifiers and Fortran constants to the exported API</p></li>
+</ul>
+</li>
+<li><p><strong>Low Comm</strong></p>
+<ul>
+<li><p>Multinic devices initialization</p></li>
+<li><p>Interface capabilities initialization</p></li>
+<li><p>Deadlock in backend releasing</p></li>
+<li><p>Deadlock in flush operation with no pending communications</p></li>
+<li><p>Potential error in PTL finalization in multithreaded context</p></li>
+<li><p>Rendezvous Active Message user headers not reaching the target</p></li>
+<li><p>Release the PTL backend in the right order</p></li>
+</ul>
+</li>
+<li><p>Memory related potential bugs in MPI, Low Comm, Common and Config</p></li>
+</ul>
+</section>
+</section>
+<section id="id5">
+<h2><a class="reference external" href="https://github.com/cea-hpc/mpc/releases/tag/MPC_4.3.0">4.3.0</a> - 2025-11-18<a class="headerlink" href="#id5" title="Link to this heading"></a></h2>
+<section id="id6">
+<h3>Added<a class="headerlink" href="#id6" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><strong>Accelerators</strong></p>
+<ul>
+<li><p>Support CUDA</p></li>
+<li><p>Support HIP</p></li>
+</ul>
+</li>
+<li><p><strong>Build</strong></p>
+<ul>
+<li><p>Add release with debug information optimization option (<code class="docutils literal notranslate"><span class="pre">--relwithdebinfo</span></code>)</p></li>
+</ul>
+</li>
+<li><p><strong>Low Comm</strong> / RED-SEA Project</p>
+<ul>
+<li><p>Refactoring LCP module to better support suit protocols evolutions</p></li>
+<li><p>Support for implementing protocols on top of rails (active message)</p></li>
+<li><p>Support for multirail and fragmentation</p></li>
+<li><p>Extension of rail API to support stream-like data transfers (tcp and ptl only)</p></li>
+<li><p>Component-based transport with static loading</p></li>
+</ul>
+</li>
+<li><p><strong>MPI</strong></p>
+<ul>
+<li><p>Support Gather Allgather Bcast topological collectives</p></li>
+<li><p>Support for MPI Tools interface</p></li>
+</ul>
+</li>
+</ul>
+</section>
+<section id="id7">
+<h3>Changed<a class="headerlink" href="#id7" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><strong>Compilers</strong></p>
+<ul>
+<li><p>Activate privatization only if the underlying compiler is capable</p></li>
+</ul>
+</li>
+<li><p><strong>OMP</strong></p>
+<ul>
+<li><p>Enhancing support of OpenMP task and interactions with MPI</p></li>
+</ul>
+</li>
+<li><p><strong>MPCRUN</strong></p>
+<ul>
+<li><p>Change default count for resource request</p></li>
+</ul>
+</li>
+</ul>
+</section>
+<section id="id8">
+<h3>Removed<a class="headerlink" href="#id8" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><strong>Low Comm</strong></p>
+<ul>
+<li><p>Remove deprecated Portals compatibility layer</p></li>
+</ul>
+</li>
+<li><p><strong>Threads</strong></p>
+<ul>
+<li><p>Remove NG scheduler used for research purposes</p></li>
+</ul>
+</li>
+</ul>
+</section>
+<section id="id9">
+<h3>Deprecated<a class="headerlink" href="#id9" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><strong>Threads</strong></p>
+<ul>
+<li><p>Workshare support (needs GCC 7.3 to work)</p></li>
+</ul>
+</li>
+</ul>
+</section>
+<section id="id10">
+<h3>Fixed<a class="headerlink" href="#id10" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><strong>Build</strong></p>
+<ul>
+<li><p>Add support for GCC 13, 14, 15 and C23</p></li>
+<li><p>Fix –enable-debug-mem by correctly depending on libasan</p></li>
+</ul>
+</li>
+<li><p><strong>Compilers</strong></p>
+<ul>
+<li><p>Fix compilers wrong error code propagation</p></li>
+<li><p>Fix wrong linking option with fortran in process mode</p></li>
+</ul>
+</li>
+<li><p><strong>Launch</strong></p>
+<ul>
+<li><p>Fix PMIx inter-node intra-node initialization</p></li>
+<li><p>Add missing calls to PMIx_Finalize</p></li>
+<li><p>Fix wrong termination with PMIx on abortion</p></li>
+</ul>
+</li>
+<li><p><strong>Low Comm</strong></p>
+<ul>
+<li><p>Fix PTL RMA completion system</p></li>
+<li><p>Fix PTL RMA Flush operations</p></li>
+<li><p>Fix LCP atomics</p></li>
+</ul>
+</li>
+<li><p><strong>MPI</strong></p>
+<ul>
+<li><p>Fix Exscan algorithm selection</p></li>
+<li><p>Fix Pack and Unpack capabilities</p></li>
+<li><p>Fix MPI_Self path</p></li>
+<li><p>Accept NULL as bypass for MPI_T query functions</p></li>
+<li><p>Fix persistent communications request initialization</p></li>
+</ul>
+</li>
+<li><p>Plenty of small bug fixes in all parts of MPC</p></li>
+</ul>
+</section>
+</section>
+<section id="id11">
+<h2><a class="reference external" href="https://github.com/cea-hpc/mpc/releases/tag/MPC_4.2.0">4.2.0</a> - 2023-06-13<a class="headerlink" href="#id11" title="Link to this heading"></a></h2>
+<section id="id12">
+<h3>Added<a class="headerlink" href="#id12" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><strong>COMPILER</strong> new wrappers for mpicc++ and mpif90 (privatization)</p></li>
+<li><p><strong>SESSIONS</strong> adding sessions support</p></li>
+<li><p><strong>OMP</strong></p>
+<ul>
+<li><p>Added fibers to OpenMP tasks</p></li>
+<li><p>Fix OMP Tool support</p></li>
+<li><p>Added interoperation between MPC-MPI / MPC-OpenMP(tasks) for the « loss of thread issue »</p></li>
+<li><p>Refactored OpenMP task runtime (memory management, dependencies, tasks priorities)</p></li>
+</ul>
+</li>
+<li><p><strong>MPI</strong></p>
+<ul>
+<li><p>adding message queue</p></li>
+<li><p>new pairwise alltoall algorithm</p></li>
+</ul>
+</li>
+<li><p><strong>CONFIG</strong> add intracomm collective communications config switch</p></li>
+</ul>
+</section>
+<section id="id13">
+<h3>Changed<a class="headerlink" href="#id13" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><strong>UPGRADE</strong> upgrade to autopriv&#64;0.8.0 then to autopriv&#64;0.9.1</p></li>
+<li><p><strong>INFRASTRUCTURE</strong> moving communicator attributes to lowcomm</p></li>
+<li><p><strong>PMIX</strong> detection and execution improvements</p></li>
+</ul>
+</section>
+<section id="id14">
+<h3>Fixed<a class="headerlink" href="#id14" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p>fix ompt</p></li>
+<li><p>fix allocation on tree initialization</p></li>
+<li><p>fix mpirun return code</p></li>
+<li><p>fix –without-rocm</p></li>
+<li><p>fix nbc thread segfault</p></li>
+<li><p>fix –disable-mpc-alloc</p></li>
+<li><p>fix long arguments</p></li>
+<li><p>Clean of the RDMA</p></li>
+<li><p>Removal of RDMA control messages</p></li>
+<li><p>Fixes on communicator pruning in thread-based</p></li>
+<li><p>fix shm</p></li>
+<li><p>fix MPI_PRIV</p></li>
+<li><p>free in topological communicators</p></li>
+<li><p>elements scattering in topological scatter</p></li>
+<li><p>–autokilll</p></li>
+<li><p>lib dependencies path</p></li>
+<li><p>output color</p></li>
+<li><p>portals and PMIX</p></li>
+<li><p>MPI_STATUS</p></li>
+</ul>
+</section>
+</section>
+<section id="id15">
+<h2><a class="reference external" href="https://github.com/cea-hpc/mpc/releases/tag/MPC_4.1.0">4.1.0</a> - 2021-08-03<a class="headerlink" href="#id15" title="Link to this heading"></a></h2>
+<section id="id16">
+<h3>Added<a class="headerlink" href="#id16" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><strong>Config</strong></p>
+<ul>
+<li><p>Add new configuration system inside MPC (only at runtime)</p></li>
+</ul>
+</li>
+<li><p><strong>Low Comm</strong></p>
+<ul>
+<li><p>Add libfabric support (OFI)</p></li>
+<li><p>Active Message engine based on libffi</p></li>
+</ul>
+</li>
+<li><p><strong>MPCRUN</strong></p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">PRRTE</span></code> implement support for the PMIx standard runtime.</p></li>
+</ul>
+</li>
+<li><p><strong>MPI</strong></p>
+<ul>
+<li><p>MPI 4.0 Split topology support</p></li>
+<li><p>Topological collectives support</p></li>
+</ul>
+</li>
+<li><p><strong>OMP</strong></p>
+<ul>
+<li><p>Add OMP 5.0 memory management support (includes HWLOC 2+ support)</p></li>
+</ul>
+</li>
+<li><p><strong>Threads</strong></p>
+<ul>
+<li><p>Workshare support</p></li>
+</ul>
+</li>
+</ul>
+</section>
+<section id="id17">
+<h3>Changed<a class="headerlink" href="#id17" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><strong>Build</strong></p>
+<ul>
+<li><p>Autopriv dependency has been renamed to mpc-compiler-additions</p></li>
+<li><p>Move to HWLOC 2+</p></li>
+<li><p>Move to mpc-compiler-additions 0.7.0 with GCC 10.2.0</p></li>
+<li><p>Expose MPC’s modularity in PKGCONFIG / CMAKE</p></li>
+</ul>
+</li>
+<li><p><strong>Low Comm</strong></p>
+<ul>
+<li><p>Improved DNS resolution for TCP</p></li>
+</ul>
+</li>
+<li><p><strong>MPI</strong></p>
+<ul>
+<li><p>MPIT rewrite mirroring the new configuration system</p></li>
+<li><p>Full communicator / Group system rewrite</p></li>
+<li><p>Collective factorization and rewrite</p></li>
+</ul>
+</li>
+<li><p><strong>OMP</strong></p>
+<ul>
+<li><p>OMPT improvements</p></li>
+</ul>
+</li>
+</ul>
+</section>
+<section id="id18">
+<h3>Fixed<a class="headerlink" href="#id18" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><strong>MPI</strong></p>
+<ul>
+<li><p>Bugfix on persistent collectives</p></li>
+</ul>
+</li>
+<li><p>General bugfixes and documentation</p></li>
+</ul>
+</section>
+</section>
+<section id="id19">
+<h2><a class="reference external" href="https://github.com/cea-hpc/mpc/releases/tag/MPC_4.0.0">4.0.0</a> - 2020-12-16<a class="headerlink" href="#id19" title="Link to this heading"></a></h2>
+<p><strong>This is a BETA release</strong></p>
+<p>For this release MPC has undergone a massive refactoring. It is in some aspects not compatible with previous versions of MPC. It should bring several enhancements in terms of installation process and modularity. One should not expect binary compatibility with a previous version of MPC. Due to the massive changes, this changelog cannot be fully exhaustive.</p>
+<section id="modularity">
+<h3>Modularity<a class="headerlink" href="#modularity" title="Link to this heading"></a></h3>
+<p>MPC is now modular and comes in several components:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">lowcomm</span></code> : component handling and providing the networks interfaces</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">threads</span></code> : component handling and providing the user-level thread scheduler</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">mpi</span></code> : component handling and providing the MPI standard API</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">mpiio</span></code> : component handling and providing the IO part of the MPI standard API</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">openmp</span></code> : component handling and providing the OpenMP standard API</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">fortran</span></code> : component handling and providing the Fortran interface for the above parallel programming APIs</p></li>
+<li><p>… and other internal components</p></li>
+</ul>
+<p>Such aforementioned components can be enabled and disabled using <code class="docutils literal notranslate"><span class="pre">--enable/disable-XX</span></code> as mpc-options in the installation script, or through variants in the new Spack building recipe.
+Note that some components are dependent and cannot be installed if the dependencies are disabled (e.g., <code class="docutils literal notranslate"><span class="pre">mpiio</span></code> depends on <code class="docutils literal notranslate"><span class="pre">mpi</span></code>, and cannot be installed if <code class="docutils literal notranslate"><span class="pre">mpi</span></code> is disabled).</p>
+</section>
+<section id="id20">
+<h3>Added<a class="headerlink" href="#id20" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><strong>PMIX</strong>: PMIX is now supported through <code class="docutils literal notranslate"><span class="pre">--with-pmix</span></code></p></li>
+<li><p><strong>PRIV</strong>: Support for new GCCs (using now external autopriv) up to 10.2.0 (using <code class="docutils literal notranslate"><span class="pre">--gcc-version=X.X.X</span></code>)</p></li>
+<li><p><strong>STATUS</strong>: the <code class="docutils literal notranslate"><span class="pre">mpc_status</span></code> command can be used to print current MPC configuration</p></li>
+<li><p><strong>BUILD</strong>: once installed with <code class="docutils literal notranslate"><span class="pre">./installmpc</span></code> MPC can be reconfigured with <code class="docutils literal notranslate"><span class="pre">./reconfigure</span></code> in the build directory. MPC is now longer in an <code class="docutils literal notranslate"><span class="pre">mpcframework</span></code> subdirectory</p></li>
+</ul>
+</section>
+<section id="id21">
+<h3>Changed<a class="headerlink" href="#id21" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><strong>BUILD</strong>: Installation process compatible with Spack to manage package dependencies</p></li>
+<li><p><strong>BUILD</strong>: MPC now relies on autotools as its build system</p></li>
+<li><p><strong>BUILD</strong>: It is possible to directly call <code class="docutils literal notranslate"><span class="pre">./configure</span></code> to use MPC in a modular way</p></li>
+<li><p><strong>DEPS</strong>: dependencies can be downloaded on demand, a <code class="docutils literal notranslate"><span class="pre">light</span></code> version is a version not providing the dependencies. <code class="docutils literal notranslate"><span class="pre">./installmpc</span> <span class="pre">--download-missing-deps</span></code> can be used to retrieve the dependencies for a given configuration. Conversely a <code class="docutils literal notranslate"><span class="pre">full</span></code> version includes all dependencies for the default configuration</p></li>
+<li><p><strong>COMM</strong>: communicator management was fully rewritten. The MPI_Comm is now a pointer (instead of an integer)</p></li>
+<li><p><strong>MPCRUN</strong>: mpcrun has been fully rewritten</p></li>
+<li><p><strong>MPIIO</strong>: MPI-IO support (ROMIO) is now integrated in MPC</p></li>
+<li><p><strong>FORTRAN</strong>: the Fortran interface is now external and optional (MPC_Fortran)</p></li>
+</ul>
+</section>
+<section id="id22">
+<h3>Deprecated<a class="headerlink" href="#id22" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><strong>mpcrun</strong>: several options from <code class="docutils literal notranslate"><span class="pre">mpcrun</span></code> were deprecated they should now be no-op</p></li>
+<li><p><strong>installmpc</strong>: several options from <code class="docutils literal notranslate"><span class="pre">./installmpc</span></code> were deprecated they should now be no-op</p></li>
+</ul>
+</section>
+<section id="id23">
+<h3>Removed<a class="headerlink" href="#id23" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><strong>mpc_compiler_manager</strong>: the <code class="docutils literal notranslate"><span class="pre">mpc_compiler_manager</span></code> command is no longer provided. MPC is now compiled against a <strong>single</strong> compiler</p></li>
+<li><p><strong>mpc_icc</strong> and compiler specific wrappers: MPC now provides only <code class="docutils literal notranslate"><span class="pre">mpc_{cc,cxx,f77}</span></code> and <code class="docutils literal notranslate"><span class="pre">mpi{cc,cxx,f77}</span></code> wrappers</p></li>
+<li><p><strong>PRIV</strong>: all privatization has been externalized in <strong>autopriv</strong>, including, compilers, plugins, TLS library and privatized getopt</p></li>
+</ul>
+</section>
+<section id="id24">
+<h3>Fixed<a class="headerlink" href="#id24" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><strong>COMM</strong>: Default communicator attributes were fixed (APP_NUM, MPI_IO, MPI_HOST)</p></li>
+<li><p><strong>COLL</strong>: fixed several collectives</p></li>
+<li><p><strong>COMM</strong>: Major fixes in communicator management (free, creation and reuse)</p></li>
+<li><p><strong>MISC</strong>: less contention on large SMP (various optimizations)</p></li>
+<li><p><strong>MISC</strong>: various fixes in the lowcomm and MPI layers</p></li>
+</ul>
+</section>
+</section>
+<section id="id25">
+<h2><a class="reference external" href="https://github.com/cea-hpc/mpc/releases/tag/MPC_3.4.0">3.4.0</a> - 2020-04-27<a class="headerlink" href="#id25" title="Link to this heading"></a></h2>
+<section id="id26">
+<h3>Added<a class="headerlink" href="#id26" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><strong>AM</strong>: Integration of custom Active Message relying on gRPC approach</p></li>
+<li><p><strong>NET</strong>: Support of MPI HW-enabled operations through Portals4 driver</p></li>
+<li><p><strong>MISC</strong>: Addition of this Changelog file</p></li>
+<li><p><strong>MISC</strong>: New doc structure through Markdown</p></li>
+</ul>
+</section>
+<section id="id27">
+<h3>Changed<a class="headerlink" href="#id27" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><strong>OMP</strong>: Improved OMPT support</p></li>
+<li><p><strong>PRIV</strong>: MPC default privatizing compiler is now GCC 7.3.0</p></li>
+</ul>
+</section>
+<section id="id28">
+<h3>Fixed<a class="headerlink" href="#id28" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><strong>MPI</strong>: Optimizations and corrections of nonblocking collectives</p></li>
+<li><p><strong>MPI</strong>: Bug fix on virtual topologies (MPI_Cart…)</p></li>
+<li><p><strong>OMP</strong>: Bug fix on tasks with dependencies</p></li>
+<li><p><strong>MISC</strong>: Many other small optimizations and bug fixes</p></li>
+</ul>
+</section>
+</section>
+<section id="id29">
+<h2><a class="reference external" href="https://github.com/cea-hpc/mpc/releases/tag/MPC_3.3.1">3.3.1</a> - 2019-06-03<a class="headerlink" href="#id29" title="Link to this heading"></a></h2>
+<section id="id30">
+<h3>Changed<a class="headerlink" href="#id30" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><strong>MISC</strong>: General source-code cleanup</p></li>
+<li><p><strong>MPI</strong>: Message latency optimization</p></li>
+<li><p><strong>MPI</strong>: Message progress with copy engine</p></li>
+</ul>
+</section>
+<section id="id31">
+<h3>Fixed<a class="headerlink" href="#id31" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><strong>MPI</strong>: wrappers (mpirun) bugfix</p></li>
+<li><p><strong>MPI</strong>: NBCs, Collectives and Communicators bugfixes</p></li>
+</ul>
+</section>
+</section>
+<section id="id32">
+<h2><a class="reference external" href="https://github.com/cea-hpc/mpc/releases/tag/MPC_3.3.0">3.3.0</a> - 2018-12-18<a class="headerlink" href="#id32" title="Link to this heading"></a></h2>
+<section id="id33">
+<h3>Added<a class="headerlink" href="#id33" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><strong>MPI</strong>: C/R support (Shmem, TCP &amp; IB handlings)</p></li>
+<li><p><strong>MPI</strong>: Shared-memory shortcut set for intra-node communications</p></li>
+<li><p><strong>OMP</strong>: Support for OMP_PLACES</p></li>
+<li><p><strong>PRIV</strong>: GCC 7.2.0 compatibility (not set as default)</p></li>
+<li><p><strong>BUILD</strong>: Spack recipes for MPC, and patched GCC</p></li>
+<li><p><strong>BUILD</strong>: Docker recipes for CentOS/Debian</p></li>
+<li><p><strong>RUN</strong>: New mpcrun options related to placement debugging</p></li>
+</ul>
+</section>
+<section id="id34">
+<h3>Changed<a class="headerlink" href="#id34" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><strong>MPI</strong>: Collective algorithms optimizations</p></li>
+<li><p><strong>MPI</strong>: NBC communication progress improvements</p></li>
+<li><p><strong>NET</strong>: Full rewrite for the Portals 4 driver (only process-mode)</p></li>
+</ul>
+</section>
+<section id="id35">
+<h3>Fixed<a class="headerlink" href="#id35" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><strong>OMP</strong>: Tasking bug fixes</p></li>
+<li><p><strong>OMP</strong>: OMPT Stabilization</p></li>
+<li><p><strong>BUILD</strong>: Fix for older Autotools</p></li>
+<li><p><strong>MISC</strong>: Process-mode performance optimizations</p></li>
+<li><p><strong>PRIV</strong>: mpc_compiler_manager optimizations and Fortran bug fixes</p></li>
+<li><p><strong>BUILD</strong>: Improve installmpc procedure when GCC is not required</p></li>
+<li><p><strong>MISC</strong>: Various bug fixes</p></li>
+<li><p><strong>MISC</strong>: Documentation</p></li>
+</ul>
+</section>
+</section>
+<section id="id36">
+<h2><a class="reference external" href="https://github.com/cea-hpc/mpc/releases/tag/MPC_3.2.0">3.2.0</a> - 2017-07-04<a class="headerlink" href="#id36" title="Link to this heading"></a></h2>
+<section id="id37">
+<h3>Added<a class="headerlink" href="#id37" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><strong>MPI</strong>: Support for MPI RMA (3.1)</p></li>
+<li><p><strong>MPI</strong>: MPI-T Support</p></li>
+<li><p><strong>MPI</strong>: Fortran 2008 modules</p></li>
+<li><p><strong>OMP</strong>: Support for the GOMP ABI</p></li>
+<li><p><strong>OMP</strong>: Support for OMP tasks with dependencies</p></li>
+<li><p><strong>OMP</strong>: OMPT Support</p></li>
+<li><p><strong>PRIV</strong>: Support for privatized CUDA contexts and privatization of Cuda programs using a dedicated compiler wrappers (mpc_nvcc)</p></li>
+<li><p><strong>PRIV</strong>: On the fly Fortran module generation</p></li>
+<li><p><strong>PRIV</strong>: Initial support for ARM</p></li>
+<li><p><strong>BUILD</strong>: Add a process mode for the installation (–mpc-process-mode)</p></li>
+<li><p><strong>BUILD</strong>: Add an “mpc_cleaner” command</p></li>
+</ul>
+</section>
+<section id="id38">
+<h3>Changed<a class="headerlink" href="#id38" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><strong>MPI</strong>: Shared-memory optimization of collectives</p></li>
+<li><p><strong>PRIV</strong>: Update to GCC 6.2 as the default privatizing compiler</p></li>
+<li><p><strong>PRIV</strong>: Enhance compiler manager and install management</p></li>
+</ul>
+</section>
+<section id="id39">
+<h3>Removed<a class="headerlink" href="#id39" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><strong>MISC</strong>: For now TBB has been disabled by default</p></li>
+</ul>
+</section>
+<section id="id40">
+<h3>Fixed<a class="headerlink" href="#id40" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><strong>MPI</strong>: Stabilization of the NBCs</p></li>
+<li><p><strong>MPI</strong>: Several bug-fixes</p></li>
+<li><p><strong>OMP</strong>: Several bug-fixes</p></li>
+<li><p><strong>PRIV</strong>: Fix support for optimized TLS with icc</p></li>
+<li><p><strong>PRIV</strong>: Several bug-fixes</p></li>
+</ul>
+</section>
+</section>
+<section id="id41">
+<h2><a class="reference external" href="https://github.com/cea-hpc/mpc/releases/tag/MPC_3.1.0">3.1.0</a> - 2016-06-27<a class="headerlink" href="#id41" title="Link to this heading"></a></h2>
+<section id="id42">
+<h3>Added<a class="headerlink" href="#id42" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><strong>PRIV</strong>: Rewrite of the TLS/HLS support</p></li>
+<li><p><strong>PRIV</strong>: Support for all linker level optimizations</p></li>
+<li><p><strong>PRIV</strong>: Definition of new C and C++ keywords</p></li>
+<li><p><strong>PRIV</strong>: Outlining of the exTLS library separating TLS from MPC</p></li>
+<li><p><strong>PRIV</strong>: Full support for global variable privatization in C</p></li>
+<li><p><strong>PRIV</strong>: Support for dynamic initializers in C to handle some TLS edge cases</p></li>
+<li><p><strong>PRIV</strong>: New compiler manager (from command line)</p></li>
+</ul>
+</section>
+</section>
+<section id="id43">
+<h2><a class="reference external" href="https://github.com/cea-hpc/mpc/releases/tag/MPC_3.0.0">3.0.0</a> - 2016-02-18<a class="headerlink" href="#id43" title="Link to this heading"></a></h2>
+<section id="id44">
+<h3>Added<a class="headerlink" href="#id44" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><strong>MPI</strong>: Integration of ROMIO and MPI-IO</p></li>
+<li><p><strong>MPI</strong>: Integration of Non-Blocking Collectives (NBC) (excluding IO)</p></li>
+<li><p><strong>MPI</strong>: Add Fortran90 support (.mod)</p></li>
+<li><p><strong>MPI</strong>: Support for heterogeneous data-types in collectives</p></li>
+<li><p><strong>BUILD</strong>: Add support for a library mode for embedding inside another MPI runtime</p></li>
+<li><p><strong>MISC</strong>: Internal implementation of asynchronous IO for old libc (AIO threads are launched with small stacks)</p></li>
+<li><p><strong>NET</strong>: Generic Multi-rail support with gates (from XML configuration file)</p></li>
+<li><p><strong>NET</strong>: Support for Portals 4</p></li>
+<li><p><strong>NET</strong>: Support for SHM</p></li>
+<li><p><strong>NET</strong>: Add low-level RDMA (for IB and Portals) and implement emulated calls</p></li>
+</ul>
+</section>
+<section id="id45">
+<h3>Changed<a class="headerlink" href="#id45" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><strong>MPI</strong>: Various improvements on data-types and collectives</p></li>
+<li><p><strong>MPI</strong>: Request management in the MPI interface was optimized</p></li>
+<li><p><strong>PRIV</strong>: Support for a privatized version of Getopt</p></li>
+<li><p><strong>NET</strong>: Addition of a generic device detection engine with distance matrix (HWLOC-based)</p></li>
+<li><p><strong>NET</strong>: Improved topological polling in Infiniband (from device detection)</p></li>
+<li><p><strong>NET</strong>: Outline of a « low-level » communication interface (cont. p2p messages and RDMA)</p></li>
+</ul>
+</section>
+<section id="id46">
+<h3>Fixed<a class="headerlink" href="#id46" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><strong>MPI</strong>: Collectives on inter-communicators and IN_PLACE related fixes</p></li>
+<li><p><strong>MPI</strong>: Fixes on MPI topologies</p></li>
+<li><p><strong>MPI</strong>: Various Bugfixes</p></li>
+<li><p><strong>OMP</strong>: Fixes in the Intel OpenMP interface</p></li>
+<li><p><strong>OMP</strong>: Corrections on topology support</p></li>
+</ul>
+</section>
+</section>
+<section id="id47">
+<h2><a class="reference external" href="https://github.com/cea-hpc/mpc/releases/tag/MPC_2.5.2">2.5.2</a> - 2015-01-20<a class="headerlink" href="#id47" title="Link to this heading"></a></h2>
+<section id="id48">
+<h3>Added<a class="headerlink" href="#id48" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><strong>MPI</strong>: Extended data-type support (up to MPI 3.0)</p></li>
+<li><p><strong>MPI</strong>: Optimized data-types (flattening and reuse)</p></li>
+<li><p><strong>MPI</strong>: Extended Generic Request and extended generic request class support</p></li>
+<li><p><strong>MPI</strong>: External32 data-representation support</p></li>
+<li><p><strong>MPI</strong>: MPI_Info support</p></li>
+<li><p><strong>OMP</strong>: Add support for Intel(r) OpenMP ABI (run OpenMP applications compiled with ICC)</p></li>
+</ul>
+</section>
+<section id="id49">
+<h3>Fixed<a class="headerlink" href="#id49" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><strong>MPI</strong>: Several fixes to the Fortran interface</p></li>
+<li><p><strong>MPI</strong>: Various bugfixes</p></li>
+</ul>
+</section>
+</section>
+<section id="id50">
+<h2><a class="reference external" href="https://github.com/cea-hpc/mpc/releases/tag/MPC_2.5.1">2.5.1</a><a class="headerlink" href="#id50" title="Link to this heading"></a></h2>
+<section id="id51">
+<h3>Added<a class="headerlink" href="#id51" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><strong>BUILD</strong>: New build system</p></li>
+<li><p><strong>ARCH</strong>: Xeon-Phi Support</p></li>
+<li><p><strong>ARCH</strong>: Cross compilation support</p></li>
+</ul>
+</section>
+<section id="id52">
+<h3>Changed<a class="headerlink" href="#id52" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><strong>OMP</strong>: optimizations</p></li>
+</ul>
+</section>
+<section id="id53">
+<h3>Fixed<a class="headerlink" href="#id53" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><strong>MISC</strong>: Various Bugfixes</p></li>
+</ul>
+</section>
+</section>
+<section id="id54">
+<h2><a class="reference external" href="https://github.com/cea-hpc/mpc/releases/tag/MPC_2.5.0">2.5.0</a> - 2014-01-30<a class="headerlink" href="#id54" title="Link to this heading"></a></h2>
+<section id="id55">
+<h3>Added<a class="headerlink" href="#id55" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><strong>PRIV</strong>: Add Patched GCC 4.8.0 with privatization of global objects</p></li>
+</ul>
+</section>
+<section id="id56">
+<h3>Changed<a class="headerlink" href="#id56" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><strong>MPI</strong>: Performance optimizations</p></li>
+<li><p><strong>OMP</strong>: New runtime (NUMA optimizations)</p></li>
+<li><p><strong>OMP</strong>: Performance optimizations</p></li>
+</ul>
+</section>
+<section id="id57">
+<h3>Fixed<a class="headerlink" href="#id57" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p>Many bug fixes</p></li>
+</ul>
+</section>
+</section>
+<section id="id58">
+<h2><a class="reference external" href="https://github.com/cea-hpc/mpc/releases/tag/MPC_2.4.1">2.4.1</a> - 2012-12-21<a class="headerlink" href="#id58" title="Link to this heading"></a></h2>
+<section id="id59">
+<h3>Added<a class="headerlink" href="#id59" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><strong>ALLOC</strong>: Custom memory allocator embedded into mpcframework</p></li>
+</ul>
+</section>
+<section id="id60">
+<h3>Changed<a class="headerlink" href="#id60" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><strong>MISC</strong>: Performance optimizations</p></li>
+</ul>
+</section>
+<section id="id61">
+<h3>Fixed<a class="headerlink" href="#id61" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p>many small bug fixes</p></li>
+</ul>
+</section>
+</section>
+<section id="id62">
+<h2><a class="reference external" href="https://github.com/cea-hpc/mpc/releases/tag/MPC_2.4.0">2.4.0</a> - 2012-09-25<a class="headerlink" href="#id62" title="Link to this heading"></a></h2>
+<section id="id63">
+<h3>Added<a class="headerlink" href="#id63" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><strong>NET</strong>: Collaborative polling</p></li>
+</ul>
+</section>
+<section id="id64">
+<h3>Changed<a class="headerlink" href="#id64" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><strong>PRIV</strong>: automatic privatization improvements</p></li>
+<li><p><strong>MISC</strong>: “Performance optimizations”</p></li>
+</ul>
+</section>
+<section id="id65">
+<h3>Fixed<a class="headerlink" href="#id65" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p>many small fixes</p></li>
+</ul>
+</section>
+</section>
+<section id="id66">
+<h2><a class="reference external" href="https://github.com/cea-hpc/mpc/releases/tag/MPC_2.3.1">2.3.1</a> - 2011-12-09<a class="headerlink" href="#id66" title="Link to this heading"></a></h2>
+<section id="id67">
+<h3>Fixed<a class="headerlink" href="#id67" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><strong>PRIV</strong>: Bug fixes in HLS support</p></li>
+</ul>
+</section>
+</section>
+<section id="id68">
+<h2><a class="reference external" href="https://github.com/cea-hpc/mpc/releases/tag/MPC_2.3.0">2.3.0</a> - 2011-11-23<a class="headerlink" href="#id68" title="Link to this heading"></a></h2>
+<section id="id69">
+<h3>Added<a class="headerlink" href="#id69" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><strong>PRIV</strong>: HLS (Hierarchical Local Storage) support</p></li>
+<li><p><strong>RUN</strong>: Hydra launcher</p></li>
+</ul>
+</section>
+<section id="id70">
+<h3>Fixed<a class="headerlink" href="#id70" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><strong>MPI</strong>: programming model</p></li>
+<li><p><strong>OMP</strong>: programming model</p></li>
+<li><p><strong>BUILD</strong>: installation process</p></li>
+</ul>
+</section>
+</section>
+<section id="id71">
+<h2><a class="reference external" href="https://github.com/cea-hpc/mpc/releases/tag/MPC_2.2.0">2.2.0</a> - 2011-06-14<a class="headerlink" href="#id71" title="Link to this heading"></a></h2>
+<section id="id72">
+<h3>Added<a class="headerlink" href="#id72" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><strong>PRIV</strong>: Extended TLS support</p></li>
+</ul>
+</section>
+<section id="id73">
+<h3>Changed<a class="headerlink" href="#id73" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><strong>NET</strong>: New InfiniBand support</p></li>
+</ul>
+</section>
+<section id="id74">
+<h3>Fixed<a class="headerlink" href="#id74" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><strong>MPI</strong>: Programming model</p></li>
+<li><p><strong>OMP</strong>: Programming model</p></li>
+<li><p><strong>BUILD</strong>: installation process</p></li>
+</ul>
+</section>
+</section>
+<section id="id75">
+<h2><a class="reference external" href="https://github.com/cea-hpc/mpc/releases/tag/MPC_2.1.0">2.1.0</a> - 2011-04-29<a class="headerlink" href="#id75" title="Link to this heading"></a></h2>
+<section id="id76">
+<h3>Added<a class="headerlink" href="#id76" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p>SHM module (shared memory communications between processes)</p></li>
+</ul>
+</section>
+<section id="id77">
+<h3>Fixed<a class="headerlink" href="#id77" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><strong>MPI</strong>: Programming model</p></li>
+<li><p><strong>OMP</strong>: Programming model</p></li>
+<li><p><strong>BUILD</strong>: Installation process</p></li>
+</ul>
+</section>
+</section>
+<section id="id78">
+<h2><a class="reference external" href="https://france.paratools.com/mpc/releases/MPC_1.1.tar.gz">1.1.0</a><a class="headerlink" href="#id78" title="Link to this heading"></a></h2>
+<section id="id79">
+<h3>Added<a class="headerlink" href="#id79" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><strong>MPI</strong>: MPI-compliant API (MPI 1.3)</p></li>
+<li><p><strong>MPI</strong>: MPI_Cancel support</p></li>
+<li><p><strong>MPI</strong>: MPI_THREAD_MULTIPLE support</p></li>
+<li><p><strong>OMP</strong>: First OpeMP support (OpenMP 1.3)</p></li>
+<li><p><strong>NET</strong>: Full Infiniband support</p></li>
+<li><p><strong>DBG</strong>: Debugger support with a patched version of GDB</p></li>
+</ul>
+</section>
+<section id="id80">
+<h3>Fixed<a class="headerlink" href="#id80" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p>many small bug fixes</p></li>
+</ul>
+<!-- Links -->
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="issues.html" class="btn btn-neutral float-left" title="Known issues" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="contribute/main.html" class="btn btn-neutral float-right" title="Contribution Guide" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Commissariat à l&#39;Énergie Atomique et aux Énergies Alternatives.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

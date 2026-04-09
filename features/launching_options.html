@@ -1,0 +1,276 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Advanced Launching Options &mdash; MPC 4.3.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+    <link rel="shortcut icon" href="../_static/mpc_logo.png"/>
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=0503a316"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Frequently Asked Questions" href="../faq.html" />
+    <link rel="prev" title="Privatization" href="privatization.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html">
+            
+              <img src="../_static/mpc_logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../start.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../build.html">Building &amp; Installing MPC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usage.html">Using MPC</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../features.html">Advanced Features</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="privatization.html">Privatization</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Advanced Launching Options</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#launcher-options">Launcher options</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#mono-process-job">Mono-process job</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#multi-process-job-on-a-single-node">Multi-process job on a single node</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#multi-process-job-on-multiple-nodes">Multi-process job on multiple nodes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#multi-process-job-on-multiple-nodes-with-process-based-mpi-flavor">Multi-process job on multiple nodes with process-based MPI flavor</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#multi-process-job-on-multiple-nodes-with-thread-based-mpi-flavor">Multi-process job on multiple nodes with thread-based MPI flavor</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#launch-with-hydra">Launch with Hydra</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../faq.html">Frequently Asked Questions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../issues.html">Known issues</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../changelog.html">Changelog</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Contribution Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../contribute/main.html">Contribution Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer Documentation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../api/main.html">Multi-Processor Computing (MPC) Framework Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/main.html#modules-documentation">Modules Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/main.html#code-documentation">Code Documentation</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Links</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference external" href="https://mpc.hpcframework.com">Official Website (mpc.hpcframework.com)</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/cea-hpc/mpc">Repository (github.com)</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://mpc.hpcframework.com/publications-2/">Publications (mpc.hpcframework.com)</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">MPC</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../features.html">Advanced Features</a></li>
+      <li class="breadcrumb-item active">Advanced Launching Options</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/features/launching_options.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="advanced-launching-options">
+<h1>Advanced Launching Options<a class="headerlink" href="#advanced-launching-options" title="Link to this heading"></a></h1>
+<section id="launcher-options">
+<h2>Launcher options<a class="headerlink" href="#launcher-options" title="Link to this heading"></a></h2>
+<p>Options passed to the launcher options should be compatible with the launch mode
+chosen during <em>configure</em>. For more information you might read the
+documentations of mpiexec and srun respectively for Hydra and Slurm.</p>
+<ul class="simple">
+<li><p><strong>Hydra</strong>: If MPC is configured with Hydra, mpcrun should be used with
+<code class="docutils literal notranslate"><span class="pre">-l=mpiexec</span></code> argument. Note that this argument is used by default if not
+specified.</p></li>
+<li><p><strong>SLURM</strong>: If MPC is configured with SLURM, mpcrun should be used with <code class="docutils literal notranslate"><span class="pre">-l=srun</span></code>
+argument.</p></li>
+</ul>
+<section id="mono-process-job">
+<h3>Mono-process job<a class="headerlink" href="#mono-process-job" title="Link to this heading"></a></h3>
+<p>In order to run an MPC job in a single process with Hydra, you should use on of
+the following methods (depending on the thread type you want to use).</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>mpcrun<span class="w"> </span>-m<span class="o">=</span>ethread<span class="w">      </span>-n<span class="o">=</span><span class="m">4</span><span class="w"> </span>hello_world
+<span class="gp">$ </span>mpcrun<span class="w"> </span>-m<span class="o">=</span>ethread_mxn<span class="w">  </span>-n<span class="o">=</span><span class="m">4</span><span class="w"> </span>hello_world
+<span class="gp">$ </span>mpcrun<span class="w"> </span>-m<span class="o">=</span>pthread<span class="w">      </span>-n<span class="o">=</span><span class="m">4</span><span class="w"> </span>hello_world
+</pre></div>
+</div>
+<p>To use one of the above methods with SLURM, just add <em>-l=srun</em> to the command
+line.</p>
+</section>
+<section id="multi-process-job-on-a-single-node">
+<h3>Multi-process job on a single node<a class="headerlink" href="#multi-process-job-on-a-single-node" title="Link to this heading"></a></h3>
+<p>In order to run an MPC job with Hydra in a two-process single-node manner with
+the shared memory module enabled (SHM), you should use one of the following
+methods (depending on the thread type you want to use). Note that on a single
+node, even if the TCP module is explicitly used, MPC automatically uses the SHM
+module for all process communications.</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>mpcrun<span class="w"> </span>-m<span class="o">=</span>ethread<span class="w">      </span>-n<span class="o">=</span><span class="m">4</span><span class="w"> </span>-p<span class="o">=</span><span class="m">2</span><span class="w"> </span>-net<span class="o">=</span>tcp<span class="w"> </span>hello_world
+<span class="gp">$ </span>mpcrun<span class="w"> </span>-m<span class="o">=</span>ethread_mxn<span class="w">  </span>-n<span class="o">=</span><span class="m">4</span><span class="w"> </span>-p<span class="o">=</span><span class="m">2</span><span class="w"> </span>-net<span class="o">=</span>tcp<span class="w"> </span>hello_world
+<span class="gp">$ </span>mpcrun<span class="w"> </span>-m<span class="o">=</span>pthread<span class="w">      </span>-n<span class="o">=</span><span class="m">4</span><span class="w"> </span>-p<span class="o">=</span><span class="m">2</span><span class="w"> </span>-net<span class="o">=</span>tcp<span class="w"> </span>hello_world
+</pre></div>
+</div>
+<p>To use one of the above methods with SLURM, just add <code class="docutils literal notranslate"><span class="pre">-l=srun</span></code> to the command
+line. Of course, this mode supports both MPI and OpenMP standards, enabling the
+use of hybrid programming. There are different implementations of inter-process
+communications. A call to <code class="docutils literal notranslate"><span class="pre">mpcrun</span> <span class="pre">--help</span></code> details all the available
+implementations.</p>
+</section>
+<section id="multi-process-job-on-multiple-nodes">
+<h3>Multi-process job on multiple nodes<a class="headerlink" href="#multi-process-job-on-multiple-nodes" title="Link to this heading"></a></h3>
+<p>In order to run an MPC job on two nodes with eight processes communicating with
+TCP, you should use one of the following methods (depending on the thread type
+you want to use). Note that on multiple nodes, MPC automatically switches to the
+MPC SHared Memory module (SHM) when a communication between processes on the
+same node occurs. This behavior is available with all inter-process
+communication modules (TCP included).</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>mpcrun<span class="w"> </span>-m<span class="o">=</span>ethread<span class="w">      </span>-n<span class="o">=</span><span class="m">8</span><span class="w"> </span>-p<span class="o">=</span><span class="m">8</span><span class="w"> </span>-net<span class="o">=</span>tcp<span class="w"> </span>-N<span class="o">=</span><span class="m">2</span><span class="w"> </span>hello_world
+<span class="gp">$ </span>mpcrun<span class="w"> </span>-m<span class="o">=</span>ethread_mxn<span class="w">  </span>-n<span class="o">=</span><span class="m">8</span><span class="w"> </span>-p<span class="o">=</span><span class="m">8</span><span class="w"> </span>-net<span class="o">=</span>tcp<span class="w"> </span>-N<span class="o">=</span><span class="m">2</span><span class="w"> </span>hello_world
+<span class="gp">$ </span>mpcrun<span class="w"> </span>-m<span class="o">=</span>pthread<span class="w">      </span>-n<span class="o">=</span><span class="m">8</span><span class="w"> </span>-p<span class="o">=</span><span class="m">8</span><span class="w"> </span>-net<span class="o">=</span>tcp<span class="w"> </span>-N<span class="o">=</span><span class="m">2</span><span class="w"> </span>hello_world
+</pre></div>
+</div>
+<p>Of course, this mode supports both MPI and OpenMP standards, enabling the use of
+hybrid programming. There are different implementations of inter-process
+communications and launch methods. A call to <code class="docutils literal notranslate"><span class="pre">mpcrun</span> <span class="pre">--help</span></code> detail all the
+available implementations and launch methods.</p>
+</section>
+<section id="multi-process-job-on-multiple-nodes-with-process-based-mpi-flavor">
+<h3>Multi-process job on multiple nodes with process-based MPI flavor<a class="headerlink" href="#multi-process-job-on-multiple-nodes-with-process-based-mpi-flavor" title="Link to this heading"></a></h3>
+<p>MPC offers two flavors of its MPI implementation: process-based and thread-based.
+Process-based implementation is similar to the behavior of OpenMPI or MPICH.
+The flavor can be directly driven by the launch arguments.
+To use MPC-MPI in process-based flavor, the number of MPI processes specified
+in the launch command should be the same as the number of OS processes specified
+(hence <code class="docutils literal notranslate"><span class="pre">-n</span></code> value should be the same as <code class="docutils literal notranslate"><span class="pre">-p</span></code> value).
+The following examples launch eight MPI processes on two nodes, in process-based
+flavor. Each node will end up with four OS processes, each of these OS processes
+embedding a MPI process.</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>mpcrun<span class="w"> </span>-m<span class="o">=</span>ethread<span class="w">      </span>-n<span class="o">=</span><span class="m">8</span><span class="w"> </span>-p<span class="o">=</span><span class="m">8</span><span class="w"> </span>-net<span class="o">=</span>tcp<span class="w"> </span>-N<span class="o">=</span><span class="m">2</span><span class="w"> </span>-c<span class="o">=</span><span class="m">2</span><span class="w"> </span>hello_world
+<span class="gp">$ </span>mpcrun<span class="w"> </span>-m<span class="o">=</span>ethread_mxn<span class="w">  </span>-n<span class="o">=</span><span class="m">8</span><span class="w"> </span>-p<span class="o">=</span><span class="m">8</span><span class="w"> </span>-net<span class="o">=</span>tcp<span class="w"> </span>-N<span class="o">=</span><span class="m">2</span><span class="w"> </span>-c<span class="o">=</span><span class="m">2</span><span class="w"> </span>hello_world
+<span class="gp">$ </span>mpcrun<span class="w"> </span>-m<span class="o">=</span>pthread<span class="w">      </span>-n<span class="o">=</span><span class="m">8</span><span class="w"> </span>-p<span class="o">=</span><span class="m">8</span><span class="w"> </span>-net<span class="o">=</span>tcp<span class="w"> </span>-N<span class="o">=</span><span class="m">2</span><span class="w"> </span>-c<span class="o">=</span><span class="m">2</span><span class="w"> </span>hello_world
+</pre></div>
+</div>
+<p>Note that the <code class="docutils literal notranslate"><span class="pre">-c</span></code> argument specified the number of cores per OS process.
+In the ebove examples, we can deduce that the nodes we want to work on have
+at least 8 cores, with four OS processes per node, and two cores per OS
+process.</p>
+</section>
+<section id="multi-process-job-on-multiple-nodes-with-thread-based-mpi-flavor">
+<h3>Multi-process job on multiple nodes with thread-based MPI flavor<a class="headerlink" href="#multi-process-job-on-multiple-nodes-with-thread-based-mpi-flavor" title="Link to this heading"></a></h3>
+<p>MPC-MPI was developed to allow a thread-based flavor, e.g. inside a node,
+MPI processes are threads. This flavor allows sharing constructs through
+the shared memory. Communications between MPI processes on the node are just
+data exchange in the shared memory, without having to go through the SHM module.
+The following examples launch eight MPI processes on two nodes, in thread-based
+flavor. Each node will end up with one OS process, each of these OS processes
+embedding four MPI processes which are threads.</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>mpcrun<span class="w"> </span>-m<span class="o">=</span>ethread<span class="w">      </span>-n<span class="o">=</span><span class="m">8</span><span class="w"> </span>-p<span class="o">=</span><span class="m">2</span><span class="w"> </span>-net<span class="o">=</span>tcp<span class="w"> </span>-N<span class="o">=</span><span class="m">2</span><span class="w"> </span>-c<span class="o">=</span><span class="m">8</span><span class="w"> </span>hello_world
+<span class="gp">$ </span>mpcrun<span class="w"> </span>-m<span class="o">=</span>ethread_mxn<span class="w">  </span>-n<span class="o">=</span><span class="m">8</span><span class="w"> </span>-p<span class="o">=</span><span class="m">2</span><span class="w"> </span>-net<span class="o">=</span>tcp<span class="w"> </span>-N<span class="o">=</span><span class="m">2</span><span class="w"> </span>-c<span class="o">=</span><span class="m">8</span><span class="w"> </span>hello_world
+<span class="gp">$ </span>mpcrun<span class="w"> </span>-m<span class="o">=</span>pthread<span class="w">      </span>-n<span class="o">=</span><span class="m">8</span><span class="w"> </span>-p<span class="o">=</span><span class="m">2</span><span class="w"> </span>-net<span class="o">=</span>tcp<span class="w"> </span>-N<span class="o">=</span><span class="m">2</span><span class="w"> </span>-c<span class="o">=</span><span class="m">8</span><span class="w"> </span>hello_world
+</pre></div>
+</div>
+<p>Since the <code class="docutils literal notranslate"><span class="pre">-c</span></code> argument specifies the number of cores per OS process, and not
+per MPI process, the user need to give a number of cores per OS process at least
+equals to the number of MPI process per OS process to avoid oversubscribing.
+In the examples above, we will have four MPI process per OS process and eight
+cores per OS process, hence two cores per MPI process.</p>
+<p>The examples above display an example of full thread-based: one OS process per node,
+and all MPI processes on the node are threads. It is also possible to have a
+mitigated behavior: several OS processes per node, and multiple MPI processes which
+are thread in each of these OS processes.
+The following examples show such a behavior:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>mpcrun<span class="w"> </span>-m<span class="o">=</span>ethread<span class="w">      </span>-n<span class="o">=</span><span class="m">8</span><span class="w"> </span>-p<span class="o">=</span><span class="m">4</span><span class="w"> </span>-net<span class="o">=</span>tcp<span class="w"> </span>-N<span class="o">=</span><span class="m">2</span><span class="w"> </span>-c<span class="o">=</span><span class="m">4</span><span class="w"> </span>hello_world
+<span class="gp">$ </span>mpcrun<span class="w"> </span>-m<span class="o">=</span>ethread_mxn<span class="w">  </span>-n<span class="o">=</span><span class="m">8</span><span class="w"> </span>-p<span class="o">=</span><span class="m">4</span><span class="w"> </span>-net<span class="o">=</span>tcp<span class="w"> </span>-N<span class="o">=</span><span class="m">2</span><span class="w"> </span>-c<span class="o">=</span><span class="m">4</span><span class="w"> </span>hello_world
+<span class="gp">$ </span>mpcrun<span class="w"> </span>-m<span class="o">=</span>pthread<span class="w">      </span>-n<span class="o">=</span><span class="m">8</span><span class="w"> </span>-p<span class="o">=</span><span class="m">4</span><span class="w"> </span>-net<span class="o">=</span>tcp<span class="w"> </span>-N<span class="o">=</span><span class="m">2</span><span class="w"> </span>-c<span class="o">=</span><span class="m">4</span><span class="w"> </span>hello_world
+</pre></div>
+</div>
+<p>With these values for <code class="docutils literal notranslate"><span class="pre">-N</span></code>, <code class="docutils literal notranslate"><span class="pre">-n</span></code>, <code class="docutils literal notranslate"><span class="pre">-p</span></code>, each node will end up with two OS processes
+and four MPI processes. It implies that each OS process embeds two MPI processes
+which are threads. Then, to have two cores per MPI process, it is necessary to
+ask four cores per OS process.</p>
+</section>
+</section>
+<section id="launch-with-hydra">
+<h2>Launch with Hydra<a class="headerlink" href="#launch-with-hydra" title="Link to this heading"></a></h2>
+<p>In order to execute an MPC job on multiple nodes using <em>Hydra</em>, you need to
+provide the list of nodes in a <em>hosts</em> file and set the HYDRA_HOST_FILE
+variable with the path to the file. You can also pass the host file as a
+parameter of the launcher as follow:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>mpcrun<span class="w"> </span>-m<span class="o">=</span>ethread<span class="w"> </span>-n<span class="o">=</span><span class="m">8</span><span class="w"> </span>-p<span class="o">=</span><span class="m">8</span><span class="w"> </span>-net<span class="o">=</span>tcp<span class="w"> </span>-N<span class="o">=</span><span class="m">2</span><span class="w"> </span>--opt<span class="o">=</span><span class="s1">&#39;-f hosts&#39;</span><span class="w"> </span>hello_world
+</pre></div>
+</div>
+<p>See <a class="reference external" href="https://wiki.mpich.org/mpich/index.php/Using_the_Hydra_Process_Manager">Using the Hydra Process Manager</a> for more information about hydra hosts file.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="privatization.html" class="btn btn-neutral float-left" title="Privatization" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../faq.html" class="btn btn-neutral float-right" title="Frequently Asked Questions" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Commissariat à l&#39;Énergie Atomique et aux Énergies Alternatives.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

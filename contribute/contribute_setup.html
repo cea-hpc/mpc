@@ -1,0 +1,205 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Prerequisites before starting to contribute &mdash; MPC 4.3.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+    <link rel="shortcut icon" href="../_static/mpc_logo.png"/>
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=0503a316"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Write a commit message" href="contribute_commit.html" />
+    <link rel="prev" title="Contribution Guide" href="main.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html">
+            
+              <img src="../_static/mpc_logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../start.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../build.html">Building &amp; Installing MPC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usage.html">Using MPC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../features.html">Advanced Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../faq.html">Frequently Asked Questions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../issues.html">Known issues</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../changelog.html">Changelog</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Contribution Guide</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="main.html">Contribution Guide</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Prerequisites before starting to contribute</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#general-description">General description</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#git">Git</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gitlab">Gitlab</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#mpc-environment">MPC environment</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="contribute_commit.html">Write a commit message</a></li>
+<li class="toctree-l2"><a class="reference internal" href="contribute_issue.html">Submit a new issue</a></li>
+<li class="toctree-l2"><a class="reference internal" href="contribute_merge_request.html">Request for merging work into mainline</a></li>
+<li class="toctree-l2"><a class="reference internal" href="contribute_pipeline.html">Run a pipeline over existing branches</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer Documentation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../api/main.html">Multi-Processor Computing (MPC) Framework Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/main.html#modules-documentation">Modules Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/main.html#code-documentation">Code Documentation</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Links</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference external" href="https://mpc.hpcframework.com">Official Website (mpc.hpcframework.com)</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/cea-hpc/mpc">Repository (github.com)</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://mpc.hpcframework.com/publications-2/">Publications (mpc.hpcframework.com)</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">MPC</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="main.html">Contribution Guide</a></li>
+      <li class="breadcrumb-item active">Prerequisites before starting to contribute</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/contribute/contribute_setup.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="prerequisites-before-starting-to-contribute">
+<h1>Prerequisites before starting to contribute<a class="headerlink" href="#prerequisites-before-starting-to-contribute" title="Link to this heading"></a></h1>
+<section id="general-description">
+<h2>General description<a class="headerlink" href="#general-description" title="Link to this heading"></a></h2>
+<p>This page should be read by anybody desiring to contribute to the MPC community and is intended, at first, for new users, helping them to set a proper environment before continuing. We encourage actual contributors to check their current compliance with these simple rules.</p>
+<section id="git">
+<h3>Git<a class="headerlink" href="#git" title="Link to this heading"></a></h3>
+<p>To contribute, an proper ID has to be set, allowing other team members to identify contributors with clear, invariant names and emails. In order to do so, a best practice is to set your Git configuration file, done through the following command lines (<cite>global</cite> indicates to update your <cite>~/.gitconfig</cite> instead of local configuration, bound to the current project):</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>config<span class="w"> </span>--global<span class="w"> </span>user.email<span class="w"> </span><span class="s2">&quot;youremail@domain.com&quot;</span>
+git<span class="w"> </span>config<span class="w"> </span>--global<span class="w"> </span>user.name<span class="w"> </span><span class="s2">&quot;Firstname Lastname&quot;</span>
+</pre></div>
+</div>
+<p>The two lines above are mandatory. Please note the following:</p>
+<ul class="simple">
+<li><p>Use the same email used by Gitlab (for proper contribution recognition)</p></li>
+<li><p>Check you do <strong>NOT</strong> have multiple identities in MPC history. To ensure that, run <cite>git shortlog -sne</cite> and look for duplicates. If so, please edit the <cite>/.mailmap</cite> file accordingly.</p></li>
+</ul>
+<p>Not further restriction, but a lot of recommended setup, listed below, to ease your experience with MPC &amp; Gitlab (and general-purpose Git usage):</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>git<span class="w"> </span>config<span class="w"> </span>--global
+How<span class="w"> </span>to<span class="w"> </span>treat<span class="w"> </span>with<span class="w"> </span><span class="s2">&quot;git push&quot;</span><span class="w"> </span><span class="o">(</span>no<span class="w"> </span>arguments<span class="o">)</span>.<span class="w"> </span>We<span class="w"> </span>strongly<span class="w"> </span>recommend<span class="w"> </span>using<span class="w"> </span>this<span class="w"> </span>setup<span class="w"> </span>to<span class="w"> </span>avoid<span class="w"> </span>misuse!
+git<span class="w"> </span>config<span class="w"> </span>--global<span class="w"> </span>push.default<span class="w"> </span>simple
+<span class="c1"># For kdiff3 aficionados when coming to resolve conflicts (vimdiff by default)</span>
+git<span class="w"> </span>config<span class="w"> </span>--global<span class="w"> </span>merge.tool<span class="w"> </span>kdiff3
+<span class="c1">#relative to the use of &quot;git grep&quot; command, a time-saving command for efficient programmers :)</span>
+git<span class="w"> </span>config<span class="w"> </span>--global<span class="w"> </span>grep.extendRegexp<span class="w"> </span><span class="nb">true</span>
+git<span class="w"> </span>config<span class="w"> </span>--global<span class="w"> </span>grep.lineNumber<span class="w"> </span><span class="nb">true</span>
+git<span class="w"> </span>config<span class="w"> </span>--global<span class="w"> </span>grep.fallbackToNoIndex<span class="w"> </span><span class="nb">true</span>
+<span class="c1"># Memorize the way merge conflicts are resolved to re-apply it if the same conflict happens again</span>
+git<span class="w"> </span>config<span class="w"> </span>--global<span class="w"> </span>rerere.enabled<span class="w"> </span><span class="nb">true</span>
+<span class="c1"># The only proof commits are from you... Anybody can take your identify otherwise !</span>
+git<span class="w"> </span>config<span class="w"> </span>--global<span class="w"> </span>user.signingkey<span class="w"> </span><span class="s2">&quot;First chars of your public GPG key&quot;</span>
+</pre></div>
+</div>
+<p>There is plenty of nice features, we only list a few of them. If interested, feel free to contact &lt;<a class="reference external" href="mailto:corentin&#46;beaulieu&#37;&#52;&#48;cea&#46;fr">corentin<span>&#46;</span>beaulieu<span>&#64;</span>cea<span>&#46;</span>fr</a>&gt; directly for more of his tips  &amp; tricks around Git (like binary diff, compact git-status, tig-like without ncurses, tuned git-grep commands, powerful ways to dig into MPC history to identify when a function has been added/deleted…)</p>
+</section>
+<section id="gitlab">
+<h3>Gitlab<a class="headerlink" href="#gitlab" title="Link to this heading"></a></h3>
+<p>To access Gitlab from Git project, two approaches: HTTPS or SSH protocols. For the first one, you may need to set a proxy in your terminal (if your network is proxified before reaching Gitlab servers). Please look at <cite>http[s]_proxy</cite> environment variables. For SSH accesses, you will need to register an SSH key to you Gitlab profile (User profile (top-right) &gt; Settings &gt; SSH Keys) by copy-pasting your public key. A key pair can be generated as follows:</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span><span class="c1"># Follow the instruction (path &amp; passphrase twice)</span>
+ssh-keygen<span class="w"> </span>-t<span class="w"> </span>rsa
+<span class="c1"># copy the content of this command into the Gitlab textbox</span>
+cat<span class="w"> </span>~/.ssh/id_rsa.pub
+</pre></div>
+</div>
+<p>Through HTTPS protocol, you will have to type out a username/password each time Git accesses remote data (considering no password management tool), while SSH protocol will ask for your passphrase. A big difference here is that HTTPS protocol is subject to filtering/ban from our firewall, SSH is not.</p>
+</section>
+<section id="mpc-environment">
+<h3>MPC environment<a class="headerlink" href="#mpc-environment" title="Link to this heading"></a></h3>
+<p>To properly install and contribute to MPC, your building environment should have:</p>
+<ul class="simple">
+<li><p>A set of commands are assumed:<cite>patch, tar, make, which</cite></p></li>
+<li><p>A proper compiler suite for C, C++, and Fortran</p></li>
+<li><p>Git installation (a recent version if possible)</p></li>
+<li><p>Optional: Spack (for MPC 4.0+ versions)</p></li>
+</ul>
+<p>To be continued…</p>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="main.html" class="btn btn-neutral float-left" title="Contribution Guide" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="contribute_commit.html" class="btn btn-neutral float-right" title="Write a commit message" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Commissariat à l&#39;Énergie Atomique et aux Énergies Alternatives.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

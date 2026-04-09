@@ -1,0 +1,234 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Submit a new issue &mdash; MPC 4.3.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+    <link rel="shortcut icon" href="../_static/mpc_logo.png"/>
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=0503a316"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Request for merging work into mainline" href="contribute_merge_request.html" />
+    <link rel="prev" title="Write a commit message" href="contribute_commit.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html">
+            
+              <img src="../_static/mpc_logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../start.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../build.html">Building &amp; Installing MPC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usage.html">Using MPC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../features.html">Advanced Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../faq.html">Frequently Asked Questions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../issues.html">Known issues</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../changelog.html">Changelog</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Contribution Guide</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="main.html">Contribution Guide</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="contribute_setup.html">Prerequisites before starting to contribute</a></li>
+<li class="toctree-l2"><a class="reference internal" href="contribute_commit.html">Write a commit message</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Submit a new issue</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#general-description">General Description</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#how-tos">HOW-TOs</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#create-a-new-bug-report">Create a new bug report</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#contribute-to-an-existing-issue">Contribute to an existing issue</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#close-an-issue">Close an issue</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="contribute_merge_request.html">Request for merging work into mainline</a></li>
+<li class="toctree-l2"><a class="reference internal" href="contribute_pipeline.html">Run a pipeline over existing branches</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer Documentation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../api/main.html">Multi-Processor Computing (MPC) Framework Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/main.html#modules-documentation">Modules Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/main.html#code-documentation">Code Documentation</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Links</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference external" href="https://mpc.hpcframework.com">Official Website (mpc.hpcframework.com)</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/cea-hpc/mpc">Repository (github.com)</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://mpc.hpcframework.com/publications-2/">Publications (mpc.hpcframework.com)</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">MPC</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="main.html">Contribution Guide</a></li>
+      <li class="breadcrumb-item active">Submit a new issue</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/contribute/contribute_issue.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="submit-a-new-issue">
+<h1>Submit a new issue<a class="headerlink" href="#submit-a-new-issue" title="Link to this heading"></a></h1>
+<section id="general-description">
+<h2>General Description<a class="headerlink" href="#general-description" title="Link to this heading"></a></h2>
+<p>Issues/Tickets can be used to open a discussion/submit a request to the MPC
+developer team. Without them, the only alternative to communication would be
+emails and it is awful. Relying on issues help developers keep track of ongoing
+work while being able to refer to history when in trouble. It is thus really
+important to use this mechanism heavily. But, as always, to take the best of a
+technology without becoming a mess, general guidelines have to be set.</p>
+<p>First of all, there is no restriction to the motivation for creating an issue,
+it may be (almost) anything: a need for advice, a bug report, a documentation
+need, a wondering, a performance inconsistency, a wish, etc… One should not
+feel ashamed or afraid of writing a “note” to the community.</p>
+<p><strong>The only restriction is a strict formalism when submitting a bug report</strong>.
+Because this implies a lot of work under the hood to identify the cause, it is
+really important that bug reporters provide as much detail as possible. To do
+so, we provide templates for it.</p>
+<p>If an issue is stated irrelevant, it may be closed by a maintainer (or even the
+author), and must be motivated, by adding a comment to justify it.</p>
+<p>When creating a new issue, multiple boxes have to be set (as shown by the UI):</p>
+<ul class="simple">
+<li><p>We recommend providing a self-explanatory title to your issue, avoiding to
+“click” on it know what it is about. For instance,  <cite>Bug in MPC</cite> is a wrong
+title, while “MPI: Segv when calling Iprobe with more than 3 processes” is
+clearly better.</p></li>
+<li><p>Description supports Markdown formatting (bold, italic, title), do not
+hesitate to use them. The <cite>Preview</cite> button allows you to see how it renders
+once published, do not hesitate to use it too! English descriptions are
+recommended and encouraged (for international purposes). Three links at the
+bottom of the textbox allow you to (1) read the Markdown documentation, (3)
+access the quick action list (like <cite>/approve</cite>) and (3) attach files.</p></li>
+<li><p>The issue should be assigned to the person you think is in charge of answering
+to this issue, or at least able to give his point about it. If unsure, leave
+it empty.</p></li>
+<li><p>Labels are important to categorize your issue: is it a bug report, a feature
+request, documentation related, a discussion, about MPI, OpenMP, etc… More
+information on labels is available on GitLab.</p></li>
+<li><p>The “Due date” is optional</p></li>
+</ul>
+</section>
+<section id="how-tos">
+<h2>HOW-TOs<a class="headerlink" href="#how-tos" title="Link to this heading"></a></h2>
+<section id="create-a-new-bug-report">
+<h3>Create a new bug report<a class="headerlink" href="#create-a-new-bug-report" title="Link to this heading"></a></h3>
+<p>While creating a bug report has to fulfill the previous guidelines, we want to
+ensure new reports contain all the information allowing contributors to directly
+start debugging, without having to send an email/notification each time a piece
+of information is missing. First of all, note that most developers will only
+address bug reports reproducible <strong>on the mainline branch</strong>. People are
+encouraged, when bugs hit major components, to post a bug report existing and
+reproducible on the main branch.</p>
+<p>To properly fill in a bug report, please use the associated dropdown menu when
+opening/editing a ticket. To ease the process of tracking bugs, it is highly
+encouraged to <strong>open a ticket for every bugfix MR</strong>. This ticket must enclose as
+much information as possible to (1) help finding a solution and (2) usable an
+source of documentation if the bug arises again in the future.</p>
+</section>
+<section id="contribute-to-an-existing-issue">
+<h3>Contribute to an existing issue<a class="headerlink" href="#contribute-to-an-existing-issue" title="Link to this heading"></a></h3>
+<p>Contributing to an open issue means posting a new comment to participate in the
+discussion. Two ways to do it:</p>
+<ul class="simple">
+<li><p>You want to make a brand-new comment, related to the issue, then use the
+text-box at the bottom of the page. The same layout as for “description” above
+applies.</p></li>
+<li><p>You want to answer, complete, amend an existing comment, in the idea of
+creating a discussion thread, then, use the “Reply” (a small square, like a
+text bubble) in the top-right corner of the previous comment. This will
+automatically create a thread and a small textbox will appear, allowing you to
+write into this thread.</p></li>
+</ul>
+<p>The main advantage to differentiate these two approaches is that, in a single
+issue, multiple discussions can occur and gathering them in threads avoid
+flooding the whole issue history line with interleaving messages.</p>
+</section>
+<section id="close-an-issue">
+<h3>Close an issue<a class="headerlink" href="#close-an-issue" title="Link to this heading"></a></h3>
+<p>Once completely answered (as judged by the author or one of the maintainers) an
+issue may be closed, meaning no one can further contribute to it. It can be done
+manually through the “Close Issue” in the top-right corner or through commit
+message references once this commit is merged with the default branch. For more
+information about that feature, please read the
+<a class="reference internal" href="contribute_commit.html"><span class="doc">documentation</span></a></p>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="contribute_commit.html" class="btn btn-neutral float-left" title="Write a commit message" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="contribute_merge_request.html" class="btn btn-neutral float-right" title="Request for merging work into mainline" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Commissariat à l&#39;Énergie Atomique et aux Énergies Alternatives.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,274 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MPC_Threads &mdash; MPC 4.3.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+    <link rel="shortcut icon" href="../_static/mpc_logo.png"/>
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=0503a316"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="MPC_Topology" href="topology.html" />
+    <link rel="prev" title="MPC_OpenMP" href="openmp.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html">
+            
+              <img src="../_static/mpc_logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../start.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../build.html">Building &amp; Installing MPC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usage.html">Using MPC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../features.html">Advanced Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../faq.html">Frequently Asked Questions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../issues.html">Known issues</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../changelog.html">Changelog</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Contribution Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../contribute/main.html">Contribution Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer Documentation</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="main.html">Multi-Processor Computing (MPC) Framework Documentation</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="main.html#modules-documentation">Modules Documentation</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="arch.html">MPC_Arch</a></li>
+<li class="toctree-l2"><a class="reference internal" href="common.html">MPC_Common</a></li>
+<li class="toctree-l2"><a class="reference internal" href="config.html">MPC_Config</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fortran.html">MPC_Fortran</a></li>
+<li class="toctree-l2"><a class="reference internal" href="io.html">MPC_IO</a></li>
+<li class="toctree-l2"><a class="reference internal" href="launch/launch.html">MPC_Launch</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lowcomm/lowcomm.html">MPC_Lowcomm</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mpi/mpi.html">MPC_MPI</a></li>
+<li class="toctree-l2"><a class="reference internal" href="openmp.html">MPC_OpenMP</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">MPC_Threads</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#module-mpc-threads">Module MPC_Threads</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#summary">SUMMARY:</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#contents">CONTENTS:</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#api">API</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="topology.html">MPC_Topology</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="main.html#code-documentation">Code Documentation</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Links</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference external" href="https://mpc.hpcframework.com">Official Website (mpc.hpcframework.com)</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/cea-hpc/mpc">Repository (github.com)</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://mpc.hpcframework.com/publications-2/">Publications (mpc.hpcframework.com)</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">MPC</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="main.html">Multi-Processor Computing (MPC) Framework Documentation</a></li>
+      <li class="breadcrumb-item active">MPC_Threads</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/api/threads.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="mpc-threads">
+<h1>MPC_Threads<a class="headerlink" href="#mpc-threads" title="Link to this heading"></a></h1>
+<section id="module-mpc-threads">
+<h2>Module MPC_Threads<a class="headerlink" href="#module-mpc-threads" title="Link to this heading"></a></h2>
+<section id="summary">
+<h3>SUMMARY:<a class="headerlink" href="#summary" title="Link to this heading"></a></h3>
+<p>MPC Threads implementation. Contains also Pthread overriding and multiple
+schedulers designed to handle MPC threads.</p>
+</section>
+<section id="contents">
+<h3>CONTENTS:<a class="headerlink" href="#contents" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><strong>include/</strong>     : exposed functions, to be called from other modules</p></li>
+<li><p><strong>src/</strong> : sources for this module</p></li>
+<li><p><strong>src/accelerator/</strong> : accelerator specific context-switching
+COMPONENTS:</p></li>
+</ul>
+<hr class="docutils" />
+<section id="tls">
+<h4>TLS<a class="headerlink" href="#tls" title="Link to this heading"></a></h4>
+<p>MPC provides runtime mechanisms to reproduce the TLS approach for privatized
+variables. The core model is given by the exTLS implementation, initially
+located in MPC sources and now distributed as an independent components. ExTLS
+can be found in extern-deps.</p>
+<p>The privatized variables are considered as multi-level TLS:</p>
+<ul class="simple">
+<li><p>process-level : mimics the global variable scope.</p></li>
+<li><p>task-level: variables are global to each task;</p></li>
+<li><p>thread-level: variables are local to the calling user-threads;</p></li>
+<li><p>openmp-level: variables are in the lowest scope: OpenMP threads;</p></li>
+</ul>
+<p>A functional runtime needs, prior to the execution, a compilation step
+translating global variables to the desired TLS level (GCC+linker patches). In
+this component, you will only find the runtime support. At runtime, TLS can be
+from two kinds:</p>
+<ul class="simple">
+<li><p>dynamically resolved: through __extls_get_addr_* calls.</p></li>
+<li><p>statically resolved: trough GS register management;</p></li>
+</ul>
+<p>In order to do that, the MPC TLS support needs to alter one base pointer, used
+by exTLS library.</p>
+</section>
+<section id="thread-engine">
+<h4>Thread engine<a class="headerlink" href="#thread-engine" title="Link to this heading"></a></h4>
+<p>MPC exposes its own thread scheduler. It means that when an application is built
+against MPC, every thread is promoted to be a user-level thread, handled as
+input by MPC. Any thread created that way will be referred as a user-level
+thread. It includes:</p>
+<ul class="simple">
+<li><p>MPI ‘task’, evolving in a single MPC/UNIX process</p></li>
+<li><p>OpenMP thread, while being a little bit different, there are managed like
+standard user-level threads</p></li>
+<li><p>Any thread created by the user (trough pthread interface for instance). Any
+entry point in that interface are caught during runtime and re-routed to the
+user-level interface.</p></li>
+</ul>
+<p>Once this is done, MPC can freely adjust its schedulign policy. There is
+currently 3 different methods do span threads over resources :</p>
+<ol class="arabic simple">
+<li><p>pthread-mode: The most basic one, where each user-level thread is actually a
+real pthread. Note that this approach still takes care to expose right TLS
+levels when needed.</p></li>
+<li><p>ethread:</p></li>
+<li><p>ethread_mxn:</p></li>
+</ol>
+<section id="pthread">
+<h5>pthread<a class="headerlink" href="#pthread" title="Link to this heading"></a></h5>
+</section>
+<section id="ethread">
+<h5>ethread_*<a class="headerlink" href="#ethread" title="Link to this heading"></a></h5>
+</section>
+</section>
+<section id="cuda">
+<h4>CUDA<a class="headerlink" href="#cuda" title="Link to this heading"></a></h4>
+<p>CUDA support is provided to MPC for supporting user-level threads inside an
+thread-based MPI application. The purpose of this work is to change the CUDA
+context pushed on top of the CUDA stack, depending on the running thread.</p>
+<p>MPC provides a new compiler wrapper named <code class="docutils literal notranslate"><span class="pre">mpc_nvcc</span></code>, in charge of compiling
+application through the <code class="docutils literal notranslate"><span class="pre">nvcc</span></code> compiler but also by taking care of global
+variable privatization. Be aware that a compilation through this wrapper can be
+longer than with <code class="docutils literal notranslate"><span class="pre">mpc_cc</span></code> or <code class="docutils literal notranslate"><span class="pre">nvcc</span></code> because the need of a double compilation.
+Actually it is the only way to detect CUDA-internal variables that should not
+be disabled. (actually, variable names could be hard-coded, but it is a dirty
+way, right ?). The found variable names are de-privatized when building the
+application.</p>
+<p>On most clusters, runtime libraries is not deployed on both login and compute
+nodes. To let applications compiling successfully, a stub library is deployed on
+compute nodes ( a <code class="docutils literal notranslate"><span class="pre">libuda</span></code> lib). The real library is then found when the
+application is run over the compute nodes. The problem arises when MPC
+dependencies (ex: ROMIO,GETOPT…) run their configure and try to execute some
+tests (Autotools does such thins a lot). In that case, the mini-test is run on
+the login node and tests failed because the lib is not present. To get rid of
+this, MPC comes with a pair of options to enable CUDA support :</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">-cuda</span></code>: Compile-time option, to inform MPC that: (1) <code class="docutils literal notranslate"><span class="pre">mpc_nvcc</span></code> should be
+used and (2) that our own stub library should be linked to the application.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">-accl</span></code>: Runtime-time option, asking mpcrun to context-switch CUDA context in
+its user-level threads. Without this option, MPC does not take care of CUDA
+environment. But application can still use CUDA by their own.</p></li>
+</ul>
+</section>
+<section id="openacc">
+<h4>OpenACC<a class="headerlink" href="#openacc" title="Link to this heading"></a></h4>
+<p>Currently, MPC does not provide an OpenACC support (at least from runtime-side).
+But the MPC_Accelerators has been designed for future evolution and handlers
+have been configured to make the implementation easier.</p>
+</section>
+<section id="opencl">
+<h4>OpenCL<a class="headerlink" href="#opencl" title="Link to this heading"></a></h4>
+<p>Exactly the same as the OpenACC thing.</p>
+</section>
+</section>
+</section>
+<section id="api">
+<h2>API<a class="headerlink" href="#api" title="Link to this heading"></a></h2>
+<dl>
+<dt class="sig sig-object cpp">
+<span class="target" id="d1/d60/group__MPC__Threads"></span><em><span class="pre">group</span></em> <span class="sig-name descname"><span class="pre">MPC_Threads</span> <span class="pre">Module</span> <span class="pre">API</span></span></dt>
+<dd></dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="openmp.html" class="btn btn-neutral float-left" title="MPC_OpenMP" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="topology.html" class="btn btn-neutral float-right" title="MPC_Topology" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Commissariat à l&#39;Énergie Atomique et aux Énergies Alternatives.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

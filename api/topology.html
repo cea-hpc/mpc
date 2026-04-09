@@ -1,0 +1,614 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MPC_Topology &mdash; MPC 4.3.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+    <link rel="shortcut icon" href="../_static/mpc_logo.png"/>
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=0503a316"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Code index" href="whole_index.html" />
+    <link rel="prev" title="MPC_Threads" href="threads.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html">
+            
+              <img src="../_static/mpc_logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../start.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../build.html">Building &amp; Installing MPC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usage.html">Using MPC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../features.html">Advanced Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../faq.html">Frequently Asked Questions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../issues.html">Known issues</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../changelog.html">Changelog</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Contribution Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../contribute/main.html">Contribution Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer Documentation</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="main.html">Multi-Processor Computing (MPC) Framework Documentation</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="main.html#modules-documentation">Modules Documentation</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="arch.html">MPC_Arch</a></li>
+<li class="toctree-l2"><a class="reference internal" href="common.html">MPC_Common</a></li>
+<li class="toctree-l2"><a class="reference internal" href="config.html">MPC_Config</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fortran.html">MPC_Fortran</a></li>
+<li class="toctree-l2"><a class="reference internal" href="io.html">MPC_IO</a></li>
+<li class="toctree-l2"><a class="reference internal" href="launch/launch.html">MPC_Launch</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lowcomm/lowcomm.html">MPC_Lowcomm</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mpi/mpi.html">MPC_MPI</a></li>
+<li class="toctree-l2"><a class="reference internal" href="openmp.html">MPC_OpenMP</a></li>
+<li class="toctree-l2"><a class="reference internal" href="threads.html">MPC_Threads</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">MPC_Topology</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#api">API</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#c.mpc_topology_init"><code class="docutils literal notranslate"><span class="pre">mpc_topology_init()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.mpc_topology_init_distance_simulation_factors"><code class="docutils literal notranslate"><span class="pre">mpc_topology_init_distance_simulation_factors()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.mpc_topology_destroy"><code class="docutils literal notranslate"><span class="pre">mpc_topology_destroy()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.mpc_topology_split_hardware_type_t"><code class="docutils literal notranslate"><span class="pre">mpc_topology_split_hardware_type_t</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.mpc_topology_get"><code class="docutils literal notranslate"><span class="pre">mpc_topology_get()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.mpc_topology_global_get"><code class="docutils literal notranslate"><span class="pre">mpc_topology_global_get()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.mpc_topology_get_pu_neighborhood"><code class="docutils literal notranslate"><span class="pre">mpc_topology_get_pu_neighborhood()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.mpc_topology_get_numa_node_from_cpu"><code class="docutils literal notranslate"><span class="pre">mpc_topology_get_numa_node_from_cpu()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.mpc_topology_get_numa_node_count"><code class="docutils literal notranslate"><span class="pre">mpc_topology_get_numa_node_count()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.mpc_topology_has_numa_nodes"><code class="docutils literal notranslate"><span class="pre">mpc_topology_has_numa_nodes()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.mpc_topology_get_socket_count"><code class="docutils literal notranslate"><span class="pre">mpc_topology_get_socket_count()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.mpc_topology_bind_to_cpu"><code class="docutils literal notranslate"><span class="pre">mpc_topology_bind_to_cpu()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.mpc_topology_bind_to_process_cpuset"><code class="docutils literal notranslate"><span class="pre">mpc_topology_bind_to_process_cpuset()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.mpc_topology_print"><code class="docutils literal notranslate"><span class="pre">mpc_topology_print()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.mpc_topology_get_pu_count"><code class="docutils literal notranslate"><span class="pre">mpc_topology_get_pu_count()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.mpc_topology_get_current_cpu"><code class="docutils literal notranslate"><span class="pre">mpc_topology_get_current_cpu()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.mpc_topology_is_loaded"><code class="docutils literal notranslate"><span class="pre">mpc_topology_is_loaded()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.mpc_topology_get_global_current_cpu"><code class="docutils literal notranslate"><span class="pre">mpc_topology_get_global_current_cpu()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.mpc_topology_get_pu"><code class="docutils literal notranslate"><span class="pre">mpc_topology_get_pu()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.mpc_topology_get_global_pu"><code class="docutils literal notranslate"><span class="pre">mpc_topology_get_global_pu()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.mpc_topology_convert_os_pu_to_logical"><code class="docutils literal notranslate"><span class="pre">mpc_topology_convert_os_pu_to_logical()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.mpc_topology_convert_logical_pu_to_os"><code class="docutils literal notranslate"><span class="pre">mpc_topology_convert_logical_pu_to_os()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.mpc_topology_get_process_cpuset"><code class="docutils literal notranslate"><span class="pre">mpc_topology_get_process_cpuset()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.mpc_topology_get_parent_numa_cpuset"><code class="docutils literal notranslate"><span class="pre">mpc_topology_get_parent_numa_cpuset()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.mpc_topology_get_parent_socket_cpuset"><code class="docutils literal notranslate"><span class="pre">mpc_topology_get_parent_socket_cpuset()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.mpc_topology_get_pu_cpuset"><code class="docutils literal notranslate"><span class="pre">mpc_topology_get_pu_cpuset()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.mpc_topology_get_parent_core_cpuset"><code class="docutils literal notranslate"><span class="pre">mpc_topology_get_parent_core_cpuset()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.mpc_topology_get_first_pu_for_level"><code class="docutils literal notranslate"><span class="pre">mpc_topology_get_first_pu_for_level()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.mpc_topology_get_ht_per_core"><code class="docutils literal notranslate"><span class="pre">mpc_topology_get_ht_per_core()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.mpc_topology_clear_cpu_pinning_cache"><code class="docutils literal notranslate"><span class="pre">mpc_topology_clear_cpu_pinning_cache()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.mpc_topology_set_pu_count"><code class="docutils literal notranslate"><span class="pre">mpc_topology_set_pu_count()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.mpc_topology_get_mcdram_node"><code class="docutils literal notranslate"><span class="pre">mpc_topology_get_mcdram_node()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.mpc_topology_has_nvdimm"><code class="docutils literal notranslate"><span class="pre">mpc_topology_has_nvdimm()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.mpc_topology_guided_compute_color"><code class="docutils literal notranslate"><span class="pre">mpc_topology_guided_compute_color()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.mpc_topology_unguided_compute_color"><code class="docutils literal notranslate"><span class="pre">mpc_topology_unguided_compute_color()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.mpc_topology_split_hardware_type_name"><code class="docutils literal notranslate"><span class="pre">mpc_topology_split_hardware_type_name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.mpc_topology_split_hardware_hwloc_type"><code class="docutils literal notranslate"><span class="pre">mpc_topology_split_hardware_hwloc_type</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="main.html#code-documentation">Code Documentation</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Links</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference external" href="https://mpc.hpcframework.com">Official Website (mpc.hpcframework.com)</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/cea-hpc/mpc">Repository (github.com)</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://mpc.hpcframework.com/publications-2/">Publications (mpc.hpcframework.com)</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">MPC</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="main.html">Multi-Processor Computing (MPC) Framework Documentation</a></li>
+      <li class="breadcrumb-item active">MPC_Topology</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/api/topology.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="mpc-topology">
+<h1>MPC_Topology<a class="headerlink" href="#mpc-topology" title="Link to this heading"></a></h1>
+<section id="api">
+<h2>API<a class="headerlink" href="#api" title="Link to this heading"></a></h2>
+<dl>
+<dt class="sig sig-object cpp">
+<span class="target" id="d0/dda/group__topology__interface"></span><em><span class="pre">group</span></em> <span class="sig-name descname"><span class="pre">General</span> <span class="pre">Topology</span> <span class="pre">Interface</span></span></dt>
+<dd><p>This module provides the general topology getters for MPC. </p>
+<p>These functions are the initialization and release points for the topology interface. </p>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-functions">Functions</p>
+<dl class="c function">
+<dt class="sig sig-object c" id="c.mpc_topology_init">
+<span class="target" id="d2/d19/group__topology__interface__init_1ga76ec2659900d07c95478d77c5a25dde1"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_topology_init</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">void</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.mpc_topology_init" title="Link to this definition"></a><br /></dt>
+<dd><p>Initialize the topology module. </p>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.mpc_topology_init_distance_simulation_factors">
+<span class="target" id="d2/d19/group__topology__interface__init_1ga200b4d48ed8aadda90daa9ad816b1673"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_topology_init_distance_simulation_factors</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">int</span></span><span class="p"><span class="pre">*</span></span>, <span class="kt"><span class="pre">int</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.mpc_topology_init_distance_simulation_factors" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.mpc_topology_destroy">
+<span class="target" id="d2/d19/group__topology__interface__init_1ga0aeaf09df6d2ea4b5dd3be4faf6d3c72"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_topology_destroy</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">void</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.mpc_topology_destroy" title="Link to this definition"></a><br /></dt>
+<dd><p>Destroy the topology module. </p>
+</dd></dl>
+
+</div>
+<p>These functions are used to retrieve topology for current process in MPC. </p>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-enums">Enums</p>
+<dl class="c enum">
+<dt class="sig sig-object c" id="c.mpc_topology_split_hardware_type_t">
+<span class="target" id="d1/dca/group__topology__interface__getters_1ga3eb87f42fd25ec51a5c9fa5ba2b17297"></span><span class="k"><span class="pre">enum</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_topology_split_hardware_type_t</span></span></span><a class="headerlink" href="#c.mpc_topology_split_hardware_type_t" title="Link to this definition"></a><br /></dt>
+<dd><p><em>Values:</em></p>
+<dl class="c enumerator">
+<dt class="sig sig-object c" id="c.mpc_topology_split_hardware_type_t.MPC_LOWCOMM_HW_NODE">
+<span class="target" id="d1/dca/group__topology__interface__getters_1gga3eb87f42fd25ec51a5c9fa5ba2b17297a96b05479086fae1711aaaca5c449e772"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">MPC_LOWCOMM_HW_NODE</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#c.mpc_topology_split_hardware_type_t.MPC_LOWCOMM_HW_NODE" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="c enumerator">
+<dt class="sig sig-object c" id="c.mpc_topology_split_hardware_type_t.MPC_LOWCOMM_HW_PACKAGE">
+<span class="target" id="d1/dca/group__topology__interface__getters_1gga3eb87f42fd25ec51a5c9fa5ba2b17297a0494903f8a6deba30738b2ec479638ce"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">MPC_LOWCOMM_HW_PACKAGE</span></span></span><a class="headerlink" href="#c.mpc_topology_split_hardware_type_t.MPC_LOWCOMM_HW_PACKAGE" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="c enumerator">
+<dt class="sig sig-object c" id="c.mpc_topology_split_hardware_type_t.MPC_LOWCOMM_HW_NUMANODE">
+<span class="target" id="d1/dca/group__topology__interface__getters_1gga3eb87f42fd25ec51a5c9fa5ba2b17297ad2caca4821d9b7fb8a702f6186961a82"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">MPC_LOWCOMM_HW_NUMANODE</span></span></span><a class="headerlink" href="#c.mpc_topology_split_hardware_type_t.MPC_LOWCOMM_HW_NUMANODE" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="c enumerator">
+<dt class="sig sig-object c" id="c.mpc_topology_split_hardware_type_t.MPC_LOWCOMM_HW_CACHEL3">
+<span class="target" id="d1/dca/group__topology__interface__getters_1gga3eb87f42fd25ec51a5c9fa5ba2b17297adf331974a936f95361bae82603e0bf82"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">MPC_LOWCOMM_HW_CACHEL3</span></span></span><a class="headerlink" href="#c.mpc_topology_split_hardware_type_t.MPC_LOWCOMM_HW_CACHEL3" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="c enumerator">
+<dt class="sig sig-object c" id="c.mpc_topology_split_hardware_type_t.MPC_LOWCOMM_HW_CACHEL2">
+<span class="target" id="d1/dca/group__topology__interface__getters_1gga3eb87f42fd25ec51a5c9fa5ba2b17297aec08eb0d785eedb996a5641ecfc35914"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">MPC_LOWCOMM_HW_CACHEL2</span></span></span><a class="headerlink" href="#c.mpc_topology_split_hardware_type_t.MPC_LOWCOMM_HW_CACHEL2" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="c enumerator">
+<dt class="sig sig-object c" id="c.mpc_topology_split_hardware_type_t.MPC_LOWCOMM_HW_CACHEL1">
+<span class="target" id="d1/dca/group__topology__interface__getters_1gga3eb87f42fd25ec51a5c9fa5ba2b17297a3ef36596e8092b88421419c3ddac552e"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">MPC_LOWCOMM_HW_CACHEL1</span></span></span><a class="headerlink" href="#c.mpc_topology_split_hardware_type_t.MPC_LOWCOMM_HW_CACHEL1" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="c enumerator">
+<dt class="sig sig-object c" id="c.mpc_topology_split_hardware_type_t.MPC_LOWCOMM_HW_TYPE_COUNT">
+<span class="target" id="d1/dca/group__topology__interface__getters_1gga3eb87f42fd25ec51a5c9fa5ba2b17297a5933f60094f2eaebec195b6be04a9ece"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">MPC_LOWCOMM_HW_TYPE_COUNT</span></span></span><a class="headerlink" href="#c.mpc_topology_split_hardware_type_t.MPC_LOWCOMM_HW_TYPE_COUNT" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-functions">Functions</p>
+<dl class="c function">
+<dt class="sig sig-object c" id="c.mpc_topology_get">
+<span class="target" id="d1/dca/group__topology__interface__getters_1ga8b8372236db114d4c3b7f03bcaf5ef74"></span><span class="n"><span class="pre">hwloc_topology_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_topology_get</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">void</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.mpc_topology_get" title="Link to this definition"></a><br /></dt>
+<dd><p>Retrieve the Main Topology Object from MPC. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>hwloc_topology_t MPC’s main topology object </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.mpc_topology_global_get">
+<span class="target" id="d1/dca/group__topology__interface__getters_1ga8eab295696012cf187a91bf86c3971c9"></span><span class="n"><span class="pre">hwloc_topology_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_topology_global_get</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">void</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.mpc_topology_global_get" title="Link to this definition"></a><br /></dt>
+<dd><p>Retrieve the Main not restricted Topology Object from MPC. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>hwloc_topology_t MPC’s main topology object </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.mpc_topology_get_pu_neighborhood">
+<span class="target" id="d1/dca/group__topology__interface__getters_1ga78e2426bf8f5d2830129af92188eb8ee"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_topology_get_pu_neighborhood</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">cpuid</span></span>, <span class="kt"><span class="pre">unsigned</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">nb_cpus</span></span>, <span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">neighborhood</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.mpc_topology_get_pu_neighborhood" title="Link to this definition"></a><br /></dt>
+<dd><p>Return the closest core_id. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>cpuid</strong> – Main core_id </p></li>
+<li><p><strong>nb_cpus</strong> – Number of neighbor </p></li>
+<li><p><strong>neighborhood</strong> – Neighbor list </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.mpc_topology_get_numa_node_from_cpu">
+<span class="target" id="d1/dca/group__topology__interface__getters_1ga80fc5eedaecf92aa1a1ce35dfd4080e6"></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_topology_get_numa_node_from_cpu</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">cpuid</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.mpc_topology_get_numa_node_from_cpu" title="Link to this definition"></a><br /></dt>
+<dd><p>return the Numa node associated with a given CPUID </p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>cpuid</strong> – The target CPUID (logical) </p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>identifier of the numa node matching cpuid (0 if none) </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.mpc_topology_get_numa_node_count">
+<span class="target" id="d1/dca/group__topology__interface__getters_1ga0d897b19df804fa746dd931a2f2a4c7e"></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_topology_get_numa_node_count</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">void</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.mpc_topology_get_numa_node_count" title="Link to this definition"></a><br /></dt>
+<dd><p>Return the number of NUMA nodes. </p>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.mpc_topology_has_numa_nodes">
+<span class="target" id="d1/dca/group__topology__interface__getters_1ga983dca1d2b4fbee792c67d416ae881af"></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_topology_has_numa_nodes</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">void</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.mpc_topology_has_numa_nodes" title="Link to this definition"></a><br /></dt>
+<dd><p>Return 1 if the current node is a NUMA node, 0 otherwise. </p>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.mpc_topology_get_socket_count">
+<span class="target" id="d1/dca/group__topology__interface__getters_1gae7da4eeed464f9f1cccda367cb18e6e5"></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_topology_get_socket_count</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">void</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.mpc_topology_get_socket_count" title="Link to this definition"></a><br /></dt>
+<dd><p>Return the number of sockets. </p>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.mpc_topology_bind_to_cpu">
+<span class="target" id="d1/dca/group__topology__interface__getters_1ga69ce84f572482f797867633c10815797"></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_topology_bind_to_cpu</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">i</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.mpc_topology_bind_to_cpu" title="Link to this definition"></a><br /></dt>
+<dd><p>Bind the current thread &#64; param i The cpu_id to bind. </p>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.mpc_topology_bind_to_process_cpuset">
+<span class="target" id="d1/dca/group__topology__interface__getters_1gac6ab3f0463b649374d0c57e040744984"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_topology_bind_to_process_cpuset</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#c.mpc_topology_bind_to_process_cpuset" title="Link to this definition"></a><br /></dt>
+<dd><p>Bind the current thread to the whole process. </p>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.mpc_topology_print">
+<span class="target" id="d1/dca/group__topology__interface__getters_1gac99ea0b02968d361931ec677adf163e6"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_topology_print</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">FILE</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">fd</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.mpc_topology_print" title="Link to this definition"></a><br /></dt>
+<dd><p>Print the topology tree into a file. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>fd</strong> – Destination file descriptor </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.mpc_topology_get_pu_count">
+<span class="target" id="d1/dca/group__topology__interface__getters_1ga8a86121891cddaf38d2897c2b94281e2"></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_topology_get_pu_count</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">void</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.mpc_topology_get_pu_count" title="Link to this definition"></a><br /></dt>
+<dd><p>get the number of processing units (PU) as seen by MPC </p>
+<p>Number of active PU for the topology.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Number of PUs in current MPC topology</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>int number of active PUs </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.mpc_topology_get_current_cpu">
+<span class="target" id="d1/dca/group__topology__interface__getters_1ga230d6e5f09e7f2e715240a1e2d7958a4"></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_topology_get_current_cpu</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">void</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.mpc_topology_get_current_cpu" title="Link to this definition"></a><br /></dt>
+<dd><p>Return the current core_id. </p>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.mpc_topology_is_loaded">
+<span class="target" id="d1/dca/group__topology__interface__getters_1ga33aca5ec9b792118dffb65d4995c498d"></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_topology_is_loaded</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">void</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.mpc_topology_is_loaded" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.mpc_topology_get_global_current_cpu">
+<span class="target" id="d1/dca/group__topology__interface__getters_1gaed65dcc91934af30a012678dd51cc1ec"></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_topology_get_global_current_cpu</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">void</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.mpc_topology_get_global_current_cpu" title="Link to this definition"></a><br /></dt>
+<dd><p>Return the current global core_id. </p>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.mpc_topology_get_pu">
+<span class="target" id="d1/dca/group__topology__interface__getters_1ga1f8a0a7a898de370f696737ae1eb2538"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_topology_get_pu</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">void</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.mpc_topology_get_pu" title="Link to this definition"></a><br /></dt>
+<dd><p>Return the PU executing current thread. </p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This version relies on HWLOC as MPC has no scheduler</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int current PU executing this thread </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.mpc_topology_get_global_pu">
+<span class="target" id="d1/dca/group__topology__interface__getters_1ga9a7e01bf235ff85d7dcaa47dae9e2fbc"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_topology_get_global_pu</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">void</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.mpc_topology_get_global_pu" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.mpc_topology_convert_os_pu_to_logical">
+<span class="target" id="d1/dca/group__topology__interface__getters_1ga4cdabd54807f57235a1c9c0c3abfe4fc"></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_topology_convert_os_pu_to_logical</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">pu_os_id</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.mpc_topology_convert_os_pu_to_logical" title="Link to this definition"></a><br /></dt>
+<dd><p>Convert a PU id from OS to logical numbering. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>pu_os_id</strong> – OS id of the source PU </p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>int Logical ID of the PU (used in Hwloc) </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.mpc_topology_convert_logical_pu_to_os">
+<span class="target" id="d1/dca/group__topology__interface__getters_1ga921e6a7fbef0c0b65c27fb4a2ebb52e7"></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_topology_convert_logical_pu_to_os</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">cpuid</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.mpc_topology_convert_logical_pu_to_os" title="Link to this definition"></a><br /></dt>
+<dd><p>Convert a PU id from logical to OS numbering. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>cpuid</strong> – logical id of the source PU </p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>int OS ID of the PU </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.mpc_topology_get_process_cpuset">
+<span class="target" id="d1/dca/group__topology__interface__getters_1ga6c177194ea4ad84d32e3dd4d8f50633f"></span><span class="n"><span class="pre">hwloc_const_cpuset_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_topology_get_process_cpuset</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#c.mpc_topology_get_process_cpuset" title="Link to this definition"></a><br /></dt>
+<dd><p>Return the overall cpuset of the MPC process. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>hwloc_const_cpuset_t process cpuset </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.mpc_topology_get_parent_numa_cpuset">
+<span class="target" id="d1/dca/group__topology__interface__getters_1ga795be1f44b4dfd687f4edd43d63cd5c9"></span><span class="n"><span class="pre">hwloc_cpuset_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_topology_get_parent_numa_cpuset</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">cpuid</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.mpc_topology_get_parent_numa_cpuset" title="Link to this definition"></a><br /></dt>
+<dd><p>Return the numa node (or whole machine if none) of cpuid. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>cpuid</strong> – PU id to query for </p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>hwloc_cpuset_t corresponding NUMA cpuset </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.mpc_topology_get_parent_socket_cpuset">
+<span class="target" id="d1/dca/group__topology__interface__getters_1ga839c591e5ee3272e3cafe314286911b5"></span><span class="n"><span class="pre">hwloc_cpuset_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_topology_get_parent_socket_cpuset</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">cpuid</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.mpc_topology_get_parent_socket_cpuset" title="Link to this definition"></a><br /></dt>
+<dd><p>Return the socket of cpuid. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>cpuid</strong> – PU id to query for </p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>hwloc_cpuset_t corresponding socket cpuset </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.mpc_topology_get_pu_cpuset">
+<span class="target" id="d1/dca/group__topology__interface__getters_1ga598a75e4bdd61d86033bbf56c1d7388c"></span><span class="n"><span class="pre">hwloc_cpuset_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_topology_get_pu_cpuset</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">cpuid</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.mpc_topology_get_pu_cpuset" title="Link to this definition"></a><br /></dt>
+<dd><p>Return the PU cupset of cpuid. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>cpuid</strong> – PU id to query for </p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>hwloc_cpuset_t corresponding PU cpuset </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.mpc_topology_get_parent_core_cpuset">
+<span class="target" id="d1/dca/group__topology__interface__getters_1ga8be5cf74c46e0491478d43a911acb72a"></span><span class="n"><span class="pre">hwloc_cpuset_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_topology_get_parent_core_cpuset</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">cpuid</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.mpc_topology_get_parent_core_cpuset" title="Link to this definition"></a><br /></dt>
+<dd><p>Return the core cupset of cpuid. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>cpuid</strong> – PU id to query for </p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>hwloc_cpuset_t corresponding core cpuset </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.mpc_topology_get_first_pu_for_level">
+<span class="target" id="d1/dca/group__topology__interface__getters_1gafd1b4ce8e49129f446fdf9f3e4b088e6"></span><span class="n"><span class="pre">hwloc_cpuset_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_topology_get_first_pu_for_level</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">hwloc_obj_type_t</span></span><span class="w"> </span><span class="n"><span class="pre">type</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.mpc_topology_get_first_pu_for_level" title="Link to this definition"></a><br /></dt>
+<dd><p>Return the first PU in the given node level. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>type</strong> – Type of level to search for </p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>hwloc_cpuset_t cpuset with a single core according to level </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.mpc_topology_get_ht_per_core">
+<span class="target" id="d1/dca/group__topology__interface__getters_1ga995c90ac3de3c94c21be300e991e4f8d"></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_topology_get_ht_per_core</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">void</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.mpc_topology_get_ht_per_core" title="Link to this definition"></a><br /></dt>
+<dd><p>Number of processing units per core (Hyperhtreads) </p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int number of PU per CORE </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.mpc_topology_clear_cpu_pinning_cache">
+<span class="target" id="d1/dca/group__topology__interface__getters_1gaab540981f098d6f20db17f1448cf821b"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_topology_clear_cpu_pinning_cache</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#c.mpc_topology_clear_cpu_pinning_cache" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.mpc_topology_set_pu_count">
+<span class="target" id="d1/dca/group__topology__interface__getters_1ga08758a8ab1c6abb8cccd520f226e3604"></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_topology_set_pu_count</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">n</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.mpc_topology_set_pu_count" title="Link to this definition"></a><br /></dt>
+<dd><p>Set the number of core usable for the current process. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>n</strong> – Number of cores used for ethread </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.mpc_topology_get_mcdram_node">
+<span class="target" id="d1/dca/group__topology__interface__getters_1ga1579fa27813bc3b03f19be40d0a6048b"></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_topology_get_mcdram_node</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#c.mpc_topology_get_mcdram_node" title="Link to this definition"></a><br /></dt>
+<dd><p>Return the node ID for the MCDRAM. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int MCDRAM node ID (-1 if none) </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.mpc_topology_has_nvdimm">
+<span class="target" id="d1/dca/group__topology__interface__getters_1gaea61921f75540b6e6526ae75fd1b8c21"></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_topology_has_nvdimm</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#c.mpc_topology_has_nvdimm" title="Link to this definition"></a><br /></dt>
+<dd><p>Check if the machine has NVDIMMs. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int non zero if NVDIMMs are found </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.mpc_topology_guided_compute_color">
+<span class="target" id="d1/dca/group__topology__interface__getters_1ga3c87e632eb65ee744cfebb73d05dbace"></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_topology_guided_compute_color</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">char</span></span><span class="p"><span class="pre">*</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.mpc_topology_guided_compute_color" title="Link to this definition"></a><br /></dt>
+<dd><p>Return logical id of a hardware instance for guided topological split. </p>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.mpc_topology_unguided_compute_color">
+<span class="target" id="d1/dca/group__topology__interface__getters_1ga633167334c03a205bcd503c24a34c269"></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_topology_unguided_compute_color</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">int</span></span><span class="p"><span class="pre">*</span></span>, <span class="kt"><span class="pre">int</span></span><span class="p"><span class="pre">*</span></span>, <span class="kt"><span class="pre">int</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.mpc_topology_unguided_compute_color" title="Link to this definition"></a><br /></dt>
+<dd><p>Return logical id of a hardware instance for unguided topological split. </p>
+</dd></dl>
+
+</div>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-variables">Variables</p>
+<dl class="c var">
+<dt class="sig sig-object c" id="c.mpc_topology_split_hardware_type_name">
+<span class="target" id="d1/dca/group__topology__interface__getters_1gaa70618c8e031dc3bd035af8561b53bfb"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_topology_split_hardware_type_name</span></span></span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#c.mpc_topology_split_hardware_type_t.MPC_LOWCOMM_HW_TYPE_COUNT" title="MPC_LOWCOMM_HW_TYPE_COUNT"><span class="n"><span class="pre">MPC_LOWCOMM_HW_TYPE_COUNT</span></span></a><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="p"><span class="pre">{</span></span><span class="s"><span class="pre">&quot;Node&quot;</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">&quot;Package&quot;</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">&quot;NUMANode&quot;</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">&quot;L3Cache&quot;</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">&quot;L2Cache&quot;</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">&quot;L1Cache&quot;</span></span><span class="p"><span class="pre">}</span></span><a class="headerlink" href="#c.mpc_topology_split_hardware_type_name" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="c var">
+<dt class="sig sig-object c" id="c.mpc_topology_split_hardware_hwloc_type">
+<span class="target" id="d1/dca/group__topology__interface__getters_1gafb71ab463c9d982fbe3a8a6dfab072aa"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">hwloc_obj_type_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_topology_split_hardware_hwloc_type</span></span></span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#c.mpc_topology_split_hardware_type_t.MPC_LOWCOMM_HW_TYPE_COUNT" title="MPC_LOWCOMM_HW_TYPE_COUNT"><span class="n"><span class="pre">MPC_LOWCOMM_HW_TYPE_COUNT</span></span></a><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="p"><span class="pre">{</span></span><span class="n"><span class="pre">HWLOC_OBJ_MACHINE</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="n"><span class="pre">HWLOC_OBJ_PACKAGE</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="n"><span class="pre">HWLOC_OBJ_NUMANODE</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="n"><span class="pre">HWLOC_OBJ_CACHE</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="n"><span class="pre">HWLOC_OBJ_CACHE</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="n"><span class="pre">HWLOC_OBJ_CACHE</span></span><span class="p"><span class="pre">}</span></span><a class="headerlink" href="#c.mpc_topology_split_hardware_hwloc_type" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+</div>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="threads.html" class="btn btn-neutral float-left" title="MPC_Threads" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="whole_index.html" class="btn btn-neutral float-right" title="Code index" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Commissariat à l&#39;Énergie Atomique et aux Énergies Alternatives.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

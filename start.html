@@ -1,0 +1,292 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Getting started &mdash; MPC 4.3.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+
+  
+    <link rel="shortcut icon" href="_static/mpc_logo.png"/>
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=0503a316"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Building &amp; Installing MPC" href="build.html" />
+    <link rel="prev" title="Multi-Processor Computing" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html">
+            
+              <img src="_static/mpc_logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Getting started</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#prerequisites">Prerequisites</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#get-mpc-source-code">Get MPC Source code</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#building-mpc">Building MPC</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#using-mpc">Using MPC</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#compiling-applications">Compiling applications</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#running-applications">Running applications</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="build.html">Building &amp; Installing MPC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage.html">Using MPC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="features.html">Advanced Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="faq.html">Frequently Asked Questions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="issues.html">Known issues</a></li>
+<li class="toctree-l1"><a class="reference internal" href="changelog.html">Changelog</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Contribution Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="contribute/main.html">Contribution Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer Documentation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="api/main.html">Multi-Processor Computing (MPC) Framework Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/main.html#modules-documentation">Modules Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/main.html#code-documentation">Code Documentation</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Links</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference external" href="https://mpc.hpcframework.com">Official Website (mpc.hpcframework.com)</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/cea-hpc/mpc">Repository (github.com)</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://mpc.hpcframework.com/publications-2/">Publications (mpc.hpcframework.com)</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">MPC</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Getting started</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/start.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="getting-started">
+<h1>Getting started<a class="headerlink" href="#getting-started" title="Link to this heading"></a></h1>
+<section id="prerequisites">
+<h2>Prerequisites<a class="headerlink" href="#prerequisites" title="Link to this heading"></a></h2>
+<p>MPC has a few dependencies which must be installed prior to running the
+installation script. Most of them are available on most systems.</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span><span class="c1"># Install dependencies on Centos</span>
+yum<span class="w"> </span>install<span class="w"> </span>-y<span class="w"> </span>gcc<span class="w"> </span>gcc-gfortran<span class="w"> </span>gcc-c++<span class="w"> </span>patch<span class="w"> </span>make<span class="w"> </span>cmake<span class="w"> </span>automake<span class="w"> </span>libtool<span class="w"> </span>binutils<span class="w"> </span>bzip2<span class="w"> </span>pkg-config<span class="w"> </span>curl<span class="w"> </span>python36<span class="w"> </span>texinfo<span class="w"> </span>diffutils<span class="w"> </span>file
+<span class="c1"># Install dependencies on Debian / Ubuntu</span>
+apt<span class="w"> </span>install<span class="w"> </span>-y<span class="w"> </span>gcc<span class="w"> </span>g++<span class="w"> </span>gfortran<span class="w"> </span>patch<span class="w"> </span>make<span class="w"> </span>cmake<span class="w"> </span>automake<span class="w"> </span>libtool<span class="w"> </span>binutils<span class="w"> </span>bzip2<span class="w"> </span>pkg-config<span class="w"> </span>curl<span class="w"> </span>python3
+<span class="c1"># Install dependencies on Fedora</span>
+yum<span class="w"> </span>install<span class="w"> </span>-y<span class="w"> </span>gcc<span class="w"> </span>gcc-gfortran<span class="w"> </span>gcc-c++<span class="w"> </span>patch<span class="w"> </span>make<span class="w"> </span>cmake<span class="w"> </span>bzip2<span class="w"> </span>pkg-config<span class="w"> </span>findutils<span class="w"> </span>texinfo<span class="w"> </span>diffutils<span class="w"> </span>file
+<span class="c1"># Install dependencies on ArchLinux</span>
+pacman<span class="w"> </span>-Su<span class="w"> </span>gcc<span class="w"> </span>gcc-fortran<span class="w"> </span>patch<span class="w"> </span>make<span class="w"> </span>cmake<span class="w"> </span>bzip2<span class="w"> </span>pkg-config<span class="w"> </span>python<span class="w"> </span>diffutils<span class="w"> </span>perl-podlators<span class="w"> </span>automake<span class="w"> </span>libtool<span class="w"> </span>binutils
+</pre></div>
+</div>
+<p>Others dependencies are embedded with MPC source distribution and will
+downloaded/installed automatically.</p>
+</section>
+<section id="get-mpc-source-code">
+<h2>Get MPC Source code<a class="headerlink" href="#get-mpc-source-code" title="Link to this heading"></a></h2>
+<p>Two ways to retrieve MPC sources:</p>
+<ul>
+<li><dl>
+<dt>From a release (<a class="reference external" href="https://github.com/cea-hpc/mpc/releases/releases">release page</a>)</dt><dd><pre class="literal-block"># Get the last tarball
+curl -k https://github.com/cea-hpc/mpc/archive/refs/tags/MPC_4.3.1.tar.gz
+# Extract the tarball
+tar xf MPC_4.3.1.tar.gz</pre>
+</dd>
+</dl>
+</li>
+<li><dl>
+<dt>From the Git repository on <a class="reference external" href="https://github.com/cea-hpc/mpc">Github</a></dt><dd><div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/cea-hpc/mpc.git
+</pre></div>
+</div>
+</dd>
+</dl>
+</li>
+</ul>
+</section>
+<section id="building-mpc">
+<h2>Building MPC<a class="headerlink" href="#building-mpc" title="Link to this heading"></a></h2>
+<p>To ease the installation process of MPC and its dependencies, an unified
+installation script is provided , <code class="docutils literal notranslate"><span class="pre">installmpc</span></code>. You can run it from the
+extracted directory. Note that if MPC has been cloned from the Git repository,
+<code class="docutils literal notranslate"><span class="pre">autoconf</span></code> must be called beforehand to generate proper installation
+architecture (Makefile.in &amp; configure scripts). From a release distribution,
+these files should be already provided.</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span><span class="c1"># Considering this installation prefix (to change accordingly)</span>
+<span class="nv">INSTALL_PREFIX</span><span class="o">=</span><span class="nv">$PWD</span>/INSTALL
+<span class="c1"># Run the install script</span>
+mkdir<span class="w"> </span>BUILD<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">cd</span><span class="w"> </span>BUILD
+../installmpc<span class="w"> </span>--prefix<span class="o">=</span><span class="si">${</span><span class="nv">INSTALL_PREFIX</span><span class="si">}</span>
+</pre></div>
+</div>
+<p>This will build MPC and its dependencies and may take a while, especially if the
+<em>thread-based</em> support is enabled (with <code class="docutils literal notranslate"><span class="pre">--thread-based</span></code>). To build MPC only in process mode (default),
+one may uses the <code class="docutils literal notranslate"><span class="pre">--process-mode</span></code> to the <code class="docutils literal notranslate"><span class="pre">installmpc</span></code> script. MPC supports
+Spack to reuse already installed packages to shorten the time to build. This
+behavior is the default and can be customized with <code class="docutils literal notranslate"><span class="pre">--enable/disable-spack</span></code>.
+Considering Spack is loaded to the current shell, MPC will try to find if deps
+(hwloc, openpa, libxml2, mpc-compiler-additions…) before building them.
+Additionally, MPC can install required dependencies through Spack to improve
+future builds by reusing them with <code class="docutils literal notranslate"><span class="pre">--enable/disable-spack-build</span></code>. This
+capability is disabled by default to avoid slowing down Spack installation with
+undesired packages.</p>
+<div class="admonition caution">
+<p class="admonition-title">Caution</p>
+<p>Installation prefix should be set to avoid “default” installation path  (usually under <code class="docutils literal notranslate"><span class="pre">/usr/local</span></code>) as MPC provides redefinition of few system headers (like <code class="docutils literal notranslate"><span class="pre">pthread.h</span></code> to intercept applications). It could lead to issues when MPC is not loaded. Additionally, MPC should be installed in a non-root environment.</p>
+</div>
+</section>
+<section id="using-mpc">
+<h2>Using MPC<a class="headerlink" href="#using-mpc" title="Link to this heading"></a></h2>
+<p>To load MPC in the current environment, a sourcing script is made available in
+the install prefix:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span><span class="nb">source</span><span class="w"> </span><span class="si">${</span><span class="nv">INSTALL_PREFIX</span><span class="si">}</span>/mpcvars.sh
+</pre></div>
+</div>
+<section id="compiling-applications">
+<h3>Compiling applications<a class="headerlink" href="#compiling-applications" title="Link to this heading"></a></h3>
+<p>MPC provides multiple entry-points to build applications. Beyond the classical
+<code class="docutils literal notranslate"><span class="pre">mpicc</span></code>, <code class="docutils literal notranslate"><span class="pre">mpicxx/mpic++</span></code> and <code class="docutils literal notranslate"><span class="pre">mpif*</span></code> scripts, MPC comes with its own sets
+of compiler scripts named after the language it targets: <code class="docutils literal notranslate"><span class="pre">mpc_cc</span></code>, <code class="docutils literal notranslate"><span class="pre">mpc_cxx</span></code>
+&amp; <code class="docutils literal notranslate"><span class="pre">mpc_f77</span></code> (common wrapper for any Fortran standard).</p>
+<p>The main difference between these two sets of scripts can be identified when MPC
+is built in <em>thread-based</em> mode: <code class="docutils literal notranslate"><span class="pre">mpi*</span></code> scripts <strong>does not</strong> privatize
+applications by default with a <em>thread-based</em> installation, while <code class="docutils literal notranslate"><span class="pre">mpc_*</span></code>
+script <strong>will privatize</strong> by default. This is intended to transparently capture
+applications assuming <code class="docutils literal notranslate"><span class="pre">mpi*</span></code> scripts without silently attempting to privatize
+them. This way, applications built with “conventional” MPI wrappers can be
+supported. To conveniently enable privatization without propagating any
+compilation flag, it can be done through environment variables:</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span><span class="c1"># Considering a &quot;thread-based&quot; installation</span>
+<span class="c1"># Compilation with automatic privatization</span>
+mpc_cc<span class="w"> </span>main.c
+<span class="c1"># Compilation WITHOUT automatic privatization</span>
+mpicc<span class="w"> </span>main.c
+
+<span class="c1"># All the lines below are equivalent and enables automatic privatization</span>
+mpc_cc<span class="w"> </span>main.c<span class="w"> </span>mpc_cc<span class="w"> </span>-fmpc-privatize<span class="w"> </span>main.c
+mpicc<span class="w"> </span>-fmpc-privatize<span class="w"> </span>main.c<span class="w"> </span><span class="nv">MPI_PRIV</span><span class="o">=</span><span class="m">1</span><span class="w"> </span>mpicc<span class="w"> </span>main.c
+</pre></div>
+</div>
+<p>Without providing any further option, MPC is installed with no <em>thread-based
+MPI</em> support, implying multiple MPI processes can not live within the same UNIX
+process. The privatization is implied if the <code class="docutils literal notranslate"><span class="pre">--thread-based</span></code> installation parameter was passed.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>MPC can be installed in <em>thread-based</em> configuration by using the <code class="docutils literal notranslate"><span class="pre">--thread-based</span></code> option to the <code class="docutils literal notranslate"><span class="pre">installmpc</span></code> script.</p>
+</div>
+</section>
+<section id="running-applications">
+<h3>Running applications<a class="headerlink" href="#running-applications" title="Link to this heading"></a></h3>
+<p>MPC provides two entry points for launching applications. The regular <code class="docutils literal notranslate"><span class="pre">mpirun</span></code>
+and <code class="docutils literal notranslate"><span class="pre">mpcrun</span></code>. The latter gives more control on many aspects of running in
+complex environments. Most of runtime options are available as configuration
+environment variables, most scenarios have a equivalent in both scripts.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>While <code class="docutils literal notranslate"><span class="pre">mpcrun</span></code> is a Bash-based Shell script, <code class="docutils literal notranslate"><span class="pre">mpirun</span></code> is a Python script.</p>
+</div>
+<p>The strength of MPC in thread-based mode is to allow MPI processes to run inside
+regular UNIX processes. For this purpose, an extra set of options is added when
+defining such parameter is required. Both must be set when running an
+application. With <code class="docutils literal notranslate"><span class="pre">mpirun</span></code>, one can be extrapolated from the other:</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span><span class="c1"># Two MPI processes, two UNIX processes</span>
+mpirun<span class="w"> </span>-np<span class="w"> </span><span class="m">2</span><span class="w"> </span>./a.out
+
+<span class="c1"># Two MPI processes, one single UNIX processes</span>
+<span class="c1"># Considering ./a.out as a privatized application</span>
+mpirun<span class="w"> </span>-np<span class="w"> </span><span class="m">2</span><span class="w"> </span>-p<span class="w"> </span><span class="m">1</span><span class="w"> </span>./a.out
+mpirun<span class="w"> </span>-n<span class="w"> </span><span class="m">2</span><span class="w">  </span>-p<span class="w"> </span><span class="m">1</span><span class="w"> </span>./a.out
+mpcrun<span class="w"> </span>-n<span class="o">=</span><span class="m">2</span><span class="w">  </span>-p<span class="o">=</span><span class="m">1</span><span class="w"> </span>./a.out
+
+<span class="c1"># Running on multiple nodes, one UNIX process per node of two MPI processes each</span>
+mpirun<span class="w"> </span>-N<span class="w"> </span><span class="m">2</span><span class="w"> </span>-n<span class="w"> </span><span class="m">4</span><span class="w"> </span>-p<span class="w"> </span><span class="m">2</span><span class="w"> </span>./a.out
+
+<span class="c1"># Restrict number of cores bound to EACH process</span>
+<span class="c1"># Note:</span>
+<span class="c1"># * PpN = &#39;-p&#39; / &#39;-N&#39; = number of processes per node</span>
+<span class="c1"># the number of cores required per node (PpN * &#39;-c&#39;) must not exceed the</span>
+<span class="c1"># maximum number of cores on a single node</span>
+mpirun<span class="w"> </span>-N<span class="w"> </span><span class="m">2</span><span class="w"> </span>-n<span class="w"> </span><span class="m">4</span><span class="w"> </span>-p<span class="w"> </span><span class="m">2</span><span class="w"> </span>-c<span class="w"> </span><span class="m">4</span><span class="w"> </span>./a.out
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>MPC is configured to run with the launcher detected during the installation phase. To list available launchers (Hydra, SLURM…): <code class="docutils literal notranslate"><span class="pre">mpcrun</span> <span class="pre">--launch_list</span></code>, to then be used with <code class="docutils literal notranslate"><span class="pre">-l</span></code> option.</p>
+</div>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="index.html" class="btn btn-neutral float-left" title="Multi-Processor Computing" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="build.html" class="btn btn-neutral float-right" title="Building &amp; Installing MPC" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Commissariat à l&#39;Énergie Atomique et aux Énergies Alternatives.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

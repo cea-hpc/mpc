@@ -1,0 +1,339 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Runtime options &mdash; MPC 4.3.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+    <link rel="shortcut icon" href="../_static/mpc_logo.png"/>
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=0503a316"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Examples" href="runtime_examples.html" />
+    <link rel="prev" title="Sourcing MPC" href="sourcing.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html">
+            
+              <img src="../_static/mpc_logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../start.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../build.html">Building &amp; Installing MPC</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../usage.html">Using MPC</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="sourcing.html">Sourcing MPC</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Runtime options</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#main-options">Main options</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#multithreading">Multithreading</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#network">Network</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#launcher">Launcher</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#information">Information</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#debugger">Debugger</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="runtime_examples.html">Examples</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../features.html">Advanced Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../faq.html">Frequently Asked Questions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../issues.html">Known issues</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../changelog.html">Changelog</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Contribution Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../contribute/main.html">Contribution Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer Documentation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../api/main.html">Multi-Processor Computing (MPC) Framework Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/main.html#modules-documentation">Modules Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/main.html#code-documentation">Code Documentation</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Links</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference external" href="https://mpc.hpcframework.com">Official Website (mpc.hpcframework.com)</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/cea-hpc/mpc">Repository (github.com)</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://mpc.hpcframework.com/publications-2/">Publications (mpc.hpcframework.com)</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">MPC</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../usage.html">Using MPC</a></li>
+      <li class="breadcrumb-item active">Runtime options</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/runtime/runtime_options.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="runtime-options">
+<h1>Runtime options<a class="headerlink" href="#runtime-options" title="Link to this heading"></a></h1>
+<p>This is the plain man page of mpcrun. You can find this exact text using <code class="docutils literal notranslate"><span class="pre">mpcrun</span> <span class="pre">-h</span></code>.</p>
+<p>Usage</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">mpcrun</span> <span class="p">[</span><span class="n">option</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="p">]</span> <span class="n">binary</span> <span class="p">[</span><span class="n">user</span> <span class="n">args</span><span class="p">]</span>
+</pre></div>
+</div>
+<section id="main-options">
+<h2>Main options<a class="headerlink" href="#main-options" title="Link to this heading"></a></h2>
+<p>mpcrun provides several options for configuring the launch process. These include:</p>
+<table class="docutils align-center" id="id1">
+<caption><span class="caption-text">Common mpcrun options</span><a class="headerlink" href="#id1" title="Link to this table"></a></caption>
+<tbody>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">-N=n,--node-nb=n</span></code></p></td>
+<td><p>Total number of nodes            (default: 1)</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">-p=n,</span> <span class="pre">--process-nb=n</span></code></p></td>
+<td><p>Total number of UNIX processes   (default: 1)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">-n=n,</span> <span class="pre">--task-nb=n</span></code></p></td>
+<td><p>Total number of MPC tasks        (default: 1)</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">-c=n,</span> <span class="pre">--cpu-nb=n</span></code></p></td>
+<td><p>Number of cpus per UNIX process  (default: 1)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">--cpu-nb-mpc=n</span></code></p></td>
+<td><p>Number of cpus per MPC tasks</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">--enable-smt</span></code></p></td>
+<td><p>Enable SMT capabilities (disabled by default)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">--mpmd</span></code></p></td>
+<td><p>Use mpmd mode (replaces binary)</p></td>
+</tr>
+</tbody>
+</table>
+<p>You can see the hierarchy of tasks and processes in mpc runtime :</p>
+<figure class="align-center" id="id2">
+<img alt="MPC task hierarchy" src="../_images/mpc_task_hierarchy.png" />
+<figcaption>
+<p><span class="caption-text">MPC execution model as described in <a class="reference external" href="https://hpcframework.com/wp-content/uploads/2015/06/MPC-A-Unified-Parallel-Runtime-for-Clusters-of-NUMA-Machines.pdf">this paper</a></span><a class="headerlink" href="#id2" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+<p>Traditionally, an MPC program is launched using a combination of <code class="docutils literal notranslate"><span class="pre">-N</span></code>, <code class="docutils literal notranslate"><span class="pre">-n</span></code> and <code class="docutils literal notranslate"><span class="pre">-c</span></code>.</p>
+<p>For example <code class="docutils literal notranslate"><span class="pre">mpcrun</span> <span class="pre">-N</span> <span class="pre">4</span> <span class="pre">-p</span> <span class="pre">8</span> <span class="pre">-n</span> <span class="pre">16</span> <span class="pre">./my_mpi_app</span></code> launches <cite>my_mpi_app</cite> with 4 nodes, each having 2 processes, and each process running 4 tasks.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">-p</span></code> option is specific to thread-based. It will have no effect if used with MPC compiled in process-mode.</p>
+</div>
+</section>
+<section id="multithreading">
+<h2>Multithreading<a class="headerlink" href="#multithreading" title="Link to this heading"></a></h2>
+<table class="docutils align-center">
+<tbody>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">-m=n,</span> <span class="pre">--multithreading=n</span></code></p></td>
+<td><p>Define underlying threading engine</p></td>
+</tr>
+</tbody>
+</table>
+<dl class="simple">
+<dt>The most common modes are</dt><dd><ul class="simple">
+<li><p><strong>pthread</strong>
+Use POSIX threads to ensure multithreading</p></li>
+<li><p><strong>ethread_mxn</strong>
+Use MPC own user level threading engine</p></li>
+<li><p><strong>ethread</strong>
+Use MPC own user level threading engine for debug purposes (only one thread at a time)</p></li>
+</ul>
+</dd>
+</dl>
+</section>
+<section id="network">
+<h2>Network<a class="headerlink" href="#network" title="Link to this heading"></a></h2>
+<table class="docutils align-center">
+<tbody>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">-net=n,</span> <span class="pre">--net=,</span> <span class="pre">--network=n</span></code></p></td>
+<td><p>Define Network mode</p></td>
+</tr>
+</tbody>
+</table>
+<p>Using the help command, the available networks configuration should be displayed as follow</p>
+<div class="literal-block-wrapper docutils container" id="id3">
+<div class="code-block-caption"><span class="caption-text">Example of available network configurations</span><a class="headerlink" href="#id3" title="Link to this code"></a></div>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">Configured CLI switches for network configurations (default: tcpshm):</span>
+
+<span class="go">- shm:</span>
+<span class="go">   * tbsmmpi</span>
+<span class="go">   * shmmpi</span>
+
+<span class="go">- verbsshm:</span>
+<span class="go">   * tbsmmpi</span>
+<span class="go">   * shmmpi</span>
+<span class="go">   * verbsofirail</span>
+
+<span class="go">- verbs:</span>
+<span class="go">   * tbsmmpi</span>
+<span class="go">   * verbsofirail</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="launcher">
+<h2>Launcher<a class="headerlink" href="#launcher" title="Link to this heading"></a></h2>
+<table class="docutils align-center">
+<tbody>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">-l=n,</span> <span class="pre">--launcher=n</span></code></p></td>
+<td><p>Define launcher</p></td>
+</tr>
+</tbody>
+</table>
+<p>Using the help command, the available launchers should be displayed as follow</p>
+<div class="literal-block-wrapper docutils container" id="id4">
+<div class="code-block-caption"><span class="caption-text">Example of available launchers</span><a class="headerlink" href="#id4" title="Link to this code"></a></div>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">Available launch methods (default is srun):</span>
+<span class="go">   - none</span>
+<span class="go">   - none_mpc-gdb</span>
+<span class="go">   - salloc_hydra</span>
+<span class="go">   - srun</span>
+</pre></div>
+</div>
+</div>
+<table class="docutils align-center">
+<tbody>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">--opt=&lt;options&gt;</span></code></p></td>
+<td><p>Launcher specific options</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">--launchlist</span></code></p></td>
+<td><p>Print available launch methods</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">--config=&lt;file&gt;</span></code></p></td>
+<td><p>Configuration file to load</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">--profiles=&lt;p1,p2&gt;</span></code></p></td>
+<td><p>List of profiles to enable in config</p></td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">--opt</span></code> option is used to pass through options to the underlying launcher.
+It is commonly used to specify the wanted partition to slurm</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">mpcrun</span> <span class="o">-</span><span class="n">N</span><span class="o">=</span><span class="mi">2</span> <span class="o">-</span><span class="n">n</span><span class="o">=</span><span class="mi">2</span> <span class="o">--</span><span class="n">opt</span><span class="o">=</span><span class="s2">&quot;-p &lt;partition&gt;&quot;</span> <span class="o">--</span> <span class="o">./</span><span class="n">a</span><span class="o">.</span><span class="n">out</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="information">
+<h2>Information<a class="headerlink" href="#information" title="Link to this heading"></a></h2>
+<table class="docutils align-center">
+<tbody>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">-h,</span> <span class="pre">--help</span></code></p></td>
+<td><p>Display this help</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">--show</span></code></p></td>
+<td><p>Display command line</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">-v,-vv,-vvv</span></code></p></td>
+<td><p>Verbose mode (level 1 to 3)</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">--verbose</span></code></p></td>
+<td><p>Verbose level 1</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">--graphic-placement</span></code></p></td>
+<td><p>Output a xml file of thread placement and topology for each compute node</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">--text-placement</span></code></p></td>
+<td><p>Output a txt file of thread placement and topology for each compute node</p></td>
+</tr>
+</tbody>
+</table>
+<dl class="simple">
+<dt>The verbose level are defined as such</dt><dd><ul class="simple">
+<li><p>Level 1 (v): Show basic information about the launched process</p></li>
+<li><p>Level 2 (vv): Show logs information about the launched process</p></li>
+<li><p>Level 3 (vvv): Show very detailed debug information about the launched process</p></li>
+</ul>
+</dd>
+</dl>
+</section>
+<section id="debugger">
+<h2>Debugger<a class="headerlink" href="#debugger" title="Link to this heading"></a></h2>
+<p>mpcrun provides options for configuring the debugger:</p>
+<table class="docutils align-center">
+<tbody>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">--dbg=&lt;debugger_name&gt;</span></code></p></td>
+<td><p>to use a debugger</p></td>
+</tr>
+</tbody>
+</table>
+<p>You can also launch your binaries as such if you want to keep the UNIX process outputs separate :</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">mpcrun -n=2 -p=2 xterm -hold -e gdb -ex r ./my_mpi_app</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="sourcing.html" class="btn btn-neutral float-left" title="Sourcing MPC" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="runtime_examples.html" class="btn btn-neutral float-right" title="Examples" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Commissariat à l&#39;Énergie Atomique et aux Énergies Alternatives.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

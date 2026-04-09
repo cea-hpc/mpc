@@ -1,0 +1,192 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MPC_Launch &mdash; MPC 4.3.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=fa44fd50" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
+
+  
+    <link rel="shortcut icon" href="../../_static/mpc_logo.png"/>
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=0503a316"></script>
+      <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Process Management Interface (PMI)" href="pmi.html" />
+    <link rel="prev" title="MPC_IO" href="../io.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html">
+            
+              <img src="../../_static/mpc_logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../start.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../build.html">Building &amp; Installing MPC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../usage.html">Using MPC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../features.html">Advanced Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../faq.html">Frequently Asked Questions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../issues.html">Known issues</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../changelog.html">Changelog</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Contribution Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../contribute/main.html">Contribution Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer Documentation</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../main.html">Multi-Processor Computing (MPC) Framework Documentation</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../main.html#modules-documentation">Modules Documentation</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../arch.html">MPC_Arch</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../common.html">MPC_Common</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../config.html">MPC_Config</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../fortran.html">MPC_Fortran</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../io.html">MPC_IO</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">MPC_Launch</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#module-mpc-launch">Module MPC_Launch</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#summary">SUMMARY:</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#contents">CONTENTS:</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#components">COMPONENTS:</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#api">API</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="pmi.html">Process Management Interface (PMI)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="libmode.html">Mode Hooks library</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../lowcomm/lowcomm.html">MPC_Lowcomm</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../mpi/mpi.html">MPC_MPI</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../openmp.html">MPC_OpenMP</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../threads.html">MPC_Threads</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../topology.html">MPC_Topology</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../main.html#code-documentation">Code Documentation</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Links</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference external" href="https://mpc.hpcframework.com">Official Website (mpc.hpcframework.com)</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/cea-hpc/mpc">Repository (github.com)</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://mpc.hpcframework.com/publications-2/">Publications (mpc.hpcframework.com)</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">MPC</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../main.html">Multi-Processor Computing (MPC) Framework Documentation</a></li>
+      <li class="breadcrumb-item active">MPC_Launch</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/api/launch/launch.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="mpc-launch">
+<h1>MPC_Launch<a class="headerlink" href="#mpc-launch" title="Link to this heading"></a></h1>
+<section id="module-mpc-launch">
+<h2>Module MPC_Launch<a class="headerlink" href="#module-mpc-launch" title="Link to this heading"></a></h2>
+<section id="summary">
+<h3>SUMMARY:<a class="headerlink" href="#summary" title="Link to this heading"></a></h3>
+<p>This module is in charge of launching MPC it therefore define a main entry point for C and Fortran and provides the initialization for other modules including argument parsing. In addition, PMI is managed in this module.</p>
+</section>
+<section id="contents">
+<h3>CONTENTS:<a class="headerlink" href="#contents" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><strong>include/</strong> : Headers used as interface with other modules</p></li>
+<li><p><strong>src/</strong>     : module main source files</p></li>
+</ul>
+</section>
+<section id="components">
+<h3>COMPONENTS:<a class="headerlink" href="#components" title="Link to this heading"></a></h3>
+<section id="component-1">
+<h4>Component #1<a class="headerlink" href="#component-1" title="Link to this heading"></a></h4>
+</section>
+<section id="component-2">
+<h4>Component #2<a class="headerlink" href="#component-2" title="Link to this heading"></a></h4>
+</section>
+</section>
+</section>
+<section id="api">
+<h2>API<a class="headerlink" href="#api" title="Link to this heading"></a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="pmi.html">Process Management Interface (PMI)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="libmode.html">Mode Hooks library</a></li>
+</ul>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../io.html" class="btn btn-neutral float-left" title="MPC_IO" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="pmi.html" class="btn btn-neutral float-right" title="Process Management Interface (PMI)" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Commissariat à l&#39;Énergie Atomique et aux Énergies Alternatives.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

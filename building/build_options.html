@@ -1,0 +1,238 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Compilation options &mdash; MPC 4.3.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+    <link rel="shortcut icon" href="../_static/mpc_logo.png"/>
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=0503a316"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Using spack" href="build_spack.html" />
+    <link rel="prev" title="Building &amp; Installing MPC" href="../build.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html">
+            
+              <img src="../_static/mpc_logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../start.html">Getting started</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../build.html">Building &amp; Installing MPC</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Compilation options</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#files-location-and-external-modules-configuration">Files location and external modules configuration</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#installation-process">Installation Process</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="build_spack.html">Using spack</a></li>
+<li class="toctree-l2"><a class="reference internal" href="build_tips.html">Installation tips</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../usage.html">Using MPC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../features.html">Advanced Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../faq.html">Frequently Asked Questions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../issues.html">Known issues</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../changelog.html">Changelog</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Contribution Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../contribute/main.html">Contribution Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer Documentation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../api/main.html">Multi-Processor Computing (MPC) Framework Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/main.html#modules-documentation">Modules Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/main.html#code-documentation">Code Documentation</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Links</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference external" href="https://mpc.hpcframework.com">Official Website (mpc.hpcframework.com)</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/cea-hpc/mpc">Repository (github.com)</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://mpc.hpcframework.com/publications-2/">Publications (mpc.hpcframework.com)</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">MPC</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../build.html">Building &amp; Installing MPC</a></li>
+      <li class="breadcrumb-item active">Compilation options</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/building/build_options.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="compilation-options">
+<h1>Compilation options<a class="headerlink" href="#compilation-options" title="Link to this heading"></a></h1>
+<section id="files-location-and-external-modules-configuration">
+<h2>Files location and external modules configuration<a class="headerlink" href="#files-location-and-external-modules-configuration" title="Link to this heading"></a></h2>
+<p>Unless building with sudo you should specify a prefix for the installation. Use
+absolute paths to avoid any issue. For a quick install you can use these
+commands :</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>mkdir<span class="w"> </span><span class="nv">$HOME</span>/installmpc<span class="w"> </span>installmpc<span class="w"> </span>--prefix<span class="o">=</span><span class="nv">$HOME</span>/installmpc
+</pre></div>
+</div>
+<p>In case you are building MPC offline you should place the external modules
+sources in the BUILD directory or in the $HOME/.mpc-deps. You can get all
+dependencies sources zipped archives with <code class="docutils literal notranslate"><span class="pre">installmpc</span> <span class="pre">--download</span></code>. MPC
+installed dependencies are the following :</p>
+<ul class="simple">
+<li><p>openpa</p></li>
+<li><p>Hydra</p></li>
+<li><p>OFI</p></li>
+<li><p>mpc-compiler-additions</p></li>
+<li><p>mpc-allocator</p></li>
+<li><p>libfabric</p></li>
+</ul>
+<p>MPC will look for pre-installed modules although you can specify paths for
+system modules. The option to specify a module path is <code class="docutils literal notranslate"><span class="pre">--with-[module]=</span></code>.
+The option to disable a module is <code class="docutils literal notranslate"><span class="pre">--disable-[module]</span></code></p>
+<p>Additionally you can specify paths for :</p>
+<ul class="simple">
+<li><p>cuda</p></li>
+<li><p>opencl</p></li>
+<li><p>openacc</p></li>
+<li><p>tbb</p></li>
+</ul>
+<p>MPC modules are installed in the same prefix as MPC. It is possible to
+reconfigure modules and install them again if you have any specific needs.</p>
+</section>
+<section id="installation-process">
+<h2>Installation Process<a class="headerlink" href="#installation-process" title="Link to this heading"></a></h2>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>MPC can also be used in a modular fashion (component by component)
+if this is of interest please refer to section “Modular MPC” as the rest
+of this section covers the “bundle install” of MPC using ./installmpc</p>
+</div>
+<p>Once you downloaded the archive from the website, you may proceed as follows.
+Note that by default, if you run the <code class="docutils literal notranslate"><span class="pre">installmpc</span></code> script directly into the
+source directory, a <code class="docutils literal notranslate"><span class="pre">build</span></code> directory will be automatically created to avoid
+squashing source and build altogether.</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>tar<span class="w"> </span>xf<span class="w"> </span>MPC_<span class="nv">$VERSION</span>.tar.gz
+<span class="gp">$ </span><span class="nb">cd</span><span class="w"> </span>MPC_<span class="nv">$VERSION</span>
+<span class="gp">$ </span>mkdir<span class="w"> </span>BUILD<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">cd</span><span class="w"> </span>BUILD
+<span class="gp">$ </span>../installmpc<span class="w"> </span>--prefix<span class="o">=</span><span class="nv">$PREFIX</span>
+</pre></div>
+</div>
+<p>The compiler will be detected by default if a privatizing compiler is compiled. To
+avoid any ambiguous detection, one can specify the specific compiler to use
+through the <code class="docutils literal notranslate"><span class="pre">--compiler</span></code> option. For example, using such command with the Intel
+compiler will avoid MPC to build the embedded patched GCC compiler.</p>
+<p>MPC relies on a number of dependencies (openpa, hwloc…) and some may be
+missing in the archive you downloaded (for archive size reasons). Considering
+the current installation process can have an internet connection, on might
+consider using the <code class="docutils literal notranslate"><span class="pre">--download-missing-deps</span></code> option. Any of the dependency can
+be overridden with a custom, already installed version, anywhere on the system.
+An option exist for each, similar to <code class="docutils literal notranslate"><span class="pre">--with-&lt;dep&gt;=/path</span></code>. In these cases, it is
+up to the user to ensure the compatibility between the external dependency and
+MPC’s requirement. A complete list of dependency versions can be found in
+<code class="docutils literal notranslate"><span class="pre">utils/config.txt</span></code>. On the contrary, to forward extra arguments when building embedded
+dependencies, one can use <code class="docutils literal notranslate"><span class="pre">--&lt;dep&gt;-&lt;arg&gt;</span></code>. Here two examples for HWLOC support :</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>./installmpc<span class="w"> </span>--with-hwloc<span class="o">=</span>/app/hwloc/
+$<span class="w"> </span>./installmpc<span class="w"> </span>--hwloc-disable-cuda<span class="w"> </span><span class="c1"># forwarded to hwloc configure as --disable-cuda</span>
+</pre></div>
+</div>
+<p>Beyond these basic options, some useful others are listed and detailed below :</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">--disable-autopriv</span></code> or <code class="docutils literal notranslate"><span class="pre">--process-mode</span></code> if you are not intending on running MPI processes inside
+threads and therefore do not need the privatization support</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--enable-debug</span></code> to enable full debugging for MPC purpose. Will build
+MPC in debug mode <em>AND</em> will build the GDB support for MPC.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--disable-prefix-check</span></code> to confirm you want to erase any existing
+installation specified by $PREFIX. Not used by default to prevent accidental
+overrides.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--enable-color</span></code> if MPC should be build with terminal color support.</p></li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>By default, MPC tries to build with slurm support. If slurm is not found, it will default to using Hydra.
+If you want to build with slurm support, you have to make sure that PMIx is available.</p>
+</div>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>../installmpc<span class="w"> </span>--prefix<span class="o">=</span><span class="nv">$PREFIX</span><span class="w"> </span>-j8<span class="w"> </span>--with-slurm
+</pre></div>
+</div>
+<p>Any MPC option (which can be found by running <code class="docutils literal notranslate"><span class="pre">./configure</span> <span class="pre">--help</span></code>)
+can be provided when invoking the <code class="docutils literal notranslate"><span class="pre">installmpc</span></code> script through the <code class="docutils literal notranslate"><span class="pre">--mpc-option</span></code>
+argument. Ex:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>./installmpc<span class="w"> </span>--prefix<span class="o">=</span><span class="nv">$PREFIX</span><span class="w"> </span>-j8<span class="w"> </span>--mpcframework<span class="o">=</span><span class="s2">&quot;--enable-cma&quot;</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../build.html" class="btn btn-neutral float-left" title="Building &amp; Installing MPC" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="build_spack.html" class="btn btn-neutral float-right" title="Using spack" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Commissariat à l&#39;Énergie Atomique et aux Énergies Alternatives.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,437 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Multi-Processor Computing &mdash; MPC 4.3.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+
+  
+    <link rel="shortcut icon" href="_static/mpc_logo.png"/>
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=0503a316"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Getting started" href="start.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="#">
+            
+              <img src="_static/mpc_logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="start.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="build.html">Building &amp; Installing MPC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage.html">Using MPC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="features.html">Advanced Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="faq.html">Frequently Asked Questions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="issues.html">Known issues</a></li>
+<li class="toctree-l1"><a class="reference internal" href="changelog.html">Changelog</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Contribution Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="contribute/main.html">Contribution Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer Documentation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="api/main.html">Multi-Processor Computing (MPC) Framework Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/main.html#modules-documentation">Modules Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/main.html#code-documentation">Code Documentation</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Links</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference external" href="https://mpc.hpcframework.com">Official Website (mpc.hpcframework.com)</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/cea-hpc/mpc">Repository (github.com)</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://mpc.hpcframework.com/publications-2/">Publications (mpc.hpcframework.com)</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="#">MPC</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="#" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Multi-Processor Computing</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <a class="reference internal image-reference" href="_images/mpc_logo_full.png"><img alt="_images/mpc_logo_full.png" class="align-right" src="_images/mpc_logo_full.png" width="280" />
+</a>
+<section id="multi-processor-computing">
+<h1>Multi-Processor Computing<a class="headerlink" href="#multi-processor-computing" title="Link to this heading"></a></h1>
+<p>The Multi-Processor Computing runtime (MPC) is a unified runtime targeting the
+MPI, OpenMP and PThread standards. One of its main specificities is the ability to
+run MPI Processes inside threads, being a thread-based MPI.</p>
+<p>MPC supports the MPI 3.1 standard in both thread-based and process-based flavors
+and was optimized for the Infiniband and Portals 4 networks. In MPC,
+<strong>MPI_THREAD_MULTIPLE</strong> is always on, which allows transparent use of shared-memory
+parallelism with MPI.</p>
+<p>MPC comes with a suite of privatizing compilers which enable the transparent
+port of existing codes to the thread-based execution paradigm. To do so, MPC
+extended the support of TLS which are now hierarchical.</p>
+<p>Running inside threads enables lower latencies inside nodes (as messages are
+direct memcpys). It requires fewer communication endpoints, one per node instead
+of one per core, leading to memory and launch time improvements.</p>
+<section id="supported-parallel-programming-apis">
+<h2>Supported Parallel Programming APIs<a class="headerlink" href="#supported-parallel-programming-apis" title="Link to this heading"></a></h2>
+<p>MPC provides implementations for the MPI, OpenMP and POSIX Threads standards.
+All these standards can be mixed together in an efficient way, thanks to process
+virtualization. MPC has been ported on x86 and x86_64  with Linux system,  and
+supports TCP, InfiniBand and Portals4 interconnects.</p>
+<section id="mpi">
+<h3>MPI<a class="headerlink" href="#mpi" title="Link to this heading"></a></h3>
+<p>MPC provides its own MPI implementation, and fully respects the MPI 3.1
+standard, such as an efficient MPI_THREAD_MULTIPLE support, a full MPI I/O
+support, a full non-blocking collectives support and an efficient Generalized
+requests support.</p>
+<p>MPC provides a thread-based MPI implementation (e.g MPI processes are threads
+and not OS processes). MPC’s communications are implemented in the following
+way: intra-node communications involve several MPI Processes in a unique OS
+process (MPC’s default mode uses one OS process per node). These MPI Processes
+use the optimized thread-scheduler polling method and thread-scheduler
+integrated collectives to communicate with each other. As far as inter-node
+communications are concerned, MPC uses direct access to the TCP, InfiniBand or
+Portals4 interconnect. MPC provides performances close to MPICH or OpenMPI, but
+with a much better support of hybrid programming models (e.g., MPI/PThreads,
+MPI/OpenMP…) and lower memory consumption.</p>
+<p>MPC also provides a process-based way of using its MPI implementation.</p>
+</section>
+<section id="openmp">
+<h3>OpenMP<a class="headerlink" href="#openmp" title="Link to this heading"></a></h3>
+<p>MPC provides its own OpenMP implementation, and fully respects the OpenMP 3.1
+standard. MPC allows compilation and execution of C/C++ and Fortran OpenMP
+applications thanks to GNU and Intel compilers support. The main MPC package
+contains a patched version of GCC (6.2) called MPC_GCC which is automatically
+installed when building MPC. The OpenMP implementation is also compatible with
+Intel C/C++ and FORTRAN compilers starting at version 15.0.</p>
+<p>The OpenMP runtime has been optimized to efficiently support large NUMA
+architectures and hybrid MPI/OpenMP codes.</p>
+</section>
+<section id="thread-library">
+<h3>Thread Library<a class="headerlink" href="#thread-library" title="Link to this heading"></a></h3>
+<p>MPC comes with its own MxN thread library and POSIX Thread implementation. MxN
+thread libraries provide lightweight user-level threads that are mapped to
+kernel threads. One key advantage of the MxN approach is the ability to optimize
+the user-level thread scheduler to create and schedule a very large number of
+threads with a reduced overhead. The MPC thread scheduler provides a polling
+method that avoids busy-waiting and keeps a high level of reactivity for
+communications, even when the number of tasks is much larger than the number of
+available CPU cores. Furthermore, collective communications are integrated into
+the thread scheduler to enable efficient barrier, reduction and broadcast
+operations.</p>
+</section>
+<section id="features">
+<h3>Features<a class="headerlink" href="#features" title="Link to this heading"></a></h3>
+<section id="thread-debugging">
+<h4>Thread debugging<a class="headerlink" href="#thread-debugging" title="Link to this heading"></a></h4>
+<p>Support for debugging user-level MPC threads is provided thanks to an
+implementation of the libthread_db and a patch to the GNU Debugger (GDB). It
+allows to manage user-level threads in GDB and all GUIs based on GDB. MPC is
+also compatible with Allinea’s DDT Debugger.</p>
+</section>
+<section id="thread-safety">
+<h4>Thread safety<a class="headerlink" href="#thread-safety" title="Link to this heading"></a></h4>
+<a class="reference internal image-reference" href="_images/mpc_logo_tls.png"><img alt="_images/mpc_logo_tls.png" class="align-left" src="_images/mpc_logo_tls.png" width="180" />
+</a>
+<p>Because MPC provides a thread-based MPI implementation, a mechanism is needed to
+deal with global-variable sharing in the application.</p>
+<p>Such thread-safety issues are managed with automatic privatization of global
+variables. This mechanism is automatically applied by the compiler for C/C++
+and Fortran MPI codes through the new -fmpc-privatize option. This new option is
+available in MPC_GCC (provided with the MPC package) and Intel compilers
+(starting with version 15.0 for C/C++ and Fortran).</p>
+</section>
+<section id="memory-allocator">
+<h4>Memory Allocator<a class="headerlink" href="#memory-allocator" title="Link to this heading"></a></h4>
+<p>The MPC thread library comes with a thread-aware and NUMA-aware memory allocator
+(<cite>malloc</cite>, <cite>calloc</cite>, <cite>realloc</cite>, <cite>free</cite>, <cite>memalign</cite> and <cite>posix_memalign</cite>). It implements a
+per-thread heap to avoid contention during allocation and to maintain data
+locality on NUMA nodes. Each new data allocation is first performed by a
+lock-free algorithm on the thread private heap. If this local private heap is
+unable to provide a new memory block, the requesting thread queries a large page
+to the second-level global heap with a synchronization scheme. A large page is a
+parametrized number of system pages. Memory deallocation is locally performed in
+each private heap. When a large page is totally free, it is returned to the
+second-level global heap with a lock-free method. Pages in second-level global
+heap are virtual and are not necessarily backed by physical pages. On a same
+node, memory pages freed by a thread are provided to new allocations of other
+threads without any system call.</p>
+</section>
+<section id="hierarchical-local-storage-hls">
+<h4>Hierarchical Local Storage (HLS)<a class="headerlink" href="#hierarchical-local-storage-hls" title="Link to this heading"></a></h4>
+<p>HLS is a set of directives in C, C++ and Fortran allowing the application
+developer to share global variables across MPI tasks running on a same node. The
+HLS extension can be used to reduce the memory footprint of MPI programs by
+avoiding to duplicate data that are common to all MPI tasks. One typical use
+case of HLS variables is a large table of physical constants. With the HLS
+extension, only one table per node will be allocated instead of one table per
+core (if there is one MPI task per core) thus reducing the memory consumption by
+a factor equal to the number of cores per node.</p>
+</section>
+</section>
+</section>
+<section id="mpc-documentation">
+<h2>MPC Documentation<a class="headerlink" href="#mpc-documentation" title="Link to this heading"></a></h2>
+<p>MPC Documentation is under active development and can be found in the following
+locations:</p>
+<ul class="simple">
+<li><p>The Official website for the whole project: (<a class="reference external" href="http://mpc.hpcframework.com/">http://mpc.hpcframework.com/</a>)</p></li>
+<li><p>In-place documentation (within source code), under Doxygen formatting. Please
+note that this is currently in progress and not everything is fully documented.
+Feel free to contact one of the maintainers mentioned in the MAINTAINERS file.</p></li>
+<li><p>A complete documentation based on currently-written Doxygen AND Markdown files
+placed in modules that can be generated. Please consult the /doc/Doxyfile.in
+to customize the generation to the needs. Once ready, please run
+<code class="docutils literal notranslate"><span class="pre">./doc/gen_doc</span></code>. Be sure to have Doxygen in your PATH along with Graphviz (not
+mandatory) for drawings.</p></li>
+</ul>
+</section>
+<section id="table-of-contents">
+<h2>Table of Contents<a class="headerlink" href="#table-of-contents" title="Link to this heading"></a></h2>
+<div class="toctree-wrapper compound">
+<p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="start.html">Getting started</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="start.html#prerequisites">Prerequisites</a></li>
+<li class="toctree-l2"><a class="reference internal" href="start.html#get-mpc-source-code">Get MPC Source code</a></li>
+<li class="toctree-l2"><a class="reference internal" href="start.html#building-mpc">Building MPC</a></li>
+<li class="toctree-l2"><a class="reference internal" href="start.html#using-mpc">Using MPC</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="build.html">Building &amp; Installing MPC</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="building/build_options.html">Compilation options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="building/build_spack.html">Using spack</a></li>
+<li class="toctree-l2"><a class="reference internal" href="building/build_tips.html">Installation tips</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="usage.html">Using MPC</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="runtime/sourcing.html">Sourcing MPC</a></li>
+<li class="toctree-l2"><a class="reference internal" href="runtime/runtime_options.html">Runtime options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="runtime/runtime_examples.html">Examples</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="features.html">Advanced Features</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="features/privatization.html">Privatization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="features/launching_options.html">Advanced Launching Options</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="faq.html">Frequently Asked Questions</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="faq.html#build-install">Build &amp; Install</a></li>
+<li class="toctree-l2"><a class="reference internal" href="faq.html#runtime">Runtime</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="issues.html">Known issues</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="issues.html#build-install">Build &amp; Install</a></li>
+<li class="toctree-l2"><a class="reference internal" href="issues.html#mpc-to-build-applications">MPC to build applications</a></li>
+<li class="toctree-l2"><a class="reference internal" href="issues.html#mpc-to-run-applications">MPC to run applications</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="changelog.html">Changelog</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#unreleased">[Unreleased]</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#id1">4.3.1 - 2026-04-08</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#id5">4.3.0 - 2025-11-18</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#id11">4.2.0 - 2023-06-13</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#id15">4.1.0 - 2021-08-03</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#id19">4.0.0 - 2020-12-16</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#id25">3.4.0 - 2020-04-27</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#id29">3.3.1 - 2019-06-03</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#id32">3.3.0 - 2018-12-18</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#id36">3.2.0 - 2017-07-04</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#id41">3.1.0 - 2016-06-27</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#id43">3.0.0 - 2016-02-18</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#id47">2.5.2 - 2015-01-20</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#id50">2.5.1</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#id54">2.5.0 - 2014-01-30</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#id58">2.4.1 - 2012-12-21</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#id62">2.4.0 - 2012-09-25</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#id66">2.3.1 - 2011-12-09</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#id68">2.3.0 - 2011-11-23</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#id71">2.2.0 - 2011-06-14</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#id75">2.1.0 - 2011-04-29</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#id78">1.1.0</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="toctree-wrapper compound">
+<p class="caption" role="heading"><span class="caption-text">Contribution Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="contribute/main.html">Contribution Guide</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="contribute/contribute_setup.html">Prerequisites before starting to contribute</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="contribute/contribute_setup.html#general-description">General description</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="contribute/contribute_setup.html#git">Git</a></li>
+<li class="toctree-l4"><a class="reference internal" href="contribute/contribute_setup.html#gitlab">Gitlab</a></li>
+<li class="toctree-l4"><a class="reference internal" href="contribute/contribute_setup.html#mpc-environment">MPC environment</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="contribute/contribute_commit.html">Write a commit message</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="contribute/contribute_commit.html#properly-format-a-commit-message">Properly format a commit message</a></li>
+<li class="toctree-l3"><a class="reference internal" href="contribute/contribute_commit.html#make-use-of-the-pre-commit">Make use of the pre-commit</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="contribute/contribute_commit.html#failing-pre-commit">Failing pre-commit</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="contribute/contribute_commit.html#common">Common</a></li>
+<li class="toctree-l5"><a class="reference internal" href="contribute/contribute_commit.html#typos">typos</a></li>
+<li class="toctree-l5"><a class="reference internal" href="contribute/contribute_commit.html#uncrustify">uncrustify</a></li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="contribute/contribute_commit.html#troubleshooting">Troubleshooting</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="contribute/contribute_commit.html#clang-tidy-cannot-found-compile-commands-json">clang-tidy cannot found compile_commands.json</a></li>
+<li class="toctree-l5"><a class="reference internal" href="contribute/contribute_commit.html#false-positive-from-typos">False positive from typos</a></li>
+<li class="toctree-l5"><a class="reference internal" href="contribute/contribute_commit.html#failing-pipeline-on-passed-pre-commit">Failing pipeline on passed pre-commit</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="contribute/contribute_issue.html">Submit a new issue</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="contribute/contribute_issue.html#general-description">General Description</a></li>
+<li class="toctree-l3"><a class="reference internal" href="contribute/contribute_issue.html#how-tos">HOW-TOs</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="contribute/contribute_issue.html#create-a-new-bug-report">Create a new bug report</a></li>
+<li class="toctree-l4"><a class="reference internal" href="contribute/contribute_issue.html#contribute-to-an-existing-issue">Contribute to an existing issue</a></li>
+<li class="toctree-l4"><a class="reference internal" href="contribute/contribute_issue.html#close-an-issue">Close an issue</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="contribute/contribute_merge_request.html">Request for merging work into mainline</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="contribute/contribute_merge_request.html#general-description">General description</a></li>
+<li class="toctree-l3"><a class="reference internal" href="contribute/contribute_merge_request.html#how-tos">HOW-TOs</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="contribute/contribute_merge_request.html#prepare-the-branch-to-be-merged">Prepare the branch to be merged</a></li>
+<li class="toctree-l4"><a class="reference internal" href="contribute/contribute_merge_request.html#create-a-new-merge-request">Create a new merge-request</a></li>
+<li class="toctree-l4"><a class="reference internal" href="contribute/contribute_merge_request.html#contribute-to-an-existing-merge-request">Contribute to an existing merge-request</a></li>
+<li class="toctree-l4"><a class="reference internal" href="contribute/contribute_merge_request.html#the-reviewing-process">The reviewing process</a></li>
+<li class="toctree-l4"><a class="reference internal" href="contribute/contribute_merge_request.html#merge-a-new-merge-request">Merge a new merge-request</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="contribute/contribute_pipeline.html">Run a pipeline over existing branches</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="contribute/contribute_pipeline.html#general-description">General Description</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="contribute/contribute_pipeline.html#overall">Overall</a></li>
+<li class="toctree-l4"><a class="reference internal" href="contribute/contribute_pipeline.html#ci-cd-tasks">CI/CD Tasks</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="contribute/contribute_pipeline.html#how-tos">HOW-TOs</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="contribute/contribute_pipeline.html#run-manually-a-new-pipeline">Run manually a new pipeline</a></li>
+<li class="toctree-l4"><a class="reference internal" href="contribute/contribute_pipeline.html#run-automatically-a-new-pipeline">Run automatically a new pipeline</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="toctree-wrapper compound">
+<p class="caption" role="heading"><span class="caption-text">Developer Documentation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="api/main.html">Multi-Processor Computing (MPC) Framework Documentation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="api/main.html#introduction">Introduction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/main.html#supported-parallel-programming-apis">Supported Parallel Programming APIs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/main.html#features">Features</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/main.html#credits">Credits</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="api/main.html#modules-documentation">Modules Documentation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="api/arch.html">MPC_Arch</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/common.html">MPC_Common</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/config.html">MPC_Config</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/fortran.html">MPC_Fortran</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/io.html">MPC_IO</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/launch/launch.html">MPC_Launch</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/lowcomm/lowcomm.html">MPC_Lowcomm</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/mpi/mpi.html">MPC_MPI</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/openmp.html">MPC_OpenMP</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/threads.html">MPC_Threads</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/topology.html">MPC_Topology</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="api/main.html#code-documentation">Code Documentation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="api/whole_index.html">Code index</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="toctree-wrapper compound">
+<p class="caption" role="heading"><span class="caption-text">Links</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference external" href="https://mpc.hpcframework.com">Official Website (mpc.hpcframework.com)</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/cea-hpc/mpc">Repository (github.com)</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://mpc.hpcframework.com/publications-2/">Publications (mpc.hpcframework.com)</a></li>
+</ul>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="start.html" class="btn btn-neutral float-right" title="Getting started" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Commissariat à l&#39;Énergie Atomique et aux Énergies Alternatives.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

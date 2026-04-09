@@ -1,0 +1,427 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MPC_Lowcomm &mdash; MPC 4.3.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=fa44fd50" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
+
+  
+    <link rel="shortcut icon" href="../../_static/mpc_logo.png"/>
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=0503a316"></script>
+      <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="LowComm Protocol layer (LCP)" href="lcp.html" />
+    <link rel="prev" title="Mode Hooks library" href="../launch/libmode.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html">
+            
+              <img src="../../_static/mpc_logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../start.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../build.html">Building &amp; Installing MPC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../usage.html">Using MPC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../features.html">Advanced Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../faq.html">Frequently Asked Questions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../issues.html">Known issues</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../changelog.html">Changelog</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Contribution Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../contribute/main.html">Contribution Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer Documentation</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../main.html">Multi-Processor Computing (MPC) Framework Documentation</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../main.html#modules-documentation">Modules Documentation</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../arch.html">MPC_Arch</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../common.html">MPC_Common</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../config.html">MPC_Config</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../fortran.html">MPC_Fortran</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../io.html">MPC_IO</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../launch/launch.html">MPC_Launch</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">MPC_Lowcomm</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#module-mpc-lowcomm">Module MPC_Lowcomm</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#summary">SUMMARY:</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#contents">CONTENTS:</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#components">COMPONENTS:</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#api">API</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="lcp.html">LowComm Protocol layer (LCP)</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../mpi/mpi.html">MPC_MPI</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../openmp.html">MPC_OpenMP</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../threads.html">MPC_Threads</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../topology.html">MPC_Topology</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../main.html#code-documentation">Code Documentation</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Links</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference external" href="https://mpc.hpcframework.com">Official Website (mpc.hpcframework.com)</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/cea-hpc/mpc">Repository (github.com)</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://mpc.hpcframework.com/publications-2/">Publications (mpc.hpcframework.com)</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">MPC</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../main.html">Multi-Processor Computing (MPC) Framework Documentation</a></li>
+      <li class="breadcrumb-item active">MPC_Lowcomm</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/api/lowcomm/lowcomm.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="mpc-lowcomm">
+<h1>MPC_Lowcomm<a class="headerlink" href="#mpc-lowcomm" title="Link to this heading"></a></h1>
+<section id="module-mpc-lowcomm">
+<h2>Module MPC_Lowcomm<a class="headerlink" href="#module-mpc-lowcomm" title="Link to this heading"></a></h2>
+<section id="summary">
+<h3>SUMMARY:<a class="headerlink" href="#summary" title="Link to this heading"></a></h3>
+<p>Here are described the internal of the Lowcomm module.</p>
+</section>
+<section id="contents">
+<h3>CONTENTS:<a class="headerlink" href="#contents" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><strong>lcp/</strong>        : LowComm Protocol network layer.</p></li>
+<li><p><strong>lcr/</strong>        : LowComm Rail network layer.</p></li>
+<li><p><strong>cplane/</strong>     : TCP-based network backbone for inter-job communication.</p></li>
+<li><p><strong>tbsm/</strong>       : Driver sources to handle inter-task network layer (Thread-Based Shared Memory).</p></li>
+<li><p><strong>shm/</strong>        : driver sources to handle intra-node communications (SHared Memory).</p></li>
+<li><p><strong>tcp/</strong>        : Driver sources to handle TCP network layer.</p></li>
+<li><p><strong>ptl/</strong>        : Driver sources to handle Portals network layer.</p></li>
+<li><p><strong>ofi/</strong>        : Driver sources to handle OpenFabric network layer</p></li>
+</ul>
+</section>
+<section id="components">
+<h3>COMPONENTS:<a class="headerlink" href="#components" title="Link to this heading"></a></h3>
+<section id="lowcomm-protocol-layer">
+<h4>LowComm Protocol Layer<a class="headerlink" href="#lowcomm-protocol-layer" title="Link to this heading"></a></h4>
+<p>LCP is responsible for:</p>
+<p><strong>Resource Initialization</strong></p>
+<p>The Resource Initialization process in the LowComm Protocol Layer automates the
+discovery of network resources. It scans the network environment to identify
+hardware and software resources that meet application requirements, driven by
+user input. This process selects appropriate resources based on user-defined
+criteria, simplifying setup and optimizing resource use.</p>
+<p><strong>Connection Management</strong></p>
+<p>Connection Management facilitates robust communication across networked
+environments. It handles the creation of endpoints necessary for establishing
+communication links between nodes. This component also manages multirail
+configurations where multiple network interfaces are used to increase bandwidth
+(and improve fault tolerance, TOBEIMPLEMENTED). It includes the negotiation and
+adjustment of connection parameters to maintain stable communication.</p>
+<p><strong>Communication Protocols</strong></p>
+<p>This function optimizes data paths for transferring information across various
+configurations, such as intra-process, intra-node, and inter-node
+communications. It adjusts to the network topology and communication hardware
+characteristics to ensure efficient data transmission.</p>
+<p><strong>Communication Progression</strong></p>
+<p>Communication Progression manages the stages and transitions of communication
+activities, ensuring the progression of messages within the infrastructure.</p>
+<p><strong>Communication Models</strong></p>
+<p>The layer supports various communication models, including Message Passing and
+Remote Memory Access (RMA). Message Passing is suited for general
+communications, while RMA allows direct memory access on remote nodes,
+beneficial for high-performance computing.</p>
+<p><strong>Memory Management</strong></p>
+<p>Memory Management involves the registration and deregistration of memory for
+Remote Direct Memory Access (RDMA) communications. It allocates and manages
+memory across communication processes.</p>
+<section id="definitions">
+<h5>Definitions<a class="headerlink" href="#definitions" title="Link to this heading"></a></h5>
+<p>The following term are used throughout the documentation:</p>
+<ul class="simple">
+<li><p><strong>transport</strong>: physical network (TCP/IP, BXI, IB).</p></li>
+<li><p><strong>component</strong>: abstract interface describing a transport (<code class="docutils literal notranslate"><span class="pre">tcp</span></code>, <code class="docutils literal notranslate"><span class="pre">ptl</span></code>,
+<code class="docutils literal notranslate"><span class="pre">ofi</span></code>). It can “query” <em>devices</em> and “open” <em>rail interface</em>. It correspond to
+<code class="docutils literal notranslate"><span class="pre">lcr_component_t</span></code> defined in <code class="docutils literal notranslate"><span class="pre">lcr_component.h</span></code></p></li>
+<li><p><strong>device</strong>: representation of a physical device by its name (eg <code class="docutils literal notranslate"><span class="pre">eth0</span></code>, <code class="docutils literal notranslate"><span class="pre">bxi0</span></code>).</p></li>
+<li><p><strong>rail interface</strong>: abstract interface to expose capabilities of the network
+used (send/recv operations, connection management, RDMA, Atomics). It defines
+the transport API.</p></li>
+<li><p><strong>driver</strong>: implementation of the rail interface API for a specific transport.</p></li>
+<li><p><strong>rail (=resource)</strong>: instance of a rail interface.</p></li>
+</ul>
+</section>
+<section id="context-initialization">
+<h5>Context initialization<a class="headerlink" href="#context-initialization" title="Link to this heading"></a></h5>
+<p>The LCP Context handles the initialization of the network resources based on the
+configuration provided by the user. For example, it queries available devices
+(TCP, OFI, Portals), it instantiates and initializes resources,… It
+centralizes all structures related to communication.</p>
+<p>Context initialization has 7 steps:</p>
+<ol class="arabic simple">
+<li><p><em>Load network configuration</em>: load the configuration provided at context
+creation from <code class="docutils literal notranslate"><span class="pre">lcp_context_param_t</span></code> and from <code class="docutils literal notranslate"><span class="pre">lowcomm_config.c</span></code></p></li>
+<li><p><em>Pre-“Component query” configuration</em>: check if requested components are
+available. This is a compilation type check since component availability may be
+determined by compilation option (ex: <code class="docutils literal notranslate"><span class="pre">--with-portals</span></code>)</p></li>
+<li><p><em>Component filtering</em>:</p></li>
+</ol>
+<ul class="simple">
+<li><p>based on the MPI layout configuration (ex: 1 proc, 1 node, n MPI tasks =&gt;
+only use TBSM)</p></li>
+<li><p>avoid registering rail for polling, which introduce overhead, when we know
+they will not be used</p></li>
+<li><p>TBSM usage <strong>is not configurable</strong>. If MPC is compiled in thread-mode + run
+with less proc than MPI rank =&gt; TBSM will be used for inter-thread
+communication.</p></li>
+</ul>
+<ol class="arabic simple" start="4">
+<li><p><em>Component device query</em>: call <code class="docutils literal notranslate"><span class="pre">lcp_context_query_component_devices</span></code> for all
+requested and filtered components</p></li>
+<li><p><em>Device filtering</em>:</p></li>
+</ol>
+<ul class="simple">
+<li><p>based on device name from rail configuration (if not <code class="docutils literal notranslate"><span class="pre">any</span></code> then do <code class="docutils literal notranslate"><span class="pre">strstr</span></code>)</p></li>
+<li><p>compared also with the maximal number of interfaces in rail configuration</p></li>
+<li><p>build a device map for later resource init</p></li>
+</ul>
+<ol class="arabic simple" start="6">
+<li><p><em>Resource allocation and interface opening</em>.</p></li>
+<li><p><em>Interface capabilities</em>: capabilities may be check using
+<code class="docutils literal notranslate"><span class="pre">lcr_iface_get_attr</span></code> only, so this can be known only after initialization since
+network resources may have runtime specifications (two Portals NIC from two
+different cluster may have different configurations).</p></li>
+</ol>
+</section>
+<section id="connection-management">
+<h5>Connection management<a class="headerlink" href="#connection-management" title="Link to this heading"></a></h5>
+<p><strong>Connection management</strong> relies on endpoints which conceptually refer to the
+communication channels or connection points through which processes can
+exchange messages and data. They have the following properties:</p>
+<ul class="simple">
+<li><p>Each process has a set of endpoints, and each endpoint is uniquely identified
+by a specific identifier (addressing scheme described later).</p></li>
+<li><p>They created dynamically or “on-demand” allowing processes to manage them at
+runtime.</p></li>
+<li><p>Resource mapping: each endpoint is associated with particular hardware
+resources, like network interfaces. Endpoint supports multirail: one endpoint
+may have multiple network interfaces.</p></li>
+<li><p>Asynchronous connection: connection establishment is non-blocking. Operations
+on non-connected endpoints will be set to pending and resumed at a later stage.</p></li>
+</ul>
+<p>Endpoints follows the two layers architecture:</p>
+<ul class="simple">
+<li><p>Protocol endpoints: Encompass multiple rail endpoints and are used to
+implement the multirail feature.</p></li>
+<li><p>Rail endpoints: defined in the Rail layer, containing specific network
+connection information (like IP address for TCP, Queue Pairs for InfiniBand, or
+Process Identifiers in Portals4) and an interface object.</p></li>
+</ul>
+<p><strong>Addressing scheme</strong> is based on <code class="docutils literal notranslate"><span class="pre">monitor.c</span></code>. Each endpoint is identified by a
+unique <code class="docutils literal notranslate"><span class="pre">uint64_t</span></code> where:</p>
+<ul class="simple">
+<li><p>32 most significant bits are the <strong>set id</strong>: used for multi-job runs for example.</p></li>
+<li><p>32 least significant bits are the <strong>process id</strong>: used to identify an UNIX process.</p></li>
+</ul>
+</section>
+<section id="communication-protocols">
+<h5>Communication protocols<a class="headerlink" href="#communication-protocols" title="Link to this heading"></a></h5>
+<p>Without going into much detail, we describe impactful design choice in LCP.</p>
+<section id="datapaths">
+<h6>Datapaths<a class="headerlink" href="#datapaths" title="Link to this heading"></a></h6>
+<p>LCP defines multiple <strong>datapaths</strong> depending on message size, request
+parameter, endpoint layout (intra-process, intra-node, inter-node), available
+networks and their capabilities. For both TAG and AM API, branching is located
+in <code class="docutils literal notranslate"><span class="pre">*start*</span></code> functions (<code class="docutils literal notranslate"><span class="pre">lcp_tag_send_start</span></code> and <code class="docutils literal notranslate"><span class="pre">lcp_am_send_start</span></code>).</p>
+</section>
+<section id="internal-communication-model">
+<h6>Internal communication model<a class="headerlink" href="#internal-communication-model" title="Link to this heading"></a></h6>
+<p><strong>Internal communication model</strong> is based on the active message paradigm:</p>
+<ul class="simple">
+<li><p>Handlers are registered and assigned an active message id.</p></li>
+<li><p>Upon reception of data from the network, appropriate handler will be called
+and executed.</p></li>
+</ul>
+<p>Internal handler definition is done through the <code class="docutils literal notranslate"><span class="pre">LCP_DEFINE_AM</span></code> macro where we
+specify the active message ID, the function handler that has been previously
+developed and some flags.</p>
+<p>For example in <code class="docutils literal notranslate"><span class="pre">lcp_tag.c</span></code>, <code class="docutils literal notranslate"><span class="pre">LCP_DEFINE_AM(LCP_AM_ID_EAGER_TAG,</span> <span class="pre">lcp_eager_tag_handler,</span> <span class="pre">0);</span></code> defines the handler that processes eager message
+for the TAG API. It will be executed by the underlying network transport, see
+<code class="docutils literal notranslate"><span class="pre">tcp.c</span></code> in function <code class="docutils literal notranslate"><span class="pre">lcr_tcp_invoke_am</span></code>.</p>
+<p>Such tags are defined in <code class="docutils literal notranslate"><span class="pre">lcp_types.h</span></code>. These tags are registered in the
+adequate protocol file (C.F. <code class="docutils literal notranslate"><span class="pre">lcp_tag.c</span></code>, <code class="docutils literal notranslate"><span class="pre">lcp_rndv.c</span></code>) using <code class="docutils literal notranslate"><span class="pre">LCP_DEFINE_AM</span></code>.
+This macro requires a callback symbol which prototype is defined in
+<code class="docutils literal notranslate"><span class="pre">lcr_defs.h</span></code> as <code class="docutils literal notranslate"><span class="pre">lcr_am_callback</span></code>. The specified callback is always called on
+request receive. However it is not called back if it has been called once.</p>
+<p>If a request has triggered its associated active message callback but is not expected as a MPI receive, it is not being inserted into unexpected matching lists and must be explicitly inserted into such lists. The standard procedure that should be pasted into any callback is the following :</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span>
+<span class="k">static</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="nf">your_message_handler</span><span class="p">(</span><span class="kt">void</span><span class="w"> </span><span class="o">*</span><span class="n">arg</span><span class="p">,</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="o">*</span><span class="n">data</span><span class="p">,</span>
+<span class="w">                                 </span><span class="kt">size_t</span><span class="w"> </span><span class="n">length</span><span class="p">,</span>
+<span class="w">                                 </span><span class="n">__UNUSED__</span><span class="w"> </span><span class="kt">unsigned</span><span class="w"> </span><span class="n">flags</span><span class="p">)</span>
+<span class="p">{</span>
+<span class="w">        </span><span class="kt">int</span><span class="w"> </span><span class="n">rc</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">LCP_SUCCESS</span><span class="p">;</span>
+<span class="w">        </span><span class="n">lcp_context_h</span><span class="w"> </span><span class="n">ctx</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">arg</span><span class="p">;</span>
+<span class="w">        </span><span class="n">lcp_unexp_ctnr_t</span><span class="w"> </span><span class="o">*</span><span class="n">ctnr</span><span class="p">;</span>
+<span class="w">        </span><span class="n">lcp_request_t</span><span class="w"> </span><span class="o">*</span><span class="n">req</span><span class="p">;</span>
+<span class="w">        </span><span class="n">lcp_tag_hdr_t</span><span class="w"> </span><span class="o">*</span><span class="n">hdr</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">data</span><span class="p">;</span>
+<span class="w">        </span><span class="n">lcp_task_h</span><span class="w"> </span><span class="n">task</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">NULL</span><span class="p">;</span>
+
+<span class="w">        </span><span class="n">task</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">lcp_context_task_get</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span><span class="w"> </span><span class="n">hdr</span><span class="o">-&gt;</span><span class="n">dest_tid</span><span class="p">);</span><span class="w">  </span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">task</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="nb">NULL</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="n">mpc_common_errorpoint_fmt</span><span class="p">(</span><span class="s">&quot;LCP: could not find task with tid=%d&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">hdr</span><span class="o">-&gt;</span><span class="n">dest_tid</span><span class="p">);</span>
+<span class="w">                </span><span class="n">rc</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">LCP_ERROR</span><span class="p">;</span>
+<span class="w">                </span><span class="k">goto</span><span class="w"> </span><span class="n">err</span><span class="p">;</span>
+<span class="w">        </span><span class="p">}</span>
+
+<span class="w">	</span><span class="n">LCP_TASK_LOCK</span><span class="p">(</span><span class="n">task</span><span class="p">);</span>
+<span class="w">	</span><span class="cm">/* Try to match it with a posted message */</span>
+<span class="w">        </span><span class="n">req</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">lcp_match_prqueue</span><span class="p">(</span><span class="n">task</span><span class="o">-&gt;</span><span class="n">prqs</span><span class="p">,</span>
+<span class="w">                                </span><span class="n">hdr</span><span class="o">-&gt;</span><span class="n">comm</span><span class="p">,</span>
+<span class="w">                                </span><span class="n">hdr</span><span class="o">-&gt;</span><span class="n">tag</span><span class="p">,</span>
+<span class="w">                                </span><span class="n">hdr</span><span class="o">-&gt;</span><span class="n">src_tid</span><span class="p">);</span>
+<span class="w">	</span><span class="cm">/* if request is not matched */</span>
+<span class="w">	</span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">req</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="nb">NULL</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="n">mpc_common_debug_info</span><span class="p">(</span><span class="s">&quot;LCP: recv unexp tag src=%d, tag=%d, dest=%d, &quot;</span>
+<span class="w">                                      </span><span class="s">&quot;length=%d, sequence=%d&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">hdr</span><span class="o">-&gt;</span><span class="n">src_tid</span><span class="p">,</span>
+<span class="w">                                      </span><span class="n">hdr</span><span class="o">-&gt;</span><span class="n">tag</span><span class="p">,</span><span class="w"> </span><span class="n">hdr</span><span class="o">-&gt;</span><span class="n">dest_tid</span><span class="p">,</span><span class="w"> </span><span class="n">length</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="k">sizeof</span><span class="p">(</span><span class="n">lcp_tag_hdr_t</span><span class="p">),</span>
+<span class="w">                                      </span><span class="n">hdr</span><span class="o">-&gt;</span><span class="n">seqn</span><span class="p">);</span>
+<span class="w">		</span><span class="n">rc</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">lcp_request_init_unexp_ctnr</span><span class="p">(</span><span class="n">task</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">ctnr</span><span class="p">,</span><span class="w"> </span><span class="n">hdr</span><span class="p">,</span><span class="w"> </span><span class="n">length</span><span class="p">,</span>
+<span class="w">                                                 </span><span class="n">LCP_RECV_CONTAINER_UNEXP_EAGER_TAG</span><span class="p">);</span>
+<span class="w">		</span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">rc</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="n">LCP_SUCCESS</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">			</span><span class="k">goto</span><span class="w"> </span><span class="n">err</span><span class="p">;</span>
+<span class="w">		</span><span class="p">}</span>
+<span class="w">		</span><span class="c1">// add the request to the unexpected messages</span>
+<span class="w">		</span><span class="n">lcp_append_umqueue</span><span class="p">(</span><span class="n">task</span><span class="o">-&gt;</span><span class="n">umqs</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">ctnr</span><span class="o">-&gt;</span><span class="n">elem</span><span class="p">,</span>
+<span class="w">			       </span><span class="n">hdr</span><span class="o">-&gt;</span><span class="n">comm</span><span class="p">);</span>
+
+<span class="w">		</span><span class="n">LCP_TASK_UNLOCK</span><span class="p">(</span><span class="n">task</span><span class="p">);</span>
+<span class="w">		</span><span class="k">return</span><span class="w"> </span><span class="n">LCP_SUCCESS</span><span class="p">;</span>
+<span class="w">	</span><span class="p">}</span>
+<span class="w">	</span><span class="n">LCP_TASK_UNLOCK</span><span class="p">(</span><span class="n">task</span><span class="p">);</span>
+
+<span class="w">	</span><span class="p">[</span><span class="n">further</span><span class="w"> </span><span class="n">message</span><span class="w"> </span><span class="n">handling</span><span class="p">]</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>The said MPI receive call does not trigger the adequate active message callback so any code that is after the aforementioned procedure is to be repeated in the <code class="docutils literal notranslate"><span class="pre">lcp_recv.c:lcp_tag_recv_nb</span></code> function.</p>
+</section>
+<section id="data-layout">
+<h6>Data layout<a class="headerlink" href="#data-layout" title="Link to this heading"></a></h6>
+<p>Before being sent to the network, data is successively encapsulated by the two
+layers, each adding their own protocol data. Indeed, through IOVEC or packing,
+user data is proceeded by a header containing protocol data of the current
+layer.  Unpacking is performed upon data reception.</p>
+<p>Actual memory layout for both TAG and AM API may be found in <code class="docutils literal notranslate"><span class="pre">lcp_tag.c</span></code> and
+<code class="docutils literal notranslate"><span class="pre">lcp_am.c</span></code>.</p>
+<p>We mention that tag-matching offloading protocols require a completely
+different data layout since all protocol data has to be contained in metadata
+container provided by the lower layer. For more details, check
+<code class="docutils literal notranslate"><span class="pre">lcp_tag_offload.c</span></code>.</p>
+</section>
+<section id="software-tag-matching">
+<h6>Software tag matching<a class="headerlink" href="#software-tag-matching" title="Link to this heading"></a></h6>
+<p>Tag matching is implemented by <code class="docutils literal notranslate"><span class="pre">lcp_tag_match.c</span></code> using intrusive queue
+datastructures. It implements the Unexpected Message Queues (UMQ) and
+Posted Receive Queues (PRQ). There are a unique queue per MPI rank.</p>
+<p>Before being posted to the UMQ, the message data is copied to a receive
+descriptor (<code class="docutils literal notranslate"><span class="pre">lcp_unexp_ctnr_t</span></code>) so that Rail resources can be released on event
+completion.  Receive descriptor also describe the type of protocol from which
+the message has been received.</p>
+</section>
+<section id="protocol-implementation">
+<h6>Protocol implementation<a class="headerlink" href="#protocol-implementation" title="Link to this heading"></a></h6>
+<p><strong>EAGER</strong>: TODO</p>
+<p><strong>RENDEZ-VOUS</strong>: TODO</p>
+</section>
+</section>
+<section id="memory-management">
+<h5>Memory management<a class="headerlink" href="#memory-management" title="Link to this heading"></a></h5>
+<p>TODO</p>
+</section>
+</section>
+</section>
+</section>
+<section id="api">
+<h2>API<a class="headerlink" href="#api" title="Link to this heading"></a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="lcp.html">LowComm Protocol layer (LCP)</a></li>
+</ul>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../launch/libmode.html" class="btn btn-neutral float-left" title="Mode Hooks library" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="lcp.html" class="btn btn-neutral float-right" title="LowComm Protocol layer (LCP)" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Commissariat à l&#39;Énergie Atomique et aux Énergies Alternatives.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

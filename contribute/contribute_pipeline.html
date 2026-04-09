@@ -1,0 +1,206 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Run a pipeline over existing branches &mdash; MPC 4.3.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+    <link rel="shortcut icon" href="../_static/mpc_logo.png"/>
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=0503a316"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Multi-Processor Computing (MPC) Framework Documentation" href="../api/main.html" />
+    <link rel="prev" title="Request for merging work into mainline" href="contribute_merge_request.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html">
+            
+              <img src="../_static/mpc_logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../start.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../build.html">Building &amp; Installing MPC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usage.html">Using MPC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../features.html">Advanced Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../faq.html">Frequently Asked Questions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../issues.html">Known issues</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../changelog.html">Changelog</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Contribution Guide</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="main.html">Contribution Guide</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="contribute_setup.html">Prerequisites before starting to contribute</a></li>
+<li class="toctree-l2"><a class="reference internal" href="contribute_commit.html">Write a commit message</a></li>
+<li class="toctree-l2"><a class="reference internal" href="contribute_issue.html">Submit a new issue</a></li>
+<li class="toctree-l2"><a class="reference internal" href="contribute_merge_request.html">Request for merging work into mainline</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Run a pipeline over existing branches</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#general-description">General Description</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#overall">Overall</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#ci-cd-tasks">CI/CD Tasks</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#how-tos">HOW-TOs</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#run-manually-a-new-pipeline">Run manually a new pipeline</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#run-automatically-a-new-pipeline">Run automatically a new pipeline</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer Documentation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../api/main.html">Multi-Processor Computing (MPC) Framework Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/main.html#modules-documentation">Modules Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/main.html#code-documentation">Code Documentation</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Links</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference external" href="https://mpc.hpcframework.com">Official Website (mpc.hpcframework.com)</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/cea-hpc/mpc">Repository (github.com)</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://mpc.hpcframework.com/publications-2/">Publications (mpc.hpcframework.com)</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">MPC</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="main.html">Contribution Guide</a></li>
+      <li class="breadcrumb-item active">Run a pipeline over existing branches</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/contribute/contribute_pipeline.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="run-a-pipeline-over-existing-branches">
+<h1>Run a pipeline over existing branches<a class="headerlink" href="#run-a-pipeline-over-existing-branches" title="Link to this heading"></a></h1>
+<section id="general-description">
+<h2>General Description<a class="headerlink" href="#general-description" title="Link to this heading"></a></h2>
+<section id="overall">
+<h3>Overall<a class="headerlink" href="#overall" title="Link to this heading"></a></h3>
+<p>To keep a high level of code quality in the mainline branch, Gitlab is configured to rely on CI/CD pipelines (Continuous Integration/Continuous Development). The main objective is to avoid code regression and improve the time-to-merge for new features. A pipeline is a set of tasks (in-order) to be run (under a given configuration). Each task will return a status (success, fail, warn). It will display a badge (green, yellow, red) depending on that status, the main objective being to keep an “all-green” pipeline at any time. Now considering MPC, a pipeline can run in different scenarios:</p>
+<ul class="simple">
+<li><p>If a new commit is pushed to the <cite>devel</cite> branch, a pipeline is automatically run to assess the code quality.</p></li>
+<li><p>If a new merge-request is opened/updated, a pipeline is run on the head of this merge-request in a “detached” mode (such label can be seen in the pipeline UI) (not relevant to explain here why). Each time a new commit is pushed to the merge request, a new pipeline is triggered.</p></li>
+<li><p>Manually, through the “Run Pipeline” button, one can specify any ref (branch,
+tag, SHA…) to be run through the pipeline…</p></li>
+</ul>
+<p>For now, all pipelines are run on a <em>single</em> Gitlab-runner, relying on a 4-node 4-core SLURM-based cluster. This means:</p>
+<ul class="simple">
+<li><p>Any pipeline competes with any other at the server scale. Do not panic if your pipeline does not start right away. (If more than a day of waiting, please contact us).</p></li>
+<li><p>Avoid pushing in a short timeframe multiple single commits <strong>on merge-requests</strong>. Prefer pushing once multiple commits. Any deprecated waiting pipeline on merge-requests will be canceled( ex: a first push triggers a a pipeline which, for multiple reasons, is in a waiting state. A second push triggers a new pipeline while the first still wait). If you need to push to a merge request frequently and do not want the pipeline to be run each time, you can temporarily label your merge request <cite>CI::Disabled</cite>.</p></li>
+</ul>
+</section>
+<section id="ci-cd-tasks">
+<h3>CI/CD Tasks<a class="headerlink" href="#ci-cd-tasks" title="Link to this heading"></a></h3>
+<p>Tasks are gathered into groups, where tasks inside a group are run concurrently. If a single task within a group failed, the whole pipeline is marked as failed and the remaining tasks are canceled (the running group is completed, though). An “all-green” state requires all tasks to succeed, mandatory for a merge-request to occur to be mergeable (among other conditions).</p>
+<p>As far as this documentation is written, the MPC pipeline contains the following groups:</p>
+<ul class="simple">
+<li><p>Build: MPC is built only once</p></li>
+<li><p>Basic testing: Check MPC can still run really basic programs + config</p></li>
+<li><p>Regular testing: test main MPC features (MPI, OpenMP, privatization)</p></li>
+<li><p>Benchmarks: Assess bases of robustness within the code</p></li>
+<li><p>Applications: “Real” use-case application, potential hybrid MPI+X</p></li>
+</ul>
+<p><strong>Reminder</strong>: If such a pipeline allows developers to detect a major failure, an “all-green” pipeline does not necessarily mean code is perfect. That’s why the peer code reviewing process applied to each merge-request is as much important as continuous integration. If one day, MPC comes with full unit-test coverage, this sentence could be mitigated but until that time, a regular complete non-regression should be run on a large cluster.</p>
+</section>
+</section>
+<section id="how-tos">
+<h2>HOW-TOs<a class="headerlink" href="#how-tos" title="Link to this heading"></a></h2>
+<section id="run-manually-a-new-pipeline">
+<h3>Run manually a new pipeline<a class="headerlink" href="#run-manually-a-new-pipeline" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p>Go to <cite>CI/CD &gt; Pipelines</cite></p></li>
+<li><p>click on <cite>Run pipeline</cite> button, top-right corner.</p></li>
+<li><p>Select the branch to run the pipeline on (can be a SHA1)</p></li>
+<li><p>Ignore the <cite>Variables</cite> section, not used in the current configuration</p></li>
+<li><p>Click on <cite>Run the pipeline</cite></p></li>
+</ul>
+<p>When going back to the main CI/CD pipeline page, a new entry should appear.</p>
+</section>
+<section id="run-automatically-a-new-pipeline">
+<h3>Run automatically a new pipeline<a class="headerlink" href="#run-automatically-a-new-pipeline" title="Link to this heading"></a></h3>
+<p>A new pipeline is run automatically when:</p>
+<ul class="simple">
+<li><p>A new commit (or a set of commits) is pushed to a mainline branch-like devel or pt_devel.</p></li>
+<li><p>Each time a new commit is added to an existing merge request.</p></li>
+</ul>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="contribute_merge_request.html" class="btn btn-neutral float-left" title="Request for merging work into mainline" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../api/main.html" class="btn btn-neutral float-right" title="Multi-Processor Computing (MPC) Framework Documentation" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Commissariat à l&#39;Énergie Atomique et aux Énergies Alternatives.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

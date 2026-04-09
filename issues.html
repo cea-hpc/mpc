@@ -1,0 +1,272 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Known issues &mdash; MPC 4.3.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+
+  
+    <link rel="shortcut icon" href="_static/mpc_logo.png"/>
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=0503a316"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Changelog" href="changelog.html" />
+    <link rel="prev" title="Frequently Asked Questions" href="faq.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html">
+            
+              <img src="_static/mpc_logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="start.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="build.html">Building &amp; Installing MPC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage.html">Using MPC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="features.html">Advanced Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="faq.html">Frequently Asked Questions</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Known issues</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#build-install">Build &amp; Install</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#downstream-to-mpc-packages-fails-with-to-use-proper-compiler">Downstream-to-MPC packages fails with to use proper compiler</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#mpcframework-fails-with-hwloc-related-error">“mpcframework” fails with hwloc-related error</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#error-with-system-header-not-found-when-compiling-gcc">Error with system header not found when compiling GCC</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#mpc-to-build-applications">MPC to build applications</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#complain-about-already-existing-installation">Complain about already existing installation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#gcc-compiler-not-found">GCC compiler not found</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#mpc-to-run-applications">MPC to run applications</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#unable-to-load-mpc-configuration">Unable to load MPC configuration</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="changelog.html">Changelog</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Contribution Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="contribute/main.html">Contribution Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer Documentation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="api/main.html">Multi-Processor Computing (MPC) Framework Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/main.html#modules-documentation">Modules Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/main.html#code-documentation">Code Documentation</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Links</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference external" href="https://mpc.hpcframework.com">Official Website (mpc.hpcframework.com)</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/cea-hpc/mpc">Repository (github.com)</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://mpc.hpcframework.com/publications-2/">Publications (mpc.hpcframework.com)</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">MPC</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Known issues</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/issues.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="known-issues">
+<h1>Known issues<a class="headerlink" href="#known-issues" title="Link to this heading"></a></h1>
+<p>This page intends to summarize at one place all known bugs one can encountered
+when building MPC or using it as a compiler and/or a runtime. Scenarios
+described here are known and should not lead to open a “bug” issue but a
+discussion can be clearly opened to find a way with their resolution. Before
+opening a new issue, please check if the use case does not already exist here.</p>
+<div class="toctree-wrapper compound">
+</div>
+<section id="build-install">
+<h2>Build &amp; Install<a class="headerlink" href="#build-install" title="Link to this heading"></a></h2>
+<section id="downstream-to-mpc-packages-fails-with-to-use-proper-compiler">
+<h3>Downstream-to-MPC packages fails with to use proper compiler<a class="headerlink" href="#downstream-to-mpc-packages-fails-with-to-use-proper-compiler" title="Link to this heading"></a></h3>
+<div class="literal-block-wrapper docutils container" id="id1">
+<div class="code-block-caption"><span class="caption-text">Typical Error Message</span><a class="headerlink" href="#id1" title="Link to this code"></a></div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="linenos">1</span><span class="n">error</span><span class="p">:</span> <span class="n">cannot</span> <span class="n">run</span> <span class="n">C</span> <span class="n">compiled</span> <span class="n">programs</span>
+</span></pre></div>
+</div>
+</div>
+<p><strong>Quickfix:</strong> Run <cite>mpc_cc</cite> by hand to see actual output or browse incriminated
+package <cite>config.log</cite> in build directory.</p>
+<p><strong>Explanation:</strong> MPC wrappers works improperly. Particularly here, the <cite>mpc_cc</cite>
+command does not correctly. A quick way to test the wrapper while not having a
+complete installation is to run the <cite>mpc_env.sh</cite> script located in your build
+directory, aimed to reproduce MPC environment (like if you sourced the
+<cite>mpcvars.sh</cite> directly). To do so, the script take 3 arguments. The two firsts
+are host and target directory, the third being the actual command to load. For
+instance: <cite>./mpc_env.sh x86_64 x86_64 mpc_cc main.c</cite></p>
+<p>The output of this command would help you to detect the error. Note you can also
+directly source in your current environment the mpcframework environment by
+sourcing <cite>$PREFIX/$host/$target/bin/mpcvars.sh</cite> where <em>host</em> and <em>target</em> are,
+most of the time <cite>x86_64</cite>.</p>
+<p>Common scenarii where this error can occur:
+* Bad syntax in MPC wrappers (bug report)
+* MPC re-installation in same prefix after an HOME link has been created. Delete
+directory mentioned in MPC wrapper output</p>
+</section>
+<section id="mpcframework-fails-with-hwloc-related-error">
+<h3>“mpcframework” fails with hwloc-related error<a class="headerlink" href="#mpcframework-fails-with-hwloc-related-error" title="Link to this heading"></a></h3>
+<div class="literal-block-wrapper docutils container" id="id2">
+<div class="code-block-caption"><span class="caption-text">Typical Error Message</span><a class="headerlink" href="#id2" title="Link to this code"></a></div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="linenos">1</span><span class="n">Error</span><span class="p">:</span> <span class="s2">&quot;HWLOC_...&quot;</span> <span class="n">undeclared</span>
+</span></pre></div>
+</div>
+</div>
+<p><strong>Quickfix:</strong> please ensure to rely on the same version as embedded
+within MPC source base.</p>
+<p><strong>Explanation:</strong> Because MPC depends heavily on hwloc types, mismatching hwloc versions in your environment can lead to undefined symbols.</p>
+</section>
+<section id="error-with-system-header-not-found-when-compiling-gcc">
+<h3>Error with system header not found when compiling GCC<a class="headerlink" href="#error-with-system-header-not-found-when-compiling-gcc" title="Link to this heading"></a></h3>
+<div class="literal-block-wrapper docutils container" id="id3">
+<div class="code-block-caption"><span class="caption-text">Typical Error Message</span><a class="headerlink" href="#id3" title="Link to this code"></a></div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="linenos">1</span><span class="n">fatal</span> <span class="n">error</span><span class="p">:</span> <span class="n">sys</span><span class="o">/</span><span class="n">ustat</span><span class="o">.</span><span class="n">h</span><span class="p">:</span> <span class="n">No</span> <span class="n">such</span> <span class="n">file</span> <span class="ow">or</span> <span class="n">directory</span>
+</span></pre></div>
+</div>
+</div>
+<p><strong>Quickfix</strong>: disable the thread-based approach by providing <cite>–disable-mpc-gcc</cite>
+from the <cite>installmpc</cite> script. Do not consider using <cite>-fmpc-privatize</cite> in such
+scenario !</p>
+<p><strong>Explanation</strong>: Privatizing compiler coming with MPC is GCC 7.2.0 (currently)
+and needs an header called <cite>ustat.h</cite>, deprecated for a long time. Recent glibc
+(above 2.28) removed this system header, preventing GCC 7.2.0 to compile
+correctly. This includes recent Ubuntu installation (equal or later than 18.04).
+There is no solution to this currently, we are working on supporting a compiler
+recent enough to dismiss this error.</p>
+</section>
+</section>
+<section id="mpc-to-build-applications">
+<h2>MPC to build applications<a class="headerlink" href="#mpc-to-build-applications" title="Link to this heading"></a></h2>
+<section id="complain-about-already-existing-installation">
+<h3>Complain about already existing installation<a class="headerlink" href="#complain-about-already-existing-installation" title="Link to this heading"></a></h3>
+<div class="literal-block-wrapper docutils container" id="id4">
+<div class="code-block-caption"><span class="caption-text">Typical Error Message</span><a class="headerlink" href="#id4" title="Link to this code"></a></div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="linenos">1</span>A previous backup exists. Please remove &lt;...&gt; directory first!
+</span></pre></div>
+</div>
+</div>
+<p><strong>Quickfix:</strong> (if you know what you’re doing OR you never used the
+compiler manager), you can safely remove the incriminated directory (with and
+without <cite>-backup</cite> extension).</p>
+<p><strong>Explanation:</strong> MPC has been re-installed within the same prefix <strong>AFTER</strong> an
+user-level compiler manager has been invoked. This use will create a home-based
+configuration link (under <cite>~/.mpcompil/ directory</cite>). To detect re-installation
+and prevent users to rely on outdated configuration, a fatal error is emitted
+once a re-installation (=same prefix) is done while a local custom configuration
+exist.</p>
+</section>
+<section id="gcc-compiler-not-found">
+<h3>GCC compiler not found<a class="headerlink" href="#gcc-compiler-not-found" title="Link to this heading"></a></h3>
+<div class="literal-block-wrapper docutils container" id="id5">
+<div class="code-block-caption"><span class="caption-text">Typical Error Message</span><a class="headerlink" href="#id5" title="Link to this code"></a></div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="linenos">1</span><span class="n">Compiler</span> <span class="s2">&quot;&lt;...&gt;/mpc-gcc_620&quot;</span> <span class="ow">not</span> <span class="n">found</span>
+</span></pre></div>
+</div>
+</div>
+<p><strong>Quickfix</strong>: erase the whole installation directory along with the relevant
+<cite>~/.mpcompil</cite> subdirectory (a complete list is available through <cite>mpc_cleaner</cite>).</p>
+<p><strong>Explanation:</strong> This nasty bug comes after a GCC release update. For a long
+time, MPC relied on GCC 6.2.0. When decided to update to GCC 7.2.0, MPC
+re-installation (=same prefix) leads to an error into compiler manager files as
+old compiler path was still referenced. A fix has been made for that and is now
+merged into the devel branch.</p>
+</section>
+</section>
+<section id="mpc-to-run-applications">
+<h2>MPC to run applications<a class="headerlink" href="#mpc-to-run-applications" title="Link to this heading"></a></h2>
+<section id="unable-to-load-mpc-configuration">
+<h3>Unable to load MPC configuration<a class="headerlink" href="#unable-to-load-mpc-configuration" title="Link to this heading"></a></h3>
+<div class="literal-block-wrapper docutils container" id="id6">
+<div class="code-block-caption"><span class="caption-text">Typical Error Message</span><a class="headerlink" href="#id6" title="Link to this code"></a></div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="linenos">1</span>Error while loading MPC configuration files`
+</span></pre></div>
+</div>
+</div>
+<p><strong>Quickfix:</strong> Try to run it by yourself and investigate the output. If you
+edited the configuration (or used the <cite>mpcrun –config</cite> option), you have
+improperly formatted the XML files.</p>
+<p><strong>Explanation:</strong> Error with running correctly the <cite>mpc_print_config</cite> command.
+Other scenarii where this bug can occur:
+* <cite>mpc_print_config</cite> can be built on compute nodes but is run during starting
+process and is run on the login node. An architecture mismatch can lead to such error.</p>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="faq.html" class="btn btn-neutral float-left" title="Frequently Asked Questions" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="changelog.html" class="btn btn-neutral float-right" title="Changelog" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Commissariat à l&#39;Énergie Atomique et aux Énergies Alternatives.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

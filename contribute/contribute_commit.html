@@ -1,0 +1,305 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Write a commit message &mdash; MPC 4.3.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+    <link rel="shortcut icon" href="../_static/mpc_logo.png"/>
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=0503a316"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Submit a new issue" href="contribute_issue.html" />
+    <link rel="prev" title="Prerequisites before starting to contribute" href="contribute_setup.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html">
+            
+              <img src="../_static/mpc_logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../start.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../build.html">Building &amp; Installing MPC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usage.html">Using MPC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../features.html">Advanced Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../faq.html">Frequently Asked Questions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../issues.html">Known issues</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../changelog.html">Changelog</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Contribution Guide</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="main.html">Contribution Guide</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="contribute_setup.html">Prerequisites before starting to contribute</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Write a commit message</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#properly-format-a-commit-message">Properly format a commit message</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#make-use-of-the-pre-commit">Make use of the pre-commit</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#failing-pre-commit">Failing pre-commit</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#troubleshooting">Troubleshooting</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="contribute_issue.html">Submit a new issue</a></li>
+<li class="toctree-l2"><a class="reference internal" href="contribute_merge_request.html">Request for merging work into mainline</a></li>
+<li class="toctree-l2"><a class="reference internal" href="contribute_pipeline.html">Run a pipeline over existing branches</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer Documentation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../api/main.html">Multi-Processor Computing (MPC) Framework Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/main.html#modules-documentation">Modules Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/main.html#code-documentation">Code Documentation</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Links</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference external" href="https://mpc.hpcframework.com">Official Website (mpc.hpcframework.com)</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/cea-hpc/mpc">Repository (github.com)</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://mpc.hpcframework.com/publications-2/">Publications (mpc.hpcframework.com)</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">MPC</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="main.html">Contribution Guide</a></li>
+      <li class="breadcrumb-item active">Write a commit message</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/contribute/contribute_commit.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="write-a-commit-message">
+<h1>Write a commit message<a class="headerlink" href="#write-a-commit-message" title="Link to this heading"></a></h1>
+<section id="properly-format-a-commit-message">
+<h2>Properly format a commit message<a class="headerlink" href="#properly-format-a-commit-message" title="Link to this heading"></a></h2>
+<p>This may be one of the most important HOW-TO to write. Even if no policy is enforced about commit messages (yet), we strongly encourage people to follow these simples guidelines. A commit message is composed of 4 distinct parts:</p>
+<ul class="simple">
+<li><p><strong>A first-line</strong> (preferably ending with a period). This should be a single the sentence, self-explanatory for the purpose of the commit, without giving to much details about it. Ideally, it should contain the component label it is changing the most (OMP, MessagePassing, Threads, Chores…) followed by a colon <cite>:</cite></p></li>
+<li><p><strong>a blank line</strong>: This is mandatory if you are going to make a multi-line commit message. Without it, Git is not able to make a difference between the “title” and “body” and will consider the whole as the “title”, creating really ugly layouts when coming to in-depth history searches. Please, do not forget to add a blank line, it only cost an extra keypress. <strong>A body message</strong>, where you can detail as much as possible the reason of these changes (not a description of the changes, it would be redundant). For instance, if you resolve multiple bugs or scenarios within one commit, you may list them here</p></li>
+<li><p><strong>Gitlab-related anchors</strong>, to interact directly from commit messages with issues and merge-requests. Not mandatory but highly encouraged to do so, as Gitlab can then generate a bidirectional link from commit to content. It refers to them by their number, prefixed with a <cite>#</cite> for issues and <cite>!</cite> for merge-requests. It is even possible to close an issue from a commit message by using keywords ! for instance, if a commit message contains:</p>
+<ul>
+<li><p><cite>#23</cite>: issue #23 is mentioned by this commit and will appear in issue
+description.</p></li>
+<li><p><cite>!14</cite>: merge-request is mentioned by this commit and will appear in
+merge-request description.</p></li>
+<li><p><cite>Closes #23</cite>: close issue #23 (works also with <cite>Fix|Resolve</cite>). The ticket
+will be automatically closed when this commit will be merged to the default
+project branch (probably the devel, after a merge-request). Do not expect to
+see the ticket closed as soon as you pushed it!</p></li>
+</ul>
+</li>
+</ul>
+<p>More information here: <a class="reference external" href="https://docs.gitlab.com/ee/user/project/issues/crosslinking_issues.html">https://docs.gitlab.com/ee/user/project/issues/crosslinking_issues.html</a></p>
+<p>Clearly, it is asking for a bit of work to write a good commit. But this is one of the best way to ease the reviewing process by explaining to others what you did, how you did it and why. Even more, by taking some time to summarize your work, you may discover some pitfalls or even better solutions which did not come to your mind the first time. Here is a good example of what a commit message should be:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>GETOPT: simple fix for privatizing getopt vars.
+
+It seems that GCCs patch has difficulties not considering this getopt as system
+header as it is being included by UNISTD.h A proposed solution is to flag them
+__task by force.
+
+Closes #16
+</pre></div>
+</div>
+<p>And remind to stay as far as possible from commit message like these (from MPC framework history itself):</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>-&gt; Many small fixes
+-&gt; Remove bug
+-&gt; Add new test
+-&gt; Dummy Commit
+-&gt; Hello World works
+-&gt; Update (multiple times in a row !!!)
+...
+</pre></div>
+</div>
+</section>
+<section id="make-use-of-the-pre-commit">
+<h2>Make use of the pre-commit<a class="headerlink" href="#make-use-of-the-pre-commit" title="Link to this heading"></a></h2>
+<p><a class="reference external" href="https://pre-commit.com/">pre-commit</a> is a python tool to run automated tasks on commit.
+It helps keep the codebase uniform and prevents simple mistakes to be incorporated.
+The use of this tool is strongly recommended !</p>
+<p>Installation of the tool is a simple pip installation</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>pre-commit
+<span class="c1"># Alternatively, pre-commit is available in spack</span>
+$<span class="w"> </span>spack<span class="w"> </span>install<span class="w"> </span>py-pre-commit
+</pre></div>
+</div>
+<p>Then, the setup is a simple command launch in the MPC root directory</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Alternatively, you can use <a class="reference external" href="https://prek.j178.dev/">prek</a> which is a Rust rewrite of pre-commit and is fully compatible</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span><span class="c1"># using pip</span>
+$<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>prek
+<span class="c1"># using cargo</span>
+$<span class="w"> </span>cargo<span class="w"> </span>install<span class="w"> </span>--locked<span class="w"> </span>prek
+</pre></div>
+</div>
+</div>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>pre-commit<span class="w"> </span>install
+</pre></div>
+</div>
+<p>It is configured in <cite>.pre-commit-config.yaml</cite> and runs the following hooks on commit</p>
+<ul class="simple">
+<li><p><strong>executables have shebangs</strong>: checks that the executables scripts begin with a shebang</p></li>
+<li><p><strong>merge conflicts</strong>: checks that no conflict marks are present in the commit</p></li>
+<li><p><strong>don’t commit to branch</strong>: prevents a commit to be directly appended to <cite>devel</cite> or <cite>master</cite></p></li>
+<li><p><strong>python ast</strong>: checks that python scripts are syntactically correct</p></li>
+<li><p><strong>json</strong>: checks that JSON files are syntactically correct</p></li>
+<li><p><strong>yaml</strong>: checks that YAML files are syntactically correct</p></li>
+<li><p><strong>fix end of files</strong>: checks that files doesn’t end with a newline</p></li>
+<li><p><strong>trailing whitespace</strong>: trims the trailing whitespaces</p></li>
+<li><p><strong>typos</strong>: runs the typos-cli tool which is a spell-checker looking for typos in the commit</p></li>
+<li><p><strong>clang-tidy</strong>: runs clang-tidy to lint common mistakes</p></li>
+<li><p><strong>uncrustify</strong>: check if the code is well formatted according to the <cite>uncrustify.cfg</cite> configuration</p></li>
+<li><p><strong>git blame</strong>: updates the git configuration to ignore some commits from <cite>git blame</cite></p></li>
+</ul>
+<p>To commit without the pre-commit, you shall use the <code class="docutils literal notranslate"><span class="pre">--no-verify</span></code> option</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>git<span class="w"> </span>commit<span class="w"> </span>--no-verify
+</pre></div>
+</div>
+<p>Be aware that the pre-commit is present in the CI and code on which it is failing cannot been merged into the devel branch.</p>
+<section id="failing-pre-commit">
+<h3>Failing pre-commit<a class="headerlink" href="#failing-pre-commit" title="Link to this heading"></a></h3>
+<p>In most cases, the reason of the failing is self-explanatory.
+Some failures require manual intervention to be resolved.</p>
+<section id="common">
+<h4>Common<a class="headerlink" href="#common" title="Link to this heading"></a></h4>
+<p>The <code class="docutils literal notranslate"><span class="pre">fix</span> <span class="pre">end</span> <span class="pre">of</span> <span class="pre">files</span></code> and <code class="docutils literal notranslate"><span class="pre">trailing</span> <span class="pre">whitespace</span></code> hooks modify files upon errors found.
+You can verify that the changes aren’t error prone</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>git<span class="w"> </span>diff
+</pre></div>
+</div>
+<p>The changes should be quite trivial. You can than stage the modified files and commit as usual.</p>
+</section>
+<section id="typos">
+<h4>typos<a class="headerlink" href="#typos" title="Link to this heading"></a></h4>
+<p>To avoid false positive being introduced, the <code class="docutils literal notranslate"><span class="pre">typos</span></code> hook does not automatically write on detected error.
+It prints the error and the proposed solutions.
+In case, there is only one suggested correction, you can automatically fix it by running</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>typos<span class="w"> </span>-w<span class="w"> </span>&lt;path/to/file&gt;
+</pre></div>
+</div>
+<p>In case <code class="docutils literal notranslate"><span class="pre">typos</span></code> is unable to find an unique solution, you will have to correct the files yourself.</p>
+<p>You can then stage the modification and commit as usual.</p>
+<p>In case <code class="docutils literal notranslate"><span class="pre">typos</span></code> reports a false positive, please refer to <a class="reference internal" href="#false-positive-from-typos">False positive from typos</a>.</p>
+</section>
+<section id="uncrustify">
+<h4>uncrustify<a class="headerlink" href="#uncrustify" title="Link to this heading"></a></h4>
+<p>To avoid undesired formatting, the <code class="docutils literal notranslate"><span class="pre">uncrustify</span></code> hook does not automatically reformat the files.
+You have to run it manually</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>uncrustify<span class="w"> </span>-c<span class="w"> </span>uncrustify.cfg<span class="w"> </span>-f<span class="w"> </span>&lt;path/to/file&gt;<span class="w"> </span>--replace
+</pre></div>
+</div>
+<p>Then, it advised to check the formatting as it can be a bit strange sometimes.
+Finally, you stage and commit your changes as usual.</p>
+</section>
+</section>
+<section id="troubleshooting">
+<h3>Troubleshooting<a class="headerlink" href="#troubleshooting" title="Link to this heading"></a></h3>
+<section id="clang-tidy-cannot-found-compile-commands-json">
+<h4>clang-tidy cannot found compile_commands.json<a class="headerlink" href="#clang-tidy-cannot-found-compile-commands-json" title="Link to this heading"></a></h4>
+<p><code class="docutils literal notranslate"><span class="pre">clang-tidy</span></code> requires a <code class="docutils literal notranslate"><span class="pre">compile_commands.json</span></code> file to provide diagnostics.
+To generate this file, you need <code class="docutils literal notranslate"><span class="pre">bear</span></code>.
+The easiest way is to use the <code class="docutils literal notranslate"><span class="pre">installmpc</span></code> script with the <code class="docutils literal notranslate"><span class="pre">--enable-lsp</span></code> option to generate the <code class="docutils literal notranslate"><span class="pre">compile_commands.json</span></code> file.</p>
+</section>
+<section id="false-positive-from-typos">
+<h4>False positive from typos<a class="headerlink" href="#false-positive-from-typos" title="Link to this heading"></a></h4>
+<p>Sometimes, errors reported from <code class="docutils literal notranslate"><span class="pre">typos</span></code> aren’t misspelling.
+The easiest way to fix those is to rename the faulty word to something else to avoid collision with a misspelled word.</p>
+<p>Alternatively, you can add the desired word to the dictionary to be able to use it anyway.
+To do so, please modify the <code class="docutils literal notranslate"><span class="pre">utils/.typos.toml</span></code> file.
+You need to add the following</p>
+<div class="highlight-toml notranslate"><div class="highlight"><pre><span></span><span class="k">[default.extend-words]</span>
+<span class="n">your-word</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;your-word&quot;</span>
+</pre></div>
+</div>
+<p>It tells <code class="docutils literal notranslate"><span class="pre">typos</span></code> that whenever it encounters <code class="docutils literal notranslate"><span class="pre">your-word</span></code> it should correct the spelling by <code class="docutils literal notranslate"><span class="pre">your-word</span></code></p>
+</section>
+<section id="failing-pipeline-on-passed-pre-commit">
+<h4>Failing pipeline on passed pre-commit<a class="headerlink" href="#failing-pipeline-on-passed-pre-commit" title="Link to this heading"></a></h4>
+<p>A common reason for this to happen, is a mismatch between the local version of the tools used and the one used by the runner.</p>
+<p>Please consider checking you have the same version as the CI:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">pre-commit</span></code>: 4.2.0</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">clang-tidy</span></code>: 18.1.3</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">typos</span></code>: 1.36.2</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">uncrustify</span></code>: 0.80.1</p></li>
+</ul>
+</section>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="contribute_setup.html" class="btn btn-neutral float-left" title="Prerequisites before starting to contribute" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="contribute_issue.html" class="btn btn-neutral float-right" title="Submit a new issue" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Commissariat à l&#39;Énergie Atomique et aux Énergies Alternatives.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
