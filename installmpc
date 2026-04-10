@@ -978,12 +978,14 @@ build_configure_based_package()
 
 		locate_tarball "$package" "$version"
 
-		checking "Extracting $TARBALL_PATH"
-
 		if test ! -f "$TARBALL_PATH"; then
 			nok
 			die "Could not locate a tarball for $package-$version in $pkg_dir"
 		fi
+
+		info "Found archive at $TARBALL_PATH"
+
+		checking "Extracting $package-$version"
 
 		wrap_output tar xf "$TARBALL_PATH"
 
