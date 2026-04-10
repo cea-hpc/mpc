@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 SRC="`readlink -e $0`"
 SRC="`dirname $SRC`"

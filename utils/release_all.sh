@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 for i in "bullseye" "buster"; do
 	utils/prepare_release.sh deb --distribution=debian:$i --target=$1;
