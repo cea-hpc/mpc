@@ -93,6 +93,7 @@ err:
 
 			le = (ptl_le_t) {
 				.ct_handle = PTL_CT_NONE,
+				.min_free  = block->rail->config.eager_limit,
 				.options   = PTL_LE_OP_PUT
 				             | PTL_LE_MANAGE_LOCAL
 				             | PTL_LE_EVENT_LINK_DISABLE

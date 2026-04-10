@@ -878,7 +878,7 @@ err:
 			.start     = (void *)start,
 			.options   = PTL_MD_EVENT_SEND_DISABLE
 		};
-		lcr_ptl_chk(PtlMDBind(srail->net.nih, &md, &mem->mdh));
+		    lcr_ptl_chk(PtlMDBind(srail->net.nih, &md, &mem->mdh));
 
 		mem->success = 0;
 
@@ -888,6 +888,7 @@ err:
 			ptl_le_t le = (ptl_le_t) {
 				.ct_handle = PTL_CT_NONE,
 				.uid       = PTL_UID_ANY,
+				.min_free  = 0,
 				.options   = PTL_LE_OP_PUT
 				             | PTL_LE_OP_GET
 				             | PTL_LE_EVENT_LINK_DISABLE
@@ -948,7 +949,7 @@ err:
 	{
 		sctk_free(mem->txqt);
 
-		lcr_ptl_chk(PtlMDRelease(mem->mdh));
+		    lcr_ptl_chk(PtlMDRelease(mem->mdh));
 
 #ifdef BXI_VERSION_3_R6_LITE
 			int rc = PtlLEUnlink(mem->leh);

@@ -409,6 +409,7 @@ err:
 			/* complete the LE data, this LE will be appended to the PRIORITY_LIST */
 			ptl_le_t le = (ptl_le_t) {
 				.ct_handle = PTL_CT_NONE,
+				.min_free  = 0,
 				.length    = iov[iovcnt - 1].iov_len,
 				.start     = iov[iovcnt - 1].iov_base,
 				.uid       = PTL_UID_ANY,
