@@ -169,14 +169,12 @@ checking() {
 
 	local msg="$1"
 	local msg_length=${#msg}
-	local dot_len
+	local dot_len=3
 
-	if [ $msg_length -le 63 ]; then
-		dot_len=$((66 - $msg_length))
-	else
-		dot_len=3
+	if [ "$msg_length" -le 63 ]; then
+		dot_len=$((66 - msg_length))
 	fi
-	printf "==>${colMAGENTA} %s%s ${colRESET}" "${msg:0:63}" "${LOTS_OF_DOTS:0:$dot_len}"
+	printf "==>${colMAGENTA} %s%s ${colRESET}" "${msg}" "${LOTS_OF_DOTS:0:$dot_len}"
 }
 
 ok()
@@ -980,7 +978,7 @@ build_configure_based_package()
 
 		locate_tarball "$package" "$version"
 
-		checking "Extracting $package-$version (from $TARBALL_PATH)"
+		checking "Extracting $TARBALL_PATH"
 
 		if test ! -f "$TARBALL_PATH"; then
 			nok
