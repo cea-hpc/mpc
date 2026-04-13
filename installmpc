@@ -135,7 +135,7 @@ STEP_WRAPPER_VERBOSE=0
 
 show_run_cmd()
 {
-	if test $STEP_WRAPPER_VERBOSE -gt 0; then
+	if test $STEP_WRAPPER_VERBOSE -gt 1; then
 		test -n "${PENDING_LB}" && echo ""
 		PENDING_LB=""
 		echo "$ $*"
@@ -181,7 +181,7 @@ ok()
 {
 	PENDING_LB=""
 	LAST_RESULT="ok"
-	if test $STEP_WRAPPER_VERBOSE -eq 0; then
+	if test $STEP_WRAPPER_VERBOSE -le 1; then
 		printf "${colGREEN}SUCCESS${colRESET}\n"
 	fi
 }
