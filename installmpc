@@ -759,13 +759,13 @@ download_package()
 
 	checking "Downloading $PKG-$VERS"
 
-	have_cmd "wget"
+	have_cmd "curl"
 	if test "x${HAVE_CMD}" = "xyes"; then
-		wrap_output wget "$(package_download_address "$PKG" "${VERS}")"
+		wrap_output curl -L "$(package_download_address "$PKG" "${VERS}")" -o "./${FNAME}"
 	else
-		have_cmd "curl"
+		have_cmd "wget"
 		if test "x${HAVE_CMD}" = "xyes"; then
-			wrap_output curl -L "$(package_download_address "$PKG" "${VERS}")" -o "./${FNAME}"
+			wrap_output wget --tries=5 --timeout=20 "$(package_download_address "$PKG" "${VERS}")"
 		else
 			nok
 			die "Curl or wget is required for dep download or use --download."
