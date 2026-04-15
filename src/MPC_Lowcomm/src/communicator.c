@@ -877,17 +877,7 @@ static inline mpc_lowcomm_internal_communicator_t *__init_communicator_with_id(m
 	/* Topo comms */
 	___init_topo_comm(ret);
 
-
-	if (comm_id == MPC_LOWCOMM_COMM_SELF_ID)
-	{
-		/* Comm self is practically
-		 * a virtual communicator without internal
-		 * group to handle as it is different
-		 * for each MPI Process */
-		assume(group == NULL);
-		ret->is_comm_self = 1;
-	}
-	else if (group != NULL)
+	if (group != NULL)
 	{
 		/* This is an intracomm */
 		assume(group != NULL);
@@ -1481,11 +1471,6 @@ mpc_lowcomm_communicator_t mpc_lowcomm_communicator_from_group(mpc_lowcomm_commu
 mpc_lowcomm_group_t * mpc_lowcomm_communicator_group(mpc_lowcomm_communicator_t comm)
 {
 	comm = __mpc_lowcomm_communicator_from_predefined(comm);
-	if (comm->is_comm_self)
-	{
-		int my_rank = mpc_common_get_task_rank();
-		return mpc_lowcomm_group_create(1, &my_rank);
-	}
 
 	mpc_lowcomm_communicator_t local = MPC_COMM_NULL;
 
@@ -1636,9 +1621,10 @@ void _mpc_lowcomm_communicator_init_task(int my_rank)
 		cw_group, 0, MPC_COMM_NULL, MPC_COMM_NULL, MPC_LOWCOMM_COMM_WORLD_NUMERIC_ID);
 
 	__comm_world[my_local_rank]->group->my_rank[my_local_rank] = my_rank;
+	mpc_lowcomm_group_t *self_group = mpc_lowcomm_group_create(1, &my_rank);
 
 	__comm_self[my_local_rank] = __init_communicator_with_id(MPC_LOWCOMM_COMM_SELF_ID,
-		NULL, 1, MPC_COMM_NULL, MPC_COMM_NULL, MPC_LOWCOMM_COMM_SELF_NUMERIC_ID);
+		self_group, 1, MPC_COMM_NULL, MPC_COMM_NULL, MPC_LOWCOMM_COMM_SELF_NUMERIC_ID);
 }
 
 void _mpc_lowcomm_communicator_release(void)
