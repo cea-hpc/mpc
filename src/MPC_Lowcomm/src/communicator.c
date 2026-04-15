@@ -2020,8 +2020,7 @@ mpc_lowcomm_communicator_t mpc_lowcomm_communicator_split(mpc_lowcomm_communicat
 	// No need to create a new communicator if the group is the same
 	if (color_number == 1)
 	{
-		_mpc_lowcomm_communicator_acquire(comm);
-		comm_out = comm;
+		comm_out = mpc_lowcomm_communicator_dup(comm);
 	}
 	else
 	{
@@ -2081,9 +2080,6 @@ mpc_lowcomm_communicator_t mpc_lowcomm_communicator_split(mpc_lowcomm_communicat
 
 	sctk_free(color_tab);
 	sctk_free(tab);
-	// mpc_common_debug_error("Split done");
-
-	comm_out = __mpc_lowcomm_communicator_to_predefined(comm_out);
 
 	return comm_out;
 }

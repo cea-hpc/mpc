@@ -13023,7 +13023,7 @@ int PMPI_Comm_free(MPI_Comm *comm)
 
 	if ((*comm == MPI_COMM_WORLD) || (*comm == MPI_COMM_SELF))
 	{
-		MPI_ERROR_REPORT(MPI_COMM_WORLD, MPI_ERR_COMM, "");
+		MPI_ERROR_REPORT(MPI_COMM_WORLD, MPI_ERR_COMM, "Tried to free a predefined communicator");
 	}
 
 	mpi_check_comm(*comm);
