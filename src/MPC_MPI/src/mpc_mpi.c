@@ -14670,6 +14670,7 @@ int PMPI_Error_string(int errorcode, char *string, int *resultlen)
 	MPI_Error_string_convert(MPI_ERR_ROOT,                "Invalid root");
 	MPI_Error_string_convert(MPI_ERR_GROUP,               "Invalid group ");
 	MPI_Error_string_convert(MPI_ERR_OP,                  "Invalid operation");
+	MPI_Error_string_convert(MPI_ERR_ERRHANDLER,          "Invalid errhandler argument");
 	MPI_Error_string_convert(MPI_ERR_TOPOLOGY,            "Invalid topology");
 	MPI_Error_string_convert(MPI_ERR_DIMS,                "Invalid dimension argument");
 	MPI_Error_string_convert(MPI_ERR_ARG,                 "Invalid argument of some other kind");

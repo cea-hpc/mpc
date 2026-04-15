@@ -640,10 +640,9 @@ int _mpc_mpi_init_counter(int *counter);
 		if ((buf == NULL) && (buf != MPI_BOTTOM)) \
 		MPI_ERROR_REPORT(comm, MPI_ERR_BUFFER, "")
 
-// TODO : Change the error code to something more appropriate
 #define mpi_check_errhandler(errh, comm)                                        \
 		if (!_mpc_mpi_errhandler_is_valid(errh) || errh == MPI_ERRHANDLER_NULL) \
-		MPI_ERROR_REPORT(comm, MPI_ERR_ARG, "Errhandler invalid")
+		MPI_ERROR_REPORT(comm, MPI_ERR_ERRHANDLER, "Errhandler invalid")
 
 
 #define mpi_check_count(count, comm) \

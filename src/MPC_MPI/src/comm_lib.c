@@ -3333,8 +3333,10 @@ int _mpc_cl_error_init()
 			(int)(long)MPC_ERRORS_ABORT);
 	}
 
-	_mpc_cl_errhandler_set(__mpc_lowcomm_communicator_from_predefined(MPC_COMM_WORLD), MPC_ERRORS_ARE_FATAL);
-	_mpc_cl_errhandler_set(__mpc_lowcomm_communicator_from_predefined(MPC_COMM_SELF),  MPC_ERRORS_ARE_FATAL);
+	_mpc_mpi_errhandler_t errh = _mpc_mpi_errhandler_from_idx((long)MPC_ERRORS_ARE_FATAL);
+
+	_mpc_cl_errhandler_set(__mpc_lowcomm_communicator_from_predefined(MPC_COMM_WORLD), errh);
+	_mpc_cl_errhandler_set(__mpc_lowcomm_communicator_from_predefined(MPC_COMM_SELF),  errh);
 
 	MPC_ERROR_SUCCESS();
 }
