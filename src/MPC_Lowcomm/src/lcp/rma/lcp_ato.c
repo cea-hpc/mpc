@@ -76,6 +76,24 @@ static const lcr_atomic_dt_t lcp_atomic_dt_table[] =
  *
  * @param[in] comp Completion function to call on completion
  */
+static void lcp_atomic_complete_local(lcr_completion_t *comp)
+{
+	lcp_request_t *req = mpc_container_of(comp, lcp_request_t, state.comp);
+
+	req->flags |= LCP_REQUEST_LOCAL_COMPLETED;
+	if ((req->flags & LCP_REQUEST_REMOTE_COMPLETED) != 0)
+	{
+		req->status = MPC_LOWCOMM_SUCCESS;
+
+		lcp_request_complete(req, send.send_cb, req->status, 0);
+	}
+}
+
+/**
+ * @brief Completes an atomic operation
+ *
+ * @param[in] comp Completion function to call on completion
+ */
 static void lcp_atomic_complete(lcr_completion_t *comp)
 {
 	lcp_request_t *req = mpc_container_of(comp, lcp_request_t, state.comp);
@@ -253,14 +271,14 @@ lcp_status_ptr_t lcp_atomic_op_nb(lcp_ep_h ep, lcp_task_h task, const void *buff
 		req->state.lmem = param->mem;
 	}
 
+	req->state.comp.comp_cb = lcp_atomic_complete;
 	memcpy(&req->send.ato.value, buffer, length);
 	if (param->field_mask & LCP_REQUEST_REPLY_BUFFER)
 	{
 		memcpy(&req->send.ato.compare, param->reply_buffer, length);
 		req->send.ato.reply_buffer = param->reply_buffer;
+		req->state.comp.comp_cb    = lcp_atomic_complete_local;
 	}
-
-	req->state.comp.comp_cb = lcp_atomic_complete;
 
 	rc = lcp_atomic_select_proto_channel(ep, &atomic_proto, &req->send.ato.cc);
 	if (rc != MPC_LOWCOMM_SUCCESS)

@@ -137,8 +137,7 @@ static ssize_t lcp_atomic_reply_pack(void *dest, void *data)
  */
 static void lcp_atomic_complete(lcr_completion_t *comp)
 {
-	lcp_request_t *req = mpc_container_of(comp, lcp_request_t,
-		state.comp);
+	lcp_request_t *req = mpc_container_of(comp, lcp_request_t, state.comp);
 
 	if ((req->flags & LCP_REQUEST_REMOTE_COMPLETED)
 	    && (req->flags & LCP_REQUEST_LOCAL_COMPLETED))
