@@ -283,7 +283,7 @@ int lcp_manager_fini(lcp_manager_h mngr)
 	int i;
 	int rc = MPC_LOWCOMM_SUCCESS;
 
-	mpc_common_debug("LCP MNGR: mngr fini. mngr id=%d",
+	mpc_common_nodebug("LCP MNGR: mngr fini. mngr id=%d",
 		mngr->id);
 
 	lcp_pinning_mmu_release(mngr->mmu);

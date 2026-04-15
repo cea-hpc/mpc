@@ -1024,7 +1024,7 @@ int _mpc_thread_create_vp(mpc_thread_t *restrict __threadp,
 	int new_binding = mpc_thread_get_task_placement(core);
 
 	core++;
-	mpc_common_debug_info("Task %d is bound to core %d", local_task_id, new_binding);
+	mpc_common_nodebug("Task %d is bound to core %d", local_task_id, new_binding);
 	int previous_binding = mpc_topology_bind_to_cpu(new_binding);
 
 	assert(new_binding == mpc_topology_get_current_cpu());

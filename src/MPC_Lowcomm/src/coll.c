@@ -1692,8 +1692,8 @@ void _mpc_coll_noalloc_bcast(void *buffer, const size_t size,
 		assume(total_max >= total);
 		if (mpc_common_get_task_rank() == 0)
 		{
-			mpc_common_debug("enter broadcast total = %d, total_max = %d, "
-				             "myself = %d, BROADCAST_ARITY = %d\n",
+			mpc_common_nodebug("enter broadcast total = %d, total_max = %d, "
+				               "myself = %d, BROADCAST_ARITY = %d\n",
 				total, total_max, myself, BROADCAST_ARITY);
 		}
 
@@ -1746,8 +1746,8 @@ void _mpc_coll_noalloc_bcast(void *buffer, const size_t size,
 		_mpc_coll_messages_table_wait(&table);
 		if (mpc_common_get_task_rank() == 0)
 		{
-			mpc_common_debug("end broadcast total = %d, total_max = %d, "
-				             "myself = %d, BROADCAST_ARITY = %d",
+			mpc_common_nodebug("end broadcast total = %d, total_max = %d, "
+				               "myself = %d, BROADCAST_ARITY = %d",
 				total, total_max, myself, BROADCAST_ARITY);
 		}
 	}

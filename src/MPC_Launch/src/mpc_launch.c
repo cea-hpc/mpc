@@ -291,7 +291,7 @@ static inline int __parse_arg_eq(char *arg,
 
 static inline void __parse_argument(char *passed_arg)
 {
-	mpc_common_debug("mpirun argument: %s", passed_arg);
+	mpc_common_nodebug("mpirun argument: %s", passed_arg);
 
 	/* Boolean flags */
 	    SET_FLAG_BOOLEAN("smt",               enable_smt_capabilities);

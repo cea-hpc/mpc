@@ -10,6 +10,8 @@
 #include "mpcomp_types.h"
 #include "mpc_omp_abi.h"
 
+	#define MPC_MODULE "OMP/TOOLS"
+
 	/* Global vars */
 	extern mpc_omp_global_icv_t mpcomp_global_icvs;
 
@@ -23,7 +25,7 @@
 		ompt_start_tool_result_t * (*start_tool_ptr)(unsigned int omp_version,
 		                                             const char *runtime_version) = NULL;
 
-		mpc_common_debug("(WEAK) %s: look for symbol in dynamically-linked tool",
+		mpc_common_nodebug("(WEAK) %s: look for symbol in dynamically-linked tool",
 			__func__);
 
 		start_tool_ptr = dlsym(RTLD_NEXT, "ompt_start_tool");
@@ -33,7 +35,7 @@
 			ret = start_tool_ptr(omp_version, runtime_version);
 		}
 
-		mpc_common_debug("(WEAK) %s: %s (ret=%p)",
+		mpc_common_nodebug("(WEAK) %s: %s (ret=%p)",
 			__func__, ret ? "found" : "not found", ret);
 
 		return ret;
@@ -52,8 +54,8 @@
 		ompt_start_tool_result_t * (*start_tool_ptr)(unsigned int omp_version,
 		                                             const char *runtime_version) = NULL;
 
-		mpc_common_debug("%s: omp version support \"%u\", omp runtime version \"%s\", %s (%p)",
-			__func__, omp_version, runtime_version, tool_path
+		mpc_common_debug_info("OMP version support \"%u\", omp runtime version \"%s\", %s (%p)",
+			omp_version, runtime_version, tool_path
 			? "record tool path" : "no tool path record", tool_path);
 
 		/* Is omp_start_tool routine defined in address space? */
@@ -124,9 +126,9 @@
 		thread = ( mpc_omp_thread_t * )mpc_omp_tls;
 		assert(thread);
 
-		mpc_common_debug("%s: %s tool interface (OMP_TOOL)", __func__,
+		mpc_common_debug_info("%s tool interface (OMP_TOOL)",
 			mpcomp_global_icvs.tool == mpc_omp_tool_enabled
-			? "initialize" : "ignore");
+			? "Initializing" : "Ignoring");
 
 		/* Tool interface disabled by OMP_TOOL env variable */
 		if (mpcomp_global_icvs.tool != mpc_omp_tool_enabled)
@@ -155,16 +157,16 @@
 		if (tool_res
 		    && mpc_omp_ompt_register_tool(tool_res, tool_path ? tool_path : NULL))
 		{
-			mpc_common_debug("%s: Tool found! Tool interface active.\n"
-				             "(tool result = %p, tool instance = %p)",
-				__func__, thread->tool_instance->start_result,
+			mpc_common_debug_info("Tool found! Tool interface active.");
+			mpc_common_nodebug("(tool result = %p, tool instance = %p)",
+				thread->tool_instance->start_result,
 				thread->tool_instance);
 		}
 		else
 		{
 			thread->tool_status = inactive;
 
-			mpc_common_debug("%s: No tool found, tool interface inactive", __func__);
+			mpc_common_debug_info("No tool found, tool interface inactive.");
 		}
 	}
 
@@ -178,7 +180,7 @@
 		thread = ( mpc_omp_thread_t * )mpc_omp_tls;
 		assert(thread);
 
-		mpc_common_debug("%s: tool state = %s", __func__,
+		mpc_common_nodebug("%s: tool state = %s", __func__,
 			thread->tool_status == active ? "active" : "inactive");
 
 		if (thread->tool_status == active)

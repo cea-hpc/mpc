@@ -851,7 +851,7 @@ void _mpc_topology_device_init(hwloc_topology_t topology)
 		pci_dev = hwloc_get_next_pcidev(topology, pci_dev);
 	}
 
-	mpc_common_debug("sctk_topology located %d PCI devices",
+	mpc_common_debug_info("sctk_topology located %d PCI devices",
 		__mpc_topology_device_list_count);
 	/* Allocate devices */
 	__mpc_topology_device_list = sctk_malloc(sizeof(mpc_topology_device_t) * __mpc_topology_device_list_count);

@@ -1046,7 +1046,7 @@ static mpc_lowcomm_monitor_retcode_t __start_server_socket(struct _mpc_lowcomm_m
 		return MPC_LOWCOMM_MONITOR_RET_ERROR;
 	}
 
-	mpc_common_debug_info("MON: bound to %s", monitor->monitor_uri);
+	mpc_common_debug_info("Bound to %s", monitor->monitor_uri);
 
 	return MPC_LOWCOMM_MONITOR_RET_SUCCESS;
 }
