@@ -20,6 +20,10 @@
 /* #   - JAEGER Julien julien.jaeger@cea.fr                               # */
 /* #                                                                      # */
 /* ######################################################################## */
+
+#ifndef MPC_MPI_INTERNAL_H
+#define MPC_MPI_INTERNAL_H
+
 // #include "sctk_alloc.h"
 
 #include "mpc_common_debug.h"
@@ -42,8 +46,6 @@
 #include <string.h>
 #include <uthash.h>
 #include <utlist.h>
-
-#include "lcp.h"
 
 TODO("Expose this header cleanly");
 #include <shm_coll.h>
@@ -723,3 +725,5 @@ static int mpi_check_op_type_func_MPI_(MPI_Datatype datatype)
 		mpi_check_op_type_func_notavail(MPC_LOWCOMM_FLOAT);  \
 		mpi_check_op_type_func_notavail(MPC_LOWCOMM_DOUBLE); \
 		mpi_check_op_type_func_notavail(MPC_LOWCOMM_LONG_DOUBLE)
+
+#endif // MPC_MPI_INTERNAL_H
