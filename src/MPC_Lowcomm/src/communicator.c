@@ -1649,7 +1649,7 @@ void _mpc_lowcomm_communicator_release_task(void)
  * ACCESSORS *
  *************/
 
-lcp_ep_h mpc_lowcomm_communicator_lookup(mpc_lowcomm_communicator_t comm, int rank)
+void * mpc_lowcomm_communicator_lookup(mpc_lowcomm_communicator_t comm, int rank)
 {
 	mpc_lowcomm_communicator_t tcomm = __mpc_lowcomm_communicator_from_predefined(comm);
 
@@ -1668,23 +1668,24 @@ lcp_ep_h mpc_lowcomm_communicator_lookup(mpc_lowcomm_communicator_t comm, int ra
 	}
 }
 
-void mpc_lowcomm_communicator_add_ep(mpc_lowcomm_communicator_t comm, int rank, lcp_ep_h ep)
+void mpc_lowcomm_communicator_add_ep(mpc_lowcomm_communicator_t comm, int rank, void *ep)
 {
+	lcp_ep_h lcp_ep = (lcp_ep_h)ep;
 	mpc_lowcomm_communicator_t tcomm = __mpc_lowcomm_communicator_from_predefined(comm);
 
 	if (tcomm->is_comm_self)
 	{
-		__comm_self_ep = ep;
+		__comm_self_ep = lcp_ep;
 	}
 	else if (mpc_lowcomm_communicator_is_intercomm(tcomm))
 	{
 		assert(rank >= 0 && rank < (int)mpc_lowcomm_group_size(tcomm->left_comm->group));
-		tcomm->right_comm->group->eps[rank] = ep;
+		tcomm->right_comm->group->eps[rank] = lcp_ep;
 	}
 	else
 	{
 		assert(rank >= 0 && rank < (int)mpc_lowcomm_group_size(tcomm->group));
-		tcomm->group->eps[rank] = ep;
+		tcomm->group->eps[rank] = lcp_ep;
 	}
 }
 
