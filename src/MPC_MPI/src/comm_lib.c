@@ -1382,12 +1382,12 @@ int _mpc_cl_type_get_true_extent(mpc_lowcomm_datatype_t datatype, long *true_lb,
 	{
 	case MPC_DATATYPES_COMMON:
 		tmp_true_lb = 0;
-		tmp_true_ub = (long)__mpc_cl_datatype_get_size(datatype);
+		// HACK: From size to inclusive UB means we have to remove 1
+		tmp_true_ub = (long)__mpc_cl_datatype_get_size(datatype) - 1;
 		break;
 
 	case MPC_DATATYPES_USER:
-		_mpc_dt_general_true_extend(datatype, &tmp_true_lb,
-			&tmp_true_ub);
+		_mpc_dt_general_true_extend(datatype, &tmp_true_lb, &tmp_true_ub);
 		break;
 
 	case MPC_DATATYPES_UNKNOWN:
