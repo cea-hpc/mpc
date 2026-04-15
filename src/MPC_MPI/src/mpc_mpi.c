@@ -15718,6 +15718,11 @@ int PMPI_Info_free(MPI_Info *info)
 
 int PMPI_Info_dup(MPI_Info info, MPI_Info *newinfo)
 {
+	if (info == MPI_INFO_NULL)
+	{
+		*newinfo = MPI_INFO_NULL;
+		return MPI_SUCCESS;
+	}
 	return _mpc_cl_info_dup((MPC_Info)info, (MPC_Info * )newinfo);
 }
 
