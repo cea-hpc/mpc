@@ -317,7 +317,7 @@ lcp_status_ptr_t lcp_put_nb(lcp_ep_h ep, lcp_task_h task, void *buffer, size_t l
 		return LCP_STATUS_PTR(rc);
 	}
 
-	mpc_common_debug("LCP RMA: perform put. req=%p, task=%p, buffer=%p, length=%d, remote addr=%p.",
+	mpc_common_nodebug("LCP RMA: perform put. req=%p, task=%p, buffer=%p, length=%d, remote addr=%p.",
 		req, task, buffer, length, remote_addr);
 
 	ret = lcp_request_send(req);
@@ -362,7 +362,7 @@ lcp_status_ptr_t lcp_get_nb(lcp_ep_h ep, lcp_task_h task, void *buffer,
 		return LCP_STATUS_PTR(rc);
 	}
 
-	mpc_common_debug("LCP RMA: perform get. req=%p, task=%p, buffer=%p, length=%d, remote addr=%p.",
+	mpc_common_nodebug("LCP RMA: perform get. req=%p, task=%p, buffer=%p, length=%d, remote addr=%p.",
 		req, task, buffer, length, remote_addr);
 
 	ret = lcp_request_send(req);
@@ -377,9 +377,7 @@ static int lcp_flush_manager_nb(lcp_request_t *req)
 	sctk_rail_info_t *iface;
 	lcr_rail_attr_t   attr;
 
-
-	// FIXME: code a better way to get the number of interface that support
-	//       RMA.
+	// FIXME: code a better way to get the number of interface that support RMA.
 	for (i = 0; i < req->mngr->num_ifaces; i++)
 	{
 		iface = req->mngr->ifaces[i];
@@ -389,6 +387,15 @@ static int lcp_flush_manager_nb(lcp_request_t *req)
 		{
 			req->state.comp.count++;
 		}
+	}
+
+	// If nothing to flush, we need to complete the request
+	if (req->state.comp.count == 0)
+	{
+		// The completion function is in charge of decrementing the pending comms
+		req->state.comp.count++;
+		req->state.comp.comp_cb(&req->state.comp);
+		goto err;
 	}
 
 	for (i = 0; i < req->mngr->num_ifaces; i++)
@@ -439,8 +446,7 @@ static int lcp_flush_ep_nb(lcp_request_t *req)
 		}
 
 		iface = ep->lct_eps[i]->rail;
-		rc    = lcp_do_flush_ep(iface, ep->lct_eps[i],
-			&req->state.comp, 0);
+		rc    = lcp_do_flush_ep(iface, ep->lct_eps[i], &req->state.comp, 0);
 		if (rc != MPC_LOWCOMM_SUCCESS)
 		{
 			goto err;
@@ -496,6 +502,16 @@ static int lcp_flush_mem_ep_nb(lcp_request_t *req)
 	// NOTE: at least one channel must support RMA flush.
 	assert(req->send.ep->cap & LCR_IFACE_CAP_RMA);
 
+	req->state.comp.count = mpc_bitmap_popcount(flush_map);
+	// If nothing to flush, we need to complete the request
+	if (req->state.comp.count == 0)
+	{
+		// The completion function is in charge of decrementing the pending comms
+		req->state.comp.count++;
+		req->state.comp.comp_cb(&req->state.comp);
+		goto err;
+	}
+
 	for (i = 0; i < req->mngr->num_ifaces; i++)
 	{
 		if (!MPC_BITMAP_GET(flush_map, i))
@@ -505,9 +521,7 @@ static int lcp_flush_mem_ep_nb(lcp_request_t *req)
 
 		iface = ep->lct_eps[i]->rail;
 
-		rc = lcp_do_flush_mem_ep(iface, ep->lct_eps[i],
-			&mem->mems[i], &req->state.comp,
-			0);
+		rc = lcp_do_flush_mem_ep(iface, ep->lct_eps[i], &mem->mems[i], &req->state.comp, 0);
 		if (rc != MPC_LOWCOMM_SUCCESS)
 		{
 			goto err;
@@ -572,6 +586,8 @@ lcp_status_ptr_t lcp_flush_nb(lcp_manager_h mngr, lcp_task_h task,
 	LCP_REQUEST_INIT_RMA_FLUSH(req, mngr, task, 0, param->request, NULL,
 		NULL, 0, 0, param->datatype);
 
+	req->state.comp.count   = 0;
+	req->state.comp.sent    = 0;
 	req->state.comp.comp_cb = lcp_flush_request_complete;
 
 	if (param->field_mask & LCP_REQUEST_USER_MEMH)
