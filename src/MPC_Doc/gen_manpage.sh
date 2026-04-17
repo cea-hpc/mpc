@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 if test "x$#" = "x0"; then
         echo "USAGE:"

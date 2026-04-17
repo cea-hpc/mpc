@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 #last version
 version=$(../config/mpc_get_version.sh)
