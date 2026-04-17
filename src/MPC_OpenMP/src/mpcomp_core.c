@@ -1158,7 +1158,7 @@ void mpc_omp_init(void)
 		case MPC_OMP_MODE_SIMPLE_MIXED:
 			/* Compute the number of cores for this task */
 			mpc_thread_get_task_placement_and_count(task_rank, &nb_mvps);
-			mpc_common_nodebug("[%d] %s: SIMPLE_MIXED -> #mvps = %d", task_rank, __func__,
+			mpc_common_debug_info("[%d] %s: SIMPLE_MIXED -> #mvps = %d", task_rank, __func__,
 				nb_mvps);
 
 			/* Consider the env variable if between 1 and the number
@@ -1238,7 +1238,7 @@ void mpc_omp_init(void)
 	}
 	else
 	{
-		icvs.nthreads_var = __omp_conf.OMP_NUM_THREADS;
+		icvs.nthreads_var = mpc_common_min(__omp_conf.OMP_NUM_THREADS, nb_mvps);
 	}
 
 	icvs.dyn_var            = __omp_conf.OMP_DYNAMIC;
