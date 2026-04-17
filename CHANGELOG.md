@@ -14,6 +14,9 @@ All notable changes to this project will be documented in this file. The format 
 
 ### Fixed
 
+- **Low Comm**
+  - lcp active message rendezvous container memory leak
+
 ## [4.3.1] - 2026-04-08
 
 ### Added
