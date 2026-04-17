@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 export PATH="@CONFIGURE_PATH@:$PATH"
 export LD_LIBRARY_PATH="@CONFIGURE_LD_LIBRARY_PATH@:$LD_LIBRARY_PATH"

@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 MPC_INSTALL_DIR_PREFIX=@prefix@
 MPC_VERSION=@MPC_VERSION_STRING@

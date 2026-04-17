@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 ############################# MPC License ##############################
 # Wed Nov 19 15:19:19 CET 2008                                         #
 # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          #
@@ -135,7 +135,7 @@ STEP_WRAPPER_VERBOSE=0
 
 show_run_cmd()
 {
-	if test $STEP_WRAPPER_VERBOSE -gt 0; then
+	if test $STEP_WRAPPER_VERBOSE -gt 1; then
 		test -n "${PENDING_LB}" && echo ""
 		PENDING_LB=""
 		echo "$ $*"
@@ -169,21 +169,19 @@ checking() {
 
 	local msg="$1"
 	local msg_length=${#msg}
-	local dot_len
+	local dot_len=3
 
-	if [ $msg_length -le 63 ]; then
-		dot_len=$((66 - $msg_length))
-	else
-		dot_len=3
+	if [ "$msg_length" -le 63 ]; then
+		dot_len=$((66 - msg_length))
 	fi
-	printf "==>${colMAGENTA} %s%s ${colRESET}" "${msg:0:63}" "${LOTS_OF_DOTS:0:$dot_len}"
+	printf "==>${colMAGENTA} %s%s ${colRESET}" "${msg}" "${LOTS_OF_DOTS:0:$dot_len}"
 }
 
 ok()
 {
 	PENDING_LB=""
 	LAST_RESULT="ok"
-	if test $STEP_WRAPPER_VERBOSE -eq 0; then
+	if test $STEP_WRAPPER_VERBOSE -le 1; then
 		printf "${colGREEN}SUCCESS${colRESET}\n"
 	fi
 }
@@ -761,13 +759,13 @@ download_package()
 
 	checking "Downloading $PKG-$VERS"
 
-	have_cmd "wget"
+	have_cmd "curl"
 	if test "x${HAVE_CMD}" = "xyes"; then
-		wrap_output wget "$(package_download_address "$PKG" "${VERS}")"
+		wrap_output curl -L "$(package_download_address "$PKG" "${VERS}")" -o "./${FNAME}"
 	else
-		have_cmd "curl"
+		have_cmd "wget"
 		if test "x${HAVE_CMD}" = "xyes"; then
-			wrap_output curl -L "$(package_download_address "$PKG" "${VERS}")" -o "./${FNAME}"
+			wrap_output wget --tries=5 --timeout=20 "$(package_download_address "$PKG" "${VERS}")"
 		else
 			nok
 			die "Curl or wget is required for dep download or use --download."
@@ -980,12 +978,14 @@ build_configure_based_package()
 
 		locate_tarball "$package" "$version"
 
-		checking "Extracting $package-$version (from $TARBALL_PATH)"
-
 		if test ! -f "$TARBALL_PATH"; then
 			nok
 			die "Could not locate a tarball for $package-$version in $pkg_dir"
 		fi
+
+		info "Found archive at $TARBALL_PATH"
+
+		checking "Extracting $package-$version"
 
 		wrap_output tar xf "$TARBALL_PATH"
 

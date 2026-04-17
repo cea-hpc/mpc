@@ -17,6 +17,9 @@ All notable changes to this project will be documented in this file. The format 
 - **Low Comm**
   - lcp active message rendezvous container memory leak
 
+- **OpenMP**
+  - Fix `omp_get_max_threads` to give a lower bound estimation with respect to topology when in hybrid MPI/OpenMP mode.
+
 ## [4.3.1] - 2026-04-08
 
 ### Added
