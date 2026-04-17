@@ -167,15 +167,11 @@ static void lcp_am_recv_complete(lcr_completion_t *comp)
 		MPC_LOWCOMM_SUCCESS,
 		req->recv.send_length);
 
-	// FIXME: recheck why we need to test the flags before putting back the
-	//       container.
 	// FIXME: for now, these can be called only for RNDV but it should be
 	//       generalized for EAGER messages also.
-	if (req->flags & LCP_REQUEST_USER_CALLBACK)
-	{
-		/* Free container */
-		lcp_container_put(ctnr);
-	}
+
+	/* Free container */
+	lcp_container_put(ctnr);
 }
 
 /* ============================================== */
