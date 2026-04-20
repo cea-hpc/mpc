@@ -53,9 +53,9 @@
 
 #define DEBUG_INFO_SIZE (128)
 
-/**********************
- * FILE-BASED LOGGING *
- **********************/
+/**********************/
+/* FILE-BASED LOGGING */
+/**********************/
 
 static FILE *__log_outfile = NULL;
 static mpc_common_spinlock_t __log_outfile_lock = MPC_COMMON_SPINLOCK_INITIALIZER;
@@ -140,9 +140,64 @@ static void __log_to_file(char *filename,
 	mpc_common_spinlock_unlock(&__log_outfile_lock);
 }
 
-/**********************************************************************/
-/* Threads support                                                    */
-/**********************************************************************/
+/************************/
+/* PRINTF-BASED LOGGINF */
+/************************/
+
+void __mpc_printf(char *messagebuffer,
+                  char *modulename,
+                  char *filename __UNUSED__,
+                  int line __UNUSED__,
+                  char *color,
+                  const char *verbosity_level)
+{
+	if (mpc_common_debug_is_stderr_tty()
+	    && mpc_common_get_flags()->colors)
+	{
+		fprintf(stderr,
+			"%s[%sT%4d %sP%4d %sN%4d%s]%s " // Task, Process & Node rank
+			"%s[%s%5s%s]%s "                // Verbosity level
+			"%s[%s%s%s]%s "                 // Module
+			"%s%s%s\n",                     // Message
+
+			// Task process & node rank
+			MPC_COLOR_CHAR_BOLD_DEFAULT,
+			MPC_COLOR_CHAR_RED, mpc_common_get_task_rank(),
+			MPC_COLOR_CHAR_BLUE, mpc_common_get_process_rank(),
+			MPC_COLOR_CHAR_GREEN, mpc_common_get_node_rank(),
+			MPC_COLOR_CHAR_BOLD_DEFAULT, MPC_COLOR_CHAR_DEFAULT,
+
+			// Verbosity Level
+			MPC_COLOR_CHAR_BOLD_DEFAULT,
+			color, verbosity_level,
+			MPC_COLOR_CHAR_BOLD_DEFAULT,
+			MPC_COLOR_CHAR_DEFAULT,
+
+			// Module
+			MPC_COLOR_CHAR_BOLD_DEFAULT,
+			MPC_COLOR_CHAR_CYAN, modulename,
+			MPC_COLOR_CHAR_BOLD_DEFAULT,
+			MPC_COLOR_CHAR_DEFAULT,
+
+			// Message
+			color, messagebuffer, MPC_COLOR_CHAR_DEFAULT);
+	}
+	else
+	{
+		fprintf(stderr,
+			"[T%4d P%4d N%4d] [%5s] [%s] %s\n",
+			mpc_common_get_task_rank(),
+			mpc_common_get_process_rank(),
+			mpc_common_get_node_rank(),
+			verbosity_level,
+			modulename,
+			messagebuffer);
+	}
+}
+
+/*******************/
+/* THREADS SUPPORT */
+/*******************/
 
 /* NOLINTBEGIN(clang-diagnostic-unused-function) */
 static inline char *__debug_print_info(char *buffer)
@@ -172,9 +227,10 @@ static inline char *__debug_print_info(char *buffer)
 
 /* NOLINTEND(clang-diagnostic-unused-function) */
 
-/**********************************************************************/
-/*Abort                                                               */
-/**********************************************************************/
+/*********/
+/* ABORT */
+/*********/
+
 void mpc_launch_pmi_abort(const int);
 
 __attribute__((__noreturn__)) void mpc_common_debug_abort(const int errorcode)
@@ -186,10 +242,9 @@ __attribute__((__noreturn__)) void mpc_common_debug_abort(const int errorcode)
 	abort();
 }
 
-/**********************************************************************/
-/*Messages                                                            */
-/**********************************************************************/
-
+/************/
+/* MESSAGES */
+/************/
 
 const char * mpc_common_debug_get_basename(const char *path)
 {
@@ -314,9 +369,10 @@ void mpc_common_debug_abort_log(FILE *stream, int line,
 	mpc_common_debug_abort(MPC_COMMON_ABORT_ERROR_CODE);
 }
 
-/**********************************************************************/
-/*Sizes                                                               */
-/**********************************************************************/
+/***************/
+/* SIZES CHECK */
+/***************/
+
 void mpc_common_debug_check_large_enough(size_t a, size_t b, char *ca, char *cb, char *file, int line)
 {
 	if (!(a <= b))
@@ -335,61 +391,9 @@ void mpc_common_debug_check_size_equal(size_t a, size_t b, char *ca, char *cb, c
 	}
 }
 
-void __mpcprintf(char *messagebuffer,
-                 char *modulename,
-                 char *filename __UNUSED__,
-                 int line __UNUSED__,
-                 char *color,
-                 const char *verbosity_level)
-{
-	if (mpc_common_debug_is_stderr_tty()
-	    && mpc_common_get_flags()->colors)
-	{
-		fprintf(stderr,
-			"%s[%sT%4d %sP%4d %sN%4d%s]%s " // Task, Process & Node rank
-			"%s[%s%5s%s]%s "                // Verbosity level
-			"%s[%s%s%s]%s "                 // Module
-			"%s%s%s\n",                     // Message
-
-			// Task process & node rank
-			MPC_COLOR_CHAR_BOLD_DEFAULT,
-			MPC_COLOR_CHAR_RED, mpc_common_get_task_rank(),
-			MPC_COLOR_CHAR_BLUE, mpc_common_get_process_rank(),
-			MPC_COLOR_CHAR_GREEN, mpc_common_get_node_rank(),
-			MPC_COLOR_CHAR_BOLD_DEFAULT, MPC_COLOR_CHAR_DEFAULT,
-
-			// Verbosity Level
-			MPC_COLOR_CHAR_BOLD_DEFAULT,
-			color, verbosity_level,
-			MPC_COLOR_CHAR_BOLD_DEFAULT,
-			MPC_COLOR_CHAR_DEFAULT,
-
-			// Module
-			MPC_COLOR_CHAR_BOLD_DEFAULT,
-			MPC_COLOR_CHAR_CYAN, modulename,
-			MPC_COLOR_CHAR_BOLD_DEFAULT,
-			MPC_COLOR_CHAR_DEFAULT,
-
-			// Message
-			color, messagebuffer, MPC_COLOR_CHAR_DEFAULT);
-	}
-	else
-	{
-		fprintf(stderr,
-			"[T%4d P%4d N%4d] [%5s] [%s] %s\n",
-			mpc_common_get_task_rank(),
-			mpc_common_get_process_rank(),
-			mpc_common_get_node_rank(),
-			verbosity_level,
-			modulename,
-			messagebuffer);
-	}
-}
-
-/******************************
- * LOG FILTERING CAPABILITIES *
- ******************************/
-
+/******************************/
+/* LOG FILTERING CAPABILITIES */
+/******************************/
 
 typedef enum
 {
@@ -425,7 +429,6 @@ struct __log_filter_rule_s
 	__log_filter_type_t type;
 	char                match[FILTER_MAX_SIZE];
 };
-
 
 #define MAX_LOG_FILTER_RULES 32
 
@@ -533,7 +536,7 @@ static inline void __parse_log_filter_rules(void)
 	}
 }
 
-char * strstr_case_insensitive(const char *haystack, const char *needle)
+static inline char * __strstr_case_insensitive(const char *haystack, const char *needle)
 {
 	if (haystack == NULL || needle == NULL || !*needle)
 	{
@@ -579,21 +582,21 @@ static inline int __call_is_filtered_from_env(const char *modulename, const char
 		switch (tmp->type)
 		{
 		case FILTER_FILE:
-			if (strstr_case_insensitive(filename, tmp->match))
+			if (__strstr_case_insensitive(filename, tmp->match))
 			{
 				return 0;
 			}
 			break;
 
 		case FILTER_MODULE:
-			if (strstr_case_insensitive(modulename, tmp->match))
+			if (__strstr_case_insensitive(modulename, tmp->match))
 			{
 				return 0;
 			}
 			break;
 
 		case FILTER_FUNCTION:
-			if (strstr_case_insensitive(funcname, tmp->match))
+			if (__strstr_case_insensitive(funcname, tmp->match))
 			{
 				return 0;
 			}
@@ -612,6 +615,10 @@ static inline int __call_is_filtered_from_env(const char *modulename, const char
 	return 1;
 }
 
+/*********************/
+/* LOGS CAPABILITIES */
+/*********************/
+
 static void __log_and_print(char *filename,
                             int line,
                             const char *funcname,
@@ -621,23 +628,21 @@ static void __log_and_print(char *filename,
                             char *content)
 {
 	/* To console */
-	__mpcprintf(content, modulename, filename, line, color, verbosity_level);
+	__mpc_printf(content, modulename, filename, line, color, verbosity_level);
 	/* To file */
 	__log_to_file(filename, line, funcname, verbosity_level, modulename, content);
 }
 
-int mpc_common_debug_print(char *filename,
-                           int line,
-                           const char *funcname,
-                           char *color,
-                           mpc_common_debug_verbosity_level_t verbosity_level,
-                           char *modulename,
-                           char *string,
-                           ...)
+int mpc_common_debug_vprint(char *filename,
+                            int line,
+                            const char *funcname,
+                            char *color,
+                            mpc_common_debug_verbosity_level_t verbosity_level,
+                            mpc_common_debug_scope_t debug_scope,
+                            char *modulename,
+                            char *string,
+                            va_list ap)
 {
-	va_list ap;
-	int     r = 0;
-
 	/* Check loglevel */
 	if (mpc_common_get_flags()->verbosity < (int)verbosity_level)
 	{
@@ -650,70 +655,69 @@ int mpc_common_debug_print(char *filename,
 		return 0;
 	}
 
-	va_start(ap, string);
+	switch (debug_scope)
+	{
+	case MPC_COMMON_SCOPE_PROCESS:
+		if (mpc_common_get_process_rank() != 0)
+		{
+			return 0;
+		}
+		break;
+
+	case MPC_COMMON_SCOPE_TASK:
+		if (mpc_common_get_task_rank() != 0)
+		{
+			return 0;
+		}
+		break;
+
+	case MPC_COMMON_SCOPE_ALL:
+		break;
+	}
+
+	if (!strcmp("MPC_MODULE", modulename))
+	{
+		/* No module was set */
+		modulename = "";
+	}
 
 	char messagebuffer[SMALL_BUFFER_SIZE];
+	int  r = vsnprintf(messagebuffer, (long)SMALL_BUFFER_SIZE, string, ap);
 
-	if (modulename[0] == 'M' && modulename[1] == 'P' && modulename[2] == 'C')
+	char *save_ptr = NULL;
+	char *sline    = strtok_r(messagebuffer, "\n", &save_ptr);
+
+	while (sline != NULL)
 	{
-		if (!strcmp("MPC_MODULE", modulename))
+		if (strlen(sline))
 		{
-			/* No module was set */
-			modulename = "";
+			__log_and_print(filename, line, funcname, color,
+				mpc_common_debug_verbosity_level_to_string(verbosity_level), modulename, sline);
 		}
+		sline = strtok_r(NULL, "\n", &save_ptr);
 	}
 
-	/* Strip quotes */
-	char  __no_quote_module_name[128];
-	char *no_quote_module_name = __no_quote_module_name;
-	(void)snprintf(no_quote_module_name, 128, "%s", modulename);
-
-	unsigned long modlen = strlen(no_quote_module_name);
-
-	if (modlen)
-	{
-		if (no_quote_module_name[modlen - 1] == '"' || no_quote_module_name[modlen - 1] == '\'')
-		{
-			no_quote_module_name[modlen - 1] = '\0';
-		}
-
-		if (no_quote_module_name[0] == '"' || no_quote_module_name[0] == '\'')
-		{
-			no_quote_module_name++;
-		}
-	}
-
-	r = vsnprintf(messagebuffer, (long)SMALL_BUFFER_SIZE, string, ap);
-
-
-	if (strchr(messagebuffer, '\n'))
-	{
-		char *save_ptr = NULL;
-		char *sline    = strtok_r(messagebuffer, "\n", &save_ptr);
-
-		while (sline != NULL)
-		{
-			if (strlen(sline))
-			{
-				__log_and_print(filename, line, funcname, color,
-					mpc_common_debug_verbosity_level_to_string(verbosity_level), no_quote_module_name, sline);
-			}
-			sline = strtok_r(NULL, "\n", &save_ptr);
-		}
-	}
-	else
-	{
-		__log_and_print(filename,
-			line,
-			funcname,
-			color,
-			mpc_common_debug_verbosity_level_to_string(verbosity_level),
-			no_quote_module_name,
-			messagebuffer);
-	}
-
-	va_end(ap);
 	return r;
+}
+
+__attribute__((flatten))
+int mpc_common_debug_print(char *filename,
+                           int line,
+                           const char *funcname,
+                           char *color,
+                           mpc_common_debug_verbosity_level_t verbosity_level,
+                           mpc_common_debug_scope_t debug_scope,
+                           char *modulename,
+                           char *string,
+                           ...)
+{
+	va_list args;
+
+	va_start(args, string);
+	int res = mpc_common_debug_vprint(filename, line, funcname, color, verbosity_level, debug_scope,
+		modulename, string, args);
+	va_end(args);
+	return res;
 }
 
 const char * mpc_common_debug_verbosity_level_to_string(mpc_common_debug_verbosity_level_t level)
@@ -736,9 +740,9 @@ const char * mpc_common_debug_verbosity_level_to_string(mpc_common_debug_verbosi
 	return slevel[level];
 }
 
-/**************
- * TTY STATUS *
- **************/
+/**************/
+/* TTY STATUS */
+/**************/
 
 static int __is_stderr_tty = 0;
 
@@ -748,9 +752,9 @@ int mpc_common_debug_is_stderr_tty()
 	return __is_stderr_tty;
 }
 
-/***************************************
- * MPC COMMON DEBUG INITIALIZATION CODE *
- ***************************************/
+/****************************************/
+/* MPC COMMON DEBUG INITIALIZATION CODE */
+/****************************************/
 
 
 void mpc_common_debug_init()
