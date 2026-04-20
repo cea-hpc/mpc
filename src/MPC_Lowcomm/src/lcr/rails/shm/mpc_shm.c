@@ -966,7 +966,7 @@ static size_t _mpc_shm_storage_get_size(unsigned int process_count,
 	/* End CMA context */
 	ret += SHM_CELL_COUNT_PER_PROC * process_count * sizeof(struct _mpc_shm_cell);
 
-	mpc_common_debug_info("SHM: segment is %g MB", (double)ret / (1024 * 1024));
+	mpc_common_debug_info_process0("SHM: segment is %g MB", (double)ret / (1024 * 1024));
 
 	return ret;
 }

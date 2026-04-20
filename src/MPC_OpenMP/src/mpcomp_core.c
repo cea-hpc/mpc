@@ -1238,7 +1238,7 @@ void mpc_omp_init(void)
 	{
 		icvs.nthreads_var = mpc_common_min(__omp_conf.OMP_NUM_THREADS, nb_mvps);
 	}
-	mpc_common_debug_info("Running with %d threads per ranks.", icvs.nthreads_var);
+	mpc_common_debug_info("Running with %d threads.", icvs.nthreads_var);
 
 	icvs.dyn_var            = __omp_conf.OMP_DYNAMIC;
 	icvs.nest_var           = __omp_conf.OMP_NESTED;

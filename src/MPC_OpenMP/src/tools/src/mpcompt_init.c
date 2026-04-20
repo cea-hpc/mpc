@@ -1,3 +1,4 @@
+#include "mpc_common_debug.h"
 #define _GNU_SOURCE
 #include <dlfcn.h>
 
@@ -54,7 +55,7 @@
 		ompt_start_tool_result_t * (*start_tool_ptr)(unsigned int omp_version,
 		                                             const char *runtime_version) = NULL;
 
-		mpc_common_debug_info("OMP version support \"%u\", omp runtime version \"%s\", %s (%p)",
+		mpc_common_debug_info_task0("OMP version support \"%u\", omp runtime version \"%s\", %s (%p)",
 			omp_version, runtime_version, tool_path
 			? "record tool path" : "no tool path record", tool_path);
 
@@ -126,7 +127,7 @@
 		thread = ( mpc_omp_thread_t * )mpc_omp_tls;
 		assert(thread);
 
-		mpc_common_debug_info("%s tool interface (OMP_TOOL)",
+		mpc_common_debug_info_task0("%s tool interface (OMP_TOOL)",
 			mpcomp_global_icvs.tool == mpc_omp_tool_enabled
 			? "Initializing" : "Ignoring");
 
@@ -157,7 +158,7 @@
 		if (tool_res
 		    && mpc_omp_ompt_register_tool(tool_res, tool_path ? tool_path : NULL))
 		{
-			mpc_common_debug_info("Tool found! Tool interface active.");
+			mpc_common_debug_info_task0("Tool found! Tool interface active.");
 			mpc_common_nodebug("(tool result = %p, tool instance = %p)",
 				thread->tool_instance->start_result,
 				thread->tool_instance);
@@ -165,8 +166,7 @@
 		else
 		{
 			thread->tool_status = inactive;
-
-			mpc_common_debug_info("No tool found, tool interface inactive.");
+			mpc_common_debug_info_task0("No tool found, tool interface inactive.");
 		}
 	}
 
