@@ -98,6 +98,17 @@ It may gives some information about the configuration of the individual MPC modu
 
    mpc_common_debug_info("World communicator created with success");
 
+.. note::
+
+   There are shortcut to print info only from process 0 or from task 0 using the following.
+   This can be useful to not spam logs when information across processes or tasks/process is identical.
+
+   .. code-block:: c
+
+      mpc_common_debug_info_process0("World communicator created with success");
+      mpc_common_debug_info_task0("World communicator created with success");
+
+
 Debugs
 ''''''
 

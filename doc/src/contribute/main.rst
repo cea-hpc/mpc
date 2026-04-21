@@ -45,3 +45,4 @@ Contribute in code
    :caption: Contents:
 
    code_logging
+   code_rank_scope
