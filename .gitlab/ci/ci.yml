@@ -19,9 +19,9 @@ stages:
 # Default variables. Those with description are intended to be modified manually
 variables:
   # mpc-ci path
-  GL_MPC_CI_PATH: '$CI_BUILDS_DIR/mpc-ci'
+  GL_MPC_CI_PATH: '$CI_BUILDS_DIR/$CI_PIPELINE_ID/mpc-ci'
   # pcvs-benchmarks path
-  GL_PCVS_BENCHMARKS_PATH: '$CI_BUILDS_DIR/pcvs-benchmarks'
+  GL_PCVS_BENCHMARKS_PATH: '$CI_BUILDS_DIR/$CI_PIPELINE_ID/pcvs-benchmarks'
   # Installation option used by all configuration
   GL_INSTALL_COMMON_OPTS: --relwithdebinfo -j32
   # Default pipeline name for the workflow
@@ -71,17 +71,9 @@ workflow:
 ################## Setup ###################
 ############################################
 
-Env Sanitize:
-  stage: '.pre'
-  needs: []
-  script:
-    - echo $CI_BUILDS_DIR
-    - rm -rf $CI_BUILDS_DIR/*
-    - ln -snf "$(ccc_home -u mpc)"/mpc_deps "${HOME}"/.mpcdep
-
 Retrieve Tests:
   stage: '.pre'
-  needs: ['Env Sanitize']
+  needs: []
   script:
     - echo "Using CI branch ${CI_BRANCH}"
     - |
@@ -91,7 +83,7 @@ Retrieve Tests:
 
 Retrieve Benchmarks:
   stage: '.pre'
-  needs: ['Env Sanitize']
+  needs: []
   script:
     - echo "${BENCHMARKS_BRANCH}"
     - |
@@ -108,7 +100,7 @@ Retrieve Benchmarks:
 ############################################
 
 .build_and_run:
-  needs: ['Env Sanitize']
+  needs: []
   variables:
     CHILD_PIPELINE_NAME: '${CI_JOB_NAME}'
     PARENT_PIPELINE_ID: $CI_PIPELINE_ID
@@ -220,7 +212,7 @@ Without MPCAlloc:
 
 Check Precommit Rules:
   stage: 'Extra Steps'
-  needs: ['Env Sanitize']
+  needs: []
   before_script:
     - !reference ['.load_pcvs', before_script]
     - export PATH=$PATH:"$(ccc_home -u mpc)/mpc_pre_commit/bin"
@@ -246,5 +238,5 @@ Resource Relinquishing:
   script:
     - echo "Suppressing ${CI_BUILDS_DIR} data"
   after_script:
-    - rm -rf ${CI_BUILDS_DIR}/*
+    - rm -rf ${CI_BUILDS_DIR}/${CI_PIPELINE_ID}/*
   interruptible: false

@@ -29,9 +29,9 @@ variables:
   # Install directory path
   GL_INSTALL_DIR: '$GL_PIPELINE_PATH/install'
   # MPC CI top level path
-  GL_MPC_CI_ROOT_PATH: '$CI_BUILDS_DIR/mpc-ci'
+  GL_MPC_CI_ROOT_PATH: '$CI_BUILDS_DIR/$PARENT_PIPELINE_ID/mpc-ci'
   # PCVS Benchmarks top level path
-  GL_PCVS_BENCHMARKS_ROOT_PATH: '$CI_BUILDS_DIR/pcvs-benchmarks'
+  GL_PCVS_BENCHMARKS_ROOT_PATH: '$CI_BUILDS_DIR/$PARENT_PIPELINE_ID/pcvs-benchmarks'
   # PCVS Basic run command
   PCVS_RUN: 'pcvs -v run --override'
   # PCVS command used with process mode profile
