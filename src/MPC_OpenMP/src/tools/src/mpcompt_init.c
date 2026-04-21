@@ -1,4 +1,3 @@
-#include "mpc_common_debug.h"
 #define _GNU_SOURCE
 #include <dlfcn.h>
 
@@ -6,6 +5,7 @@
 
 #if OMPT_SUPPORT
 #include <string.h>
+#include "mpc_common_debug.h"
 #include "mpcompt_entryPoints.h"
 #include "mpcompt_instance.h"
 #include "mpcomp_types.h"
