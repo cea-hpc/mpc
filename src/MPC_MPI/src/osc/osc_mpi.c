@@ -21,21 +21,41 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#include <stdbool.h>
+/**@file
+ *
+ * This file contains the implementation of most of the function of the OSC API for MPI.
+ * Those functions are called by MPI to perform RMA operations.
+ * Those functions should rely on CommLib and LowComm solely.
+ */
 
-#include <mpc_common_progress.h>
-#include <mpc_common_rank.h>
-#include <mpc_lowcomm.h>
-#include <mpc_lowcomm_one_sided.h>
+#include <stdbool.h>               // For bool, true and false
 
-#include "osc_mpi.h"
-#include "mpitypes.h"
-#include "osc_mpi_internal.h"
-#include "mpc_mpi.h"
+#include <mpc_common_progress.h>   // For mpc_common_progress
+#include <mpc_common_rank.h>       // For mpc_common_get_task_rank...
+#include <mpc_lowcomm.h>           // For mpc_lowcomm_communicator_t...
+#include <mpc_lowcomm_one_sided.h> // For this whole OSC API
 
-#include <sctk_alloc.h>
+#include "mpc_mpi_internal.h"      // For MPI_internal_request_t...
+#include "mpitypes.h"              // For MPIT_Type...
+#include "osc_mpi_internal.h"      // For internal mpc_mpi_win_t layout
 
-static void _min_op_long(const void *in, void *out, size_t length, mpc_lowcomm_datatype_t dt)
+#include <sctk_alloc.h>            // For sctk_malloc, sctk_free
+
+/*********************
+ * Window Management *
+ *********************/
+
+/** @ingroup MPI_OSC_INTERNAL
+ * @brief Reduction operation performing a min on long int
+ *
+ * This function is used to check the difference in displacement unit in the window creation across the tasks.
+ *
+ * @param[in]  in     Array of the reference longs
+ * @param[out] out    Arary of long to be compared
+ * @param[in]  length Size (in elements) of in and out
+ * @param[in]  dt     Datatype of the arrays (UNUSED)
+ */
+static void __osc_min_op_long(const void *in, void *out, size_t length, mpc_lowcomm_datatype_t dt)
 {
 	UNUSED(dt);
 
@@ -51,8 +71,22 @@ static void _min_op_long(const void *in, void *out, size_t length, mpc_lowcomm_d
 	}
 }
 
-static int osc_win_setup_after_creation(mpc_mpi_win_t *win, const size_t size, int disp_unit,
-                                        MPI_Info info, const int flavor)
+/** @ingroup MPI_OSC_INTERNAL
+ * @brief Setup the MPI specific operations on the MPI Window after LowComm window creation
+ *
+ * This function setup the MPI specific objects and characteristics (MPI_Info, epoch, disp_unit, flavor, model...).
+ * The most significant part is the gathering of all the disp_unit of the tasks.
+ *
+ * @param[out] win       MPI Window to fill
+ * @param[in]  size      Size of the Window underlying buffer
+ * @param[in]  disp_unit Displacement unit of the current task for this window
+ * @param[in]  info      MPI Info object to associate with the newly created window
+ * @param[in]  flavor    MPI Creation Flavor of the window
+ *
+ * @return               MPI errorcode
+ */
+static int __osc_win_setup_after_creation(mpc_mpi_win_t *win, const size_t size, int disp_unit,
+                                          MPI_Info info, const int flavor)
 {
 	long values[2];
 
@@ -66,7 +100,7 @@ static int osc_win_setup_after_creation(mpc_mpi_win_t *win, const size_t size, i
 	const int comm_size = mpc_lowcomm_communicator_size(comm);
 	const int comm_rank = mpc_lowcomm_communicator_rank_of(comm, mpc_common_get_task_rank());
 
-	mpc_lowcomm_allreduce(values, tmp, sizeof(*values), 2, _min_op_long, comm, MPC_LOWCOMM_LONG);
+	mpc_lowcomm_allreduce(values, tmp, sizeof(*values), 2, __osc_min_op_long, comm, MPC_LOWCOMM_LONG);
 
 	values[0] = tmp[0];
 	values[1] = tmp[1];
@@ -104,8 +138,7 @@ static int osc_win_setup_after_creation(mpc_mpi_win_t *win, const size_t size, i
 	return MPI_SUCCESS;
 }
 
-/* Window Management */
-int mpc_mpi_osc_win_create(void **base, size_t size, int disp_unit, MPI_Info info,
+int mpc_mpi_osc_win_create(void **base, const size_t size, const int disp_unit, MPI_Info info,
                            mpc_lowcomm_communicator_t comm, mpc_mpi_win_t **win_p)
 {
 	int rc = MPI_SUCCESS;
@@ -119,15 +152,14 @@ int mpc_mpi_osc_win_create(void **base, size_t size, int disp_unit, MPI_Info inf
 	}
 	memset(win, 0, sizeof(mpc_mpi_win_t));
 
-	rc = mpc_lowcomm_window_create(base, size, comm,
-		MPC_LOWCOMM_WINDOW_FLAG_CREATE, &(win->win_module));
+	rc = mpc_lowcomm_window_create(base, size, comm, MPC_LOWCOMM_WINDOW_FLAG_CREATE, &(win->win_module));
 
-	osc_win_setup_after_creation(win, size, disp_unit, info, MPI_WIN_FLAVOR_CREATE);
+	__osc_win_setup_after_creation(win, size, disp_unit, info, MPI_WIN_FLAVOR_CREATE);
 
 	return rc;
 }
 
-int mpc_mpi_osc_win_allocate(void **base, size_t size, int disp_unit, MPI_Info info,
+int mpc_mpi_osc_win_allocate(void **base, const size_t size, const int disp_unit, MPI_Info info,
                              mpc_lowcomm_communicator_t comm, mpc_mpi_win_t **win_p)
 {
 	int rc = MPI_SUCCESS;
@@ -143,7 +175,7 @@ int mpc_mpi_osc_win_allocate(void **base, size_t size, int disp_unit, MPI_Info i
 
 	rc = mpc_lowcomm_window_create(base, size, comm, MPC_LOWCOMM_WINDOW_FLAG_ALLOCATE, &(win->win_module));
 
-	osc_win_setup_after_creation(win, size, disp_unit, info, MPI_WIN_FLAVOR_ALLOCATE);
+	__osc_win_setup_after_creation(win, size, disp_unit, info, MPI_WIN_FLAVOR_ALLOCATE);
 
 	return rc;
 }
@@ -161,15 +193,14 @@ int mpc_mpi_osc_win_create_dynamic(MPI_Info info, mpc_lowcomm_communicator_t com
 	}
 	memset(win, 0, sizeof(mpc_mpi_win_t));
 
-	rc = mpc_lowcomm_window_create(NULL, 0, comm,
-		MPC_LOWCOMM_WINDOW_FLAG_DYNAMIC, &(win->win_module));
+	rc = mpc_lowcomm_window_create(NULL, 0, comm, MPC_LOWCOMM_WINDOW_FLAG_DYNAMIC, &(win->win_module));
 
-	osc_win_setup_after_creation(win, 0, 1, info, MPI_WIN_FLAVOR_DYNAMIC);
+	__osc_win_setup_after_creation(win, 0, 1, info, MPI_WIN_FLAVOR_DYNAMIC);
 
 	return rc;
 }
 
-int mpc_mpi_osc_win_attach(mpc_mpi_win_t *win, void *base, size_t len)
+int mpc_mpi_osc_win_attach(mpc_mpi_win_t *win, void *base, const size_t len)
 {
 	int rc = MPI_SUCCESS;
 
@@ -203,12 +234,11 @@ int mpc_mpi_osc_win_free(mpc_mpi_win_t *win)
 
 	assert(OPA_load_int(&win->lock_count) == 0);
 
-	mpc_mpi_osc_win_attr_ht_release(&win->attrs);
+	osc_win_attr_ht_release(&win->attrs);
 
 	rc = mpc_lowcomm_window_free(&win->win_module);
 
-	/* Deallocate table of displacement units if not all processes had the
-	 * same. */
+	/* Deallocate table of displacement units if not all processes had the same. */
 	if (win->disp_unit == -1)
 	{
 		sctk_free(win->disp_units);
@@ -219,106 +249,26 @@ int mpc_mpi_osc_win_free(mpc_mpi_win_t *win)
 	return rc;
 }
 
-static int mpc_osc_discontig_common(const void *origin_addr, int origin_count,
-                                    _mpc_lowcomm_general_datatype_t *origin_dt,
-                                    int is_orig_dt_contig, const int target,
-                                    uint64_t target_disp, int target_count,
-                                    _mpc_lowcomm_general_datatype_t *target_dt,
-                                    int is_target_dt_contig, bool is_get,
-                                    mpc_lowcomm_window_t *win, mpc_lowcomm_request_t *request);
+/******************
+ * Communications *
+ ******************/
 
-static int mpc_osc_put_common(const void *origin_addr,
-                              int origin_count,
-                              _mpc_lowcomm_general_datatype_t *origin_dt,
-                              int target,
-                              ptrdiff_t target_disp,
-                              int target_count,
-                              _mpc_lowcomm_general_datatype_t *target_dt,
-                              mpc_mpi_win_t *win,
-                              mpc_lowcomm_request_t *request)
-{
-	int    rc = MPC_LOWCOMM_SUCCESS;
-	size_t origin_len;
-	int    is_orig_dt_contiguous   = 0;
-	int    is_target_dt_contiguous = 0;
-	long   origin_lb, target_lb;
-	long   origin_extent, target_extent;
-
-	if (!origin_count || !target_count)
-	{
-		return rc;
-	}
-
-	origin_dt = _mpc_dt_get_datatype(origin_dt);
-	target_dt = _mpc_dt_get_datatype(target_dt);
-
-	is_orig_dt_contiguous   = _mpc_dt_is_contig_mem(origin_dt);
-	is_target_dt_contiguous = _mpc_dt_is_contig_mem(target_dt);
-
-	_mpc_cl_type_get_true_extent(origin_dt, &origin_lb, &origin_extent);
-	_mpc_cl_type_get_true_extent(target_dt, &target_lb, &target_extent);
-
-	if (is_orig_dt_contiguous && is_target_dt_contiguous)
-	{
-		origin_len = origin_extent * origin_count;
-		const ptrdiff_t new_target_disp = target_disp * OSC_GET_DISP(win, target) + target_lb;
-
-		rc = mpc_lowcomm_iput(origin_addr + origin_lb, origin_len, target, new_target_disp, win->win_module, request);
-	}
-	else
-	{
-		rc = mpc_osc_discontig_common(
-			origin_addr + origin_lb, origin_count, origin_dt, is_orig_dt_contiguous, target,
-			target_disp * OSC_GET_DISP(win, target) + target_lb, target_count, target_dt, is_target_dt_contiguous,
-			false, win->win_module, request);
-	}
-
-	return rc;
-}
-
-static int mpc_osc_get_common(void *origin_addr, int origin_count, _mpc_lowcomm_general_datatype_t *origin_dt,
-                              int target, ptrdiff_t target_disp,
-                              int target_count, _mpc_lowcomm_general_datatype_t *target_dt,
-                              mpc_mpi_win_t *win, mpc_lowcomm_request_t *request)
-{
-	int    rc = MPC_SUCCESS;
-	size_t origin_len;
-	int    is_orig_dt_contiguous   = 0;
-	int    is_target_dt_contiguous = 0;
-	long   origin_lb, target_lb;
-	long   origin_extent, target_extent;
-
-	origin_dt = _mpc_dt_get_datatype(origin_dt);
-	target_dt = _mpc_dt_get_datatype(target_dt);
-
-	is_orig_dt_contiguous   = _mpc_dt_is_contig_mem(origin_dt);
-	is_target_dt_contiguous = _mpc_dt_is_contig_mem(target_dt);
-
-	_mpc_cl_type_get_true_extent(origin_dt, &origin_lb, &origin_extent);
-	_mpc_cl_type_get_true_extent(target_dt, &target_lb, &target_extent);
-
-	if (is_orig_dt_contiguous && is_target_dt_contiguous)
-	{
-		origin_len = origin_extent * origin_count;
-		const ptrdiff_t new_target_disp = target_disp * OSC_GET_DISP(win, target) + target_lb;
-
-		rc = mpc_lowcomm_iget(origin_addr + origin_lb, origin_len, target, new_target_disp, win->win_module, request);
-	}
-	else
-	{
-		rc = mpc_osc_discontig_common(
-			origin_addr + origin_lb, origin_count, origin_dt, is_orig_dt_contiguous, target,
-			target_disp * OSC_GET_DISP(win, target) + target_lb, target_count, target_dt, is_target_dt_contiguous,
-			true, win->win_module, request);
-	}
-	return rc;
-}
-
-static int mpc_mpi_osc_create_dt_blocks(const void *typebuf, int count,
-                                        mpc_lowcomm_datatype_t dt,
-                                        int **blocks_p,
-                                        intptr_t **disps_p,
-                                        int *intblockct_p)
+/**@ingroup MPI_OSC_INTERNAL
+ * @brief Creates contiguous data blocks from a non-contiguous datatype
+ *
+ * A non-contiguous datatype can be describe as contiguous blocks of various sizes displaced from one another.
+ *
+ * @param[in]  typebuf      Buffer containing the data of type @ref dt
+ * @param[in]  count        Number of element of type @ref dt in @ref typebuf
+ * @param[in]  dt           Datype of the elements in @ref typebuf
+ * @param[out] blocks_p     Pointer to store an array of block size
+ * @param[out] disps_p      Pointer to store an array of displacement for the blocks
+ * @param[out] intblockct_p Pointer to store the number of blocks
+ *
+ * @return                  MPI errorcode
+ */
+static int __osc_create_dt_blocks(const void *const typebuf, const int count, const mpc_lowcomm_datatype_t dt,
+                                  int **blocks_p, intptr_t **disps_p, int *intblockct_p)
 {
 	int       rc = MPC_LOWCOMM_SUCCESS;
 	size_t    tmp_size;
@@ -376,13 +326,32 @@ err:
 	return rc;
 }
 
-static int mpc_osc_discontig_common(const void *origin_addr, int origin_count,
-                                    _mpc_lowcomm_general_datatype_t *origin_dt,
-                                    int is_orig_dt_contig, const int target,
-                                    uint64_t target_disp, int target_count,
-                                    _mpc_lowcomm_general_datatype_t *target_dt,
-                                    int is_target_dt_contig, bool is_get,
-                                    mpc_lowcomm_window_t *win, mpc_lowcomm_request_t *request)
+/**@ingroup MPI_OSC_INTERNAL
+ * @brief Perform a RMA operation on a non-contiguous datatype
+ *
+ * This function handles both put and get type of RMA.
+ *
+ * @param[in]  origin_addr         Buffer address at the origin
+ * @param[in]  origin_count        Number of elements in @ref origin_addr
+ * @param[in]  origin_dt           Datatype of the elements in @ref origin_addr
+ * @param[in]  is_orig_dt_contig   Boolean on whether the origin datatype is contiguous or not
+ * @param[in]  target              Rank of the target task
+ * @param[in]  target_disp         Remote offset at the target
+ * @param[in]  target_count        Number of elements to put/get from the target
+ * @param[in]  target_dt           Datatype of the elements at the target
+ * @param[in]  is_target_dt_contig Boolean on whether the origin datatype is contiguous or not
+ * @param[in]  do_get              Whether to perform a get (true) or a put (false)
+ * @param[in]  win                 Window on which the operation is performed
+ * @param[out] request             Request associated with the ongoing communication
+ *
+ * @return                         MPI errorcode
+ */
+static int __osc_discontig_common(void *origin_addr, const int origin_count,
+                                  const mpc_lowcomm_datatype_t origin_dt, const bool is_orig_dt_contig,
+                                  const int target, const uint64_t target_disp, const int target_count,
+                                  const mpc_lowcomm_datatype_t target_dt, const bool is_target_dt_contig,
+                                  const bool do_get,
+                                  mpc_lowcomm_window_t *win, mpc_lowcomm_request_t *request)
 {
 	int       rc = MPI_SUCCESS;
 	int *     orig_blocks, *target_blocks;
@@ -392,7 +361,7 @@ static int mpc_osc_discontig_common(const void *origin_addr, int origin_count,
 
 	if (!is_orig_dt_contig)
 	{
-		rc = mpc_mpi_osc_create_dt_blocks(origin_addr, origin_count, origin_dt,
+		rc = __osc_create_dt_blocks(origin_addr, origin_count, origin_dt,
 			&orig_blocks, &orig_disps, &orig_intblockct);
 		if (rc != MPI_SUCCESS)
 		{
@@ -402,7 +371,7 @@ static int mpc_osc_discontig_common(const void *origin_addr, int origin_count,
 
 	if (!is_target_dt_contig)
 	{
-		rc = mpc_mpi_osc_create_dt_blocks((void *)target_disp, target_count,
+		rc = __osc_create_dt_blocks((void *)target_disp, target_count,
 			target_dt, &target_blocks, &target_disps, &target_intblockct);
 		if (rc != MPI_SUCCESS)
 		{
@@ -418,7 +387,7 @@ static int mpc_osc_discontig_common(const void *origin_addr, int origin_count,
 		{
 			curr_len = mpc_common_min(orig_blocks[orig_blockidx], target_blocks[target_blockidx]);
 
-			if (is_get)
+			if (do_get)
 			{
 				rc = mpc_lowcomm_iget((void *)orig_disps[orig_blockidx],
 					curr_len, target, target_disps[target_blockidx], win, request);
@@ -452,7 +421,7 @@ static int mpc_osc_discontig_common(const void *origin_addr, int origin_count,
 		size_t curr_len = 0;
 		while (orig_blockidx < orig_intblockct)
 		{
-			if (is_get)
+			if (do_get)
 			{
 				rc = mpc_lowcomm_iget((void *)orig_disps[orig_blockidx],
 					orig_blocks[orig_blockidx], target, target_disp + curr_len, win, request);
@@ -476,7 +445,7 @@ static int mpc_osc_discontig_common(const void *origin_addr, int origin_count,
 		size_t curr_len = 0;
 		while (target_blockidx < target_intblockct)
 		{
-			if (is_get)
+			if (do_get)
 			{
 				rc = mpc_lowcomm_iget((char *)origin_addr + curr_len,
 					target_blocks[target_blockidx], target, target_disps[target_blockidx], win, request);
@@ -500,24 +469,136 @@ err:
 	return rc;
 }
 
-int mpc_mpi_osc_put(const void *origin_addr, int origin_count,
-                    _mpc_lowcomm_general_datatype_t *origin_dt,
-                    int target, ptrdiff_t target_disp, int target_count,
-                    _mpc_lowcomm_general_datatype_t *target_dt, mpc_mpi_win_t *win)
+/**@ingroup MPI_OSC_INTERNAL
+ * @brief Common entry point to perform a put operation
+ *
+ * This function unwraps the datatypes and compute the correct offset based on the datatype lb and target_disp.
+ * It performs a put directly if both datatypes are contiguous otherwise it relies on @ref mpc_osc_discontig_common.
+ *
+ * @param[in]  origin_addr  Buffer address at the origin
+ * @param[in]  origin_count Number of elements in @ref origin_addr
+ * @param[in]  origin_dt    Datatype of the elements in @ref origin_addr
+ * @param[in]  target       Rank of the target task
+ * @param[in]  target_disp  Remote offset at the target
+ * @param[in]  target_count Number of elements to put/get from the target
+ * @param[in]  target_dt    Datatype of the elements at the target
+ * @param[in]  win          Window on which the operation is performed
+ * @param[out] request      Request associated with the ongoing communication
+ *
+ * @return                  MPI errorcode
+ */
+static int __osc_put_common(const void *const origin_addr, const int origin_count, mpc_lowcomm_datatype_t origin_dt,
+                            const int target, const ptrdiff_t target_disp,
+                            const int target_count, mpc_lowcomm_datatype_t target_dt,
+                            mpc_mpi_win_t *win, mpc_lowcomm_request_t *request)
 {
-	return mpc_osc_put_common(origin_addr, origin_count, origin_dt, target,
+	int    rc = MPC_LOWCOMM_SUCCESS;
+	size_t origin_len;
+	bool   is_orig_dt_contiguous = false, is_target_dt_contiguous = false;
+	long   origin_lb, target_lb;
+	long   origin_extent, target_extent;
+
+	if (!origin_count || !target_count)
+	{
+		return rc;
+	}
+
+	origin_dt = _mpc_dt_get_datatype(origin_dt);
+	target_dt = _mpc_dt_get_datatype(target_dt);
+
+	is_orig_dt_contiguous   = _mpc_dt_is_contig_mem(origin_dt);
+	is_target_dt_contiguous = _mpc_dt_is_contig_mem(target_dt);
+
+	_mpc_cl_type_get_true_extent(origin_dt, &origin_lb, &origin_extent);
+	_mpc_cl_type_get_true_extent(target_dt, &target_lb, &target_extent);
+
+	if (is_orig_dt_contiguous && is_target_dt_contiguous)
+	{
+		origin_len = origin_extent * origin_count;
+		const ptrdiff_t new_target_disp = target_disp * OSC_GET_DISP(win, target) + target_lb;
+
+		rc = mpc_lowcomm_iput(origin_addr + origin_lb, origin_len, target, new_target_disp, win->win_module, request);
+	}
+	else
+	{
+		rc = __osc_discontig_common(
+			// NOLINTNEXTLINE(clang-diagnostic-incompatible-pointer-types-discards-qualifiers)
+			origin_addr + origin_lb, origin_count, origin_dt, is_orig_dt_contiguous, target,
+			target_disp * OSC_GET_DISP(win, target) + target_lb, target_count, target_dt, is_target_dt_contiguous,
+			false, win->win_module, request);
+	}
+
+	return rc;
+}
+
+/**@ingroup MPI_OSC_INTERNAL
+ * @brief Common entry point to perform a get operation
+ *
+ * This function unwraps the datatypes and compute the correct offset based on the datatype lb and target_disp.
+ * It performs a get directly if both datatypes are contiguous otherwise it relies on @ref mpc_osc_discontig_common.
+ *
+ * @param[in]  origin_addr  Buffer address at the origin
+ * @param[in]  origin_count Number of elements in @ref origin_addr
+ * @param[in]  origin_dt    Datatype of the elements in @ref origin_addr
+ * @param[in]  target       Rank of the target task
+ * @param[in]  target_disp  Remote offset at the target
+ * @param[in]  target_count Number of elements to put/get from the target
+ * @param[in]  target_dt    Datatype of the elements at the target
+ * @param[in]  win          Window on which the operation is performed
+ * @param[out] request      Request associated with the ongoing communication
+ *
+ * @return                  MPI errorcode
+ */
+static int __osc_get_common(void *origin_addr, const int origin_count, mpc_lowcomm_datatype_t origin_dt,
+                            const int target, const ptrdiff_t target_disp,
+                            const int target_count, mpc_lowcomm_datatype_t target_dt,
+                            mpc_mpi_win_t *win, mpc_lowcomm_request_t *request)
+{
+	int    rc = MPC_SUCCESS;
+	size_t origin_len;
+	int    is_orig_dt_contiguous   = 0;
+	int    is_target_dt_contiguous = 0;
+	long   origin_lb, target_lb;
+	long   origin_extent, target_extent;
+
+	origin_dt = _mpc_dt_get_datatype(origin_dt);
+	target_dt = _mpc_dt_get_datatype(target_dt);
+
+	is_orig_dt_contiguous   = _mpc_dt_is_contig_mem(origin_dt);
+	is_target_dt_contiguous = _mpc_dt_is_contig_mem(target_dt);
+
+	_mpc_cl_type_get_true_extent(origin_dt, &origin_lb, &origin_extent);
+	_mpc_cl_type_get_true_extent(target_dt, &target_lb, &target_extent);
+
+	if (is_orig_dt_contiguous && is_target_dt_contiguous)
+	{
+		origin_len = origin_extent * origin_count;
+		const ptrdiff_t new_target_disp = target_disp * OSC_GET_DISP(win, target) + target_lb;
+
+		rc = mpc_lowcomm_iget(origin_addr + origin_lb, origin_len, target, new_target_disp, win->win_module, request);
+	}
+	else
+	{
+		rc = __osc_discontig_common(
+			origin_addr + origin_lb, origin_count, origin_dt, is_orig_dt_contiguous, target,
+			target_disp * OSC_GET_DISP(win, target) + target_lb, target_count, target_dt, is_target_dt_contiguous,
+			true, win->win_module, request);
+	}
+	return rc;
+}
+
+int mpc_mpi_osc_put(const void *origin_addr, const int origin_count,
+                    mpc_lowcomm_datatype_t origin_dt,
+                    const int target, const ptrdiff_t target_disp, const int target_count,
+                    mpc_lowcomm_datatype_t target_dt, mpc_mpi_win_t *win)
+{
+	return __osc_put_common(origin_addr, origin_count, origin_dt, target,
 		target_disp, target_count, target_dt, win, &MPC_REQUEST_NULL);
 }
 
-int mpc_mpi_osc_rput(const void *origin_addr,
-                     int origin_count,
-                     _mpc_lowcomm_general_datatype_t *origin_dt,
-                     int target,
-                     ptrdiff_t target_disp,
-                     int target_count,
-                     _mpc_lowcomm_general_datatype_t *target_dt,
-                     mpc_mpi_win_t *win,
-                     MPI_Request *request)
+int mpc_mpi_osc_rput(const void *origin_addr, const int origin_count, mpc_lowcomm_datatype_t origin_dt,
+                     const int target, const ptrdiff_t target_disp, const int target_count,
+                     mpc_lowcomm_datatype_t target_dt, mpc_mpi_win_t *win, MPI_Request *request)
 {
 	int rc = MPI_SUCCESS;
 
@@ -529,7 +610,7 @@ int mpc_mpi_osc_rput(const void *origin_addr,
 	// We do not need to do the comm if target == MPC_PROC_NULL but we have to complete the request
 	if (target != MPC_PROC_NULL)
 	{
-		rc = mpc_osc_put_common(origin_addr, origin_count, origin_dt, target,
+		rc = __osc_put_common(origin_addr, origin_count, origin_dt, target,
 			target_disp, target_count, target_dt, win, lowcomm_req);
 	}
 	else
@@ -540,20 +621,17 @@ int mpc_mpi_osc_rput(const void *origin_addr,
 	return rc;
 }
 
-int mpc_mpi_osc_get(void *origin_addr, int origin_count,
-                    _mpc_lowcomm_general_datatype_t *origin_dt,
-                    int target, ptrdiff_t target_disp, int target_count,
-                    _mpc_lowcomm_general_datatype_t *target_dt, mpc_mpi_win_t *win)
+int mpc_mpi_osc_get(void *origin_addr, const int origin_count, mpc_lowcomm_datatype_t origin_dt,
+                    const int target, const ptrdiff_t target_disp, const int target_count,
+                    mpc_lowcomm_datatype_t target_dt, mpc_mpi_win_t *win)
 {
-	return mpc_osc_get_common(origin_addr, origin_count, origin_dt, target,
+	return __osc_get_common(origin_addr, origin_count, origin_dt, target,
 		target_disp, target_count, target_dt, win, &MPC_REQUEST_NULL);
 }
 
-int mpc_mpi_osc_rget(void *origin_addr, int origin_count,
-                     _mpc_lowcomm_general_datatype_t *origin_dt,
-                     int target, ptrdiff_t target_disp, int target_count,
-                     _mpc_lowcomm_general_datatype_t *target_dt, mpc_mpi_win_t *win,
-                     MPI_Request *request)
+int mpc_mpi_osc_rget(void *origin_addr, const int origin_count, mpc_lowcomm_datatype_t origin_dt,
+                     const int target, const ptrdiff_t target_disp, const int target_count,
+                     mpc_lowcomm_datatype_t target_dt, mpc_mpi_win_t *win, MPI_Request *request)
 {
 	int rc = MPI_SUCCESS;
 
@@ -565,7 +643,7 @@ int mpc_mpi_osc_rget(void *origin_addr, int origin_count,
 	// We do not need to do the comm if target == MPC_PROC_NULL but we have to complete the request
 	if (target != MPC_PROC_NULL)
 	{
-		rc = mpc_osc_get_common(origin_addr, origin_count, origin_dt, target,
+		rc = __osc_get_common(origin_addr, origin_count, origin_dt, target,
 			target_disp, target_count, target_dt, win, lowcomm_req);
 	}
 	else
@@ -576,11 +654,9 @@ int mpc_mpi_osc_rget(void *origin_addr, int origin_count,
 	return rc;
 }
 
-int mpc_mpi_osc_accumulate(const void *origin_addr, int origin_count,
-                           _mpc_lowcomm_general_datatype_t *origin_dt,
-                           int target, ptrdiff_t target_disp, int target_count,
-                           _mpc_lowcomm_general_datatype_t *target_dt,
-                           MPI_Op op, mpc_mpi_win_t *win)
+int mpc_mpi_osc_accumulate(const void *origin_addr, const int origin_count, mpc_lowcomm_datatype_t origin_dt,
+                           const int target, const ptrdiff_t target_disp, const int target_count,
+                           mpc_lowcomm_datatype_t target_dt, MPI_Op op, mpc_mpi_win_t *win)
 {
 	int   rc = MPI_SUCCESS;
 	void *tmp_result_addr = NULL;
@@ -692,7 +768,7 @@ int mpc_mpi_osc_accumulate(const void *origin_addr, int origin_count,
 			int       orig_blockidx = 0;
 
 			// NOTE: We want to retrieve the layout of the datatype
-			rc = mpc_mpi_osc_create_dt_blocks(origin_addr, origin_count, origin_dt, &blocks, &disps, &intblockct);
+			rc = __osc_create_dt_blocks(origin_addr, origin_count, origin_dt, &blocks, &disps, &intblockct);
 			if (rc != MPI_SUCCESS)
 			{
 				goto unlock;
@@ -764,40 +840,10 @@ unlock:
 	return rc;
 }
 
-int mpc_mpi_osc_raccumulate(const void *origin_addr, int origin_count,
-                            _mpc_lowcomm_general_datatype_t *origin_dt,
-                            int target, ptrdiff_t target_disp, int target_count,
-                            _mpc_lowcomm_general_datatype_t *target_dt, MPI_Op op,
-                            mpc_mpi_win_t *win, MPI_Request *request)
-{
-	int rc = MPI_SUCCESS;
-
-	MPI_internal_request_t *mpi_request     = *request = mpc_mpi_alloc_request();
-	mpc_lowcomm_request_t * lowcomm_request = _mpc_cl_get_lowcomm_request(mpi_request);
-
-	mpc_lowcomm_request_init(lowcomm_request, 1, NULL, NULL, 0);
-	mpc_lowcomm_request_set_null(lowcomm_request, 0);
-	lowcomm_request->request_type    = REQUEST_SEND;
-	lowcomm_request->completion_flag = MPC_LOWCOMM_MESSAGE_PENDING;
-
-
-	// We do not need to do the comm if target == MPC_PROC_NULL but we still need to complete the request
-	if (target != MPC_PROC_NULL)
-	{
-		rc = mpc_mpi_osc_accumulate(origin_addr, origin_count, origin_dt, target,
-			target_disp, target_count, target_dt, op, win);
-	}
-	mpc_lowcomm_osc_request_complete(rc, lowcomm_request, origin_count);
-
-	return rc;
-}
-
-int mpc_mpi_osc_get_accumulate(const void *origin_addr, int origin_count,
-                               _mpc_lowcomm_general_datatype_t *origin_dt,
-                               void *result_addr, int result_count,
-                               _mpc_lowcomm_general_datatype_t *result_dt,
-                               int target, ptrdiff_t target_disp,
-                               int target_count, _mpc_lowcomm_general_datatype_t *target_dt,
+int mpc_mpi_osc_get_accumulate(const void *origin_addr, const int origin_count, mpc_lowcomm_datatype_t origin_dt,
+                               void *result_addr, const int result_count, mpc_lowcomm_datatype_t result_dt,
+                               const int target, const ptrdiff_t target_disp,
+                               const int target_count, const mpc_lowcomm_datatype_t target_dt,
                                MPI_Op op, mpc_mpi_win_t *win)
 {
 	int   rc = MPI_SUCCESS;
@@ -910,7 +956,7 @@ int mpc_mpi_osc_get_accumulate(const void *origin_addr, int origin_count,
 				MPI_Aint *disps;
 				int       orig_blockidx = 0;
 
-				rc = mpc_mpi_osc_create_dt_blocks(origin_addr, origin_count, origin_dt, &blocks, &disps, &intblockct);
+				rc = __osc_create_dt_blocks(origin_addr, origin_count, origin_dt, &blocks, &disps, &intblockct);
 				if (rc != MPI_SUCCESS)
 				{
 					goto unlock;
@@ -983,14 +1029,38 @@ unlock:
 	return rc;
 }
 
-int mpc_mpi_osc_rget_accumulate(const void *origin_addr, int origin_count,
-                                _mpc_lowcomm_general_datatype_t *origin_datatype,
-                                void *result_addr, int result_count,
-                                _mpc_lowcomm_general_datatype_t *result_datatype,
-                                int target, ptrdiff_t target_disp, int target_count,
-                                _mpc_lowcomm_general_datatype_t *target_datatype,
-                                MPI_Op op, mpc_mpi_win_t *win,
-                                MPI_Request *request)
+int mpc_mpi_osc_raccumulate(const void *origin_addr, const int origin_count, mpc_lowcomm_datatype_t origin_dt,
+                            const int target, const ptrdiff_t target_disp, const int target_count,
+                            mpc_lowcomm_datatype_t target_dt, MPI_Op op,
+                            mpc_mpi_win_t *win, MPI_Request *request)
+{
+	int rc = MPI_SUCCESS;
+
+	MPI_internal_request_t *mpi_request     = *request = mpc_mpi_alloc_request();
+	mpc_lowcomm_request_t * lowcomm_request = _mpc_cl_get_lowcomm_request(mpi_request);
+
+	mpc_lowcomm_request_init(lowcomm_request, 1, NULL, NULL, 0);
+	mpc_lowcomm_request_set_null(lowcomm_request, 0);
+	lowcomm_request->request_type    = REQUEST_SEND;
+	lowcomm_request->completion_flag = MPC_LOWCOMM_MESSAGE_PENDING;
+
+
+	// We do not need to do the comm if target == MPC_PROC_NULL but we still need to complete the request
+	if (target != MPC_PROC_NULL)
+	{
+		rc = mpc_mpi_osc_accumulate(origin_addr, origin_count, origin_dt, target,
+			target_disp, target_count, target_dt, op, win);
+	}
+	mpc_lowcomm_osc_request_complete(rc, lowcomm_request, origin_count);
+
+	return rc;
+}
+
+int mpc_mpi_osc_rget_accumulate(const void *origin_addr, const int origin_count, mpc_lowcomm_datatype_t origin_datatype,
+                                void *result_addr, const int result_count, mpc_lowcomm_datatype_t result_datatype,
+                                const int target, const ptrdiff_t target_disp, const int target_count,
+                                mpc_lowcomm_datatype_t target_datatype, MPI_Op op,
+                                mpc_mpi_win_t *win, MPI_Request *request)
 {
 	int rc = MPI_SUCCESS;
 
@@ -1011,9 +1081,8 @@ int mpc_mpi_osc_rget_accumulate(const void *origin_addr, int origin_count,
 	return rc;
 }
 
-int mpc_mpi_osc_compare_and_swap(const void *origin_addr, const void *compare_addr,
-                                 void *result_addr, _mpc_lowcomm_general_datatype_t *dt,
-                                 int target, ptrdiff_t target_disp,
+int mpc_mpi_osc_compare_and_swap(const void *origin_addr, const void *compare_addr, void *result_addr,
+                                 mpc_lowcomm_datatype_t dt, const int target, const ptrdiff_t target_disp,
                                  mpc_mpi_win_t *win)
 {
 	mpc_lowcomm_request_t *req = _mpc_cl_get_lowcomm_request(mpc_mpi_alloc_request());
@@ -1036,10 +1105,8 @@ int mpc_mpi_osc_compare_and_swap(const void *origin_addr, const void *compare_ad
 	return lowcomm_status.MPC_ERROR;
 }
 
-int mpc_mpi_osc_fetch_and_op(const void *origin_addr, void *result_addr,
-                             _mpc_lowcomm_general_datatype_t *dt, int target,
-                             ptrdiff_t target_disp, MPI_Op op,
-                             mpc_mpi_win_t *win)
+int mpc_mpi_osc_fetch_and_op(const void *origin_addr, void *result_addr, mpc_lowcomm_datatype_t dt,
+                             const int target, const ptrdiff_t target_disp, MPI_Op op, mpc_mpi_win_t *win)
 {
 	static const uint64_t no_op_value = 0ull;
 	int         op_code    = -1;
@@ -1114,8 +1181,11 @@ int mpc_mpi_osc_fetch_and_op(const void *origin_addr, void *result_addr,
 	}
 }
 
-/* Passive Target */
-int mpc_mpi_osc_flush(int target, mpc_mpi_win_t *win)
+/******************
+ * Passive Target *
+ ******************/
+
+int mpc_mpi_osc_flush(const int target, mpc_mpi_win_t *win)
 {
 	if (win->epoch.access != PASSIVE_ALL_EPOCH && win->epoch.access != PASSIVE_EPOCH)
 	{
@@ -1188,7 +1258,7 @@ int mpc_mpi_osc_sync(mpc_mpi_win_t *win)
 	return rc;
 }
 
-int mpc_mpi_osc_lock(int lock_type, int target, int mpi_assert, mpc_mpi_win_t *win)
+int mpc_mpi_osc_lock(const int lock_type, const int target, const int mpi_assert, mpc_mpi_win_t *win)
 {
 	int rc = MPI_SUCCESS;
 
@@ -1229,7 +1299,7 @@ int mpc_mpi_osc_lock(int lock_type, int target, int mpi_assert, mpc_mpi_win_t *w
 	return rc;
 }
 
-int mpc_mpi_osc_unlock(int target, mpc_mpi_win_t *win)
+int mpc_mpi_osc_unlock(const int target, mpc_mpi_win_t *win)
 {
 	int rc = MPI_SUCCESS;
 
@@ -1254,7 +1324,7 @@ int mpc_mpi_osc_unlock(int target, mpc_mpi_win_t *win)
 	return rc;
 }
 
-int mpc_mpi_osc_lock_all(int mpi_assert, mpc_mpi_win_t *win)
+int mpc_mpi_osc_lock_all(const int mpi_assert, mpc_mpi_win_t *win)
 {
 	int rc = MPI_SUCCESS;
 
@@ -1286,8 +1356,11 @@ int mpc_mpi_osc_unlock_all(mpc_mpi_win_t *win)
 	return rc;
 }
 
-/* Active Target */
-int mpc_mpi_osc_fence(int mpi_assert, mpc_mpi_win_t *win)
+/*****************
+ * Active Target *
+ *****************/
+
+int mpc_mpi_osc_fence(const int mpi_assert, mpc_mpi_win_t *win)
 {
 	int rc = MPI_SUCCESS;
 
@@ -1328,7 +1401,7 @@ int mpc_mpi_osc_fence(int mpi_assert, mpc_mpi_win_t *win)
 	return rc;
 }
 
-int mpc_mpi_osc_start(mpc_lowcomm_group_t *group, int mpi_assert, mpc_mpi_win_t *win)
+int mpc_mpi_osc_start(mpc_lowcomm_group_t *group, const int mpi_assert, mpc_mpi_win_t *win)
 {
 	int rc = MPI_SUCCESS;
 
@@ -1368,7 +1441,7 @@ int mpc_mpi_osc_complete(mpc_mpi_win_t *win)
 	return rc;
 }
 
-int mpc_mpi_osc_post(mpc_lowcomm_group_t *group, int mpi_assert, mpc_mpi_win_t *win)
+int mpc_mpi_osc_post(mpc_lowcomm_group_t *group, const int mpi_assert, mpc_mpi_win_t *win)
 {
 	int rc = MPI_SUCCESS;
 
@@ -1430,13 +1503,16 @@ int mpc_mpi_osc_test(mpc_mpi_win_t *win, int *flag)
 	return rc;
 }
 
-/* Special */
-MPI_Comm mpc_mpi_osc_win_get_comm(const mpc_mpi_win_t *const win)
+/***********
+ * Special *
+ ***********/
+
+MPI_Comm mpc_mpi_osc_win_get_comm(mpc_mpi_win_t *const win)
 {
 	return (MPI_Comm)mpc_lowcomm_osc_win_get_comm(win->win_module);
 }
 
-MPI_Group mpc_mpi_osc_win_get_group(const mpc_mpi_win_t *const win)
+MPI_Group mpc_mpi_osc_win_get_group(mpc_mpi_win_t *const win)
 {
 	return (MPI_Group)mpc_lowcomm_osc_win_get_group(win->win_module);
 }

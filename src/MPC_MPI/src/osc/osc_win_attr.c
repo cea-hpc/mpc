@@ -22,37 +22,57 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-/************************************************************************/
-/* INTERNAL MPI Window Attribute support                                */
-/************************************************************************/
+/**@file
+ * INTERNAL MPI Window Attribute support
+ */
 
-/* Keyval low-level storage */
-#include "osc_mpi.h"
 #include <mpc_common_rank.h>
-#include "osc_mpi_internal.h"
 #include <mpc_lowcomm_one_sided.h>
 
-struct mpc_mpi_osc_win_keyval
+#include "osc_mpi.h"
+#include "osc_mpi_internal.h"
+
+/**@ingroup MPI_OSC_INTERNAL
+ * Internal structure of an osc keyval
+ */
+struct osc_win_keyval_s
 {
-	uint64_t                      keyval;
-	MPI_Win_copy_attr_function *  copy_fn;
-	MPI_Win_delete_attr_function *delete_fn;
-	void *                        extra_state;
+	uint64_t                      keyval;      /**< Unique identifier of the keyval */
+	MPI_Win_copy_attr_function *  copy_fn;     /**< Copy function */
+	MPI_Win_delete_attr_function *delete_fn;   /**< Deletion function */
+	void *                        extra_state; /**< Additional information */
 };
 
-struct mpc_mpi_osc_win_attr
+/**@ingroup MPI_OSC_INTERNAL
+ * Internal structure of an osc attribute
+ */
+struct osc_win_attr_s
 {
-	int                           keyval;
-	void *                        value;
-	struct mpc_mpi_osc_win_keyval keyval_pl;
-	mpc_mpi_win_t *               win;
+	int                     keyval;    /**< Unique identifier of the attribute */
+	void *                  value;     /**< Information stored in the attribute */
+	struct osc_win_keyval_s keyval_pl; /**< Associated keyval  structure */
+	mpc_mpi_win_t *         win;       /**< Associated window */
 };
 
+/**@ingroup MPI_OSC_INTERNAL
+ * Shared keyval hashtable
+ */
 static struct mpc_common_hashtable __osc_win_keyval_ht;
-static mpc_common_spinlock_t       __osc_win_keyval_ht_lock = MPC_COMMON_SPINLOCK_INITIALIZER;
+
+/**@ingroup MPI_OSC_INTERNAL
+ * Global keyval hashtable lock
+ */
+static mpc_common_spinlock_t __osc_win_keyval_ht_lock = MPC_COMMON_SPINLOCK_INITIALIZER;
+
+/**@ingroup MPI_OSC_INTERNAL
+ * State of the keyval hashtable (1 for initialized)
+ */
 static int __osc_win_keyval_ht_init_done = 0;
 
-static inline void win_keyval_ht_init_once()
+/**@ingroup MPI_OSC_INTERNAL
+ * @brief Initiates the global keyval hashtable is not done already
+ */
+static inline void __osc_win_keyval_ht_init_once()
 {
 	mpc_common_spinlock_lock(&__osc_win_keyval_ht_lock);
 
@@ -65,7 +85,14 @@ static inline void win_keyval_ht_init_once()
 	mpc_common_spinlock_unlock(&__osc_win_keyval_ht_lock);
 }
 
-static inline uint64_t get_per_rank_keyval_key(int keyval)
+/**@ingroup MPI_OSC_INTERNAL
+ * @brief Retrieves the per rank keyval
+ *
+ * @param[in] keyval Global keyval identifier
+ *
+ * @return           Keyval for the current task
+ */
+static inline uint64_t __osc_get_per_rank_keyval_key(const int keyval)
 {
 	uint64_t rank = mpc_common_get_task_rank();
 	uint64_t ret  = 0;
@@ -78,19 +105,29 @@ static inline uint64_t get_per_rank_keyval_key(int keyval)
 
 /* Attr definition */
 
+/**@ingroup MPI_OSC_INTERNAL
+ * Global attributes counter
+ */
 static OPA_int_t __win_attr_counter;
 
-struct mpc_mpi_osc_win_keyval *
-mpc_mpi_osc_win_keyval_init(MPI_Win_copy_attr_function *copy_fn,
-                            MPI_Win_delete_attr_function *delete_fn,
-                            void *extra_state)
+/**@ingroup MPI_OSC_INTERNAL
+ * @brief Allocates and initializes a new keyval
+ *
+ * @param[in] copy_fn     Copy function to associate with the keyval
+ * @param[in] delete_fn   Deletion function to associate with the keyval
+ * @param[in] extra_state Additional information stored in the keyval
+ *
+ * @return                Allocated and initialized keyval
+ */
+static struct osc_win_keyval_s * __osc_win_keyval_init(MPI_Win_copy_attr_function *copy_fn,
+                                                       MPI_Win_delete_attr_function *delete_fn, void *extra_state)
 {
-	struct mpc_mpi_osc_win_keyval *ret =
-		sctk_calloc(1, sizeof(struct mpc_mpi_osc_win_keyval));
+	struct osc_win_keyval_s *ret =
+		sctk_calloc(1, sizeof(struct osc_win_keyval_s));
 
 	if (!ret)
 	{
-		perror("calloc");
+		mpc_common_debug_error("Failed to allocate a keyval");
 		return NULL;
 	}
 
@@ -108,34 +145,36 @@ mpc_mpi_osc_win_keyval_init(MPI_Win_copy_attr_function *copy_fn,
 	return ret;
 }
 
-/* Attr storage */
-
-struct mpc_mpi_osc_win_attr *
-mpc_mpi_osc_win_attr_init(int keyval, void *value, struct mpc_mpi_osc_win_keyval *keyval_pl, mpc_mpi_win_t *win)
+/**@ingroup MPI_OSC_INTERNAL
+ * @brief Allocates and initializes a new attribute
+ *
+ * @param[in] keyval    Unique identifier of the attribute
+ * @param[in] value     Value stored in the attribute
+ * @param[in] keyval_pl Keyval used by this attribute
+ * @param[in] win       Window associated with the attribute
+ *
+ * @return              Allocated and initialized attribute
+ */
+static struct osc_win_attr_s * __osc_win_attr_init(int keyval, void *value,
+                                                   struct osc_win_keyval_s *keyval_pl, mpc_mpi_win_t *win)
 {
-	struct mpc_mpi_osc_win_attr *ret = sctk_calloc(1, sizeof(struct mpc_mpi_osc_win_attr));
+	struct osc_win_attr_s *ret = sctk_calloc(1, sizeof(struct osc_win_attr_s));
 
 	if (ret == NULL)
 	{
-		perror("Calloc");
+		mpc_common_debug_error("Failed to allocate an attribute");
 		return ret;
 	}
 
 	ret->keyval = keyval;
 	ret->value  = value;
-	memcpy(&ret->keyval_pl, keyval_pl, sizeof(struct mpc_mpi_osc_win_keyval));
+	memcpy(&ret->keyval_pl, keyval_pl, sizeof(struct osc_win_keyval_s));
 	ret->win = win;
 
 	return ret;
 }
 
-int mpc_mpi_osc_win_attr_ht_init(struct mpc_common_hashtable *atht)
-{
-	mpc_common_hashtable_init(atht, 16);
-	return 0;
-}
-
-int mpc_mpi_osc_win_attr_ht_release(struct mpc_common_hashtable *atht)
+int osc_win_attr_ht_release(struct mpc_common_hashtable *atht)
 {
 	void *pattr = NULL;
 
@@ -145,12 +184,12 @@ int mpc_mpi_osc_win_attr_ht_release(struct mpc_common_hashtable *atht)
 	{
 		found = -1;
 
-		struct mpc_mpi_osc_win_attr *attr = NULL;
+		struct osc_win_attr_s *attr = NULL;
 		MPC_HT_ITER(atht, pattr)
 
 		if (found < 0)
 		{
-			attr = (struct mpc_mpi_osc_win_attr *)pattr;
+			attr = (struct osc_win_attr_s *)pattr;
 			if (attr)
 			{
 				found = attr->keyval;
@@ -181,9 +220,9 @@ int mpc_mpi_osc_win_attr_ht_release(struct mpc_common_hashtable *atht)
 
 /* MPI Attr handling */
 
-int mpc_mpi_osc_win_set_attr(mpc_mpi_win_t *win, int keyval, void *attr_val)
+int mpc_mpi_osc_win_set_attr(mpc_mpi_win_t *win, const int keyval, void *const attr_val)
 {
-	win_keyval_ht_init_once();
+	__osc_win_keyval_ht_init_once();
 
 	if (!attr_val)
 	{
@@ -197,10 +236,10 @@ int mpc_mpi_osc_win_set_attr(mpc_mpi_win_t *win, int keyval, void *attr_val)
 
 	/* Check keyval */
 
-	uint64_t per_rank_keyval = get_per_rank_keyval_key(keyval);
+	uint64_t per_rank_keyval = __osc_get_per_rank_keyval_key(keyval);
 
-	struct mpc_mpi_osc_win_keyval *kv =
-		(struct mpc_mpi_osc_win_keyval *)mpc_common_hashtable_get(&__osc_win_keyval_ht, per_rank_keyval);
+	struct osc_win_keyval_s *kv =
+		(struct osc_win_keyval_s *)mpc_common_hashtable_get(&__osc_win_keyval_ht, per_rank_keyval);
 
 	if (!kv)
 	{
@@ -208,11 +247,11 @@ int mpc_mpi_osc_win_set_attr(mpc_mpi_win_t *win, int keyval, void *attr_val)
 	}
 
 	/* If we are here ready to set */
-	struct mpc_mpi_osc_win_attr *attr = (struct mpc_mpi_osc_win_attr *)mpc_common_hashtable_get(&win->attrs, keyval);
+	struct osc_win_attr_s *attr = (struct osc_win_attr_s *)mpc_common_hashtable_get(&win->attrs, keyval);
 
 	if (!attr)
 	{
-		attr = mpc_mpi_osc_win_attr_init(keyval, attr_val, kv, win);
+		attr = __osc_win_attr_init(keyval, attr_val, kv, win);
 		mpc_common_hashtable_set(&win->attrs, keyval, attr);
 	}
 	else
@@ -223,9 +262,9 @@ int mpc_mpi_osc_win_set_attr(mpc_mpi_win_t *win, int keyval, void *attr_val)
 	return MPI_SUCCESS;
 }
 
-int mpc_mpi_osc_win_get_attr(mpc_mpi_win_t *win, int keyval, void *attr_val, int *flag)
+int mpc_mpi_osc_win_get_attr(mpc_mpi_win_t *win, const int keyval, void *attr_val, int *flag)
 {
-	win_keyval_ht_init_once();
+	__osc_win_keyval_ht_init_once();
 
 	*flag = 0;
 	if (keyval == MPI_KEYVAL_INVALID)
@@ -281,7 +320,7 @@ int mpc_mpi_osc_win_get_attr(mpc_mpi_win_t *win, int keyval, void *attr_val, int
 
 	/* First check keyval */
 
-	uint64_t per_rank_keyval = get_per_rank_keyval_key(keyval);
+	uint64_t per_rank_keyval = __osc_get_per_rank_keyval_key(keyval);
 
 	void *pkv = mpc_common_hashtable_get(&__osc_win_keyval_ht, per_rank_keyval);
 
@@ -291,7 +330,7 @@ int mpc_mpi_osc_win_get_attr(mpc_mpi_win_t *win, int keyval, void *attr_val, int
 	}
 
 	/* Now try to retrieve attr */
-	struct mpc_mpi_osc_win_attr *attr = (struct mpc_mpi_osc_win_attr *)mpc_common_hashtable_get(&win->attrs, keyval);
+	struct osc_win_attr_s *attr = (struct osc_win_attr_s *)mpc_common_hashtable_get(&win->attrs, keyval);
 
 	if (!attr)
 	{
@@ -311,10 +350,10 @@ int mpc_mpi_osc_win_delete_attr(mpc_mpi_win_t *const win, const int keyval)
 {
 	/* Check keyval */
 
-	uint64_t per_rank_keyval = get_per_rank_keyval_key(keyval);
+	uint64_t per_rank_keyval = __osc_get_per_rank_keyval_key(keyval);
 
-	struct mpc_mpi_osc_win_keyval *kv =
-		(struct mpc_mpi_osc_win_keyval *)mpc_common_hashtable_get(&__osc_win_keyval_ht, per_rank_keyval);
+	struct osc_win_keyval_s *kv =
+		(struct osc_win_keyval_s *)mpc_common_hashtable_get(&__osc_win_keyval_ht, per_rank_keyval);
 
 	if (!kv)
 	{
@@ -322,7 +361,7 @@ int mpc_mpi_osc_win_delete_attr(mpc_mpi_win_t *const win, const int keyval)
 	}
 
 	/* Now try to retrieve attr */
-	struct mpc_mpi_osc_win_attr *attr = (struct mpc_mpi_osc_win_attr *)mpc_common_hashtable_get(&win->attrs, keyval);
+	struct osc_win_attr_s *attr = (struct osc_win_attr_s *)mpc_common_hashtable_get(&win->attrs, keyval);
 
 	if (attr)
 	{
@@ -342,9 +381,9 @@ int mpc_mpi_osc_win_create_keyval(MPI_Win_copy_attr_function *copy_fn,
                                   MPI_Win_delete_attr_function *delete_fn,
                                   int *keyval, void *extra_state)
 {
-	win_keyval_ht_init_once();
+	__osc_win_keyval_ht_init_once();
 
-	struct mpc_mpi_osc_win_keyval *new = mpc_mpi_osc_win_keyval_init(copy_fn, delete_fn, extra_state);
+	struct osc_win_keyval_s *new = __osc_win_keyval_init(copy_fn, delete_fn, extra_state);
 
 	if (!new)
 	{
@@ -352,7 +391,7 @@ int mpc_mpi_osc_win_create_keyval(MPI_Win_copy_attr_function *copy_fn,
 	}
 
 	/* Now add to the ATTR HT */
-	uint64_t per_rank_keyval = get_per_rank_keyval_key(new->keyval);
+	uint64_t per_rank_keyval = __osc_get_per_rank_keyval_key(new->keyval);
 
 	mpc_common_hashtable_set(&__osc_win_keyval_ht, per_rank_keyval, new);
 
@@ -364,9 +403,9 @@ int mpc_mpi_osc_win_create_keyval(MPI_Win_copy_attr_function *copy_fn,
 
 int mpc_mpi_osc_win_free_keyval(const int keyval)
 {
-	win_keyval_ht_init_once();
+	__osc_win_keyval_ht_init_once();
 
-	uint64_t per_rank_keyval = get_per_rank_keyval_key(keyval);
+	uint64_t per_rank_keyval = __osc_get_per_rank_keyval_key(keyval);
 
 	void *pkv = mpc_common_hashtable_get(&__osc_win_keyval_ht, per_rank_keyval);
 
