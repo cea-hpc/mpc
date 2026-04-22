@@ -71,6 +71,14 @@ workflow:
 ################## Setup ###################
 ############################################
 
+Env Preparation:
+  stage: '.pre'
+  needs: []
+  script:
+    - echo $HOME
+    - ln -snf "$(ccc_home -u mpc)"/mpc_deps "${HOME}"/.mpcdep
+    - ls "${HOME}"/.mpcdep
+
 Retrieve Tests:
   stage: '.pre'
   needs: []
@@ -100,7 +108,7 @@ Retrieve Benchmarks:
 ############################################
 
 .build_and_run:
-  needs: []
+  needs: ['Env Preparation']
   variables:
     CHILD_PIPELINE_NAME: '${CI_JOB_NAME}'
     PARENT_PIPELINE_ID: $CI_PIPELINE_ID
