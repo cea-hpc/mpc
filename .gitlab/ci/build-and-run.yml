@@ -115,7 +115,8 @@ Simple Run:
       job: 'Retrieve Tests'
   extends: ['.prepare_mpc_ci', '.regular_testing_rules']
   script:
-    - mpc_cc --help && mpcrun --help
+    - mpc_cc --help || exit 1
+    - mpcrun --help || exit 2
     - ${PCVS_COMMAND} "${GL_MPC_CI_ROOT_PATH}/trivial"
 
 # Lightweight sanity check for configurations without MPI or OpenMP
@@ -129,7 +130,8 @@ Hello World:
   script:
     - cp -r "${GL_MPC_CI_ROOT_PATH}/trivial" .
     - rm trivial/main.cpp
-    - mpc_cc --help && mpcrun --help
+    - mpc_cc --help || exit 1
+    - mpcrun --help || exit 2
     - ${PCVS_COMMAND} "trivial"
   rules:
     - if: '$DO_REGULAR_TESTING == "false"'
