@@ -522,8 +522,7 @@ static int __osc_put_common(const void *const origin_addr, const int origin_coun
 	else
 	{
 		rc = __osc_discontig_common(
-			// NOLINTNEXTLINE(clang-diagnostic-incompatible-pointer-types-discards-qualifiers)
-			origin_addr + origin_lb, origin_count, origin_dt, is_orig_dt_contiguous, target,
+			(void *)origin_addr + origin_lb, origin_count, origin_dt, is_orig_dt_contiguous, target,
 			target_disp * OSC_GET_DISP(win, target) + target_lb, target_count, target_dt, is_target_dt_contiguous,
 			false, win->win_module, request);
 	}
@@ -669,7 +668,7 @@ int mpc_mpi_osc_accumulate(const void *origin_addr, const int origin_count, mpc_
 	}
 	bool need_to_unlock = false;
 
-	rc = mpc_lowcomm_osc_lock(MPC_LOWCOMM_WINDOW_LOCK_ATOMIC, win->win_module, target, false);
+	rc = mpc_lowcomm_osc_lock(MPC_LOWCOMM_WINDOW_LOCK_ATOMIC, target, win->win_module, false);
 	if (rc == MPC_LOWCOMM_SUCCESS)
 	{
 		need_to_unlock = true;
@@ -834,7 +833,7 @@ unlock:
 	}
 	if ((need_to_unlock))
 	{
-		mpc_lowcomm_osc_unlock(win->win_module, target, true);
+		mpc_lowcomm_osc_unlock(target, win->win_module, true);
 	}
 
 	return rc;
@@ -851,7 +850,7 @@ int mpc_mpi_osc_get_accumulate(const void *origin_addr, const int origin_count, 
 
 	bool need_to_unlock = false;
 
-	rc = mpc_lowcomm_osc_lock(MPC_LOWCOMM_WINDOW_LOCK_ATOMIC, win->win_module, target, false);
+	rc = mpc_lowcomm_osc_lock(MPC_LOWCOMM_WINDOW_LOCK_ATOMIC, target, win->win_module, false);
 	if (rc == MPC_LOWCOMM_SUCCESS)
 	{
 		need_to_unlock = true;
@@ -1023,7 +1022,7 @@ unlock:
 
 	if ((need_to_unlock))
 	{
-		mpc_lowcomm_osc_unlock(win->win_module, target, true);
+		mpc_lowcomm_osc_unlock(target, win->win_module, true);
 	}
 
 	return rc;
@@ -1287,7 +1286,7 @@ int mpc_mpi_osc_lock(const int lock_type, const int target, const int mpi_assert
 		return MPI_ERR_LOCKTYPE;
 	}
 
-	rc = mpc_lowcomm_osc_lock(lowcomm_lock, win->win_module, target, is_no_check);
+	rc = mpc_lowcomm_osc_lock(lowcomm_lock, target, win->win_module, is_no_check);
 	if (rc == MPC_LOWCOMM_SUCCESS)
 	{
 		if (OPA_fetch_and_incr_int(&win->lock_count) == 0)
@@ -1312,7 +1311,7 @@ int mpc_mpi_osc_unlock(const int target, mpc_mpi_win_t *win)
 		return MPI_ERR_RMA_SYNC;
 	}
 
-	rc = mpc_lowcomm_osc_unlock(win->win_module, target, false);
+	rc = mpc_lowcomm_osc_unlock(target, win->win_module, false);
 	if (rc == MPC_LOWCOMM_SUCCESS)
 	{
 		if (OPA_fetch_and_decr_int(&win->lock_count) == 1)

@@ -21,36 +21,43 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
+/**@file
+ * One sided common routines implementation.
+ * This file contains the common function used by multiple other one sided parts.
+ */
+
 #include <mpc_common_progress.h>
 #include <sctk_alloc.h>
 #include "mpc_lowcomm_one_sided.h"
 #include "lowcomm_one_sided_internal.h"
 
-int _lowcomm_osc_get_target_ep(mpc_lowcomm_window_t *const win, const int target, lcp_ep_h *ep_p)
+void _lowcomm_osc_get_target_ep(const int target, mpc_lowcomm_window_t *win, lcp_ep_h *ep_p)
 {
-	int rc = 0;
+	lcp_ep_h ep;
 
-	if (win->eps[target] == NULL)
+	/* Try to get cached endpoint. */
+	ep = mpc_lowcomm_communicator_lookup(win->comm, target);
+	if (ep == NULL)
 	{
 		uint64_t target_uid = mpc_lowcomm_communicator_uid(win->comm, target);
+		// NOTE: We do not use lcp_ep_get_or_create as we specifically want a rma ep
+		int rc = lcp_ep_create(win->mngr, &ep, target_uid, 0);
 
-		rc = lcp_ep_create(win->mngr, &win->eps[target], target_uid, 0);
 		if (rc != 0)
 		{
-			mpc_common_debug_error("Could not create endpoint.");
-			goto err;
+			mpc_common_debug_fatal("Could not create endpoint.");
 		}
+		/* Add endpoint to communicator cache. */
+		mpc_lowcomm_communicator_add_ep(win->comm, target, ep);
 	}
 
-	*ep_p = win->eps[target];
-err:
-	return rc;
+	*ep_p = ep;
 }
 
-int _lowcomm_osc_perform_atomic(mpc_lowcomm_window_t *win, lcp_ep_h ep,
-                                lcp_task_h task, uint64_t value, lcp_atomic_dt_t atomic_datatype,
-                                uint64_t *result, uint64_t remote_addr,
-                                lcp_mem_h rkey, lcp_atomic_op_t op)
+int _lowcomm_osc_perform_atomic(lcp_task_h task, lcp_ep_h ep, const uint64_t value, uint64_t *result,
+                                const uint64_t remote_addr, const lcp_mem_h rkey,
+                                const lcp_atomic_dt_t atomic_datatype, const lcp_atomic_op_t op,
+                                mpc_lowcomm_window_t *win)
 {
 	UNUSED(win);
 	int              rc = MPC_LOWCOMM_SUCCESS;
@@ -90,7 +97,7 @@ err:
 	return rc;
 }
 
-int _lowcomm_osc_perform_flush(mpc_lowcomm_window_t *win, lcp_task_h task, lcp_ep_h ep, lcp_mem_h mem)
+int _lowcomm_osc_perform_flush(lcp_task_h task, lcp_ep_h ep, lcp_mem_h mem, mpc_lowcomm_window_t *win)
 {
 	int              rc = MPC_LOWCOMM_SUCCESS;
 	void *           req;
@@ -138,10 +145,14 @@ err:
 	return rc;
 }
 
-int _lowcomm_osc_find_attached_region_position(mpc_osc_dynamic_win_t *regions,
-                                               int min_idx, int max_idx, uint64_t base,
-                                               size_t len, int *insert_idx)
+int _lowcomm_osc_find_attached_region_position(const _lowcomm_osc_dynamic_win_t *regions,
+                                               const int min_idx, const int max_idx, const uint64_t base,
+                                               const size_t len, int *insert_idx)
 {
+	// PERF: I (Corentin) am not sure about the relevance of a dichotomic search here
+	//       1. The array is rather small (128 elements at most) and recursive function calls is costly
+	//       2. Most of the time the array will contain very few regions (less than 10)
+
 	int mid_idx = (min_idx + max_idx) >> 1;
 
 	if (min_idx > max_idx)
@@ -164,24 +175,35 @@ int _lowcomm_osc_find_attached_region_position(mpc_osc_dynamic_win_t *regions,
 	}
 }
 
-int _lowcomm_osc_get_dynamic_win_info(lcp_ep_h ep, lcp_task_h task,
-                                      uint64_t remote_addr,
-                                      mpc_lowcomm_window_t *win,
-                                      int target, lcp_mem_h *rmem_p)
+/**@ingroup LOWCOMM_ONE_SIDED_INTERNAL
+ * @brief Get information about a dynamic window from a distant target
+ *
+ * @param[in]  task        Current LCP task
+ * @param[in]  target      Rank of the target task
+ * @param[in]  remote_addr Address of the buffer in case of dynamic window
+ * @param[in]  win         Window on which the communication happens
+ * @param[out] rmem_p      Retrieved remote memory
+ *
+ * @return                 MPC_LOWCOMM_SUCCESS upon success
+ */
+static int __osc_common_get_dynamic_win_info(lcp_task_h task, const int target, const uint64_t remote_addr,
+                                             mpc_lowcomm_window_t *win, lcp_mem_h *rmem_p)
 {
 	int rc = MPC_LOWCOMM_SUCCESS;
-	lcp_status_ptr_t       status;
-	void *                 rdyn_win_info;
-	lcp_request_param_t    params;
-	uint64_t               dynamic_win_count;
-	mpc_osc_dynamic_win_t *tmp_dyn_win_infos;
-	size_t                 rdyn_win_info_len = sizeof(uint64_t) + OSC_DYNAMIC_WIN_ATTACH_MAX
-	                                           * sizeof(mpc_osc_dynamic_win_t);
+	lcp_status_ptr_t            status;
+	void *                      rdyn_win_info;
+	lcp_request_param_t         params;
+	uint64_t                    dynamic_win_count;
+	_lowcomm_osc_dynamic_win_t *tmp_dyn_win_infos;
+	size_t                      rdyn_win_info_len = sizeof(uint64_t) + OSC_DYNAMIC_WIN_ATTACH_MAX
+	                                                * sizeof(_lowcomm_osc_dynamic_win_t);
 	lcp_mem_h rkey_state = win->rstate_win_info[target].rkey;
 	lcp_mem_h rkey_data;
-	uint64_t  remote_state_dyn_addr = win->rstate_win_info[target].addr
-	                                  + OSC_STATE_DYNAMIC_WIN_COUNT_OFFSET;
-	int found_idx, insert_idx;
+	uint64_t  remote_state_dyn_addr = win->rstate_win_info[target].addr + OSC_STATE_DYNAMIC_WIN_COUNT_OFFSET;
+	int       found_idx, insert_idx;
+	lcp_ep_h  ep;
+
+	_lowcomm_osc_get_target_ep(target, win, &ep);
 
 	assert(ep != NULL && task != NULL);
 
@@ -193,9 +215,7 @@ int _lowcomm_osc_get_dynamic_win_info(lcp_ep_h ep, lcp_task_h task,
 	}
 
 	/* Take the region lock since another region could be added concurrently at the target. */
-	rc = start_exclusive_lock(win, task,
-		OSC_STATE_REGION_LOCK_OFFSET,
-		target);
+	rc = _lowcomm_osc_start_exclusive_lock(task, target, OSC_STATE_REGION_LOCK_OFFSET, win);
 	if (rc != MPC_LOWCOMM_SUCCESS)
 	{
 		goto err;
@@ -214,15 +234,13 @@ int _lowcomm_osc_get_dynamic_win_info(lcp_ep_h ep, lcp_task_h task,
 		goto err;
 	}
 
-	rc = end_exclusive_lock(win, task,
-		OSC_STATE_REGION_LOCK_OFFSET,
-		target);
+	rc = _lowcomm_osc_end_exclusive_lock(task, target, OSC_STATE_REGION_LOCK_OFFSET, win);
 	if (rc != MPC_LOWCOMM_SUCCESS)
 	{
 		goto err;
 	}
 
-	rc = _lowcomm_osc_perform_flush(win, task, ep, NULL);
+	rc = _lowcomm_osc_perform_flush(task, ep, NULL, win);
 	if (rc != MPC_LOWCOMM_SUCCESS)
 	{
 		goto err;
@@ -255,17 +273,15 @@ err:
 	return rc;
 }
 
-int _lowcomm_osc_get_remote_memory(mpc_lowcomm_window_t *const win, const lcp_ep_h ep,
-                                   lcp_task_h task, const mpc_lowcomm_window_flag_t win_flavor,
-                                   const int target, const uint64_t remote_addr,
-                                   lcp_mem_h *rmem_p)
+int _lowcomm_osc_get_remote_memory(lcp_task_h task, const int target, const uint64_t remote_addr,
+                                   mpc_lowcomm_window_t *const win, lcp_mem_h *rmem_p)
 {
 	int       rc = MPC_LOWCOMM_SUCCESS;
 	lcp_mem_h rmem;
 
-	if (win_flavor == MPC_LOWCOMM_WINDOW_FLAG_DYNAMIC)
+	if (win->win_flag == MPC_LOWCOMM_WINDOW_FLAG_DYNAMIC)
 	{
-		rc = _lowcomm_osc_get_dynamic_win_info(ep, task, remote_addr, win, target, &rmem);
+		rc = __osc_common_get_dynamic_win_info(task, target, remote_addr, win, &rmem);
 		if (rc != MPC_LOWCOMM_SUCCESS)
 		{
 			goto err;
@@ -281,13 +297,21 @@ err:
 	return rc;
 }
 
-int _lowcomm_osc_release_remote_memory(mpc_lowcomm_window_t *const win, lcp_mem_h rmem)
+int _lowcomm_osc_release_remote_memory(lcp_mem_h *rmem, mpc_lowcomm_window_t *const win)
 {
 	int rc = MPC_LOWCOMM_SUCCESS;
 
+	if (rmem == NULL)
+	{
+		goto end;
+	}
+
 	if (win->win_flag == MPC_LOWCOMM_WINDOW_FLAG_DYNAMIC)
 	{
-		rc = lcp_mem_deprovision(win->mngr, rmem);
+		rc    = lcp_mem_deprovision(win->mngr, *rmem);
+		*rmem = NULL;
 	}
+
+end:
 	return rc;
 }

@@ -21,10 +21,27 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
+/**@file
+ * LowComm OSC intramodule interface
+ *
+ * This file defines the OSC interface used elsewhere in LowComm
+ */
+
 #ifndef LOWCOMM_OSC_H_
 #define LOWCOMM_OSC_H_
 
-int lowcomm_osc_deinit(void);
+/**@ingroup LOWCOMM_ONE_SIDED
+ * @brief Initializes the one-sided part of lowcomm
+ *
+ * @return An errorcode
+ */
 int lowcomm_osc_init(void);
+
+/**@ingroup LOWCOMM_ONE_SIDED
+ * @brief Deinitializes the one-sided part of lowcomm
+ *
+ * @return An errorcode
+ */
+int lowcomm_osc_deinit(void);
 
 #endif // LOWCOMM_OSC_H_

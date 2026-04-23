@@ -21,6 +21,10 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
+/**@file
+ * One sided communication routines implementation
+ */
+
 #include "lowcomm_one_sided_internal.h"
 #include "mpc_lowcomm_msg.h"     // For MPC_LOWCOMM_MESSAGE_DONE
 #include "rma/lcp_rma.h"         // For atomic type and sizes
@@ -28,7 +32,16 @@
 #include <mpc_common_rank.h>     // For mpc_common_get_task_rank
 #include <mpc_common_progress.h> // For mpc_common_progress
 
-static int _mpc_osc_request_send_complete(int status, void *request, size_t length)
+/**@ingroup
+ * @brief Complete an OSC request
+ *
+ * @param[in] status  Error status of the communication
+ * @param[in] request Request to complete
+ * @param[in] length  Size of the message sent/received
+ *
+ * @return            MPC_LOWCOMM_SUCCESS upon success
+ */
+static int _mpc_osc_request_send_complete(const int status, void *request, const size_t length)
 {
 	mpc_lowcomm_request_t *req = (mpc_lowcomm_request_t *)request;
 
@@ -84,13 +97,9 @@ int mpc_lowcomm_iput(const void *const origin_buffer, const int size,
 	}
 
 	task = lcp_context_task_get(win->ctx, mpc_common_get_task_rank());
-	rc   = _lowcomm_osc_get_target_ep(win, target, &ep);
-	if (rc != MPC_LOWCOMM_SUCCESS)
-	{
-		goto err;
-	}
+	_lowcomm_osc_get_target_ep(target, win, &ep);
 
-	rc = _lowcomm_osc_get_remote_memory(win, ep, task, win->win_flag, target, remote_addr, &rmem);
+	rc = _lowcomm_osc_get_remote_memory(task, target, remote_addr, win, &rmem);
 	if (rc != MPC_LOWCOMM_SUCCESS)
 	{
 		goto err;
@@ -112,7 +121,7 @@ int mpc_lowcomm_iput(const void *const origin_buffer, const int size,
 		rc = MPC_LOWCOMM_ERROR;
 	}
 
-	_lowcomm_osc_release_remote_memory(win, rmem);
+	_lowcomm_osc_release_remote_memory(&rmem, win);
 err:
 	return rc;
 }
@@ -140,13 +149,9 @@ int mpc_lowcomm_iget(void *origin_buffer, const int size,
 	}
 
 	task = lcp_context_task_get(win->ctx, mpc_common_get_task_rank());
-	rc   = _lowcomm_osc_get_target_ep(win, target, &ep);
-	if (rc != MPC_LOWCOMM_SUCCESS)
-	{
-		goto err;
-	}
+	_lowcomm_osc_get_target_ep(target, win, &ep);
 
-	rc = _lowcomm_osc_get_remote_memory(win, ep, task, win->win_flag, target, remote_addr, &rmem);
+	rc = _lowcomm_osc_get_remote_memory(task, target, remote_addr, win, &rmem);
 	if (rc != MPC_LOWCOMM_SUCCESS)
 	{
 		goto err;
@@ -168,7 +173,7 @@ int mpc_lowcomm_iget(void *origin_buffer, const int size,
 		rc = MPC_LOWCOMM_ERROR;
 	}
 
-	_lowcomm_osc_release_remote_memory(win, rmem);
+	_lowcomm_osc_release_remote_memory(&rmem, win);
 err:
 	return rc;
 }
@@ -200,11 +205,7 @@ int mpc_lowcomm_iflush(const int target, mpc_lowcomm_window_t *win, mpc_lowcomm_
 	}
 	else
 	{
-		rc = _lowcomm_osc_get_target_ep(win, target, &ep);
-	}
-	if (rc != MPC_LOWCOMM_SUCCESS)
-	{
-		goto err;
+		_lowcomm_osc_get_target_ep(target, win, &ep);
 	}
 
 	lcp_request_param_t params =
@@ -303,13 +304,13 @@ int mpc_lowcomm_iatomic(const void *const origin_buffer, void *fetch_buffer, con
 	}
 
 	task = lcp_context_task_get(win->ctx, mpc_common_get_task_rank());
-	rc   = _lowcomm_osc_get_target_ep(win, target, &ep);
+	_lowcomm_osc_get_target_ep(target, win, &ep);
 	if (rc != MPC_LOWCOMM_SUCCESS)
 	{
 		goto err;
 	}
 
-	rc = _lowcomm_osc_get_remote_memory(win, ep, task, win->win_flag, target, remote_addr, &rmem);
+	rc = _lowcomm_osc_get_remote_memory(task, target, remote_addr, win, &rmem);
 	if (rc != MPC_LOWCOMM_SUCCESS)
 	{
 		goto err;
@@ -318,7 +319,6 @@ int mpc_lowcomm_iatomic(const void *const origin_buffer, void *fetch_buffer, con
 	const uint32_t field_mask =
 		(fetch_buffer != NULL ? LCP_REQUEST_REPLY_BUFFER : 0)                                    // Fetch ?
 		| (req != &MPC_REQUEST_NULL ? LCP_REQUEST_USER_REQUEST | LCP_REQUEST_SEND_CALLBACK : 0); // Request to complete
-	                                                                                             // ?
 
 	if (compare_buffer != NULL && fetch_buffer != NULL)
 	{

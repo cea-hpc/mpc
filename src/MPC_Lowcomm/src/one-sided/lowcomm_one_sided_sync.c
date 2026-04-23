@@ -27,18 +27,34 @@
 #include <mpc_common_progress.h>
 #include <sctk_alloc.h>
 
+/**@file
+ * One sided synchronization routines implementation
+ */
+
 /***********************************************/
 /*************** Passive Target ****************/
 /***********************************************/
 
-static inline int need_atomic_lock(mpc_lowcomm_window_t *module, int target)
+/**@ingroup LOWCOMM_ONE_SIDED_INTERNAL
+ * @brief Tests if a window is already locked in exclusive mode
+ *
+ * This function is used to know if an atomic lock is necessary as those two type of locks are very similar.
+ *
+ * @param[in] target Rank of the target task
+ * @param[in] window Window to check the if the lock is held
+ *
+ * @retval true if an atomic lock is needed (no exclusive lock found)
+ * @retval false if no atomic lock is needed (exclusive lock found)
+ */
+static inline bool __sync_need_atomic_lock(const int target, mpc_lowcomm_window_t *window)
 {
-	mpc_osc_lock_t *lock = mpc_common_hashtable_get(&(module->outstanding_locks), target);
+	_lowcomm_osc_lock_t *lock = mpc_common_hashtable_get(&(window->outstanding_locks), target);
 
 	return !(lock != NULL && (lock->type == MPC_LOWCOMM_WINDOW_LOCK_EXCLUSIVE && !lock->is_no_check));
 }
 
-int start_exclusive_lock(mpc_lowcomm_window_t *win, lcp_task_h task, uint64_t lock_offset, int target)
+int _lowcomm_osc_start_exclusive_lock(lcp_task_h task, const int target, const uint64_t lock_offset,
+                                      mpc_lowcomm_window_t *window)
 {
 	int      rc         = MPC_LOWCOMM_SUCCESS;
 	uint64_t lock_state = OSC_LOCK_UNLOCK;
@@ -46,16 +62,13 @@ int start_exclusive_lock(mpc_lowcomm_window_t *win, lcp_task_h task, uint64_t lo
 
 	do
 	{
-		base_rstate = (uint64_t)win->rstate_win_info[target].addr;
+		base_rstate = (uint64_t)window->rstate_win_info[target].addr;
 		lcp_ep_h ep;
-		_lowcomm_osc_get_target_ep(win, target, &ep);
+		_lowcomm_osc_get_target_ep(target, window, &ep);
 
-		rc = _lowcomm_osc_perform_atomic(win, ep,
-			task, OSC_LOCK_EXCLUSIVE,
-			LCP_ATOMIC_DT_UINT64, &lock_state,
-			base_rstate + lock_offset,
-			win->rstate_win_info[target].rkey,
-			LCP_ATOMIC_OP_CSWAP);
+		rc = _lowcomm_osc_perform_atomic(task, ep, OSC_LOCK_EXCLUSIVE, &lock_state, base_rstate + lock_offset,
+			window->rstate_win_info[target].rkey, LCP_ATOMIC_DT_UINT64, LCP_ATOMIC_OP_CSWAP, window);
+
 		if (rc != MPC_LOWCOMM_SUCCESS)
 		{
 			goto err;
@@ -75,7 +88,7 @@ int start_exclusive_lock(mpc_lowcomm_window_t *win, lcp_task_h task, uint64_t lo
 			continue;
 		}
 
-		mpc_common_nodebug("MPI OSC: start exclusive. to=%d", target);
+		mpc_common_nodebug("start exclusive. to=%d", target);
 
 		break;
 	} while (1);
@@ -84,25 +97,32 @@ err:
 	return rc;
 }
 
-int end_exclusive_lock(mpc_lowcomm_window_t *win, lcp_task_h task, uint64_t lock_offset, int target)
+int _lowcomm_osc_end_exclusive_lock(lcp_task_h task, const int target, const uint64_t lock_offset,
+                                    mpc_lowcomm_window_t *window)
 {
 	int      rc          = MPC_LOWCOMM_SUCCESS;
 	uint64_t value       = -OSC_LOCK_EXCLUSIVE;
-	uint64_t base_rstate = (uint64_t)win->rstate_win_info[target].addr;
+	uint64_t base_rstate = (uint64_t)window->rstate_win_info[target].addr;
 
 	lcp_ep_h ep;
 
-	_lowcomm_osc_get_target_ep(win, target, &ep);
-	mpc_common_nodebug("MPI OSC: end exclusive. to=%d", target);
-	rc = _lowcomm_osc_perform_atomic(win, ep, task, value,
-		LCP_ATOMIC_DT_UINT64, NULL, base_rstate
-		+ lock_offset,
-		win->rstate_win_info[target].rkey,
-		LCP_ATOMIC_OP_ADD);
+	_lowcomm_osc_get_target_ep(target, window, &ep);
+	mpc_common_nodebug("end exclusive. to=%d", target);
+	rc = _lowcomm_osc_perform_atomic(task, ep, value, NULL, base_rstate + lock_offset,
+		window->rstate_win_info[target].rkey, LCP_ATOMIC_DT_UINT64, LCP_ATOMIC_OP_ADD, window);
 	return rc;
 }
 
-static int start_shared_lock(mpc_lowcomm_window_t *win, lcp_task_h task, int target)
+/**@ingroup LOWCOMM_ONE_SIDED_INTERNAL
+ * @brief Locks a window in shared mode
+ *
+ * @param[in] task   Current LCP Task
+ * @param[in] target Rank of the target task
+ * @param[in] window Window to lock
+ *
+ * @return           MPC_LOWCOMM_SUCCESS upon success
+ */
+static int __sync_start_shared_lock(lcp_task_h task, const int target, mpc_lowcomm_window_t *window)
 {
 	int      rc = MPC_LOWCOMM_SUCCESS;
 	uint64_t lock_state;
@@ -110,17 +130,14 @@ static int start_shared_lock(mpc_lowcomm_window_t *win, lcp_task_h task, int tar
 
 	lcp_ep_h ep;
 
-	_lowcomm_osc_get_target_ep(win, target, &ep);
+	_lowcomm_osc_get_target_ep(target, window, &ep);
 
 	do
 	{
-		base_rstate = (uint64_t)win->rstate_win_info[target].addr;
-		rc          = _lowcomm_osc_perform_atomic(win, ep, task,
-			1, LCP_ATOMIC_DT_UINT64,
-			&lock_state, base_rstate
-			+ OSC_STATE_GLOBAL_LOCK_OFFSET,
-			win->rstate_win_info[target].rkey,
-			LCP_ATOMIC_OP_ADD);
+		base_rstate = (uint64_t)window->rstate_win_info[target].addr;
+		rc          = _lowcomm_osc_perform_atomic(task, ep, 1, &lock_state, base_rstate + OSC_STATE_GLOBAL_LOCK_OFFSET,
+			window->rstate_win_info[target].rkey, LCP_ATOMIC_DT_UINT64, LCP_ATOMIC_OP_ADD, window);
+
 		if (rc != MPC_LOWCOMM_SUCCESS)
 		{
 			goto err;
@@ -129,14 +146,9 @@ static int start_shared_lock(mpc_lowcomm_window_t *win, lcp_task_h task, int tar
 		if (lock_state >= OSC_LOCK_EXCLUSIVE)
 		{
 			/* back off. */
-			rc = _lowcomm_osc_perform_atomic(win,
-				ep,
-				task, -1,
-				LCP_ATOMIC_DT_UINT64, NULL,
-				base_rstate
-				+ OSC_STATE_GLOBAL_LOCK_OFFSET,
-				win->rstate_win_info[target].rkey,
-				LCP_ATOMIC_OP_ADD);
+			rc = _lowcomm_osc_perform_atomic(task, ep, -1, NULL, base_rstate + OSC_STATE_GLOBAL_LOCK_OFFSET,
+				window->rstate_win_info[target].rkey, LCP_ATOMIC_DT_UINT64, LCP_ATOMIC_OP_ADD, window);
+
 			if (rc != MPC_LOWCOMM_SUCCESS)
 			{
 				goto err;
@@ -150,43 +162,61 @@ err:
 	return rc;
 }
 
-static int end_shared_lock(mpc_lowcomm_window_t *win, lcp_task_h task, int target)
+/**@ingroup LOWCOMM_ONE_SIDED_INTERNAL
+ * @brief Unlocks a window in shared mode
+ *
+ * @param[in] task   Current LCP Task
+ * @param[in] target Rank of the target task
+ * @param[in] window Window to unlock
+ *
+ * @return           MPC_LOWCOMM_SUCCESS upon success
+ */
+static int __sync_end_shared_lock(lcp_task_h task, const int target, mpc_lowcomm_window_t *window)
 {
 	int      rc          = MPC_LOWCOMM_SUCCESS;
-	uint64_t base_rstate = (uint64_t)win->rstate_win_info[target].addr;
+	uint64_t base_rstate = (uint64_t)window->rstate_win_info[target].addr;
 
 	lcp_ep_h ep;
 
-	_lowcomm_osc_get_target_ep(win, target, &ep);
+	_lowcomm_osc_get_target_ep(target, window, &ep);
 
-	rc = _lowcomm_osc_perform_atomic(win, ep, task,
-		-1, LCP_ATOMIC_DT_UINT64, NULL,
-		base_rstate
-		+ OSC_STATE_GLOBAL_LOCK_OFFSET,
-		win->rstate_win_info[target].rkey,
-		LCP_ATOMIC_OP_ADD);
+	rc = _lowcomm_osc_perform_atomic(task, ep, -1, NULL, base_rstate + OSC_STATE_GLOBAL_LOCK_OFFSET,
+		window->rstate_win_info[target].rkey, LCP_ATOMIC_DT_UINT64, LCP_ATOMIC_OP_ADD, window);
 
 	return rc;
 }
 
-static int start_atomic_lock(mpc_lowcomm_window_t *module, lcp_ep_h ep,
-                             lcp_task_h task, int target)
+/**@ingroup LOWCOMM_ONE_SIDED_INTERNAL
+ * @brief Locks a window in atomic mode
+ *
+ * @note If the window is already locked in exclusive mode, this function does nothing
+ *
+ * @param[in] task   Current LCP Task
+ * @param[in] target Rank of the target task
+ * @param[in] window Window to lock
+ *
+ * @retval           MPC_LOWCOMM_SUCCESS upon success
+ * @retval           MPC_LOWCOMM_OSC_ALREADY_LOCKED if the lock is already taken (no need to unlock)
+ * @retval           A LowComm errorcode otherwise
+ */
+static int __sync_start_atomic_lock(lcp_task_h task, const int target, mpc_lowcomm_window_t *window)
 {
 	int      rc               = MPC_LOWCOMM_OSC_ALREADY_LOCKED;
 	uint64_t lock_state       = 0;
 	uint64_t value            = 1;
-	size_t   remote_lock_addr = module->rstate_win_info[target].addr
-	                            + OSC_STATE_ACC_LOCK_OFFSET;
+	size_t   remote_lock_addr = window->rstate_win_info[target].addr + OSC_STATE_ACC_LOCK_OFFSET;
+	lcp_ep_h ep;
 
-	if (need_atomic_lock(module, target))
+	_lowcomm_osc_get_target_ep(target, window, &ep);
+
+	if (__sync_need_atomic_lock(target, window))
 	{
-		// FIXME: should this be added to a perform_idle type of function to
-		//       avoid active waiting.
+		// FIXME: should this be added to a perform_idle type of function to avoid active waiting.
 		do
 		{
-			rc = _lowcomm_osc_perform_atomic(module, ep, task, value,
-				LCP_ATOMIC_DT_UINT64, &lock_state, remote_lock_addr,
-				module->rstate_win_info[target].rkey, LCP_ATOMIC_OP_CSWAP);
+			rc = _lowcomm_osc_perform_atomic(task, ep, value, &lock_state, remote_lock_addr,
+				window->rstate_win_info[target].rkey, LCP_ATOMIC_DT_UINT64, LCP_ATOMIC_OP_CSWAP, window);
+
 			if (rc != MPC_LOWCOMM_SUCCESS)
 			{
 				goto err;
@@ -210,64 +240,71 @@ static int start_atomic_lock(mpc_lowcomm_window_t *module, lcp_ep_h ep,
 		} while (1);
 	}
 
-	mpc_common_nodebug("MPI OSC: acc atomic lock. from=%d, to=%d, remote lock addr=%p",
+	mpc_common_nodebug("acc atomic lock. from=%d, to=%d, remote lock addr=%p",
 		mpc_common_get_task_rank(), target, remote_lock_addr);
 
 err:
 	return rc;
 }
 
-static int end_atomic_lock(mpc_lowcomm_window_t *win, lcp_ep_h ep,
-                           lcp_task_h task, int target)
+/**@ingroup LOWCOMM_ONE_SIDED_INTERNAL
+ * @brief Unlocks a window in atomic mode
+ *
+ * @note If the window is already locked in exclusive mode, this function does nothing
+ *
+ * @param[in] task   Current LCP Task
+ * @param[in] target Rank of the target task
+ * @param[in] window Window to unlock
+ *
+ * @return           MPC_LOWCOMM_SUCCESS upon success
+ */
+static int __sync_end_atomic_lock(lcp_task_h task, const int target, mpc_lowcomm_window_t *window)
 {
 	int      rc               = MPC_LOWCOMM_SUCCESS;
 	uint64_t value            = 0;
-	size_t   remote_lock_addr = win->rstate_win_info[target].addr
-	                            + OSC_STATE_ACC_LOCK_OFFSET;
-	uint64_t lock_state = 1;
+	size_t   remote_lock_addr = window->rstate_win_info[target].addr + OSC_STATE_ACC_LOCK_OFFSET;
+	uint64_t lock_state       = 1;
+	lcp_ep_h ep;
 
-	mpc_common_nodebug("MPI OSC:  unlock. remote lock addr=%p",
-		remote_lock_addr);
+	_lowcomm_osc_get_target_ep(target, window, &ep);
 	assert(ep);
-	if (need_atomic_lock(win, target))
+
+	mpc_common_nodebug("unlock. remote lock addr=%p", remote_lock_addr);
+	if (__sync_need_atomic_lock(target, window))
 	{
-		rc = _lowcomm_osc_perform_atomic(win, ep, task, value,
-			LCP_ATOMIC_DT_UINT64, &lock_state, remote_lock_addr,
-			win->rstate_win_info[target].rkey, LCP_ATOMIC_OP_CSWAP);
+		rc = _lowcomm_osc_perform_atomic(task, ep, value, &lock_state, remote_lock_addr,
+			window->rstate_win_info[target].rkey, LCP_ATOMIC_DT_UINT64, LCP_ATOMIC_OP_CSWAP, window);
+
 		if (lock_state != 1)
 		{
 			mpc_common_debug_fatal("failed with lock_state = %d", lock_state);
 		}
-		assert(lock_state == 1);
 	}
 
-	mpc_common_nodebug("MPI OSC: acc atomic unlock. from=%d, to=%d, remote lock addr=%p",
+	mpc_common_nodebug("acc atomic unlock. from=%d, to=%d, remote lock addr=%p",
 		mpc_common_get_task_rank(), target, remote_lock_addr);
 
 	return rc;
 }
 
-int mpc_lowcomm_osc_lock(const mpc_lowcomm_osc_lock_type_t lock_type, mpc_lowcomm_window_t *win,
-                         const int target_rank, const bool is_no_check)
+int mpc_lowcomm_osc_lock(const mpc_lowcomm_osc_lock_type_t lock_type, const int target_rank,
+                         mpc_lowcomm_window_t *window, const bool is_no_check)
 {
-	int        rc = MPC_LOWCOMM_SUCCESS;
-	lcp_ep_h   ep;
-	lcp_task_h task = lcp_context_task_get(win->ctx, mpc_common_get_task_rank());
+	int        rc   = MPC_LOWCOMM_SUCCESS;
+	lcp_task_h task = lcp_context_task_get(window->ctx, mpc_common_get_task_rank());
 
-	rc = _lowcomm_osc_get_target_ep(win, target_rank, &ep);
+	_lowcomm_osc_lock_t *lock = NULL;
 
-
-	mpc_osc_lock_t *lock = NULL;
 	if (lock_type == MPC_LOWCOMM_WINDOW_LOCK_EXCLUSIVE || lock_type == MPC_LOWCOMM_WINDOW_LOCK_SHARED)
 	{
 		// The target is already locked
-		lock = mpc_common_hashtable_get(&win->outstanding_locks, target_rank);
+		lock = mpc_common_hashtable_get(&window->outstanding_locks, target_rank);
 		if (lock != NULL)
 		{
 			return MPC_LOWCOMM_OSC_ALREADY_LOCKED;
 		}
 
-		lock = sctk_malloc(sizeof(mpc_osc_lock_t));
+		lock = sctk_malloc(sizeof(_lowcomm_osc_lock_t));
 		if (lock == NULL)
 		{
 			mpc_common_debug_fatal("MPC OSC: could not allocate new lock.");
@@ -281,16 +318,16 @@ int mpc_lowcomm_osc_lock(const mpc_lowcomm_osc_lock_type_t lock_type, mpc_lowcom
 		{
 		case MPC_LOWCOMM_WINDOW_LOCK_EXCLUSIVE:
 			lock->type = MPC_LOWCOMM_WINDOW_LOCK_EXCLUSIVE;
-			rc         = start_exclusive_lock(win, task, OSC_STATE_GLOBAL_LOCK_OFFSET, target_rank);
+			rc         = _lowcomm_osc_start_exclusive_lock(task, target_rank, OSC_STATE_GLOBAL_LOCK_OFFSET, window);
 			break;
 
 		case MPC_LOWCOMM_WINDOW_LOCK_SHARED:
 			lock->type = MPC_LOWCOMM_WINDOW_LOCK_SHARED;
-			rc         = start_shared_lock(win, task, target_rank);
+			rc         = __sync_start_shared_lock(task, target_rank, window);
 			break;
 
 		case MPC_LOWCOMM_WINDOW_LOCK_ATOMIC:
-			rc = start_atomic_lock(win, ep, task, target_rank);
+			rc = __sync_start_atomic_lock(task, target_rank, window);
 			goto end;
 			break;
 
@@ -311,7 +348,7 @@ int mpc_lowcomm_osc_lock(const mpc_lowcomm_osc_lock_type_t lock_type, mpc_lowcom
 	if (rc == MPC_LOWCOMM_SUCCESS)
 	{
 		mpc_common_nodebug("setting lock for target_rank %d, lock_type = %d", target_rank, lock->type);
-		mpc_common_hashtable_set(&win->outstanding_locks, target_rank, lock);
+		mpc_common_hashtable_set(&window->outstanding_locks, target_rank, lock);
 	}
 	else
 	{
@@ -322,19 +359,15 @@ end:
 	return rc;
 }
 
-int mpc_lowcomm_osc_unlock(mpc_lowcomm_window_t *win, const int target_rank, const bool is_atomic)
+int mpc_lowcomm_osc_unlock(const int target_rank, mpc_lowcomm_window_t *window, const bool is_atomic)
 {
 	int        rc = MPC_LOWCOMM_SUCCESS;
 	lcp_ep_h   ep;
-	lcp_task_h task = lcp_context_task_get(win->ctx, mpc_common_get_task_rank());
+	lcp_task_h task = lcp_context_task_get(window->ctx, mpc_common_get_task_rank());
 
-	rc = _lowcomm_osc_get_target_ep(win, target_rank, &ep);
-	if (rc != MPC_LOWCOMM_SUCCESS)
-	{
-		goto end;
-	}
+	_lowcomm_osc_get_target_ep(target_rank, window, &ep);
 
-	rc = _lowcomm_osc_perform_flush(win, task, ep, NULL);
+	rc = _lowcomm_osc_perform_flush(task, ep, NULL, window);
 	if (rc != MPC_LOWCOMM_SUCCESS)
 	{
 		goto end;
@@ -342,33 +375,33 @@ int mpc_lowcomm_osc_unlock(mpc_lowcomm_window_t *win, const int target_rank, con
 
 	if ((is_atomic))
 	{
-		rc = end_atomic_lock(win, ep, task, target_rank);
+		rc = __sync_end_atomic_lock(task, target_rank, window);
 		goto end;
 	}
 
-	mpc_osc_lock_t *lock;
-	lock = mpc_common_hashtable_get(&win->outstanding_locks, target_rank);
+	_lowcomm_osc_lock_t *lock;
+	lock = mpc_common_hashtable_get(&window->outstanding_locks, target_rank);
 	// Check the lock is still active
 	if (lock == NULL)
 	{
 		return MPC_LOWCOMM_ERROR;
 	}
-	mpc_common_hashtable_delete(&win->outstanding_locks, target_rank);
+	mpc_common_hashtable_delete(&window->outstanding_locks, target_rank);
 
 	if (lock->is_no_check == 0)
 	{
 		switch (lock->type)
 		{
 		case MPC_LOWCOMM_WINDOW_LOCK_EXCLUSIVE:
-			rc = end_exclusive_lock(win, task, OSC_STATE_GLOBAL_LOCK_OFFSET, target_rank);
+			rc = _lowcomm_osc_end_exclusive_lock(task, target_rank, OSC_STATE_GLOBAL_LOCK_OFFSET, window);
 			break;
 
 		case MPC_LOWCOMM_WINDOW_LOCK_SHARED:
-			rc = end_shared_lock(win, task, target_rank);
+			rc = __sync_end_shared_lock(task, target_rank, window);
 			break;
 
 		case MPC_LOWCOMM_WINDOW_LOCK_ATOMIC:
-			rc = end_atomic_lock(win, ep, task, target_rank);
+			rc = __sync_end_atomic_lock(task, target_rank, window);
 			break;
 
 		default:
@@ -382,70 +415,70 @@ end:
 	return rc;
 }
 
-int mpc_lowcomm_osc_lock_all(mpc_lowcomm_window_t *win, const bool is_no_check)
+int mpc_lowcomm_osc_lock_all(mpc_lowcomm_window_t *window, const bool is_no_check)
 {
 	int        rc = MPC_LOWCOMM_SUCCESS;
 	int        i, j;
 	lcp_task_h task;
 
-	const int comm_size = mpc_lowcomm_communicator_size(win->comm);
+	const int comm_size = mpc_lowcomm_communicator_size(window->comm);
 
 	if (is_no_check == false)
 	{
-		task = lcp_context_task_get(win->ctx, mpc_common_get_task_rank());
+		task = lcp_context_task_get(window->ctx, mpc_common_get_task_rank());
 		for (i = 0; i < comm_size; i++)
 		{
 			if (rc != MPC_LOWCOMM_SUCCESS)
 			{
 				goto err;
 			}
-			rc = start_shared_lock(win, task, i);
+			rc = __sync_start_shared_lock(task, i, window);
 			if (rc != MPC_LOWCOMM_SUCCESS)
 			{
 				for (j = 0; j < i; j++)
 				{
-					end_shared_lock(win, task, j);
+					__sync_end_shared_lock(task, j, window);
 				}
 				return rc;
 			}
 		}
-		win->lock_all_is_no_check = 0;
+		window->lock_all_is_no_check = 0;
 	}
 	else
 	{
-		win->lock_all_is_no_check = 1;
+		window->lock_all_is_no_check = 1;
 	}
 
 err:
 	return rc;
 }
 
-int mpc_lowcomm_osc_unlock_all(mpc_lowcomm_window_t *win)
+int mpc_lowcomm_osc_unlock_all(mpc_lowcomm_window_t *window)
 {
 	int        rc = MPC_LOWCOMM_SUCCESS;
 	int        i;
 	lcp_task_h task = NULL;
 
-	task = lcp_context_task_get(win->ctx, mpc_common_get_task_rank());
-	const int comm_size = mpc_lowcomm_communicator_size(win->comm);
+	task = lcp_context_task_get(window->ctx, mpc_common_get_task_rank());
+	const int comm_size = mpc_lowcomm_communicator_size(window->comm);
 
-	rc = _lowcomm_osc_perform_flush(win, task, NULL, NULL);
+	rc = _lowcomm_osc_perform_flush(task, NULL, NULL, window);
 	if (rc != MPC_LOWCOMM_SUCCESS)
 	{
 		goto err;
 	}
 
-	if (win->lock_all_is_no_check == 0)
+	if (window->lock_all_is_no_check == 0)
 	{
 		for (i = 0; i < comm_size; i++)
 		{
-			rc |= end_shared_lock(win, task, i);
+			rc |= __sync_end_shared_lock(task, i, window);
 		}
-		win->lock_all_is_no_check = -1;
+		window->lock_all_is_no_check = -1;
 	}
 	else
 	{
-		win->lock_all_is_no_check = -1;
+		window->lock_all_is_no_check = -1;
 	}
 
 
@@ -465,7 +498,7 @@ int mpc_lowcomm_osc_sync(mpc_lowcomm_window_t *win)
 
 	task = lcp_context_task_get(win->ctx, mpc_common_get_task_rank());
 
-	rc = _lowcomm_osc_perform_flush(win, task, NULL, win->lkey_data);
+	rc = _lowcomm_osc_perform_flush(task, NULL, win->lkey_data, win);
 
 	return rc;
 }
@@ -474,10 +507,18 @@ int mpc_lowcomm_osc_sync(mpc_lowcomm_window_t *win)
 /**************** Active Target ****************/
 /***********************************************/
 
-static void mpc_osc_handle_incoming_post(mpc_lowcomm_window_t *module, volatile uint64_t *post_ptr,
-                                         int ranks_in_grp_win[], int size)
+/**@ingroup LOWCOMM_ONE_SIDED_INTERNAL
+ * @brief Updates the pending posts list on receiving a post from another task
+ *
+ * @param[in] post_ptr         Some internal state
+ * @param[in] size             Number of tasks in the group
+ * @param[in] ranks_in_grp_win Translation table between tasks in group and global task ranks
+ * @param[in] window           Window for which the post are handled
+ */
+static void __sync_handle_incoming_post(volatile uint64_t *post_ptr, const int size,
+                                        const int ranks_in_grp_win[static const size], mpc_lowcomm_window_t *window)
 {
-	mpc_osc_pending_post_t *post;
+	_lowcomm_osc_pending_post_t *post;
 	int i, post_rank = (int)*post_ptr - 1;
 
 	/* Reset state post so it can be reused by another process. */
@@ -487,15 +528,15 @@ static void mpc_osc_handle_incoming_post(mpc_lowcomm_window_t *module, volatile 
 	{
 		if (post_rank == ranks_in_grp_win[i])
 		{
-			module->post_count++;
+			window->post_count++;
 			return;
 		}
 	}
 
 	/* Push to pending list for later start. */
-	post       = sctk_malloc(sizeof(mpc_osc_pending_post_t));
+	post       = sctk_malloc(sizeof(_lowcomm_osc_pending_post_t));
 	post->rank = post_rank;
-	mpc_list_push_head(&module->pending_posts, &post->elem);
+	mpc_list_push_head(&window->pending_posts, &post->elem);
 }
 
 int mpc_lowcomm_osc_start(mpc_lowcomm_group_t *group, mpc_lowcomm_window_t *win, const bool is_no_check)
@@ -536,8 +577,8 @@ int mpc_lowcomm_osc_start(mpc_lowcomm_group_t *group, mpc_lowcomm_window_t *win,
 		win->post_count = 0;
 
 		/* First, handle pending post list. */
-		mpc_osc_pending_post_t *post, *tmp;
-		mpc_list_for_each_safe(post, tmp, &win->pending_posts, mpc_osc_pending_post_t, elem)
+		_lowcomm_osc_pending_post_t *post, *tmp;
+		mpc_list_for_each_safe(post, tmp, &win->pending_posts, _lowcomm_osc_pending_post_t, elem)
 		{
 			for (i = 0; i < grp_size; i++)
 			{
@@ -559,7 +600,7 @@ int mpc_lowcomm_osc_start(mpc_lowcomm_group_t *group, mpc_lowcomm_window_t *win,
 					continue;
 				}
 
-				mpc_osc_handle_incoming_post(win, &win->state->post_state[i], ranks_in_grp_win, grp_size);
+				__sync_handle_incoming_post(&win->state->post_state[i], grp_size, ranks_in_grp_win, win);
 			}
 
 			rc = mpc_common_progress();
@@ -582,7 +623,7 @@ err:
 	return rc;
 }
 
-int mpc_lowcomm_osc_post(mpc_lowcomm_group_t *group, mpc_lowcomm_window_t *win, __UNUSED__ const bool is_no_check)
+int mpc_lowcomm_osc_post(mpc_lowcomm_group_t *group, mpc_lowcomm_window_t *window, __UNUSED__ const bool is_no_check)
 {
 	int                  i, j, rc = MPC_LOWCOMM_SUCCESS;
 	uint64_t             my_rank, cur_idx, result;
@@ -593,9 +634,9 @@ int mpc_lowcomm_osc_post(mpc_lowcomm_group_t *group, mpc_lowcomm_window_t *win, 
 	int *                ranks_in_grp, *ranks_in_grp_win;
 	lcp_task_h           task;
 
-	win->post_group = mpc_lowcomm_group_dup(group);
+	window->post_group = mpc_lowcomm_group_dup(group);
 
-	grp_size     = mpc_lowcomm_group_size(win->post_group);
+	grp_size     = mpc_lowcomm_group_size(window->post_group);
 	ranks_in_grp = sctk_malloc(grp_size * sizeof(int));
 	if (ranks_in_grp == NULL)
 	{
@@ -616,27 +657,25 @@ int mpc_lowcomm_osc_post(mpc_lowcomm_group_t *group, mpc_lowcomm_window_t *win, 
 		goto err;
 	}
 
-	win_grp = mpc_lowcomm_communicator_group(win->comm);
-	mpc_lowcomm_group_translate_ranks(win->post_group, grp_size, ranks_in_grp, win_grp, ranks_in_grp_win);
+	win_grp = mpc_lowcomm_communicator_group(window->comm);
+	mpc_lowcomm_group_translate_ranks(window->post_group, grp_size, ranks_in_grp, win_grp, ranks_in_grp_win);
 
-	my_rank = mpc_lowcomm_communicator_rank(win->comm);
+	my_rank = mpc_lowcomm_communicator_rank(window->comm);
 
-	task = lcp_context_task_get(win->ctx, mpc_common_get_task_rank());
+	task = lcp_context_task_get(window->ctx, mpc_common_get_task_rank());
 
 	/* Acquire a free index. */
 	for (i = 0; i < grp_size; i++)
 	{
 		lcp_ep_h ep;
-		_lowcomm_osc_get_target_ep(win, ranks_in_grp_win[i], &ep);
+		_lowcomm_osc_get_target_ep(ranks_in_grp_win[i], window, &ep);
 
-		base_rstate = (char *)win->rstate_win_info[ranks_in_grp_win[i]].addr;
+		base_rstate = (char *)window->rstate_win_info[ranks_in_grp_win[i]].addr;
 
-		rc = _lowcomm_osc_perform_atomic(win,
-			ep,
-			task, inc, LCP_ATOMIC_DT_UINT64,
-			&result, (uint64_t)(base_rstate + OSC_STATE_POST_COUNTER_OFFSET),
-			win->rstate_win_info[ranks_in_grp_win[i]].rkey,
-			LCP_ATOMIC_OP_ADD);
+		rc = _lowcomm_osc_perform_atomic(task, ep, inc, &result,
+			(uint64_t)(base_rstate + OSC_STATE_POST_COUNTER_OFFSET), window->rstate_win_info[ranks_in_grp_win[i]].rkey,
+			LCP_ATOMIC_DT_UINT64, LCP_ATOMIC_OP_ADD, window);
+
 		if (rc != MPC_LOWCOMM_SUCCESS)
 		{
 			goto err;
@@ -647,14 +686,9 @@ int mpc_lowcomm_osc_post(mpc_lowcomm_group_t *group, mpc_lowcomm_window_t *win, 
 		result = 0;
 		do
 		{
-			rc = _lowcomm_osc_perform_atomic(win,
-				ep,
-				task, my_rank + 1,
-				LCP_ATOMIC_DT_UINT64,
-				&result,
+			rc = _lowcomm_osc_perform_atomic(task, ep, my_rank + 1, &result,
 				(uint64_t)(base_rstate + OSC_STATE_POST_OFFSET + cur_idx * sizeof(uint64_t)),
-				win->rstate_win_info[ranks_in_grp_win[i]].rkey,
-				LCP_ATOMIC_OP_CSWAP);
+				window->rstate_win_info[ranks_in_grp_win[i]].rkey, LCP_ATOMIC_DT_UINT64, LCP_ATOMIC_OP_CSWAP, window);
 
 			if (result == 0)
 			{
@@ -663,12 +697,12 @@ int mpc_lowcomm_osc_post(mpc_lowcomm_group_t *group, mpc_lowcomm_window_t *win, 
 
 			for (j = 0; j < OSC_POST_PEER_MAX; j++)
 			{
-				if (win->state->post_state[j] == 0)
+				if (window->state->post_state[j] == 0)
 				{
 					continue;
 				}
 
-				mpc_osc_handle_incoming_post(win, &win->state->post_state[j], ranks_in_grp_win, grp_size);
+				__sync_handle_incoming_post(&window->state->post_state[j], grp_size, ranks_in_grp_win, window);
 
 				mpc_common_progress();
 				mpc_thread_yield();
@@ -679,10 +713,10 @@ err:
 	return rc;
 }
 
-int mpc_lowcomm_osc_complete(mpc_lowcomm_window_t *win)
+int mpc_lowcomm_osc_complete(mpc_lowcomm_window_t *window)
 {
 	// Start already completed...
-	if (win->start_group == NULL)
+	if (window->start_group == NULL)
 	{
 		return MPC_LOWCOMM_SUCCESS;
 	}
@@ -691,12 +725,12 @@ int mpc_lowcomm_osc_complete(mpc_lowcomm_window_t *win)
 	uint64_t   one = 1;
 	uint64_t   base_rstate;
 	int        target;
-	int        grp_size = mpc_lowcomm_group_size(win->start_group);
+	int        grp_size = mpc_lowcomm_group_size(window->start_group);
 	lcp_task_h task;
 
-	task = lcp_context_task_get(win->ctx, mpc_common_get_task_rank());
+	task = lcp_context_task_get(window->ctx, mpc_common_get_task_rank());
 
-	rc = _lowcomm_osc_perform_flush(win, task, NULL, NULL);
+	rc = _lowcomm_osc_perform_flush(task, NULL, NULL, window);
 	if (rc != MPC_LOWCOMM_SUCCESS)
 	{
 		goto err;
@@ -704,18 +738,14 @@ int mpc_lowcomm_osc_complete(mpc_lowcomm_window_t *win)
 
 	for (i = 0; i < grp_size; i++)
 	{
-		target = win->start_grp_ranks[i];
+		target = window->start_grp_ranks[i];
 		lcp_ep_h ep;
-		_lowcomm_osc_get_target_ep(win, target, &ep);
+		_lowcomm_osc_get_target_ep(target, window, &ep);
 
-		base_rstate = (uint64_t)win->rstate_win_info[win->start_grp_ranks[i]].addr;
+		base_rstate = (uint64_t)window->rstate_win_info[window->start_grp_ranks[i]].addr;
 
-		rc = _lowcomm_osc_perform_atomic(win, ep,
-			task, one, LCP_ATOMIC_DT_UINT64,
-			NULL, base_rstate
-			+ OSC_STATE_COMPLETION_COUNTER_OFFSET,
-			win->rstate_win_info[win->start_grp_ranks[i]].rkey,
-			LCP_ATOMIC_OP_ADD);
+		rc = _lowcomm_osc_perform_atomic(task, ep, one, NULL, base_rstate + OSC_STATE_COMPLETION_COUNTER_OFFSET,
+			window->rstate_win_info[window->start_grp_ranks[i]].rkey, LCP_ATOMIC_DT_UINT64, LCP_ATOMIC_OP_ADD, window);
 
 		if (rc != MPC_LOWCOMM_SUCCESS)
 		{
@@ -723,55 +753,55 @@ int mpc_lowcomm_osc_complete(mpc_lowcomm_window_t *win)
 		}
 	}
 
-	sctk_free(win->start_grp_ranks);
-	mpc_lowcomm_group_free(&win->start_group);
-	win->start_group = NULL;
+	sctk_free(window->start_grp_ranks);
+	mpc_lowcomm_group_free(&window->start_group);
+	window->start_group = NULL;
 err:
 	return rc;
 }
 
-int mpc_lowcomm_osc_wait(mpc_lowcomm_window_t *win)
+int mpc_lowcomm_osc_wait(mpc_lowcomm_window_t *window)
 {
 	// Post already waited...
-	if (win->post_group == NULL)
+	if (window->post_group == NULL)
 	{
 		return MPC_LOWCOMM_SUCCESS;
 	}
 
-	int grp_size = mpc_lowcomm_group_size(win->post_group);
+	int grp_size = mpc_lowcomm_group_size(window->post_group);
 
-	while (win->state->completion_counter != (uint64_t)grp_size)
+	while (window->state->completion_counter != (uint64_t)grp_size)
 	{
 		mpc_common_progress();
 		mpc_thread_yield();
 	}
 
-	win->state->completion_counter = 0;
-	mpc_lowcomm_group_free(&win->post_group);
-	win->post_group = NULL;
+	window->state->completion_counter = 0;
+	mpc_lowcomm_group_free(&window->post_group);
+	window->post_group = NULL;
 
 
 	return MPC_LOWCOMM_SUCCESS;
 }
 
-int mpc_lowcomm_osc_test(mpc_lowcomm_window_t *win, bool *is_completed)
+int mpc_lowcomm_osc_test(mpc_lowcomm_window_t *window, bool *is_completed)
 {
 	// Post already waited...
-	if (win->post_group == NULL)
+	if (window->post_group == NULL)
 	{
 		return MPC_LOWCOMM_SUCCESS;
 	}
-	int grp_size = mpc_lowcomm_group_size(win->post_group);
+	int grp_size = mpc_lowcomm_group_size(window->post_group);
 
 	mpc_common_progress();
 
-	if (win->state->completion_counter == (uint64_t)grp_size)
+	if (window->state->completion_counter == (uint64_t)grp_size)
 	{
 		*is_completed = true;
 
-		win->state->completion_counter = 0;
-		mpc_lowcomm_group_free(&win->post_group);
-		win->post_group = NULL;
+		window->state->completion_counter = 0;
+		mpc_lowcomm_group_free(&window->post_group);
+		window->post_group = NULL;
 	}
 	else
 	{

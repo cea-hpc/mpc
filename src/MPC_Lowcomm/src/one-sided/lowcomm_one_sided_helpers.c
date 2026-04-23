@@ -21,6 +21,10 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
+/**@file
+ * One sided getter routines implementation
+ */
+
 #include "lowcomm_one_sided_internal.h"
 #include "communicator.h"
 
