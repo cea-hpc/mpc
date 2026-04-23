@@ -347,20 +347,23 @@ static inline struct _mpc_shm_cell * _mpc_shm_list_head_try_get(struct _mpc_shm_
 {
 	struct _mpc_shm_cell *ret = NULL;
 
-	if (mpc_common_spinlock_trylock(&list->lock) == 0)
+	if (list->tail)
 	{
-		if (list->tail)
+		if (mpc_common_spinlock_trylock(&list->lock) == 0)
 		{
-			ret        = (struct _mpc_shm_cell *)((char *)list->tail + (uint64_t)base);
-			list->tail = ret->prev;
-			ret->prev  = NULL;
-			if (!list->tail)
+			if (list->tail)
 			{
-				list->head = NULL;
+				ret        = (struct _mpc_shm_cell *)((char *)list->tail + (uint64_t)base);
+				list->tail = ret->prev;
+				ret->prev  = NULL;
+				if (!list->tail)
+				{
+					list->head = NULL;
+				}
 			}
-		}
 
-		mpc_common_spinlock_unlock(&list->lock);
+			mpc_common_spinlock_unlock(&list->lock);
+		}
 	}
 
 	return ret;
