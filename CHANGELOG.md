@@ -7,7 +7,9 @@ All notable changes to this project will be documented in this file. The format 
 ### Added
 
 - **Rail Portals**
-    - Added BXI version 3 support
+  - Added BXI version 3 support
+- **Low Comm**
+  - New lowcomm top level one sided communication interface
 
 ### Changed
 
@@ -25,6 +27,7 @@ All notable changes to this project will be documented in this file. The format 
   - Finish the implementation of the various types of flush
   - CMA support test between processes leading to more communications going though CMA
   - Atomics with double precision floating point numbers
+  - Synchronize host and NIC memory in Portals flushes
 - **MPI**
   - Compute the correct inclusive UB for predefined datatypes
   - Handle NULL MPI_Info duplication
