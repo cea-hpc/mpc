@@ -24,15 +24,12 @@
 #define __SCTK_THREADS_H_
 
 
-#include <stdlib.h>
-#include <signal.h>
 
 #include <mpc_common_debug.h>
 #include <mpc_thread_accessor.h>
 
 
-#include "mpc_common_spinlock.h"
-#include "sctk_alloc.h"
+#include <sctk_alloc.h>
 #include "mpc_thread.h"
 
 #include "thread_dbg.h"
