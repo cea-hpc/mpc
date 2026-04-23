@@ -23,6 +23,7 @@
 #define COMMUNICATOR_H
 
 #include <mpc_lowcomm_communicator.h>
+#include <mpc_lowcomm_ep.h>
 #include <group.h>
 
 #include <mpc_common_asm.h>
@@ -59,6 +60,7 @@ typedef struct MPI_ABI_Comm
 	OPA_int_t                     free_count;     /**< Local synchronization for free */
 
 	mpc_lowcomm_group_t *         group;          /**< Group supporting the comm */
+	mpc_lowcomm_ep_t *            eps;            /*< Endpoints to the different tasks */
 
 	int *                         process_array;  /**< Array of the processes in the group */
 	unsigned int                  process_span;   /**< Number of UNIX processes in the group */

@@ -68,7 +68,6 @@ typedef struct MPI_ABI_Group
 
 	unsigned int                          size;
 	_mpc_lowcomm_group_rank_descriptor_t *ranks;
-	mpc_lowcomm_ep_t *                    eps;
 
 	int *                                 global_to_local;
 
