@@ -27,7 +27,7 @@
 
 #include <dlfcn.h>
 #include <unistd.h>
-#include <signal.h>
+#include <signal.h> // sigset_t
 
 #ifdef WINDOWS_SYS
 #include <windows.h>

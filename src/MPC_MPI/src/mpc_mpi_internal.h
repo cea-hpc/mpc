@@ -24,19 +24,16 @@
 #ifndef MPC_MPI_INTERNAL_H
 #define MPC_MPI_INTERNAL_H
 
-// #include "sctk_alloc.h"
 
 #include "mpc_common_debug.h"
 #include "nbc.h"
-#include "sctk_alloc.h"
+#include <sctk_alloc.h>
 #include "mpc_lowcomm.h"
 
 #include "errh.h"
 #include <mpc_lowcomm_msg.h>
 #include "mpc_common_spinlock.h"
-#include "mpc_coll.h"
 
-#include "mpc_topology.h"
 #include <mpc.h>
 #include <mpc_extern32.h>
 #include <mpc_mpi.h>

@@ -27,8 +27,9 @@
 #include <mpc_thread.h>
 #include <mpc_common_profiler.h>
 
+#include <sctk_alloc.h>
+
 #include "microthread.h"
-#include "sctk_alloc.h"
 #include "sctk_context.h"
 #include "mpc_thread.h"
 #include "mpc_topology.h"

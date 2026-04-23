@@ -43,12 +43,14 @@
 #include <stdbool.h>
 #include <mpc_common_types.h>
 #include <stdbool.h>
+
+#include <sctk_alloc.h>
+
 #include "mpc_common_debug.h"
 #include <mpc_common_asm.h>
 #include "sctk_context.h"
 #include "mpc_omp.h"
 #include "mpc_omp_task_property.h"
-#include "sctk_alloc.h"
 #include "mpc_common_mcs.h"
 #include "mpcompt_instance_types.h"
 #include "mpcompt_frame_types.h"

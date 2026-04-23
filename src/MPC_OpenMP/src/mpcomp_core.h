@@ -37,6 +37,7 @@
 #define __MPC_OMP_CORE_H__
 
 #include "mpcomp_types.h" /* need mpc_omp_mvp_t && mpc_omp_instance_t */
+#include <sctk_alloc.h>
 #include <mpc_conf.h>
 
 /**************

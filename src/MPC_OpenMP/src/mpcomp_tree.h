@@ -34,6 +34,11 @@
 #ifndef MPC_OMP_TREE_H_
 #define MPC_OMP_TREE_H_
 
+#include <assert.h>
+#include <string.h>
+
+#include <sctk_alloc.h>
+
 #include "mpcomp_types.h"
 #include "omp_intel.h"
 
