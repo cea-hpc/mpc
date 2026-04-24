@@ -82,7 +82,7 @@ static int _lcp_context_query_component_devices(lcr_component_h component,
 
 	if (num_devices == 0)
 	{
-		mpc_common_debug("No device found for component: %s",
+		mpc_common_debug_info_process0("No device found for component: %s",
 			component->name);
 	}
 
@@ -239,10 +239,10 @@ static int _lcp_context_load_ctx_config(lcp_context_h ctx, lcp_context_param_t *
 	{
 		goto err_free;
 	}
-	mpc_common_debug("Loaded User Configurations:\n");
+	mpc_common_debug_info_process0("Loaded User Configurations:\n");
 	for (int i = 0; i < num_configs; i++)
 	{
-		mpc_common_debug("\tCONF: %s\n", rail_configs[i]->name);
+		mpc_common_debug_info_process0("\tCONF: %s\n", rail_configs[i]->name);
 	}
 
 	/* Load and init available components. */
@@ -251,10 +251,10 @@ static int _lcp_context_load_ctx_config(lcp_context_h ctx, lcp_context_param_t *
 	{
 		goto err_free;
 	}
-	mpc_common_debug("Loaded Available Components:\n");
+	mpc_common_debug_info_process0("Loaded Available Components:\n");
 	for (int i = 0; i < num_components; i++)
 	{
-		mpc_common_debug("\tCONF: %s\n", components[i]->name);
+		mpc_common_debug_info_process0("\tCONF: %s\n", components[i]->name);
 	}
 
 
@@ -402,8 +402,8 @@ static int _lcp_context_devices_load_and_filter(lcp_context_h ctx)
 			}
 			else
 			{
-				mpc_common_debug_info("Found non-composable rail %s with 0 devices,"
-					                  " rail will no be configured",
+				mpc_common_debug_info_process0("Found non-composable rail %s with 0 devices,"
+					                           " rail will no be configured",
 					ctx->components[i]->name);
 			}
 		}
@@ -458,7 +458,7 @@ static int _lcp_context_devices_load_and_filter(lcp_context_h ctx)
 	{
 		if (ctx->components[i]->num_devices == 0)
 		{
-			mpc_common_debug("Skipping registration for component %s as no devices were founds",
+			mpc_common_debug_info_process0("Skipping registration for component %s as no devices were founds",
 				ctx->components[i]->name);
 			continue;
 		}
@@ -468,7 +468,8 @@ static int _lcp_context_devices_load_and_filter(lcp_context_h ctx)
 			// Skip shm if no need for it
 			if ((strncmp("shm", ctx->components[i]->name, 3) == 0) && (node_number == process_number))
 			{
-				mpc_common_debug("Skipping registration for %s as only one process per node was requested",
+				mpc_common_debug_info_process0(
+					"Skipping registration for %s as only one process per node was requested",
 					ctx->components[i]->name);
 				continue;
 			}
@@ -478,7 +479,7 @@ static int _lcp_context_devices_load_and_filter(lcp_context_h ctx)
 			// 	ctx->components[i]->query_device_nearest(&ctx->components[i]->devices,
 			// 		&ctx->components[i]->num_devices);
 			// }
-			mpc_common_debug("Registering %s as composable component", ctx->components[i]->name);
+			mpc_common_debug_info_process0("Registering %s as composable component", ctx->components[i]->name);
 			/* There can be only one iface for composable rail such as tbsm or shm. */
 			MPC_BITMAP_SET(dev_map, i);
 			nb_dev++;
@@ -554,12 +555,12 @@ static int _lcp_context_devices_load_and_filter(lcp_context_h ctx)
 	ctx->resources     = sctk_malloc(nb_dev * sizeof(lcp_rsc_desc_t));
 	for (unsigned int i = 0; i < ctx->num_cmpts; i++)
 	{
-		mpc_common_debug("Initializing resources for %s", ctx->components[i]->name);
+		mpc_common_nodebug("Looking for resources for %s", ctx->components[i]->name);
 		for (unsigned int j = 0 ; j < ctx->components[i]->num_devices; j++)
 		{
 			if (MPC_BITMAP_GET(dev_map, i))
 			{
-				mpc_common_debug("Initializing resource %s for %s",
+				mpc_common_debug_info_process0("Initializing resource %s for %s",
 					ctx->components[i]->devices[j].name, ctx->components[i]->name);
 
 				_lcp_context_resource_init(&ctx->resources[rsc_count], ctx->components[i],
@@ -633,6 +634,10 @@ err:
 
 int lcp_context_create(lcp_context_h *ctx_p, lcp_context_param_t *param)
 {
+	mpc_common_debug_info_process0("---------------");
+	mpc_common_debug_info_process0("MPC Lowcomm/LCP");
+	mpc_common_debug_info_process0("---------------");
+
 	int           rc  = MPC_LOWCOMM_SUCCESS;
 	lcp_context_h ctx = { 0 };
 
@@ -693,14 +698,14 @@ int lcp_context_create(lcp_context_h *ctx_p, lcp_context_param_t *param)
 		ctx->config.request.init = param->request_init;
 	}
 
-	mpc_common_debug("Loading context config");
+	mpc_common_debug_info_process0("Loading LCP context configuration:");
 	rc = _lcp_context_load_ctx_config(ctx, param);
 	if (rc != MPC_LOWCOMM_SUCCESS)
 	{
 		goto out_free_ctx;
 	}
 
-	mpc_common_debug("Loading & filtering devices");
+	mpc_common_debug_info_process0("Loading & filtering LCP devices");
 	rc = _lcp_context_devices_load_and_filter(ctx);
 	if (rc != MPC_LOWCOMM_SUCCESS)
 	{
@@ -717,7 +722,7 @@ int lcp_context_create(lcp_context_h *ctx_p, lcp_context_param_t *param)
 
 	*ctx_p = static_ctx = ctx;
 
-	mpc_common_debug("Context creation success");
+	mpc_common_debug_info_process0("LCP Context creation success");
 	return MPC_LOWCOMM_SUCCESS;
 
 out_free_ctx:

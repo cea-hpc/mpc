@@ -809,7 +809,7 @@ int mpc_launch_pmi_init()
 /*! \brief Finalization function */
 int mpc_launch_pmi_finalize()
 {
-	mpc_common_debug("ENDING PMI");
+	mpc_common_nodebug("ENDING PMI");
 #if defined(MPC_USE_PMIX)
 		pmix_status_t rc = PMIx_Finalize(NULL, 0);
 		PMI_RETURN(rc);

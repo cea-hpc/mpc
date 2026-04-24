@@ -1046,7 +1046,7 @@ static mpc_lowcomm_monitor_retcode_t __start_server_socket(struct _mpc_lowcomm_m
 		return MPC_LOWCOMM_MONITOR_RET_ERROR;
 	}
 
-	mpc_common_debug_info("MON: bound to %s", monitor->monitor_uri);
+	mpc_common_debug_info_process0("Bound to %s", monitor->monitor_uri);
 
 	return MPC_LOWCOMM_MONITOR_RET_SUCCESS;
 }
@@ -1268,7 +1268,7 @@ static inline _mpc_lowcomm_client_ctx_t *___connect_client(struct _mpc_lowcomm_m
 		hints.ai_family   = AF_UNSPEC;
 		hints.ai_socktype = SOCK_STREAM;
 
-		mpc_common_debug_info("MON: Trying to connect to %s : %s", trials[i], port);
+		mpc_common_nodebug("MON: Trying to connect to %s : %s", trials[i], port);
 
 		/* Note we bind to port 0 as we do not care much of where we are */
 		int ret = mpc_common_getaddrinfo(trials[i], port, &hints, &res, "ib");
@@ -1318,7 +1318,7 @@ static inline _mpc_lowcomm_client_ctx_t *___connect_client(struct _mpc_lowcomm_m
 			}
 
 
-			mpc_common_debug_info("MON: DONE trying to connect to %s : %s == %d", trials[i], port, client_socket);
+			mpc_common_nodebug("MON: DONE trying to connect to %s : %s == %d", trials[i], port, client_socket);
 			/* all done */
 			break;
 		}

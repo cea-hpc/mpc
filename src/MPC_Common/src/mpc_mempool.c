@@ -455,7 +455,7 @@ int mpc_mpool_init(mpc_mempool_t *mp, mpc_mempool_param_t *params)
 	}
 	mpc_common_spinlock_init(&(mp->data->lock), 0);
 
-	mpc_common_debug("MEMPOOL: user elem size=%d, alignment=%d, struct chunk size=%d.",
+	mpc_common_nodebug("MEMPOOL: user elem size=%d, alignment=%d, struct chunk size=%d.",
 		params->elem_size, params->alignment, sizeof(mpc_mempool_chunk_t));
 
 	mpc_mpool_grow(mp);

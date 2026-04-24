@@ -392,7 +392,7 @@ static int _mpc_thread_ethread_mxn_engine_user_create(_mpc_thread_ethread_t *thr
 	 * MxN Scheduling */
 	_mpc_thread_ethread_virtual_processor_t *current_vp = _mpc_thread_ethread_mxn_engine_vp_list[pos];
 
-	mpc_common_debug("Non VP thread creation on VP %d / %d", pos, sctk_nb_vp_initialized);
+	mpc_common_nodebug("Non VP thread creation on VP %d / %d", pos, sctk_nb_vp_initialized);
 
 	if (attr != NULL)
 	{

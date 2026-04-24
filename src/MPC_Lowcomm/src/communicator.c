@@ -1017,7 +1017,7 @@ static inline void __communicator_id_register(mpc_lowcomm_communicator_t comm, c
 	assume(0 < comm->linear_comm_id);
 	uint64_t linear_key = comm->linear_comm_id;
 
-	mpc_common_debug_info("COMM: register key=%llu, int key=%d, linear key=%llu", key, key, linear_key);
+	mpc_common_nodebug("Register key=%llu, int key=%d, linear key=%llu", key, key, linear_key);
 
 	/* It is forbidden to add an existing comm */
 	assume(mpc_common_hashtable_get(&id_factory->id_table, key) == NULL);
@@ -1035,7 +1035,7 @@ static inline void __communicator_id_release(mpc_lowcomm_communicator_t comm)
 	uint64_t key        = comm->id;
 	uint64_t linear_key = comm->linear_comm_id;
 
-	mpc_common_debug_info("COMM: release key=%llu, int key=%d, linear key=%llu", key, key, linear_key);
+	mpc_common_nodebug("Release key=%llu, int key=%d, linear key=%llu", key, key, linear_key);
 
 	mpc_common_hashtable_delete(&id_factory->id_table,     key);
 	mpc_common_hashtable_delete(&id_factory->int_id_table, linear_key);

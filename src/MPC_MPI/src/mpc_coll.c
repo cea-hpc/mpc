@@ -11654,7 +11654,9 @@ int ___collectives_allgather_topo_gather_allgather_broadcast(const void *sendbuf
 			// We cannot create topological and they aren't already created
 			// Fallback to non-topological algorithms
 
-			mpc_common_debug_log("TOPO ALLG | RANK %d | Fallback to non-topological algorithm\n", rank);
+			mpc_common_debug_warning(
+				"Topological %s called, but topological communicators couldn't be fetched or created.\nFall back to non-topological algorithm",
+				"allgather");
 
 			res = _mpc_mpi_config()->coll_algorithm_intracomm.allgather(sendbuf,
 				tmp_sendcount,
@@ -11721,7 +11723,7 @@ int ___collectives_allgather_topo_gather_allgather_broadcast(const void *sendbuf
 			allgatherv_buf = MPI_IN_PLACE;
 		}
 
-		mpc_common_debug_log(
+		mpc_common_nodebug(
 			"TOPO ALLG | RANK %d | Allgather level 0 | master_comm: %p, rank_master: %d, size_master: %d\n",
 			rank,
 			master_comm,

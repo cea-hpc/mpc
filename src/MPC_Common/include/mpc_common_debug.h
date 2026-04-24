@@ -57,6 +57,14 @@ typedef enum
 	MPC_COMMON_LOG_LEVEL_COUNT
 }mpc_common_debug_verbosity_level_t;
 
+typedef enum
+{
+	MPC_COMMON_SCOPE_ALL     = 0, // every rank/process print the message
+	MPC_COMMON_SCOPE_PROCESS = 1, // only global process 0 print the message (task my not be initialize early on)
+	MPC_COMMON_SCOPE_TASK    = 2, // only global task 0 print the message
+}mpc_common_debug_scope_t;
+
+
 const char * mpc_common_debug_verbosity_level_to_string(mpc_common_debug_verbosity_level_t level);
 
 int mpc_common_debug_is_stderr_tty();
@@ -126,35 +134,42 @@ int mpc_common_debug_print(char *filename,
                            const char *funcname,
                            char *color,
                            mpc_common_debug_verbosity_level_t verbosity_level,
+                           mpc_common_debug_scope_t debug_scope,
                            char *modulename,
                            char *string,
                            ...);
 
-#define mpc_common_debug_warning(s, ...)     \
-		do                                   \
-		{                                    \
-			mpc_common_debug_print(__FILE__, \
-	__LINE__,                                \
-	__func__,                                \
-	MPC_COLOR_CHAR_YELLOW,                   \
-	MPC_COMMON_LOG_LEVEL_WARNING,            \
-	xstr(MPC_MODULE),                        \
-	s,                                       \
-	## __VA_ARGS__);                         \
+int mpc_common_debug_vprint(char *filename,
+                            int line,
+                            const char *funcname,
+                            char *color,
+                            mpc_common_debug_verbosity_level_t verbosity_level,
+                            mpc_common_debug_scope_t debug_scope,
+                            char *modulename,
+                            char *string,
+                            va_list ap);
+
+#define mpc_common_debug_warning(s, ...)                                                                              \
+		do                                                                                                            \
+		{                                                                                                             \
+			mpc_common_debug_print(__FILE__, __LINE__, __func__, MPC_COLOR_CHAR_YELLOW, MPC_COMMON_LOG_LEVEL_WARNING, \
+	MPC_COMMON_SCOPE_ALL, xstr(MPC_MODULE), s, ## __VA_ARGS__);                                                       \
 		}while (0)
+
 
 #define mpc_common_debug_error(s, ...)                                                                           \
 		do                                                                                                       \
 		{                                                                                                        \
 			mpc_common_debug_print(__FILE__, __LINE__, __func__, MPC_COLOR_CHAR_RED, MPC_COMMON_LOG_LEVEL_ERROR, \
-	xstr(MPC_MODULE), s, ## __VA_ARGS__);                                                                        \
+	MPC_COMMON_SCOPE_ALL, xstr(MPC_MODULE), s, ## __VA_ARGS__);                                                  \
 		}while (0)
+
 
 #define mpc_common_debug_log(s, ...)                                                                             \
 		do                                                                                                       \
 		{                                                                                                        \
 			mpc_common_debug_print(__FILE__, __LINE__, __func__, MPC_COLOR_CHAR_GREEN, MPC_COMMON_LOG_LEVEL_LOG, \
-	xstr(MPC_MODULE), s, ## __VA_ARGS__);                                                                        \
+	MPC_COMMON_SCOPE_ALL, xstr(MPC_MODULE), s, ## __VA_ARGS__);                                                  \
 		}while (0)
 
 
@@ -162,22 +177,30 @@ int mpc_common_debug_print(char *filename,
 		do                                                                                                         \
 		{                                                                                                          \
 			mpc_common_debug_print(__FILE__, __LINE__, __func__, MPC_COLOR_CHAR_VIOLET, MPC_COMMON_LOG_LEVEL_INFO, \
-	xstr(MPC_MODULE), s, ## __VA_ARGS__);                                                                          \
+	MPC_COMMON_SCOPE_ALL, xstr(MPC_MODULE), s, ## __VA_ARGS__);                                                    \
 		}while (0)
 
+#define mpc_common_debug_info_task0(s, ...)                                                                        \
+		do                                                                                                         \
+		{                                                                                                          \
+			mpc_common_debug_print(__FILE__, __LINE__, __func__, MPC_COLOR_CHAR_VIOLET, MPC_COMMON_LOG_LEVEL_INFO, \
+	MPC_COMMON_SCOPE_TASK, xstr(MPC_MODULE), s, ## __VA_ARGS__);                                                   \
+		} while (0)
+
+
+#define mpc_common_debug_info_process0(s, ...)                                                                     \
+		do                                                                                                         \
+		{                                                                                                          \
+			mpc_common_debug_print(__FILE__, __LINE__, __func__, MPC_COLOR_CHAR_VIOLET, MPC_COMMON_LOG_LEVEL_INFO, \
+	MPC_COMMON_SCOPE_PROCESS, xstr(MPC_MODULE), s, ## __VA_ARGS__);                                                \
+		}while (0)
 
 #ifdef MPC_ENABLE_DEBUG_MESSAGES
-	#define mpc_common_debug(s, ...)             \
-			do                                   \
-			{                                    \
-				mpc_common_debug_print(__FILE__, \
-	__LINE__,                                    \
-	__func__,                                    \
-	MPC_COLOR_CHAR_DEFAULT,                      \
-	MPC_COMMON_LOG_LEVEL_DEBUG,                  \
-	xstr(MPC_MODULE),                            \
-	s,                                           \
-	## __VA_ARGS__);                             \
+	#define mpc_common_debug(s, ...)                                                                                     \
+			do                                                                                                           \
+			{                                                                                                            \
+				mpc_common_debug_print(__FILE__, __LINE__, __func__, MPC_COLOR_CHAR_DEFAULT, MPC_COMMON_LOG_LEVEL_DEBUG, \
+	MPC_COMMON_SCOPE_PROCESS, xstr(MPC_MODULE), s, ## __VA_ARGS__);                                                      \
 			}while (0)
 #else
 	#if defined(__GNUC__) || defined(__INTEL_COMPILER)

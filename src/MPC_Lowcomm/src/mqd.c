@@ -7,6 +7,7 @@
 
 
 #include "mpc_common_flags.h"
+#include "mpc_conf.h"
 #include "sctk_alloc.h"
 #include "mpc_common_rank.h"
 #include "communicator.h"

@@ -152,7 +152,7 @@ int lcp_task_create(lcp_context_h ctx, int tid, lcp_task_h *task_p)
 	ctx->tasks[tid] = task;
 
 	*task_p = task;
-	mpc_common_debug_info("LCP: created task tid=%d", tid);
+	mpc_common_nodebug("Created task tid=%d", tid);
 err:
 	return rc;
 }
@@ -173,8 +173,7 @@ int lcp_task_associate(lcp_task_h task, lcp_manager_h mngr)
 	tcc = sctk_malloc(sizeof(lcp_task_comm_context_t));
 	if (tcc == NULL)
 	{
-		mpc_common_debug_error("LCP TASK: could not allocate task communication "
-			                   "context.");
+		mpc_common_debug_error("Could not allocate task communication context.");
 		rc = MPC_LOWCOMM_ERROR;
 		goto err;
 	}
@@ -207,7 +206,7 @@ int lcp_task_associate(lcp_task_h task, lcp_manager_h mngr)
 			* sizeof(lcp_am_user_handler_t));
 		if (tcc->am.handlers == NULL)
 		{
-			mpc_common_debug_error("LCP TASK: Could not allocate "
+			mpc_common_debug_error("Could not allocate "
 				                   "user AM handlers");
 			rc = MPC_LOWCOMM_ERROR;
 			goto err;
@@ -219,7 +218,7 @@ int lcp_task_associate(lcp_task_h task, lcp_manager_h mngr)
 	task->num_managers++;
 	task->tcct[mngr->id] = tcc;
 
-	mpc_common_debug_info("LCP TASK: associated task. tid=%d, mngr id=%d.",
+	mpc_common_nodebug("Associated task. tid=%d, mngr id=%d.",
 		task->tid, mngr->id);
 err:
 	return rc;
@@ -238,7 +237,7 @@ int lcp_task_dissociate(lcp_task_h task, lcp_manager_h mngr)
 
 	task->tcct[mngr->id] = NULL;
 
-	mpc_common_debug("LCP TASK: dissociated task. tid=%d, mngr id=%d",
+	mpc_common_nodebug("Dissociated task. tid=%d, mngr id=%d",
 		task->tid, mngr->id);
 
 	return MPC_LOWCOMM_SUCCESS;

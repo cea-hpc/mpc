@@ -168,9 +168,14 @@ static inline void __init_thread_module_config(void)
  * THREAD COUNTER *
  ******************/
 
-/* Register, unregister running thread */
-volatile int       sctk_current_local_tasks_nb   = 0;
-mpc_thread_mutex_t sctk_current_local_tasks_lock = SCTK_THREAD_MUTEX_INITIALIZER;
+/* Register, unregister running thread and expected ones */
+/* nb. of tasks that should be run by the process. */
+static int sctk_local_tasks_nb = 0;
+/* start index of the tasks for the current process in global tasks list. */
+static int sctk_local_tasks_start_index = 0;
+/* currently runnings tasks on local process. */
+static volatile int sctk_current_local_tasks_nb   = 0;
+mpc_thread_mutex_t  sctk_current_local_tasks_lock = SCTK_THREAD_MUTEX_INITIALIZER;
 
 void sctk_unregister_task(__UNUSED__ const int i)
 {
@@ -186,7 +191,21 @@ void sctk_register_task(__UNUSED__ const int i)
 	mpc_thread_mutex_unlock(&sctk_current_local_tasks_lock);
 }
 
-/* Return the number of running tasks (i.e tasks already registered) */
+/* Return the index of the first task of the node.
+ * rank number on a node are always contiguous */
+int mpc_thread_get_local_tasks_start_index()
+{
+	return sctk_local_tasks_start_index;
+}
+
+/* Return the number of tasks expected in this process */
+int mpc_thread_get_local_tasks_nb()
+{
+	return sctk_local_tasks_nb;
+}
+
+/* Return the number of actually running mpi tasks in this process
+ * (i.e tasks already registered) */
 int mpc_thread_get_current_local_tasks_nb()
 {
 	return sctk_current_local_tasks_nb;
@@ -196,32 +215,27 @@ int mpc_thread_get_current_local_tasks_nb()
  * VP LAYOUT AND VP LAUNCH *
  ***************************/
 
-static int sctk_first_local = 0;
-static int sctk_last_local  = 0;
-
-
 // default algorithm
 int mpc_thread_get_task_placement_and_count_default(int i, int *nbVp)
 {
 	/*   int rank_in_node; */
 	int slot_size;
-	int task_nb;
 	int proc = -1;
 	int first;
 	int last;
-	int cpu_nb;
-	int total_tasks_number;
 	int cpu_per_task;
 	int j;
 
-	cpu_nb             = mpc_topology_get_pu_count(); // number of cpu per process
-	total_tasks_number = mpc_common_get_task_count();
+	int cpu_nb                  = mpc_topology_get_pu_count(); // number of cpu per process
+	int total_tasks_nb          = mpc_common_get_task_count();
+	int local_tasks_nb          = mpc_thread_get_local_tasks_nb();
+	int local_tasks_start_index = mpc_thread_get_local_tasks_start_index();
+
 	/*   rank_in_node = i - sctk_first_local; */
 	/*   mpc_common_nodebug("check for %d(%d) %d cpu",i,rank_in_node,cpu_nb); */
-	assume((sctk_last_local != 0) || (total_tasks_number == 1) || (mpc_common_get_process_rank() == 0));
-	task_nb      = sctk_last_local - sctk_first_local + 1;
-	slot_size    = task_nb / cpu_nb;
-	cpu_per_task = cpu_nb / task_nb;
+	assume((local_tasks_nb != 0) || (total_tasks_nb == 1) || (mpc_common_get_process_rank() == 0));
+	slot_size    = local_tasks_nb / cpu_nb;
+	cpu_per_task = cpu_nb / local_tasks_nb;
 
 	if (cpu_per_task < 1)
 	{
@@ -233,9 +247,9 @@ int mpc_thread_get_task_placement_and_count_default(int i, int *nbVp)
 
 	/* Normalize i if i the the global number instead of localnumber*/
 	// hmt
-	if (i >= task_nb)
+	if (i >= local_tasks_nb)
 	{
-		i = i - sctk_first_local;
+		i = i - local_tasks_start_index;
 	}
 
 	mpc_common_nodebug("i normalized=%d", i);
@@ -249,7 +263,7 @@ int mpc_thread_get_task_placement_and_count_default(int i, int *nbVp)
 		local_slot_size = slot_size;
 		mpc_common_nodebug("local_slot_size=%d", local_slot_size);
 
-		if ((task_nb % cpu_nb) > j)
+		if ((local_tasks_nb % cpu_nb) > j)
 		{
 			local_slot_size++;
 			mpc_common_nodebug("local_slot_size inside the if=%d", local_slot_size);
@@ -261,7 +275,7 @@ int mpc_thread_get_task_placement_and_count_default(int i, int *nbVp)
 
 		if ((i >= first) && (i <= last))
 		{
-			if ((cpu_nb % task_nb > j) && (cpu_nb > task_nb))
+			if ((cpu_nb % local_tasks_nb > j) && (cpu_nb > local_tasks_nb))
 			{
 				*nbVp = cpu_per_task + 1;
 			}
@@ -277,7 +291,7 @@ int mpc_thread_get_task_placement_and_count_default(int i, int *nbVp)
 		first = last + 1;
 		j++;
 
-		if ((cpu_nb % task_nb >= j) && (cpu_nb > task_nb))
+		if ((cpu_nb % local_tasks_nb >= j) && (cpu_nb > local_tasks_nb))
 		{
 			proc++;
 		}
@@ -305,7 +319,7 @@ int mpc_thread_get_task_placement_and_count_numa_packed(int i, int *nbVp)
 	cpu_nb = mpc_topology_get_pu_count();                       // number of cpu per process
 	nb_numa_node_per_node = mpc_topology_get_numa_node_count(); // number of numa nodes in the node
 	// config
-	int T = sctk_last_local - sctk_first_local + 1;             // number of task per node
+	int T = mpc_thread_get_local_tasks_nb();                    // number of task on the current node
 	int C = cpu_nb;                                             // number of cpu per node
 	int N = nb_numa_node_per_node;                              // number of numa nodes
 	int t = T % N;                                              // buffer task
@@ -475,9 +489,6 @@ static inline void __vp_placement_init_data(int *vp_start_thread, int *vp_thread
 		start_thread += total_tasks_number % mpc_common_get_process_count();
 	}
 
-	TODO("THIS GLOBAL IS UGLY");
-	sctk_first_local = start_thread;
-	sctk_last_local  = start_thread + local_threads - 1;
 	*vp_start_thread = start_thread;
 	*vp_thread_count = local_threads;
 }
@@ -813,6 +824,8 @@ void mpc_thread_spawn_mpi_tasks(void *(*mpi_task_start_func)(void *), void *arg)
 	int start_thread  = -1;
 	int local_threads = -1;
 	__vp_placement_init_data(&start_thread, &local_threads);
+	sctk_local_tasks_nb          = local_threads;
+	sctk_local_tasks_start_index = start_thread;
 
 	mpc_thread_t *threads = ( mpc_thread_t * )sctk_malloc(local_threads * sizeof(mpc_thread_t));
 
@@ -1024,7 +1037,7 @@ int _mpc_thread_create_vp(mpc_thread_t *restrict __threadp,
 	int new_binding = mpc_thread_get_task_placement(core);
 
 	core++;
-	mpc_common_debug_info("Task %d is bound to core %d", local_task_id, new_binding);
+	mpc_common_nodebug("Task %d is bound to core %d", local_task_id, new_binding);
 	int previous_binding = mpc_topology_bind_to_cpu(new_binding);
 
 	assert(new_binding == mpc_topology_get_current_cpu());
