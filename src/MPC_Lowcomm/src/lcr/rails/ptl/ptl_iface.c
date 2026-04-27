@@ -888,7 +888,7 @@ err:
 		};
 		lcr_ptl_chk(PtlMDBind(srail->net.nih, &md, &mem->mdh));
 
-		mem->match = atomic_fetch_add(&srail->net.rma.mem_uid, 1);
+		mem->match = atomic_fetch_add(&srail->net.rma.mem_uid, 0);
 
 		me = (ptl_me_t) {
 			.ct_handle   = PTL_CT_NONE,
