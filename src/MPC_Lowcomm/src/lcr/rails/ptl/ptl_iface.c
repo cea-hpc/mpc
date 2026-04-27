@@ -49,8 +49,12 @@
 	static inline void __ptl_set_limits(ptl_ni_limits_t *l)
 	{
 		*l = (ptl_ni_limits_t){
-			.max_entries            = INT_MAX,     /* Max number of entries allocated at any time */
-			.max_unexpected_headers = INT_MAX,     /* max number of headers at any time */
+			.max_entries = INT_MAX,                /* Max number of entries allocated at any time */
+#ifdef BXI_VERSION_3_R6_LITE
+				.max_unexpected_headers = 0,       /* max number of headers at any time */
+#else
+				.max_unexpected_headers = INT_MAX, /* max number of headers at any time */
+#endif
 			.max_mds           = INT_MAX,          /* Max number of MD allocated at any time */
 			.max_cts           = INT_MAX,          /* Max number of CT allocated at any time */
 			.max_eqs           = INT_MAX,          /* Max number of EQ allocated at any time */
