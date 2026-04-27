@@ -200,7 +200,7 @@ int mpc_common_debug_vprint(char *filename,
 			do                                                                                                           \
 			{                                                                                                            \
 				mpc_common_debug_print(__FILE__, __LINE__, __func__, MPC_COLOR_CHAR_DEFAULT, MPC_COMMON_LOG_LEVEL_DEBUG, \
-	MPC_COMMON_SCOPE_PROCESS, xstr(MPC_MODULE), s, ## __VA_ARGS__);                                                      \
+	MPC_COMMON_SCOPE_ALL, xstr(MPC_MODULE), s, ## __VA_ARGS__);                                                          \
 			}while (0)
 #else
 	#if defined(__GNUC__) || defined(__INTEL_COMPILER)
