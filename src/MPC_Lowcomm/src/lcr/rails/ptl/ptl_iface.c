@@ -883,7 +883,9 @@ err:
 
 		mem->success = 0;
 
-		mem->match = atomic_fetch_add(&srail->net.rma.mem_uid, 1);
+		// FIXME: Disabling matching on the mem_uid due to one sided issue.
+		//        Should be deal properly with matching activated.
+		mem->match = atomic_fetch_add(&srail->net.rma.mem_uid, 0);
 
 #ifdef BXI_VERSION_3
 			ptl_le_t le = (ptl_le_t) {
