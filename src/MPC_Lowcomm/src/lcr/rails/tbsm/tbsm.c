@@ -46,7 +46,7 @@
 
 #include <lcr/lcr_component.h>
 
-#define MPC_MODULE "Lowcomm/Tbsm"
+#define MPC_MODULE "LCR/TBSM"
 
 ssize_t lcr_tbsm_send_am_bcopy(_mpc_lowcomm_endpoint_t *ep,
                                uint8_t id,
@@ -64,7 +64,7 @@ ssize_t lcr_tbsm_send_am_bcopy(_mpc_lowcomm_endpoint_t *ep,
 	if (start == NULL)
 	{
 		// FIXME: Should be MPC_LOWCOMM_NO_RESOURCE but LCP does not handle pending request yet.
-		mpc_common_debug_error("LCR TBSM: could not allocate bcopy buffer.");
+		mpc_common_debug_error("could not allocate bcopy buffer.");
 		size = -1;
 		goto err;
 	}
@@ -78,13 +78,13 @@ ssize_t lcr_tbsm_send_am_bcopy(_mpc_lowcomm_endpoint_t *ep,
 	lcr_am_handler_t handler = ep->rail->am[id];
 	if (handler.cb == NULL)
 	{
-		mpc_common_debug_fatal("LCR TBSM: handler id %d not supported.", id);
+		mpc_common_debug_fatal("handler id %d not supported.", id);
 	}
 
 	size = handler.cb(handler.arg, start, size, LCR_IFACE_AM_LAYOUT_BUFFER);
 	if (size != MPC_LOWCOMM_SUCCESS)
 	{
-		mpc_common_debug_error("LCR TBSM: handler id %d failed.", id);
+		mpc_common_debug_error("handler id %d failed.", id);
 		goto err;
 	}
 
@@ -110,11 +110,11 @@ int lcr_tbsm_send_am_zcopy(_mpc_lowcomm_endpoint_t *ep,
 	size_t            tbsm_iov_cnt = 0;
 	size_t            send_length  = 0;
 
-	mpc_common_debug("LCR TBSM: send zcopy. ep=%p", ep);
+	mpc_common_nodebug("SEND. am zcopy. ep=%p", ep);
 
 	if (iovcnt > rail->network.tbsm.max_iov)
 	{
-		mpc_common_debug_error("LCR TBSM: exceeded maximal number if iov");
+		mpc_common_debug_error("exceeded maximal number if iov");
 		rc = MPC_LOWCOMM_ERROR;
 		goto err;
 	}
@@ -134,7 +134,7 @@ int lcr_tbsm_send_am_zcopy(_mpc_lowcomm_endpoint_t *ep,
 
 	if (send_length > rail->network.tbsm.eager_limit)
 	{
-		mpc_common_debug_error("LCR TBSM: exceeded maximal eager data length.");
+		mpc_common_debug_error("exceeded maximal eager data length.");
 		rc = MPC_LOWCOMM_ERROR;
 		goto err;
 	}
@@ -142,13 +142,13 @@ int lcr_tbsm_send_am_zcopy(_mpc_lowcomm_endpoint_t *ep,
 	lcr_am_handler_t handler = rail->am[id];
 	if (handler.cb == NULL)
 	{
-		mpc_common_debug_fatal("LCR TBSM: handler id %d not supported.", id);
+		mpc_common_debug_fatal("handler id %d not supported.", id);
 	}
 
 	rc = handler.cb(handler.arg, tbsm_iov, tbsm_iov_cnt, LCR_IFACE_AM_LAYOUT_IOV);
 	if (rc != MPC_LOWCOMM_SUCCESS)
 	{
-		mpc_common_debug_error("LCR TBSM: handler id %d failed.", id);
+		mpc_common_debug_error("handler id %d failed.", id);
 		goto err;
 	}
 
@@ -298,7 +298,7 @@ void lcr_tbsm_connect_on_demand(sctk_rail_info_t *rail, uint64_t uid)
 
 	if (ep != NULL)
 	{
-		mpc_common_debug_warning("LCR TBSM: connect on demand. endpoint %llu already exists.", ep->subrail_id);
+		mpc_common_debug_warning("connect on demand. endpoint %llu already exists.", ep->subrail_id);
 		return;
 	}
 
@@ -442,7 +442,7 @@ int lcr_tbsm_query_devices(lcr_component_t *component,
 	devices = sctk_malloc(num_devices * sizeof(*devices));
 	if (devices == NULL)
 	{
-		mpc_common_debug_error("LCR TBSM: could not allocate devices");
+		mpc_common_debug_error("could not allocate devices");
 		rc = MPC_LOWCOMM_ERROR;
 		goto err;
 	}
@@ -479,7 +479,7 @@ int lcr_tbsm_iface_open(int mngr_id, __UNUSED__ const char *device_name, int id,
 	lcr_rail_init(rail_config, driver_config, &iface);
 	if (iface == NULL)
 	{
-		mpc_common_debug_error("LCR TBSM: could not allocate rail");
+		mpc_common_debug_error("could not allocate rail");
 		rc = MPC_LOWCOMM_ERROR;
 		goto err;
 	}

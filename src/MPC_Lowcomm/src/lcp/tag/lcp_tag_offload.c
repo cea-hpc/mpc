@@ -44,7 +44,7 @@
 #include "mpc_common_debug.h"
 #include "mpc_common_compiler_def.h"
 
-#define MPC_MODULE "Lowcomm/LCP/TagOffload"
+#define MPC_MODULE "LCP/Tag"
 
 
 /* ============================================== */
@@ -596,7 +596,7 @@ int lcp_recv_eager_tag_offload_data(lcp_request_t *req, void *data, size_t lengt
 	int     rc           = MPC_LOWCOMM_SUCCESS;
 	ssize_t unpacked_len = 0;
 
-	mpc_common_debug("LCP: recv tag offload data req=%p, src=%d, tag=%d, comm=%d",
+	mpc_common_debug("RECV eager offload data. req=%p, src=%d, tag=%d, comm=%d",
 		req, req->recv.tag.src_tid, req->recv.tag.tag, req->recv.tag.comm);
 
 	/* Unpack necessary if datatype is derived or if

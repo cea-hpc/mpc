@@ -41,6 +41,8 @@
 
 #include "mpc_common_debug.h"
 
+#define MPC_MODULE "LCP/RMA"
+
 /** @addtogroup LCP_ATOMIC
  * @{
  */
@@ -119,9 +121,8 @@ static int lcp_atomic_post(lcp_request_t *req)
 
 	assert(req->send.ep->cap & LCR_IFACE_CAP_ATOMICS);
 
-	mpc_common_debug(
-		"LCP ATO: perform post. req=%p, task=%p, tid=%d, remote addr=%p, op=%s, value=%d", req, req->task,
-		req->task->tid, req->send.ato.remote_addr,
+	mpc_common_debug("ATOMIC POST. req=%p, task=%p, tid=%d, remote addr=%p, op=%s, value=%d",
+		req, req->task, req->task->tid, req->send.ato.remote_addr,
 		lcp_ato_sw_decode_op(req->send.ato.op), req->send.ato.value);
 
 	rc = lcp_atomic_do_post(ep, req->send.ato.value,
@@ -149,11 +150,9 @@ static int lcp_atomic_fetch(lcp_request_t *req)
 
 	assert(req->send.ep->cap & LCR_IFACE_CAP_ATOMICS);
 
-	mpc_common_debug("LCP ATO: perform fetch. req=%p, task=%p, tid=%d, remote addr=%p, op=%s, value=%d",
-		req, req->task,
-		req->task->tid, req->send.ato.remote_addr,
-		lcp_ato_sw_decode_op(req->send.ato.op),
-		req->send.ato.value);
+	mpc_common_debug("FETCH. req=%p, task=%p, tid=%d, remote addr=%p, op=%s, value=%d",
+		req, req->task, req->task->tid, req->send.ato.remote_addr,
+		lcp_ato_sw_decode_op(req->send.ato.op), req->send.ato.value);
 
 	rc = lcp_atomic_do_fetch(ep, req->send.ato.reply_buffer,
 		req->send.ato.value,
@@ -181,11 +180,9 @@ static int lcp_atomic_cswap(lcp_request_t *req)
 
 	assert(req->send.ep->cap & LCR_IFACE_CAP_ATOMICS);
 
-	mpc_common_debug("LCP ATO: perform cswap. req=%p, task=%p, tid=%d, remote addr=%p, op=%s, compare=%d, value=%d",
+	mpc_common_debug("CSWAP. req=%p, task=%p, tid=%d, remote addr=%p, op=%s, compare=%d, value=%d",
 		req, req->task, req->task->tid, req->send.ato.remote_addr,
-		lcp_ato_sw_decode_op(req->send.ato.op),
-		*(uint64_t *)req->send.ato.reply_buffer,
-		req->send.ato.value);
+		lcp_ato_sw_decode_op(req->send.ato.op), *(uint64_t *)req->send.ato.reply_buffer, req->send.ato.value);
 
 	rc = lcp_atomic_do_cswap(ep, req->send.ato.reply_buffer,
 		req->send.ato.value,

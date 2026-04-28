@@ -239,7 +239,7 @@ err:
 				if (!mpc_queue_is_empty(&ptl_ep->am_txq.ops))
 				{
 					ptl_ep->num_ops++;
-					mpc_common_debug("LCR PTL: push send. token num=%d, ep num=%d",
+					mpc_common_nodebug("LCR PTL: push send. token num=%d, ep num=%d",
 						ptl_ep->tokens, ptl_ep->num_ops);
 					mpc_queue_push(&ptl_ep->am_txq.ops, &op->elem);
 				}
@@ -560,14 +560,14 @@ err:
 		mpc_queue_push(&txq->ops, &op->elem);
 		mpc_common_spinlock_unlock(&txq->lock);
 
-		mpc_common_debug("LCR PTL: local key. lkey size=%llu, addr=%p, "
-			             "local offset=%llu, remote offset=%llu, "
-			             "cth=%llu, mdh=%llu.", lctx->size,
+		mpc_common_nodebug("LCR PTL: local key. lkey size=%llu, addr=%p, "
+			               "local offset=%llu, remote offset=%llu, "
+			               "cth=%llu, mdh=%llu.", lctx->size,
 			lctx->start, op->rma.local_offset,
 			op->rma.remote_offset,
 			op->rma.lkey->cth,
 			op->rma.lkey->mdh);
-		mpc_common_debug("LCR PTL: remote key. addr=%p, match=%llu", rctx->start,
+		mpc_common_nodebug("LCR PTL: remote key. addr=%p, match=%llu", rctx->start,
 			(uint64_t)op->rma.match);
 		rc = lcr_ptl_do_op(op);
 
@@ -644,9 +644,9 @@ err:
 		lcr_ptl_ep_info_t *  ptl_ep = &ep->data.ptl;
 		lcr_ptl_rail_info_t *srail  = &ep->rail->network.ptl;
 
-		mpc_common_debug("PTL: get tag remote key. "
-			             "iface=%p, remote nid=%lu, pid=%lu, remote off=%llu, pte idx=%d, "
-			             "local off=%p", ep->rail, ptl_ep->addr.id.phys.nid,
+		mpc_common_nodebug("PTL: get tag remote key. "
+			               "iface=%p, remote nid=%lu, pid=%lu, remote off=%llu, pte idx=%d, "
+			               "local off=%p", ep->rail, ptl_ep->addr.id.phys.nid,
 			ptl_ep->addr.id.phys.pid, remote_offset,
 			srail->net.tag.pti, local_offset);
 
@@ -768,7 +768,7 @@ err:
 		mpc_common_spinlock_lock(&txq->lock);
 		mpc_queue_push(&txq->ops, &op->elem);
 		mpc_common_spinlock_unlock(&txq->lock);
-		mpc_common_debug(
+		mpc_common_nodebug(
 			"LCR PTL: atomic post operation. type=%s, lkey=%p"
 			"op size=%llu, value=%llu, remote offset=%llu, cth=%llu, mdh=%llu, match=%llu.",
 			lcr_ptl_decode_atomic_op(op->ato.op),
@@ -836,7 +836,7 @@ err:
 		mpc_queue_push(&txq->ops, &op->elem);
 		mpc_common_spinlock_unlock(&txq->lock);
 
-		mpc_common_debug(
+		mpc_common_nodebug(
 			"LCR PTL: atomic fetch operation. type=%s, lkey=%p, op size=%llu, result=%p, "
 			"value=%llu, remote offset=%llu, cth=%llu, mdh=%llu, match=%llu.",
 			lcr_ptl_decode_atomic_op(op->ato.op),
@@ -905,7 +905,7 @@ err:
 		mpc_queue_push(&txq->ops, &op->elem);
 		mpc_common_spinlock_unlock(&txq->lock);
 
-		mpc_common_debug(
+		mpc_common_nodebug(
 			"LCR PTL: atomic cswap operation. type=%s, lkey=%p, op size=%llu, result=%p, "
 			"value=%llu, remote offset=%llu, cth=%llu, mdh=%llu, match=%llu.",
 			lcr_ptl_decode_atomic_op(op->ato.op),
@@ -969,7 +969,7 @@ err:
 
 		mpc_lowcomm_monitor_args_t *content = mpc_lowcomm_monitor_response_get_content(resp);
 
-		mpc_common_debug("LCR PTL: OD got %s", content->on_demand.data);
+		mpc_common_nodebug("LCR PTL: OD got %s", content->on_demand.data);
 		lcr_ptl_addr_t out_id;
 
 		lcr_ptl_data_deserialize(content->on_demand.data, /* the buffer containing raw data */

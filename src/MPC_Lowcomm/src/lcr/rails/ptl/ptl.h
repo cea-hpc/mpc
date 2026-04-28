@@ -743,11 +743,10 @@
 	{
 		int rc = MPC_LOWCOMM_SUCCESS;
 
-		mpc_common_debug("LCR PTL: op id=%d, op=%p, type=%s, size=%llu, nid=%llu, pid=%llu, pti=%d, "
-			             "mdh=%llu, txq=%p, hdr=0x%08x.",
-			op->id, op, lcr_ptl_op_decode(op), op->size, op->addr.phys.nid,
-			op->addr.phys.pid, op->pti,
-			op->mdh, op->txq, op->hdr);
+		mpc_common_nodebug(
+			"LCR PTL: op id=%d, op=%p, type=%s, size=%llu, nid=%llu, pid=%llu, pti=%d, mdh=%llu, txq=%p, hdr=0x%08x.",
+			op->id, op, lcr_ptl_op_decode(op), op->size,
+			op->addr.phys.nid, op->addr.phys.pid, op->pti, op->mdh, op->txq, op->hdr);
 
 		switch (op->type)
 		{
@@ -880,8 +879,7 @@
 		op = mpc_mpool_pop(srail->net.tk.ops);
 		if (op == NULL)
 		{
-			mpc_common_debug("LCR PTL: could not allocate "
-				             "token operation.");
+			mpc_common_debug_warning("LCR PTL: could not allocate token operation.");
 			rc = MPC_LOWCOMM_NO_RESOURCE;
 			goto err;
 		}
@@ -910,7 +908,7 @@ err:
 		op = mpc_mpool_pop(srail->net.tk.ops);
 		if (op == NULL)
 		{
-			mpc_common_debug("LCR PTL: could not allocate token operation.");
+			mpc_common_debug_warning("LCR PTL: could not allocate token operation.");
 			rc = MPC_LOWCOMM_NO_RESOURCE;
 			goto err;
 		}
@@ -938,8 +936,7 @@ err:
 		if (!mpc_queue_is_empty(&ep->am_txq.ops))
 		{
 			ep->num_ops++;
-			mpc_common_debug("LCR PTL: push send. token num=%d, ep num=%d",
-				ep->tokens, ep->num_ops);
+			mpc_common_nodebug("LCR PTL: push send. token num=%d, ep num=%d", ep->tokens, ep->num_ops);
 			mpc_queue_push(&ep->am_txq.ops, &op->elem);
 		}
 		else

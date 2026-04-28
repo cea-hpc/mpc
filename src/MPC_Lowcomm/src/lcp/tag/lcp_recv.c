@@ -41,7 +41,7 @@
 
 #include "mpc_common_debug.h"
 
-#define MPC_MODULE "Lowcomm/LCP/Recv"
+#define MPC_MODULE "LCP/Recv"
 
 lcp_status_ptr_t lcp_tag_recv_nb(lcp_manager_h mngr, lcp_task_h task, void *buffer,
                                  size_t count, lcp_tag_info_t *tag_info, int32_t src_mask,
@@ -81,7 +81,7 @@ lcp_status_ptr_t lcp_tag_recv_nb(lcp_manager_h mngr, lcp_task_h task, void *buff
 
 		return (lcp_status_ptr_t)(int64_t)rc;
 	}
-	mpc_common_nodebug("LCP: post recv tag task=%p, comm=%d, src=%d, tag=%0#x, length=%d, buf=%p, req=%p",
+	mpc_common_debug("RECV post tag. task=%p, comm=%d, src=%d, tag=%0#x, length=%d, buf=%p, req=%p.",
 		task, req->recv.tag.comm, req->recv.tag.src_tid, req->recv.tag.tag, count, buffer, req);
 
 	req->state.offloaded = 0;

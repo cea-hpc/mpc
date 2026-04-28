@@ -42,6 +42,8 @@
 
 #include "mpc_common_debug.h"
 
+#define MPC_MODULE "LCP/RMA"
+
 enum
 {
 	LCP_FLUSH_SCOPE_MANAGER = 0,
@@ -86,8 +88,7 @@ static ssize_t lcp_rma_unpack(void *req, const void *dest, size_t arg)
  */
 static void lcp_rma_request_complete(lcr_completion_t *comp)
 {
-	lcp_request_t *req = mpc_container_of(comp, lcp_request_t,
-		state.comp);
+	lcp_request_t *req = mpc_container_of(comp, lcp_request_t, state.comp);
 
 	req->state.remaining -= comp->sent;
 	if (req->state.remaining == 0)
@@ -127,8 +128,6 @@ __UNUSED__ static int lcp_rma_progress_bcopy(lcp_request_t *req)
 	lcp_ep_h       ep = req->send.ep;
 	lcp_chnl_idx_t cc = ep->rma_chnl;
 
-	mpc_common_debug_info("LCP: send put bcopy remote addr=%p, dest=%d",
-		req->send.rma.remote_addr, ep->uid);
 	if (req->send.rma.is_get)
 	{
 		// FIXME: not implemented
@@ -317,7 +316,7 @@ lcp_status_ptr_t lcp_put_nb(lcp_ep_h ep, lcp_task_h task, void *buffer, size_t l
 		return LCP_STATUS_PTR(rc);
 	}
 
-	mpc_common_nodebug("LCP RMA: perform put. req=%p, task=%p, buffer=%p, length=%d, remote addr=%p.",
+	mpc_common_debug("PUT. req=%p, task=%p, buffer=%p, length=%d, remote addr=%p.",
 		req, task, buffer, length, remote_addr);
 
 	ret = lcp_request_send(req);
@@ -362,7 +361,7 @@ lcp_status_ptr_t lcp_get_nb(lcp_ep_h ep, lcp_task_h task, void *buffer,
 		return LCP_STATUS_PTR(rc);
 	}
 
-	mpc_common_nodebug("LCP RMA: perform get. req=%p, task=%p, buffer=%p, length=%d, remote addr=%p.",
+	mpc_common_debug("GET. req=%p, task=%p, buffer=%p, length=%d, remote addr=%p.",
 		req, task, buffer, length, remote_addr);
 
 	ret = lcp_request_send(req);
@@ -389,6 +388,7 @@ static int lcp_flush_manager_nb(lcp_request_t *req)
 		}
 	}
 
+	mpc_common_debug("FLUSH manager. req=%p mngr=%p.", req, req->mngr);
 	// If nothing to flush, we need to complete the request
 	if (req->state.comp.count == 0)
 	{
@@ -429,6 +429,7 @@ static int lcp_flush_ep_nb(lcp_request_t *req)
 
 	req->state.comp.count = mpc_bitmap_popcount(ep->rma_bmap);
 
+	mpc_common_debug("FLUSH ep. req=%p ep=%p.", req, req->send.ep);
 	// If nothing to flush, we need to complete the request
 	if (req->state.comp.count == 0)
 	{
@@ -464,6 +465,7 @@ static int lcp_flush_mem_nb(lcp_request_t *req)
 
 	req->state.comp.count = mpc_bitmap_popcount(mem->bm);
 
+	mpc_common_debug("FLUSH ep. req=%p mem=%p.", req, req->state.lmem);
 	// If nothing to flush, we need to complete the request
 	if (req->state.comp.count == 0)
 	{
@@ -502,6 +504,7 @@ static int lcp_flush_mem_ep_nb(lcp_request_t *req)
 	// NOTE: at least one channel must support RMA flush.
 	assert(req->send.ep->cap & LCR_IFACE_CAP_RMA);
 
+	mpc_common_debug("FLUSH mem ep. req=%p mem=%p ep=%p.", req, req->state.lmem, req->send.ep);
 	req->state.comp.count = mpc_bitmap_popcount(flush_map);
 	// If nothing to flush, we need to complete the request
 	if (req->state.comp.count == 0)
@@ -545,8 +548,7 @@ static lcp_status_ptr_t lcp_request_send_flush(lcp_request_t *req)
 
 	case MPC_LOWCOMM_NO_RESOURCE:
 		// TODO: implement thread-safe pending queue
-		mpc_common_debug_error("LCP RMA: no resource flush "
-			                   "operation not implemented.");
+		mpc_common_debug_error("no resource flush operation not implemented.");
 		not_implemented();
 		ret = req + 1;
 		break;
@@ -579,12 +581,11 @@ lcp_status_ptr_t lcp_flush_nb(lcp_manager_h mngr, lcp_task_h task,
 	req = lcp_request_get_param(task, param);
 	if (req == NULL)
 	{
-		mpc_common_debug_error("LCP RMA: could not allocate flush request.");
+		mpc_common_debug_error("could not allocate flush request.");
 		return LCP_STATUS_PTR(MPC_LOWCOMM_ERROR);
 	}
 
-	LCP_REQUEST_INIT_RMA_FLUSH(req, mngr, task, 0, param->request, NULL,
-		NULL, 0, 0, param->datatype);
+	LCP_REQUEST_INIT_RMA_FLUSH(req, mngr, task, 0, param->request, NULL, NULL, 0, 0, param->datatype);
 
 	req->state.comp.count   = 0;
 	req->state.comp.sent    = 0;
@@ -627,7 +628,7 @@ lcp_status_ptr_t lcp_flush_nb(lcp_manager_h mngr, lcp_task_h task,
 		break;
 
 	default:
-		mpc_common_debug_error("LCP RMA: unknown flush operation.");
+		mpc_common_debug_error("unknown flush operation.");
 		rc = MPC_LOWCOMM_ERROR;
 		return LCP_STATUS_PTR(rc);
 

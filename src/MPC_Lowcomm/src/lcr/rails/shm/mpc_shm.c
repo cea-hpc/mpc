@@ -1102,9 +1102,8 @@ int _mpc_shm_storage_release(__UNUSED__ struct _mpc_shm_storage *storage)
 void mpc_shm_connect_on_demand(__UNUSED__ struct sctk_rail_info_s *rail, __UNUSED__ mpc_lowcomm_peer_uid_t dest)
 {
 	UNUSED(rail);
-	// NOTE: nothing to be done since all transport endpoints were created at
-	//      init.
-	mpc_common_debug("On demand to %llu", dest);
+	// NOTE: nothing to be done since all transport endpoints were created at init.
+	mpc_common_nodebug("On demand to %llu", dest);
 }
 
 void _mpc_lowcomm_shm_endpoint_info_init(_mpc_lowcomm_shm_endpoint_info_t *infos,

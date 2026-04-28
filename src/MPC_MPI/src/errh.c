@@ -229,7 +229,7 @@ int _mpc_mpi_errhandler_free_no_lock(_mpc_mpi_errhandler_t errh)
 	{
 		if (_mpc_mpi_errhandler_can_be_released(errh))
 		{
-			mpc_common_debug("ERR: can be released");
+			mpc_common_nodebug("ERR: can be released");
 			memset(errh, 0, sizeof(struct MPI_ABI_Errhandler));
 		}
 	}

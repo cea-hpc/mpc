@@ -728,9 +728,7 @@ void mpc_lowcomm_topo_comm_set(mpc_lowcomm_communicator_t comm, int root, mpc_ha
 
 	if (index != -1)
 	{
-#ifdef MPC_ENABLE_DEBUG_MESSAGES
-			mpc_common_debug("SET | TASK %d | UPDATE | ROOT %d -> INDEX %d | ADR %p", task_rank, root, index, hw_info);
-#endif
+		mpc_common_nodebug("SET | TASK %d | UPDATE | ROOT %d -> INDEX %d | ADR %p", task_rank, root, index, hw_info);
 		comm->topo_comms[task_rank].hw_infos[index] = hw_info;
 		return;
 	}
@@ -752,9 +750,7 @@ void mpc_lowcomm_topo_comm_set(mpc_lowcomm_communicator_t comm, int root, mpc_ha
 		comm->topo_comms[task_rank].size *= 2;
 	}
 
-#ifdef MPC_ENABLE_DEBUG_MESSAGES
-		mpc_common_debug("SET | TASK %d | ROOT %d -> INDEX %d | ADR %p", task_rank, root, index, hw_info);
-#endif
+	mpc_common_nodebug("SET | TASK %d | ROOT %d -> INDEX %d | ADR %p", task_rank, root, index, hw_info);
 	comm->topo_comms[task_rank].roots[index]    = root;
 	comm->topo_comms[task_rank].hw_infos[index] = hw_info;
 }
@@ -1230,7 +1226,7 @@ static inline void __comm_free(mpc_lowcomm_communicator_t comm)
 	{
 		int lrefcount = _mpc_lowcomm_communicator_relax(comm->left_comm);
 
-		mpc_common_debug("FREE LEFT %d", lrefcount);
+		mpc_common_nodebug("FREE LEFT %d", lrefcount);
 
 		assume(lrefcount >= 0);
 
@@ -1244,7 +1240,7 @@ static inline void __comm_free(mpc_lowcomm_communicator_t comm)
 	{
 		int rrefcount = _mpc_lowcomm_communicator_relax(comm->right_comm);
 
-		mpc_common_debug("FREE RIGHT %d", rrefcount);
+		mpc_common_nodebug("FREE RIGHT %d", rrefcount);
 
 		assume(rrefcount >= 0);
 

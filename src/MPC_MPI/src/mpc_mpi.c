@@ -7932,7 +7932,7 @@ int PMPIX_Swap(void **sendrecv_buf, int remote_rank, MPI_Count size, MPI_Comm co
 			return res;
 		}
 
-		mpc_common_debug("SWAPPING ");
+		mpc_common_nodebug("SWAPPING ");
 
 		/* Replace by the remote ptr */
 		*sendrecv_buf = tmp_ptr;
@@ -7949,7 +7949,7 @@ int PMPIX_Swap(void **sendrecv_buf, int remote_rank, MPI_Count size, MPI_Comm co
 			tmp_buff, size, MPI_BYTE, remote_rank, 58740,
 			comm, MPI_STATUS_IGNORE);
 
-		mpc_common_debug("COPYING !");
+		mpc_common_nodebug("COPYING !");
 
 		if (res != MPI_SUCCESS)
 		{
@@ -8003,7 +8003,7 @@ int PMPIX_Exchange(void **send_buf, void **recvbuff, int remote_rank, MPI_Count 
 			return res;
 		}
 
-		mpc_common_debug("SWAPPING EX!");
+		mpc_common_nodebug("SWAPPING EX!");
 	}
 	else
 	{
@@ -8013,7 +8013,7 @@ int PMPIX_Exchange(void **send_buf, void **recvbuff, int remote_rank, MPI_Count 
 			*recvbuff, size, MPI_BYTE, remote_rank, 58740,
 			comm, MPI_STATUS_IGNORE);
 
-		mpc_common_debug("COPYING EX!");
+		mpc_common_nodebug("COPYING EX!");
 
 		if (res != MPI_SUCCESS)
 		{

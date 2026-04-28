@@ -175,7 +175,7 @@ err:
 		tk->pool++;
 		mpc_common_spinlock_unlock(&tk->lock);
 
-		mpc_common_debug("LCR PTL: token release. nid=%llu, pid=%llu, pool tokens=%d.",
+		mpc_common_nodebug("LCR PTL: token release. nid=%llu, pid=%llu, pool tokens=%d.",
 			remote.phys.nid,
 			remote.phys.pid,
 			tk->pool);
@@ -302,8 +302,8 @@ unlock:
 				rsc->req.granted   = 0;
 				rsc->req.scheduled = 0;
 
-				mpc_common_debug("LCR PTL: Received TOKEN REQUEST. nid=%llu, pid=%llu, "
-					             "num token requested=%d", ev->initiator.phys.nid,
+				mpc_common_nodebug("LCR PTL: Received TOKEN REQUEST. nid=%llu, pid=%llu, "
+					               "num token requested=%d", ev->initiator.phys.nid,
 					ev->initiator.phys.pid, rsc->req.requested);
 
 				/* Push to exhausted list to be granted tokens during distribution. */
@@ -316,8 +316,8 @@ unlock:
 				token_num = LCR_PTL_CTRL_HDR_GET_TOKEN_NUM(ev->hdr_data);
 				ep        = srail->ept[LCR_PTL_CTRL_HDR_GET_TX_ID(ev->hdr_data)];
 
-				mpc_common_debug("LCR PTL: Received TOKEN GRANT. nid=%llu, pid=%llu, "
-					             "num token granted=%d, ", ev->initiator.phys.nid,
+				mpc_common_nodebug("LCR PTL: Received TOKEN GRANT. nid=%llu, pid=%llu, "
+					               "num token granted=%d, ", ev->initiator.phys.nid,
 					ev->initiator.phys.pid, token_num);
 
 				/* Add tokens to sender's TX Queue. */

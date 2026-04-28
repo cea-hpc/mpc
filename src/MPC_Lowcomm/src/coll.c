@@ -1588,7 +1588,7 @@ static void _mpc_coll_noalloc_barrier(const mpc_lowcomm_communicator_t communica
 					mpc_common_nodebug("Send barrier message %d -> %d (l.%d)...", myself, dest, __LINE__);
 					_mpc_coll_message_send(communicator, myself, dest, tag, &c, 1, MPC_LOWCOMM_BARRIER_MESSAGE,
 						_mpc_coll_message_table_get_item(&table, OPT_NOALLOC_MAX_ASYNC), 0);
-					mpc_common_debug("Receive barrier message %d -> %d (l.%d)...", dest, myself, __LINE__);
+					mpc_common_nodebug("Receive barrier message %d -> %d (l.%d)...", dest, myself, __LINE__);
 					_mpc_coll_message_recv(communicator, dest, myself, tag, &c, 1, MPC_LOWCOMM_BARRIER_MESSAGE,
 						_mpc_coll_message_table_get_item(&table, OPT_NOALLOC_MAX_ASYNC),
 						0);
