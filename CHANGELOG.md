@@ -8,6 +8,9 @@ All notable changes to this project will be documented in this file. The format 
 
 ### Changed
 
+- **MPI**
+  - Added MPI 4.1 errors
+
 ### Removed
 
 ### Deprecated
@@ -15,8 +18,14 @@ All notable changes to this project will be documented in this file. The format 
 ### Fixed
 
 - **Low Comm**
-  - lcp active message rendezvous container memory leak
-
+  - LCP active message rendezvous container memory leak
+  - Finish the implementation of the various types of flush
+  - CMA support test between processes leading to more communications going though CMA
+  - Atomics with double precision floating point numbers
+- **MPI**
+  - Compute the correct inclusive UB for predefined datatypes
+  - Handle NULL MPI_Info duplication
+  - Comm_split special case: duplicate the communicator when only one color instead of referencing it
 - **OpenMP**
   - Fix `omp_get_max_threads` to give a lower bound estimation with respect to topology when in hybrid MPI/OpenMP mode.
 
