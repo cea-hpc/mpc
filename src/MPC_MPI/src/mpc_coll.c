@@ -47,6 +47,8 @@
 #define ALLOW_TOPO_COMM 1
 #define TOPO_MAX_LEVEL  1
 
+#define MPC_MODULE "MPI/Coll"
+
 /**
  * @brief This enables debugging in the MPC_COLL file
  *
@@ -1864,14 +1866,7 @@ static inline int ___collectives_send_type(const void *buffer,
 			MPI_Comm_group(MPI_COMM_WORLD, &global_group);
 			MPI_Group_translate_ranks(local_group, 1, &dest, global_group, &peer_global_rank);
 			mpc_common_debug("%sSEND | % 4d (% 4d) -> % 4d (% 4d) (count=%d) : %p | COMM %p",
-				__debug_indentation,
-				rank,
-				global_rank,
-				dest,
-				peer_global_rank,
-				count,
-				buffer,
-				comm);
+				__debug_indentation, rank, global_rank, dest, peer_global_rank, count, buffer, comm);
 		}
 #endif
 
@@ -2237,14 +2232,11 @@ static inline int ___collectives_create_hardware_comm_unguided(MPI_Comm comm, in
 			    _mpc_cl_comm_rank(hwcomm[level_num + 1], &vrank);
 
 #ifdef MPC_COLL_EXTRA_DEBUG_ENABLED
+				int tmp_rank, tmp_size;
 				_mpc_cl_comm_rank(hwcomm[level_num + 1], &tmp_rank);
 				_mpc_cl_comm_size(hwcomm[level_num + 1], &tmp_size);
 				mpc_common_debug("%sRANK %d / %d | SPLIT COMM | SUBRANK %d / %d",
-				__debug_indentation,
-				rank,
-				size,
-				tmp_rank,
-				tmp_size);
+				__debug_indentation, rank, size, tmp_rank, tmp_size);
 #endif
 
 			level_num++;
@@ -2320,14 +2312,11 @@ static inline int ___collectives_create_master_hardware_comm_unguided(int vrank,
 #ifdef MPC_COLL_EXTRA_DEBUG_ENABLED
 			if (color == 0)
 			{
+				int tmp_rank, tmp_size;
 				_mpc_cl_comm_rank(rootcomm[i], &tmp_rank);
 				_mpc_cl_comm_size(rootcomm[i], &tmp_size);
 				mpc_common_debug("%sRANK %d / %d | SPLIT ROOT | SUBRANK %d / %d",
-					__debug_indentation,
-					rank,
-					size,
-					tmp_rank,
-					tmp_size);
+					__debug_indentation, rank, size, tmp_rank, tmp_size);
 			}
 #endif
 	}
@@ -7849,11 +7838,6 @@ int ___collectives_gather_switch(const void *sendbuf,
 		}
 #endif
 
-	if (sendcount == 0)
-	{
-		return MPI_SUCCESS;
-	}
-
 	enum
 	{
 		NBC_GATHER_LINEAR,
@@ -10861,11 +10845,6 @@ int ___collectives_allgather_switch(const void *sendbuf,
 			strncat(__debug_indentation, "\t", DBG_INDENT_LEN - 1);
 		}
 #endif
-
-	if (sendcount == 0 && sendbuf != MPI_IN_PLACE)
-	{
-		return MPI_SUCCESS;
-	}
 
 	enum
 	{

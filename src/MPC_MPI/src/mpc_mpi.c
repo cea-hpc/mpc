@@ -17173,19 +17173,9 @@ int PMPI_Gather(const void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 		return res;
 	}
 
-	if ((sendcnt == 0 || recvcnt == 0) && !mpc_lowcomm_communicator_is_intercomm(comm))
-	{
-		return MPI_SUCCESS;
-	}
-
 	if (sendbuf == recvbuf && rank == root)
 	{
 		MPI_ERROR_REPORT(comm, MPI_ERR_ARG, "");
-	}
-
-	if (sendtype != recvtype)
-	{
-		MPI_ERROR_REPORT(comm, MPI_ERR_TYPE, "Mismatched datatypes");
 	}
 
 	/* Error checking */
@@ -17205,22 +17195,19 @@ int PMPI_Gather(const void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 			mpi_check_count(sendcnt, comm);
 			mpi_check_type(sendtype, comm);
 			mpi_check_type_committed(sendtype, comm);
+			if (sendtype != recvtype)
+			{
+				MPI_ERROR_REPORT(comm, MPI_ERR_TYPE, "Mismatched datatypes");
+			}
 		}
 		mpi_check_buf(recvbuf, comm);
 		mpi_check_count(recvcnt, comm);
 		mpi_check_type_committed(recvtype, comm);
 	}
 
-	if ((0 == sendcnt && MPI_ROOT != root
-	     && (rank != root
-	         || (rank == root && MPI_IN_PLACE != sendbuf)
-	         )
-	     )
+	if ((0 == sendcnt && MPI_ROOT != root && (rank != root || (rank == root && MPI_IN_PLACE != sendbuf)))
 	    || (rank == root && MPI_IN_PLACE == sendbuf && 0 == recvcnt)
-	    || (0 == recvcnt
-	        && (MPI_ROOT == root || MPI_PROC_NULL == root)
-	        )
-	    )
+	    || (0 == recvcnt && (MPI_ROOT == root || MPI_PROC_NULL == root)))
 	{
 		return MPI_SUCCESS;
 	}
