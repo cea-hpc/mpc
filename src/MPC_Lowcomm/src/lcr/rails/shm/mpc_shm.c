@@ -453,7 +453,7 @@ int mpc_shm_has_cma_support(struct _mpc_shm_storage *storage)
 		pid_t remote_pid = storage->pids[i];
 		mpc_lowcomm_peer_uid_t *remote_uid_addresses = storage->remote_uid_addresses[i];
 		mpc_lowcomm_peer_uid_t  remote_uid_cma       = 0;
-		mpc_lowcomm_peer_uid_t  remote_uid_value     = mpc_lowcomm_monitor_local_uid_of(i);
+		mpc_lowcomm_peer_uid_t  remote_uid_value     = storage->uids[i];
 
 		if (__do_cma_read(remote_pid, remote_uid_addresses, &remote_uid_cma, sizeof(mpc_lowcomm_peer_uid_t)))
 		{
