@@ -20,6 +20,6 @@
 #                                                                      #
 ########################################################################
 mpc_headerdir=$(pkgincludedir)
-mpc_header_HEADERS= $(abs_srcdir)/include/shmem.h
+mpc_header_HEADERS= $(abs_srcdir)/include/shmem.h $(abs_srcdir)/include/pshmem.h $(abs_srcdir)/include/shmemx.h
 
 SUBDIRS=src

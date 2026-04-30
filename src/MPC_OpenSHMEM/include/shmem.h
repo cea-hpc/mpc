@@ -20,7 +20,8 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#pragma once
+#ifndef MPC_OPENSHMEM_API_H_
+#define MPC_OPENSHMEM_API_H_
 
 #include <stddef.h>
 #include <stdint.h>
@@ -44,85 +45,90 @@
  * Constants *
  *************/
 
-/**
- * @name OpenSHMEM thread support levels
- * @{
- */
-/**
- * @var SHMEM_THREAD_SINGLE
- * @brief No support for multithreaded application is granted
- */
-/**
- * @var SHMEM_THREAD_FUNNELED
- * @brief Support for only one thread invoking OpenSHMEM API at a time is
- * granted
- */
-/**
- * @var SHMEM_THREAD_SERIALIZED
- * @brief Support for non concurrent OpenSHMEM API calls is granted
- */
-/**
- * @var SHMEM_THREAD_MULTIPLE
- * @brief Full support for multithreading in OpenSHMEM calls
- */
+// NOTE: Only define constants once
+#ifndef MPC_OPENSHMEM_PROFILING_API_H_
+
+	/**
+	 * @name OpenSHMEM thread support levels
+	 * @{
+	 */
+	/**
+	 * @var SHMEM_THREAD_SINGLE
+	 * @brief No support for multithreaded application is granted
+	 */
+	/**
+	 * @var SHMEM_THREAD_FUNNELED
+	 * @brief Support for only one thread invoking OpenSHMEM API at a time is
+	 * granted
+	 */
+	/**
+	 * @var SHMEM_THREAD_SERIALIZED
+	 * @brief Support for non concurrent OpenSHMEM API calls is granted
+	 */
+	/**
+	 * @var SHMEM_THREAD_MULTIPLE
+	 * @brief Full support for multithreading in OpenSHMEM calls
+	 */
 
 #if __STDC_VERSION__ >= 202300L
-	constexpr int SHMEM_THREAD_SINGLE     = 0;
-	constexpr int SHMEM_THREAD_FUNNELED   = 1024;
-	constexpr int SHMEM_THREAD_SERIALIZED = 2048;
-	constexpr int SHMEM_THREAD_MULTIPLE   = 4096;
+		constexpr int SHMEM_THREAD_SINGLE     = 0;
+		constexpr int SHMEM_THREAD_FUNNELED   = 1024;
+		constexpr int SHMEM_THREAD_SERIALIZED = 2048;
+		constexpr int SHMEM_THREAD_MULTIPLE   = 4096;
 #else
-	static const int SHMEM_THREAD_SINGLE     = 0;
-	static const int SHMEM_THREAD_FUNNELED   = 1024;
-	static const int SHMEM_THREAD_SERIALIZED = 2048;
-	static const int SHMEM_THREAD_MULTIPLE   = 4096;
+		static const int SHMEM_THREAD_SINGLE     = 0;
+		static const int SHMEM_THREAD_FUNNELED   = 1024;
+		static const int SHMEM_THREAD_SERIALIZED = 2048;
+		static const int SHMEM_THREAD_MULTIPLE   = 4096;
 #endif
 
-/** @} */ // OpenSHMEM thread support levels
+	/** @} */ // OpenSHMEM thread support levels
 
-/**
- * @name OpenSHMEM library information
- * @{
- */
-/**
- * @var SHMEM_MAJOR_VERSION
- * @brief Integer representing the major version of OpenSHMEM Specification in use
- */
-/**
- * @var SHMEM_MINOR_VERSION
- * @brief Integer representing the minor version of OpenSHMEM Specification in use
- */
-/**
- * @var SHMEM_MAX_NAME_LEN
- * @brief Integer representing the maximum length of SHMEM_VENDOR_STRING
- */
-/**
- * @var SHMEM_VENDOR_STRING
- * @brief String representing vendor defined information
- */
+	/**
+	 * @name OpenSHMEM library information
+	 * @{
+	 */
+	/**
+	 * @var SHMEM_MAJOR_VERSION
+	 * @brief Integer representing the major version of OpenSHMEM Specification in use
+	 */
+	/**
+	 * @var SHMEM_MINOR_VERSION
+	 * @brief Integer representing the minor version of OpenSHMEM Specification in use
+	 */
+	/**
+	 * @var SHMEM_MAX_NAME_LEN
+	 * @brief Integer representing the maximum length of SHMEM_VENDOR_STRING
+	 */
+	/**
+	 * @var SHMEM_VENDOR_STRING
+	 * @brief String representing vendor defined information
+	 */
 
 #if __STDC_VERSION__ >= 202300L
-	constexpr int SHMEM_MAJOR_VERSION = 1;
-	[[deprecated]] constexpr int _SHMEM_MAJOR_VERSION = SHMEM_MAJOR_VERSION;
-	constexpr int SHMEM_MINOR_VERSION = 6;
-	[[deprecated]] constexpr int _SHMEM_MINOR_VERSION = SHMEM_MINOR_VERSION;
-	constexpr int SHMEM_MAX_NAME_LEN = 32;
-	[[deprecated]] constexpr int _SHMEM_MAX_NAME_LEN     = 32;
-	constexpr char SHMEM_VENDOR_STRING[]                 = "MPC";
-	[[deprecated]] constexpr char _SHMEM_VENDOR_STRING[] = "MPC";
+		constexpr int SHMEM_MAJOR_VERSION = 1;
+		[[deprecated]] constexpr int _SHMEM_MAJOR_VERSION = SHMEM_MAJOR_VERSION;
+		constexpr int SHMEM_MINOR_VERSION = 6;
+		[[deprecated]] constexpr int _SHMEM_MINOR_VERSION = SHMEM_MINOR_VERSION;
+		constexpr int SHMEM_MAX_NAME_LEN = 32;
+		[[deprecated]] constexpr int _SHMEM_MAX_NAME_LEN     = 32;
+		constexpr char SHMEM_VENDOR_STRING[]                 = "MPC";
+		[[deprecated]] constexpr char _SHMEM_VENDOR_STRING[] = "MPC";
 
 #else
-	static const int SHMEM_MAJOR_VERSION = 1;
-	__attribute__((deprecated)) static const int _SHMEM_MAJOR_VERSION = SHMEM_MAJOR_VERSION;
-	static const int SHMEM_MINOR_VERSION = 6;
-	__attribute__((deprecated)) static const int _SHMEM_MINOR_VERSION = SHMEM_MINOR_VERSION;
-	static const int SHMEM_MAX_NAME_LEN = 32;
-	__attribute__((deprecated)) static const int _SHMEM_MAX_NAME_LEN = 32;
-	static const char SHMEM_VENDOR_STRING[] = "MPC";
-	__attribute__((deprecated)) static const char _SHMEM_VENDOR_STRING[] = "MPC";
+		static const int SHMEM_MAJOR_VERSION = 1;
+		__attribute__((deprecated)) static const int _SHMEM_MAJOR_VERSION = SHMEM_MAJOR_VERSION;
+		static const int SHMEM_MINOR_VERSION = 6;
+		__attribute__((deprecated)) static const int _SHMEM_MINOR_VERSION = SHMEM_MINOR_VERSION;
+		static const int SHMEM_MAX_NAME_LEN = 32;
+		__attribute__((deprecated)) static const int _SHMEM_MAX_NAME_LEN = 32;
+		static const char SHMEM_VENDOR_STRING[] = "MPC";
+		__attribute__((deprecated)) static const char _SHMEM_VENDOR_STRING[] = "MPC";
 #endif
 
-/** @} */ // OpenSHMEM library information
+	/** @} */ // OpenSHMEM library information
+
+#endif /* MPC_OPENSHMEM_PROFILING_API_H_ */
 
 /**
  * @defgroup MPC_OPENSHMEM_API_GENERAL Setup, Exit and Query
@@ -1092,3 +1098,5 @@ void shmem_barrier_all(void);
 
 /** @} */ // MPC_OPENSHMEM_API_COLL_SYNC
 /** @} */ // MPC_OPENSHMEM_API
+
+#endif // !MPC_OPENSHMEM_API_H_
