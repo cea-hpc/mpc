@@ -116,9 +116,9 @@ void mpc_openshmem_memory_symmetric_stack_free(const void *ptr)
 	}
 }
 
-void mpc_openshmem_memory_symmetric_stack_deinit(void)
+void mpc_openshmem_memory_symmetric_stack_deinit(void *start_addr)
 {
-	sctk_free(_mpc_openshmem_stack_info.bottom);
+	sctk_free(start_addr);
 }
 
 /** @} */ // openshmem_memory

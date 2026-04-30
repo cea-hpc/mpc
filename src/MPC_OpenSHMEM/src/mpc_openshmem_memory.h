@@ -53,6 +53,6 @@ void mpc_openshmem_memory_symmetric_stack_free(const void *ptr);
 
 /** @brief Relinquish the symmetric stack
  */
-void mpc_openshmem_memory_symmetric_stack_deinit(void);
+void mpc_openshmem_memory_symmetric_stack_deinit(void *start_addr);
 
 /** @} */ // openshmem_internals
