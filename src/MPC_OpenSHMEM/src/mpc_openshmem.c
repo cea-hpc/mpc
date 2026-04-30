@@ -136,6 +136,12 @@ static inline void * __oshmem_select_memory_region(const void *const address,
 		*window_p = context->user_bss_window;
 		ret       = context->user_bss_start;
 	}
+	else
+	{
+#ifndef MPC_IN_PROCESS_MODE
+			mpc_common_debug_fatal("Symmetric global and static variables are not supported in thread-based")
+#endif
+	}
 
 	return ret;
 }
@@ -452,8 +458,7 @@ void pshmem_getmem(void *dest, const void *src, size_t size, int pe)
 
 	mpc_lowcomm_request_t *req = __openshmem_convert_lcp_request_to_lowcomm(mpc_lowcomm_request_alloc());
 
-	mpc_common_nodebug("get with src=%p, size=%2d, dest=%p, local_addr=%p, offset=%lun",
-		src, size, dest, dest, offset);
+	mpc_common_nodebug("get with src=%p, size=%2d, dest=%p, offset=%lu", src, size, dest, offset);
 
 	mpc_lowcomm_iget(dest, size, pe, offset, win, req);
 
@@ -532,8 +537,6 @@ static void * _mpc_openshmem_internal_cswap_nb(void *dest, void *cond, void *val
 	const intptr_t offset = (intptr_t)dest - (intptr_t)local_start_addr;
 
 	mpc_lowcomm_request_t *req = __openshmem_convert_lcp_request_to_lowcomm(mpc_lowcomm_request_alloc());
-
-	mpc_common_debug_info("compare and swap with value=%p, dest=%p, cond=%p offset=%lu", value, dest, cond, offset);
 
 	mpc_lowcomm_iatomic(value, cond, cond, datatype, pe, offset, LOWCOMM_ATOMIC_OP_CSWAP, win, req);
 
@@ -1440,116 +1443,6 @@ void shmem_longlong_add(long long *dest, long long value, int pe)
 	pshmem_longlong_atomic_add(dest, value, pe);
 }
 
-/**********
- * Memory *
- **********/
-
-
-// FIXME: Should query an allocator to manage the memory
-void *pshmem_malloc(size_t size)
-{
-	if (size == 0)
-	{
-		return NULL;
-	}
-	void *    ret  = mpc_openshmem_memory_symmetric_stack_alloc(size);
-	const int ierr = mpc_lowcomm_barrier(MPC_COMM_WORLD);
-	mpc_common_debug("%lu bytes allocated at %p", size, ret);
-	if (ierr != MPC_LOWCOMM_SUCCESS)
-	{
-		return NULL;
-	}
-
-	return ret;
-}
-
-void *shmalloc(size_t size)
-{
-	return pshmem_malloc(size);
-}
-
-void *pshmem_realloc(void *ptr, size_t size)
-{
-	if (size == 0)
-	{
-		const int ierr = mpc_lowcomm_barrier(MPC_COMM_WORLD);
-		if (ierr != MPC_LOWCOMM_SUCCESS)
-		{
-			mpc_common_debug_fatal("shmem_realloc barrier on entry failed");
-		}
-
-		if (ptr != NULL)
-		{
-			mpc_openshmem_memory_symmetric_stack_free(ptr);
-		}
-		return NULL;
-	}
-	void *ret = NULL;
-	if (ptr == NULL)
-	{
-		ret = mpc_openshmem_memory_symmetric_stack_alloc(size);
-	}
-	else
-	{
-		ret = mpc_openshmem_memory_symmetric_stack_resize(ptr, size);
-	}
-
-	const int ierr = mpc_lowcomm_barrier(MPC_COMM_WORLD);
-	if (ierr != MPC_LOWCOMM_SUCCESS)
-	{
-		return NULL;
-	}
-
-	return ret;
-}
-
-void *shrealloc(void *ptr, size_t size)
-{
-	return pshmem_realloc(ptr, size);
-}
-
-void *pshmem_calloc(size_t count, size_t size)
-{
-	if (count == 0 || size == 0)
-	{
-		return NULL;
-	}
-	void *const ret = mpc_openshmem_memory_symmetric_stack_alloc(size);
-	if (ret == NULL)
-	{
-		return NULL;
-	}
-	memset(ret, 0, count * size);
-	const int ierr = mpc_lowcomm_barrier(MPC_COMM_WORLD);
-	if (ierr != MPC_LOWCOMM_SUCCESS)
-	{
-		return NULL;
-	}
-
-	return ret;
-}
-
-void pshmem_free(void *ptr)
-{
-	if (ptr == NULL)
-	{
-		return;
-	}
-
-	const int ierr = mpc_lowcomm_barrier(MPC_COMM_WORLD);
-	if (ierr != MPC_LOWCOMM_SUCCESS)
-	{
-		mpc_common_debug_fatal("shmem_free barrier on entry failed");
-	}
-
-	mpc_openshmem_memory_symmetric_stack_free(ptr);
-}
-
-void shfree(void *ptr)
-{
-	pshmem_free(ptr);
-}
-
 /*************************
  * Setup, Exit and Query *
  *************************/
@@ -1664,7 +1557,7 @@ int pshmem_init_thread(int requested, int *provided)
 
 			// Allocate and exchange symmetric heap memory information
 			my_task_context->symmetric_heap_start =
-				mpc_openshmem_memory_symmetric_stack_init(my_task_context->symmetric_heap_size);
+				mpc_openshmem_memory_symmetric_stack_init(&my_task_context->symmetric_heap_size);
 
 			mpc_lowcomm_window_create(&my_task_context->symmetric_heap_start, my_task_context->symmetric_heap_size,
 				MPC_COMM_WORLD, MPC_LOWCOMM_WINDOW_FLAG_CREATE, &my_task_context->symmetric_heap_window);
@@ -1789,6 +1682,102 @@ int pshmem_n_pes(void)
 int _num_pes(void)
 {
 	return pshmem_n_pes();
+}
+
+/**********
+ * Memory *
+ **********/
+
+
+// FIXME: Should query an allocator to manage the memory
+void *pshmem_malloc(size_t size)
+{
+	if (size == 0)
+	{
+		return NULL;
+	}
+
+	const _mpc_oshmem_context_t *context = __oshmem_get_context();
+
+	void *ret = mpc_openshmem_memory_symmetric_stack_alloc(context->symmetric_heap_start, size);
+	__oshmem_sync_all_windows();
+
+	return ret;
+}
+
+void *shmalloc(size_t size)
+{
+	return pshmem_malloc(size);
+}
+
+void *pshmem_realloc(void *ptr, size_t size)
+{
+	const _mpc_oshmem_context_t *context = __oshmem_get_context();
+	if (size == 0)
+	{
+		__oshmem_sync_all_windows();
+
+		if (ptr != NULL)
+		{
+			mpc_openshmem_memory_symmetric_stack_free(context->symmetric_heap_start, ptr);
+		}
+		return NULL;
+	}
+	void *ret = NULL;
+	if (ptr == NULL)
+	{
+		ret = mpc_openshmem_memory_symmetric_stack_alloc(context->symmetric_heap_start, size);
+	}
+	else
+	{
+		ret = mpc_openshmem_memory_symmetric_stack_resize(context->symmetric_heap_start, ptr, size);
+	}
+
+	__oshmem_sync_all_windows();
+
+	return ret;
+}
+
+void *shrealloc(void *ptr, size_t size)
+{
+	return pshmem_realloc(ptr, size);
+}
+
+void *pshmem_calloc(size_t count, size_t size)
+{
+	if (count == 0 || size == 0)
+	{
+		return NULL;
+	}
+	const _mpc_oshmem_context_t *context = __oshmem_get_context();
+	void *const ret = mpc_openshmem_memory_symmetric_stack_alloc(context->symmetric_heap_start, size);
+	if (ret == NULL)
+	{
+		return NULL;
+	}
+	memset(ret, 0, count * size);
+	__oshmem_sync_all_windows();
+
+	return ret;
+}
+
+void pshmem_free(void *ptr)
+{
+	if (ptr == NULL)
+	{
+		return;
+	}
+
+	__oshmem_sync_all_windows();
+
+	const _mpc_oshmem_context_t *context = __oshmem_get_context();
+
+	mpc_openshmem_memory_symmetric_stack_free(context->symmetric_heap_start, ptr);
+}
+
+void shfree(void *ptr)
+{
+	pshmem_free(ptr);
 }
 
 /*******************************

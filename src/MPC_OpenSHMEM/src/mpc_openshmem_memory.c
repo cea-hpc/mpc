@@ -1,26 +1,46 @@
+#include <stdbool.h>
+#include <string.h>
+
+#include <mpc_common_debug.h>
+#include <mpc_common_spinlock.h>
+
+#include <sctk_alloc.h>
+
 #include "mpc_openshmem_memory.h"
-#include "sctk_alloc.h"
-#include "stdbool.h"
 
 /** @ingroup openshmem_memory
  * @{
  */
 
 /** @brief Information of the symmetric stack */
-static struct _mpc_openshmem_stack_info_s
+typedef struct _mpc_openshmem_stack_info_s
 {
-	void *    bottom;          /**< First address of the stack */
-	size_t    size;            /**< Fixed size of the whole stack */
-	ptrdiff_t top;             /**< Offset to next free block in the stack */
-	size_t    last_block_size; /**< Size of the last allocation */
-} _mpc_openshmem_stack_info;
+	int                   canary;          /**< Canary for integrity checking */
+	mpc_common_spinlock_t lock;            /**< Lock for thread safe access */
+	void *                bottom;          /**< First address of the stack */
+	size_t                size;            /**< Fixed size of the whole stack */
+	ptrdiff_t             top;             /**< Offset to next free block in the stack */
+	size_t                last_block_size; /**< Size of the last allocation */
+	char                  padding[22];     /**< Pad to 64 bytes to align the following header */
+} _mpc_openshmem_stack_info_t;
+
+/** @brief Header of the memory blocks */
+typedef struct __openshmem_allocator_memory_header_s
+{
+	size_t canary;              /**< Canary for integrity checking */
+	size_t previous_block_size; /**< Size of the previous block */
+	size_t block_size;          /**< Size of the block */
+	char   padding[36];         /**< Pad to 64 bytes to align the following memory block */
+} __openshmem_allocator_memory_header_t;
 
 #if __STDC_VERSION__ < 202300L
-	static const ptrdiff_t _mpc_openshmem_stack_alignment = 8;
+	static const ptrdiff_t _mpc_openshmem_stack_alignment = 64;
 #else
-	constexpr ptrdiff_t _mpc_openshmem_stack_alignment = 8;
+	constexpr ptrdiff_t _mpc_openshmem_stack_alignment = 64;
 #endif
 
+#define __openshmem_memory_stack_info_from_ptr(__ptr) (((_mpc_openshmem_stack_info_t *)__ptr) - 1)
+#define __openshmem_memory_header_from_ptr(__ptr)     (((__openshmem_allocator_memory_header_t *)__ptr) - 1)
 
 /** @brief Check if this address correspond to the last allocated one
  *
@@ -28,92 +48,240 @@ static struct _mpc_openshmem_stack_info_s
  * @retval			true		ptr is the address of the lastly allocated block
  * @retval			false		ptr is not the address of the lastly allocated block
  */
-static inline bool __openshmem_memory_is_last_allocation(const void *const ptr)
+static inline bool __openshmem_memory_is_last_allocation(const _mpc_openshmem_stack_info_t *const stack_info,
+                                                         const void *const ptr)
 {
-	return (_mpc_openshmem_stack_info.bottom
-	        + (_mpc_openshmem_stack_info.top
-	           - _mpc_openshmem_stack_info.last_block_size)) == ptr;
+	return (stack_info->bottom + (stack_info->top - stack_info->last_block_size)) == ptr;
 }
 
-void * mpc_openshmem_memory_symmetric_stack_init(const size_t size)
+#if !defined(NDEBUG)
+	#define __openshmem_memory_stack_check_canary(__stack)                                \
+			do                                                                            \
+			{                                                                             \
+				if ((__stack)->canary != 0xdead)                                          \
+				{                                                                         \
+					mpc_common_debug_fatal("Corruption in the symmetric heap detected!"); \
+				}                                                                         \
+			} while (0)
+	#define __openshmem_memory_block_check_canary(__mem_block)                                      \
+			do                                                                                      \
+			{                                                                                       \
+				if ((__mem_block)->canary != 0xdeadc0de)                                            \
+				{                                                                                   \
+					mpc_common_debug_fatal(                                                         \
+	"Invalid pointer at %p or Buffer overflow detected in the symmetric heap at %p (canary: %0#x)", \
+	__mem_block + 1, __mem_block, __mem_block->canary);                                             \
+				}                                                                                   \
+			} while (0)
+#else
+	#define __openshmem_memory_stack_check_canary(__stack)     ;
+	#define __openshmem_memory_block_check_canary(__mem_block) ;
+
+#endif
+
+void * mpc_openshmem_memory_symmetric_stack_init(size_t *const size)
 {
-	_mpc_openshmem_stack_info.bottom          = NULL;
-	_mpc_openshmem_stack_info.size            = size;
-	_mpc_openshmem_stack_info.top             = 0;
-	_mpc_openshmem_stack_info.last_block_size = 0;
+	*size = *size + 1024 * sizeof(__openshmem_allocator_memory_header_t) + sizeof(_mpc_openshmem_stack_info_t);
+	_mpc_openshmem_stack_info_t *new_stack = sctk_memalign(sizeof(__openshmem_allocator_memory_header_t), *size);
+	new_stack->canary = 0xdead;
+	mpc_common_spinlock_init(&new_stack->lock, 0);
+	new_stack->bottom          = NULL;
+	new_stack->size            = *size;
+	new_stack->top             = 0;
+	new_stack->last_block_size = 0;
 
-	_mpc_openshmem_stack_info.bottom = sctk_malloc(size);
+	new_stack->bottom = new_stack + 1;
+	// Verify that the header is correctly aligned
+	assert(((size_t)new_stack->bottom % sizeof(__openshmem_allocator_memory_header_t)) == 0);
 
-	return _mpc_openshmem_stack_info.bottom;
+	return new_stack->bottom;
 }
 
-void * mpc_openshmem_memory_symmetric_stack_alloc(const size_t size)
+static void * mpc_openshmem_memory_symmetric_stack_alloc_no_lock(_mpc_openshmem_stack_info_t *stack_info,
+                                                                 const size_t size)
 {
 	// Set the block for the next address to be aligned
 	const size_t aligned_size =
 		((size % _mpc_openshmem_stack_alignment) == 0)
-		? size
-		: ((size / _mpc_openshmem_stack_alignment) + 1) * _mpc_openshmem_stack_alignment;
+		? size + sizeof(__openshmem_allocator_memory_header_t)
+		: ((size / _mpc_openshmem_stack_alignment) + 1) * _mpc_openshmem_stack_alignment
+		+ sizeof(__openshmem_allocator_memory_header_t);
 
 	// Not enough space to alloc the required size
-	if (_mpc_openshmem_stack_info.top + aligned_size >= _mpc_openshmem_stack_info.size)
+	if (stack_info->top + aligned_size >= stack_info->size)
 	{
 		return NULL;
 	}
+	// Verify that the header is correctly aligned
+	assert((stack_info->top % sizeof(__openshmem_allocator_memory_header_t)) == 0);
 
 	// Compute the address to the newly allocated block
-	void *ret = _mpc_openshmem_stack_info.bottom + _mpc_openshmem_stack_info.top;
+	__openshmem_allocator_memory_header_t *ret = stack_info->bottom + stack_info->top;
+
+	ret->previous_block_size = stack_info->last_block_size;
+	ret->block_size          = aligned_size;
+	ret->canary = 0xdeadc0de;
 
 	// Reserve the newly allocated block
-	_mpc_openshmem_stack_info.last_block_size = aligned_size;
-	_mpc_openshmem_stack_info.top            += aligned_size;
+	stack_info->last_block_size = aligned_size;
+	stack_info->top            += aligned_size;
 
-	return ret;
+	mpc_common_nodebug("Allocating memory @ %p (size: %llu)", ret + 1, aligned_size);
+
+	return ret + 1;
 }
 
-void * mpc_openshmem_memory_symmetric_stack_resize(const void *const ptr, const size_t new_size)
+void * mpc_openshmem_memory_symmetric_stack_alloc(void *stack_start, const size_t size)
 {
-	const void *ret = NULL;
+	_mpc_openshmem_stack_info_t *stack_info = __openshmem_memory_stack_info_from_ptr(stack_start);
+
+	__openshmem_memory_stack_check_canary(stack_info);
+	// Set the block for the next address to be aligned
+	const size_t aligned_size =
+		((size % _mpc_openshmem_stack_alignment) == 0)
+		? size + sizeof(__openshmem_allocator_memory_header_t)
+		: ((size / _mpc_openshmem_stack_alignment) + 1) * _mpc_openshmem_stack_alignment
+		+ sizeof(__openshmem_allocator_memory_header_t);
+
+	// Not enough space to alloc the required size
+	if (stack_info->top + aligned_size >= stack_info->size)
+	{
+		return NULL;
+	}
+	// Verify that the header is correctly aligned
+	assert((stack_info->top % sizeof(__openshmem_allocator_memory_header_t)) == 0);
+
+	mpc_common_spinlock_lock(&stack_info->lock);
+	// Compute the address to the newly allocated block
+	__openshmem_allocator_memory_header_t *ret = stack_info->bottom + stack_info->top;
+
+	ret->previous_block_size = stack_info->last_block_size;
+	ret->block_size          = aligned_size;
+	ret->canary = 0xdeadc0de;
+
+	// Reserve the newly allocated block
+	stack_info->last_block_size = aligned_size;
+	stack_info->top            += aligned_size;
+
+	mpc_common_spinlock_unlock(&stack_info->lock);
+
+	mpc_common_nodebug("Allocating memory %p @ %p (size: %llu)", ret, ret + 1, aligned_size);
+
+	return ret + 1;
+}
+
+static void mpc_openshmem_memory_symmetric_stack_free_no_lock(_mpc_openshmem_stack_info_t *stack_info, void *ptr)
+{
+	// Retrieve the headers
+	__openshmem_allocator_memory_header_t *memory_block = __openshmem_memory_header_from_ptr(ptr);
+	__openshmem_allocator_memory_header_t *prev_block   = ((void *)memory_block - memory_block->previous_block_size);
+
+	mpc_common_nodebug("Freeing memory @ %p", ptr);
+	// Check the integrity of the memory block before reading it
+	__openshmem_memory_block_check_canary(memory_block);
+	// Check if the block has already been freed
+	if (memory_block->block_size == 0)
+	{
+		mpc_common_debug_fatal("Double free detected for %p", ptr);
+	}
+
+	// Set the block as freed
+	memory_block->block_size = 0;
+	if (__openshmem_memory_is_last_allocation(stack_info, memory_block))
+	{
+		do
+		{
+			// Move the tail of the allocator
+			stack_info->top            -= stack_info->last_block_size;
+			stack_info->last_block_size = memory_block->previous_block_size;
+
+			memory_block = prev_block;
+			prev_block   = ((void *)memory_block - memory_block->previous_block_size);
+
+			// Try moving the tail as far as possible
+		} while (memory_block->block_size == 0 && stack_info->top != 0);
+	}
+}
+
+void mpc_openshmem_memory_symmetric_stack_free(void *stack_start, void *ptr)
+{
+	_mpc_openshmem_stack_info_t *stack_info = __openshmem_memory_stack_info_from_ptr(stack_start);
+
+	__openshmem_memory_stack_check_canary(stack_info);
+
+	mpc_common_spinlock_lock(&stack_info->lock);
+	mpc_openshmem_memory_symmetric_stack_free_no_lock(stack_info, ptr);
+	mpc_common_spinlock_unlock(&stack_info->lock);
+}
+
+void * mpc_openshmem_memory_symmetric_stack_resize(void *stack_start, void *ptr, const size_t new_size)
+{
+	_mpc_openshmem_stack_info_t *stack_info = __openshmem_memory_stack_info_from_ptr(stack_start);
+
+	__openshmem_memory_stack_check_canary(stack_info);
+	void *ret = NULL;
+
 	// Set the block for the next address to be aligned
 	const size_t aligned_size =
 		((new_size % _mpc_openshmem_stack_alignment) == 0)
-		? new_size
-		: ((new_size / _mpc_openshmem_stack_alignment) + 1) * _mpc_openshmem_stack_alignment;
+		? new_size + sizeof(__openshmem_allocator_memory_header_t)
+		: ((new_size / _mpc_openshmem_stack_alignment) + 1) * _mpc_openshmem_stack_alignment
+		+ sizeof(__openshmem_allocator_memory_header_t)
+	;
+
+	mpc_common_spinlock_lock(&stack_info->lock);
+	__openshmem_allocator_memory_header_t *memory_block = __openshmem_memory_header_from_ptr(ptr);
+
+	// Check the integrity of the memory block before reading it
+	__openshmem_memory_block_check_canary(memory_block);
+
+	// The block is already large enough
+	if (memory_block->block_size >= aligned_size)
+	{
+		mpc_common_spinlock_unlock(&stack_info->lock);
+		return ptr;
+	}
 
 	// Resize if last allocation
-	if (__openshmem_memory_is_last_allocation(ptr))
+	if (__openshmem_memory_is_last_allocation(stack_info, memory_block))
 	{
-		const ptrdiff_t old_offset = ptr - _mpc_openshmem_stack_info.bottom;
+		const ptrdiff_t old_offset = ptr - stack_info->bottom;
 		// Not enough space to alloc the required size
-		if (old_offset + aligned_size >= _mpc_openshmem_stack_info.size)
+		if (old_offset + aligned_size >= stack_info->size)
 		{
+			mpc_common_spinlock_unlock(&stack_info->lock);
 			return NULL;
 		}
 
 		// Compute the address to the newly allocated block
 		ret = ptr;
+		memory_block->block_size = aligned_size;
 
 		// Reserve the newly allocated block
-		_mpc_openshmem_stack_info.last_block_size = aligned_size;
-		_mpc_openshmem_stack_info.top             = old_offset + aligned_size;
+		stack_info->last_block_size = aligned_size;
+		stack_info->top             = old_offset + aligned_size;
 	}
 	// otherwise allocate a new block
 	else
 	{
-		ret = mpc_openshmem_memory_symmetric_stack_alloc(aligned_size);
+		// Allocate a new block
+		ret = mpc_openshmem_memory_symmetric_stack_alloc_no_lock(stack_info, aligned_size);
+		if (ret == NULL)
+		{
+			mpc_common_spinlock_unlock(&stack_info->lock);
+			return ret;
+		}
+		// Copy the data from the old block
+		memcpy(ret, memory_block + 1, memory_block->block_size - sizeof(__openshmem_allocator_memory_header_t));
+		// Free the old block
+		mpc_openshmem_memory_symmetric_stack_free_no_lock(stack_info, ptr);
 	}
+	mpc_common_spinlock_unlock(&stack_info->lock);
+
+	mpc_common_nodebug("Resize from %p (size: %llu) to %p (size: %llu)", ptr, memory_block->block_size, ret,
+		aligned_size);
 
 	return (void *)ret;
-}
-
-void mpc_openshmem_memory_symmetric_stack_free(const void *ptr)
-{
-	// Only deallocating the last allocation has an effect
-	if (__openshmem_memory_is_last_allocation(ptr))
-	{
-		_mpc_openshmem_stack_info.top            -= _mpc_openshmem_stack_info.last_block_size;
-		_mpc_openshmem_stack_info.last_block_size = 0;
-	}
 }
 
 void mpc_openshmem_memory_symmetric_stack_deinit(void *start_addr)
