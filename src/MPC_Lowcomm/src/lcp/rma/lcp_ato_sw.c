@@ -301,8 +301,8 @@ static int lcp_atomic_handler(void *arg, void *data, size_t length, unsigned fla
 
 			case LCP_ATOMIC_DT_DOUBLE:
 				mpc_common_spinlock_lock(&lcp_atomic_global_lock);
-				reply.result.f64 = *(volatile float *)hdr->remote_addr;
-				*(volatile float *)hdr->remote_addr += value.f64;
+				reply.result.f64 = *(volatile double *)hdr->remote_addr;
+				*(volatile double *)hdr->remote_addr += value.f64;
 				mpc_common_spinlock_unlock(&lcp_atomic_global_lock);
 				break;
 #endif
@@ -368,8 +368,8 @@ static int lcp_atomic_handler(void *arg, void *data, size_t length, unsigned fla
 
 			case LCP_ATOMIC_DT_DOUBLE:
 				mpc_common_spinlock_lock(&lcp_atomic_global_lock);
-				reply.result.f64 = *(volatile float *)hdr->remote_addr;
-				*(volatile float *)hdr->remote_addr -= value.f64;
+				reply.result.f64 = *(volatile double *)hdr->remote_addr;
+				*(volatile double *)hdr->remote_addr -= value.f64;
 				mpc_common_spinlock_unlock(&lcp_atomic_global_lock);
 				break;
 #endif
