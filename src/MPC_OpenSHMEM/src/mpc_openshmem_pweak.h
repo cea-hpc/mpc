@@ -226,6 +226,7 @@
 #pragma weak shmem_ptrdiff_t_atomic_add = pshmem_ptrdiff_t_atomic_add
 
 #pragma weak shmem_quiet = pshmem_quiet
+#pragma weak shmem_fence = pshmem_fence
 #pragma weak shmem_barrier_all = pshmem_barrier_all
 
 #endif /* ifdef MPC_OPENSHMEM_PROFILING_WEAK_SYMBOLS_H_ */

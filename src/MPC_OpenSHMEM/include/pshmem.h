@@ -429,120 +429,6 @@ ptrdiff_t pshmem_ptrdiff_t_g(const ptrdiff_t *src, int pe);
 
 
 /**
- * @brief OpenSHMEM put operation with multiple contigue data
- *
- * @note Generic counterpart of the #shmem_TYPE_put functions.
- *
- * @param[in] dest   Symmetric address in which the data is put
- * @param[in] src    Local address from which the data is read
- * @param[in] nelems Number of elements of any supported type to send
- * @param[in] pe     Unique identifier (rank) of the target
- */
-#define pshmem_put(dest, src, nelems, pe)    \
-		_Generic((*src),                     \
-	float: pshmem_float_put,                 \
-	double: pshmem_double_put,               \
-	long double: pshmem_longdouble_put,      \
-	char: pshmem_char_put,                   \
-	signed char: pshmem_schar_put,           \
-	short: pshmem_short_put,                 \
-	int: pshmem_int_put,                     \
-	long: pshmem_long_put,                   \
-	long long: pshmem_longlong_put,          \
-	unsigned char: pshmem_uchar_put,         \
-	unsigned short: pshmem_ushort_put,       \
-	unsigned int: pshmem_uint_put,           \
-	unsigned long: pshmem_ulong_put,         \
-	unsigned long long: pshmem_ulonglong_put \
-	)(dest, src, nelems, pe)
-
-/**
- * @brief OpenSHMEM put operation with a single data
- *
- * @note Generic counterpart of the #shmem_TYPE_p functions.
- *
- * @param[in] dest  Symmetric address in which the data is put
- * @param[in] value Local value to be send
- * @param[in] pe    Unique identifier (rank) of the target
- */
-#define pshmem_p(dest, value, pe)          \
-		_Generic(value,                    \
-	float: pshmem_float_p,                 \
-	double: pshmem_double_p,               \
-	long double: pshmem_longdouble_p,      \
-	char: pshmem_char_p,                   \
-	signed char: pshmem_schar_p,           \
-	short: pshmem_short_p,                 \
-	int: pshmem_int_p,                     \
-	long: pshmem_long_p,                   \
-	long long: pshmem_longlong_p,          \
-	unsigned char: pshmem_uchar_p,         \
-	unsigned short: pshmem_ushort_p,       \
-	unsigned int: pshmem_uint_p,           \
-	unsigned long: pshmem_ulong_p,         \
-	unsigned long long: pshmem_ulonglong_p \
-	)(dest, value, pe)
-
-/**
- * @brief OpenSHMEM get operation with multiple contigue data
- *
- * @note Generic counterpart of the #shmem_TYPE_get functions.
- *
- * @param[in] dest   Local address in which the data is put
- * @param[in] src    Symmetric address from which the data is read
- * @param[in] nelems Number of elements of any supported type to send
- * @param[in] pe     Unique identifier (rank) of the target
- */
-#define pshmem_get(dest, src, nelems, pe)    \
-		_Generic(*dest,                      \
-	float: pshmem_float_get,                 \
-	double: pshmem_double_get,               \
-	long double: pshmem_longdouble_get,      \
-	char: pshmem_char_get,                   \
-	signed char: pshmem_schar_get,           \
-	short: pshmem_short_get,                 \
-	int: pshmem_int_get,                     \
-	long: pshmem_long_get,                   \
-	long long: pshmem_longlong_get,          \
-	unsigned char: pshmem_uchar_get,         \
-	unsigned short: pshmem_ushort_get,       \
-	unsigned int: pshmem_uint_get,           \
-	unsigned long: pshmem_ulong_get,         \
-	unsigned long long: pshmem_ulonglong_get \
-	)(dest, src, nelems, pe)
-
-/**
- * @brief OpenSHMEM get operation with a single data
- *
- * @note Generic counterpart of the #shmem_TYPE_g functions.
- *
- * @param[in] src Symmetric address from which the data read
- * @param[in] pe  Unique identifier (rank) of the target
- *
- * @return        data stored in #src on the rank #pe
- */
-#define pshmem_g(src, pe)                  \
-		_Generic((*src),                   \
-	float: pshmem_float_g,                 \
-	double: pshmem_double_g,               \
-	long double: pshmem_longdouble_g,      \
-	char: pshmem_char_g,                   \
-	signed char: pshmem_schar_g,           \
-	short: pshmem_short_g,                 \
-	int: pshmem_int_g,                     \
-	long: pshmem_long_g,                   \
-	long long: pshmem_longlong_g,          \
-	unsigned char: pshmem_uchar_g,         \
-	unsigned short: pshmem_ushort_g,       \
-	unsigned int: pshmem_uint_g,           \
-	unsigned long: pshmem_ulong_g,         \
-	unsigned long long: pshmem_ulonglong_g \
-	)(src, pe)
-
-/** @} */ // MPC_OPENSHMEM_API_COMM
-
-
-/**
  * @defgroup MPC_OPENSHMEM_API_ATO Atomic Communications
  * @{
  * @brief OpenSHMEM defined atomic communications
@@ -715,182 +601,54 @@ void pshmem_ptrdiff_t_atomic_add(ptrdiff_t *dest, ptrdiff_t value, int pe);
 /** @} */ // pshmem_TYPE_atomic_add
 
 /**
- * @brief OpenSHMEM atomic fetch operation
+ * @name pshmem_TYPE_atomic_fetch_inc
+ * @{
  *
- * @note Generic counterpart of the #shmem_TYPE_atomic_fetch functions.
+ * @brief Perform an atomic fetch and increment on a given symmetric object
  *
- * @param[in] src Symmetric address from which the data is read
- * @param[in] pe  Unique identifier (rank) of the target
- */
-#define pshmem_atomic_fetch(src, pe)                  \
-		_Generic(*src,                                \
-	float: pshmem_float_atomic_fetch,                 \
-	double: pshmem_double_atomic_fetch,               \
-	int: pshmem_int_atomic_fetch,                     \
-	long: pshmem_long_atomic_fetch,                   \
-	long long: pshmem_longlong_atomic_fetch,          \
-	unsigned int: pshmem_uint_atomic_fetch,           \
-	unsigned long: pshmem_ulong_atomic_fetch,         \
-	unsigned long long: pshmem_ulonglong_atomic_fetch \
-	)(src, pe)
-
-#define pshmem_fetch(src, pe)         \
-		_Generic(*src,                \
-	float: pshmem_float_fetch,        \
-	double: pshmem_double_fetch,      \
-	int: pshmem_int_fetch,            \
-	long: pshmem_long_fetch,          \
-	long long: pshmem_longlong_fetch, \
-	)(src, pe)
-
-/**
- * @brief OpenSHMEM atomic set operation
- *
- * @note Generic counterpart of the #shmem_TYPE_atomic_set functions.
- *
- * @param[in] dest  Symmetric address of the element to set
- * @param[in] value Value to put in remote memory
- * @param[in] pe    Unique identifier (rank) of the target
- */
-#define pshmem_atomic_set(dest, value, pe)          \
-		_Generic(value,                             \
-	float: pshmem_float_atomic_set,                 \
-	double: pshmem_double_atomic_set,               \
-	int: pshmem_int_atomic_set,                     \
-	long: pshmem_long_atomic_set,                   \
-	long long: pshmem_longlong_atomic_set,          \
-	unsigned int: pshmem_uint_atomic_set,           \
-	unsigned long: pshmem_ulong_atomic_set,         \
-	unsigned long long: pshmem_ulonglong_atomic_set \
-	)(dest, value, pe)
-
-#define pshmem_set(dest, value, pe) \
-		_Generic(value,             \
-	float: pshmem_float_set,        \
-	double: pshmem_double_set,      \
-	int: pshmem_int_set,            \
-	long: pshmem_long_set,          \
-	long long: pshmem_longlong_set, \
-	)(dest, value, pe)
-
-/**
- * @brief OpenSHMEM atomic compare and swap operation
- *
- * @note Generic counterpart of the #shmem_TYPE_atomic_compare_swap functions.
- *
- * @param[in] dest  Symmetric address of the element to set
- * @param[in] cond  Value expected in the remote memory
- * @param[in] value Value to put in remote memory
- * @param[in] pe    Unique identifier (rank) of the target
- *
- * @retval  old_data        Previously held data (if condition passed)
- * @retval  current_data    Value currently in the remote memory (otherwise)
- */
-#define pshmem_atomic_compare_swap(dest, cond, value, pe)    \
-		_Generic(value,                                      \
-	int: pshmem_int_atomic_compare_swap,                     \
-	long: pshmem_long_atomic_compare_swap,                   \
-	long long: pshmem_longlong_atomic_compare_swap,          \
-	unsigned int: pshmem_uint_atomic_compare_swap,           \
-	unsigned long: pshmem_ulong_atomic_compare_swap,         \
-	unsigned long long: pshmem_ulonglong_atomic_compare_swap \
-	)(dest, cond, value, pe)
-
-#define pshmem_cswap(dest, cond, value, pe) \
-		_Generic(value,                     \
-	int: pshmem_int_cswap,                  \
-	long: pshmem_long_cswap,                \
-	long long: pshmem_longlong_cswap,       \
-	)(dest, cond, value, pe)
-
-/**
- * @brief OpenSHMEM atomic swap operation
- *
- * @note Generic counterpart of the #shmem_TYPE_atomic_swap functions.
- *
- * @param[in] dest  Symmetric address of the element to set
- * @param[in] value Value to put in remote memory
- * @param[in] pe    Unique identifier (rank) of the target
+ * @param[in] dest Symmetric address of the element to increment
+ * @param[in] pe   Unique identifier (rank) of the target
  *
  * @retval  old_data        Previously held data
  */
-#define pshmem_atomic_swap(dest, value, pe)          \
-		_Generic(value,                              \
-	float: pshmem_float_atomic_swap,                 \
-	double: pshmem_double_atomic_swap,               \
-	int: pshmem_int_atomic_swap,                     \
-	long: pshmem_long_atomic_swap,                   \
-	long long: pshmem_longlong_atomic_swap,          \
-	unsigned int: pshmem_uint_atomic_swap,           \
-	unsigned long: pshmem_ulong_atomic_swap,         \
-	unsigned long long: pshmem_ulonglong_atomic_swap \
-	)(dest, value, pe)
+int pshmem_int_atomic_fetch_inc(int *dest, int pe);
+long pshmem_long_atomic_fetch_inc(long *dest, int pe);
+long long pshmem_longlong_atomic_fetch_inc(long long *dest, int pe);
+unsigned int pshmem_uint_atomic_fetch_inc(unsigned int *dest, int pe);
+unsigned long pshmem_ulong_atomic_fetch_inc(unsigned long *dest, int pe);
+unsigned long long pshmem_ulonglong_atomic_fetch_inc(unsigned long long *dest, int pe);
+int32_t pshmem_int32_t_atomic_fetch_inc(int32_t *dest, int pe);
+uint32_t pshmem_uint32_t_atomic_fetch_inc(uint32_t *dest, int pe);
+int64_t pshmem_int64_t_atomic_fetch_inc(int64_t *dest, int pe);
+uint64_t pshmem_uint64_t_atomic_fetch_inc(uint64_t *dest, int pe);
+size_t pshmem_size_t_atomic_fetch_inc(size_t *dest, int pe);
+ptrdiff_t pshmem_ptrdiff_t_atomic_fetch_inc(ptrdiff_t *dest, int pe);
 
-#define pshmem_swap(dest, value, pe) \
-		_Generic(value,              \
-	float: pshmem_float_swap,        \
-	double: pshmem_double_swap,      \
-	int: pshmem_int_swap,            \
-	long: pshmem_long_swap,          \
-	long long: pshmem_longlong_swap, \
-	)(dest, value, pe)
+/** @} */ // pshmem_TYPE_atomic_fetch_inc
 
 /**
- * @brief OpenSHMEM atomic fetch and add operation
+ * @name pshmem_TYPE_atomic_inc
+ * @{
  *
- * @note Generic counterpart of the #shmem_TYPE_atomic_fetch_add functions.
+ * @brief Perform an atomic increment on a given symmetric object
  *
- * @param[in] dest  Symmetric address of the element to set
- * @param[in] value Value to add to the remote memory object
- * @param[in] pe    Unique identifier (rank) of the target
- *
- * @retval  old_data        Previously held data
+ * @param[in] dest Symmetric address of the element to increment
+ * @param[in] pe   Unique identifier (rank) of the target
  */
-#define pshmem_atomic_fetch_add(dest, value, pe)          \
-		_Generic(value,                                   \
-	int: pshmem_int_atomic_fetch_add,                     \
-	long: pshmem_long_atomic_fetch_add,                   \
-	long long: pshmem_longlong_atomic_fetch_add,          \
-	unsigned int: pshmem_uint_atomic_fetch_add,           \
-	unsigned long: pshmem_ulong_atomic_fetch_add,         \
-	unsigned long long: pshmem_ulonglong_atomic_fetch_add \
-	)(dest, value, pe)
+void pshmem_int_atomic_inc(int *dest, int pe);
+void pshmem_long_atomic_inc(long *dest, int pe);
+void pshmem_longlong_atomic_inc(long long *dest, int pe);
+void pshmem_uint_atomic_inc(unsigned int *dest, int pe);
+void pshmem_ulong_atomic_inc(unsigned long *dest, int pe);
+void pshmem_ulonglong_atomic_inc(unsigned long long *dest, int pe);
+void pshmem_int32_t_atomic_inc(int32_t *dest, int pe);
+void pshmem_uint32_t_atomic_inc(uint32_t *dest, int pe);
+void pshmem_int64_t_atomic_inc(int64_t *dest, int pe);
+void pshmem_uint64_t_atomic_inc(uint64_t *dest, int pe);
+void pshmem_size_t_atomic_inc(size_t *dest, int pe);
+void pshmem_ptrdiff_t_atomic_inc(ptrdiff_t *dest, int pe);
 
-#define pshmem_fadd(dest, value, pe) \
-		_Generic(value,              \
-	int: pshmem_int_fadd,            \
-	long: pshmem_long_fadd,          \
-	long long: pshmem_longlong_fadd, \
-	)(dest, value, pe)
-
-/**
- * @brief OpenSHMEM atomic add operation
- *
- * @note Generic counterpart of the #shmem_TYPE_atomic_add functions.
- *
- * @param[in] dest  Symmetric address of the element to set
- * @param[in] value Value to add to the remote memory object
- * @param[in] pe    Unique identifier (rank) of the target
- */
-#define pshmem_atomic_add(dest, value, pe)          \
-		_Generic(value,                             \
-	int: pshmem_int_atomic_add,                     \
-	long: pshmem_long_atomic_add,                   \
-	long long: pshmem_longlong_atomic_add,          \
-	unsigned int: pshmem_uint_atomic_add,           \
-	unsigned long: pshmem_ulong_atomic_add,         \
-	unsigned long long: pshmem_ulonglong_atomic_add \
-	)(dest, value, pe)
-
-#define pshmem_add(dest, value, pe) \
-		_Generic(value,             \
-	int: pshmem_int_add,            \
-	long: pshmem_long_add,          \
-	long long: pshmem_longlong_add, \
-	)(dest, value, pe)
-
-
-/** @} */ // MPC_OPENSHMEM_API_ATO
+/** @} */ // pshmem_TYPE_atomic_inc
 
 
 /**
@@ -903,6 +661,11 @@ void pshmem_ptrdiff_t_atomic_add(ptrdiff_t *dest, ptrdiff_t value, int pe);
  * @brief Wait until the completion of all pending communications
  */
 void pshmem_quiet(void);
+
+/**
+ * @brief Assess the ordering of communications
+ */
+void pshmem_fence(void);
 
 /**
  * @brief Synchronize all tasks and guarantee the completion of all pending communication

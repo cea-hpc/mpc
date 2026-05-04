@@ -902,6 +902,56 @@ void shmem_ptrdiff_t_atomic_add(ptrdiff_t *dest, ptrdiff_t value, int pe);
 /** @} */ // shmem_TYPE_atomic_add
 
 /**
+ * @name shmem_TYPE_atomic_fetch_inc
+ * @{
+ *
+ * @brief Perform an atomic fetch and increment on a given symmetric object
+ *
+ * @param[in] dest Symmetric address of the element to increment
+ * @param[in] pe   Unique identifier (rank) of the target
+ *
+ * @retval  old_data        Previously held data
+ */
+int shmem_int_atomic_fetch_inc(int *dest, int pe);
+long shmem_long_atomic_fetch_inc(long *dest, int pe);
+long long shmem_longlong_atomic_fetch_inc(long long *dest, int pe);
+unsigned int shmem_uint_atomic_fetch_inc(unsigned int *dest, int pe);
+unsigned long shmem_ulong_atomic_fetch_inc(unsigned long *dest, int pe);
+unsigned long long shmem_ulonglong_atomic_fetch_inc(unsigned long long *dest, int pe);
+int32_t shmem_int32_t_atomic_fetch_inc(int32_t *dest, int pe);
+uint32_t shmem_uint32_t_atomic_fetch_inc(uint32_t *dest, int pe);
+int64_t shmem_int64_t_atomic_fetch_inc(int64_t *dest, int pe);
+uint64_t shmem_uint64_t_atomic_fetch_inc(uint64_t *dest, int pe);
+size_t shmem_size_t_atomic_fetch_inc(size_t *dest, int pe);
+ptrdiff_t shmem_ptrdiff_t_atomic_fetch_inc(ptrdiff_t *dest, int pe);
+
+/** @} */ // shmem_TYPE_atomic_fetch_inc
+
+/**
+ * @name shmem_TYPE_atomic_inc
+ * @{
+ *
+ * @brief Perform an atomic increment on a given symmetric object
+ *
+ * @param[in] dest Symmetric address of the element to increment
+ * @param[in] pe   Unique identifier (rank) of the target
+ */
+void shmem_int_atomic_inc(int *dest, int pe);
+void shmem_long_atomic_inc(long *dest, int pe);
+void shmem_longlong_atomic_inc(long long *dest, int pe);
+void shmem_uint_atomic_inc(unsigned int *dest, int pe);
+void shmem_ulong_atomic_inc(unsigned long *dest, int pe);
+void shmem_ulonglong_atomic_inc(unsigned long long *dest, int pe);
+void shmem_int32_t_atomic_inc(int32_t *dest, int pe);
+void shmem_uint32_t_atomic_inc(uint32_t *dest, int pe);
+void shmem_int64_t_atomic_inc(int64_t *dest, int pe);
+void shmem_uint64_t_atomic_inc(uint64_t *dest, int pe);
+void shmem_size_t_atomic_inc(size_t *dest, int pe);
+void shmem_ptrdiff_t_atomic_inc(ptrdiff_t *dest, int pe);
+
+/** @} */ // shmem_TYPE_atomic_inc
+
+/**
  * @brief OpenSHMEM atomic fetch operation
  *
  * @note Generic counterpart of the #shmem_TYPE_atomic_fetch functions.
@@ -1076,6 +1126,43 @@ void shmem_ptrdiff_t_atomic_add(ptrdiff_t *dest, ptrdiff_t value, int pe);
 	long long: shmem_longlong_add, \
 	)(dest, value, pe)
 
+/**
+ * @brief OpenSHMEM atomic fetch and add operation
+ *
+ * @note Generic counterpart of the #shmem_TYPE_atomic_fetch_inc functions.
+ *
+ * @param[in] dest Symmetric address of the element to set
+ * @param[in] pe   Unique identifier (rank) of the target
+ *
+ * @retval  old_data        Previously held data
+ */
+#define shmem_atomic_fetch_inc(dest, pe)                 \
+		_Generic(*dest,                                  \
+	int: shmem_int_atomic_fetch_inc,                     \
+	long: shmem_long_atomic_fetch_inc,                   \
+	long long: shmem_longlong_atomic_fetch_inc,          \
+	unsigned int: shmem_uint_atomic_fetch_inc,           \
+	unsigned long: shmem_ulong_atomic_fetch_inc,         \
+	unsigned long long: shmem_ulonglong_atomic_fetch_inc \
+	)(dest, pe)
+
+/**
+ * @brief OpenSHMEM atomic add operation
+ *
+ * @note Generic counterpart of the #shmem_TYPE_atomic_inc functions.
+ *
+ * @param[in] dest Symmetric address of the element to set
+ * @param[in] pe   Unique identifier (rank) of the target
+ */
+#define shmem_atomic_inc(dest, pe)                 \
+		_Generic(*dest,                            \
+	int: shmem_int_atomic_inc,                     \
+	long: shmem_long_atomic_inc,                   \
+	long long: shmem_longlong_atomic_inc,          \
+	unsigned int: shmem_uint_atomic_inc,           \
+	unsigned long: shmem_ulong_atomic_inc,         \
+	unsigned long long: shmem_ulonglong_atomic_inc \
+	)(dest, pe)
 
 /** @} */ // MPC_OPENSHMEM_API_ATO
 
@@ -1090,6 +1177,11 @@ void shmem_ptrdiff_t_atomic_add(ptrdiff_t *dest, ptrdiff_t value, int pe);
  * @brief Wait until the completion of all pending communications
  */
 void shmem_quiet(void);
+
+/**
+ * @brief Assess the ordering of communications
+ */
+void shmem_fence(void);
 
 /**
  * @brief Synchronize all tasks and guarantee the completion of all pending communication
