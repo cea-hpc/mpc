@@ -628,12 +628,21 @@ ptrdiff_t shmem_ptrdiff_t_g(const ptrdiff_t *src, int pe);
  */
 float shmem_float_atomic_fetch(const float *src, int pe);
 double shmem_double_atomic_fetch(const double *src, int pe);
+char shmem_char_atomic_fetch(const char *src, int pe);
+signed char shmem_schar_atomic_fetch(const signed char *src, int pe);
+short shmem_short_atomic_fetch(const short *src, int pe);
 int shmem_int_atomic_fetch(const int *src, int pe);
 long shmem_long_atomic_fetch(const long *src, int pe);
 long long shmem_longlong_atomic_fetch(const long long *src, int pe);
+unsigned char shmem_uchar_atomic_fetch(const unsigned char *src, int pe);
+unsigned short shmem_ushort_atomic_fetch(const unsigned short *src, int pe);
 unsigned int shmem_uint_atomic_fetch(const unsigned int *src, int pe);
 unsigned long shmem_ulong_atomic_fetch(const unsigned long *src, int pe);
 unsigned long long shmem_ulonglong_atomic_fetch(const unsigned long long *src, int pe);
+int8_t shmem_int8_t_atomic_fetch(const int8_t *src, int pe);
+uint8_t shmem_uint8_t_atomic_fetch(const uint8_t *src, int pe);
+int16_t shmem_int16_t_atomic_fetch(const int16_t *src, int pe);
+uint16_t shmem_uint16_t_atomic_fetch(const uint16_t *src, int pe);
 int32_t shmem_int32_t_atomic_fetch(const int32_t *src, int pe);
 uint32_t shmem_uint32_t_atomic_fetch(const uint32_t *src, int pe);
 int64_t shmem_int64_t_atomic_fetch(const int64_t *src, int pe);
@@ -679,12 +688,21 @@ ptrdiff_t shmem_ptrdiff_t_atomic_fetch(const ptrdiff_t *src, int pe);
  */
 void shmem_float_atomic_set(float *dest, float value, int pe);
 void shmem_double_atomic_set(double *dest, double value, int pe);
+void shmem_char_atomic_set(char *dest, char value, int pe);
+void shmem_schar_atomic_set(signed char *dest, signed char value, int pe);
+void shmem_short_atomic_set(short *dest, short value, int pe);
 void shmem_int_atomic_set(int *dest, int value, int pe);
 void shmem_long_atomic_set(long *dest, long value, int pe);
 void shmem_longlong_atomic_set(long long *dest, long long value, int pe);
+void shmem_uchar_atomic_set(unsigned char *dest, unsigned char value, int pe);
+void shmem_ushort_atomic_set(unsigned short *dest, unsigned short value, int pe);
 void shmem_uint_atomic_set(unsigned int *dest, unsigned int value, int pe);
 void shmem_ulong_atomic_set(unsigned long *dest, unsigned long value, int pe);
 void shmem_ulonglong_atomic_set(unsigned long long *dest, unsigned long long value, int pe);
+void shmem_int8_t_atomic_set(int8_t *dest, int8_t value, int pe);
+void shmem_uint8_t_atomic_set(uint8_t *dest, uint8_t value, int pe);
+void shmem_int16_t_atomic_set(int16_t *dest, int16_t value, int pe);
+void shmem_uint16_t_atomic_set(uint16_t *dest, uint16_t value, int pe);
 void shmem_int32_t_atomic_set(int32_t *dest, int32_t value, int pe);
 void shmem_uint32_t_atomic_set(uint32_t *dest, uint32_t value, int pe);
 void shmem_int64_t_atomic_set(int64_t *dest, int64_t value, int pe);
@@ -732,13 +750,25 @@ void shmem_ptrdiff_t_atomic_set(ptrdiff_t *dest, ptrdiff_t value, int pe);
  * @retval  old_data        Previously held data (if condition passed)
  * @retval  current_data    Value currently in the remote memory (otherwise)
  */
+float shmem_float_atomic_compare_swap(float *dest, float cond, float value, int pe);
+double shmem_double_atomic_compare_swap(double *dest, double cond, double value, int pe);
+char shmem_char_atomic_compare_swap(char *dest, char cond, char value, int pe);
+signed char shmem_schar_atomic_compare_swap(signed char *dest, signed char cond, signed char value, int pe);
+short shmem_short_atomic_compare_swap(short *dest, short cond, short value, int pe);
 int shmem_int_atomic_compare_swap(int *dest, int cond, int value, int pe);
 long shmem_long_atomic_compare_swap(long *dest, long cond, long value, int pe);
 long long shmem_longlong_atomic_compare_swap(long long *dest, long long cond, long long value, int pe);
+unsigned char shmem_uchar_atomic_compare_swap(unsigned char *dest, unsigned char cond, unsigned char value, int pe);
+unsigned short shmem_ushort_atomic_compare_swap(unsigned short *dest, unsigned short cond,
+                                                unsigned short value, int pe);
 unsigned int shmem_uint_atomic_compare_swap(unsigned int *dest, unsigned int cond, unsigned int value, int pe);
 unsigned long shmem_ulong_atomic_compare_swap(unsigned long *dest, unsigned long cond, unsigned long value, int pe);
 unsigned long long shmem_ulonglong_atomic_compare_swap(unsigned long long *dest, unsigned long long cond,
                                                        unsigned long long value, int pe);
+int8_t shmem_int8_t_atomic_compare_swap(int8_t *dest, int8_t cond, int8_t value, int pe);
+uint8_t shmem_uint8_t_atomic_compare_swap(uint8_t *dest, uint8_t cond, uint8_t value, int pe);
+int16_t shmem_int16_t_atomic_compare_swap(int16_t *dest, int16_t cond, int16_t value, int pe);
+uint16_t shmem_uint16_t_atomic_compare_swap(uint16_t *dest, uint16_t cond, uint16_t value, int pe);
 int32_t shmem_int32_t_atomic_compare_swap(int32_t *dest, int32_t cond, int32_t value, int pe);
 uint32_t shmem_uint32_t_atomic_compare_swap(uint32_t *dest, uint32_t cond, uint32_t value, int pe);
 int64_t shmem_int64_t_atomic_compare_swap(int64_t *dest, int64_t cond, int64_t value, int pe);
@@ -779,12 +809,21 @@ ptrdiff_t shmem_ptrdiff_t_atomic_compare_swap(ptrdiff_t *dest, ptrdiff_t cond, p
  */
 float shmem_float_atomic_swap(float *dest, float value, int pe);
 double shmem_double_atomic_swap(double *dest, double value, int pe);
+char shmem_char_atomic_swap(char *dest, char value, int pe);
+signed char shmem_schar_atomic_swap(signed char *dest, signed char value, int pe);
+short shmem_short_atomic_swap(short *dest, short value, int pe);
 int shmem_int_atomic_swap(int *dest, int value, int pe);
 long shmem_long_atomic_swap(long *dest, long value, int pe);
 long long shmem_longlong_atomic_swap(long long *dest, long long value, int pe);
+unsigned char shmem_uchar_atomic_swap(unsigned char *dest, unsigned char value, int pe);
+unsigned short shmem_ushort_atomic_swap(unsigned short *dest, unsigned short value, int pe);
 unsigned int shmem_uint_atomic_swap(unsigned int *dest, unsigned int value, int pe);
 unsigned long shmem_ulong_atomic_swap(unsigned long *dest, unsigned long value, int pe);
 unsigned long long shmem_ulonglong_atomic_swap(unsigned long long *dest, unsigned long long value, int pe);
+int8_t shmem_int8_t_atomic_swap(int8_t *dest, int8_t value, int pe);
+uint8_t shmem_uint8_t_atomic_swap(uint8_t *dest, uint8_t value, int pe);
+int16_t shmem_int16_t_atomic_swap(int16_t *dest, int16_t value, int pe);
+uint16_t shmem_uint16_t_atomic_swap(uint16_t *dest, uint16_t value, int pe);
 int32_t shmem_int32_t_atomic_swap(int32_t *dest, int32_t value, int pe);
 uint32_t shmem_uint32_t_atomic_swap(uint32_t *dest, uint32_t value, int pe);
 int64_t shmem_int64_t_atomic_swap(int64_t *dest, int64_t value, int pe);
@@ -830,12 +869,23 @@ ptrdiff_t shmem_ptrdiff_t_atomic_swap(ptrdiff_t *dest, ptrdiff_t value, int pe);
  *
  * @retval  old_data        Previously held data
  */
+float shmem_float_atomic_fetch_add(float *dest, float value, int pe);
+double shmem_double_atomic_fetch_add(double *dest, double value, int pe);
+char shmem_char_atomic_fetch_add(char *dest, char value, int pe);
+signed char shmem_schar_atomic_fetch_add(signed char *dest, signed char value, int pe);
+short shmem_short_atomic_fetch_add(short *dest, short value, int pe);
 int shmem_int_atomic_fetch_add(int *dest, int value, int pe);
 long shmem_long_atomic_fetch_add(long *dest, long value, int pe);
 long long shmem_longlong_atomic_fetch_add(long long *dest, long long value, int pe);
+unsigned char shmem_uchar_atomic_fetch_add(unsigned char *dest, unsigned char value, int pe);
+unsigned short shmem_ushort_atomic_fetch_add(unsigned short *dest, unsigned short value, int pe);
 unsigned int shmem_uint_atomic_fetch_add(unsigned int *dest, unsigned int value, int pe);
 unsigned long shmem_ulong_atomic_fetch_add(unsigned long *dest, unsigned long value, int pe);
 unsigned long long shmem_ulonglong_atomic_fetch_add(unsigned long long *dest, unsigned long long value, int pe);
+int8_t shmem_int8_t_atomic_fetch_add(int8_t *dest, int8_t value, int pe);
+uint8_t shmem_uint8_t_atomic_fetch_add(uint8_t *dest, uint8_t value, int pe);
+int16_t shmem_int16_t_atomic_fetch_add(int16_t *dest, int16_t value, int pe);
+uint16_t shmem_uint16_t_atomic_fetch_add(uint16_t *dest, uint16_t value, int pe);
 int32_t shmem_int32_t_atomic_fetch_add(int32_t *dest, int32_t value, int pe);
 uint32_t shmem_uint32_t_atomic_fetch_add(uint32_t *dest, uint32_t value, int pe);
 int64_t shmem_int64_t_atomic_fetch_add(int64_t *dest, int64_t value, int pe);
@@ -870,12 +920,23 @@ ptrdiff_t shmem_ptrdiff_t_atomic_fetch_add(ptrdiff_t *dest, ptrdiff_t value, int
  * @param[in] value Value to add to the remote memory object
  * @param[in] pe    Unique identifier (rank) of the target
  */
+void shmem_float_atomic_add(float *dest, float value, int pe);
+void shmem_double_atomic_add(double *dest, double value, int pe);
+void shmem_char_atomic_add(char *dest, char value, int pe);
+void shmem_schar_atomic_add(signed char *dest, signed char value, int pe);
+void shmem_short_atomic_add(short *dest, short value, int pe);
 void shmem_int_atomic_add(int *dest, int value, int pe);
 void shmem_long_atomic_add(long *dest, long value, int pe);
 void shmem_longlong_atomic_add(long long *dest, long long value, int pe);
+void shmem_uchar_atomic_add(unsigned char *dest, unsigned char value, int pe);
+void shmem_ushort_atomic_add(unsigned short *dest, unsigned short value, int pe);
 void shmem_uint_atomic_add(unsigned int *dest, unsigned int value, int pe);
 void shmem_ulong_atomic_add(unsigned long *dest, unsigned long value, int pe);
 void shmem_ulonglong_atomic_add(unsigned long long *dest, unsigned long long value, int pe);
+void shmem_int8_t_atomic_add(int8_t *dest, int8_t value, int pe);
+void shmem_uint8_t_atomic_add(uint8_t *dest, uint8_t value, int pe);
+void shmem_int16_t_atomic_add(int16_t *dest, int16_t value, int pe);
+void shmem_uint16_t_atomic_add(uint16_t *dest, uint16_t value, int pe);
 void shmem_int32_t_atomic_add(int32_t *dest, int32_t value, int pe);
 void shmem_uint32_t_atomic_add(uint32_t *dest, uint32_t value, int pe);
 void shmem_int64_t_atomic_add(int64_t *dest, int64_t value, int pe);
@@ -912,12 +973,23 @@ void shmem_ptrdiff_t_atomic_add(ptrdiff_t *dest, ptrdiff_t value, int pe);
  *
  * @retval  old_data        Previously held data
  */
+float shmem_float_atomic_fetch_inc(float *dest, int pe);
+double shmem_double_atomic_fetch_inc(double *dest, int pe);
+char shmem_char_atomic_fetch_inc(char *dest, int pe);
+signed char shmem_schar_atomic_fetch_inc(signed char *dest, int pe);
+short shmem_short_atomic_fetch_inc(short *dest, int pe);
 int shmem_int_atomic_fetch_inc(int *dest, int pe);
 long shmem_long_atomic_fetch_inc(long *dest, int pe);
 long long shmem_longlong_atomic_fetch_inc(long long *dest, int pe);
+unsigned char shmem_uchar_atomic_fetch_inc(unsigned char *dest, int pe);
+unsigned short shmem_ushort_atomic_fetch_inc(unsigned short *dest, int pe);
 unsigned int shmem_uint_atomic_fetch_inc(unsigned int *dest, int pe);
 unsigned long shmem_ulong_atomic_fetch_inc(unsigned long *dest, int pe);
 unsigned long long shmem_ulonglong_atomic_fetch_inc(unsigned long long *dest, int pe);
+int8_t shmem_int8_t_atomic_fetch_inc(int8_t *dest, int pe);
+uint8_t shmem_uint8_t_atomic_fetch_inc(uint8_t *dest, int pe);
+int16_t shmem_int16_t_atomic_fetch_inc(int16_t *dest, int pe);
+uint16_t shmem_uint16_t_atomic_fetch_inc(uint16_t *dest, int pe);
 int32_t shmem_int32_t_atomic_fetch_inc(int32_t *dest, int pe);
 uint32_t shmem_uint32_t_atomic_fetch_inc(uint32_t *dest, int pe);
 int64_t shmem_int64_t_atomic_fetch_inc(int64_t *dest, int pe);
@@ -925,6 +997,21 @@ uint64_t shmem_uint64_t_atomic_fetch_inc(uint64_t *dest, int pe);
 size_t shmem_size_t_atomic_fetch_inc(size_t *dest, int pe);
 ptrdiff_t shmem_ptrdiff_t_atomic_fetch_inc(ptrdiff_t *dest, int pe);
 
+#if __STDC_VERSION__ >= 202300L
+	[[deprecated]] int shmem_int_finc(int *dest, int pe);
+
+	[[deprecated]] long shmem_long_finc(long *dest, int pe);
+
+	[[deprecated]] long long shmem_longlong_finc(long long *dest, int pe);
+
+#else
+	__attribute__((deprecated)) int shmem_int_finc(int *dest, int pe);
+
+	__attribute__((deprecated)) long shmem_long_finc(long *dest, int pe);
+
+	__attribute__((deprecated)) long long shmem_longlong_finc(long long *dest, int pe);
+
+#endif
 /** @} */ // shmem_TYPE_atomic_fetch_inc
 
 /**
@@ -936,12 +1023,23 @@ ptrdiff_t shmem_ptrdiff_t_atomic_fetch_inc(ptrdiff_t *dest, int pe);
  * @param[in] dest Symmetric address of the element to increment
  * @param[in] pe   Unique identifier (rank) of the target
  */
+void shmem_float_atomic_inc(float *dest, int pe);
+void shmem_double_atomic_inc(double *dest, int pe);
+void shmem_char_atomic_inc(char *dest, int pe);
+void shmem_schar_atomic_inc(signed char *dest, int pe);
+void shmem_short_atomic_inc(short *dest, int pe);
 void shmem_int_atomic_inc(int *dest, int pe);
 void shmem_long_atomic_inc(long *dest, int pe);
 void shmem_longlong_atomic_inc(long long *dest, int pe);
+void shmem_uchar_atomic_inc(unsigned char *dest, int pe);
+void shmem_ushort_atomic_inc(unsigned short *dest, int pe);
 void shmem_uint_atomic_inc(unsigned int *dest, int pe);
 void shmem_ulong_atomic_inc(unsigned long *dest, int pe);
 void shmem_ulonglong_atomic_inc(unsigned long long *dest, int pe);
+void shmem_int8_t_atomic_inc(int8_t *dest, int pe);
+void shmem_uint8_t_atomic_inc(uint8_t *dest, int pe);
+void shmem_int16_t_atomic_inc(int16_t *dest, int pe);
+void shmem_uint16_t_atomic_inc(uint16_t *dest, int pe);
 void shmem_int32_t_atomic_inc(int32_t *dest, int pe);
 void shmem_uint32_t_atomic_inc(uint32_t *dest, int pe);
 void shmem_int64_t_atomic_inc(int64_t *dest, int pe);
@@ -949,6 +1047,21 @@ void shmem_uint64_t_atomic_inc(uint64_t *dest, int pe);
 void shmem_size_t_atomic_inc(size_t *dest, int pe);
 void shmem_ptrdiff_t_atomic_inc(ptrdiff_t *dest, int pe);
 
+#if __STDC_VERSION__ >= 202300L
+	[[deprecated]] void shmem_int_inc(int *dest, int pe);
+
+	[[deprecated]] void shmem_long_inc(long *dest, int pe);
+
+	[[deprecated]] void shmem_longlong_inc(long long *dest, int pe);
+
+#else
+	__attribute__((deprecated)) void shmem_int_inc(int *dest, int pe);
+
+	__attribute__((deprecated)) void shmem_long_inc(long *dest, int pe);
+
+	__attribute__((deprecated)) void shmem_longlong_inc(long long *dest, int pe);
+
+#endif
 /** @} */ // shmem_TYPE_atomic_inc
 
 /**
@@ -959,25 +1072,30 @@ void shmem_ptrdiff_t_atomic_inc(ptrdiff_t *dest, int pe);
  * @param[in] src Symmetric address from which the data is read
  * @param[in] pe  Unique identifier (rank) of the target
  */
-#define shmem_atomic_fetch(src, pe)                  \
-		_Generic(*src,                               \
-	float: shmem_float_atomic_fetch,                 \
-	double: shmem_double_atomic_fetch,               \
-	int: shmem_int_atomic_fetch,                     \
-	long: shmem_long_atomic_fetch,                   \
-	long long: shmem_longlong_atomic_fetch,          \
-	unsigned int: shmem_uint_atomic_fetch,           \
-	unsigned long: shmem_ulong_atomic_fetch,         \
-	unsigned long long: shmem_ulonglong_atomic_fetch \
+#define shmem_atomic_fetch(src, pe)                    \
+		_Generic(src,                                  \
+	float *: shmem_float_atomic_fetch,                 \
+	double *: shmem_double_atomic_fetch,               \
+	char *: shmem_char_atomic_fetch,                   \
+	signed char *: shmem_schar_atomic_fetch,           \
+	short *: shmem_short_atomic_fetch,                 \
+	int *: shmem_int_atomic_fetch,                     \
+	long *: shmem_long_atomic_fetch,                   \
+	long long *: shmem_longlong_atomic_fetch,          \
+	unsigned char *: shmem_uchar_atomic_fetch,         \
+	unsigned short *: shmem_ushort_atomic_fetch,       \
+	unsigned int *: shmem_uint_atomic_fetch,           \
+	unsigned long *: shmem_ulong_atomic_fetch,         \
+	unsigned long long *: shmem_ulonglong_atomic_fetch \
 	)(src, pe)
 
-#define shmem_fetch(src, pe)         \
-		_Generic(*src,               \
-	float: shmem_float_fetch,        \
-	double: shmem_double_fetch,      \
-	int: shmem_int_fetch,            \
-	long: shmem_long_fetch,          \
-	long long: shmem_longlong_fetch, \
+#define shmem_fetch(src, pe)           \
+		_Generic(src,                  \
+	float *: shmem_float_fetch,        \
+	double *: shmem_double_fetch,      \
+	int *: shmem_int_fetch,            \
+	long *: shmem_long_fetch,          \
+	long long *: shmem_longlong_fetch, \
 	)(src, pe)
 
 /**
@@ -993,9 +1111,14 @@ void shmem_ptrdiff_t_atomic_inc(ptrdiff_t *dest, int pe);
 		_Generic(value,                            \
 	float: shmem_float_atomic_set,                 \
 	double: shmem_double_atomic_set,               \
+	char: shmem_char_atomic_set,                   \
+	signed char: shmem_schar_atomic_set,           \
+	short: shmem_short_atomic_set,                 \
 	int: shmem_int_atomic_set,                     \
 	long: shmem_long_atomic_set,                   \
 	long long: shmem_longlong_atomic_set,          \
+	unsigned char: shmem_uchar_atomic_set,         \
+	unsigned short: shmem_ushort_atomic_set,       \
 	unsigned int: shmem_uint_atomic_set,           \
 	unsigned long: shmem_ulong_atomic_set,         \
 	unsigned long long: shmem_ulonglong_atomic_set \
@@ -1015,7 +1138,7 @@ void shmem_ptrdiff_t_atomic_inc(ptrdiff_t *dest, int pe);
  *
  * @note Generic counterpart of the #shmem_TYPE_atomic_compare_swap functions.
  *
- * @param[in] dest  Symmetric address of the element to set
+ * @param[in] dest  Symmetric address of the element to swap
  * @param[in] cond  Value expected in the remote memory
  * @param[in] value Value to put in remote memory
  * @param[in] pe    Unique identifier (rank) of the target
@@ -1025,9 +1148,16 @@ void shmem_ptrdiff_t_atomic_inc(ptrdiff_t *dest, int pe);
  */
 #define shmem_atomic_compare_swap(dest, cond, value, pe)    \
 		_Generic(value,                                     \
+	float: shmem_float_atomic_compare_swap,                 \
+	double: shmem_double_atomic_compare_swap,               \
+	char: shmem_char_atomic_compare_swap,                   \
+	signed char: shmem_schar_atomic_compare_swap,           \
+	short: shmem_short_atomic_compare_swap,                 \
 	int: shmem_int_atomic_compare_swap,                     \
 	long: shmem_long_atomic_compare_swap,                   \
 	long long: shmem_longlong_atomic_compare_swap,          \
+	unsigned char: shmem_uchar_atomic_compare_swap,         \
+	unsigned short: shmem_ushort_atomic_compare_swap,       \
 	unsigned int: shmem_uint_atomic_compare_swap,           \
 	unsigned long: shmem_ulong_atomic_compare_swap,         \
 	unsigned long long: shmem_ulonglong_atomic_compare_swap \
@@ -1045,7 +1175,7 @@ void shmem_ptrdiff_t_atomic_inc(ptrdiff_t *dest, int pe);
  *
  * @note Generic counterpart of the #shmem_TYPE_atomic_swap functions.
  *
- * @param[in] dest  Symmetric address of the element to set
+ * @param[in] dest  Symmetric address of the element to swap
  * @param[in] value Value to put in remote memory
  * @param[in] pe    Unique identifier (rank) of the target
  *
@@ -1055,9 +1185,14 @@ void shmem_ptrdiff_t_atomic_inc(ptrdiff_t *dest, int pe);
 		_Generic(value,                             \
 	float: shmem_float_atomic_swap,                 \
 	double: shmem_double_atomic_swap,               \
+	char: shmem_char_atomic_swap,                   \
+	signed char: shmem_schar_atomic_swap,           \
+	short: shmem_short_atomic_swap,                 \
 	int: shmem_int_atomic_swap,                     \
 	long: shmem_long_atomic_swap,                   \
 	long long: shmem_longlong_atomic_swap,          \
+	unsigned char: shmem_uchar_atomic_swap,         \
+	unsigned short: shmem_ushort_atomic_swap,       \
 	unsigned int: shmem_uint_atomic_swap,           \
 	unsigned long: shmem_ulong_atomic_swap,         \
 	unsigned long long: shmem_ulonglong_atomic_swap \
@@ -1077,7 +1212,7 @@ void shmem_ptrdiff_t_atomic_inc(ptrdiff_t *dest, int pe);
  *
  * @note Generic counterpart of the #shmem_TYPE_atomic_fetch_add functions.
  *
- * @param[in] dest  Symmetric address of the element to set
+ * @param[in] dest  Symmetric address of the element to fetch and add to
  * @param[in] value Value to add to the remote memory object
  * @param[in] pe    Unique identifier (rank) of the target
  *
@@ -1085,9 +1220,16 @@ void shmem_ptrdiff_t_atomic_inc(ptrdiff_t *dest, int pe);
  */
 #define shmem_atomic_fetch_add(dest, value, pe)          \
 		_Generic(value,                                  \
+	float: shmem_float_atomic_fetch_add,                 \
+	double: shmem_double_atomic_fetch_add,               \
+	char: shmem_char_atomic_fetch_add,                   \
+	signed char: shmem_schar_atomic_fetch_add,           \
+	short: shmem_short_atomic_fetch_add,                 \
 	int: shmem_int_atomic_fetch_add,                     \
 	long: shmem_long_atomic_fetch_add,                   \
 	long long: shmem_longlong_atomic_fetch_add,          \
+	unsigned char: shmem_uchar_atomic_fetch_add,         \
+	unsigned short: shmem_ushort_atomic_fetch_add,       \
 	unsigned int: shmem_uint_atomic_fetch_add,           \
 	unsigned long: shmem_ulong_atomic_fetch_add,         \
 	unsigned long long: shmem_ulonglong_atomic_fetch_add \
@@ -1105,15 +1247,22 @@ void shmem_ptrdiff_t_atomic_inc(ptrdiff_t *dest, int pe);
  *
  * @note Generic counterpart of the #shmem_TYPE_atomic_add functions.
  *
- * @param[in] dest  Symmetric address of the element to set
+ * @param[in] dest  Symmetric address of the element to add to
  * @param[in] value Value to add to the remote memory object
  * @param[in] pe    Unique identifier (rank) of the target
  */
 #define shmem_atomic_add(dest, value, pe)          \
 		_Generic(value,                            \
+	float: shmem_float_atomic_add,                 \
+	double: shmem_double_atomic_add,               \
+	char: shmem_char_atomic_add,                   \
+	signed char: shmem_schar_atomic_add,           \
+	short: shmem_short_atomic_add,                 \
 	int: shmem_int_atomic_add,                     \
 	long: shmem_long_atomic_add,                   \
 	long long: shmem_longlong_atomic_add,          \
+	unsigned char: shmem_uchar_atomic_add,         \
+	unsigned short: shmem_ushort_atomic_add,       \
 	unsigned int: shmem_uint_atomic_add,           \
 	unsigned long: shmem_ulong_atomic_add,         \
 	unsigned long long: shmem_ulonglong_atomic_add \
@@ -1127,43 +1276,70 @@ void shmem_ptrdiff_t_atomic_inc(ptrdiff_t *dest, int pe);
 	)(dest, value, pe)
 
 /**
- * @brief OpenSHMEM atomic fetch and add operation
+ * @brief OpenSHMEM atomic fetch and increment operation
  *
  * @note Generic counterpart of the #shmem_TYPE_atomic_fetch_inc functions.
  *
- * @param[in] dest Symmetric address of the element to set
+ * @param[in] dest Symmetric address of the element to fetch and increment
  * @param[in] pe   Unique identifier (rank) of the target
  *
  * @retval  old_data        Previously held data
  */
-#define shmem_atomic_fetch_inc(dest, pe)                 \
-		_Generic(*dest,                                  \
-	int: shmem_int_atomic_fetch_inc,                     \
-	long: shmem_long_atomic_fetch_inc,                   \
-	long long: shmem_longlong_atomic_fetch_inc,          \
-	unsigned int: shmem_uint_atomic_fetch_inc,           \
-	unsigned long: shmem_ulong_atomic_fetch_inc,         \
-	unsigned long long: shmem_ulonglong_atomic_fetch_inc \
+#define shmem_atomic_fetch_inc(dest, pe)                   \
+		_Generic(dest,                                     \
+	float *: shmem_float_atomic_fetch_inc,                 \
+	double *: shmem_double_atomic_fetch_inc,               \
+	char *: shmem_char_atomic_fetch_inc,                   \
+	signed char *: shmem_schar_atomic_fetch_inc,           \
+	short *: shmem_short_atomic_fetch_inc,                 \
+	int *: shmem_int_atomic_fetch_inc,                     \
+	long *: shmem_long_atomic_fetch_inc,                   \
+	long long *: shmem_longlong_atomic_fetch_inc,          \
+	unsigned char *: shmem_uchar_atomic_fetch_inc,         \
+	unsigned short *: shmem_ushort_atomic_fetch_inc,       \
+	unsigned int *: shmem_uint_atomic_fetch_inc,           \
+	unsigned long *: shmem_ulong_atomic_fetch_inc,         \
+	unsigned long long *: shmem_ulonglong_atomic_fetch_inc \
+	)(dest, pe)
+
+#define shmem_finc(dest, pe)        \
+		_Generic(value,             \
+	int: shmem_int_finc,            \
+	long: shmem_long_finc,          \
+	long long: shmem_longlong_finc, \
 	)(dest, pe)
 
 /**
- * @brief OpenSHMEM atomic add operation
+ * @brief OpenSHMEM atomic increment operation
  *
  * @note Generic counterpart of the #shmem_TYPE_atomic_inc functions.
  *
- * @param[in] dest Symmetric address of the element to set
+ * @param[in] dest Symmetric address of the element to increment
  * @param[in] pe   Unique identifier (rank) of the target
  */
-#define shmem_atomic_inc(dest, pe)                 \
-		_Generic(*dest,                            \
-	int: shmem_int_atomic_inc,                     \
-	long: shmem_long_atomic_inc,                   \
-	long long: shmem_longlong_atomic_inc,          \
-	unsigned int: shmem_uint_atomic_inc,           \
-	unsigned long: shmem_ulong_atomic_inc,         \
-	unsigned long long: shmem_ulonglong_atomic_inc \
+#define shmem_atomic_inc(dest, pe)                   \
+		_Generic(dest,                               \
+	float *: shmem_float_atomic_inc,                 \
+	double *: shmem_double_atomic_inc,               \
+	char *: shmem_char_atomic_inc,                   \
+	signed char *: shmem_schar_atomic_inc,           \
+	short *: shmem_short_atomic_inc,                 \
+	int *: shmem_int_atomic_inc,                     \
+	long *: shmem_long_atomic_inc,                   \
+	long long *: shmem_longlong_atomic_inc,          \
+	unsigned char *: shmem_uchar_atomic_inc,         \
+	unsigned short *: shmem_ushort_atomic_inc,       \
+	unsigned int *: shmem_uint_atomic_inc,           \
+	unsigned long *: shmem_ulong_atomic_inc,         \
+	unsigned long long *: shmem_ulonglong_atomic_inc \
 	)(dest, pe)
 
+#define shmem_inc(dest, pe)        \
+		_Generic(value,            \
+	int: shmem_int_inc,            \
+	long: shmem_long_inc,          \
+	long long: shmem_longlong_inc, \
+	)(dest, pe)
 /** @} */ // MPC_OPENSHMEM_API_ATO
 
 

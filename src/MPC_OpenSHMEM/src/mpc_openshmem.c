@@ -478,7 +478,7 @@ void pshmem_getmem(void *dest, const void *src, size_t size, int pe)
  * @param[in]  src      Remote address of the object to fetch
  * @param[out] ret      Address to store the fetched item
  * @param[in]  operand  Address containing the element to add
- * @param[in]  datatype Datatype of the object to compare and swap
+ * @param[in]  datatype Datatype of the object to fetch and add
  * @param[in]  pe       Unique identifier (rank) of the target
  *
  * @return              Request to wait for blocking behavior
@@ -578,172 +578,45 @@ static void * _mpc_openshmem_internal_swap_nb(void *dest, void *value, mpc_lowco
 	return req;
 }
 
-// fetch
-float pshmem_float_atomic_fetch(const float *src, int pe)
-{
-	float       ret;
-	const float null_element = 0.0f;
-	void *const req          = _mpc_openshmem_internal_fetch_add_nb(src, &ret, &null_element, MPC_LOWCOMM_FLOAT, pe);
+// Fetch
+#define __shmem_atomic_fetch_impl(functype, ctype, lowcommtype, zero)                                \
+		ctype pshmem_ ## functype ## _atomic_fetch(const ctype * src, int pe)                        \
+		{                                                                                            \
+			ctype       ret;                                                                         \
+			ctype       value = zero;                                                                \
+			void *const req   =                                                                      \
+				_mpc_openshmem_internal_fetch_add_nb(src, &ret, &value, lowcommtype, pe);            \
+                                                                                                     \
+			_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for fetch to complete"); \
+                                                                                                     \
+			return ret;                                                                              \
+		}
 
-	_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for fetch to complete");
+__shmem_atomic_fetch_impl(float,     float,              MPC_LOWCOMM_FLOAT,              0.0f);
+__shmem_atomic_fetch_impl(double,    double,             MPC_LOWCOMM_DOUBLE,             0.0);
+__shmem_atomic_fetch_impl(char,      char,               MPC_LOWCOMM_CHAR,               0);
+__shmem_atomic_fetch_impl(schar,     signed char,        MPC_LOWCOMM_SIGNED_CHAR,        0);
+__shmem_atomic_fetch_impl(short,     short,              MPC_LOWCOMM_SHORT,              0);
+__shmem_atomic_fetch_impl(int,       int,                MPC_LOWCOMM_INT,                0);
+__shmem_atomic_fetch_impl(long,      long,               MPC_LOWCOMM_LONG,               0l);
+__shmem_atomic_fetch_impl(longlong,  long long,          MPC_LOWCOMM_LONG_LONG,          0ll);
+__shmem_atomic_fetch_impl(uchar,     unsigned char,      MPC_LOWCOMM_UNSIGNED_CHAR,      0u);
+__shmem_atomic_fetch_impl(ushort,    unsigned short,     MPC_LOWCOMM_UNSIGNED_SHORT,     0u);
+__shmem_atomic_fetch_impl(uint,      unsigned int,       MPC_LOWCOMM_UNSIGNED,           0u);
+__shmem_atomic_fetch_impl(ulong,     unsigned long,      MPC_LOWCOMM_UNSIGNED_LONG,      0ul);
+__shmem_atomic_fetch_impl(ulonglong, unsigned long long, MPC_LOWCOMM_UNSIGNED_LONG_LONG, 0ull);
+__shmem_atomic_fetch_impl(int8_t,    int8_t,             MPC_LOWCOMM_INT8_T,             0);
+__shmem_atomic_fetch_impl(uint8_t,   uint8_t,            MPC_LOWCOMM_UINT8_T,            0u);
+__shmem_atomic_fetch_impl(int16_t,   int16_t,            MPC_LOWCOMM_INT16_T,            0);
+__shmem_atomic_fetch_impl(uint16_t,  uint16_t,           MPC_LOWCOMM_UINT16_T,           0u);
+__shmem_atomic_fetch_impl(int32_t,   int32_t,            MPC_LOWCOMM_INT32_T,            0);
+__shmem_atomic_fetch_impl(uint32_t,  uint32_t,           MPC_LOWCOMM_UINT32_T,           0u);
+__shmem_atomic_fetch_impl(int64_t,   int64_t,            MPC_LOWCOMM_INT64_T,            0ll);
+__shmem_atomic_fetch_impl(uint64_t,  uint64_t,           MPC_LOWCOMM_UINT64_T,           0ull);
+__shmem_atomic_fetch_impl(size_t,    size_t,             MPC_LOWCOMM_UINT64_T,           0ull);
+__shmem_atomic_fetch_impl(ptrdiff_t, ptrdiff_t,          MPC_LOWCOMM_AINT,               0ll);
 
-	return ret;
-}
-
-double pshmem_double_atomic_fetch(const double *src, int pe)
-{
-	double       ret;
-	const double null_element = 0.0F;
-	void *const  req          = _mpc_openshmem_internal_fetch_add_nb(src, &ret, &null_element, MPC_LOWCOMM_DOUBLE,
-		pe);
-
-	_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for fetch to complete");
-
-	return ret;
-}
-
-int pshmem_int_atomic_fetch(const int *src, int pe)
-{
-	int         ret;
-	const int   null_element = 0x0;
-	void *const req          = _mpc_openshmem_internal_fetch_add_nb(src, &ret, &null_element, MPC_LOWCOMM_INT, pe);
-
-	_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for fetch to complete");
-
-	return ret;
-}
-
-long pshmem_long_atomic_fetch(const long *src, int pe)
-{
-	int            ret;
-	const long int null_element = 0x0l;
-	void *const    req          =
-		_mpc_openshmem_internal_fetch_add_nb(src, &ret, &null_element, MPC_LOWCOMM_LONG, pe);
-
-	_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for fetch to complete");
-
-	return ret;
-}
-
-long long pshmem_longlong_atomic_fetch(const long long *src, int pe)
-{
-	int             ret;
-	const long long null_element = 0x0ll;
-	void *const     req          =
-		_mpc_openshmem_internal_fetch_add_nb(src, &ret, &null_element, MPC_LOWCOMM_LONG_LONG, pe);
-
-	_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for fetch to complete");
-
-	return ret;
-}
-
-unsigned int pshmem_uint_atomic_fetch(const unsigned int *src, int pe)
-{
-	unsigned int       ret;
-	const unsigned int null_element = 0x0u;
-	void *const        req          =
-		_mpc_openshmem_internal_fetch_add_nb(src, &ret, &null_element, MPC_LOWCOMM_UNSIGNED, pe);
-
-	_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for fetch to complete");
-
-	return ret;
-}
-
-unsigned long pshmem_ulong_atomic_fetch(const unsigned long *src, int pe)
-{
-	unsigned int            ret;
-	const unsigned long int null_element = 0x0ul;
-	void *const             req          =
-		_mpc_openshmem_internal_fetch_add_nb(src, &ret, &null_element, MPC_LOWCOMM_UNSIGNED_LONG, pe);
-
-	_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for fetch to complete");
-
-	return ret;
-}
-
-unsigned long long pshmem_ulonglong_atomic_fetch(const unsigned long long *src, int pe)
-{
-	unsigned int ret;
-	const unsigned long long int null_element = 0x0ull;
-	void *const req =
-		_mpc_openshmem_internal_fetch_add_nb(src, &ret, &null_element, MPC_LOWCOMM_UNSIGNED_LONG_LONG, pe);
-
-	_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for fetch to complete");
-
-	return ret;
-}
-
-int32_t pshmem_int32_t_atomic_fetch(const int32_t *src, int pe)
-{
-	int32_t       ret;
-	const int32_t null_element = 0x0;
-	void *const   req          =
-		_mpc_openshmem_internal_fetch_add_nb(src, &ret, &null_element, MPC_LOWCOMM_INT32_T, pe);
-
-	_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for fetch to complete");
-
-	return ret;
-}
-
-uint32_t pshmem_uint32_t_atomic_fetch(const uint32_t *src, int pe)
-{
-	uint32_t       ret;
-	const uint32_t null_element = 0x0;
-	void *const    req          =
-		_mpc_openshmem_internal_fetch_add_nb(src, &ret, &null_element, MPC_LOWCOMM_UINT32_T, pe);
-
-	_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for fetch to complete");
-
-	return ret;
-}
-
-int64_t pshmem_int64_t_atomic_fetch(const int64_t *src, int pe)
-{
-	int64_t       ret;
-	const int64_t null_element = 0x0;
-	void *const   req          =
-		_mpc_openshmem_internal_fetch_add_nb(src, &ret, &null_element, MPC_LOWCOMM_INT64_T, pe);
-
-	_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for fetch to complete");
-
-	return ret;
-}
-
-uint64_t pshmem_uint64_t_atomic_fetch(const uint64_t *src, int pe)
-{
-	uint64_t       ret;
-	const uint64_t null_element = 0x0;
-	void *const    req          =
-		_mpc_openshmem_internal_fetch_add_nb(src, &ret, &null_element, MPC_LOWCOMM_UINT64_T, pe);
-
-	_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for fetch to complete");
-
-	return ret;
-}
-
-size_t pshmem_size_t_atomic_fetch(const size_t *src, int pe)
-{
-	size_t       ret;
-	const size_t null_element = 0x0;
-	void *const  req          =
-		_mpc_openshmem_internal_fetch_add_nb(src, &ret, &null_element, MPC_LOWCOMM_UINT64_T, pe);
-
-	_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for fetch to complete");
-
-	return ret;
-}
-
-ptrdiff_t pshmem_ptrdiff_t_atomic_fetch(const ptrdiff_t *src, int pe)
-{
-	ptrdiff_t       ret;
-	const ptrdiff_t null_element = 0x0;
-	void *const     req          =
-		_mpc_openshmem_internal_fetch_add_nb(src, &ret, &null_element, MPC_LOWCOMM_AINT, pe);
-
-	_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for fetch to complete");
-
-	return ret;
-}
+#undef  __shmem_atomic_fetch_impl
 
 float shmem_float_fetch(const float *src, int pe)
 {
@@ -771,103 +644,39 @@ long long shmem_longlong_fetch(const long long *src, int pe)
 }
 
 // Set
-void pshmem_float_atomic_set(float *dest, float value, int pe)
-{
-	void *const req = _mpc_openshmem_internal_swap_nb(dest, &value, MPC_LOWCOMM_FLOAT, pe);
+#define __shmem_atomic_set_impl(functype, ctype, lowcommtype)                                      \
+		void pshmem_ ## functype ## _atomic_set(ctype * dest, ctype value, int pe)                 \
+		{                                                                                          \
+			void *const req = _mpc_openshmem_internal_swap_nb(dest, &value, lowcommtype, pe);      \
+                                                                                                   \
+			_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for set to complete"); \
+		}
 
-	_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for set to complete");
-}
+__shmem_atomic_set_impl(float,     float,              MPC_LOWCOMM_FLOAT);
+__shmem_atomic_set_impl(double,    double,             MPC_LOWCOMM_DOUBLE);
+__shmem_atomic_set_impl(char,      char,               MPC_LOWCOMM_CHAR);
+__shmem_atomic_set_impl(schar,     signed char,        MPC_LOWCOMM_SIGNED_CHAR);
+__shmem_atomic_set_impl(short,     short,              MPC_LOWCOMM_SHORT);
+__shmem_atomic_set_impl(int,       int,                MPC_LOWCOMM_INT);
+__shmem_atomic_set_impl(long,      long,               MPC_LOWCOMM_LONG);
+__shmem_atomic_set_impl(longlong,  long long,          MPC_LOWCOMM_LONG_LONG);
+__shmem_atomic_set_impl(uchar,     unsigned char,      MPC_LOWCOMM_UNSIGNED_CHAR);
+__shmem_atomic_set_impl(ushort,    unsigned short,     MPC_LOWCOMM_UNSIGNED_SHORT);
+__shmem_atomic_set_impl(uint,      unsigned int,       MPC_LOWCOMM_UNSIGNED);
+__shmem_atomic_set_impl(ulong,     unsigned long,      MPC_LOWCOMM_UNSIGNED_LONG);
+__shmem_atomic_set_impl(ulonglong, unsigned long long, MPC_LOWCOMM_UNSIGNED_LONG_LONG);
+__shmem_atomic_set_impl(int8_t,    int8_t,             MPC_LOWCOMM_INT8_T);
+__shmem_atomic_set_impl(uint8_t,   uint8_t,            MPC_LOWCOMM_UINT8_T);
+__shmem_atomic_set_impl(int16_t,   int16_t,            MPC_LOWCOMM_INT16_T);
+__shmem_atomic_set_impl(uint16_t,  uint16_t,           MPC_LOWCOMM_UINT16_T);
+__shmem_atomic_set_impl(int32_t,   int32_t,            MPC_LOWCOMM_INT32_T);
+__shmem_atomic_set_impl(uint32_t,  uint32_t,           MPC_LOWCOMM_UINT32_T);
+__shmem_atomic_set_impl(int64_t,   int64_t,            MPC_LOWCOMM_INT64_T);
+__shmem_atomic_set_impl(uint64_t,  uint64_t,           MPC_LOWCOMM_UINT64_T);
+__shmem_atomic_set_impl(size_t,    size_t,             MPC_LOWCOMM_UINT64_T);
+__shmem_atomic_set_impl(ptrdiff_t, ptrdiff_t,          MPC_LOWCOMM_AINT);
 
-void pshmem_double_atomic_set(double *dest, double value, int pe)
-{
-	void *const req = _mpc_openshmem_internal_swap_nb(dest, &value, MPC_LOWCOMM_DOUBLE, pe);
-
-	_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for set to complete");
-}
-
-void pshmem_int_atomic_set(int *dest, int value, int pe)
-{
-	void *const req = _mpc_openshmem_internal_swap_nb(dest, &value, MPC_LOWCOMM_INT, pe);
-
-	_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for set to complete");
-}
-
-void pshmem_long_atomic_set(long *dest, long value, int pe)
-{
-	void *const req = _mpc_openshmem_internal_swap_nb(dest, &value, MPC_LOWCOMM_LONG, pe);
-
-	_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for set to complete");
-}
-
-void pshmem_longlong_atomic_set(long long *dest, long long value, int pe)
-{
-	void *const req = _mpc_openshmem_internal_swap_nb(dest, &value, MPC_LOWCOMM_LONG_LONG, pe);
-
-	_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for set to complete");
-}
-
-void pshmem_uint_atomic_set(unsigned int *dest, unsigned int value, int pe)
-{
-	void *const req = _mpc_openshmem_internal_swap_nb(dest, &value, MPC_LOWCOMM_UNSIGNED, pe);
-
-	_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for set to complete");
-}
-
-void pshmem_ulong_atomic_set(unsigned long *dest, unsigned long value, int pe)
-{
-	void *const req = _mpc_openshmem_internal_swap_nb(dest, &value, MPC_LOWCOMM_UNSIGNED_LONG, pe);
-
-	_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for set to complete");
-}
-
-void pshmem_ulonglong_atomic_set(unsigned long long *dest, unsigned long long value, int pe)
-{
-	void *const req = _mpc_openshmem_internal_swap_nb(dest, &value, MPC_LOWCOMM_UNSIGNED_LONG_LONG, pe);
-
-	_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for set to complete");
-}
-
-void pshmem_int32_t_atomic_set(int32_t *dest, int32_t value, int pe)
-{
-	void *const req = _mpc_openshmem_internal_swap_nb(dest, &value, MPC_LOWCOMM_INT32_T, pe);
-
-	_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for set to complete");
-}
-
-void pshmem_uint32_t_atomic_set(uint32_t *dest, uint32_t value, int pe)
-{
-	void *const req = _mpc_openshmem_internal_swap_nb(dest, &value, MPC_LOWCOMM_UINT32_T, pe);
-
-	_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for set to complete");
-}
-
-void pshmem_int64_t_atomic_set(int64_t *dest, int64_t value, int pe)
-{
-	void *const req = _mpc_openshmem_internal_swap_nb(dest, &value, MPC_LOWCOMM_INT64_T, pe);
-
-	_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for set to complete");
-}
-
-void pshmem_uint64_t_atomic_set(uint64_t *dest, uint64_t value, int pe)
-{
-	void *const req = _mpc_openshmem_internal_swap_nb(dest, &value, MPC_LOWCOMM_UINT64_T, pe);
-
-	_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for set to complete");
-}
-
-void pshmem_size_t_atomic_set(size_t *dest, size_t value, int pe)
-{
-	void *const req = _mpc_openshmem_internal_swap_nb(dest, &value, MPC_LOWCOMM_UINT64_T, pe);
-
-	_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for set to complete");
-}
-
-void pshmem_ptrdiff_t_atomic_set(ptrdiff_t *dest, ptrdiff_t value, int pe)
-{
-	void *const req = _mpc_openshmem_internal_swap_nb(dest, &value, MPC_LOWCOMM_AINT, pe);
-
-	_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for set to complete");
-}
+#undef  __shmem_atomic_set_impl
 
 void shmem_float_set(float *dest, float value, int pe)
 {
@@ -895,114 +704,41 @@ void shmem_longlong_set(long long *dest, long long value, int pe)
 }
 
 // Compare & Swap
-int pshmem_int_atomic_compare_swap(int *dest, int cond, int value, int pe)
-{
-	void *const req = _mpc_openshmem_internal_cswap_nb(dest, &cond, &value, MPC_LOWCOMM_INT, pe);
+#define __shmem_atomic_compare_swap_impl(functype, ctype, lowcommtype)                                      \
+		ctype pshmem_ ## functype ## _atomic_compare_swap(ctype * dest, ctype cond, ctype value, int pe)    \
+		{                                                                                                   \
+			void *const req = _mpc_openshmem_internal_cswap_nb(dest, &cond, &value, lowcommtype, pe);       \
+                                                                                                            \
+			_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for Compare Swap to complete"); \
+                                                                                                            \
+			return cond;                                                                                    \
+		}
 
-	_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for Compare Swap to complete");
+__shmem_atomic_compare_swap_impl(float,     float,              MPC_LOWCOMM_FLOAT);
+__shmem_atomic_compare_swap_impl(double,    double,             MPC_LOWCOMM_DOUBLE);
+__shmem_atomic_compare_swap_impl(char,      char,               MPC_LOWCOMM_CHAR);
+__shmem_atomic_compare_swap_impl(schar,     signed char,        MPC_LOWCOMM_SIGNED_CHAR);
+__shmem_atomic_compare_swap_impl(short,     short,              MPC_LOWCOMM_SHORT);
+__shmem_atomic_compare_swap_impl(int,       int,                MPC_LOWCOMM_INT);
+__shmem_atomic_compare_swap_impl(long,      long,               MPC_LOWCOMM_LONG);
+__shmem_atomic_compare_swap_impl(longlong,  long long,          MPC_LOWCOMM_LONG_LONG);
+__shmem_atomic_compare_swap_impl(uchar,     unsigned char,      MPC_LOWCOMM_UNSIGNED_CHAR);
+__shmem_atomic_compare_swap_impl(ushort,    unsigned short,     MPC_LOWCOMM_UNSIGNED_SHORT);
+__shmem_atomic_compare_swap_impl(uint,      unsigned int,       MPC_LOWCOMM_UNSIGNED);
+__shmem_atomic_compare_swap_impl(ulong,     unsigned long,      MPC_LOWCOMM_UNSIGNED_LONG);
+__shmem_atomic_compare_swap_impl(ulonglong, unsigned long long, MPC_LOWCOMM_UNSIGNED_LONG_LONG);
+__shmem_atomic_compare_swap_impl(int8_t,    int8_t,             MPC_LOWCOMM_INT8_T);
+__shmem_atomic_compare_swap_impl(uint8_t,   uint8_t,            MPC_LOWCOMM_UINT8_T);
+__shmem_atomic_compare_swap_impl(int16_t,   int16_t,            MPC_LOWCOMM_INT16_T);
+__shmem_atomic_compare_swap_impl(uint16_t,  uint16_t,           MPC_LOWCOMM_UINT16_T);
+__shmem_atomic_compare_swap_impl(int32_t,   int32_t,            MPC_LOWCOMM_INT32_T);
+__shmem_atomic_compare_swap_impl(uint32_t,  uint32_t,           MPC_LOWCOMM_UINT32_T);
+__shmem_atomic_compare_swap_impl(int64_t,   int64_t,            MPC_LOWCOMM_INT64_T);
+__shmem_atomic_compare_swap_impl(uint64_t,  uint64_t,           MPC_LOWCOMM_UINT64_T);
+__shmem_atomic_compare_swap_impl(size_t,    size_t,             MPC_LOWCOMM_UINT64_T);
+__shmem_atomic_compare_swap_impl(ptrdiff_t, ptrdiff_t,          MPC_LOWCOMM_AINT);
 
-	return cond;
-}
-
-long pshmem_long_atomic_compare_swap(long *dest, long cond, long value, int pe)
-{
-	void *const req = _mpc_openshmem_internal_cswap_nb(dest, &cond, &value, MPC_LOWCOMM_LONG, pe);
-
-	_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for Compare Swap to complete");
-
-	return cond;
-}
-
-long long pshmem_longlong_atomic_compare_swap(long long *dest, long long cond, long long value, int pe)
-{
-	void *const req = _mpc_openshmem_internal_cswap_nb(dest, &cond, &value, MPC_LOWCOMM_LONG_LONG, pe);
-
-	_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for Compare Swap to complete");
-
-	return cond;
-}
-
-unsigned int pshmem_uint_atomic_compare_swap(unsigned int *dest, unsigned int cond, unsigned int value, int pe)
-{
-	void *const req = _mpc_openshmem_internal_cswap_nb(dest, &cond, &value, MPC_LOWCOMM_UNSIGNED, pe);
-
-	_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for Compare Swap to complete");
-
-	return cond;
-}
-
-unsigned long pshmem_ulong_atomic_compare_swap(unsigned long *dest, unsigned long cond, unsigned long value, int pe)
-{
-	void *const req = _mpc_openshmem_internal_cswap_nb(dest, &cond, &value, MPC_LOWCOMM_UNSIGNED_LONG, pe);
-
-	_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for Compare Swap to complete");
-
-	return cond;
-}
-
-unsigned long long pshmem_ulonglong_atomic_compare_swap(unsigned long long *dest, unsigned long long cond,
-                                                        unsigned long long value, int pe)
-{
-	void *const req = _mpc_openshmem_internal_cswap_nb(dest, &cond, &value, MPC_LOWCOMM_UNSIGNED_LONG_LONG, pe);
-
-	_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for Compare Swap to complete");
-
-	return cond;
-}
-
-int32_t pshmem_int32_t_atomic_compare_swap(int32_t *dest, int32_t cond, int32_t value, int pe)
-{
-	void *const req = _mpc_openshmem_internal_cswap_nb(dest, &cond, &value, MPC_LOWCOMM_INT32_T, pe);
-
-	_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for Compare Swap to complete");
-
-	return cond;
-}
-
-uint32_t pshmem_uint32_t_atomic_compare_swap(uint32_t *dest, uint32_t cond, uint32_t value, int pe)
-{
-	void *const req = _mpc_openshmem_internal_cswap_nb(dest, &cond, &value, MPC_LOWCOMM_UINT32_T, pe);
-
-	_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for Compare Swap to complete");
-
-	return cond;
-}
-
-int64_t pshmem_int64_t_atomic_compare_swap(int64_t *dest, int64_t cond, int64_t value, int pe)
-{
-	void *const req = _mpc_openshmem_internal_cswap_nb(dest, &cond, &value, MPC_LOWCOMM_INT64_T, pe);
-
-	_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for Compare Swap to complete");
-
-	return cond;
-}
-
-uint64_t pshmem_uint64_t_atomic_compare_swap(uint64_t *dest, uint64_t cond, uint64_t value, int pe)
-{
-	void *const req = _mpc_openshmem_internal_cswap_nb(dest, &cond, &value, MPC_LOWCOMM_UINT64_T, pe);
-
-	_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for Compare Swap to complete");
-
-	return cond;
-}
-
-size_t pshmem_size_t_atomic_compare_swap(size_t *dest, size_t cond, size_t value, int pe)
-{
-	void *const req = _mpc_openshmem_internal_cswap_nb(dest, &cond, &value, MPC_LOWCOMM_UINT64_T, pe);
-
-	_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for Compare Swap to complete");
-
-	return cond;
-}
-
-ptrdiff_t pshmem_ptrdiff_t_atomic_compare_swap(ptrdiff_t *dest, ptrdiff_t cond, ptrdiff_t value, int pe)
-{
-	void *const req = _mpc_openshmem_internal_cswap_nb(dest, &cond, &value, MPC_LOWCOMM_AINT, pe);
-
-	_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for Compare Swap to complete");
-
-	return cond;
-}
+#undef __shmem_atomic_compare_swap_impl
 
 int shmem_int_cswap(int *dest, int cond, int value, int pe)
 {
@@ -1020,131 +756,41 @@ long long shmem_longlong_cswap(long long *dest, long long cond, long long value,
 }
 
 // Swap
-float pshmem_float_atomic_swap(float *dest, float value, int pe)
-{
-	void *const req = _mpc_openshmem_internal_swap_nb(dest, &value, MPC_LOWCOMM_FLOAT, pe);
+#define __shmem_atomic_swap_impl(functype, ctype, lowcommtype)                                      \
+		ctype pshmem_ ## functype ## _atomic_swap(ctype * dest, ctype value, int pe)                \
+		{                                                                                           \
+			void *const req = _mpc_openshmem_internal_swap_nb(dest, &value, lowcommtype, pe);       \
+                                                                                                    \
+			_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for swap to complete"); \
+                                                                                                    \
+			return value;                                                                           \
+		}
 
-	_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for swap to complete");
+__shmem_atomic_swap_impl(float,     float,              MPC_LOWCOMM_FLOAT);
+__shmem_atomic_swap_impl(double,    double,             MPC_LOWCOMM_DOUBLE);
+__shmem_atomic_swap_impl(char,      char,               MPC_LOWCOMM_CHAR);
+__shmem_atomic_swap_impl(schar,     signed char,        MPC_LOWCOMM_SIGNED_CHAR);
+__shmem_atomic_swap_impl(short,     short,              MPC_LOWCOMM_SHORT);
+__shmem_atomic_swap_impl(int,       int,                MPC_LOWCOMM_INT);
+__shmem_atomic_swap_impl(long,      long,               MPC_LOWCOMM_LONG);
+__shmem_atomic_swap_impl(longlong,  long long,          MPC_LOWCOMM_LONG_LONG);
+__shmem_atomic_swap_impl(uchar,     unsigned char,      MPC_LOWCOMM_UNSIGNED_CHAR);
+__shmem_atomic_swap_impl(ushort,    unsigned short,     MPC_LOWCOMM_UNSIGNED_SHORT);
+__shmem_atomic_swap_impl(uint,      unsigned int,       MPC_LOWCOMM_UNSIGNED);
+__shmem_atomic_swap_impl(ulong,     unsigned long,      MPC_LOWCOMM_UNSIGNED_LONG);
+__shmem_atomic_swap_impl(ulonglong, unsigned long long, MPC_LOWCOMM_UNSIGNED_LONG_LONG);
+__shmem_atomic_swap_impl(int8_t,    int8_t,             MPC_LOWCOMM_INT8_T);
+__shmem_atomic_swap_impl(uint8_t,   uint8_t,            MPC_LOWCOMM_UINT8_T);
+__shmem_atomic_swap_impl(int16_t,   int16_t,            MPC_LOWCOMM_INT16_T);
+__shmem_atomic_swap_impl(uint16_t,  uint16_t,           MPC_LOWCOMM_UINT16_T);
+__shmem_atomic_swap_impl(int32_t,   int32_t,            MPC_LOWCOMM_INT32_T);
+__shmem_atomic_swap_impl(uint32_t,  uint32_t,           MPC_LOWCOMM_UINT32_T);
+__shmem_atomic_swap_impl(int64_t,   int64_t,            MPC_LOWCOMM_INT64_T);
+__shmem_atomic_swap_impl(uint64_t,  uint64_t,           MPC_LOWCOMM_UINT64_T);
+__shmem_atomic_swap_impl(size_t,    size_t,             MPC_LOWCOMM_UINT64_T);
+__shmem_atomic_swap_impl(ptrdiff_t, ptrdiff_t,          MPC_LOWCOMM_AINT);
 
-	return value;
-}
-
-double pshmem_double_atomic_swap(double *dest, double value, int pe)
-{
-	void *const req = _mpc_openshmem_internal_swap_nb(dest, &value, MPC_LOWCOMM_DOUBLE, pe);
-
-	_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for swap to complete");
-
-	return value;
-}
-
-int pshmem_int_atomic_swap(int *dest, int value, int pe)
-{
-	void *const req = _mpc_openshmem_internal_swap_nb(dest, &value, MPC_LOWCOMM_INT, pe);
-
-	_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for swap to complete");
-
-	return value;
-}
-
-long pshmem_long_atomic_swap(long *dest, long value, int pe)
-{
-	void *const req = _mpc_openshmem_internal_swap_nb(dest, &value, MPC_LOWCOMM_LONG, pe);
-
-	_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for swap to complete");
-
-	return value;
-}
-
-long long pshmem_longlong_atomic_swap(long long *dest, long long value, int pe)
-{
-	void *const req = _mpc_openshmem_internal_swap_nb(dest, &value, MPC_LOWCOMM_LONG_LONG, pe);
-
-	_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for swap to complete");
-
-	return value;
-}
-
-unsigned int pshmem_uint_atomic_swap(unsigned int *dest, unsigned int value, int pe)
-{
-	void *const req = _mpc_openshmem_internal_swap_nb(dest, &value, MPC_LOWCOMM_UNSIGNED, pe);
-
-	_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for swap to complete");
-
-	return value;
-}
-
-unsigned long pshmem_ulong_atomic_swap(unsigned long *dest, unsigned long value, int pe)
-{
-	void *const req = _mpc_openshmem_internal_swap_nb(dest, &value, MPC_LOWCOMM_UNSIGNED_LONG, pe);
-
-	_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for swap to complete");
-
-	return value;
-}
-
-unsigned long long pshmem_ulonglong_atomic_swap(unsigned long long *dest, unsigned long long value, int pe)
-{
-	void *const req = _mpc_openshmem_internal_swap_nb(dest, &value, MPC_LOWCOMM_UNSIGNED_LONG_LONG, pe);
-
-	_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for swap to complete");
-
-	return value;
-}
-
-int32_t pshmem_int32_t_atomic_swap(int32_t *dest, int32_t value, int pe)
-{
-	void *const req = _mpc_openshmem_internal_swap_nb(dest, &value, MPC_LOWCOMM_INT32_T, pe);
-
-	_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for swap to complete");
-
-	return value;
-}
-
-uint32_t pshmem_uint32_t_atomic_swap(uint32_t *dest, uint32_t value, int pe)
-{
-	void *const req = _mpc_openshmem_internal_swap_nb(dest, &value, MPC_LOWCOMM_UINT32_T, pe);
-
-	_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for swap to complete");
-
-	return value;
-}
-
-int64_t pshmem_int64_t_atomic_swap(int64_t *dest, int64_t value, int pe)
-{
-	void *const req = _mpc_openshmem_internal_swap_nb(dest, &value, MPC_LOWCOMM_INT64_T, pe);
-
-	_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for swap to complete");
-
-	return value;
-}
-
-uint64_t pshmem_uint64_t_atomic_swap(uint64_t *dest, uint64_t value, int pe)
-{
-	void *const req = _mpc_openshmem_internal_swap_nb(dest, &value, MPC_LOWCOMM_UINT64_T, pe);
-
-	_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for swap to complete");
-
-	return value;
-}
-
-size_t pshmem_size_t_atomic_swap(size_t *dest, size_t value, int pe)
-{
-	void *const req = _mpc_openshmem_internal_swap_nb(dest, &value, MPC_LOWCOMM_UINT64_T, pe);
-
-	_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for swap to complete");
-
-	return value;
-}
-
-ptrdiff_t pshmem_ptrdiff_t_atomic_swap(ptrdiff_t *dest, ptrdiff_t value, int pe)
-{
-	void *const req = _mpc_openshmem_internal_swap_nb(dest, &value, MPC_LOWCOMM_AINT, pe);
-
-	_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for swap to complete");
-
-	return value;
-}
+#undef  __shmem_atomic_swap_impl
 
 float shmem_float_swap(float *dest, float value, int pe)
 {
@@ -1172,261 +818,94 @@ long long shmem_longlong_swap(long long *dest, long long value, int pe)
 }
 
 // Fetch add
-int pshmem_int_atomic_fetch_add(int *dest, int value, int pe)
-{
-	int         ret;
-	void *const req =
-		_mpc_openshmem_internal_fetch_add_nb(dest, &ret, &value, MPC_LOWCOMM_INT, pe);
+#define __shmem_atomic_fetch_add_impl(functype, ctype, lowcommtype)                                      \
+		ctype pshmem_ ## functype ## _atomic_fetch_add(ctype * dest, ctype value, int pe)                \
+		{                                                                                                \
+			ctype       ret;                                                                             \
+			void *const req =                                                                            \
+				_mpc_openshmem_internal_fetch_add_nb(dest, &ret, &value, lowcommtype, pe);               \
+                                                                                                         \
+			_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for fetch add to complete"); \
+                                                                                                         \
+			return ret;                                                                                  \
+		}
 
-	_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for fetch add to complete");
+__shmem_atomic_fetch_add_impl(float,     float,              MPC_LOWCOMM_FLOAT);
+__shmem_atomic_fetch_add_impl(double,    double,             MPC_LOWCOMM_DOUBLE);
+__shmem_atomic_fetch_add_impl(char,      char,               MPC_LOWCOMM_CHAR);
+__shmem_atomic_fetch_add_impl(schar,     signed char,        MPC_LOWCOMM_SIGNED_CHAR);
+__shmem_atomic_fetch_add_impl(short,     short,              MPC_LOWCOMM_SHORT);
+__shmem_atomic_fetch_add_impl(int,       int,                MPC_LOWCOMM_INT);
+__shmem_atomic_fetch_add_impl(long,      long,               MPC_LOWCOMM_LONG);
+__shmem_atomic_fetch_add_impl(longlong,  long long,          MPC_LOWCOMM_LONG_LONG);
+__shmem_atomic_fetch_add_impl(uchar,     unsigned char,      MPC_LOWCOMM_UNSIGNED_CHAR);
+__shmem_atomic_fetch_add_impl(ushort,    unsigned short,     MPC_LOWCOMM_UNSIGNED_SHORT);
+__shmem_atomic_fetch_add_impl(uint,      unsigned int,       MPC_LOWCOMM_UNSIGNED);
+__shmem_atomic_fetch_add_impl(ulong,     unsigned long,      MPC_LOWCOMM_UNSIGNED_LONG);
+__shmem_atomic_fetch_add_impl(ulonglong, unsigned long long, MPC_LOWCOMM_UNSIGNED_LONG_LONG);
+__shmem_atomic_fetch_add_impl(int8_t,    int8_t,             MPC_LOWCOMM_INT8_T);
+__shmem_atomic_fetch_add_impl(uint8_t,   uint8_t,            MPC_LOWCOMM_UINT8_T);
+__shmem_atomic_fetch_add_impl(int16_t,   int16_t,            MPC_LOWCOMM_INT16_T);
+__shmem_atomic_fetch_add_impl(uint16_t,  uint16_t,           MPC_LOWCOMM_UINT16_T);
+__shmem_atomic_fetch_add_impl(int32_t,   int32_t,            MPC_LOWCOMM_INT32_T);
+__shmem_atomic_fetch_add_impl(uint32_t,  uint32_t,           MPC_LOWCOMM_UINT32_T);
+__shmem_atomic_fetch_add_impl(int64_t,   int64_t,            MPC_LOWCOMM_INT64_T);
+__shmem_atomic_fetch_add_impl(uint64_t,  uint64_t,           MPC_LOWCOMM_UINT64_T);
+__shmem_atomic_fetch_add_impl(size_t,    size_t,             MPC_LOWCOMM_UINT64_T);
+__shmem_atomic_fetch_add_impl(ptrdiff_t, ptrdiff_t,          MPC_LOWCOMM_AINT);
 
-	return ret;
-}
+#undef __shmem_atomic_fetch_add_impl
 
-long pshmem_long_atomic_fetch_add(long *dest, long value, int pe)
-{
-	long int    ret;
-	void *const req =
-		_mpc_openshmem_internal_fetch_add_nb(dest, &ret, &value, MPC_LOWCOMM_LONG, pe);
-
-	_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for fetch add to complete");
-
-	return ret;
-}
-
-long long pshmem_longlong_atomic_fetch_add(long long *dest, long long value, int pe)
-{
-	long long int ret;
-	void *const   req =
-		_mpc_openshmem_internal_fetch_add_nb(dest, &ret, &value, MPC_LOWCOMM_LONG_LONG, pe);
-
-	_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for fetch add to complete");
-
-	return ret;
-}
-
-unsigned int pshmem_uint_atomic_fetch_add(unsigned int *dest, unsigned int value, int pe)
-{
-	unsigned int ret;
-	void *const  req =
-		_mpc_openshmem_internal_fetch_add_nb(dest, &ret, &value, MPC_LOWCOMM_UNSIGNED, pe);
-
-	_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for fetch add to complete");
-
-	return ret;
-}
-
-unsigned long pshmem_ulong_atomic_fetch_add(unsigned long *dest, unsigned long value, int pe)
-{
-	unsigned long int ret;
-	void *const       req =
-		_mpc_openshmem_internal_fetch_add_nb(dest, &ret, &value, MPC_LOWCOMM_UNSIGNED_LONG, pe);
-
-	_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for fetch add to complete");
-
-	return ret;
-}
-
-unsigned long long pshmem_ulonglong_atomic_fetch_add(unsigned long long *dest, unsigned long long value, int pe)
-{
-	unsigned long long int ret;
-	void *const            req =
-		_mpc_openshmem_internal_fetch_add_nb(dest, &ret, &value, MPC_LOWCOMM_UNSIGNED_LONG_LONG, pe);
-
-	_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for fetch add to complete");
-
-	return ret;
-}
-
-int32_t pshmem_int32_t_atomic_fetch_add(int32_t *dest, int32_t value, int pe)
-{
-	int32_t     ret;
-	void *const req =
-		_mpc_openshmem_internal_fetch_add_nb(dest, &ret, &value, MPC_LOWCOMM_INT32_T, pe);
-
-	_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for fetch add to complete");
-
-	return ret;
-}
-
-uint32_t pshmem_uint32_t_atomic_fetch_add(uint32_t *dest, uint32_t value, int pe)
-{
-	uint32_t    ret;
-	void *const req =
-		_mpc_openshmem_internal_fetch_add_nb(dest, &ret, &value, MPC_LOWCOMM_UINT32_T, pe);
-
-	_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for fetch add to complete");
-
-	return ret;
-}
-
-int64_t pshmem_int64_t_atomic_fetch_add(int64_t *dest, int64_t value, int pe)
-{
-	int64_t     ret;
-	void *const req =
-		_mpc_openshmem_internal_fetch_add_nb(dest, &ret, &value, MPC_LOWCOMM_INT64_T, pe);
-
-	_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for fetch add to complete");
-
-	return ret;
-}
-
-uint64_t pshmem_uint64_t_atomic_fetch_add(uint64_t *dest, uint64_t value, int pe)
-{
-	uint64_t    ret;
-	void *const req =
-		_mpc_openshmem_internal_fetch_add_nb(dest, &ret, &value, MPC_LOWCOMM_UINT64_T, pe);
-
-	_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for fetch add to complete");
-
-	return ret;
-}
-
-size_t pshmem_size_t_atomic_fetch_add(size_t *dest, size_t value, int pe)
-{
-	size_t      ret;
-	void *const req =
-		_mpc_openshmem_internal_fetch_add_nb(dest, &ret, &value, MPC_LOWCOMM_UINT64_T, pe);
-
-	_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for fetch add to complete");
-
-	return ret;
-}
-
-ptrdiff_t pshmem_ptrdiff_t_atomic_fetch_add(ptrdiff_t *dest, ptrdiff_t value, int pe)
-{
-	ptrdiff_t   ret;
-	void *const req =
-		_mpc_openshmem_internal_fetch_add_nb(dest, &ret, &value, MPC_LOWCOMM_AINT, pe);
-
-	_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for fetch add to complete");
-
-	return ret;
-}
-
-int pshmem_int_fadd(int *dest, int value, int pe)
+int shmem_int_fadd(int *dest, int value, int pe)
 {
 	return pshmem_int_atomic_fetch_add(dest, value, pe);
 }
 
-long pshmem_long_fadd(long *dest, long value, int pe)
+long shmem_long_fadd(long *dest, long value, int pe)
 {
 	return pshmem_long_atomic_fetch_add(dest, value, pe);
 }
 
-long long pshmem_longlong_fadd(long long *dest, long long value, int pe)
+long long shmem_longlong_fadd(long long *dest, long long value, int pe)
 {
 	return pshmem_longlong_atomic_fetch_add(dest, value, pe);
 }
 
 // Add
-void pshmem_int_atomic_add(int *dest, int value, int pe)
-{
-	int         ret;
-	void *const req =
-		_mpc_openshmem_internal_fetch_add_nb(dest, &ret, &value, MPC_LOWCOMM_INT, pe);
+#define __shmem_atomic_add_impl(functype, ctype, lowcommtype)                                      \
+		void pshmem_ ## functype ## _atomic_add(ctype * dest, ctype value, int pe)                 \
+		{                                                                                          \
+			ctype       ret;                                                                       \
+			void *const req =                                                                      \
+				_mpc_openshmem_internal_fetch_add_nb(dest, &ret, &value, lowcommtype, pe);         \
+                                                                                                   \
+			_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for add to complete"); \
+		}
+__shmem_atomic_add_impl(float,     float,              MPC_LOWCOMM_FLOAT);
+__shmem_atomic_add_impl(double,    double,             MPC_LOWCOMM_DOUBLE);
+__shmem_atomic_add_impl(char,      char,               MPC_LOWCOMM_CHAR);
+__shmem_atomic_add_impl(schar,     signed char,        MPC_LOWCOMM_SIGNED_CHAR);
+__shmem_atomic_add_impl(short,     short,              MPC_LOWCOMM_SHORT);
+__shmem_atomic_add_impl(int,       int,                MPC_LOWCOMM_INT);
+__shmem_atomic_add_impl(long,      long,               MPC_LOWCOMM_LONG);
+__shmem_atomic_add_impl(longlong,  long long,          MPC_LOWCOMM_LONG_LONG);
+__shmem_atomic_add_impl(uchar,     unsigned char,      MPC_LOWCOMM_UNSIGNED_CHAR);
+__shmem_atomic_add_impl(ushort,    unsigned short,     MPC_LOWCOMM_UNSIGNED_SHORT);
+__shmem_atomic_add_impl(uint,      unsigned int,       MPC_LOWCOMM_UNSIGNED);
+__shmem_atomic_add_impl(ulong,     unsigned long,      MPC_LOWCOMM_UNSIGNED_LONG);
+__shmem_atomic_add_impl(ulonglong, unsigned long long, MPC_LOWCOMM_UNSIGNED_LONG_LONG);
+__shmem_atomic_add_impl(int8_t,    int8_t,             MPC_LOWCOMM_INT8_T);
+__shmem_atomic_add_impl(uint8_t,   uint8_t,            MPC_LOWCOMM_UINT8_T);
+__shmem_atomic_add_impl(int16_t,   int16_t,            MPC_LOWCOMM_INT16_T);
+__shmem_atomic_add_impl(uint16_t,  uint16_t,           MPC_LOWCOMM_UINT16_T);
+__shmem_atomic_add_impl(int32_t,   int32_t,            MPC_LOWCOMM_INT32_T);
+__shmem_atomic_add_impl(uint32_t,  uint32_t,           MPC_LOWCOMM_UINT32_T);
+__shmem_atomic_add_impl(int64_t,   int64_t,            MPC_LOWCOMM_INT64_T);
+__shmem_atomic_add_impl(uint64_t,  uint64_t,           MPC_LOWCOMM_UINT64_T);
+__shmem_atomic_add_impl(size_t,    size_t,             MPC_LOWCOMM_UINT64_T);
+__shmem_atomic_add_impl(ptrdiff_t, ptrdiff_t,          MPC_LOWCOMM_AINT);
 
-	_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for add to complete");
-}
-
-void pshmem_long_atomic_add(long *dest, long value, int pe)
-{
-	long int    ret;
-	void *const req =
-		_mpc_openshmem_internal_fetch_add_nb(dest, &ret, &value, MPC_LOWCOMM_LONG, pe);
-
-	_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for add to complete");
-}
-
-void pshmem_longlong_atomic_add(long long *dest, long long value, int pe)
-{
-	long long int ret;
-	void *const   req =
-		_mpc_openshmem_internal_fetch_add_nb(dest, &ret, &value, MPC_LOWCOMM_LONG_LONG, pe);
-
-	_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for add to complete");
-}
-
-void pshmem_uint_atomic_add(unsigned int *dest, unsigned int value, int pe)
-{
-	unsigned int ret;
-	void *const  req =
-		_mpc_openshmem_internal_fetch_add_nb(dest, &ret, &value, MPC_LOWCOMM_UNSIGNED, pe);
-
-	_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for add to complete");
-}
-
-void pshmem_ulong_atomic_add(unsigned long *dest, unsigned long value, int pe)
-{
-	unsigned long int ret;
-	void *const       req =
-		_mpc_openshmem_internal_fetch_add_nb(dest, &ret, &value, MPC_LOWCOMM_UNSIGNED_LONG, pe);
-
-	_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for add to complete");
-}
-
-void pshmem_ulonglong_atomic_add(unsigned long long *dest, unsigned long long value, int pe)
-{
-	unsigned long long int ret;
-	void *const            req =
-		_mpc_openshmem_internal_fetch_add_nb(dest, &ret, &value, MPC_LOWCOMM_UNSIGNED_LONG_LONG, pe);
-
-	_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for add to complete");
-}
-
-void pshmem_int32_t_atomic_add(int32_t *dest, int32_t value, int pe)
-{
-	int32_t     ret;
-	void *const req =
-		_mpc_openshmem_internal_fetch_add_nb(dest, &ret, &value, MPC_LOWCOMM_INT32_T, pe);
-
-	_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for add to complete");
-}
-
-void pshmem_uint32_t_atomic_add(uint32_t *dest, uint32_t value, int pe)
-{
-	uint32_t    ret;
-	void *const req =
-		_mpc_openshmem_internal_fetch_add_nb(dest, &ret, &value, MPC_LOWCOMM_UINT32_T, pe);
-
-	_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for add to complete");
-}
-
-void pshmem_int64_t_atomic_add(int64_t *dest, int64_t value, int pe)
-{
-	int64_t     ret;
-	void *const req =
-		_mpc_openshmem_internal_fetch_add_nb(dest, &ret, &value, MPC_LOWCOMM_INT64_T, pe);
-
-	_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for add to complete");
-}
-
-void pshmem_uint64_t_atomic_add(uint64_t *dest, uint64_t value, int pe)
-{
-	uint64_t    ret;
-	void *const req =
-		_mpc_openshmem_internal_fetch_add_nb(dest, &ret, &value, MPC_LOWCOMM_UINT64_T, pe);
-
-	_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for add to complete");
-}
-
-void pshmem_size_t_atomic_add(size_t *dest, size_t value, int pe)
-{
-	size_t      ret;
-	void *const req =
-		_mpc_openshmem_internal_fetch_add_nb(dest, &ret, &value, MPC_LOWCOMM_UINT64_T, pe);
-
-	_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for add to complete");
-}
-
-void pshmem_ptrdiff_t_atomic_add(ptrdiff_t *dest, ptrdiff_t value, int pe)
-{
-	ptrdiff_t   ret;
-	void *const req =
-		_mpc_openshmem_internal_fetch_add_nb(dest, &ret, &value, MPC_LOWCOMM_AINT, pe);
-
-	_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for add to complete");
-}
+#undef __shmem_atomic_add_impl
 
 void shmem_int_add(int *dest, int value, int pe)
 {
@@ -1444,285 +923,97 @@ void shmem_longlong_add(long long *dest, long long value, int pe)
 }
 
 // Fetch add
-int pshmem_int_atomic_fetch_inc(int *dest, int pe)
-{
-	int         ret;
-	int         value = 1;
-	void *const req   =
-		_mpc_openshmem_internal_fetch_add_nb(dest, &ret, &value, MPC_LOWCOMM_INT, pe);
+#define __shmem_atomic_fetch_inc_impl(functype, ctype, lowcommtype)                                      \
+		ctype pshmem_ ## functype ## _atomic_fetch_inc(ctype * dest, int pe)                             \
+		{                                                                                                \
+			ctype       ret;                                                                             \
+			ctype       value = 1;                                                                       \
+			void *const req   =                                                                          \
+				_mpc_openshmem_internal_fetch_add_nb(dest, &ret, &value, lowcommtype, pe);               \
+                                                                                                         \
+			_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for fetch inc to complete"); \
+                                                                                                         \
+			return ret;                                                                                  \
+		}
 
-	_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for fetch inc to complete");
+__shmem_atomic_fetch_inc_impl(float,     float,              MPC_LOWCOMM_FLOAT);
+__shmem_atomic_fetch_inc_impl(double,    double,             MPC_LOWCOMM_DOUBLE);
+__shmem_atomic_fetch_inc_impl(char,      char,               MPC_LOWCOMM_CHAR);
+__shmem_atomic_fetch_inc_impl(schar,     signed char,        MPC_LOWCOMM_SIGNED_CHAR);
+__shmem_atomic_fetch_inc_impl(short,     short,              MPC_LOWCOMM_SHORT);
+__shmem_atomic_fetch_inc_impl(int,       int,                MPC_LOWCOMM_INT);
+__shmem_atomic_fetch_inc_impl(long,      long,               MPC_LOWCOMM_LONG);
+__shmem_atomic_fetch_inc_impl(longlong,  long long,          MPC_LOWCOMM_LONG_LONG);
+__shmem_atomic_fetch_inc_impl(uchar,     unsigned char,      MPC_LOWCOMM_UNSIGNED_CHAR);
+__shmem_atomic_fetch_inc_impl(ushort,    unsigned short,     MPC_LOWCOMM_UNSIGNED_SHORT);
+__shmem_atomic_fetch_inc_impl(uint,      unsigned int,       MPC_LOWCOMM_UNSIGNED);
+__shmem_atomic_fetch_inc_impl(ulong,     unsigned long,      MPC_LOWCOMM_UNSIGNED_LONG);
+__shmem_atomic_fetch_inc_impl(ulonglong, unsigned long long, MPC_LOWCOMM_UNSIGNED_LONG_LONG);
+__shmem_atomic_fetch_inc_impl(int8_t,    int8_t,             MPC_LOWCOMM_INT8_T);
+__shmem_atomic_fetch_inc_impl(uint8_t,   uint8_t,            MPC_LOWCOMM_UINT8_T);
+__shmem_atomic_fetch_inc_impl(int16_t,   int16_t,            MPC_LOWCOMM_INT16_T);
+__shmem_atomic_fetch_inc_impl(uint16_t,  uint16_t,           MPC_LOWCOMM_UINT16_T);
+__shmem_atomic_fetch_inc_impl(int32_t,   int32_t,            MPC_LOWCOMM_INT32_T);
+__shmem_atomic_fetch_inc_impl(uint32_t,  uint32_t,           MPC_LOWCOMM_UINT32_T);
+__shmem_atomic_fetch_inc_impl(int64_t,   int64_t,            MPC_LOWCOMM_INT64_T);
+__shmem_atomic_fetch_inc_impl(uint64_t,  uint64_t,           MPC_LOWCOMM_UINT64_T);
+__shmem_atomic_fetch_inc_impl(size_t,    size_t,             MPC_LOWCOMM_UINT64_T);
+__shmem_atomic_fetch_inc_impl(ptrdiff_t, ptrdiff_t,          MPC_LOWCOMM_AINT);
 
-	return ret;
-}
+#undef __shmem_atomic_fetch_inc_impl
 
-long pshmem_long_atomic_fetch_inc(long *dest, int pe)
-{
-	long int    ret;
-	long int    value = 1;
-	void *const req   =
-		_mpc_openshmem_internal_fetch_add_nb(dest, &ret, &value, MPC_LOWCOMM_LONG, pe);
-
-	_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for fetch inc to complete");
-
-	return ret;
-}
-
-long long pshmem_longlong_atomic_fetch_inc(long long *dest, int pe)
-{
-	long long int ret;
-	long long int value = 1;
-	void *const   req   =
-		_mpc_openshmem_internal_fetch_add_nb(dest, &ret, &value, MPC_LOWCOMM_LONG_LONG, pe);
-
-	_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for fetch inc to complete");
-
-	return ret;
-}
-
-unsigned int pshmem_uint_atomic_fetch_inc(unsigned int *dest, int pe)
-{
-	unsigned int ret;
-	unsigned int value = 1;
-	void *const  req   =
-		_mpc_openshmem_internal_fetch_add_nb(dest, &ret, &value, MPC_LOWCOMM_UNSIGNED, pe);
-
-	_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for fetch inc to complete");
-
-	return ret;
-}
-
-unsigned long pshmem_ulong_atomic_fetch_inc(unsigned long *dest, int pe)
-{
-	unsigned long int ret;
-	unsigned long int value = 1;
-	void *const       req   =
-		_mpc_openshmem_internal_fetch_add_nb(dest, &ret, &value, MPC_LOWCOMM_UNSIGNED_LONG, pe);
-
-	_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for fetch inc to complete");
-
-	return ret;
-}
-
-unsigned long long pshmem_ulonglong_atomic_fetch_inc(unsigned long long *dest, int pe)
-{
-	unsigned long long int ret;
-	unsigned long long int value = 1;
-	void *const            req   =
-		_mpc_openshmem_internal_fetch_add_nb(dest, &ret, &value, MPC_LOWCOMM_UNSIGNED_LONG_LONG, pe);
-
-	_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for fetch inc to complete");
-
-	return ret;
-}
-
-int32_t pshmem_int32_t_atomic_fetch_inc(int32_t *dest, int pe)
-{
-	int32_t     ret;
-	int32_t     value = 1;
-	void *const req   =
-		_mpc_openshmem_internal_fetch_add_nb(dest, &ret, &value, MPC_LOWCOMM_INT32_T, pe);
-
-	_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for fetch inc to complete");
-
-	return ret;
-}
-
-uint32_t pshmem_uint32_t_atomic_fetch_inc(uint32_t *dest, int pe)
-{
-	uint32_t    ret;
-	uint32_t    value = 1;
-	void *const req   =
-		_mpc_openshmem_internal_fetch_add_nb(dest, &ret, &value, MPC_LOWCOMM_UINT32_T, pe);
-
-	_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for fetch inc to complete");
-
-	return ret;
-}
-
-int64_t pshmem_int64_t_atomic_fetch_inc(int64_t *dest, int pe)
-{
-	int64_t     ret;
-	int64_t     value = 1;
-	void *const req   =
-		_mpc_openshmem_internal_fetch_add_nb(dest, &ret, &value, MPC_LOWCOMM_INT64_T, pe);
-
-	_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for fetch inc to complete");
-
-	return ret;
-}
-
-uint64_t pshmem_uint64_t_atomic_fetch_inc(uint64_t *dest, int pe)
-{
-	uint64_t    ret;
-	uint64_t    value = 1;
-	void *const req   =
-		_mpc_openshmem_internal_fetch_add_nb(dest, &ret, &value, MPC_LOWCOMM_UINT64_T, pe);
-
-	_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for fetch inc to complete");
-
-	return ret;
-}
-
-size_t pshmem_size_t_atomic_fetch_inc(size_t *dest, int pe)
-{
-	size_t      ret;
-	size_t      value = 1;
-	void *const req   =
-		_mpc_openshmem_internal_fetch_add_nb(dest, &ret, &value, MPC_LOWCOMM_UINT64_T, pe);
-
-	_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for fetch inc to complete");
-
-	return ret;
-}
-
-ptrdiff_t pshmem_ptrdiff_t_atomic_fetch_inc(ptrdiff_t *dest, int pe)
-{
-	ptrdiff_t   ret;
-	ptrdiff_t   value = 1;
-	void *const req   =
-		_mpc_openshmem_internal_fetch_add_nb(dest, &ret, &value, MPC_LOWCOMM_AINT, pe);
-
-	_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for fetch inc to complete");
-
-	return ret;
-}
-
-int pshmem_int_finc(int *dest, int pe)
+int shmem_int_finc(int *dest, int pe)
 {
 	return pshmem_int_atomic_fetch_inc(dest, pe);
 }
 
-long pshmem_long_finc(long *dest, int pe)
+long shmem_long_finc(long *dest, int pe)
 {
 	return pshmem_long_atomic_fetch_inc(dest, pe);
 }
 
-long long pshmem_longlong_finc(long long *dest, int pe)
+long long shmem_longlong_finc(long long *dest, int pe)
 {
 	return pshmem_longlong_atomic_fetch_inc(dest, pe);
 }
 
-// Add
-void pshmem_int_atomic_inc(int *dest, int pe)
-{
-	int         ret;
-	int         value = 1;
-	void *const req   =
-		_mpc_openshmem_internal_fetch_add_nb(dest, &ret, &value, MPC_LOWCOMM_INT, pe);
+// Inc
+#define __shmem_atomic_inc_impl(functype, ctype, lowcommtype, one)                                       \
+		void pshmem_ ## functype ## _atomic_inc(ctype * dest, int pe)                                    \
+		{                                                                                                \
+			ctype       ret;                                                                             \
+			ctype       value = one;                                                                     \
+			void *const req   =                                                                          \
+				_mpc_openshmem_internal_fetch_add_nb(dest, &ret, &value, lowcommtype, pe);               \
+                                                                                                         \
+			_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for fetch inc to complete"); \
+		}
 
-	_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for inc to complete");
-}
+__shmem_atomic_inc_impl(float,     float,              MPC_LOWCOMM_FLOAT,              1.0f);
+__shmem_atomic_inc_impl(double,    double,             MPC_LOWCOMM_DOUBLE,             1.0);
+__shmem_atomic_inc_impl(char,      char,               MPC_LOWCOMM_CHAR,               1);
+__shmem_atomic_inc_impl(schar,     signed char,        MPC_LOWCOMM_SIGNED_CHAR,        1);
+__shmem_atomic_inc_impl(short,     short,              MPC_LOWCOMM_SHORT,              1);
+__shmem_atomic_inc_impl(int,       int,                MPC_LOWCOMM_INT,                1);
+__shmem_atomic_inc_impl(long,      long,               MPC_LOWCOMM_LONG,               1l);
+__shmem_atomic_inc_impl(longlong,  long long,          MPC_LOWCOMM_LONG_LONG,          1ll);
+__shmem_atomic_inc_impl(uchar,     unsigned char,      MPC_LOWCOMM_UNSIGNED_CHAR,      1u);
+__shmem_atomic_inc_impl(ushort,    unsigned short,     MPC_LOWCOMM_UNSIGNED_SHORT,     1u);
+__shmem_atomic_inc_impl(uint,      unsigned int,       MPC_LOWCOMM_UNSIGNED,           1u);
+__shmem_atomic_inc_impl(ulong,     unsigned long,      MPC_LOWCOMM_UNSIGNED_LONG,      1ul);
+__shmem_atomic_inc_impl(ulonglong, unsigned long long, MPC_LOWCOMM_UNSIGNED_LONG_LONG, 1ull);
+__shmem_atomic_inc_impl(int8_t,    int8_t,             MPC_LOWCOMM_INT8_T,             1);
+__shmem_atomic_inc_impl(uint8_t,   uint8_t,            MPC_LOWCOMM_UINT8_T,            1u);
+__shmem_atomic_inc_impl(int16_t,   int16_t,            MPC_LOWCOMM_INT16_T,            1);
+__shmem_atomic_inc_impl(uint16_t,  uint16_t,           MPC_LOWCOMM_UINT16_T,           1u);
+__shmem_atomic_inc_impl(int32_t,   int32_t,            MPC_LOWCOMM_INT32_T,            1);
+__shmem_atomic_inc_impl(uint32_t,  uint32_t,           MPC_LOWCOMM_UINT32_T,           1u);
+__shmem_atomic_inc_impl(int64_t,   int64_t,            MPC_LOWCOMM_INT64_T,            1ll);
+__shmem_atomic_inc_impl(uint64_t,  uint64_t,           MPC_LOWCOMM_UINT64_T,           1ull);
+__shmem_atomic_inc_impl(size_t,    size_t,             MPC_LOWCOMM_UINT64_T,           1ull);
+__shmem_atomic_inc_impl(ptrdiff_t, ptrdiff_t,          MPC_LOWCOMM_AINT,               1ll);
 
-void pshmem_long_atomic_inc(long *dest, int pe)
-{
-	long int    ret;
-	long int    value = 1;
-	void *const req   =
-		_mpc_openshmem_internal_fetch_add_nb(dest, &ret, &value, MPC_LOWCOMM_LONG, pe);
-
-	_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for inc to complete");
-}
-
-void pshmem_longlong_atomic_inc(long long *dest, int pe)
-{
-	long long int ret;
-	long long int value = 1;
-	void *const   req   =
-		_mpc_openshmem_internal_fetch_add_nb(dest, &ret, &value, MPC_LOWCOMM_LONG_LONG, pe);
-
-	_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for inc to complete");
-}
-
-void pshmem_uint_atomic_inc(unsigned int *dest, int pe)
-{
-	unsigned int ret;
-	unsigned int value = 1;
-	void *const  req   =
-		_mpc_openshmem_internal_fetch_add_nb(dest, &ret, &value, MPC_LOWCOMM_UNSIGNED, pe);
-
-	_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for inc to complete");
-}
-
-void pshmem_ulong_atomic_inc(unsigned long *dest, int pe)
-{
-	unsigned long int ret;
-	unsigned long int value = 1;
-	void *const       req   =
-		_mpc_openshmem_internal_fetch_add_nb(dest, &ret, &value, MPC_LOWCOMM_UNSIGNED_LONG, pe);
-
-	_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for inc to complete");
-}
-
-void pshmem_ulonglong_atomic_inc(unsigned long long *dest, int pe)
-{
-	unsigned long long int ret;
-	unsigned long long int value = 1;
-	void *const            req   =
-		_mpc_openshmem_internal_fetch_add_nb(dest, &ret, &value, MPC_LOWCOMM_UNSIGNED_LONG_LONG, pe);
-
-	_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for inc to complete");
-}
-
-void pshmem_int32_t_atomic_inc(int32_t *dest, int pe)
-{
-	int32_t     ret;
-	int32_t     value = 1;
-	void *const req   =
-		_mpc_openshmem_internal_fetch_add_nb(dest, &ret, &value, MPC_LOWCOMM_INT32_T, pe);
-
-	_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for inc to complete");
-}
-
-void pshmem_uint32_t_atomic_inc(uint32_t *dest, int pe)
-{
-	uint32_t    ret;
-	uint32_t    value = 1;
-	void *const req   =
-		_mpc_openshmem_internal_fetch_add_nb(dest, &ret, &value, MPC_LOWCOMM_UINT32_T, pe);
-
-	_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for inc to complete");
-}
-
-void pshmem_int64_t_atomic_inc(int64_t *dest, int pe)
-{
-	int64_t     ret;
-	int64_t     value = 1;
-	void *const req   =
-		_mpc_openshmem_internal_fetch_add_nb(dest, &ret, &value, MPC_LOWCOMM_INT64_T, pe);
-
-	_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for inc to complete");
-}
-
-void pshmem_uint64_t_atomic_inc(uint64_t *dest, int pe)
-{
-	uint64_t    ret;
-	uint64_t    value = 1;
-	void *const req   =
-		_mpc_openshmem_internal_fetch_add_nb(dest, &ret, &value, MPC_LOWCOMM_UINT64_T, pe);
-
-	_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for inc to complete");
-}
-
-void pshmem_size_t_atomic_inc(size_t *dest, int pe)
-{
-	size_t      ret;
-	size_t      value = 1;
-	void *const req   =
-		_mpc_openshmem_internal_fetch_add_nb(dest, &ret, &value, MPC_LOWCOMM_UINT64_T, pe);
-
-	_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for inc to complete");
-}
-
-void pshmem_ptrdiff_t_atomic_inc(ptrdiff_t *dest, int pe)
-{
-	ptrdiff_t   ret;
-	ptrdiff_t   value = 1;
-	void *const req   =
-		_mpc_openshmem_internal_fetch_add_nb(dest, &ret, &value, MPC_LOWCOMM_AINT, pe);
-
-	_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for inc to complete");
-}
+#undef __shmem_atomic_inc_impl
 
 void shmem_int_inc(int *dest, int pe)
 {

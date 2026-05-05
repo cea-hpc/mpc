@@ -447,12 +447,21 @@ ptrdiff_t pshmem_ptrdiff_t_g(const ptrdiff_t *src, int pe);
  */
 float pshmem_float_atomic_fetch(const float *src, int pe);
 double pshmem_double_atomic_fetch(const double *src, int pe);
+char pshmem_char_atomic_fetch(const char *src, int pe);
+signed char pshmem_schar_atomic_fetch(const signed char *src, int pe);
+short pshmem_short_atomic_fetch(const short *src, int pe);
 int pshmem_int_atomic_fetch(const int *src, int pe);
 long pshmem_long_atomic_fetch(const long *src, int pe);
 long long pshmem_longlong_atomic_fetch(const long long *src, int pe);
+unsigned char pshmem_uchar_atomic_fetch(const unsigned char *src, int pe);
+unsigned short pshmem_ushort_atomic_fetch(const unsigned short *src, int pe);
 unsigned int pshmem_uint_atomic_fetch(const unsigned int *src, int pe);
 unsigned long pshmem_ulong_atomic_fetch(const unsigned long *src, int pe);
 unsigned long long pshmem_ulonglong_atomic_fetch(const unsigned long long *src, int pe);
+int8_t pshmem_int8_t_atomic_fetch(const int8_t *src, int pe);
+uint8_t pshmem_uint8_t_atomic_fetch(const uint8_t *src, int pe);
+int16_t pshmem_int16_t_atomic_fetch(const int16_t *src, int pe);
+uint16_t pshmem_uint16_t_atomic_fetch(const uint16_t *src, int pe);
 int32_t pshmem_int32_t_atomic_fetch(const int32_t *src, int pe);
 uint32_t pshmem_uint32_t_atomic_fetch(const uint32_t *src, int pe);
 int64_t pshmem_int64_t_atomic_fetch(const int64_t *src, int pe);
@@ -474,12 +483,21 @@ ptrdiff_t pshmem_ptrdiff_t_atomic_fetch(const ptrdiff_t *src, int pe);
  */
 void pshmem_float_atomic_set(float *dest, float value, int pe);
 void pshmem_double_atomic_set(double *dest, double value, int pe);
+void pshmem_char_atomic_set(char *dest, char value, int pe);
+void pshmem_schar_atomic_set(signed char *dest, signed char value, int pe);
+void pshmem_short_atomic_set(short *dest, short value, int pe);
 void pshmem_int_atomic_set(int *dest, int value, int pe);
 void pshmem_long_atomic_set(long *dest, long value, int pe);
 void pshmem_longlong_atomic_set(long long *dest, long long value, int pe);
+void pshmem_uchar_atomic_set(unsigned char *dest, unsigned char value, int pe);
+void pshmem_ushort_atomic_set(unsigned short *dest, unsigned short value, int pe);
 void pshmem_uint_atomic_set(unsigned int *dest, unsigned int value, int pe);
 void pshmem_ulong_atomic_set(unsigned long *dest, unsigned long value, int pe);
 void pshmem_ulonglong_atomic_set(unsigned long long *dest, unsigned long long value, int pe);
+void pshmem_int8_t_atomic_set(int8_t *dest, int8_t value, int pe);
+void pshmem_uint8_t_atomic_set(uint8_t *dest, uint8_t value, int pe);
+void pshmem_int16_t_atomic_set(int16_t *dest, int16_t value, int pe);
+void pshmem_uint16_t_atomic_set(uint16_t *dest, uint16_t value, int pe);
 void pshmem_int32_t_atomic_set(int32_t *dest, int32_t value, int pe);
 void pshmem_uint32_t_atomic_set(uint32_t *dest, uint32_t value, int pe);
 void pshmem_int64_t_atomic_set(int64_t *dest, int64_t value, int pe);
@@ -503,13 +521,25 @@ void pshmem_ptrdiff_t_atomic_set(ptrdiff_t *dest, ptrdiff_t value, int pe);
  * @retval  old_data        Previously held data (if condition passed)
  * @retval  current_data    Value currently in the remote memory (otherwise)
  */
+float pshmem_float_atomic_compare_swap(float *dest, float cond, float value, int pe);
+double pshmem_double_atomic_compare_swap(double *dest, double cond, double value, int pe);
+char pshmem_char_atomic_compare_swap(char *dest, char cond, char value, int pe);
+signed char pshmem_schar_atomic_compare_swap(signed char *dest, signed char cond, signed char value, int pe);
+short pshmem_short_atomic_compare_swap(short *dest, short cond, short value, int pe);
 int pshmem_int_atomic_compare_swap(int *dest, int cond, int value, int pe);
 long pshmem_long_atomic_compare_swap(long *dest, long cond, long value, int pe);
 long long pshmem_longlong_atomic_compare_swap(long long *dest, long long cond, long long value, int pe);
+unsigned char pshmem_uchar_atomic_compare_swap(unsigned char *dest, unsigned char cond, unsigned char value, int pe);
+unsigned short pshmem_ushort_atomic_compare_swap(unsigned short *dest, unsigned short cond,
+                                                 unsigned short value, int pe);
 unsigned int pshmem_uint_atomic_compare_swap(unsigned int *dest, unsigned int cond, unsigned int value, int pe);
 unsigned long pshmem_ulong_atomic_compare_swap(unsigned long *dest, unsigned long cond, unsigned long value, int pe);
 unsigned long long pshmem_ulonglong_atomic_compare_swap(unsigned long long *dest, unsigned long long cond,
                                                         unsigned long long value, int pe);
+int8_t pshmem_int8_t_atomic_compare_swap(int8_t *dest, int8_t cond, int8_t value, int pe);
+uint8_t pshmem_uint8_t_atomic_compare_swap(uint8_t *dest, uint8_t cond, uint8_t value, int pe);
+int16_t pshmem_int16_t_atomic_compare_swap(int16_t *dest, int16_t cond, int16_t value, int pe);
+uint16_t pshmem_uint16_t_atomic_compare_swap(uint16_t *dest, uint16_t cond, uint16_t value, int pe);
 int32_t pshmem_int32_t_atomic_compare_swap(int32_t *dest, int32_t cond, int32_t value, int pe);
 uint32_t pshmem_uint32_t_atomic_compare_swap(uint32_t *dest, uint32_t cond, uint32_t value, int pe);
 int64_t pshmem_int64_t_atomic_compare_swap(int64_t *dest, int64_t cond, int64_t value, int pe);
@@ -533,12 +563,21 @@ ptrdiff_t pshmem_ptrdiff_t_atomic_compare_swap(ptrdiff_t *dest, ptrdiff_t cond, 
  */
 float pshmem_float_atomic_swap(float *dest, float value, int pe);
 double pshmem_double_atomic_swap(double *dest, double value, int pe);
+char pshmem_char_atomic_swap(char *dest, char value, int pe);
+signed char pshmem_schar_atomic_swap(signed char *dest, signed char value, int pe);
+short pshmem_short_atomic_swap(short *dest, short value, int pe);
 int pshmem_int_atomic_swap(int *dest, int value, int pe);
 long pshmem_long_atomic_swap(long *dest, long value, int pe);
 long long pshmem_longlong_atomic_swap(long long *dest, long long value, int pe);
+unsigned char pshmem_uchar_atomic_swap(unsigned char *dest, unsigned char value, int pe);
+unsigned short pshmem_ushort_atomic_swap(unsigned short *dest, unsigned short value, int pe);
 unsigned int pshmem_uint_atomic_swap(unsigned int *dest, unsigned int value, int pe);
 unsigned long pshmem_ulong_atomic_swap(unsigned long *dest, unsigned long value, int pe);
 unsigned long long pshmem_ulonglong_atomic_swap(unsigned long long *dest, unsigned long long value, int pe);
+int8_t pshmem_int8_t_atomic_swap(int8_t *dest, int8_t value, int pe);
+uint8_t pshmem_uint8_t_atomic_swap(uint8_t *dest, uint8_t value, int pe);
+int16_t pshmem_int16_t_atomic_swap(int16_t *dest, int16_t value, int pe);
+uint16_t pshmem_uint16_t_atomic_swap(uint16_t *dest, uint16_t value, int pe);
 int32_t pshmem_int32_t_atomic_swap(int32_t *dest, int32_t value, int pe);
 uint32_t pshmem_uint32_t_atomic_swap(uint32_t *dest, uint32_t value, int pe);
 int64_t pshmem_int64_t_atomic_swap(int64_t *dest, int64_t value, int pe);
@@ -560,12 +599,23 @@ ptrdiff_t pshmem_ptrdiff_t_atomic_swap(ptrdiff_t *dest, ptrdiff_t value, int pe)
  *
  * @retval  old_data        Previously held data
  */
+float pshmem_float_atomic_fetch_add(float *dest, float value, int pe);
+double pshmem_double_atomic_fetch_add(double *dest, double value, int pe);
+char pshmem_char_atomic_fetch_add(char *dest, char value, int pe);
+signed char pshmem_schar_atomic_fetch_add(signed char *dest, signed char value, int pe);
+short pshmem_short_atomic_fetch_add(short *dest, short value, int pe);
 int pshmem_int_atomic_fetch_add(int *dest, int value, int pe);
 long pshmem_long_atomic_fetch_add(long *dest, long value, int pe);
 long long pshmem_longlong_atomic_fetch_add(long long *dest, long long value, int pe);
+unsigned char pshmem_uchar_atomic_fetch_add(unsigned char *dest, unsigned char value, int pe);
+unsigned short pshmem_ushort_atomic_fetch_add(unsigned short *dest, unsigned short value, int pe);
 unsigned int pshmem_uint_atomic_fetch_add(unsigned int *dest, unsigned int value, int pe);
 unsigned long pshmem_ulong_atomic_fetch_add(unsigned long *dest, unsigned long value, int pe);
 unsigned long long pshmem_ulonglong_atomic_fetch_add(unsigned long long *dest, unsigned long long value, int pe);
+int8_t pshmem_int8_t_atomic_fetch_add(int8_t *dest, int8_t value, int pe);
+uint8_t pshmem_uint8_t_atomic_fetch_add(uint8_t *dest, uint8_t value, int pe);
+int16_t pshmem_int16_t_atomic_fetch_add(int16_t *dest, int16_t value, int pe);
+uint16_t pshmem_uint16_t_atomic_fetch_add(uint16_t *dest, uint16_t value, int pe);
 int32_t pshmem_int32_t_atomic_fetch_add(int32_t *dest, int32_t value, int pe);
 uint32_t pshmem_uint32_t_atomic_fetch_add(uint32_t *dest, uint32_t value, int pe);
 int64_t pshmem_int64_t_atomic_fetch_add(int64_t *dest, int64_t value, int pe);
@@ -585,12 +635,23 @@ ptrdiff_t pshmem_ptrdiff_t_atomic_fetch_add(ptrdiff_t *dest, ptrdiff_t value, in
  * @param[in] value Value to add to the remote memory object
  * @param[in] pe    Unique identifier (rank) of the target
  */
+void pshmem_float_atomic_add(float *dest, float value, int pe);
+void pshmem_double_atomic_add(double *dest, double value, int pe);
+void pshmem_char_atomic_add(char *dest, char value, int pe);
+void pshmem_schar_atomic_add(signed char *dest, signed char value, int pe);
+void pshmem_short_atomic_add(short *dest, short value, int pe);
 void pshmem_int_atomic_add(int *dest, int value, int pe);
 void pshmem_long_atomic_add(long *dest, long value, int pe);
 void pshmem_longlong_atomic_add(long long *dest, long long value, int pe);
+void pshmem_uchar_atomic_add(unsigned char *dest, unsigned char value, int pe);
+void pshmem_ushort_atomic_add(unsigned short *dest, unsigned short value, int pe);
 void pshmem_uint_atomic_add(unsigned int *dest, unsigned int value, int pe);
 void pshmem_ulong_atomic_add(unsigned long *dest, unsigned long value, int pe);
 void pshmem_ulonglong_atomic_add(unsigned long long *dest, unsigned long long value, int pe);
+void pshmem_int8_t_atomic_add(int8_t *dest, int8_t value, int pe);
+void pshmem_uint8_t_atomic_add(uint8_t *dest, uint8_t value, int pe);
+void pshmem_int16_t_atomic_add(int16_t *dest, int16_t value, int pe);
+void pshmem_uint16_t_atomic_add(uint16_t *dest, uint16_t value, int pe);
 void pshmem_int32_t_atomic_add(int32_t *dest, int32_t value, int pe);
 void pshmem_uint32_t_atomic_add(uint32_t *dest, uint32_t value, int pe);
 void pshmem_int64_t_atomic_add(int64_t *dest, int64_t value, int pe);
@@ -611,12 +672,23 @@ void pshmem_ptrdiff_t_atomic_add(ptrdiff_t *dest, ptrdiff_t value, int pe);
  *
  * @retval  old_data        Previously held data
  */
+float pshmem_float_atomic_fetch_inc(float *dest, int pe);
+double pshmem_double_atomic_fetch_inc(double *dest, int pe);
+char pshmem_char_atomic_fetch_inc(char *dest, int pe);
+signed char pshmem_schar_atomic_fetch_inc(signed char *dest, int pe);
+short pshmem_short_atomic_fetch_inc(short *dest, int pe);
 int pshmem_int_atomic_fetch_inc(int *dest, int pe);
 long pshmem_long_atomic_fetch_inc(long *dest, int pe);
 long long pshmem_longlong_atomic_fetch_inc(long long *dest, int pe);
+unsigned char pshmem_uchar_atomic_fetch_inc(unsigned char *dest, int pe);
+unsigned short pshmem_ushort_atomic_fetch_inc(unsigned short *dest, int pe);
 unsigned int pshmem_uint_atomic_fetch_inc(unsigned int *dest, int pe);
 unsigned long pshmem_ulong_atomic_fetch_inc(unsigned long *dest, int pe);
 unsigned long long pshmem_ulonglong_atomic_fetch_inc(unsigned long long *dest, int pe);
+int8_t pshmem_int8_t_atomic_fetch_inc(int8_t *dest, int pe);
+uint8_t pshmem_uint8_t_atomic_fetch_inc(uint8_t *dest, int pe);
+int16_t pshmem_int16_t_atomic_fetch_inc(int16_t *dest, int pe);
+uint16_t pshmem_uint16_t_atomic_fetch_inc(uint16_t *dest, int pe);
 int32_t pshmem_int32_t_atomic_fetch_inc(int32_t *dest, int pe);
 uint32_t pshmem_uint32_t_atomic_fetch_inc(uint32_t *dest, int pe);
 int64_t pshmem_int64_t_atomic_fetch_inc(int64_t *dest, int pe);
@@ -635,12 +707,23 @@ ptrdiff_t pshmem_ptrdiff_t_atomic_fetch_inc(ptrdiff_t *dest, int pe);
  * @param[in] dest Symmetric address of the element to increment
  * @param[in] pe   Unique identifier (rank) of the target
  */
+void pshmem_float_atomic_inc(float *dest, int pe);
+void pshmem_double_atomic_inc(double *dest, int pe);
+void pshmem_char_atomic_inc(char *dest, int pe);
+void pshmem_schar_atomic_inc(signed char *dest, int pe);
+void pshmem_short_atomic_inc(short *dest, int pe);
 void pshmem_int_atomic_inc(int *dest, int pe);
 void pshmem_long_atomic_inc(long *dest, int pe);
 void pshmem_longlong_atomic_inc(long long *dest, int pe);
+void pshmem_uchar_atomic_inc(unsigned char *dest, int pe);
+void pshmem_ushort_atomic_inc(unsigned short *dest, int pe);
 void pshmem_uint_atomic_inc(unsigned int *dest, int pe);
 void pshmem_ulong_atomic_inc(unsigned long *dest, int pe);
 void pshmem_ulonglong_atomic_inc(unsigned long long *dest, int pe);
+void pshmem_int8_t_atomic_inc(int8_t *dest, int pe);
+void pshmem_uint8_t_atomic_inc(uint8_t *dest, int pe);
+void pshmem_int16_t_atomic_inc(int16_t *dest, int pe);
+void pshmem_uint16_t_atomic_inc(uint16_t *dest, int pe);
 void pshmem_int32_t_atomic_inc(int32_t *dest, int pe);
 void pshmem_uint32_t_atomic_inc(uint32_t *dest, int pe);
 void pshmem_int64_t_atomic_inc(int64_t *dest, int pe);
