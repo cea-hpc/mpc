@@ -23,6 +23,11 @@
 #ifndef MPC_OPENSHMEM_API_H_
 #define MPC_OPENSHMEM_API_H_
 
+#ifdef __cplusplus
+	extern "C"
+	{
+#endif
+
 #include <stddef.h>
 #include <stdint.h>
 
@@ -107,9 +112,9 @@
 
 #if __STDC_VERSION__ >= 202300L
 		constexpr int SHMEM_MAJOR_VERSION = 1;
-		[[deprecated]] constexpr int _SHMEM_MAJOR_VERSION = SHMEM_MAJOR_VERSION;
+		[[deprecated]] constexpr int _SHMEM_MAJOR_VERSION = 1;
 		constexpr int SHMEM_MINOR_VERSION = 6;
-		[[deprecated]] constexpr int _SHMEM_MINOR_VERSION = SHMEM_MINOR_VERSION;
+		[[deprecated]] constexpr int _SHMEM_MINOR_VERSION = 6;
 		constexpr int SHMEM_MAX_NAME_LEN = 32;
 		[[deprecated]] constexpr int _SHMEM_MAX_NAME_LEN     = 32;
 		constexpr char SHMEM_VENDOR_STRING[]                 = "MPC";
@@ -117,9 +122,9 @@
 
 #else
 		static const int SHMEM_MAJOR_VERSION = 1;
-		__attribute__((deprecated)) static const int _SHMEM_MAJOR_VERSION = SHMEM_MAJOR_VERSION;
+		__attribute__((deprecated)) static const int _SHMEM_MAJOR_VERSION = 1;
 		static const int SHMEM_MINOR_VERSION = 6;
-		__attribute__((deprecated)) static const int _SHMEM_MINOR_VERSION = SHMEM_MINOR_VERSION;
+		__attribute__((deprecated)) static const int _SHMEM_MINOR_VERSION = 6;
 		static const int SHMEM_MAX_NAME_LEN = 32;
 		__attribute__((deprecated)) static const int _SHMEM_MAX_NAME_LEN = 32;
 		static const char SHMEM_VENDOR_STRING[] = "MPC";
@@ -195,16 +200,33 @@ int shmem_n_pes(void);
  */
 void shmem_finalize(void);
 
-/**
- * @brief Force terminate the entire program
- *
- * Any invocation of this routine must lead to the termination of all PEs.
- * I/O are flushed and resources released accordingly to C/C++ requirements on
- * program termination.
- *
- * @param status Exit status from the main program
- */
-_Noreturn void shmem_global_exit(int status);
+#if !defined(__cplusplus) && __STDC_VERSION__ >= 201100L
+
+	/**
+	 * @brief Force terminate the entire program
+	 *
+	 * Any invocation of this routine must lead to the termination of all PEs.
+	 * I/O are flushed and resources released accordingly to C/C++ requirements on
+	 * program termination.
+	 *
+	 * @param status Exit status from the main program
+	 */
+	_Noreturn void shmem_global_exit(int status);
+
+#else
+
+	/**
+	 * @brief Force terminate the entire program
+	 *
+	 * Any invocation of this routine must lead to the termination of all PEs.
+	 * I/O are flushed and resources released accordingly to C/C++ requirements on
+	 * program termination.
+	 *
+	 * @param status Exit status from the main program
+	 */
+	void shmem_global_exit(int status);
+
+#endif
 
 /**
  * @brief Initialize the OpenSHMEM runtime to guarantee a certain level of multithreading
@@ -505,22 +527,22 @@ ptrdiff_t shmem_ptrdiff_t_g(const ptrdiff_t *src, int pe);
  * @param[in] nelems Number of elements of any supported type to send
  * @param[in] pe     Unique identifier (rank) of the target
  */
-#define shmem_put(dest, src, nelems, pe)    \
-		_Generic((*src),                    \
-	float: shmem_float_put,                 \
-	double: shmem_double_put,               \
-	long double: shmem_longdouble_put,      \
-	char: shmem_char_put,                   \
-	signed char: shmem_schar_put,           \
-	short: shmem_short_put,                 \
-	int: shmem_int_put,                     \
-	long: shmem_long_put,                   \
-	long long: shmem_longlong_put,          \
-	unsigned char: shmem_uchar_put,         \
-	unsigned short: shmem_ushort_put,       \
-	unsigned int: shmem_uint_put,           \
-	unsigned long: shmem_ulong_put,         \
-	unsigned long long: shmem_ulonglong_put \
+#define shmem_put(dest, src, nelems, pe)      \
+		_Generic(src,                         \
+	float *: shmem_float_put,                 \
+	double *: shmem_double_put,               \
+	long double *: shmem_longdouble_put,      \
+	char *: shmem_char_put,                   \
+	signed char *: shmem_schar_put,           \
+	short *: shmem_short_put,                 \
+	int *: shmem_int_put,                     \
+	long *: shmem_long_put,                   \
+	long long *: shmem_longlong_put,          \
+	unsigned char *: shmem_uchar_put,         \
+	unsigned short *: shmem_ushort_put,       \
+	unsigned int *: shmem_uint_put,           \
+	unsigned long *: shmem_ulong_put,         \
+	unsigned long long *: shmem_ulonglong_put \
 	)(dest, src, nelems, pe)
 
 /**
@@ -560,22 +582,22 @@ ptrdiff_t shmem_ptrdiff_t_g(const ptrdiff_t *src, int pe);
  * @param[in] nelems Number of elements of any supported type to send
  * @param[in] pe     Unique identifier (rank) of the target
  */
-#define shmem_get(dest, src, nelems, pe)    \
-		_Generic(*dest,                     \
-	float: shmem_float_get,                 \
-	double: shmem_double_get,               \
-	long double: shmem_longdouble_get,      \
-	char: shmem_char_get,                   \
-	signed char: shmem_schar_get,           \
-	short: shmem_short_get,                 \
-	int: shmem_int_get,                     \
-	long: shmem_long_get,                   \
-	long long: shmem_longlong_get,          \
-	unsigned char: shmem_uchar_get,         \
-	unsigned short: shmem_ushort_get,       \
-	unsigned int: shmem_uint_get,           \
-	unsigned long: shmem_ulong_get,         \
-	unsigned long long: shmem_ulonglong_get \
+#define shmem_get(dest, src, nelems, pe)      \
+		_Generic(dest,                        \
+	float *: shmem_float_get,                 \
+	double *: shmem_double_get,               \
+	long double *: shmem_longdouble_get,      \
+	char *: shmem_char_get,                   \
+	signed char *: shmem_schar_get,           \
+	short *: shmem_short_get,                 \
+	int *: shmem_int_get,                     \
+	long *: shmem_long_get,                   \
+	long long *: shmem_longlong_get,          \
+	unsigned char *: shmem_uchar_get,         \
+	unsigned short *: shmem_ushort_get,       \
+	unsigned int *: shmem_uint_get,           \
+	unsigned long *: shmem_ulong_get,         \
+	unsigned long long *: shmem_ulonglong_get \
 	)(dest, src, nelems, pe)
 
 /**
@@ -588,22 +610,22 @@ ptrdiff_t shmem_ptrdiff_t_g(const ptrdiff_t *src, int pe);
  *
  * @return        data stored in #src on the rank #pe
  */
-#define shmem_g(src, pe)                  \
-		_Generic((*src),                  \
-	float: shmem_float_g,                 \
-	double: shmem_double_g,               \
-	long double: shmem_longdouble_g,      \
-	char: shmem_char_g,                   \
-	signed char: shmem_schar_g,           \
-	short: shmem_short_g,                 \
-	int: shmem_int_g,                     \
-	long: shmem_long_g,                   \
-	long long: shmem_longlong_g,          \
-	unsigned char: shmem_uchar_g,         \
-	unsigned short: shmem_ushort_g,       \
-	unsigned int: shmem_uint_g,           \
-	unsigned long: shmem_ulong_g,         \
-	unsigned long long: shmem_ulonglong_g \
+#define shmem_g(src, pe)                    \
+		_Generic(src,                       \
+	float *: shmem_float_g,                 \
+	double *: shmem_double_g,               \
+	long double *: shmem_longdouble_g,      \
+	char *: shmem_char_g,                   \
+	signed char *: shmem_schar_g,           \
+	short *: shmem_short_g,                 \
+	int *: shmem_int_g,                     \
+	long *: shmem_long_g,                   \
+	long long *: shmem_longlong_g,          \
+	unsigned char *: shmem_uchar_g,         \
+	unsigned short *: shmem_ushort_g,       \
+	unsigned int *: shmem_uint_g,           \
+	unsigned long *: shmem_ulong_g,         \
+	unsigned long long *: shmem_ulonglong_g \
 	)(src, pe)
 
 /** @} */ // MPC_OPENSHMEM_API_COMM
@@ -1366,5 +1388,9 @@ void shmem_barrier_all(void);
 
 /** @} */ // MPC_OPENSHMEM_API_COLL_SYNC
 /** @} */ // MPC_OPENSHMEM_API
+
+#ifdef __cplusplus
+	} // extern "C"
+#endif
 
 #endif // !MPC_OPENSHMEM_API_H_
