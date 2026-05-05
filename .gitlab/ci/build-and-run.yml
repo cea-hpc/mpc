@@ -200,6 +200,13 @@ MPI:
   script:
     - ${PCVS_COMMAND} "${GL_MPC_CI_ROOT_PATH}/MPI/simple/c" "${GL_MPC_CI_ROOT_PATH}/MPI/simple/fortran"
 
+OpenSHMEM:
+  stage: 'Modules'
+  needs: ['Simple Run']
+  extends: ['.prepare_mpc_ci', '.regular_testing_rules']
+  script:
+    - ${PCVS_COMMAND} "${GL_MPC_CI_ROOT_PATH}/OpenSHMEM"
+
 OpenMP:
   stage: 'Modules'
   needs: ['Simple Run']
