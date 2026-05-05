@@ -196,6 +196,13 @@ int shmem_n_pes(void);
 #endif
 
 /**
+ * @brief Query the initialization status of the library
+ *
+ * @param[out] initialized non-zero if the library is initialized. Zero othrewise.
+ */
+void shmem_query_initialized(int *initialized);
+
+/**
  * @brief Finalize the OpenSHMEM runtime
  */
 void shmem_finalize(void);
@@ -227,6 +234,21 @@ void shmem_finalize(void);
 	void shmem_global_exit(int status);
 
 #endif
+
+/**
+ * @brief Query the OpenSHMEM specification version of the library
+ *
+ * @param[out] major Major version of the specification
+ * @param[out] minor Minor version of the specification
+ */
+void shmem_info_get_version(int *major, int *minor);
+
+/**
+ * @brief Query the vendor name of the library
+ *
+ * @param[out] name Vendor name of the library
+ */
+void shmem_info_get_name(char *name);
 
 /**
  * @brief Initialize the OpenSHMEM runtime to guarantee a certain level of multithreading

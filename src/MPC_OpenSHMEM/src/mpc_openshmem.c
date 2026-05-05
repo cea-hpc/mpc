@@ -1088,6 +1088,24 @@ error:
 		variable, *remaining_string, *remaining_string);
 }
 
+void pshmem_query_initialized(int *initialized)
+{
+	_mpc_oshmem_context_t *my_task_context = __oshmem_get_context();
+
+	*initialized = (int)atomic_load(&my_task_context->refcount);
+}
+
+void pshmem_info_get_version(int *major, int *minor)
+{
+	*major = SHMEM_MAJOR_VERSION;
+	*minor = SHMEM_MINOR_VERSION;
+}
+
+void pshmem_info_get_name(char *name)
+{
+	strncpy(name, SHMEM_VENDOR_STRING, SHMEM_MAX_NAME_LEN);
+}
+
 int pshmem_init_thread(int requested, int *provided)
 {
 	UNUSED(requested); // We always provide the maximum

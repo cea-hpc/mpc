@@ -29,7 +29,10 @@
 #pragma weak shmem_my_pe = pshmem_my_pe
 #pragma weak shmem_n_pes = pshmem_n_pes
 #pragma weak shmem_finalize = pshmem_finalize
+#pragma weak shmem_query_initialized = pshmem_query_initialized
 #pragma weak shmem_global_exit = pshmem_global_exit
+#pragma weak shmem_info_get_version = pshmem_info_get_version
+#pragma weak shmem_info_get_name = pshmem_info_get_name
 #pragma weak shmem_init_thread = pshmem_init_thread
 
 #pragma weak shmem_malloc = pshmem_malloc
