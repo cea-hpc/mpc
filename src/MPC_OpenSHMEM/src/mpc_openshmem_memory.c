@@ -1,3 +1,29 @@
+/* ############################# MPC License ############################## */
+/* # Wed Nov 19 15:19:19 CET 2008                                         # */
+/* # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          # */
+/* #                                                                      # */
+/* # IDDN.FR.001.230040.000.S.P.2007.000.10000                            # */
+/* # This file is part of the MPC Runtime.                                # */
+/* #                                                                      # */
+/* # This software is governed by the CeCILL-C license under French law   # */
+/* # and abiding by the rules of distribution of free software.  You can  # */
+/* # use, modify and/ or redistribute the software under the terms of     # */
+/* # the CeCILL-C license as circulated by CEA, CNRS and INRIA at the     # */
+/* # following URL http://www.cecill.info.                                # */
+/* #                                                                      # */
+/* # The fact that you are presently reading this means that you have     # */
+/* # had knowledge of the CeCILL-C license and that you accept its        # */
+/* # terms.                                                               # */
+/* #                                                                      # */
+/* # Authors:                                                             # */
+/* #   - BEAULIEU Corentin corentin.beaulieu@cea.fr                       # */
+/* #                                                                      # */
+/* ######################################################################## */
+
+/**@file
+ * OpenSHMEM internal symmetric heap allocator implementation
+ */
+
 #include <stdbool.h>
 #include <string.h>
 
@@ -7,6 +33,11 @@
 #include <sctk_alloc.h>
 
 #include "mpc_openshmem_memory.h"
+
+#ifdef MPC_MODULE
+#undef MPC_MODULE
+#endif
+#define MPC_MODULE "OpenSHMEM/memory"
 
 /** @ingroup openshmem_memory
  * @{
@@ -22,7 +53,7 @@ typedef struct _mpc_openshmem_stack_info_s
 	ptrdiff_t             top;             /**< Offset to next free block in the stack */
 	size_t                last_block_size; /**< Size of the last allocation */
 	char                  padding[22];     /**< Pad to 64 bytes to align the following header */
-} _mpc_openshmem_stack_info_t;
+} __oshmem_stack_info_t;
 
 /** @brief Header of the memory blocks */
 typedef struct __openshmem_allocator_memory_header_s
@@ -31,31 +62,31 @@ typedef struct __openshmem_allocator_memory_header_s
 	size_t previous_block_size; /**< Size of the previous block */
 	size_t block_size;          /**< Size of the block */
 	char   padding[36];         /**< Pad to 64 bytes to align the following memory block */
-} __openshmem_allocator_memory_header_t;
+} __oshmem_allocator_memory_header_t;
 
 #if __STDC_VERSION__ < 202300L
-	static const ptrdiff_t _mpc_openshmem_stack_alignment = 64;
+	static const ptrdiff_t __oshmem_stack_alignment = 64;
 #else
-	constexpr ptrdiff_t _mpc_openshmem_stack_alignment = 64;
+	constexpr ptrdiff_t __oshmem_stack_alignment = 64;
 #endif
 
-#define __openshmem_memory_stack_info_from_ptr(__ptr) (((_mpc_openshmem_stack_info_t *)__ptr) - 1)
-#define __openshmem_memory_header_from_ptr(__ptr)     (((__openshmem_allocator_memory_header_t *)__ptr) - 1)
+#define __oshmem_memory_stack_info_from_ptr(__ptr) (((__oshmem_stack_info_t *)__ptr) - 1)
+#define __shmem_memory_header_from_ptr(__ptr)      (((__oshmem_allocator_memory_header_t *)__ptr) - 1)
 
 /** @brief Check if this address correspond to the last allocated one
  *
  * @param[in] ptr address to check
- * @retval			true		ptr is the address of the lastly allocated block
- * @retval			false		ptr is not the address of the lastly allocated block
+ * @retval    true ptr is the address of the lastly allocated block
+ * @retval    false ptr is not the address of the lastly allocated block
  */
-static inline bool __openshmem_memory_is_last_allocation(const _mpc_openshmem_stack_info_t *const stack_info,
-                                                         const void *const ptr)
+static inline bool __oshmem_memory_is_last_allocation(const __oshmem_stack_info_t *const stack_info,
+                                                      const void *const ptr)
 {
 	return (stack_info->bottom + (stack_info->top - stack_info->last_block_size)) == ptr;
 }
 
 #if !defined(NDEBUG)
-	#define __openshmem_memory_stack_check_canary(__stack)                                \
+	#define __oshmem_memory_stack_check_canary(__stack)                                   \
 			do                                                                            \
 			{                                                                             \
 				if ((__stack)->canary != 0xdead)                                          \
@@ -63,7 +94,7 @@ static inline bool __openshmem_memory_is_last_allocation(const _mpc_openshmem_st
 					mpc_common_debug_fatal("Corruption in the symmetric heap detected!"); \
 				}                                                                         \
 			} while (0)
-	#define __openshmem_memory_block_check_canary(__mem_block)                                      \
+	#define __oshmem_memory_block_check_canary(__mem_block)                                         \
 			do                                                                                      \
 			{                                                                                       \
 				if ((__mem_block)->canary != 0xdeadc0de)                                            \
@@ -74,15 +105,15 @@ static inline bool __openshmem_memory_is_last_allocation(const _mpc_openshmem_st
 				}                                                                                   \
 			} while (0)
 #else
-	#define __openshmem_memory_stack_check_canary(__stack)     ;
-	#define __openshmem_memory_block_check_canary(__mem_block) ;
+	#define __oshmem_memory_stack_check_canary(__stack)     ;
+	#define __oshmem_memory_block_check_canary(__mem_block) ;
 
 #endif
 
 void * mpc_openshmem_memory_symmetric_stack_init(size_t *const size)
 {
-	*size = *size + 1024 * sizeof(__openshmem_allocator_memory_header_t) + sizeof(_mpc_openshmem_stack_info_t);
-	_mpc_openshmem_stack_info_t *new_stack = sctk_memalign(sizeof(__openshmem_allocator_memory_header_t), *size);
+	*size = *size + 1024 * sizeof(__oshmem_allocator_memory_header_t) + sizeof(__oshmem_stack_info_t);
+	__oshmem_stack_info_t *new_stack = sctk_memalign(sizeof(__oshmem_allocator_memory_header_t), *size);
 	new_stack->canary = 0xdead;
 	mpc_common_spinlock_init(&new_stack->lock, 0);
 	new_stack->bottom          = NULL;
@@ -92,20 +123,20 @@ void * mpc_openshmem_memory_symmetric_stack_init(size_t *const size)
 
 	new_stack->bottom = new_stack + 1;
 	// Verify that the header is correctly aligned
-	assert(((size_t)new_stack->bottom % sizeof(__openshmem_allocator_memory_header_t)) == 0);
+	assert(((size_t)new_stack->bottom % sizeof(__oshmem_allocator_memory_header_t)) == 0);
 
 	return new_stack->bottom;
 }
 
-static void * mpc_openshmem_memory_symmetric_stack_alloc_no_lock(_mpc_openshmem_stack_info_t *stack_info,
+static void * mpc_openshmem_memory_symmetric_stack_alloc_no_lock(__oshmem_stack_info_t *stack_info,
                                                                  const size_t size)
 {
 	// Set the block for the next address to be aligned
 	const size_t aligned_size =
-		((size % _mpc_openshmem_stack_alignment) == 0)
-		? size + sizeof(__openshmem_allocator_memory_header_t)
-		: ((size / _mpc_openshmem_stack_alignment) + 1) * _mpc_openshmem_stack_alignment
-		+ sizeof(__openshmem_allocator_memory_header_t);
+		((size % __oshmem_stack_alignment) == 0)
+		? size + sizeof(__oshmem_allocator_memory_header_t)
+		: ((size / __oshmem_stack_alignment) + 1) * __oshmem_stack_alignment
+		+ sizeof(__oshmem_allocator_memory_header_t);
 
 	// Not enough space to alloc the required size
 	if (stack_info->top + aligned_size >= stack_info->size)
@@ -113,10 +144,10 @@ static void * mpc_openshmem_memory_symmetric_stack_alloc_no_lock(_mpc_openshmem_
 		return NULL;
 	}
 	// Verify that the header is correctly aligned
-	assert((stack_info->top % sizeof(__openshmem_allocator_memory_header_t)) == 0);
+	assert((stack_info->top % sizeof(__oshmem_allocator_memory_header_t)) == 0);
 
 	// Compute the address to the newly allocated block
-	__openshmem_allocator_memory_header_t *ret = stack_info->bottom + stack_info->top;
+	__oshmem_allocator_memory_header_t *ret = stack_info->bottom + stack_info->top;
 
 	ret->previous_block_size = stack_info->last_block_size;
 	ret->block_size          = aligned_size;
@@ -133,15 +164,15 @@ static void * mpc_openshmem_memory_symmetric_stack_alloc_no_lock(_mpc_openshmem_
 
 void * mpc_openshmem_memory_symmetric_stack_alloc(void *stack_start, const size_t size)
 {
-	_mpc_openshmem_stack_info_t *stack_info = __openshmem_memory_stack_info_from_ptr(stack_start);
+	__oshmem_stack_info_t *stack_info = __oshmem_memory_stack_info_from_ptr(stack_start);
 
-	__openshmem_memory_stack_check_canary(stack_info);
+	__oshmem_memory_stack_check_canary(stack_info);
 	// Set the block for the next address to be aligned
 	const size_t aligned_size =
-		((size % _mpc_openshmem_stack_alignment) == 0)
-		? size + sizeof(__openshmem_allocator_memory_header_t)
-		: ((size / _mpc_openshmem_stack_alignment) + 1) * _mpc_openshmem_stack_alignment
-		+ sizeof(__openshmem_allocator_memory_header_t);
+		((size % __oshmem_stack_alignment) == 0)
+		? size + sizeof(__oshmem_allocator_memory_header_t)
+		: ((size / __oshmem_stack_alignment) + 1) * __oshmem_stack_alignment
+		+ sizeof(__oshmem_allocator_memory_header_t);
 
 	// Not enough space to alloc the required size
 	if (stack_info->top + aligned_size >= stack_info->size)
@@ -149,11 +180,11 @@ void * mpc_openshmem_memory_symmetric_stack_alloc(void *stack_start, const size_
 		return NULL;
 	}
 	// Verify that the header is correctly aligned
-	assert((stack_info->top % sizeof(__openshmem_allocator_memory_header_t)) == 0);
+	assert((stack_info->top % sizeof(__oshmem_allocator_memory_header_t)) == 0);
 
 	mpc_common_spinlock_lock(&stack_info->lock);
 	// Compute the address to the newly allocated block
-	__openshmem_allocator_memory_header_t *ret = stack_info->bottom + stack_info->top;
+	__oshmem_allocator_memory_header_t *ret = stack_info->bottom + stack_info->top;
 
 	ret->previous_block_size = stack_info->last_block_size;
 	ret->block_size          = aligned_size;
@@ -170,15 +201,15 @@ void * mpc_openshmem_memory_symmetric_stack_alloc(void *stack_start, const size_
 	return ret + 1;
 }
 
-static void mpc_openshmem_memory_symmetric_stack_free_no_lock(_mpc_openshmem_stack_info_t *stack_info, void *ptr)
+static void mpc_openshmem_memory_symmetric_stack_free_no_lock(__oshmem_stack_info_t *stack_info, void *ptr)
 {
 	// Retrieve the headers
-	__openshmem_allocator_memory_header_t *memory_block = __openshmem_memory_header_from_ptr(ptr);
-	__openshmem_allocator_memory_header_t *prev_block   = ((void *)memory_block - memory_block->previous_block_size);
+	__oshmem_allocator_memory_header_t *memory_block = __shmem_memory_header_from_ptr(ptr);
+	__oshmem_allocator_memory_header_t *prev_block   = ((void *)memory_block - memory_block->previous_block_size);
 
 	mpc_common_nodebug("Freeing memory @ %p", ptr);
 	// Check the integrity of the memory block before reading it
-	__openshmem_memory_block_check_canary(memory_block);
+	__oshmem_memory_block_check_canary(memory_block);
 	// Check if the block has already been freed
 	if (memory_block->block_size == 0)
 	{
@@ -187,7 +218,7 @@ static void mpc_openshmem_memory_symmetric_stack_free_no_lock(_mpc_openshmem_sta
 
 	// Set the block as freed
 	memory_block->block_size = 0;
-	if (__openshmem_memory_is_last_allocation(stack_info, memory_block))
+	if (__oshmem_memory_is_last_allocation(stack_info, memory_block))
 	{
 		do
 		{
@@ -205,9 +236,9 @@ static void mpc_openshmem_memory_symmetric_stack_free_no_lock(_mpc_openshmem_sta
 
 void mpc_openshmem_memory_symmetric_stack_free(void *stack_start, void *ptr)
 {
-	_mpc_openshmem_stack_info_t *stack_info = __openshmem_memory_stack_info_from_ptr(stack_start);
+	__oshmem_stack_info_t *stack_info = __oshmem_memory_stack_info_from_ptr(stack_start);
 
-	__openshmem_memory_stack_check_canary(stack_info);
+	__oshmem_memory_stack_check_canary(stack_info);
 
 	mpc_common_spinlock_lock(&stack_info->lock);
 	mpc_openshmem_memory_symmetric_stack_free_no_lock(stack_info, ptr);
@@ -216,24 +247,24 @@ void mpc_openshmem_memory_symmetric_stack_free(void *stack_start, void *ptr)
 
 void * mpc_openshmem_memory_symmetric_stack_resize(void *stack_start, void *ptr, const size_t new_size)
 {
-	_mpc_openshmem_stack_info_t *stack_info = __openshmem_memory_stack_info_from_ptr(stack_start);
+	__oshmem_stack_info_t *stack_info = __oshmem_memory_stack_info_from_ptr(stack_start);
 
-	__openshmem_memory_stack_check_canary(stack_info);
+	__oshmem_memory_stack_check_canary(stack_info);
 	void *ret = NULL;
 
 	// Set the block for the next address to be aligned
 	const size_t aligned_size =
-		((new_size % _mpc_openshmem_stack_alignment) == 0)
-		? new_size + sizeof(__openshmem_allocator_memory_header_t)
-		: ((new_size / _mpc_openshmem_stack_alignment) + 1) * _mpc_openshmem_stack_alignment
-		+ sizeof(__openshmem_allocator_memory_header_t)
+		((new_size % __oshmem_stack_alignment) == 0)
+		? new_size + sizeof(__oshmem_allocator_memory_header_t)
+		: ((new_size / __oshmem_stack_alignment) + 1) * __oshmem_stack_alignment
+		+ sizeof(__oshmem_allocator_memory_header_t)
 	;
 
 	mpc_common_spinlock_lock(&stack_info->lock);
-	__openshmem_allocator_memory_header_t *memory_block = __openshmem_memory_header_from_ptr(ptr);
+	__oshmem_allocator_memory_header_t *memory_block = __shmem_memory_header_from_ptr(ptr);
 
 	// Check the integrity of the memory block before reading it
-	__openshmem_memory_block_check_canary(memory_block);
+	__oshmem_memory_block_check_canary(memory_block);
 
 	// The block is already large enough
 	if (memory_block->block_size >= aligned_size)
@@ -243,7 +274,7 @@ void * mpc_openshmem_memory_symmetric_stack_resize(void *stack_start, void *ptr,
 	}
 
 	// Resize if last allocation
-	if (__openshmem_memory_is_last_allocation(stack_info, memory_block))
+	if (__oshmem_memory_is_last_allocation(stack_info, memory_block))
 	{
 		const ptrdiff_t old_offset = ptr - stack_info->bottom;
 		// Not enough space to alloc the required size
@@ -272,7 +303,7 @@ void * mpc_openshmem_memory_symmetric_stack_resize(void *stack_start, void *ptr,
 			return ret;
 		}
 		// Copy the data from the old block
-		memcpy(ret, memory_block + 1, memory_block->block_size - sizeof(__openshmem_allocator_memory_header_t));
+		memcpy(ret, memory_block + 1, memory_block->block_size - sizeof(__oshmem_allocator_memory_header_t));
 		// Free the old block
 		mpc_openshmem_memory_symmetric_stack_free_no_lock(stack_info, ptr);
 	}

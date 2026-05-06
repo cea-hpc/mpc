@@ -23,6 +23,11 @@
 #ifndef MPC_OPENSHMEM_API_H_
 #define MPC_OPENSHMEM_API_H_
 
+/**@file
+ * Standard OpenSHMEM API.
+ * Here is defined only what MPC supports.
+ */
+
 #ifdef __cplusplus
 	extern "C"
 	{
@@ -1133,6 +1138,15 @@ void shmem_ptrdiff_t_atomic_inc(ptrdiff_t *dest, int pe);
 	unsigned long long *: shmem_ulonglong_atomic_fetch \
 	)(src, pe)
 
+/**
+ * @brief OpenSHMEM atomic fetch operation
+ *
+ * @deprecated     Use shmem_atomic_fetch instead
+ * @note Generic counterpart of the @ref shmem_TYPE_fetch functions.
+ *
+ * @param[in]  src Symmetric address from which the data is read
+ * @param[in]  pe  Unique identifier (rank) of the target
+ */
 #define shmem_fetch(src, pe)           \
 		_Generic(src,                  \
 	float *: shmem_float_fetch,        \
@@ -1168,6 +1182,16 @@ void shmem_ptrdiff_t_atomic_inc(ptrdiff_t *dest, int pe);
 	unsigned long long: shmem_ulonglong_atomic_set \
 	)(dest, value, pe)
 
+/**
+ * @brief OpenSHMEM atomic set operation
+ *
+ * @deprecated       Use shmem_atomic_set instead
+ * @note Generic counterpart of the @ref shmem_TYPE_set functions.
+ *
+ * @param[in]  dest  Symmetric address of the element to set
+ * @param[in]  value Value to put in remote memory
+ * @param[in]  pe    Unique identifier (rank) of the target
+ */
 #define shmem_set(dest, value, pe) \
 		_Generic(value,            \
 	float: shmem_float_set,        \
@@ -1207,6 +1231,20 @@ void shmem_ptrdiff_t_atomic_inc(ptrdiff_t *dest, int pe);
 	unsigned long long: shmem_ulonglong_atomic_compare_swap \
 	)(dest, cond, value, pe)
 
+/**
+ * @brief OpenSHMEM atomic compare and swap operation
+ *
+ * @deprecated       Use shmem_atomic_compare_swap instead
+ * @note Generic counterpart of the #shmem_TYPE_cswap functions.
+ *
+ * @param[in]  dest  Symmetric address of the element to swap
+ * @param[in]  cond  Value expected in the remote memory
+ * @param[in]  value Value to put in remote memory
+ * @param[in]  pe    Unique identifier (rank) of the target
+ *
+ * @retval  old_data        Previously held data (if condition passed)
+ * @retval  current_data    Value currently in the remote memory (otherwise)
+ */
 #define shmem_cswap(dest, cond, value, pe) \
 		_Generic(value,                    \
 	int: shmem_int_cswap,                  \
@@ -1242,6 +1280,18 @@ void shmem_ptrdiff_t_atomic_inc(ptrdiff_t *dest, int pe);
 	unsigned long long: shmem_ulonglong_atomic_swap \
 	)(dest, value, pe)
 
+/**
+ * @brief OpenSHMEM atomic swap operation
+ *
+ * @deprecated       Use shmem_atomic_swap instead
+ * @note Generic counterpart of the @ref shmem_TYPE_swap functions.
+ *
+ * @param[in]  dest  Symmetric address of the element to swap
+ * @param[in]  value Value to put in remote memory
+ * @param[in]  pe    Unique identifier (rank) of the target
+ *
+ * @retval  old_data        Previously held data
+ */
 #define shmem_swap(dest, value, pe) \
 		_Generic(value,             \
 	float: shmem_float_swap,        \
@@ -1279,6 +1329,18 @@ void shmem_ptrdiff_t_atomic_inc(ptrdiff_t *dest, int pe);
 	unsigned long long: shmem_ulonglong_atomic_fetch_add \
 	)(dest, value, pe)
 
+/**
+ * @brief OpenSHMEM atomic fetch and add operation
+ *
+ * @deprecated       Use shmem_atomic_fetch_add instead
+ * @note Generic counterpart of the #shmem_TYPE_fadd functions.
+ *
+ * @param[in]  dest  Symmetric address of the element to fetch and add to
+ * @param[in]  value Value to add to the remote memory object
+ * @param[in]  pe    Unique identifier (rank) of the target
+ *
+ * @retval  old_data        Previously held data
+ */
 #define shmem_fadd(dest, value, pe) \
 		_Generic(value,             \
 	int: shmem_int_fadd,            \
@@ -1312,6 +1374,16 @@ void shmem_ptrdiff_t_atomic_inc(ptrdiff_t *dest, int pe);
 	unsigned long long: shmem_ulonglong_atomic_add \
 	)(dest, value, pe)
 
+/**
+ * @brief OpenSHMEM atomic add operation
+ *
+ * @deprecated       Use shmem_atomic_add instead
+ * @note Generic counterpart of the #shmem_TYPE_add functions.
+ *
+ * @param[in]  dest  Symmetric address of the element to add to
+ * @param[in]  value Value to add to the remote memory object
+ * @param[in]  pe    Unique identifier (rank) of the target
+ */
 #define shmem_add(dest, value, pe) \
 		_Generic(value,            \
 	int: shmem_int_add,            \
@@ -1346,6 +1418,17 @@ void shmem_ptrdiff_t_atomic_inc(ptrdiff_t *dest, int pe);
 	unsigned long long *: shmem_ulonglong_atomic_fetch_inc \
 	)(dest, pe)
 
+/**
+ * @brief OpenSHMEM atomic fetch and increment operation
+ *
+ * @deprecated      Use shmem_atomic_fetch_inc instead
+ * @note Generic counterpart of the #shmem_TYPE_finc functions.
+ *
+ * @param[in]  dest Symmetric address of the element to fetch and increment
+ * @param[in]  pe   Unique identifier (rank) of the target
+ *
+ * @retval  old_data        Previously held data
+ */
 #define shmem_finc(dest, pe)        \
 		_Generic(value,             \
 	int: shmem_int_finc,            \
@@ -1378,6 +1461,15 @@ void shmem_ptrdiff_t_atomic_inc(ptrdiff_t *dest, int pe);
 	unsigned long long *: shmem_ulonglong_atomic_inc \
 	)(dest, pe)
 
+/**
+ * @brief OpenSHMEM atomic increment operation
+ *
+ * @deprecated      Use shmem_atomic_inc instead
+ * @note Generic counterpart of the #shmem_TYPE_inc functions.
+ *
+ * @param[in]  dest Symmetric address of the element to increment
+ * @param[in]  pe   Unique identifier (rank) of the target
+ */
 #define shmem_inc(dest, pe)        \
 		_Generic(value,            \
 	int: shmem_int_inc,            \

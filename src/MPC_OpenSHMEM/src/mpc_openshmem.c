@@ -20,27 +20,28 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
+/**@file
+ * OpenSHMEM standard routines implementation
+ */
+
 #include <limits.h>
 #include <stdatomic.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <stdlib.h>
 
 #include <shmem.h>
 
 #include <mpc_common_debug.h>
 #include <mpc_common_rank.h>
-#include <mpc_common_progress.h>
-#include <mpc_common_flags.h>
+#include <mpc_common_spinlock.h>
 #include <mpc_lowcomm.h>
-#include <mpc_lowcomm_one_sided.h>
+#include <mpc_lowcomm_communicator.h>
 #include <mpc_lowcomm_datatypes.h>
+#include <mpc_lowcomm_one_sided.h>
 #include <sctk_alloc.h>
-#include <stdlib.h>
 
-#include "mpc_common_spinlock.h"
-#include "mpc_lowcomm_communicator.h"
-#include "mpc_lowcomm_types.h"
-#include "mpc_openshmem_setup.h"
+#include "mpc_openshmem_elf.h"
 #include "mpc_openshmem_memory.h"
 #include "mpc_openshmem_internal.h"
 
@@ -51,19 +52,29 @@
 #endif
 #define MPC_MODULE "OpenSHMEM"
 
+/** @brief Default size of the symmetric heap */
 static const size_t DEFAULT_SYMMETRIC_SIZE = 1024 * 1024 * 1024;
 
 // HACK: We need to handle it this way for thread-based
-static _mpc_oshmem_context_t * _oshmem_global_contexts         = NULL;
-static mpc_common_spinlock_t   _oshmem_global_context_lock     = MPC_COMMON_SPINLOCK_INITIALIZER;
-static _Atomic volatile size_t _oshmem_global_context_refcount = 0;
+
+/** @brief Task specific contexts */
+static _mpc_oshmem_context_t *__oshmem_global_contexts = NULL;
+/** @brief Lock of the contexts */
+static mpc_common_spinlock_t __oshmem_global_context_lock = MPC_COMMON_SPINLOCK_INITIALIZER;
+/** @brief Counter of the number of references on the contexts array */
+static _Atomic volatile size_t __oshmem_global_context_refcount = 0;
 
 
+/**
+ * @brief Retrieves a reference of the current task specific context
+ *
+ * @return The current task openshmem context
+ */
 static inline _mpc_oshmem_context_t *__oshmem_get_context(void)
 {
 	const int my_local_rank = mpc_common_get_local_task_rank();
 
-	return &_oshmem_global_contexts[my_local_rank];
+	return &__oshmem_global_contexts[my_local_rank];
 }
 
 /** @ingroup openshmem_internals
@@ -147,6 +158,16 @@ static inline void * __oshmem_select_memory_region(const void *const address,
 }
 
 #ifndef NDEBUG
+
+/**
+ * @brief Checks if the address + size requested for a communication will overflow
+ *
+ * @warning If the check fails, this function will make the program panic
+ *
+ * @param[in] address Symmetric address on which the communication will happen
+ * @param[in] size    Size (in Bytes) of the data to be written
+ * @param[in] context Openshmem context on which the check should be performed
+ */
 static inline void __oshmem_check_overflow(const void *const address, const size_t size,
                                            const _mpc_oshmem_context_t * const context)
 {
@@ -172,7 +193,15 @@ static inline void __oshmem_check_overflow(const void *const address, const size
 
 #endif
 
-static inline void _mpc_openshmem_wait_request_and_free(mpc_lowcomm_request_t *req, char *msg)
+/**
+ * @brief Waits a request than frees it
+ *
+ * @warning If the waiting of the request is not success, this function will panic
+ *
+ * @param[in] req Request to wait and free
+ * @param[in] msg Error message in case the wait is not successful
+ */
+static inline void __oshmem_wait_request_and_free(mpc_lowcomm_request_t *req, char *msg)
 {
 	mpc_lowcomm_status_t status = {};
 
@@ -190,8 +219,15 @@ static inline void _mpc_openshmem_wait_request_and_free(mpc_lowcomm_request_t *r
  * Communications *
  ******************/
 
-// Put
-#define __shmem_put_impl(functype, ctype)                                                                              \
+// PUT
+
+/**
+ * @brief Helper macro to generate a typed version of the put routine
+ *
+ * @param[in] functype Name of the type in the function name
+ * @param[in] ctype    C type of the operands
+ */
+#define __oshmem_put_impl(functype, ctype)                                                                             \
 		void pshmem_ ## functype ## _put(ctype * dest, const ctype * src, size_t nelems, int pe)                       \
 		{                                                                                                              \
 			const size_t                 size    = nelems * sizeof(ctype);                                             \
@@ -209,44 +245,51 @@ static inline void _mpc_openshmem_wait_request_and_free(mpc_lowcomm_request_t *r
                                                                                                                        \
 			const intptr_t offset = (intptr_t)dest - (intptr_t)local_start_addr;                                       \
                                                                                                                        \
-			mpc_lowcomm_request_t *req = __openshmem_convert_lcp_request_to_lowcomm(mpc_lowcomm_request_alloc());      \
+			mpc_lowcomm_request_t *req = _mpc_oshmem_convert_mpi_request_to_lowcomm(mpc_lowcomm_request_alloc());      \
                                                                                                                        \
 			mpc_common_nodebug("put with src=%p, size=%2d, local_addr=%p, offset=%lu", src, size, local_addr, offset); \
                                                                                                                        \
 			mpc_lowcomm_iput(src, size, pe, offset, win, req);                                                         \
                                                                                                                        \
-			_mpc_openshmem_wait_request_and_free(req, "ERROR happened during Put");                                    \
+			__oshmem_wait_request_and_free(req, "ERROR happened during Put");                                          \
 		}
 
-__shmem_put_impl(float,      float)
-__shmem_put_impl(double,     double)
-__shmem_put_impl(longdouble, long double)
-__shmem_put_impl(char,       char)
-__shmem_put_impl(schar,      signed char)
-__shmem_put_impl(short,      short)
-__shmem_put_impl(int,        int)
-__shmem_put_impl(long,       long)
-__shmem_put_impl(longlong,   long long)
-__shmem_put_impl(uchar,      unsigned char)
-__shmem_put_impl(ushort,     unsigned short)
-__shmem_put_impl(uint,       unsigned int)
-__shmem_put_impl(ulong,      unsigned long)
-__shmem_put_impl(ulonglong,  unsigned long long)
-__shmem_put_impl(int8_t,     int8_t)
-__shmem_put_impl(uint8_t,    uint8_t)
-__shmem_put_impl(int16_t,    int16_t)
-__shmem_put_impl(uint16_t,   uint16_t)
-__shmem_put_impl(int32_t,    int32_t)
-__shmem_put_impl(uint32_t,   uint32_t)
-__shmem_put_impl(int64_t,    int64_t)
-__shmem_put_impl(uint64_t,   uint64_t)
-__shmem_put_impl(size_t,     size_t)
-__shmem_put_impl(ptrdiff_t,  ptrdiff_t)
+__oshmem_put_impl(float,      float)
+__oshmem_put_impl(double,     double)
+__oshmem_put_impl(longdouble, long double)
+__oshmem_put_impl(char,       char)
+__oshmem_put_impl(schar,      signed char)
+__oshmem_put_impl(short,      short)
+__oshmem_put_impl(int,        int)
+__oshmem_put_impl(long,       long)
+__oshmem_put_impl(longlong,   long long)
+__oshmem_put_impl(uchar,      unsigned char)
+__oshmem_put_impl(ushort,     unsigned short)
+__oshmem_put_impl(uint,       unsigned int)
+__oshmem_put_impl(ulong,      unsigned long)
+__oshmem_put_impl(ulonglong,  unsigned long long)
+__oshmem_put_impl(int8_t,     int8_t)
+__oshmem_put_impl(uint8_t,    uint8_t)
+__oshmem_put_impl(int16_t,    int16_t)
+__oshmem_put_impl(uint16_t,   uint16_t)
+__oshmem_put_impl(int32_t,    int32_t)
+__oshmem_put_impl(uint32_t,   uint32_t)
+__oshmem_put_impl(int64_t,    int64_t)
+__oshmem_put_impl(uint64_t,   uint64_t)
+__oshmem_put_impl(size_t,     size_t)
+__oshmem_put_impl(ptrdiff_t,  ptrdiff_t)
 
-#undef __shmem_put_impl
+#undef __oshmem_put_impl
 
 // P
-#define __shmem_p_impl(functype, ctype)                                                                           \
+
+/**
+ * @brief Helper macro to generate a typed version of the p routine
+ *
+ * @param[in] functype Name of the type in the function name
+ * @param[in] ctype    C type of the operands
+ */
+#define __oshmem_p_impl(functype, ctype)                                                                          \
 		void pshmem_ ## functype ## _p(ctype * dest, const ctype value, int pe)                                   \
 		{                                                                                                         \
 			const size_t                 size    = sizeof(ctype);                                                 \
@@ -264,42 +307,44 @@ __shmem_put_impl(ptrdiff_t,  ptrdiff_t)
                                                                                                                   \
 			const intptr_t offset = (intptr_t)dest - (intptr_t)local_start_addr;                                  \
                                                                                                                   \
-			mpc_lowcomm_request_t *req = __openshmem_convert_lcp_request_to_lowcomm(mpc_lowcomm_request_alloc()); \
+			mpc_lowcomm_request_t *req = _mpc_oshmem_convert_mpi_request_to_lowcomm(mpc_lowcomm_request_alloc()); \
                                                                                                                   \
 			mpc_common_nodebug("put with value=%p, size=%2d, local_addr=%p, offset=%lu\n",                        \
 	&value, size, local_addr, offset);                                                                            \
                                                                                                                   \
 			mpc_lowcomm_iput((void *)&value, size, pe, offset, win, req);                                         \
                                                                                                                   \
-			_mpc_openshmem_wait_request_and_free(req, "ERROR happened during P");                                 \
+			__oshmem_wait_request_and_free(req, "ERROR happened during P");                                       \
 		}
 
-__shmem_p_impl(float,      float)
-__shmem_p_impl(double,     double)
-__shmem_p_impl(longdouble, long double)
-__shmem_p_impl(char,       char)
-__shmem_p_impl(schar,      signed char)
-__shmem_p_impl(short,      short)
-__shmem_p_impl(int,        int)
-__shmem_p_impl(long,       long)
-__shmem_p_impl(longlong,   long long)
-__shmem_p_impl(uchar,      unsigned char)
-__shmem_p_impl(ushort,     unsigned short)
-__shmem_p_impl(uint,       unsigned int)
-__shmem_p_impl(ulong,      unsigned long)
-__shmem_p_impl(ulonglong,  unsigned long long)
-__shmem_p_impl(int8_t,     int8_t)
-__shmem_p_impl(uint8_t,    uint8_t)
-__shmem_p_impl(int16_t,    int16_t)
-__shmem_p_impl(uint16_t,   uint16_t)
-__shmem_p_impl(int32_t,    int32_t)
-__shmem_p_impl(uint32_t,   uint32_t)
-__shmem_p_impl(int64_t,    int64_t)
-__shmem_p_impl(uint64_t,   uint64_t)
-__shmem_p_impl(size_t,     size_t)
-__shmem_p_impl(ptrdiff_t,  ptrdiff_t)
+__oshmem_p_impl(float,      float)
+__oshmem_p_impl(double,     double)
+__oshmem_p_impl(longdouble, long double)
+__oshmem_p_impl(char,       char)
+__oshmem_p_impl(schar,      signed char)
+__oshmem_p_impl(short,      short)
+__oshmem_p_impl(int,        int)
+__oshmem_p_impl(long,       long)
+__oshmem_p_impl(longlong,   long long)
+__oshmem_p_impl(uchar,      unsigned char)
+__oshmem_p_impl(ushort,     unsigned short)
+__oshmem_p_impl(uint,       unsigned int)
+__oshmem_p_impl(ulong,      unsigned long)
+__oshmem_p_impl(ulonglong,  unsigned long long)
+__oshmem_p_impl(int8_t,     int8_t)
+__oshmem_p_impl(uint8_t,    uint8_t)
+__oshmem_p_impl(int16_t,    int16_t)
+__oshmem_p_impl(uint16_t,   uint16_t)
+__oshmem_p_impl(int32_t,    int32_t)
+__oshmem_p_impl(uint32_t,   uint32_t)
+__oshmem_p_impl(int64_t,    int64_t)
+__oshmem_p_impl(uint64_t,   uint64_t)
+__oshmem_p_impl(size_t,     size_t)
+__oshmem_p_impl(ptrdiff_t,  ptrdiff_t)
 
-#undef __shmem_p_impl
+#undef __oshmem_p_impl
+
+// PUTMEM
 
 void pshmem_putmem(void *dest, const void *src, size_t size, int pe)
 {
@@ -317,16 +362,23 @@ void pshmem_putmem(void *dest, const void *src, size_t size, int pe)
 
 	const intptr_t offset = (intptr_t)dest - (intptr_t)local_start_addr;
 
-	mpc_lowcomm_request_t *req = __openshmem_convert_lcp_request_to_lowcomm(mpc_lowcomm_request_alloc());
+	mpc_lowcomm_request_t *req = _mpc_oshmem_convert_mpi_request_to_lowcomm(mpc_lowcomm_request_alloc());
 
 	mpc_common_nodebug("put with src=%p, size=%2d, local_addr=%p, offset=%lu", src, size, local_addr, offset);
 
 	mpc_lowcomm_iput(src, size, pe, offset, win, req);
-	_mpc_openshmem_wait_request_and_free(req, "ERROR happened during Put");
+	__oshmem_wait_request_and_free(req, "ERROR happened during Put");
 }
 
 // GET
-#define __shmem_get_impl(functype, ctype)                                                                         \
+
+/**
+ * @brief Helper macro to generate a typed version of the get routine
+ *
+ * @param[in] functype Name of the type in the function name
+ * @param[in] ctype    C type of the operands
+ */
+#define __oshmem_get_impl(functype, ctype)                                                                        \
 		void pshmem_ ## functype ## _get(ctype * dest, const ctype * src, size_t nelems, int pe)                  \
 		{                                                                                                         \
 			const size_t                 size    = nelems * sizeof(ctype);                                        \
@@ -344,45 +396,52 @@ void pshmem_putmem(void *dest, const void *src, size_t size, int pe)
                                                                                                                   \
 			const intptr_t offset = (intptr_t)src - (intptr_t)local_start_addr;                                   \
                                                                                                                   \
-			mpc_lowcomm_request_t *req = __openshmem_convert_lcp_request_to_lowcomm(mpc_lowcomm_request_alloc()); \
+			mpc_lowcomm_request_t *req = _mpc_oshmem_convert_mpi_request_to_lowcomm(mpc_lowcomm_request_alloc()); \
                                                                                                                   \
 			mpc_common_nodebug("get with src=%p, size=%2d, local_addr=%p, offset=%lu",                            \
 	src, size, dest, offset);                                                                                     \
                                                                                                                   \
 			mpc_lowcomm_iget(dest, size, pe, offset, win, req);                                                   \
                                                                                                                   \
-			_mpc_openshmem_wait_request_and_free(req, "ERROR happened during Get");                               \
+			__oshmem_wait_request_and_free(req, "ERROR happened during Get");                                     \
 		}
 
-__shmem_get_impl(float,      float)
-__shmem_get_impl(double,     double)
-__shmem_get_impl(longdouble, long double)
-__shmem_get_impl(char,       char)
-__shmem_get_impl(schar,      signed char)
-__shmem_get_impl(short,      short)
-__shmem_get_impl(int,        int)
-__shmem_get_impl(long,       long)
-__shmem_get_impl(longlong,   long long)
-__shmem_get_impl(uchar,      unsigned char)
-__shmem_get_impl(ushort,     unsigned short)
-__shmem_get_impl(uint,       unsigned int)
-__shmem_get_impl(ulong,      unsigned long)
-__shmem_get_impl(ulonglong,  unsigned long long)
-__shmem_get_impl(int8_t,     int8_t)
-__shmem_get_impl(uint8_t,    uint8_t)
-__shmem_get_impl(int16_t,    int16_t)
-__shmem_get_impl(uint16_t,   uint16_t)
-__shmem_get_impl(int32_t,    int32_t)
-__shmem_get_impl(uint32_t,   uint32_t)
-__shmem_get_impl(int64_t,    int64_t)
-__shmem_get_impl(uint64_t,   uint64_t)
-__shmem_get_impl(size_t,     size_t)
-__shmem_get_impl(ptrdiff_t,  ptrdiff_t)
+__oshmem_get_impl(float,      float)
+__oshmem_get_impl(double,     double)
+__oshmem_get_impl(longdouble, long double)
+__oshmem_get_impl(char,       char)
+__oshmem_get_impl(schar,      signed char)
+__oshmem_get_impl(short,      short)
+__oshmem_get_impl(int,        int)
+__oshmem_get_impl(long,       long)
+__oshmem_get_impl(longlong,   long long)
+__oshmem_get_impl(uchar,      unsigned char)
+__oshmem_get_impl(ushort,     unsigned short)
+__oshmem_get_impl(uint,       unsigned int)
+__oshmem_get_impl(ulong,      unsigned long)
+__oshmem_get_impl(ulonglong,  unsigned long long)
+__oshmem_get_impl(int8_t,     int8_t)
+__oshmem_get_impl(uint8_t,    uint8_t)
+__oshmem_get_impl(int16_t,    int16_t)
+__oshmem_get_impl(uint16_t,   uint16_t)
+__oshmem_get_impl(int32_t,    int32_t)
+__oshmem_get_impl(uint32_t,   uint32_t)
+__oshmem_get_impl(int64_t,    int64_t)
+__oshmem_get_impl(uint64_t,   uint64_t)
+__oshmem_get_impl(size_t,     size_t)
+__oshmem_get_impl(ptrdiff_t,  ptrdiff_t)
 
-#undef __shmem_get_impl
+#undef __oshmem_get_impl
 
 // G
-#define __shmem_g_impl(functype, ctype)                                                                           \
+
+/**
+ * @brief Helper macro to generate a typed version of the G routine
+ *
+ * @param[in] functype Name of the type in the function name
+ * @param[in] ctype    C type of the operands
+ */
+#define __oshmem_g_impl(functype, ctype)                                                                          \
 		ctype pshmem_ ## functype ## _g(const ctype * src, int pe)                                                \
 		{                                                                                                         \
 			const size_t                 size = sizeof(ctype);                                                    \
@@ -401,44 +460,46 @@ __shmem_get_impl(ptrdiff_t,  ptrdiff_t)
                                                                                                                   \
 			const intptr_t offset = (intptr_t)src - (intptr_t)local_start_addr;                                   \
                                                                                                                   \
-			mpc_lowcomm_request_t *req = __openshmem_convert_lcp_request_to_lowcomm(mpc_lowcomm_request_alloc()); \
+			mpc_lowcomm_request_t *req = _mpc_oshmem_convert_mpi_request_to_lowcomm(mpc_lowcomm_request_alloc()); \
                                                                                                                   \
 			mpc_common_nodebug("g with size=%2d, local_addr=%p, offset=%lu\n",                                    \
 	size, local_addr, offset);                                                                                    \
                                                                                                                   \
 			mpc_lowcomm_iget(&ret, size, pe, offset, win, req);                                                   \
                                                                                                                   \
-			_mpc_openshmem_wait_request_and_free(req, "ERROR happened during G");                                 \
+			__oshmem_wait_request_and_free(req, "ERROR happened during G");                                       \
                                                                                                                   \
 			return ret;                                                                                           \
 		}
 
-__shmem_g_impl(float,      float)
-__shmem_g_impl(double,     double)
-__shmem_g_impl(longdouble, long double)
-__shmem_g_impl(char,       char)
-__shmem_g_impl(schar,      signed char)
-__shmem_g_impl(short,      short)
-__shmem_g_impl(int,        int)
-__shmem_g_impl(long,       long)
-__shmem_g_impl(longlong,   long long)
-__shmem_g_impl(uchar,      unsigned char)
-__shmem_g_impl(ushort,     unsigned short)
-__shmem_g_impl(uint,       unsigned int)
-__shmem_g_impl(ulong,      unsigned long)
-__shmem_g_impl(ulonglong,  unsigned long long)
-__shmem_g_impl(int8_t,     int8_t)
-__shmem_g_impl(uint8_t,    uint8_t)
-__shmem_g_impl(int16_t,    int16_t)
-__shmem_g_impl(uint16_t,   uint16_t)
-__shmem_g_impl(int32_t,    int32_t)
-__shmem_g_impl(uint32_t,   uint32_t)
-__shmem_g_impl(int64_t,    int64_t)
-__shmem_g_impl(uint64_t,   uint64_t)
-__shmem_g_impl(size_t,     size_t)
-__shmem_g_impl(ptrdiff_t,  ptrdiff_t)
+__oshmem_g_impl(float,      float)
+__oshmem_g_impl(double,     double)
+__oshmem_g_impl(longdouble, long double)
+__oshmem_g_impl(char,       char)
+__oshmem_g_impl(schar,      signed char)
+__oshmem_g_impl(short,      short)
+__oshmem_g_impl(int,        int)
+__oshmem_g_impl(long,       long)
+__oshmem_g_impl(longlong,   long long)
+__oshmem_g_impl(uchar,      unsigned char)
+__oshmem_g_impl(ushort,     unsigned short)
+__oshmem_g_impl(uint,       unsigned int)
+__oshmem_g_impl(ulong,      unsigned long)
+__oshmem_g_impl(ulonglong,  unsigned long long)
+__oshmem_g_impl(int8_t,     int8_t)
+__oshmem_g_impl(uint8_t,    uint8_t)
+__oshmem_g_impl(int16_t,    int16_t)
+__oshmem_g_impl(uint16_t,   uint16_t)
+__oshmem_g_impl(int32_t,    int32_t)
+__oshmem_g_impl(uint32_t,   uint32_t)
+__oshmem_g_impl(int64_t,    int64_t)
+__oshmem_g_impl(uint64_t,   uint64_t)
+__oshmem_g_impl(size_t,     size_t)
+__oshmem_g_impl(ptrdiff_t,  ptrdiff_t)
 
-#undef __shmem_g_impl
+#undef __oshmem_g_impl
+
+// GETMEM
 
 void pshmem_getmem(void *dest, const void *src, size_t size, int pe)
 {
@@ -456,13 +517,13 @@ void pshmem_getmem(void *dest, const void *src, size_t size, int pe)
 
 	const intptr_t offset = (intptr_t)src - (intptr_t)local_start_addr;
 
-	mpc_lowcomm_request_t *req = __openshmem_convert_lcp_request_to_lowcomm(mpc_lowcomm_request_alloc());
+	mpc_lowcomm_request_t *req = _mpc_oshmem_convert_mpi_request_to_lowcomm(mpc_lowcomm_request_alloc());
 
 	mpc_common_nodebug("get with src=%p, size=%2d, dest=%p, offset=%lu", src, size, dest, offset);
 
 	mpc_lowcomm_iget(dest, size, pe, offset, win, req);
 
-	_mpc_openshmem_wait_request_and_free(req, "ERROR happened during Get");
+	__oshmem_wait_request_and_free(req, "ERROR happened during Get");
 }
 
 /***********
@@ -499,7 +560,7 @@ static void *_mpc_openshmem_internal_fetch_add_nb(const void *src,
 
 	const intptr_t offset = (intptr_t)src - (intptr_t)local_start_addr;
 
-	mpc_lowcomm_request_t *req = __openshmem_convert_lcp_request_to_lowcomm(mpc_lowcomm_request_alloc());
+	mpc_lowcomm_request_t *req = _mpc_oshmem_convert_mpi_request_to_lowcomm(mpc_lowcomm_request_alloc());
 
 	mpc_common_nodebug("fetch with src=%p, operand=%p offset=%lu", src, operand, offset);
 
@@ -536,7 +597,7 @@ static void * _mpc_openshmem_internal_cswap_nb(void *dest, void *cond, void *val
 
 	const intptr_t offset = (intptr_t)dest - (intptr_t)local_start_addr;
 
-	mpc_lowcomm_request_t *req = __openshmem_convert_lcp_request_to_lowcomm(mpc_lowcomm_request_alloc());
+	mpc_lowcomm_request_t *req = _mpc_oshmem_convert_mpi_request_to_lowcomm(mpc_lowcomm_request_alloc());
 
 	mpc_lowcomm_iatomic(value, cond, cond, datatype, pe, offset, LOWCOMM_ATOMIC_OP_CSWAP, win, req);
 
@@ -569,7 +630,7 @@ static void * _mpc_openshmem_internal_swap_nb(void *dest, void *value, mpc_lowco
 
 	const intptr_t offset = (intptr_t)dest - (intptr_t)local_start_addr;
 
-	mpc_lowcomm_request_t *req = __openshmem_convert_lcp_request_to_lowcomm(mpc_lowcomm_request_alloc());
+	mpc_lowcomm_request_t *req = _mpc_oshmem_convert_mpi_request_to_lowcomm(mpc_lowcomm_request_alloc());
 
 	mpc_common_nodebug("compare and swap with value=%p, dest=%p, offset=%lu", value, dest, offset);
 
@@ -578,45 +639,53 @@ static void * _mpc_openshmem_internal_swap_nb(void *dest, void *value, mpc_lowco
 	return req;
 }
 
-// Fetch
-#define __shmem_atomic_fetch_impl(functype, ctype, lowcommtype, zero)                                \
-		ctype pshmem_ ## functype ## _atomic_fetch(const ctype * src, int pe)                        \
-		{                                                                                            \
-			ctype       ret;                                                                         \
-			ctype       value = zero;                                                                \
-			void *const req   =                                                                      \
-				_mpc_openshmem_internal_fetch_add_nb(src, &ret, &value, lowcommtype, pe);            \
-                                                                                                     \
-			_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for fetch to complete"); \
-                                                                                                     \
-			return ret;                                                                              \
+// FETCH
+
+/**
+ * @brief Helper macro to generate a typed version of the atomic_fetch routine
+ *
+ * @param[in] functype    Name of the type in the function name
+ * @param[in] ctype       C type of the operands
+ * @param[in] lowcommtype MPC Lowcomm datatype of the operands
+ */
+#define __oshmem_atomic_fetch_impl(functype, ctype, lowcommtype)                               \
+		ctype pshmem_ ## functype ## _atomic_fetch(const ctype * src, int pe)                  \
+		{                                                                                      \
+			ctype       ret;                                                                   \
+			ctype       value = 0;                                                             \
+			void *const req   =                                                                \
+				_mpc_openshmem_internal_fetch_add_nb(src, &ret, &value, lowcommtype, pe);      \
+                                                                                               \
+			__oshmem_wait_request_and_free(req, "Failed while waiting for fetch to complete"); \
+                                                                                               \
+			return ret;                                                                        \
 		}
 
-__shmem_atomic_fetch_impl(float,     float,              MPC_LOWCOMM_FLOAT,              0.0f);
-__shmem_atomic_fetch_impl(double,    double,             MPC_LOWCOMM_DOUBLE,             0.0);
-__shmem_atomic_fetch_impl(char,      char,               MPC_LOWCOMM_CHAR,               0);
-__shmem_atomic_fetch_impl(schar,     signed char,        MPC_LOWCOMM_SIGNED_CHAR,        0);
-__shmem_atomic_fetch_impl(short,     short,              MPC_LOWCOMM_SHORT,              0);
-__shmem_atomic_fetch_impl(int,       int,                MPC_LOWCOMM_INT,                0);
-__shmem_atomic_fetch_impl(long,      long,               MPC_LOWCOMM_LONG,               0l);
-__shmem_atomic_fetch_impl(longlong,  long long,          MPC_LOWCOMM_LONG_LONG,          0ll);
-__shmem_atomic_fetch_impl(uchar,     unsigned char,      MPC_LOWCOMM_UNSIGNED_CHAR,      0u);
-__shmem_atomic_fetch_impl(ushort,    unsigned short,     MPC_LOWCOMM_UNSIGNED_SHORT,     0u);
-__shmem_atomic_fetch_impl(uint,      unsigned int,       MPC_LOWCOMM_UNSIGNED,           0u);
-__shmem_atomic_fetch_impl(ulong,     unsigned long,      MPC_LOWCOMM_UNSIGNED_LONG,      0ul);
-__shmem_atomic_fetch_impl(ulonglong, unsigned long long, MPC_LOWCOMM_UNSIGNED_LONG_LONG, 0ull);
-__shmem_atomic_fetch_impl(int8_t,    int8_t,             MPC_LOWCOMM_INT8_T,             0);
-__shmem_atomic_fetch_impl(uint8_t,   uint8_t,            MPC_LOWCOMM_UINT8_T,            0u);
-__shmem_atomic_fetch_impl(int16_t,   int16_t,            MPC_LOWCOMM_INT16_T,            0);
-__shmem_atomic_fetch_impl(uint16_t,  uint16_t,           MPC_LOWCOMM_UINT16_T,           0u);
-__shmem_atomic_fetch_impl(int32_t,   int32_t,            MPC_LOWCOMM_INT32_T,            0);
-__shmem_atomic_fetch_impl(uint32_t,  uint32_t,           MPC_LOWCOMM_UINT32_T,           0u);
-__shmem_atomic_fetch_impl(int64_t,   int64_t,            MPC_LOWCOMM_INT64_T,            0ll);
-__shmem_atomic_fetch_impl(uint64_t,  uint64_t,           MPC_LOWCOMM_UINT64_T,           0ull);
-__shmem_atomic_fetch_impl(size_t,    size_t,             MPC_LOWCOMM_UINT64_T,           0ull);
-__shmem_atomic_fetch_impl(ptrdiff_t, ptrdiff_t,          MPC_LOWCOMM_AINT,               0ll);
+__oshmem_atomic_fetch_impl(float,     float,              MPC_LOWCOMM_FLOAT);
+__oshmem_atomic_fetch_impl(double,    double,             MPC_LOWCOMM_DOUBLE);
+__oshmem_atomic_fetch_impl(char,      char,               MPC_LOWCOMM_CHAR);
+__oshmem_atomic_fetch_impl(schar,     signed char,        MPC_LOWCOMM_SIGNED_CHAR);
+__oshmem_atomic_fetch_impl(short,     short,              MPC_LOWCOMM_SHORT);
+__oshmem_atomic_fetch_impl(int,       int,                MPC_LOWCOMM_INT);
+__oshmem_atomic_fetch_impl(long,      long,               MPC_LOWCOMM_LONG);
+__oshmem_atomic_fetch_impl(longlong,  long long,          MPC_LOWCOMM_LONG_LONG);
+__oshmem_atomic_fetch_impl(uchar,     unsigned char,      MPC_LOWCOMM_UNSIGNED_CHAR);
+__oshmem_atomic_fetch_impl(ushort,    unsigned short,     MPC_LOWCOMM_UNSIGNED_SHORT);
+__oshmem_atomic_fetch_impl(uint,      unsigned int,       MPC_LOWCOMM_UNSIGNED);
+__oshmem_atomic_fetch_impl(ulong,     unsigned long,      MPC_LOWCOMM_UNSIGNED_LONG);
+__oshmem_atomic_fetch_impl(ulonglong, unsigned long long, MPC_LOWCOMM_UNSIGNED_LONG_LONG);
+__oshmem_atomic_fetch_impl(int8_t,    int8_t,             MPC_LOWCOMM_INT8_T);
+__oshmem_atomic_fetch_impl(uint8_t,   uint8_t,            MPC_LOWCOMM_UINT8_T);
+__oshmem_atomic_fetch_impl(int16_t,   int16_t,            MPC_LOWCOMM_INT16_T);
+__oshmem_atomic_fetch_impl(uint16_t,  uint16_t,           MPC_LOWCOMM_UINT16_T);
+__oshmem_atomic_fetch_impl(int32_t,   int32_t,            MPC_LOWCOMM_INT32_T);
+__oshmem_atomic_fetch_impl(uint32_t,  uint32_t,           MPC_LOWCOMM_UINT32_T);
+__oshmem_atomic_fetch_impl(int64_t,   int64_t,            MPC_LOWCOMM_INT64_T);
+__oshmem_atomic_fetch_impl(uint64_t,  uint64_t,           MPC_LOWCOMM_UINT64_T);
+__oshmem_atomic_fetch_impl(size_t,    size_t,             MPC_LOWCOMM_UINT64_T);
+__oshmem_atomic_fetch_impl(ptrdiff_t, ptrdiff_t,          MPC_LOWCOMM_AINT);
 
-#undef  __shmem_atomic_fetch_impl
+#undef  __oshmem_atomic_fetch_impl
 
 float shmem_float_fetch(const float *src, int pe)
 {
@@ -643,40 +712,48 @@ long long shmem_longlong_fetch(const long long *src, int pe)
 	return pshmem_longlong_atomic_fetch(src, pe);
 }
 
-// Set
-#define __shmem_atomic_set_impl(functype, ctype, lowcommtype)                                      \
-		void pshmem_ ## functype ## _atomic_set(ctype * dest, ctype value, int pe)                 \
-		{                                                                                          \
-			void *const req = _mpc_openshmem_internal_swap_nb(dest, &value, lowcommtype, pe);      \
-                                                                                                   \
-			_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for set to complete"); \
+// SET
+
+/**
+ * @brief Helper macro to generate a typed version of the atomic_set routine
+ *
+ * @param[in] functype    Name of the type in the function name
+ * @param[in] ctype       C type of the operands
+ * @param[in] lowcommtype MPC Lowcomm datatype of the operands
+ */
+#define __oshmem_atomic_set_impl(functype, ctype, lowcommtype)                                \
+		void pshmem_ ## functype ## _atomic_set(ctype * dest, ctype value, int pe)            \
+		{                                                                                     \
+			void *const req = _mpc_openshmem_internal_swap_nb(dest, &value, lowcommtype, pe); \
+                                                                                              \
+			__oshmem_wait_request_and_free(req, "Failed while waiting for set to complete");  \
 		}
 
-__shmem_atomic_set_impl(float,     float,              MPC_LOWCOMM_FLOAT);
-__shmem_atomic_set_impl(double,    double,             MPC_LOWCOMM_DOUBLE);
-__shmem_atomic_set_impl(char,      char,               MPC_LOWCOMM_CHAR);
-__shmem_atomic_set_impl(schar,     signed char,        MPC_LOWCOMM_SIGNED_CHAR);
-__shmem_atomic_set_impl(short,     short,              MPC_LOWCOMM_SHORT);
-__shmem_atomic_set_impl(int,       int,                MPC_LOWCOMM_INT);
-__shmem_atomic_set_impl(long,      long,               MPC_LOWCOMM_LONG);
-__shmem_atomic_set_impl(longlong,  long long,          MPC_LOWCOMM_LONG_LONG);
-__shmem_atomic_set_impl(uchar,     unsigned char,      MPC_LOWCOMM_UNSIGNED_CHAR);
-__shmem_atomic_set_impl(ushort,    unsigned short,     MPC_LOWCOMM_UNSIGNED_SHORT);
-__shmem_atomic_set_impl(uint,      unsigned int,       MPC_LOWCOMM_UNSIGNED);
-__shmem_atomic_set_impl(ulong,     unsigned long,      MPC_LOWCOMM_UNSIGNED_LONG);
-__shmem_atomic_set_impl(ulonglong, unsigned long long, MPC_LOWCOMM_UNSIGNED_LONG_LONG);
-__shmem_atomic_set_impl(int8_t,    int8_t,             MPC_LOWCOMM_INT8_T);
-__shmem_atomic_set_impl(uint8_t,   uint8_t,            MPC_LOWCOMM_UINT8_T);
-__shmem_atomic_set_impl(int16_t,   int16_t,            MPC_LOWCOMM_INT16_T);
-__shmem_atomic_set_impl(uint16_t,  uint16_t,           MPC_LOWCOMM_UINT16_T);
-__shmem_atomic_set_impl(int32_t,   int32_t,            MPC_LOWCOMM_INT32_T);
-__shmem_atomic_set_impl(uint32_t,  uint32_t,           MPC_LOWCOMM_UINT32_T);
-__shmem_atomic_set_impl(int64_t,   int64_t,            MPC_LOWCOMM_INT64_T);
-__shmem_atomic_set_impl(uint64_t,  uint64_t,           MPC_LOWCOMM_UINT64_T);
-__shmem_atomic_set_impl(size_t,    size_t,             MPC_LOWCOMM_UINT64_T);
-__shmem_atomic_set_impl(ptrdiff_t, ptrdiff_t,          MPC_LOWCOMM_AINT);
+__oshmem_atomic_set_impl(float,     float,              MPC_LOWCOMM_FLOAT);
+__oshmem_atomic_set_impl(double,    double,             MPC_LOWCOMM_DOUBLE);
+__oshmem_atomic_set_impl(char,      char,               MPC_LOWCOMM_CHAR);
+__oshmem_atomic_set_impl(schar,     signed char,        MPC_LOWCOMM_SIGNED_CHAR);
+__oshmem_atomic_set_impl(short,     short,              MPC_LOWCOMM_SHORT);
+__oshmem_atomic_set_impl(int,       int,                MPC_LOWCOMM_INT);
+__oshmem_atomic_set_impl(long,      long,               MPC_LOWCOMM_LONG);
+__oshmem_atomic_set_impl(longlong,  long long,          MPC_LOWCOMM_LONG_LONG);
+__oshmem_atomic_set_impl(uchar,     unsigned char,      MPC_LOWCOMM_UNSIGNED_CHAR);
+__oshmem_atomic_set_impl(ushort,    unsigned short,     MPC_LOWCOMM_UNSIGNED_SHORT);
+__oshmem_atomic_set_impl(uint,      unsigned int,       MPC_LOWCOMM_UNSIGNED);
+__oshmem_atomic_set_impl(ulong,     unsigned long,      MPC_LOWCOMM_UNSIGNED_LONG);
+__oshmem_atomic_set_impl(ulonglong, unsigned long long, MPC_LOWCOMM_UNSIGNED_LONG_LONG);
+__oshmem_atomic_set_impl(int8_t,    int8_t,             MPC_LOWCOMM_INT8_T);
+__oshmem_atomic_set_impl(uint8_t,   uint8_t,            MPC_LOWCOMM_UINT8_T);
+__oshmem_atomic_set_impl(int16_t,   int16_t,            MPC_LOWCOMM_INT16_T);
+__oshmem_atomic_set_impl(uint16_t,  uint16_t,           MPC_LOWCOMM_UINT16_T);
+__oshmem_atomic_set_impl(int32_t,   int32_t,            MPC_LOWCOMM_INT32_T);
+__oshmem_atomic_set_impl(uint32_t,  uint32_t,           MPC_LOWCOMM_UINT32_T);
+__oshmem_atomic_set_impl(int64_t,   int64_t,            MPC_LOWCOMM_INT64_T);
+__oshmem_atomic_set_impl(uint64_t,  uint64_t,           MPC_LOWCOMM_UINT64_T);
+__oshmem_atomic_set_impl(size_t,    size_t,             MPC_LOWCOMM_UINT64_T);
+__oshmem_atomic_set_impl(ptrdiff_t, ptrdiff_t,          MPC_LOWCOMM_AINT);
 
-#undef  __shmem_atomic_set_impl
+#undef  __oshmem_atomic_set_impl
 
 void shmem_float_set(float *dest, float value, int pe)
 {
@@ -703,42 +780,50 @@ void shmem_longlong_set(long long *dest, long long value, int pe)
 	pshmem_longlong_atomic_set(dest, value, pe);
 }
 
-// Compare & Swap
-#define __shmem_atomic_compare_swap_impl(functype, ctype, lowcommtype)                                      \
-		ctype pshmem_ ## functype ## _atomic_compare_swap(ctype * dest, ctype cond, ctype value, int pe)    \
-		{                                                                                                   \
-			void *const req = _mpc_openshmem_internal_cswap_nb(dest, &cond, &value, lowcommtype, pe);       \
-                                                                                                            \
-			_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for Compare Swap to complete"); \
-                                                                                                            \
-			return cond;                                                                                    \
+// COMPARE & SWAP
+
+/**
+ * @brief Helper macro to generate a typed version of the atomic_compare_swap routine
+ *
+ * @param[in] functype    Name of the type in the function name
+ * @param[in] ctype       C type of the operands
+ * @param[in] lowcommtype MPC Lowcomm datatype of the operands
+ */
+#define __oshmem_atomic_compare_swap_impl(functype, ctype, lowcommtype)                                  \
+		ctype pshmem_ ## functype ## _atomic_compare_swap(ctype * dest, ctype cond, ctype value, int pe) \
+		{                                                                                                \
+			void *const req = _mpc_openshmem_internal_cswap_nb(dest, &cond, &value, lowcommtype, pe);    \
+                                                                                                         \
+			__oshmem_wait_request_and_free(req, "Failed while waiting for Compare Swap to complete");    \
+                                                                                                         \
+			return cond;                                                                                 \
 		}
 
-__shmem_atomic_compare_swap_impl(float,     float,              MPC_LOWCOMM_FLOAT);
-__shmem_atomic_compare_swap_impl(double,    double,             MPC_LOWCOMM_DOUBLE);
-__shmem_atomic_compare_swap_impl(char,      char,               MPC_LOWCOMM_CHAR);
-__shmem_atomic_compare_swap_impl(schar,     signed char,        MPC_LOWCOMM_SIGNED_CHAR);
-__shmem_atomic_compare_swap_impl(short,     short,              MPC_LOWCOMM_SHORT);
-__shmem_atomic_compare_swap_impl(int,       int,                MPC_LOWCOMM_INT);
-__shmem_atomic_compare_swap_impl(long,      long,               MPC_LOWCOMM_LONG);
-__shmem_atomic_compare_swap_impl(longlong,  long long,          MPC_LOWCOMM_LONG_LONG);
-__shmem_atomic_compare_swap_impl(uchar,     unsigned char,      MPC_LOWCOMM_UNSIGNED_CHAR);
-__shmem_atomic_compare_swap_impl(ushort,    unsigned short,     MPC_LOWCOMM_UNSIGNED_SHORT);
-__shmem_atomic_compare_swap_impl(uint,      unsigned int,       MPC_LOWCOMM_UNSIGNED);
-__shmem_atomic_compare_swap_impl(ulong,     unsigned long,      MPC_LOWCOMM_UNSIGNED_LONG);
-__shmem_atomic_compare_swap_impl(ulonglong, unsigned long long, MPC_LOWCOMM_UNSIGNED_LONG_LONG);
-__shmem_atomic_compare_swap_impl(int8_t,    int8_t,             MPC_LOWCOMM_INT8_T);
-__shmem_atomic_compare_swap_impl(uint8_t,   uint8_t,            MPC_LOWCOMM_UINT8_T);
-__shmem_atomic_compare_swap_impl(int16_t,   int16_t,            MPC_LOWCOMM_INT16_T);
-__shmem_atomic_compare_swap_impl(uint16_t,  uint16_t,           MPC_LOWCOMM_UINT16_T);
-__shmem_atomic_compare_swap_impl(int32_t,   int32_t,            MPC_LOWCOMM_INT32_T);
-__shmem_atomic_compare_swap_impl(uint32_t,  uint32_t,           MPC_LOWCOMM_UINT32_T);
-__shmem_atomic_compare_swap_impl(int64_t,   int64_t,            MPC_LOWCOMM_INT64_T);
-__shmem_atomic_compare_swap_impl(uint64_t,  uint64_t,           MPC_LOWCOMM_UINT64_T);
-__shmem_atomic_compare_swap_impl(size_t,    size_t,             MPC_LOWCOMM_UINT64_T);
-__shmem_atomic_compare_swap_impl(ptrdiff_t, ptrdiff_t,          MPC_LOWCOMM_AINT);
+__oshmem_atomic_compare_swap_impl(float,     float,              MPC_LOWCOMM_FLOAT);
+__oshmem_atomic_compare_swap_impl(double,    double,             MPC_LOWCOMM_DOUBLE);
+__oshmem_atomic_compare_swap_impl(char,      char,               MPC_LOWCOMM_CHAR);
+__oshmem_atomic_compare_swap_impl(schar,     signed char,        MPC_LOWCOMM_SIGNED_CHAR);
+__oshmem_atomic_compare_swap_impl(short,     short,              MPC_LOWCOMM_SHORT);
+__oshmem_atomic_compare_swap_impl(int,       int,                MPC_LOWCOMM_INT);
+__oshmem_atomic_compare_swap_impl(long,      long,               MPC_LOWCOMM_LONG);
+__oshmem_atomic_compare_swap_impl(longlong,  long long,          MPC_LOWCOMM_LONG_LONG);
+__oshmem_atomic_compare_swap_impl(uchar,     unsigned char,      MPC_LOWCOMM_UNSIGNED_CHAR);
+__oshmem_atomic_compare_swap_impl(ushort,    unsigned short,     MPC_LOWCOMM_UNSIGNED_SHORT);
+__oshmem_atomic_compare_swap_impl(uint,      unsigned int,       MPC_LOWCOMM_UNSIGNED);
+__oshmem_atomic_compare_swap_impl(ulong,     unsigned long,      MPC_LOWCOMM_UNSIGNED_LONG);
+__oshmem_atomic_compare_swap_impl(ulonglong, unsigned long long, MPC_LOWCOMM_UNSIGNED_LONG_LONG);
+__oshmem_atomic_compare_swap_impl(int8_t,    int8_t,             MPC_LOWCOMM_INT8_T);
+__oshmem_atomic_compare_swap_impl(uint8_t,   uint8_t,            MPC_LOWCOMM_UINT8_T);
+__oshmem_atomic_compare_swap_impl(int16_t,   int16_t,            MPC_LOWCOMM_INT16_T);
+__oshmem_atomic_compare_swap_impl(uint16_t,  uint16_t,           MPC_LOWCOMM_UINT16_T);
+__oshmem_atomic_compare_swap_impl(int32_t,   int32_t,            MPC_LOWCOMM_INT32_T);
+__oshmem_atomic_compare_swap_impl(uint32_t,  uint32_t,           MPC_LOWCOMM_UINT32_T);
+__oshmem_atomic_compare_swap_impl(int64_t,   int64_t,            MPC_LOWCOMM_INT64_T);
+__oshmem_atomic_compare_swap_impl(uint64_t,  uint64_t,           MPC_LOWCOMM_UINT64_T);
+__oshmem_atomic_compare_swap_impl(size_t,    size_t,             MPC_LOWCOMM_UINT64_T);
+__oshmem_atomic_compare_swap_impl(ptrdiff_t, ptrdiff_t,          MPC_LOWCOMM_AINT);
 
-#undef __shmem_atomic_compare_swap_impl
+#undef __oshmem_atomic_compare_swap_impl
 
 int shmem_int_cswap(int *dest, int cond, int value, int pe)
 {
@@ -755,42 +840,50 @@ long long shmem_longlong_cswap(long long *dest, long long cond, long long value,
 	return pshmem_longlong_atomic_compare_swap(dest, cond, value, pe);
 }
 
-// Swap
-#define __shmem_atomic_swap_impl(functype, ctype, lowcommtype)                                      \
-		ctype pshmem_ ## functype ## _atomic_swap(ctype * dest, ctype value, int pe)                \
-		{                                                                                           \
-			void *const req = _mpc_openshmem_internal_swap_nb(dest, &value, lowcommtype, pe);       \
-                                                                                                    \
-			_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for swap to complete"); \
-                                                                                                    \
-			return value;                                                                           \
+// SWAP
+
+/**
+ * @brief Helper macro to generate a typed version of the atomic_swap routine
+ *
+ * @param[in] functype    Name of the type in the function name
+ * @param[in] ctype       C type of the operands
+ * @param[in] lowcommtype MPC Lowcomm datatype of the operands
+ */
+#define __oshmem_atomic_swap_impl(functype, ctype, lowcommtype)                               \
+		ctype pshmem_ ## functype ## _atomic_swap(ctype * dest, ctype value, int pe)          \
+		{                                                                                     \
+			void *const req = _mpc_openshmem_internal_swap_nb(dest, &value, lowcommtype, pe); \
+                                                                                              \
+			__oshmem_wait_request_and_free(req, "Failed while waiting for swap to complete"); \
+                                                                                              \
+			return value;                                                                     \
 		}
 
-__shmem_atomic_swap_impl(float,     float,              MPC_LOWCOMM_FLOAT);
-__shmem_atomic_swap_impl(double,    double,             MPC_LOWCOMM_DOUBLE);
-__shmem_atomic_swap_impl(char,      char,               MPC_LOWCOMM_CHAR);
-__shmem_atomic_swap_impl(schar,     signed char,        MPC_LOWCOMM_SIGNED_CHAR);
-__shmem_atomic_swap_impl(short,     short,              MPC_LOWCOMM_SHORT);
-__shmem_atomic_swap_impl(int,       int,                MPC_LOWCOMM_INT);
-__shmem_atomic_swap_impl(long,      long,               MPC_LOWCOMM_LONG);
-__shmem_atomic_swap_impl(longlong,  long long,          MPC_LOWCOMM_LONG_LONG);
-__shmem_atomic_swap_impl(uchar,     unsigned char,      MPC_LOWCOMM_UNSIGNED_CHAR);
-__shmem_atomic_swap_impl(ushort,    unsigned short,     MPC_LOWCOMM_UNSIGNED_SHORT);
-__shmem_atomic_swap_impl(uint,      unsigned int,       MPC_LOWCOMM_UNSIGNED);
-__shmem_atomic_swap_impl(ulong,     unsigned long,      MPC_LOWCOMM_UNSIGNED_LONG);
-__shmem_atomic_swap_impl(ulonglong, unsigned long long, MPC_LOWCOMM_UNSIGNED_LONG_LONG);
-__shmem_atomic_swap_impl(int8_t,    int8_t,             MPC_LOWCOMM_INT8_T);
-__shmem_atomic_swap_impl(uint8_t,   uint8_t,            MPC_LOWCOMM_UINT8_T);
-__shmem_atomic_swap_impl(int16_t,   int16_t,            MPC_LOWCOMM_INT16_T);
-__shmem_atomic_swap_impl(uint16_t,  uint16_t,           MPC_LOWCOMM_UINT16_T);
-__shmem_atomic_swap_impl(int32_t,   int32_t,            MPC_LOWCOMM_INT32_T);
-__shmem_atomic_swap_impl(uint32_t,  uint32_t,           MPC_LOWCOMM_UINT32_T);
-__shmem_atomic_swap_impl(int64_t,   int64_t,            MPC_LOWCOMM_INT64_T);
-__shmem_atomic_swap_impl(uint64_t,  uint64_t,           MPC_LOWCOMM_UINT64_T);
-__shmem_atomic_swap_impl(size_t,    size_t,             MPC_LOWCOMM_UINT64_T);
-__shmem_atomic_swap_impl(ptrdiff_t, ptrdiff_t,          MPC_LOWCOMM_AINT);
+__oshmem_atomic_swap_impl(float,     float,              MPC_LOWCOMM_FLOAT);
+__oshmem_atomic_swap_impl(double,    double,             MPC_LOWCOMM_DOUBLE);
+__oshmem_atomic_swap_impl(char,      char,               MPC_LOWCOMM_CHAR);
+__oshmem_atomic_swap_impl(schar,     signed char,        MPC_LOWCOMM_SIGNED_CHAR);
+__oshmem_atomic_swap_impl(short,     short,              MPC_LOWCOMM_SHORT);
+__oshmem_atomic_swap_impl(int,       int,                MPC_LOWCOMM_INT);
+__oshmem_atomic_swap_impl(long,      long,               MPC_LOWCOMM_LONG);
+__oshmem_atomic_swap_impl(longlong,  long long,          MPC_LOWCOMM_LONG_LONG);
+__oshmem_atomic_swap_impl(uchar,     unsigned char,      MPC_LOWCOMM_UNSIGNED_CHAR);
+__oshmem_atomic_swap_impl(ushort,    unsigned short,     MPC_LOWCOMM_UNSIGNED_SHORT);
+__oshmem_atomic_swap_impl(uint,      unsigned int,       MPC_LOWCOMM_UNSIGNED);
+__oshmem_atomic_swap_impl(ulong,     unsigned long,      MPC_LOWCOMM_UNSIGNED_LONG);
+__oshmem_atomic_swap_impl(ulonglong, unsigned long long, MPC_LOWCOMM_UNSIGNED_LONG_LONG);
+__oshmem_atomic_swap_impl(int8_t,    int8_t,             MPC_LOWCOMM_INT8_T);
+__oshmem_atomic_swap_impl(uint8_t,   uint8_t,            MPC_LOWCOMM_UINT8_T);
+__oshmem_atomic_swap_impl(int16_t,   int16_t,            MPC_LOWCOMM_INT16_T);
+__oshmem_atomic_swap_impl(uint16_t,  uint16_t,           MPC_LOWCOMM_UINT16_T);
+__oshmem_atomic_swap_impl(int32_t,   int32_t,            MPC_LOWCOMM_INT32_T);
+__oshmem_atomic_swap_impl(uint32_t,  uint32_t,           MPC_LOWCOMM_UINT32_T);
+__oshmem_atomic_swap_impl(int64_t,   int64_t,            MPC_LOWCOMM_INT64_T);
+__oshmem_atomic_swap_impl(uint64_t,  uint64_t,           MPC_LOWCOMM_UINT64_T);
+__oshmem_atomic_swap_impl(size_t,    size_t,             MPC_LOWCOMM_UINT64_T);
+__oshmem_atomic_swap_impl(ptrdiff_t, ptrdiff_t,          MPC_LOWCOMM_AINT);
 
-#undef  __shmem_atomic_swap_impl
+#undef  __oshmem_atomic_swap_impl
 
 float shmem_float_swap(float *dest, float value, int pe)
 {
@@ -817,44 +910,52 @@ long long shmem_longlong_swap(long long *dest, long long value, int pe)
 	return pshmem_longlong_atomic_swap(dest, value, pe);
 }
 
-// Fetch add
-#define __shmem_atomic_fetch_add_impl(functype, ctype, lowcommtype)                                      \
-		ctype pshmem_ ## functype ## _atomic_fetch_add(ctype * dest, ctype value, int pe)                \
-		{                                                                                                \
-			ctype       ret;                                                                             \
-			void *const req =                                                                            \
-				_mpc_openshmem_internal_fetch_add_nb(dest, &ret, &value, lowcommtype, pe);               \
-                                                                                                         \
-			_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for fetch add to complete"); \
-                                                                                                         \
-			return ret;                                                                                  \
+// FETCH ADD
+
+/**
+ * @brief Helper macro to generate a typed version of the atomic_fetch_add routine
+ *
+ * @param[in] functype    Name of the type in the function name
+ * @param[in] ctype       C type of the operands
+ * @param[in] lowcommtype MPC Lowcomm datatype of the operands
+ */
+#define __oshmem_atomic_fetch_add_impl(functype, ctype, lowcommtype)                               \
+		ctype pshmem_ ## functype ## _atomic_fetch_add(ctype * dest, ctype value, int pe)          \
+		{                                                                                          \
+			ctype       ret;                                                                       \
+			void *const req =                                                                      \
+				_mpc_openshmem_internal_fetch_add_nb(dest, &ret, &value, lowcommtype, pe);         \
+                                                                                                   \
+			__oshmem_wait_request_and_free(req, "Failed while waiting for fetch add to complete"); \
+                                                                                                   \
+			return ret;                                                                            \
 		}
 
-__shmem_atomic_fetch_add_impl(float,     float,              MPC_LOWCOMM_FLOAT);
-__shmem_atomic_fetch_add_impl(double,    double,             MPC_LOWCOMM_DOUBLE);
-__shmem_atomic_fetch_add_impl(char,      char,               MPC_LOWCOMM_CHAR);
-__shmem_atomic_fetch_add_impl(schar,     signed char,        MPC_LOWCOMM_SIGNED_CHAR);
-__shmem_atomic_fetch_add_impl(short,     short,              MPC_LOWCOMM_SHORT);
-__shmem_atomic_fetch_add_impl(int,       int,                MPC_LOWCOMM_INT);
-__shmem_atomic_fetch_add_impl(long,      long,               MPC_LOWCOMM_LONG);
-__shmem_atomic_fetch_add_impl(longlong,  long long,          MPC_LOWCOMM_LONG_LONG);
-__shmem_atomic_fetch_add_impl(uchar,     unsigned char,      MPC_LOWCOMM_UNSIGNED_CHAR);
-__shmem_atomic_fetch_add_impl(ushort,    unsigned short,     MPC_LOWCOMM_UNSIGNED_SHORT);
-__shmem_atomic_fetch_add_impl(uint,      unsigned int,       MPC_LOWCOMM_UNSIGNED);
-__shmem_atomic_fetch_add_impl(ulong,     unsigned long,      MPC_LOWCOMM_UNSIGNED_LONG);
-__shmem_atomic_fetch_add_impl(ulonglong, unsigned long long, MPC_LOWCOMM_UNSIGNED_LONG_LONG);
-__shmem_atomic_fetch_add_impl(int8_t,    int8_t,             MPC_LOWCOMM_INT8_T);
-__shmem_atomic_fetch_add_impl(uint8_t,   uint8_t,            MPC_LOWCOMM_UINT8_T);
-__shmem_atomic_fetch_add_impl(int16_t,   int16_t,            MPC_LOWCOMM_INT16_T);
-__shmem_atomic_fetch_add_impl(uint16_t,  uint16_t,           MPC_LOWCOMM_UINT16_T);
-__shmem_atomic_fetch_add_impl(int32_t,   int32_t,            MPC_LOWCOMM_INT32_T);
-__shmem_atomic_fetch_add_impl(uint32_t,  uint32_t,           MPC_LOWCOMM_UINT32_T);
-__shmem_atomic_fetch_add_impl(int64_t,   int64_t,            MPC_LOWCOMM_INT64_T);
-__shmem_atomic_fetch_add_impl(uint64_t,  uint64_t,           MPC_LOWCOMM_UINT64_T);
-__shmem_atomic_fetch_add_impl(size_t,    size_t,             MPC_LOWCOMM_UINT64_T);
-__shmem_atomic_fetch_add_impl(ptrdiff_t, ptrdiff_t,          MPC_LOWCOMM_AINT);
+__oshmem_atomic_fetch_add_impl(float,     float,              MPC_LOWCOMM_FLOAT);
+__oshmem_atomic_fetch_add_impl(double,    double,             MPC_LOWCOMM_DOUBLE);
+__oshmem_atomic_fetch_add_impl(char,      char,               MPC_LOWCOMM_CHAR);
+__oshmem_atomic_fetch_add_impl(schar,     signed char,        MPC_LOWCOMM_SIGNED_CHAR);
+__oshmem_atomic_fetch_add_impl(short,     short,              MPC_LOWCOMM_SHORT);
+__oshmem_atomic_fetch_add_impl(int,       int,                MPC_LOWCOMM_INT);
+__oshmem_atomic_fetch_add_impl(long,      long,               MPC_LOWCOMM_LONG);
+__oshmem_atomic_fetch_add_impl(longlong,  long long,          MPC_LOWCOMM_LONG_LONG);
+__oshmem_atomic_fetch_add_impl(uchar,     unsigned char,      MPC_LOWCOMM_UNSIGNED_CHAR);
+__oshmem_atomic_fetch_add_impl(ushort,    unsigned short,     MPC_LOWCOMM_UNSIGNED_SHORT);
+__oshmem_atomic_fetch_add_impl(uint,      unsigned int,       MPC_LOWCOMM_UNSIGNED);
+__oshmem_atomic_fetch_add_impl(ulong,     unsigned long,      MPC_LOWCOMM_UNSIGNED_LONG);
+__oshmem_atomic_fetch_add_impl(ulonglong, unsigned long long, MPC_LOWCOMM_UNSIGNED_LONG_LONG);
+__oshmem_atomic_fetch_add_impl(int8_t,    int8_t,             MPC_LOWCOMM_INT8_T);
+__oshmem_atomic_fetch_add_impl(uint8_t,   uint8_t,            MPC_LOWCOMM_UINT8_T);
+__oshmem_atomic_fetch_add_impl(int16_t,   int16_t,            MPC_LOWCOMM_INT16_T);
+__oshmem_atomic_fetch_add_impl(uint16_t,  uint16_t,           MPC_LOWCOMM_UINT16_T);
+__oshmem_atomic_fetch_add_impl(int32_t,   int32_t,            MPC_LOWCOMM_INT32_T);
+__oshmem_atomic_fetch_add_impl(uint32_t,  uint32_t,           MPC_LOWCOMM_UINT32_T);
+__oshmem_atomic_fetch_add_impl(int64_t,   int64_t,            MPC_LOWCOMM_INT64_T);
+__oshmem_atomic_fetch_add_impl(uint64_t,  uint64_t,           MPC_LOWCOMM_UINT64_T);
+__oshmem_atomic_fetch_add_impl(size_t,    size_t,             MPC_LOWCOMM_UINT64_T);
+__oshmem_atomic_fetch_add_impl(ptrdiff_t, ptrdiff_t,          MPC_LOWCOMM_AINT);
 
-#undef __shmem_atomic_fetch_add_impl
+#undef __oshmem_atomic_fetch_add_impl
 
 int shmem_int_fadd(int *dest, int value, int pe)
 {
@@ -871,41 +972,49 @@ long long shmem_longlong_fadd(long long *dest, long long value, int pe)
 	return pshmem_longlong_atomic_fetch_add(dest, value, pe);
 }
 
-// Add
-#define __shmem_atomic_add_impl(functype, ctype, lowcommtype)                                      \
-		void pshmem_ ## functype ## _atomic_add(ctype * dest, ctype value, int pe)                 \
-		{                                                                                          \
-			ctype       ret;                                                                       \
-			void *const req =                                                                      \
-				_mpc_openshmem_internal_fetch_add_nb(dest, &ret, &value, lowcommtype, pe);         \
-                                                                                                   \
-			_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for add to complete"); \
-		}
-__shmem_atomic_add_impl(float,     float,              MPC_LOWCOMM_FLOAT);
-__shmem_atomic_add_impl(double,    double,             MPC_LOWCOMM_DOUBLE);
-__shmem_atomic_add_impl(char,      char,               MPC_LOWCOMM_CHAR);
-__shmem_atomic_add_impl(schar,     signed char,        MPC_LOWCOMM_SIGNED_CHAR);
-__shmem_atomic_add_impl(short,     short,              MPC_LOWCOMM_SHORT);
-__shmem_atomic_add_impl(int,       int,                MPC_LOWCOMM_INT);
-__shmem_atomic_add_impl(long,      long,               MPC_LOWCOMM_LONG);
-__shmem_atomic_add_impl(longlong,  long long,          MPC_LOWCOMM_LONG_LONG);
-__shmem_atomic_add_impl(uchar,     unsigned char,      MPC_LOWCOMM_UNSIGNED_CHAR);
-__shmem_atomic_add_impl(ushort,    unsigned short,     MPC_LOWCOMM_UNSIGNED_SHORT);
-__shmem_atomic_add_impl(uint,      unsigned int,       MPC_LOWCOMM_UNSIGNED);
-__shmem_atomic_add_impl(ulong,     unsigned long,      MPC_LOWCOMM_UNSIGNED_LONG);
-__shmem_atomic_add_impl(ulonglong, unsigned long long, MPC_LOWCOMM_UNSIGNED_LONG_LONG);
-__shmem_atomic_add_impl(int8_t,    int8_t,             MPC_LOWCOMM_INT8_T);
-__shmem_atomic_add_impl(uint8_t,   uint8_t,            MPC_LOWCOMM_UINT8_T);
-__shmem_atomic_add_impl(int16_t,   int16_t,            MPC_LOWCOMM_INT16_T);
-__shmem_atomic_add_impl(uint16_t,  uint16_t,           MPC_LOWCOMM_UINT16_T);
-__shmem_atomic_add_impl(int32_t,   int32_t,            MPC_LOWCOMM_INT32_T);
-__shmem_atomic_add_impl(uint32_t,  uint32_t,           MPC_LOWCOMM_UINT32_T);
-__shmem_atomic_add_impl(int64_t,   int64_t,            MPC_LOWCOMM_INT64_T);
-__shmem_atomic_add_impl(uint64_t,  uint64_t,           MPC_LOWCOMM_UINT64_T);
-__shmem_atomic_add_impl(size_t,    size_t,             MPC_LOWCOMM_UINT64_T);
-__shmem_atomic_add_impl(ptrdiff_t, ptrdiff_t,          MPC_LOWCOMM_AINT);
+// ADD
 
-#undef __shmem_atomic_add_impl
+/**
+ * @brief Helper macro to generate a typed version of the atomic_add routine
+ *
+ * @param[in] functype    Name of the type in the function name
+ * @param[in] ctype       C type of the operands
+ * @param[in] lowcommtype MPC Lowcomm datatype of the operands
+ */
+#define __oshmem_atomic_add_impl(functype, ctype, lowcommtype)                               \
+		void pshmem_ ## functype ## _atomic_add(ctype * dest, ctype value, int pe)           \
+		{                                                                                    \
+			ctype       ret;                                                                 \
+			void *const req =                                                                \
+				_mpc_openshmem_internal_fetch_add_nb(dest, &ret, &value, lowcommtype, pe);   \
+                                                                                             \
+			__oshmem_wait_request_and_free(req, "Failed while waiting for add to complete"); \
+		}
+__oshmem_atomic_add_impl(float,     float,              MPC_LOWCOMM_FLOAT);
+__oshmem_atomic_add_impl(double,    double,             MPC_LOWCOMM_DOUBLE);
+__oshmem_atomic_add_impl(char,      char,               MPC_LOWCOMM_CHAR);
+__oshmem_atomic_add_impl(schar,     signed char,        MPC_LOWCOMM_SIGNED_CHAR);
+__oshmem_atomic_add_impl(short,     short,              MPC_LOWCOMM_SHORT);
+__oshmem_atomic_add_impl(int,       int,                MPC_LOWCOMM_INT);
+__oshmem_atomic_add_impl(long,      long,               MPC_LOWCOMM_LONG);
+__oshmem_atomic_add_impl(longlong,  long long,          MPC_LOWCOMM_LONG_LONG);
+__oshmem_atomic_add_impl(uchar,     unsigned char,      MPC_LOWCOMM_UNSIGNED_CHAR);
+__oshmem_atomic_add_impl(ushort,    unsigned short,     MPC_LOWCOMM_UNSIGNED_SHORT);
+__oshmem_atomic_add_impl(uint,      unsigned int,       MPC_LOWCOMM_UNSIGNED);
+__oshmem_atomic_add_impl(ulong,     unsigned long,      MPC_LOWCOMM_UNSIGNED_LONG);
+__oshmem_atomic_add_impl(ulonglong, unsigned long long, MPC_LOWCOMM_UNSIGNED_LONG_LONG);
+__oshmem_atomic_add_impl(int8_t,    int8_t,             MPC_LOWCOMM_INT8_T);
+__oshmem_atomic_add_impl(uint8_t,   uint8_t,            MPC_LOWCOMM_UINT8_T);
+__oshmem_atomic_add_impl(int16_t,   int16_t,            MPC_LOWCOMM_INT16_T);
+__oshmem_atomic_add_impl(uint16_t,  uint16_t,           MPC_LOWCOMM_UINT16_T);
+__oshmem_atomic_add_impl(int32_t,   int32_t,            MPC_LOWCOMM_INT32_T);
+__oshmem_atomic_add_impl(uint32_t,  uint32_t,           MPC_LOWCOMM_UINT32_T);
+__oshmem_atomic_add_impl(int64_t,   int64_t,            MPC_LOWCOMM_INT64_T);
+__oshmem_atomic_add_impl(uint64_t,  uint64_t,           MPC_LOWCOMM_UINT64_T);
+__oshmem_atomic_add_impl(size_t,    size_t,             MPC_LOWCOMM_UINT64_T);
+__oshmem_atomic_add_impl(ptrdiff_t, ptrdiff_t,          MPC_LOWCOMM_AINT);
+
+#undef __oshmem_atomic_add_impl
 
 void shmem_int_add(int *dest, int value, int pe)
 {
@@ -922,45 +1031,53 @@ void shmem_longlong_add(long long *dest, long long value, int pe)
 	pshmem_longlong_atomic_add(dest, value, pe);
 }
 
-// Fetch add
-#define __shmem_atomic_fetch_inc_impl(functype, ctype, lowcommtype)                                      \
-		ctype pshmem_ ## functype ## _atomic_fetch_inc(ctype * dest, int pe)                             \
-		{                                                                                                \
-			ctype       ret;                                                                             \
-			ctype       value = 1;                                                                       \
-			void *const req   =                                                                          \
-				_mpc_openshmem_internal_fetch_add_nb(dest, &ret, &value, lowcommtype, pe);               \
-                                                                                                         \
-			_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for fetch inc to complete"); \
-                                                                                                         \
-			return ret;                                                                                  \
+// FETCH INC
+
+/**
+ * @brief Helper macro to generate a typed version of the atomic_fetch_inc routine
+ *
+ * @param[in] functype    Name of the type in the function name
+ * @param[in] ctype       C type of the operands
+ * @param[in] lowcommtype MPC Lowcomm datatype of the operands
+ */
+#define __oshmem_atomic_fetch_inc_impl(functype, ctype, lowcommtype)                               \
+		ctype pshmem_ ## functype ## _atomic_fetch_inc(ctype * dest, int pe)                       \
+		{                                                                                          \
+			ctype       ret;                                                                       \
+			ctype       value = 1;                                                                 \
+			void *const req   =                                                                    \
+				_mpc_openshmem_internal_fetch_add_nb(dest, &ret, &value, lowcommtype, pe);         \
+                                                                                                   \
+			__oshmem_wait_request_and_free(req, "Failed while waiting for fetch inc to complete"); \
+                                                                                                   \
+			return ret;                                                                            \
 		}
 
-__shmem_atomic_fetch_inc_impl(float,     float,              MPC_LOWCOMM_FLOAT);
-__shmem_atomic_fetch_inc_impl(double,    double,             MPC_LOWCOMM_DOUBLE);
-__shmem_atomic_fetch_inc_impl(char,      char,               MPC_LOWCOMM_CHAR);
-__shmem_atomic_fetch_inc_impl(schar,     signed char,        MPC_LOWCOMM_SIGNED_CHAR);
-__shmem_atomic_fetch_inc_impl(short,     short,              MPC_LOWCOMM_SHORT);
-__shmem_atomic_fetch_inc_impl(int,       int,                MPC_LOWCOMM_INT);
-__shmem_atomic_fetch_inc_impl(long,      long,               MPC_LOWCOMM_LONG);
-__shmem_atomic_fetch_inc_impl(longlong,  long long,          MPC_LOWCOMM_LONG_LONG);
-__shmem_atomic_fetch_inc_impl(uchar,     unsigned char,      MPC_LOWCOMM_UNSIGNED_CHAR);
-__shmem_atomic_fetch_inc_impl(ushort,    unsigned short,     MPC_LOWCOMM_UNSIGNED_SHORT);
-__shmem_atomic_fetch_inc_impl(uint,      unsigned int,       MPC_LOWCOMM_UNSIGNED);
-__shmem_atomic_fetch_inc_impl(ulong,     unsigned long,      MPC_LOWCOMM_UNSIGNED_LONG);
-__shmem_atomic_fetch_inc_impl(ulonglong, unsigned long long, MPC_LOWCOMM_UNSIGNED_LONG_LONG);
-__shmem_atomic_fetch_inc_impl(int8_t,    int8_t,             MPC_LOWCOMM_INT8_T);
-__shmem_atomic_fetch_inc_impl(uint8_t,   uint8_t,            MPC_LOWCOMM_UINT8_T);
-__shmem_atomic_fetch_inc_impl(int16_t,   int16_t,            MPC_LOWCOMM_INT16_T);
-__shmem_atomic_fetch_inc_impl(uint16_t,  uint16_t,           MPC_LOWCOMM_UINT16_T);
-__shmem_atomic_fetch_inc_impl(int32_t,   int32_t,            MPC_LOWCOMM_INT32_T);
-__shmem_atomic_fetch_inc_impl(uint32_t,  uint32_t,           MPC_LOWCOMM_UINT32_T);
-__shmem_atomic_fetch_inc_impl(int64_t,   int64_t,            MPC_LOWCOMM_INT64_T);
-__shmem_atomic_fetch_inc_impl(uint64_t,  uint64_t,           MPC_LOWCOMM_UINT64_T);
-__shmem_atomic_fetch_inc_impl(size_t,    size_t,             MPC_LOWCOMM_UINT64_T);
-__shmem_atomic_fetch_inc_impl(ptrdiff_t, ptrdiff_t,          MPC_LOWCOMM_AINT);
+__oshmem_atomic_fetch_inc_impl(float,     float,              MPC_LOWCOMM_FLOAT);
+__oshmem_atomic_fetch_inc_impl(double,    double,             MPC_LOWCOMM_DOUBLE);
+__oshmem_atomic_fetch_inc_impl(char,      char,               MPC_LOWCOMM_CHAR);
+__oshmem_atomic_fetch_inc_impl(schar,     signed char,        MPC_LOWCOMM_SIGNED_CHAR);
+__oshmem_atomic_fetch_inc_impl(short,     short,              MPC_LOWCOMM_SHORT);
+__oshmem_atomic_fetch_inc_impl(int,       int,                MPC_LOWCOMM_INT);
+__oshmem_atomic_fetch_inc_impl(long,      long,               MPC_LOWCOMM_LONG);
+__oshmem_atomic_fetch_inc_impl(longlong,  long long,          MPC_LOWCOMM_LONG_LONG);
+__oshmem_atomic_fetch_inc_impl(uchar,     unsigned char,      MPC_LOWCOMM_UNSIGNED_CHAR);
+__oshmem_atomic_fetch_inc_impl(ushort,    unsigned short,     MPC_LOWCOMM_UNSIGNED_SHORT);
+__oshmem_atomic_fetch_inc_impl(uint,      unsigned int,       MPC_LOWCOMM_UNSIGNED);
+__oshmem_atomic_fetch_inc_impl(ulong,     unsigned long,      MPC_LOWCOMM_UNSIGNED_LONG);
+__oshmem_atomic_fetch_inc_impl(ulonglong, unsigned long long, MPC_LOWCOMM_UNSIGNED_LONG_LONG);
+__oshmem_atomic_fetch_inc_impl(int8_t,    int8_t,             MPC_LOWCOMM_INT8_T);
+__oshmem_atomic_fetch_inc_impl(uint8_t,   uint8_t,            MPC_LOWCOMM_UINT8_T);
+__oshmem_atomic_fetch_inc_impl(int16_t,   int16_t,            MPC_LOWCOMM_INT16_T);
+__oshmem_atomic_fetch_inc_impl(uint16_t,  uint16_t,           MPC_LOWCOMM_UINT16_T);
+__oshmem_atomic_fetch_inc_impl(int32_t,   int32_t,            MPC_LOWCOMM_INT32_T);
+__oshmem_atomic_fetch_inc_impl(uint32_t,  uint32_t,           MPC_LOWCOMM_UINT32_T);
+__oshmem_atomic_fetch_inc_impl(int64_t,   int64_t,            MPC_LOWCOMM_INT64_T);
+__oshmem_atomic_fetch_inc_impl(uint64_t,  uint64_t,           MPC_LOWCOMM_UINT64_T);
+__oshmem_atomic_fetch_inc_impl(size_t,    size_t,             MPC_LOWCOMM_UINT64_T);
+__oshmem_atomic_fetch_inc_impl(ptrdiff_t, ptrdiff_t,          MPC_LOWCOMM_AINT);
 
-#undef __shmem_atomic_fetch_inc_impl
+#undef __oshmem_atomic_fetch_inc_impl
 
 int shmem_int_finc(int *dest, int pe)
 {
@@ -977,43 +1094,51 @@ long long shmem_longlong_finc(long long *dest, int pe)
 	return pshmem_longlong_atomic_fetch_inc(dest, pe);
 }
 
-// Inc
-#define __shmem_atomic_inc_impl(functype, ctype, lowcommtype, one)                                       \
-		void pshmem_ ## functype ## _atomic_inc(ctype * dest, int pe)                                    \
-		{                                                                                                \
-			ctype       ret;                                                                             \
-			ctype       value = one;                                                                     \
-			void *const req   =                                                                          \
-				_mpc_openshmem_internal_fetch_add_nb(dest, &ret, &value, lowcommtype, pe);               \
-                                                                                                         \
-			_mpc_openshmem_wait_request_and_free(req, "Failed while waiting for fetch inc to complete"); \
+// INC
+
+/**
+ * @brief Helper macro to generate a typed version of the atomic_inc routine
+ *
+ * @param[in] functype    Name of the type in the function name
+ * @param[in] ctype       C type of the operands
+ * @param[in] lowcommtype MPC Lowcomm datatype of the operands
+ */
+#define __oshmem_atomic_inc_impl(functype, ctype, lowcommtype)                                     \
+		void pshmem_ ## functype ## _atomic_inc(ctype * dest, int pe)                              \
+		{                                                                                          \
+			ctype       ret;                                                                       \
+			ctype       value = 1;                                                                 \
+			void *const req   =                                                                    \
+				_mpc_openshmem_internal_fetch_add_nb(dest, &ret, &value, lowcommtype, pe);         \
+                                                                                                   \
+			__oshmem_wait_request_and_free(req, "Failed while waiting for fetch inc to complete"); \
 		}
 
-__shmem_atomic_inc_impl(float,     float,              MPC_LOWCOMM_FLOAT,              1.0f);
-__shmem_atomic_inc_impl(double,    double,             MPC_LOWCOMM_DOUBLE,             1.0);
-__shmem_atomic_inc_impl(char,      char,               MPC_LOWCOMM_CHAR,               1);
-__shmem_atomic_inc_impl(schar,     signed char,        MPC_LOWCOMM_SIGNED_CHAR,        1);
-__shmem_atomic_inc_impl(short,     short,              MPC_LOWCOMM_SHORT,              1);
-__shmem_atomic_inc_impl(int,       int,                MPC_LOWCOMM_INT,                1);
-__shmem_atomic_inc_impl(long,      long,               MPC_LOWCOMM_LONG,               1l);
-__shmem_atomic_inc_impl(longlong,  long long,          MPC_LOWCOMM_LONG_LONG,          1ll);
-__shmem_atomic_inc_impl(uchar,     unsigned char,      MPC_LOWCOMM_UNSIGNED_CHAR,      1u);
-__shmem_atomic_inc_impl(ushort,    unsigned short,     MPC_LOWCOMM_UNSIGNED_SHORT,     1u);
-__shmem_atomic_inc_impl(uint,      unsigned int,       MPC_LOWCOMM_UNSIGNED,           1u);
-__shmem_atomic_inc_impl(ulong,     unsigned long,      MPC_LOWCOMM_UNSIGNED_LONG,      1ul);
-__shmem_atomic_inc_impl(ulonglong, unsigned long long, MPC_LOWCOMM_UNSIGNED_LONG_LONG, 1ull);
-__shmem_atomic_inc_impl(int8_t,    int8_t,             MPC_LOWCOMM_INT8_T,             1);
-__shmem_atomic_inc_impl(uint8_t,   uint8_t,            MPC_LOWCOMM_UINT8_T,            1u);
-__shmem_atomic_inc_impl(int16_t,   int16_t,            MPC_LOWCOMM_INT16_T,            1);
-__shmem_atomic_inc_impl(uint16_t,  uint16_t,           MPC_LOWCOMM_UINT16_T,           1u);
-__shmem_atomic_inc_impl(int32_t,   int32_t,            MPC_LOWCOMM_INT32_T,            1);
-__shmem_atomic_inc_impl(uint32_t,  uint32_t,           MPC_LOWCOMM_UINT32_T,           1u);
-__shmem_atomic_inc_impl(int64_t,   int64_t,            MPC_LOWCOMM_INT64_T,            1ll);
-__shmem_atomic_inc_impl(uint64_t,  uint64_t,           MPC_LOWCOMM_UINT64_T,           1ull);
-__shmem_atomic_inc_impl(size_t,    size_t,             MPC_LOWCOMM_UINT64_T,           1ull);
-__shmem_atomic_inc_impl(ptrdiff_t, ptrdiff_t,          MPC_LOWCOMM_AINT,               1ll);
+__oshmem_atomic_inc_impl(float,     float,              MPC_LOWCOMM_FLOAT);
+__oshmem_atomic_inc_impl(double,    double,             MPC_LOWCOMM_DOUBLE);
+__oshmem_atomic_inc_impl(char,      char,               MPC_LOWCOMM_CHAR);
+__oshmem_atomic_inc_impl(schar,     signed char,        MPC_LOWCOMM_SIGNED_CHAR);
+__oshmem_atomic_inc_impl(short,     short,              MPC_LOWCOMM_SHORT);
+__oshmem_atomic_inc_impl(int,       int,                MPC_LOWCOMM_INT);
+__oshmem_atomic_inc_impl(long,      long,               MPC_LOWCOMM_LONG);
+__oshmem_atomic_inc_impl(longlong,  long long,          MPC_LOWCOMM_LONG_LONG);
+__oshmem_atomic_inc_impl(uchar,     unsigned char,      MPC_LOWCOMM_UNSIGNED_CHAR);
+__oshmem_atomic_inc_impl(ushort,    unsigned short,     MPC_LOWCOMM_UNSIGNED_SHORT);
+__oshmem_atomic_inc_impl(uint,      unsigned int,       MPC_LOWCOMM_UNSIGNED);
+__oshmem_atomic_inc_impl(ulong,     unsigned long,      MPC_LOWCOMM_UNSIGNED_LONG);
+__oshmem_atomic_inc_impl(ulonglong, unsigned long long, MPC_LOWCOMM_UNSIGNED_LONG_LONG);
+__oshmem_atomic_inc_impl(int8_t,    int8_t,             MPC_LOWCOMM_INT8_T);
+__oshmem_atomic_inc_impl(uint8_t,   uint8_t,            MPC_LOWCOMM_UINT8_T);
+__oshmem_atomic_inc_impl(int16_t,   int16_t,            MPC_LOWCOMM_INT16_T);
+__oshmem_atomic_inc_impl(uint16_t,  uint16_t,           MPC_LOWCOMM_UINT16_T);
+__oshmem_atomic_inc_impl(int32_t,   int32_t,            MPC_LOWCOMM_INT32_T);
+__oshmem_atomic_inc_impl(uint32_t,  uint32_t,           MPC_LOWCOMM_UINT32_T);
+__oshmem_atomic_inc_impl(int64_t,   int64_t,            MPC_LOWCOMM_INT64_T);
+__oshmem_atomic_inc_impl(uint64_t,  uint64_t,           MPC_LOWCOMM_UINT64_T);
+__oshmem_atomic_inc_impl(size_t,    size_t,             MPC_LOWCOMM_UINT64_T);
+__oshmem_atomic_inc_impl(ptrdiff_t, ptrdiff_t,          MPC_LOWCOMM_AINT);
 
-#undef __shmem_atomic_inc_impl
+#undef __oshmem_atomic_inc_impl
 
 void shmem_int_inc(int *dest, int pe)
 {
@@ -1035,6 +1160,14 @@ void shmem_longlong_inc(long long *dest, int pe)
  *************************/
 
 
+/**
+ * @brief Parses the a string representing a size
+ *
+ * @warning If the string is not a valid size with a correct suffix, this function will panic
+ *
+ * @param[in] variable String to parse
+ * @return             Size in bytes parsed
+ */
 static size_t __oshmem_parse_environment_symmetric_size(const char *const variable)
 {
 	if (variable == NULL)
@@ -1111,16 +1244,16 @@ int pshmem_init_thread(int requested, int *provided)
 	UNUSED(requested); // We always provide the maximum
 	int ierr;
 
-	if (atomic_load(&_oshmem_global_context_refcount) == 0)
+	if (atomic_load(&__oshmem_global_context_refcount) == 0)
 	{
-		mpc_common_spinlock_lock(&_oshmem_global_context_lock);
-		if (_oshmem_global_contexts == NULL)
+		mpc_common_spinlock_lock(&__oshmem_global_context_lock);
+		if (__oshmem_global_contexts == NULL)
 		{
 			const int n_local_tasks = mpc_common_get_local_task_count();
 
-			_oshmem_global_contexts = sctk_malloc(n_local_tasks * sizeof(_mpc_oshmem_context_t));
+			__oshmem_global_contexts = sctk_malloc(n_local_tasks * sizeof(_mpc_oshmem_context_t));
 
-			if (_oshmem_global_contexts == NULL)
+			if (__oshmem_global_contexts == NULL)
 			{
 				mpc_common_debug_fatal("OpenSHMEM contexts allocation failed");
 			}
@@ -1129,16 +1262,16 @@ int pshmem_init_thread(int requested, int *provided)
 
 			for (int i = 0; i < n_local_tasks; i++)
 			{
-				_oshmem_global_contexts[i].symmetric_heap_size   = symmetric_size;
-				_oshmem_global_contexts[i].symmetric_heap_window = NULL;
-				mpc_common_spinlock_init(&_oshmem_global_contexts[i].context_lock, 0);
-				atomic_store(&_oshmem_global_contexts[i].refcount, 0);
+				__oshmem_global_contexts[i].symmetric_heap_size   = symmetric_size;
+				__oshmem_global_contexts[i].symmetric_heap_window = NULL;
+				mpc_common_spinlock_init(&__oshmem_global_contexts[i].context_lock, 0);
+				atomic_store(&__oshmem_global_contexts[i].refcount, 0);
 			}
 		}
-		mpc_common_spinlock_unlock(&_oshmem_global_context_lock);
+		mpc_common_spinlock_unlock(&__oshmem_global_context_lock);
 	}
 
-	atomic_fetch_add(&_oshmem_global_context_refcount, 1);
+	atomic_fetch_add(&__oshmem_global_context_refcount, 1);
 
 	_mpc_oshmem_context_t *my_task_context = __oshmem_get_context();
 
@@ -1147,8 +1280,8 @@ int pshmem_init_thread(int requested, int *provided)
 		mpc_common_spinlock_lock(&my_task_context->context_lock);
 		if (my_task_context->symmetric_heap_window == NULL)
 		{
-			_mpc_openshmem_section_info_t section_info = {};
-			_mpc_openshmem_get_elf_info(&section_info);
+			_mpc_oshmem_section_info_t section_info = {};
+			_mpc_oshmem_get_elf_info(&section_info);
 
 			my_task_context->user_bss_start = section_info.bss.address;
 			my_task_context->user_bss_size  = section_info.bss.size;
@@ -1195,9 +1328,13 @@ void start_pes()
 	pshmem_init();
 }
 
+/**
+ * @brief Flushes the underlying manager
+ */
 static void __oshmem_flush_all_windows(void)
 {
-	mpc_lowcomm_request_t *flush_request = __openshmem_convert_lcp_request_to_lowcomm(mpc_lowcomm_request_alloc());
+	// FIXME: Works only with LCP ! We should flush all the windows...
+	mpc_lowcomm_request_t *flush_request = _mpc_oshmem_convert_mpi_request_to_lowcomm(mpc_lowcomm_request_alloc());
 
 	_mpc_oshmem_context_t *my_task_context = __oshmem_get_context();
 
@@ -1209,6 +1346,9 @@ static void __oshmem_flush_all_windows(void)
 	mpc_lowcomm_request_free(flush_request);
 }
 
+/**
+ * @brief Synchronizes all the processes in the communicator contained in the symmetric heap window
+ */
 static void __oshmem_sync_all_windows(void)
 {
 	__oshmem_flush_all_windows();
@@ -1221,7 +1361,7 @@ static void __oshmem_sync_all_windows(void)
 void pshmem_finalize(void)
 {
 	_mpc_oshmem_context_t *my_task_context = __oshmem_get_context();
-	if (atomic_load(&_oshmem_global_context_refcount) > 0)
+	if (atomic_load(&__oshmem_global_context_refcount) > 0)
 	{
 		if (atomic_load(&my_task_context->refcount) > 0)
 		{
@@ -1251,9 +1391,9 @@ void pshmem_finalize(void)
 
 				mpc_common_spinlock_unlock(&my_task_context->context_lock);
 			}
-			if (atomic_fetch_sub(&_oshmem_global_context_refcount, 1) == 0)
+			if (atomic_fetch_sub(&__oshmem_global_context_refcount, 1) == 0)
 			{
-				sctk_free(_oshmem_global_contexts);
+				sctk_free(__oshmem_global_contexts);
 			}
 		}
 		else

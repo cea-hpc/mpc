@@ -20,6 +20,10 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
+/**@file
+ * OpenSHMEM standard routines weak linkage to the profiling interface
+ */
+
 #ifndef MPC_OPENSHMEM_PROFILING_WEAK_SYMBOLS_H_
 #define MPC_OPENSHMEM_PROFILING_WEAK_SYMBOLS_H_
 

@@ -19,6 +19,7 @@
 #   - BEAULIEU Corentin corentin.beaulieu@cea.fr                       #
 #                                                                      #
 ########################################################################
+
 AM_CPPFLAGS =  -I$(abs_top_srcdir)/src/include/ -I$(abs_top_builddir)/src/include/
 AM_CPPFLAGS += -I$(abs_top_srcdir)/src/MPC_Common/include/ -I$(abs_top_builddir)/src/MPC_Common/include/
 AM_CPPFLAGS += -I$(abs_top_srcdir)/src/MPC_Arch/include/   -I$(abs_top_builddir)/src/MPC_Arch/include/
@@ -31,6 +32,6 @@ AM_CPPFLAGS += -I$(abs_top_srcdir)/src/MPC_OpenSHMEM/include/ -I$(abs_top_srcdir
 
 lib_LTLIBRARIES = libmpcopenshmem.la
 
-libmpcopenshmem_la_SOURCES = ./mpc_openshmem.c ./mpc_openshmem_setup.c ./mpc_openshmem_memory.c
+libmpcopenshmem_la_SOURCES = ./mpc_openshmem.c ./mpc_openshmem_elf.c ./mpc_openshmem_memory.c
 
 libmpcopenshmem_la_LIBADD = ../../MPC_Lowcomm/src/libmpclowcomm.la -lrt

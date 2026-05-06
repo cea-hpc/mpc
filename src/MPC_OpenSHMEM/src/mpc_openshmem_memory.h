@@ -1,10 +1,32 @@
-#pragma once
-#include <stddef.h>
+/* ############################# MPC License ############################## */
+/* # Wed Nov 19 15:19:19 CET 2008                                         # */
+/* # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          # */
+/* #                                                                      # */
+/* # IDDN.FR.001.230040.000.S.P.2007.000.10000                            # */
+/* # This file is part of the MPC Runtime.                                # */
+/* #                                                                      # */
+/* # This software is governed by the CeCILL-C license under French law   # */
+/* # and abiding by the rules of distribution of free software.  You can  # */
+/* # use, modify and/ or redistribute the software under the terms of     # */
+/* # the CeCILL-C license as circulated by CEA, CNRS and INRIA at the     # */
+/* # following URL http://www.cecill.info.                                # */
+/* #                                                                      # */
+/* # The fact that you are presently reading this means that you have     # */
+/* # had knowledge of the CeCILL-C license and that you accept its        # */
+/* # terms.                                                               # */
+/* #                                                                      # */
+/* # Authors:                                                             # */
+/* #   - BEAULIEU Corentin corentin.beaulieu@cea.fr                       # */
+/* #                                                                      # */
+/* ######################################################################## */
 
-#ifdef MPC_MODULE
-#undef MPC_MODULE
-#endif
-#define MPC_MODULE "OpenSHMEM/memory"
+/**@file
+ * OpenSHMEM internal symmetric heap allocator API
+ */
+
+#ifndef OSHMEM_MEMORY_H_
+#define OSHMEM_MEMORY_H_
+#include <stddef.h>
 
 /** @defgroup openshmem_memory Memory management
  * @ingroup openshmem_internals
@@ -64,3 +86,5 @@ void mpc_openshmem_memory_symmetric_stack_free(void *stack, void *ptr);
 void mpc_openshmem_memory_symmetric_stack_deinit(void *start_addr);
 
 /** @} */ // openshmem_internals
+
+#endif // OSHMEM_MEMORY_H_
