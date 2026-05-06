@@ -43,7 +43,7 @@
 #include "mpc_common_debug.h"
 #include "mpc_lowcomm_types.h"
 
-#define MPC_MODULE "Lowcomm/LCP/Rndv"
+#define MPC_MODULE "LCP/RNDV"
 
 /* ============================================== */
 /* Packing                                        */
@@ -221,8 +221,7 @@ int lcp_rndv_register_buffer(lcp_request_t *rndv_req)
 		goto err;
 	}
 
-	mpc_common_debug("LCP RNDV: register buffer. rndv_req=%p",
-		rndv_req);
+	mpc_common_nodebug("register buffer. rndv_req=%p", rndv_req);
 	/* Register memory. */
 	rc = lcp_mem_reg_from_map(rndv_req->mngr, rndv_req->state.lmem,
 		rndv_req->send.ep->rma_bmap,
@@ -260,15 +259,12 @@ void lcp_rndv_complete(lcr_completion_t *comp)
 		lcp_request_t *super = rndv_req->super;
 		lcp_chnl_idx_t cc    = ep->am_chnl;
 
-		mpc_common_debug("LCP RNDV: send fin. uid=%llu, rndv req=%p",
-			ep->uid, rndv_req);
-		payload = lcp_send_do_am_bcopy(ep->lct_eps[cc],
-			LCP_AM_ID_RFIN,
-			lcp_rndv_fin_pack,
-			rndv_req);
+		mpc_common_nodebug("send fin. uid=%llu, rndv req=%p", ep->uid, rndv_req);
+
+		payload = lcp_send_do_am_bcopy(ep->lct_eps[cc], LCP_AM_ID_RFIN, lcp_rndv_fin_pack, rndv_req);
 		if (payload < 0)
 		{
-			mpc_common_debug_error("LCP RNDV: error sending fin message.");
+			mpc_common_debug_error("error sending fin message.");
 			return;
 		}
 
@@ -277,7 +273,7 @@ void lcp_rndv_complete(lcr_completion_t *comp)
 		payload = lcp_mem_deprovision(rndv_req->mngr, rndv_req->state.lmem);
 		if (payload != MPC_LOWCOMM_SUCCESS)
 		{
-			mpc_common_debug_error("LCP RNDV: count not unpin memory.");
+			mpc_common_debug_error("count not unpin memory.");
 			return;
 		}
 
@@ -314,7 +310,7 @@ int lcp_send_rndv_start(lcp_request_t *req)
 	rndv_req = lcp_request_get(req->task);
 	if (rndv_req == NULL)
 	{
-		mpc_common_debug_error("LCP RNDV: could not create request.");
+		mpc_common_debug_error("could not create request.");
 		return MPC_LOWCOMM_ERROR;
 	}
 	rndv_req->super = req;
@@ -354,15 +350,12 @@ static int lcp_rndv_progress_rtr(lcp_request_t *rndv_req)
 	lcp_ep_h       ep = rndv_req->send.ep;
 	lcp_chnl_idx_t cc = ep->am_chnl;
 
-	mpc_common_debug("LCP RNDV: progress rtr request=%p",
-		rndv_req);
-	payload = lcp_send_do_am_bcopy(ep->lct_eps[cc],
-		LCP_AM_ID_RTR,
-		lcp_rndv_rtr_pack,
-		rndv_req);
+	mpc_common_nodebug("progress rtr request=%p", rndv_req);
+
+	payload = lcp_send_do_am_bcopy(ep->lct_eps[cc], LCP_AM_ID_RTR, lcp_rndv_rtr_pack, rndv_req);
 	if (payload < 0)
 	{
-		mpc_common_debug_error("LCP RNDV: error sending ack rdv message");
+		mpc_common_debug_error("error sending ack rdv message");
 		rc = MPC_LOWCOMM_ERROR;
 	}
 
@@ -383,7 +376,7 @@ int lcp_rndv_process_rts(lcp_request_t *rreq,
 	rndv_req = lcp_request_get(rreq->task);
 	if (rndv_req == NULL)
 	{
-		mpc_common_debug_error("LCP RNDV: could not create request.");
+		mpc_common_debug_error("could not create request.");
 		return MPC_LOWCOMM_ERROR;
 	}
 	rndv_req->super = rreq;
@@ -410,7 +403,7 @@ int lcp_rndv_process_rts(lcp_request_t *rreq,
 			hdr->src_uid, 0);
 		if (rc != MPC_LOWCOMM_SUCCESS)
 		{
-			mpc_common_debug_error("LCP RNDV: could not create ep "
+			mpc_common_debug_error("could not create ep "
 				                   "after match.");
 			goto err;
 		}
@@ -449,7 +442,7 @@ int lcp_rndv_process_rts(lcp_request_t *rreq,
 		break;
 
 	default:
-		mpc_common_debug_fatal("LCP RNDV: unknown protocol in recv.");
+		mpc_common_debug_fatal("unknown protocol in recv.");
 		rc = MPC_LOWCOMM_ERROR;
 		break;
 	}
@@ -522,8 +515,7 @@ static int lcp_rndv_fin_handler(void *arg, void *data,
 	rndv_req = (lcp_request_t *)hdr->msg_id;
 	req      = rndv_req->super;
 
-	mpc_common_debug("LCP RNDV: recv rfin header msg_id=%llu, req=%p",
-		hdr->msg_id, rndv_req);
+	mpc_common_nodebug("recv rfin header msg_id=%llu, req=%p", hdr->msg_id, rndv_req);
 
 	/* For both PUT and GET, when receiving a FIN message, we have to
 	 * unregister the memory */

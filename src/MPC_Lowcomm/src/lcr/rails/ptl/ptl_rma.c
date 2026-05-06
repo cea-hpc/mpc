@@ -103,8 +103,7 @@
 
 		ctx->match = ctx->mem->match;
 
-		mpc_common_debug("LCR PTL: memory registration. "
-			             "srail=%p, mem=%p, addr=%p, size=%llu, match=%llu",
+		mpc_common_nodebug("LCR PTL: memory registration. srail=%p, mem=%p, addr=%p, size=%llu, match=%llu",
 			srail, ctx->mem, addr, size, ctx->match);
 err:
 		return rc;
@@ -117,8 +116,7 @@ err:
 		lcr_ptl_rail_info_t *srail = &rail->network.ptl;
 		lcr_ptl_mem_ctx_t *  ctx   = &list->pin.ptl;
 
-		mpc_common_debug("LCR PTL: memory deregistration. "
-			             "srail=%p, mem=%p, addr=%p, size=%llu, match=%llu",
+		mpc_common_nodebug("LCR PTL: memory deregistration. srail=%p, mem=%p, addr=%p, size=%llu, match=%llu",
 			srail, ctx->mem, ctx->start, ctx->size, ctx->match);
 
 		if (ctx->mem->lifetime == LCR_PTL_MEM_STATIC)

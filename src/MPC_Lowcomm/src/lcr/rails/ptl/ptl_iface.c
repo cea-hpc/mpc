@@ -155,14 +155,7 @@
 
 		mpc_common_debug(
 			"LCR PTL: complete op. id=%llu, op=%p, size=%llu, nid=%lu, pid=%lu, pti=%d, type=%s, hdr=0x%08x.",
-			op->id,
-			op,
-			op->size,
-			op->addr.phys.nid,
-			op->addr.phys.pid,
-			op->pti,
-			lcr_ptl_op_decode(op),
-			op->hdr);
+			op->id, op, op->size, op->addr.phys.nid, op->addr.phys.pid, op->pti, lcr_ptl_op_decode(op), op->hdr);
 
 		mpc_mpool_push(op);
 out:
@@ -437,7 +430,7 @@ out:
 			/* Target PTE has been disabled, retry operation. */
 			if (ev->ni_fail_type == PTL_NI_PT_DISABLED)
 			{
-				mpc_common_debug("LCR PTL: op retry.");
+				mpc_common_nodebug("LCR PTL: op retry.");
 
 				rc = lcr_ptl_do_op(op);
 				if (rc == MPC_LOWCOMM_ERROR)
@@ -610,9 +603,9 @@ err:
 
 	static void lcr_ptl_iface_print_limits(ptl_ni_limits_t *ni_limits)
 	{
-		mpc_common_debug("LCR PTL: limits:");
+		mpc_common_debug_info_process0("LCR PTL: limits:");
 		assert(ni_limits);
-		#define s(x) mpc_common_debug("%-25s: %lu", #x, (long unsigned int)(ni_limits)->x)
+		#define s(x) mpc_common_debug_info("%-25s: %lu", #x, (long unsigned int)(ni_limits)->x)
 		s(max_entries);
 		s(max_unexpected_headers);
 		s(max_mds);
@@ -888,7 +881,7 @@ err:
 		};
 		lcr_ptl_chk(PtlMDBind(srail->net.nih, &md, &mem->mdh));
 
-		mem->match = atomic_fetch_add(&srail->net.rma.mem_uid, 1);
+		mem->match = atomic_fetch_add(&srail->net.rma.mem_uid, 0);
 
 		me = (ptl_me_t) {
 			.ct_handle   = PTL_CT_NONE,
@@ -1054,7 +1047,7 @@ err:
 		assume(0 < srail->connection_infos_size);
 		assume((int)srail->connection_infos_size < return_data_len);
 
-		mpc_common_debug("PORTALS OD CB SENDS %s", srail->connection_infos);
+		mpc_common_nodebug("PORTALS OD CB SENDS %s", srail->connection_infos);
 
 		snprintf(return_data, return_data_len, "%s", srail->connection_infos);
 
@@ -1188,7 +1181,7 @@ err:
 			.pte.rma = srail->net.rma.pti,
 		};
 
-		mpc_common_debug("LCR PTL: interface address nid=%llu, pid=%llu, "
+		mpc_common_nodebug("LCR PTL: interface address nid=%llu, pid=%llu, "
 #if defined (MPC_USE_PORTALS_CONTROL_FLOW)
 				"tk pti=%d, "
 #endif

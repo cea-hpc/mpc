@@ -310,16 +310,14 @@ struct lcp_pinning_entry * lcp_pinning_entry_list_push(struct lcp_pinning_entry_
 		if (list->max_entries_count <= list->entries_count)
 		{
 			/* Decimate one */
-			mpc_common_debug("PINNING Decimate one due to count limit");
+			mpc_common_nodebug("PINNING Decimate one due to count limit");
 			lcp_pinning_entry_list_decimate_no_lock(list, 0);
 		}
 
 		if (list->max_total_size <= (list->total_size + len))
 		{
-			mpc_common_debug("PINNING Decimate many due to size limit MAXSIZE %llu CURRENTTOTAL %llu REQLEN %llu",
-				list->max_total_size,
-				list->total_size,
-				len);
+			mpc_common_nodebug("PINNING Decimate many due to size limit MAXSIZE %llu CURRENTTOTAL %llu REQLEN %llu",
+				list->max_total_size, list->total_size, len);
 
 			lcp_pinning_entry_list_decimate_no_lock(list, (list->total_size + len) - list->max_total_size);
 		}
@@ -358,10 +356,7 @@ struct lcp_pinning_entry * lcp_pinning_entry_list_push(struct lcp_pinning_entry_
 		list->total_size += len;
 
 		mpc_common_debug("PINNING new segment for size %ld @ %p [MMU count : %llu, MMU TOTAL %g MB]",
-			len,
-			buffer,
-			list->entries_count,
-			(double)list->total_size / (1024.0 * 1024.0));
+			len, buffer, list->entries_count, (double)list->total_size / (1024.0 * 1024.0));
 	}
 
 err:
@@ -421,13 +416,11 @@ lcp_mem_h lcp_pinning_mmu_pin(lcp_manager_h mngr, const void *addr,
 	if (exists)
 	{
 		/* Was acquired in the find */
-		mpc_common_debug("MEM: pinning entry exists: addr=%p, "
-			             "size=%llu, bitmap=%x", addr, size, bitmap);
+		mpc_common_nodebug("MEM: pinning entry exists: addr=%p, size=%llu, bitmap=%x", addr, size, bitmap);
 		return exists->mem_entry;
 	}
 
-	exists = lcp_pinning_entry_list_push(&mngr->mmu->list, addr,
-		size, mngr, bitmap, flags);
+	exists = lcp_pinning_entry_list_push(&mngr->mmu->list, addr, size, mngr, bitmap, flags);
 	assume(exists);
 
 	return exists->mem_entry;

@@ -347,20 +347,23 @@ static inline struct _mpc_shm_cell * _mpc_shm_list_head_try_get(struct _mpc_shm_
 {
 	struct _mpc_shm_cell *ret = NULL;
 
-	if (mpc_common_spinlock_trylock(&list->lock) == 0)
+	if (list->tail)
 	{
-		if (list->tail)
+		if (mpc_common_spinlock_trylock(&list->lock) == 0)
 		{
-			ret        = (struct _mpc_shm_cell *)((char *)list->tail + (uint64_t)base);
-			list->tail = ret->prev;
-			ret->prev  = NULL;
-			if (!list->tail)
+			if (list->tail)
 			{
-				list->head = NULL;
+				ret        = (struct _mpc_shm_cell *)((char *)list->tail + (uint64_t)base);
+				list->tail = ret->prev;
+				ret->prev  = NULL;
+				if (!list->tail)
+				{
+					list->head = NULL;
+				}
 			}
-		}
 
-		mpc_common_spinlock_unlock(&list->lock);
+			mpc_common_spinlock_unlock(&list->lock);
+		}
 	}
 
 	return ret;
@@ -453,7 +456,7 @@ int mpc_shm_has_cma_support(struct _mpc_shm_storage *storage)
 		pid_t remote_pid = storage->pids[i];
 		mpc_lowcomm_peer_uid_t *remote_uid_addresses = storage->remote_uid_addresses[i];
 		mpc_lowcomm_peer_uid_t  remote_uid_cma       = 0;
-		mpc_lowcomm_peer_uid_t  remote_uid_value     = mpc_lowcomm_monitor_local_uid_of(i);
+		mpc_lowcomm_peer_uid_t  remote_uid_value     = storage->uids[i];
 
 		if (__do_cma_read(remote_pid, remote_uid_addresses, &remote_uid_cma, sizeof(mpc_lowcomm_peer_uid_t)))
 		{
@@ -1099,9 +1102,8 @@ int _mpc_shm_storage_release(__UNUSED__ struct _mpc_shm_storage *storage)
 void mpc_shm_connect_on_demand(__UNUSED__ struct sctk_rail_info_s *rail, __UNUSED__ mpc_lowcomm_peer_uid_t dest)
 {
 	UNUSED(rail);
-	// NOTE: nothing to be done since all transport endpoints were created at
-	//      init.
-	mpc_common_debug("On demand to %llu", dest);
+	// NOTE: nothing to be done since all transport endpoints were created at init.
+	mpc_common_nodebug("On demand to %llu", dest);
 }
 
 void _mpc_lowcomm_shm_endpoint_info_init(_mpc_lowcomm_shm_endpoint_info_t *infos,

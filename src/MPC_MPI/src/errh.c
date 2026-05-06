@@ -26,6 +26,7 @@
 #include "mpc_common_debug.h"
 #include "mpc_common_datastructure.h"
 #include "mpc_common_spinlock.h"
+#include "mpc_mpi.h"
 #include "mpc_mpi_comm_lib.h"
 #include "mpc_thread.h"
 #include <comm.h>
@@ -98,7 +99,7 @@ static void mpc_mpi_err_init_once()
 
 _mpc_mpi_errhandler_t _mpc_mpi_errhandler_from_idx(const long errh)
 {
-	if (errh > 0 && errh <= MAX_ERROR_HANDLERS)
+	if (errh >= 0 && errh <= MAX_ERROR_HANDLERS)
 	{
 		return error_handlers + errh;
 	}
@@ -215,7 +216,7 @@ int _mpc_mpi_errhandler_free_no_lock(_mpc_mpi_errhandler_t errh)
 	if (!_mpc_mpi_errhandler_is_valid(errh))
 	{
 		/* No then error */
-		return MPC_ERR_ERRHANDLER;
+		return MPI_ERR_ERRHANDLER;
 	}
 
 	if (errh->ref_count > 0)
@@ -228,7 +229,7 @@ int _mpc_mpi_errhandler_free_no_lock(_mpc_mpi_errhandler_t errh)
 	{
 		if (_mpc_mpi_errhandler_can_be_released(errh))
 		{
-			mpc_common_debug("ERR: can be released");
+			mpc_common_nodebug("ERR: can be released");
 			memset(errh, 0, sizeof(struct MPI_ABI_Errhandler));
 		}
 	}
@@ -390,7 +391,7 @@ _mpc_mpi_errhandler_t _mpc_mpi_handle_get_errhandler(sctk_handle id,
 
 	mpc_common_spinlock_unlock(&errorhandlers_lock);
 
-	mpc_common_debug("GET at %p == %d for %d", hctx, hctx->handler, id);
+	mpc_common_nodebug("GET at %p == %d for %d", hctx, hctx->handler, id);
 
 	return ret;
 }
@@ -404,7 +405,7 @@ int _mpc_mpi_handle_set_errhandler(sctk_handle id, sctk_handle_type type,
 	if (!hctx)
 	{
 		mpc_common_spinlock_unlock(&errorhandlers_lock);
-		return 1;
+		return MPI_ERR_INTERN;
 	}
 
 	errh = _mpc_mpi_errhandler_from_idx((long)errh);
@@ -413,6 +414,7 @@ int _mpc_mpi_handle_set_errhandler(sctk_handle id, sctk_handle_type type,
 	hctx->handler = errh;
 	errh->ref_count++;
 	mpc_common_spinlock_unlock(&errorhandlers_lock);
+	mpc_common_nodebug("SET at %p == %0#x for %0#x", hctx, hctx->handler, id);
 
 	return 0;
 }

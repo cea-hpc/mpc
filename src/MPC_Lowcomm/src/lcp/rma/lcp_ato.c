@@ -41,6 +41,8 @@
 
 #include "mpc_common_debug.h"
 
+#define MPC_MODULE "LCP/RMA"
+
 /** @addtogroup LCP_ATOMIC
  * @{
  */
@@ -76,6 +78,24 @@ static const lcr_atomic_dt_t lcp_atomic_dt_table[] =
  *
  * @param[in] comp Completion function to call on completion
  */
+static void lcp_atomic_complete_local(lcr_completion_t *comp)
+{
+	lcp_request_t *req = mpc_container_of(comp, lcp_request_t, state.comp);
+
+	req->flags |= LCP_REQUEST_LOCAL_COMPLETED;
+	if ((req->flags & LCP_REQUEST_REMOTE_COMPLETED) != 0)
+	{
+		req->status = MPC_LOWCOMM_SUCCESS;
+
+		lcp_request_complete(req, send.send_cb, req->status, 0);
+	}
+}
+
+/**
+ * @brief Completes an atomic operation
+ *
+ * @param[in] comp Completion function to call on completion
+ */
 static void lcp_atomic_complete(lcr_completion_t *comp)
 {
 	lcp_request_t *req = mpc_container_of(comp, lcp_request_t, state.comp);
@@ -101,9 +121,8 @@ static int lcp_atomic_post(lcp_request_t *req)
 
 	assert(req->send.ep->cap & LCR_IFACE_CAP_ATOMICS);
 
-	mpc_common_debug(
-		"LCP ATO: perform post. req=%p, task=%p, tid=%d, remote addr=%p, op=%s, value=%d", req, req->task,
-		req->task->tid, req->send.ato.remote_addr,
+	mpc_common_debug("ATOMIC POST. req=%p, task=%p, tid=%d, remote addr=%p, op=%s, value=%d",
+		req, req->task, req->task->tid, req->send.ato.remote_addr,
 		lcp_ato_sw_decode_op(req->send.ato.op), req->send.ato.value);
 
 	rc = lcp_atomic_do_post(ep, req->send.ato.value,
@@ -131,11 +150,9 @@ static int lcp_atomic_fetch(lcp_request_t *req)
 
 	assert(req->send.ep->cap & LCR_IFACE_CAP_ATOMICS);
 
-	mpc_common_debug("LCP ATO: perform fetch. req=%p, task=%p, tid=%d, remote addr=%p, op=%s, value=%d",
-		req, req->task,
-		req->task->tid, req->send.ato.remote_addr,
-		lcp_ato_sw_decode_op(req->send.ato.op),
-		req->send.ato.value);
+	mpc_common_debug("FETCH. req=%p, task=%p, tid=%d, remote addr=%p, op=%s, value=%d",
+		req, req->task, req->task->tid, req->send.ato.remote_addr,
+		lcp_ato_sw_decode_op(req->send.ato.op), req->send.ato.value);
 
 	rc = lcp_atomic_do_fetch(ep, req->send.ato.reply_buffer,
 		req->send.ato.value,
@@ -163,11 +180,9 @@ static int lcp_atomic_cswap(lcp_request_t *req)
 
 	assert(req->send.ep->cap & LCR_IFACE_CAP_ATOMICS);
 
-	mpc_common_debug("LCP ATO: perform cswap. req=%p, task=%p, tid=%d, remote addr=%p, op=%s, compare=%d, value=%d",
+	mpc_common_debug("CSWAP. req=%p, task=%p, tid=%d, remote addr=%p, op=%s, compare=%d, value=%d",
 		req, req->task, req->task->tid, req->send.ato.remote_addr,
-		lcp_ato_sw_decode_op(req->send.ato.op),
-		*(uint64_t *)req->send.ato.reply_buffer,
-		req->send.ato.value);
+		lcp_ato_sw_decode_op(req->send.ato.op), *(uint64_t *)req->send.ato.reply_buffer, req->send.ato.value);
 
 	rc = lcp_atomic_do_cswap(ep, req->send.ato.reply_buffer,
 		req->send.ato.value,
@@ -253,14 +268,14 @@ lcp_status_ptr_t lcp_atomic_op_nb(lcp_ep_h ep, lcp_task_h task, const void *buff
 		req->state.lmem = param->mem;
 	}
 
+	req->state.comp.comp_cb = lcp_atomic_complete;
 	memcpy(&req->send.ato.value, buffer, length);
 	if (param->field_mask & LCP_REQUEST_REPLY_BUFFER)
 	{
 		memcpy(&req->send.ato.compare, param->reply_buffer, length);
 		req->send.ato.reply_buffer = param->reply_buffer;
+		req->state.comp.comp_cb    = lcp_atomic_complete_local;
 	}
-
-	req->state.comp.comp_cb = lcp_atomic_complete;
 
 	rc = lcp_atomic_select_proto_channel(ep, &atomic_proto, &req->send.ato.cc);
 	if (rc != MPC_LOWCOMM_SUCCESS)

@@ -42,7 +42,7 @@
 #include <rndv/lcp_rndv.h>
 #include "mpc_common_debug.h"
 
-#define MPC_MODULE "Lowcomm/LCP/Am"
+#define MPC_MODULE "LCP/AM"
 
 /* ============================================== */
 /* Packing                                        */
@@ -185,13 +185,10 @@ static int lcp_send_rndv_am_rts_progress(lcp_request_t *req)
 	lcp_ep_h       ep = req->send.ep;
 	lcp_chnl_idx_t cc = ep->am_chnl;
 
-	mpc_common_debug("LCP AM: start am rndv. src=%d, dest=%d, am_id=%d, "
-		             "hdr_size=%d", req->send.am.src_uid, ep->uid,
-		req->send.am.am_id, req->send.am.hdr_size);
+	mpc_common_nodebug("start am rndv. src=%d, dest=%d, am_id=%d, hdr_size=%d",
+		req->send.am.src_uid, ep->uid, req->send.am.am_id, req->send.am.hdr_size);
 
-	payload_size = lcp_send_do_am_bcopy(ep->lct_eps[cc],
-		LCP_AM_ID_RTS_AM,
-		lcp_send_am_rndv_pack, req);
+	payload_size = lcp_send_do_am_bcopy(ep->lct_eps[cc], LCP_AM_ID_RTS_AM, lcp_send_am_rndv_pack, req);
 	if (payload_size < 0)
 	{
 		rc = MPC_LOWCOMM_ERROR;
@@ -231,10 +228,8 @@ int lcp_send_eager_am_bcopy(lcp_request_t *req)
 	ssize_t             payload;
 	int rc = MPC_LOWCOMM_SUCCESS;
 
-	mpc_common_debug_info("LCP: send eager am bcopy comm=%d, src=%d, "
-		                  "dest=%d, length=%d, tag=%d", req->send.tag.comm,
-		req->send.tag.src_tid, req->send.tag.dest_tid,
-		req->send.length, req->send.tag.tag);
+	mpc_common_debug("AM eager bcopy. comm=%d, src=%d, dest=%d, length=%d, tag=%d",
+		req->send.tag.comm, req->send.tag.src_tid, req->send.tag.dest_tid, req->send.length, req->send.tag.tag);
 
 	pack_cb = lcp_send_am_eager_pack;
 	if (req->is_sync)
@@ -302,9 +297,7 @@ int lcp_send_eager_am_zcopy(lcp_request_t *req)
 	iov[1].iov_len  = req->send.length;
 	iovcnt++;
 
-	mpc_common_debug_info("LCP: send eager am zcopy am_id=%d, "
-		                  "length=%d", req->send.am.am_id,
-		req->send.length);
+	mpc_common_debug("AM eager zcopy. am_id=%d, length=%d", req->send.am.am_id, req->send.length);
 
 	if (req->is_sync)
 	{
@@ -396,8 +389,7 @@ lcp_status_ptr_t lcp_am_send_nb(lcp_ep_h ep, lcp_task_h task, int32_t dest_tid,
 	req->send.am.hdr      = sctk_malloc(hdr_size);
 	if (req->send.am.hdr == NULL)
 	{
-		mpc_common_debug_error("LCP AM: could not allocated user header "
-			                   "for copy");
+		mpc_common_debug_error("could not allocated user header for copy");
 		return LCP_STATUS_PTR(MPC_LOWCOMM_ERROR);
 	}
 	memcpy(req->send.am.hdr, hdr, hdr_size);

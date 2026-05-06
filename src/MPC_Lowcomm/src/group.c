@@ -1039,7 +1039,7 @@ mpc_lowcomm_group_t *_mpc_lowcomm_group_create(unsigned int size,
 	/* SET SHM Collective context if needed */
 	if (ret->process_count == 1 && ret->size > 1)
 	{
-		mpc_common_debug("initializing shm colls with %d", ret->size);
+		mpc_common_nodebug("initializing shm colls with %d", ret->size);
 		ret->shm_coll = sctk_comm_coll_init(ret->size);
 	}
 

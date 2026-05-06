@@ -23,6 +23,7 @@
 #define COMMUNICATOR_H
 
 #include <mpc_lowcomm_communicator.h>
+#include <group.h>
 
 #include <mpc_common_asm.h>
 #include <mpc_common_types.h>

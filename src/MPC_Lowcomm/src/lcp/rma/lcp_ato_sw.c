@@ -137,8 +137,7 @@ static ssize_t lcp_atomic_reply_pack(void *dest, void *data)
  */
 static void lcp_atomic_complete(lcr_completion_t *comp)
 {
-	lcp_request_t *req = mpc_container_of(comp, lcp_request_t,
-		state.comp);
+	lcp_request_t *req = mpc_container_of(comp, lcp_request_t, state.comp);
 
 	if ((req->flags & LCP_REQUEST_REMOTE_COMPLETED)
 	    && (req->flags & LCP_REQUEST_LOCAL_COMPLETED))
@@ -302,8 +301,8 @@ static int lcp_atomic_handler(void *arg, void *data, size_t length, unsigned fla
 
 			case LCP_ATOMIC_DT_DOUBLE:
 				mpc_common_spinlock_lock(&lcp_atomic_global_lock);
-				reply.result.f64 = *(volatile float *)hdr->remote_addr;
-				*(volatile float *)hdr->remote_addr += value.f64;
+				reply.result.f64 = *(volatile double *)hdr->remote_addr;
+				*(volatile double *)hdr->remote_addr += value.f64;
 				mpc_common_spinlock_unlock(&lcp_atomic_global_lock);
 				break;
 #endif
@@ -369,8 +368,8 @@ static int lcp_atomic_handler(void *arg, void *data, size_t length, unsigned fla
 
 			case LCP_ATOMIC_DT_DOUBLE:
 				mpc_common_spinlock_lock(&lcp_atomic_global_lock);
-				reply.result.f64 = *(volatile float *)hdr->remote_addr;
-				*(volatile float *)hdr->remote_addr -= value.f64;
+				reply.result.f64 = *(volatile double *)hdr->remote_addr;
+				*(volatile double *)hdr->remote_addr -= value.f64;
 				mpc_common_spinlock_unlock(&lcp_atomic_global_lock);
 				break;
 #endif

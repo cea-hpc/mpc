@@ -356,7 +356,7 @@ void *active_message_progress_loop(void *pctx)
 	}
 
 	sctk_free(tmp_buffer);
-	mpc_common_debug("RPC THREAD Leaving");
+	mpc_common_nodebug("RPC THREAD Leaving");
 
 	return NULL;
 }

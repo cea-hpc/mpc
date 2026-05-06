@@ -728,9 +728,7 @@ void mpc_lowcomm_topo_comm_set(mpc_lowcomm_communicator_t comm, int root, mpc_ha
 
 	if (index != -1)
 	{
-#ifdef MPC_ENABLE_DEBUG_MESSAGES
-			mpc_common_debug("SET | TASK %d | UPDATE | ROOT %d -> INDEX %d | ADR %p", task_rank, root, index, hw_info);
-#endif
+		mpc_common_nodebug("SET | TASK %d | UPDATE | ROOT %d -> INDEX %d | ADR %p", task_rank, root, index, hw_info);
 		comm->topo_comms[task_rank].hw_infos[index] = hw_info;
 		return;
 	}
@@ -752,9 +750,7 @@ void mpc_lowcomm_topo_comm_set(mpc_lowcomm_communicator_t comm, int root, mpc_ha
 		comm->topo_comms[task_rank].size *= 2;
 	}
 
-#ifdef MPC_ENABLE_DEBUG_MESSAGES
-		mpc_common_debug("SET | TASK %d | ROOT %d -> INDEX %d | ADR %p", task_rank, root, index, hw_info);
-#endif
+	mpc_common_nodebug("SET | TASK %d | ROOT %d -> INDEX %d | ADR %p", task_rank, root, index, hw_info);
 	comm->topo_comms[task_rank].roots[index]    = root;
 	comm->topo_comms[task_rank].hw_infos[index] = hw_info;
 }
@@ -877,17 +873,7 @@ static inline mpc_lowcomm_internal_communicator_t *__init_communicator_with_id(m
 	/* Topo comms */
 	___init_topo_comm(ret);
 
-
-	if (comm_id == MPC_LOWCOMM_COMM_SELF_ID)
-	{
-		/* Comm self is practically
-		 * a virtual communicator without internal
-		 * group to handle as it is different
-		 * for each MPI Process */
-		assume(group == NULL);
-		ret->is_comm_self = 1;
-	}
-	else if (group != NULL)
+	if (group != NULL)
 	{
 		/* This is an intracomm */
 		assume(group != NULL);
@@ -1240,7 +1226,7 @@ static inline void __comm_free(mpc_lowcomm_communicator_t comm)
 	{
 		int lrefcount = _mpc_lowcomm_communicator_relax(comm->left_comm);
 
-		mpc_common_debug("FREE LEFT %d", lrefcount);
+		mpc_common_nodebug("FREE LEFT %d", lrefcount);
 
 		assume(lrefcount >= 0);
 
@@ -1254,7 +1240,7 @@ static inline void __comm_free(mpc_lowcomm_communicator_t comm)
 	{
 		int rrefcount = _mpc_lowcomm_communicator_relax(comm->right_comm);
 
-		mpc_common_debug("FREE RIGHT %d", rrefcount);
+		mpc_common_nodebug("FREE RIGHT %d", rrefcount);
 
 		assume(rrefcount >= 0);
 
@@ -1481,11 +1467,6 @@ mpc_lowcomm_communicator_t mpc_lowcomm_communicator_from_group(mpc_lowcomm_commu
 mpc_lowcomm_group_t * mpc_lowcomm_communicator_group(mpc_lowcomm_communicator_t comm)
 {
 	comm = __mpc_lowcomm_communicator_from_predefined(comm);
-	if (comm->is_comm_self)
-	{
-		int my_rank = mpc_common_get_task_rank();
-		return mpc_lowcomm_group_create(1, &my_rank);
-	}
 
 	mpc_lowcomm_communicator_t local = MPC_COMM_NULL;
 
@@ -1636,9 +1617,10 @@ void _mpc_lowcomm_communicator_init_task(int my_rank)
 		cw_group, 0, MPC_COMM_NULL, MPC_COMM_NULL, MPC_LOWCOMM_COMM_WORLD_NUMERIC_ID);
 
 	__comm_world[my_local_rank]->group->my_rank[my_local_rank] = my_rank;
+	mpc_lowcomm_group_t *self_group = mpc_lowcomm_group_create(1, &my_rank);
 
 	__comm_self[my_local_rank] = __init_communicator_with_id(MPC_LOWCOMM_COMM_SELF_ID,
-		NULL, 1, MPC_COMM_NULL, MPC_COMM_NULL, MPC_LOWCOMM_COMM_SELF_NUMERIC_ID);
+		self_group, 1, MPC_COMM_NULL, MPC_COMM_NULL, MPC_LOWCOMM_COMM_SELF_NUMERIC_ID);
 }
 
 void _mpc_lowcomm_communicator_release(void)
@@ -1663,7 +1645,7 @@ void _mpc_lowcomm_communicator_release_task(void)
  * ACCESSORS *
  *************/
 
-lcp_ep_h mpc_lowcomm_communicator_lookup(mpc_lowcomm_communicator_t comm, int rank)
+void * mpc_lowcomm_communicator_lookup(mpc_lowcomm_communicator_t comm, int rank)
 {
 	mpc_lowcomm_communicator_t tcomm = __mpc_lowcomm_communicator_from_predefined(comm);
 
@@ -1682,23 +1664,24 @@ lcp_ep_h mpc_lowcomm_communicator_lookup(mpc_lowcomm_communicator_t comm, int ra
 	}
 }
 
-void mpc_lowcomm_communicator_add_ep(mpc_lowcomm_communicator_t comm, int rank, lcp_ep_h ep)
+void mpc_lowcomm_communicator_add_ep(mpc_lowcomm_communicator_t comm, int rank, void *ep)
 {
+	lcp_ep_h lcp_ep = (lcp_ep_h)ep;
 	mpc_lowcomm_communicator_t tcomm = __mpc_lowcomm_communicator_from_predefined(comm);
 
 	if (tcomm->is_comm_self)
 	{
-		__comm_self_ep = ep;
+		__comm_self_ep = lcp_ep;
 	}
 	else if (mpc_lowcomm_communicator_is_intercomm(tcomm))
 	{
 		assert(rank >= 0 && rank < (int)mpc_lowcomm_group_size(tcomm->left_comm->group));
-		tcomm->right_comm->group->eps[rank] = ep;
+		tcomm->right_comm->group->eps[rank] = lcp_ep;
 	}
 	else
 	{
 		assert(rank >= 0 && rank < (int)mpc_lowcomm_group_size(tcomm->group));
-		tcomm->group->eps[rank] = ep;
+		tcomm->group->eps[rank] = lcp_ep;
 	}
 }
 
@@ -2034,8 +2017,7 @@ mpc_lowcomm_communicator_t mpc_lowcomm_communicator_split(mpc_lowcomm_communicat
 	// No need to create a new communicator if the group is the same
 	if (color_number == 1)
 	{
-		_mpc_lowcomm_communicator_acquire(comm);
-		comm_out = comm;
+		comm_out = mpc_lowcomm_communicator_dup(comm);
 	}
 	else
 	{
@@ -2095,9 +2077,6 @@ mpc_lowcomm_communicator_t mpc_lowcomm_communicator_split(mpc_lowcomm_communicat
 
 	sctk_free(color_tab);
 	sctk_free(tab);
-	// mpc_common_debug_error("Split done");
-
-	comm_out = __mpc_lowcomm_communicator_to_predefined(comm_out);
 
 	return comm_out;
 }

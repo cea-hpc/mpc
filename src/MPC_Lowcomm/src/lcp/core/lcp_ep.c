@@ -40,7 +40,7 @@
 #include <assert.h>
 #include <mpc_common_helper.h>
 
-#define MPC_MODULE "Lowcomm/LCP/Ep"
+#define MPC_MODULE "LCP/EP"
 
 static int lcp_ep_check_if_valid(lcp_ep_h ep)
 {
@@ -350,8 +350,7 @@ static int lcp_ep_init_channels(lcp_manager_h mngr, lcp_ep_h ep, unsigned flags)
 		/* Flag resource as used to enable polling on it */
 		ctx->resources[i].used = 1;
 
-		mpc_common_debug("LCP EP: route to %llu using %s", ep->uid,
-			iface->network_name);
+		mpc_common_debug("ROUTE to %llu using %s", ep->uid, iface->network_name);
 
 		/* Check transport endpoint availability */
 		// NOTE: For connection-oriented transport (TCP for example), low
@@ -409,7 +408,7 @@ static int lcp_ep_init_channels(lcp_manager_h mngr, lcp_ep_h ep, unsigned flags)
 	//	 connection bitmap. Should be adapted...
 	ep->num_chnls = mngr->num_ifaces;
 
-	mpc_common_debug("LCP EP: ep state=%s.", !equal ? "CONNECTING" : "CONNECTED");
+	mpc_common_debug("state=%s.", !equal ? "CONNECTING" : "CONNECTED");
 
 	return rc;
 }

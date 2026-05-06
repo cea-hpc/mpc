@@ -36,7 +36,6 @@
 #include <mpc_lowcomm_group.h>
 #include <mpc_common_types.h>
 #include "mpc_lowcomm_def.h"
-#include <lcp.h>
 
 /*********************************
  * PUBLIC TYPE FOR COMMUNICATORS *
@@ -328,9 +327,8 @@ int mpc_lowcomm_communicator_free(mpc_lowcomm_communicator_t *pcomm);
 int mpc_lowcomm_communicator_contains(const mpc_lowcomm_communicator_t comm,
                                       const mpc_lowcomm_peer_uid_t uid);
 
-lcp_ep_h mpc_lowcomm_communicator_lookup(mpc_lowcomm_communicator_t comm, int rank);
-void mpc_lowcomm_communicator_add_ep(mpc_lowcomm_communicator_t comm, int rank,
-                                     lcp_ep_h ep);
+void * mpc_lowcomm_communicator_lookup(mpc_lowcomm_communicator_t comm, int rank);
+void mpc_lowcomm_communicator_add_ep(mpc_lowcomm_communicator_t comm, int rank, void *ep);
 
 /**
  * @brief Get rank in communicator for current process

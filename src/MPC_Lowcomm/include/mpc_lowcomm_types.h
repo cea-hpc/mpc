@@ -207,12 +207,13 @@ typedef struct mpc_lowcomm_request_s
 	 * in the source struct which is being pulled therefore
 	 * we have to do this hack by saving a pointer to the
 	 * request inside the request */
-	void *                     pointer_to_source_request;
+	void *pointer_to_source_request;
 	/* This is a pointer to the shadow request */
-	void *                     pointer_to_shadow_request;
+	void *pointer_to_shadow_request;
 
 	/* This is a pointer to the registered memory region
 	 * in order to unpin when request completes */
+	// FIXME: Remove this !!! We do not want to rely on LCP directly !!
 	lcp_tag_recv_info_t        recv_info;
 	mpc_lowcomm_request_pack_t dt;
 	int                        dt_magic;

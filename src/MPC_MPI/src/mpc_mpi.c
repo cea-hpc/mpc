@@ -7932,7 +7932,7 @@ int PMPIX_Swap(void **sendrecv_buf, int remote_rank, MPI_Count size, MPI_Comm co
 			return res;
 		}
 
-		mpc_common_debug("SWAPPING ");
+		mpc_common_nodebug("SWAPPING ");
 
 		/* Replace by the remote ptr */
 		*sendrecv_buf = tmp_ptr;
@@ -7949,7 +7949,7 @@ int PMPIX_Swap(void **sendrecv_buf, int remote_rank, MPI_Count size, MPI_Comm co
 			tmp_buff, size, MPI_BYTE, remote_rank, 58740,
 			comm, MPI_STATUS_IGNORE);
 
-		mpc_common_debug("COPYING !");
+		mpc_common_nodebug("COPYING !");
 
 		if (res != MPI_SUCCESS)
 		{
@@ -8003,7 +8003,7 @@ int PMPIX_Exchange(void **send_buf, void **recvbuff, int remote_rank, MPI_Count 
 			return res;
 		}
 
-		mpc_common_debug("SWAPPING EX!");
+		mpc_common_nodebug("SWAPPING EX!");
 	}
 	else
 	{
@@ -8013,7 +8013,7 @@ int PMPIX_Exchange(void **send_buf, void **recvbuff, int remote_rank, MPI_Count 
 			*recvbuff, size, MPI_BYTE, remote_rank, 58740,
 			comm, MPI_STATUS_IGNORE);
 
-		mpc_common_debug("COPYING EX!");
+		mpc_common_nodebug("COPYING EX!");
 
 		if (res != MPI_SUCCESS)
 		{
@@ -13023,7 +13023,7 @@ int PMPI_Comm_free(MPI_Comm *comm)
 
 	if ((*comm == MPI_COMM_WORLD) || (*comm == MPI_COMM_SELF))
 	{
-		MPI_ERROR_REPORT(MPI_COMM_WORLD, MPI_ERR_COMM, "");
+		MPI_ERROR_REPORT(MPI_COMM_WORLD, MPI_ERR_COMM, "Tried to free a predefined communicator");
 	}
 
 	mpi_check_comm(*comm);
@@ -14670,6 +14670,7 @@ int PMPI_Error_string(int errorcode, char *string, int *resultlen)
 	MPI_Error_string_convert(MPI_ERR_ROOT,                "Invalid root");
 	MPI_Error_string_convert(MPI_ERR_GROUP,               "Invalid group ");
 	MPI_Error_string_convert(MPI_ERR_OP,                  "Invalid operation");
+	MPI_Error_string_convert(MPI_ERR_ERRHANDLER,          "Invalid errhandler argument");
 	MPI_Error_string_convert(MPI_ERR_TOPOLOGY,            "Invalid topology");
 	MPI_Error_string_convert(MPI_ERR_DIMS,                "Invalid dimension argument");
 	MPI_Error_string_convert(MPI_ERR_ARG,                 "Invalid argument of some other kind");
@@ -15718,6 +15719,11 @@ int PMPI_Info_free(MPI_Info *info)
 
 int PMPI_Info_dup(MPI_Info info, MPI_Info *newinfo)
 {
+	if (info == MPI_INFO_NULL)
+	{
+		*newinfo = MPI_INFO_NULL;
+		return MPI_SUCCESS;
+	}
 	return _mpc_cl_info_dup((MPC_Info)info, (MPC_Info * )newinfo);
 }
 
@@ -17167,19 +17173,9 @@ int PMPI_Gather(const void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 		return res;
 	}
 
-	if ((sendcnt == 0 || recvcnt == 0) && !mpc_lowcomm_communicator_is_intercomm(comm))
-	{
-		return MPI_SUCCESS;
-	}
-
 	if (sendbuf == recvbuf && rank == root)
 	{
 		MPI_ERROR_REPORT(comm, MPI_ERR_ARG, "");
-	}
-
-	if (sendtype != recvtype)
-	{
-		MPI_ERROR_REPORT(comm, MPI_ERR_TYPE, "Mismatched datatypes");
 	}
 
 	/* Error checking */
@@ -17199,22 +17195,19 @@ int PMPI_Gather(const void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 			mpi_check_count(sendcnt, comm);
 			mpi_check_type(sendtype, comm);
 			mpi_check_type_committed(sendtype, comm);
+			if (sendtype != recvtype)
+			{
+				MPI_ERROR_REPORT(comm, MPI_ERR_TYPE, "Mismatched datatypes");
+			}
 		}
 		mpi_check_buf(recvbuf, comm);
 		mpi_check_count(recvcnt, comm);
 		mpi_check_type_committed(recvtype, comm);
 	}
 
-	if ((0 == sendcnt && MPI_ROOT != root
-	     && (rank != root
-	         || (rank == root && MPI_IN_PLACE != sendbuf)
-	         )
-	     )
+	if ((0 == sendcnt && MPI_ROOT != root && (rank != root || (rank == root && MPI_IN_PLACE != sendbuf)))
 	    || (rank == root && MPI_IN_PLACE == sendbuf && 0 == recvcnt)
-	    || (0 == recvcnt
-	        && (MPI_ROOT == root || MPI_PROC_NULL == root)
-	        )
-	    )
+	    || (0 == recvcnt && (MPI_ROOT == root || MPI_PROC_NULL == root)))
 	{
 		return MPI_SUCCESS;
 	}

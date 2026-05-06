@@ -1382,12 +1382,12 @@ int _mpc_cl_type_get_true_extent(mpc_lowcomm_datatype_t datatype, long *true_lb,
 	{
 	case MPC_DATATYPES_COMMON:
 		tmp_true_lb = 0;
-		tmp_true_ub = (long)__mpc_cl_datatype_get_size(datatype);
+		// HACK: From size to inclusive UB means we have to remove 1
+		tmp_true_ub = (long)__mpc_cl_datatype_get_size(datatype) - 1;
 		break;
 
 	case MPC_DATATYPES_USER:
-		_mpc_dt_general_true_extend(datatype, &tmp_true_lb,
-			&tmp_true_ub);
+		_mpc_dt_general_true_extend(datatype, &tmp_true_lb, &tmp_true_ub);
 		break;
 
 	case MPC_DATATYPES_UNKNOWN:
@@ -3333,8 +3333,10 @@ int _mpc_cl_error_init()
 			(int)(long)MPC_ERRORS_ABORT);
 	}
 
-	_mpc_cl_errhandler_set(__mpc_lowcomm_communicator_from_predefined(MPC_COMM_WORLD), MPC_ERRORS_ARE_FATAL);
-	_mpc_cl_errhandler_set(__mpc_lowcomm_communicator_from_predefined(MPC_COMM_SELF),  MPC_ERRORS_ARE_FATAL);
+	_mpc_mpi_errhandler_t errh = _mpc_mpi_errhandler_from_idx((long)MPC_ERRORS_ARE_FATAL);
+
+	_mpc_cl_errhandler_set(__mpc_lowcomm_communicator_from_predefined(MPC_COMM_WORLD), errh);
+	_mpc_cl_errhandler_set(__mpc_lowcomm_communicator_from_predefined(MPC_COMM_SELF),  errh);
 
 	MPC_ERROR_SUCCESS();
 }

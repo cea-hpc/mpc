@@ -31,7 +31,7 @@ PATCH_VERSION=
 TAINT_VERSION=
 
 if test -n "$(command -v git)" -a -e "$CONFIG_DIR/../.git"; then
-	res=$(git -C $CONFIG_DIR describe --abbrev=0 2>/dev/null | grep -o -E "[0-9]+\.[0-9]+\.[0-9]+$")
+	res=$(git -C $CONFIG_DIR describe --tags --abbrev=0 2>/dev/null | grep -o -E "[0-9]+\.[0-9]+\.[0-9]+$")
 	MAJOR_VERSION=$(echo "$res" | cut -f1 -d".")
 	MINOR_VERSION=$(echo "$res" | cut -f2 -d".")
 	PATCH_VERSION=$(echo "$res" | cut -f3 -d".")
