@@ -30,6 +30,12 @@
 #include <mpc_common_spinlock.h>   // For mpc_common_spinlock_t
 #include <mpc_lowcomm_one_sided.h> // For mpc_lowcomm_window_t
 
+/** @defgroup openshmem_internals INTERNALS
+ * @ingroup MPC_OPENSHMEM
+ * @{
+ * @brief MPC OpenSHMEM Internal datastructures and functions
+ */
+
 /** Context of OpenSHMEM task */
 typedef struct _mpc_oshmem_context_s
 {
@@ -51,5 +57,7 @@ typedef struct _mpc_oshmem_context_s
 
 /** Converts an MPI request (returned by @ref mpc_lowcomm_request_alloc ...) into a lowcomm request */
 #define _mpc_oshmem_convert_mpi_request_to_lowcomm(__req) (((mpc_lowcomm_request_t *)__req) - 1)
+
+/** @} */  // openshmem_internals
 
 #endif // !OSHMEM_INTERNAL_H_

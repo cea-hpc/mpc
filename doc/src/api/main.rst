@@ -19,6 +19,7 @@ Modules Documentation
    lowcomm/lowcomm
    mpi/mpi
    openmp
+   openshmem
    threads
    topology
 

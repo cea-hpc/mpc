@@ -32,13 +32,7 @@
 #include <stdint.h>
 
 /**
- * @defgroup MPC_OPENSHMEM MPC OpenSHMEM
- * @{
- * @}
- */
-
-/**
- * @defgroup MPC_OPENSHMEM_API OpenSHMEM API
+ * @defgroup MPC_OPENSHMEM_PROFILING_API OpenSHMEM Profiling API
  * @ingroup MPC_OPENSHMEM
  * @{
  * @brief OpenSHMEM specification definitions
@@ -136,7 +130,7 @@
 #endif /* MPC_OPENSHMEM_API_H_ */
 
 /**
- * @defgroup MPC_OPENSHMEM_API_GENERAL Setup, Exit and Query
+ * @defgroup MPC_OPENSHMEM_PROFILING_API_GENERAL Setup, Exit and Query
  * @{
  * @brief OpenSHMEM defined Setup, Exit and Query routines
  */
@@ -208,11 +202,11 @@ void pshmem_info_get_name(char *name);
  */
 int pshmem_init_thread(int requested, int *provided);
 
-/** @} */ // MPC_OPENSHMEM_API_GENERAL
+/** @} */ // MPC_OPENSHMEM_PROFILING_API_GENERAL
 
 
 /**
- * @defgroup MPC_OPENSHMEM_API_MEM Memory Management
+ * @defgroup MPC_OPENSHMEM_PROFILING_API_MEM Memory Management
  * @{
  * @brief OpenSHMEM defined memory management routines
  */
@@ -256,17 +250,17 @@ void *pshmem_realloc(void *ptr, size_t size);
  */
 void *pshmem_calloc(size_t count, size_t size);
 
-/** @} */ // MPC_OPENSHMEM_API_MEM
+/** @} */ // MPC_OPENSHMEM_PROFILING_API_MEM
 
 
 /**
- * @defgroup MPC_OPENSHMEM_API_COMM Basic Communications
+ * @defgroup MPC_OPENSHMEM_PROFILING_API_COMM Basic Communications
  * @{
  * @brief OpenSHMEM defined basic one-sided communications
  */
 
 /**
- * @defgroup MPC_OPENSHMEM_API_COMM_PUT Put Communications
+ * @defgroup MPC_OPENSHMEM_PROFILING_API_COMM_PUT Put Communications
  * @{
  * @brief OpenSHMEM put-like defined communications
  */
@@ -354,11 +348,11 @@ void pshmem_size_t_p(size_t *dest, const size_t value, int pe);
 void pshmem_ptrdiff_t_p(ptrdiff_t *dest, const ptrdiff_t value, int pe);
 
 /** @} */ // pshmem_TYPE_p
-/** @} */ // MPC_OPENSHMEM_API_COMM_PUT
+/** @} */ // MPC_OPENSHMEM_PROFILING_API_COMM_PUT
 
 
 /**
- * @defgroup MPC_OPENSHMEM_API_COMM_GET Get Communications
+ * @defgroup MPC_OPENSHMEM_PROFILING_API_COMM_GET Get Communications
  * @{
  * @brief OpenSHMEM get-like defined communications
  */
@@ -447,11 +441,11 @@ size_t pshmem_size_t_g(const size_t *src, int pe);
 ptrdiff_t pshmem_ptrdiff_t_g(const ptrdiff_t *src, int pe);
 
 /** @} */ // pshmem_TYPE_g
-/** @} */ // MPC_OPENSHMEM_API_COMM_GET
+/** @} */ // MPC_OPENSHMEM_PROFILING_API_COMM_GET
 
 
 /**
- * @defgroup MPC_OPENSHMEM_API_ATO Atomic Communications
+ * @defgroup MPC_OPENSHMEM_PROFILING_API_ATO Atomic Communications
  * @{
  * @brief OpenSHMEM defined atomic communications
  */
@@ -757,7 +751,7 @@ void pshmem_ptrdiff_t_atomic_inc(ptrdiff_t *dest, int pe);
 
 
 /**
- * @defgroup MPC_OPENSHMEM_API_COLL_SYNC Collectives Synchronizations
+ * @defgroup MPC_OPENSHMEM_PROFILING_API_COLL_SYNC Collectives Synchronizations
  * @{
  * @brief OpenSHMEM defined Collective Synchronizations routines
  */
@@ -777,6 +771,6 @@ void pshmem_fence(void);
  */
 void pshmem_barrier_all(void);
 
-/** @} */ // MPC_OPENSHMEM_API_COLL_SYNC
-/** @} */ // MPC_OPENSHMEM_API
+/** @} */ // MPC_OPENSHMEM_PROFILING_API_COLL_SYNC
+/** @} */ // MPC_OPENSHMEM_PROFILING_API
 #endif  /* MPC_OPENSHMEM_PROFILING_API_H_ */

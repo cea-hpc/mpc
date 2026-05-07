@@ -28,12 +28,6 @@
 #define OSHMEM_ELF_H_
 #include <stddef.h>
 
-/** @defgroup openshmem_internals INTERNALS
- * @ingroup MPC_OPENSHMEM
- * @{
- * @brief MPC OpenSHMEM Internal datastructures and functions
- */
-
 /** @brief Address and size of a Elf section */
 typedef struct _mpc_oshmem_elf_info_s
 {
@@ -61,6 +55,5 @@ typedef struct _mpc_oshmem_section_info_s
  */
 void _mpc_oshmem_get_elf_info(_mpc_oshmem_section_info_t *const section_info);
 
-/** @} */  // openshmem_internals
 
 #endif // OSHMEM_ELF_H_
