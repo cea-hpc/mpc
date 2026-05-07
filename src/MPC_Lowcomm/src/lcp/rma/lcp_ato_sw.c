@@ -695,7 +695,7 @@ static int lcp_atomic_reply_handler(void *arg, void *data, size_t length, unsign
 
 	memcpy(req->send.ato.reply_buffer, &hdr->result, req->send.ato.reply_size);
 
-	req->flags |= LCP_REQUEST_REMOTE_COMPLETED;
+	req->flags |= LCP_REQUEST_REMOTE_COMPLETED | LCP_REQUEST_LOCAL_COMPLETED;
 
 	lcp_atomic_complete(&req->state.comp);
 
