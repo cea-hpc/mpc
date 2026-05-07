@@ -141,6 +141,8 @@
 					op->comp->sent = op->size;
 					op->comp->comp_cb(op->comp);
 				}
+				// FIXME: This sync is necessary to make sure host memory is synchronised
+				PtlAtomicSync();
 			}
 			else
 			{
@@ -498,11 +500,6 @@ err:
 			}
 		}
 		mpc_common_spinlock_unlock(&srail->net.rma.lock);
-
-		// FIXME: this sync is necessary to make sure host memory is
-		//       synchronised, see lockcontention2.c from mpich test suite.
-		// FIXME2: disabled for now for performance reasons.
-		// PtlAtomicSync();
 
 		return rc;
 	}
