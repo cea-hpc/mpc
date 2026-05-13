@@ -35,6 +35,7 @@
 #include <mpc_lowcomm.h>           // For mpc_lowcomm_communicator_t...
 #include <mpc_lowcomm_one_sided.h> // For this whole OSC API
 
+#include "mpc_mpi.h"
 #include "mpc_mpi_internal.h"      // For MPI_internal_request_t...
 #include "mpitypes.h"              // For MPIT_Type...
 #include "osc_mpi_internal.h"      // For internal mpc_mpi_win_t layout
@@ -653,12 +654,69 @@ int mpc_mpi_osc_rget(void *origin_addr, const int origin_count, mpc_lowcomm_data
 	return rc;
 }
 
+static inline mpc_lowcomm_accumulate_op_t __mpi_osc_convert_op(const MPI_Op op)
+{
+	mpc_lowcomm_accumulate_op_t ret;
+
+	switch (op)
+	{
+	case MPI_REPLACE:
+		ret = LOWCOMM_ACCUMULATE_REPLACE;
+		break;
+
+	case MPI_MAX:
+		ret = LOWCOMM_ACCUMULATE_MAX;
+		break;
+
+	case MPI_MIN:
+		ret = LOWCOMM_ACCUMULATE_MIN;
+		break;
+
+	case MPI_SUM:
+		ret = LOWCOMM_ACCUMULATE_SUM;
+		break;
+
+	case MPI_PROD:
+		ret = LOWCOMM_ACCUMULATE_PROD;
+		break;
+
+	case MPI_LAND:
+		ret = LOWCOMM_ACCUMULATE_LAND;
+		break;
+
+	case MPI_BAND:
+		ret = LOWCOMM_ACCUMULATE_BAND;
+		break;
+
+	case MPI_LOR:
+		ret = LOWCOMM_ACCUMULATE_LOR;
+		break;
+
+	case MPI_BOR:
+		ret = LOWCOMM_ACCUMULATE_BOR;
+		break;
+
+	case MPI_LXOR:
+		ret = LOWCOMM_ACCUMULATE_LXOR;
+		break;
+
+	case MPI_BXOR:
+		ret = LOWCOMM_ACCUMULATE_BXOR;
+		break;
+
+	default:
+		ret = LOWCOMM_ACCUMULATE_UNSUPPORTED;
+		break;
+	}
+
+	return ret;
+}
+
 int mpc_mpi_osc_accumulate(const void *origin_addr, const int origin_count, mpc_lowcomm_datatype_t origin_dt,
                            const int target, const ptrdiff_t target_disp, const int target_count,
                            mpc_lowcomm_datatype_t target_dt, MPI_Op op, mpc_mpi_win_t *win)
 {
-	int   rc = MPI_SUCCESS;
-	void *tmp_result_addr = NULL;
+	int rc = MPI_SUCCESS;
 
 	// TODO: check sync state
 
@@ -666,236 +724,30 @@ int mpc_mpi_osc_accumulate(const void *origin_addr, const int origin_count, mpc_
 	{
 		return rc;
 	}
-	bool need_to_unlock = false;
 
-	rc = mpc_lowcomm_osc_lock(MPC_LOWCOMM_WINDOW_LOCK_ATOMIC, target, win->win_module, false);
-	if (rc == MPC_LOWCOMM_SUCCESS)
+	mpc_lowcomm_accumulate_op_t lowcomm_op = __mpi_osc_convert_op(op);
+	if (lowcomm_op == LOWCOMM_ACCUMULATE_UNSUPPORTED)
 	{
-		need_to_unlock = true;
+		return MPI_ERR_OP;
 	}
 
-
-	if (op == MPI_REPLACE)
+	rc = mpc_lowcomm_iaccumulate(origin_addr, NULL, origin_count, origin_dt, target, target_disp, lowcomm_op,
+		win->win_module, NULL);
+	if (rc == MPC_LOWCOMM_NOT_SUPPORTED)
 	{
-		rc = mpc_mpi_osc_put(origin_addr, origin_count, origin_dt, target,
-			target_disp, target_count, target_dt, win);
-		if (rc != MPC_LOWCOMM_SUCCESS)
-		{
-			goto unlock;
-		}
-	}
-	else
-	{
-		mpc_lowcomm_datatype_t tmp_dt;
-		int    tmp_dt_count;
-		size_t tmp_len, tmp_dt_size;
-		long   tmp_lb, tmp_extent;
-		int    is_orig_dt_contiguous = mpc_mpi_cl_type_is_contiguous(origin_dt);
+		bool  need_to_unlock  = false;
+		void *tmp_result_addr = NULL;
 
-		if (mpc_lowcomm_datatype_is_common(target_dt))
+		rc = mpc_lowcomm_osc_lock(MPC_LOWCOMM_WINDOW_LOCK_ATOMIC, target, win->win_module, false);
+		if (rc == MPC_LOWCOMM_SUCCESS)
 		{
-			tmp_dt       = target_dt;
-			tmp_dt_count = target_count;
-		}
-		else
-		{
-			rc = _mpc_cl_type_get_primitive_type_info(target_dt, &tmp_dt, &tmp_dt_count);
-			if (rc != MPI_SUCCESS)
-			{
-				mpc_common_debug_error("MPI OSC: no single primitive type in acc");
-				goto unlock;
-			}
-			tmp_dt_count *= target_count;
-		}
-		rc = _mpc_cl_type_get_true_extent(tmp_dt, &tmp_lb, &tmp_extent);
-		if (rc != MPC_SUCCESS)
-		{
-			goto unlock;
-		}
-		tmp_len = tmp_dt_count * tmp_extent;
-
-		tmp_result_addr = sctk_malloc(tmp_len);
-		if (tmp_result_addr == NULL)
-		{
-			mpc_common_debug_error("MPI OSC: could not allocate accumulate temp buffer.");
-			goto unlock;
+			need_to_unlock = true;
 		}
 
-		rc = mpc_mpi_osc_get(tmp_result_addr, tmp_dt_count, tmp_dt, target,
-			target_disp, target_count, target_dt, win);
-		if (rc != MPC_LOWCOMM_SUCCESS)
-		{
-			goto unlock;
-		}
-
-		mpc_lowcomm_request_t *lowcomm_req = _mpc_cl_get_lowcomm_request(mpc_lowcomm_request_alloc());
-		mpc_lowcomm_status_t   lowcomm_status;
-
-		rc = mpc_lowcomm_iflush(target, win->win_module, lowcomm_req);
-		if (rc != MPC_LOWCOMM_SUCCESS)
-		{
-			goto unlock;
-		}
-
-		rc = mpc_lowcomm_wait(lowcomm_req, &lowcomm_status);
-		if (rc != MPC_LOWCOMM_SUCCESS)
-		{
-			goto unlock;
-		}
-
-		mpc_lowcomm_request_free(lowcomm_req);
-
-		rc = lowcomm_status.MPC_ERROR;
-		if (rc != MPC_LOWCOMM_SUCCESS)
-		{
-			goto unlock;
-		}
-
-		/* Get mpc operation and perform the reduction. */
-		sctk_op_t *mpc_op = sctk_convert_to_mpc_op(op);
-		sctk_Op_f  func   = sctk_get_common_function(tmp_dt, mpc_op->op);
-
-		if (is_orig_dt_contiguous)
-		{
-			func((void *)origin_addr, tmp_result_addr, tmp_dt_count, tmp_dt);
-		}
-		else
-		{
-			int *     blocks;
-			int       intblockct;
-			MPI_Aint *disps;
-			int       orig_blockidx = 0;
-
-			// NOTE: We want to retrieve the layout of the datatype
-			rc = __osc_create_dt_blocks(origin_addr, origin_count, origin_dt, &blocks, &disps, &intblockct);
-			if (rc != MPI_SUCCESS)
-			{
-				goto unlock;
-			}
-
-			if (mpc_mpi_cl_type_is_contiguous(tmp_dt))
-			{
-				_mpc_cl_type_size(tmp_dt, &tmp_dt_size);
-
-				char *curr_tmp_addr = tmp_result_addr;
-				while (orig_blockidx < intblockct)
-				{
-					func((void *)disps[orig_blockidx],
-						curr_tmp_addr,
-						blocks[orig_blockidx] / tmp_dt_size,
-						tmp_dt);
-
-					curr_tmp_addr += blocks[orig_blockidx];
-					orig_blockidx++;
-				}
-			}
-			else
-			{
-				mpc_common_debug_error("MPI OSC: non contiguous predefined datatype not implemented.");
-				not_implemented();
-			}
-		}
-
-		rc = mpc_mpi_osc_put(tmp_result_addr, tmp_dt_count, tmp_dt, target, target_disp, target_count, target_dt, win);
-		if (rc != MPC_LOWCOMM_SUCCESS)
-		{
-			goto unlock;
-		}
-	}
-
-	mpc_lowcomm_request_t *lowcomm_req = _mpc_cl_get_lowcomm_request(mpc_lowcomm_request_alloc());
-	mpc_lowcomm_status_t   lowcomm_status;
-
-	rc = mpc_lowcomm_iflush(target, win->win_module, lowcomm_req);
-	if (rc != MPC_LOWCOMM_SUCCESS)
-	{
-		goto unlock;
-	}
-
-	rc = mpc_lowcomm_wait(lowcomm_req, &lowcomm_status);
-	if (rc != MPC_LOWCOMM_SUCCESS)
-	{
-		goto unlock;
-	}
-	mpc_lowcomm_request_free(lowcomm_req);
-
-
-	rc = lowcomm_status.MPC_ERROR;
-	if (rc != MPC_LOWCOMM_SUCCESS)
-	{
-		goto unlock;
-	}
-
-unlock:
-	if (tmp_result_addr)
-	{
-		sctk_free(tmp_result_addr);
-	}
-	if ((need_to_unlock))
-	{
-		mpc_lowcomm_osc_unlock(target, win->win_module, true);
-	}
-
-	return rc;
-}
-
-int mpc_mpi_osc_get_accumulate(const void *origin_addr, const int origin_count, mpc_lowcomm_datatype_t origin_dt,
-                               void *result_addr, const int result_count, mpc_lowcomm_datatype_t result_dt,
-                               const int target, const ptrdiff_t target_disp,
-                               const int target_count, const mpc_lowcomm_datatype_t target_dt,
-                               MPI_Op op, mpc_mpi_win_t *win)
-{
-	int   rc = MPI_SUCCESS;
-	void *tmp_result_addr = NULL;
-
-	bool need_to_unlock = false;
-
-	rc = mpc_lowcomm_osc_lock(MPC_LOWCOMM_WINDOW_LOCK_ATOMIC, target, win->win_module, false);
-	if (rc == MPC_LOWCOMM_SUCCESS)
-	{
-		need_to_unlock = true;
-	}
-
-	rc = mpc_mpi_osc_get(result_addr, result_count, result_dt, target, target_disp, target_count, target_dt, win);
-	if (rc != MPC_LOWCOMM_SUCCESS)
-	{
-		goto unlock;
-	}
-
-	/* Make sure the previous get operation is completed and data is arrived at destination. */
-
-	mpc_lowcomm_request_t *lowcomm_req = _mpc_cl_get_lowcomm_request(mpc_lowcomm_request_alloc());
-	mpc_lowcomm_status_t   lowcomm_status;
-
-	rc = mpc_lowcomm_iflush(target, win->win_module, lowcomm_req);
-
-	if (rc != MPC_LOWCOMM_SUCCESS)
-	{
-		goto unlock;
-	}
-
-	rc = mpc_lowcomm_wait(lowcomm_req, &lowcomm_status);
-
-	if (rc != MPC_LOWCOMM_SUCCESS)
-	{
-		goto unlock;
-	}
-
-	mpc_lowcomm_request_free(lowcomm_req);
-
-	rc = lowcomm_status.MPC_ERROR;
-
-	if (rc != MPC_LOWCOMM_SUCCESS)
-	{
-		goto unlock;
-	}
-
-	if (op != MPI_NO_OP)
-	{
 		if (op == MPI_REPLACE)
 		{
-			rc = mpc_mpi_osc_put(origin_addr, origin_count, origin_dt, target, target_disp, target_count, target_dt,
-				win);
+			rc = mpc_mpi_osc_put(origin_addr, origin_count, origin_dt, target,
+				target_disp, target_count, target_dt, win);
 			if (rc != MPC_LOWCOMM_SUCCESS)
 			{
 				goto unlock;
@@ -907,10 +759,9 @@ int mpc_mpi_osc_get_accumulate(const void *origin_addr, const int origin_count, 
 			int    tmp_dt_count;
 			size_t tmp_len, tmp_dt_size;
 			long   tmp_lb, tmp_extent;
-			int    is_orig_dt_contiguous = mpc_lowcomm_datatype_is_common(origin_dt)
-			                               || mpc_mpi_cl_type_is_contiguous(origin_dt);
+			int    is_orig_dt_contiguous = mpc_mpi_cl_type_is_contiguous(origin_dt);
 
-			if (mpc_lowcomm_datatype_is_common_predefined(target_dt))
+			if (mpc_lowcomm_datatype_is_common(target_dt))
 			{
 				tmp_dt       = target_dt;
 				tmp_dt_count = target_count;
@@ -939,11 +790,40 @@ int mpc_mpi_osc_get_accumulate(const void *origin_addr, const int origin_count, 
 				goto unlock;
 			}
 
-			memcpy(tmp_result_addr, result_addr, tmp_len);
+			rc = mpc_mpi_osc_get(tmp_result_addr, tmp_dt_count, tmp_dt, target,
+				target_disp, target_count, target_dt, win);
+			if (rc != MPC_LOWCOMM_SUCCESS)
+			{
+				goto unlock;
+			}
+
+			mpc_lowcomm_request_t *lowcomm_req = _mpc_cl_get_lowcomm_request(mpc_lowcomm_request_alloc());
+			mpc_lowcomm_status_t   lowcomm_status;
+
+			rc = mpc_lowcomm_iflush(target, win->win_module, lowcomm_req);
+			if (rc != MPC_LOWCOMM_SUCCESS)
+			{
+				goto unlock;
+			}
+
+			rc = mpc_lowcomm_wait(lowcomm_req, &lowcomm_status);
+			if (rc != MPC_LOWCOMM_SUCCESS)
+			{
+				goto unlock;
+			}
+
+			mpc_lowcomm_request_free(lowcomm_req);
+
+			rc = lowcomm_status.MPC_ERROR;
+			if (rc != MPC_LOWCOMM_SUCCESS)
+			{
+				goto unlock;
+			}
 
 			/* Get mpc operation and perform the reduction. */
 			sctk_op_t *mpc_op = sctk_convert_to_mpc_op(op);
 			sctk_Op_f  func   = sctk_get_common_function(tmp_dt, mpc_op->op);
+
 			if (is_orig_dt_contiguous)
 			{
 				func((void *)origin_addr, tmp_result_addr, tmp_dt_count, tmp_dt);
@@ -955,6 +835,7 @@ int mpc_mpi_osc_get_accumulate(const void *origin_addr, const int origin_count, 
 				MPI_Aint *disps;
 				int       orig_blockidx = 0;
 
+				// NOTE: We want to retrieve the layout of the datatype
 				rc = __osc_create_dt_blocks(origin_addr, origin_count, origin_dt, &blocks, &disps, &intblockct);
 				if (rc != MPI_SUCCESS)
 				{
@@ -968,9 +849,7 @@ int mpc_mpi_osc_get_accumulate(const void *origin_addr, const int origin_count, 
 					char *curr_tmp_addr = tmp_result_addr;
 					while (orig_blockidx < intblockct)
 					{
-						func((void *)disps[orig_blockidx], curr_tmp_addr,
-							blocks[orig_blockidx] / tmp_dt_size,
-							tmp_dt);
+						func((void *)disps[orig_blockidx], curr_tmp_addr, blocks[orig_blockidx] / tmp_dt_size, tmp_dt);
 
 						curr_tmp_addr += blocks[orig_blockidx];
 						orig_blockidx++;
@@ -983,8 +862,7 @@ int mpc_mpi_osc_get_accumulate(const void *origin_addr, const int origin_count, 
 				}
 			}
 
-			rc = mpc_mpi_osc_put(tmp_result_addr, tmp_dt_count,
-				tmp_dt, target, target_disp,
+			rc = mpc_mpi_osc_put(tmp_result_addr, tmp_dt_count, tmp_dt, target, target_disp,
 				target_count, target_dt, win);
 			if (rc != MPC_LOWCOMM_SUCCESS)
 			{
@@ -992,7 +870,8 @@ int mpc_mpi_osc_get_accumulate(const void *origin_addr, const int origin_count, 
 			}
 		}
 
-		lowcomm_req = _mpc_cl_get_lowcomm_request(mpc_lowcomm_request_alloc());
+		mpc_lowcomm_request_t *lowcomm_req = _mpc_cl_get_lowcomm_request(mpc_lowcomm_request_alloc());
+		mpc_lowcomm_status_t   lowcomm_status;
 
 		rc = mpc_lowcomm_iflush(target, win->win_module, lowcomm_req);
 		if (rc != MPC_LOWCOMM_SUCCESS)
@@ -1007,22 +886,223 @@ int mpc_mpi_osc_get_accumulate(const void *origin_addr, const int origin_count, 
 		}
 		mpc_lowcomm_request_free(lowcomm_req);
 
+
 		rc = lowcomm_status.MPC_ERROR;
 		if (rc != MPC_LOWCOMM_SUCCESS)
 		{
 			goto unlock;
 		}
-	}
 
 unlock:
-	if (tmp_result_addr)
-	{
-		sctk_free(tmp_result_addr);
+		if (tmp_result_addr)
+		{
+			sctk_free(tmp_result_addr);
+		}
+		if ((need_to_unlock))
+		{
+			mpc_lowcomm_osc_unlock(target, win->win_module, true);
+		}
 	}
 
-	if ((need_to_unlock))
+	return rc;
+}
+
+int mpc_mpi_osc_get_accumulate(const void *origin_addr, const int origin_count, mpc_lowcomm_datatype_t origin_dt,
+                               void *result_addr, const int result_count, mpc_lowcomm_datatype_t result_dt,
+                               const int target, const ptrdiff_t target_disp,
+                               const int target_count, const mpc_lowcomm_datatype_t target_dt,
+                               MPI_Op op, mpc_mpi_win_t *win)
+{
+	int rc = MPI_SUCCESS;
+
+	mpc_lowcomm_accumulate_op_t lowcomm_op = __mpi_osc_convert_op(op);
+
+	if (lowcomm_op == LOWCOMM_ACCUMULATE_UNSUPPORTED)
 	{
-		mpc_lowcomm_osc_unlock(target, win->win_module, true);
+		return MPI_ERR_OP;
+	}
+
+	rc = mpc_lowcomm_iaccumulate(origin_addr, result_addr, origin_count, origin_dt, target, target_disp, lowcomm_op,
+		win->win_module, NULL);
+	if (rc == MPC_LOWCOMM_NOT_SUPPORTED)
+	{
+		void *tmp_result_addr = NULL;
+		bool  need_to_unlock  = false;
+
+		rc = mpc_lowcomm_osc_lock(MPC_LOWCOMM_WINDOW_LOCK_ATOMIC, target, win->win_module, false);
+		if (rc == MPC_LOWCOMM_SUCCESS)
+		{
+			need_to_unlock = true;
+		}
+
+		rc = mpc_mpi_osc_get(result_addr, result_count, result_dt, target, target_disp, target_count, target_dt, win);
+		if (rc != MPC_LOWCOMM_SUCCESS)
+		{
+			goto unlock;
+		}
+
+		/* Make sure the previous get operation is completed and data is arrived at destination. */
+
+		mpc_lowcomm_request_t *lowcomm_req = _mpc_cl_get_lowcomm_request(mpc_lowcomm_request_alloc());
+		mpc_lowcomm_status_t   lowcomm_status;
+
+		rc = mpc_lowcomm_iflush(target, win->win_module, lowcomm_req);
+
+		if (rc != MPC_LOWCOMM_SUCCESS)
+		{
+			goto unlock;
+		}
+
+		rc = mpc_lowcomm_wait(lowcomm_req, &lowcomm_status);
+
+		if (rc != MPC_LOWCOMM_SUCCESS)
+		{
+			goto unlock;
+		}
+
+		mpc_lowcomm_request_free(lowcomm_req);
+
+		rc = lowcomm_status.MPC_ERROR;
+
+		if (rc != MPC_LOWCOMM_SUCCESS)
+		{
+			goto unlock;
+		}
+
+		if (op != MPI_NO_OP)
+		{
+			if (op == MPI_REPLACE)
+			{
+				rc = mpc_mpi_osc_put(origin_addr, origin_count, origin_dt, target, target_disp, target_count, target_dt,
+					win);
+				if (rc != MPC_LOWCOMM_SUCCESS)
+				{
+					goto unlock;
+				}
+			}
+			else
+			{
+				mpc_lowcomm_datatype_t tmp_dt;
+				int    tmp_dt_count;
+				size_t tmp_len, tmp_dt_size;
+				long   tmp_lb, tmp_extent;
+				int    is_orig_dt_contiguous = mpc_lowcomm_datatype_is_common(origin_dt)
+				                               || mpc_mpi_cl_type_is_contiguous(origin_dt);
+
+				if (mpc_lowcomm_datatype_is_common_predefined(target_dt))
+				{
+					tmp_dt       = target_dt;
+					tmp_dt_count = target_count;
+				}
+				else
+				{
+					rc = _mpc_cl_type_get_primitive_type_info(target_dt, &tmp_dt, &tmp_dt_count);
+					if (rc != MPI_SUCCESS)
+					{
+						mpc_common_debug_error("MPI OSC: no single primitive type in acc");
+						goto unlock;
+					}
+					tmp_dt_count *= target_count;
+				}
+				rc = _mpc_cl_type_get_true_extent(tmp_dt, &tmp_lb, &tmp_extent);
+				if (rc != MPC_SUCCESS)
+				{
+					goto unlock;
+				}
+				tmp_len = tmp_dt_count * tmp_extent;
+
+				tmp_result_addr = sctk_malloc(tmp_len);
+				if (tmp_result_addr == NULL)
+				{
+					mpc_common_debug_error("MPI OSC: could not allocate accumulate temp buffer.");
+					goto unlock;
+				}
+
+				memcpy(tmp_result_addr, result_addr, tmp_len);
+
+				/* Get mpc operation and perform the reduction. */
+				sctk_op_t *mpc_op = sctk_convert_to_mpc_op(op);
+				sctk_Op_f  func   = sctk_get_common_function(tmp_dt, mpc_op->op);
+				if (is_orig_dt_contiguous)
+				{
+					func((void *)origin_addr, tmp_result_addr, tmp_dt_count, tmp_dt);
+				}
+				else
+				{
+					int *     blocks;
+					int       intblockct;
+					MPI_Aint *disps;
+					int       orig_blockidx = 0;
+
+					rc = __osc_create_dt_blocks(origin_addr, origin_count, origin_dt, &blocks, &disps, &intblockct);
+					if (rc != MPI_SUCCESS)
+					{
+						goto unlock;
+					}
+
+					if (mpc_mpi_cl_type_is_contiguous(tmp_dt))
+					{
+						_mpc_cl_type_size(tmp_dt, &tmp_dt_size);
+
+						char *curr_tmp_addr = tmp_result_addr;
+						while (orig_blockidx < intblockct)
+						{
+							func((void *)disps[orig_blockidx], curr_tmp_addr,
+								blocks[orig_blockidx] / tmp_dt_size,
+								tmp_dt);
+
+							curr_tmp_addr += blocks[orig_blockidx];
+							orig_blockidx++;
+						}
+					}
+					else
+					{
+						mpc_common_debug_error("MPI OSC: non contiguous predefined datatype not implemented.");
+						not_implemented();
+					}
+				}
+
+				rc = mpc_mpi_osc_put(tmp_result_addr, tmp_dt_count,
+					tmp_dt, target, target_disp,
+					target_count, target_dt, win);
+				if (rc != MPC_LOWCOMM_SUCCESS)
+				{
+					goto unlock;
+				}
+			}
+
+			lowcomm_req = _mpc_cl_get_lowcomm_request(mpc_lowcomm_request_alloc());
+
+			rc = mpc_lowcomm_iflush(target, win->win_module, lowcomm_req);
+			if (rc != MPC_LOWCOMM_SUCCESS)
+			{
+				goto unlock;
+			}
+
+			rc = mpc_lowcomm_wait(lowcomm_req, &lowcomm_status);
+			if (rc != MPC_LOWCOMM_SUCCESS)
+			{
+				goto unlock;
+			}
+			mpc_lowcomm_request_free(lowcomm_req);
+
+			rc = lowcomm_status.MPC_ERROR;
+			if (rc != MPC_LOWCOMM_SUCCESS)
+			{
+				goto unlock;
+			}
+		}
+
+unlock:
+		if (tmp_result_addr)
+		{
+			sctk_free(tmp_result_addr);
+		}
+
+		if ((need_to_unlock))
+		{
+			mpc_lowcomm_osc_unlock(target, win->win_module, true);
+		}
 	}
 
 	return rc;
@@ -1043,20 +1123,41 @@ int mpc_mpi_osc_raccumulate(const void *origin_addr, const int origin_count, mpc
 	lowcomm_request->request_type    = REQUEST_SEND;
 	lowcomm_request->completion_flag = MPC_LOWCOMM_MESSAGE_PENDING;
 
+	if (op == MPI_NO_OP || origin_addr == NULL || origin_count == 0 || target_count == 0)
+	{
+		mpc_lowcomm_osc_request_complete(rc, lowcomm_request, origin_count);
+		return rc;
+	}
 
 	// We do not need to do the comm if target == MPC_PROC_NULL but we still need to complete the request
 	if (target != MPC_PROC_NULL)
 	{
-		rc = mpc_mpi_osc_accumulate(origin_addr, origin_count, origin_dt, target,
-			target_disp, target_count, target_dt, op, win);
+		mpc_lowcomm_accumulate_op_t lowcomm_op = __mpi_osc_convert_op(op);
+
+		if (lowcomm_op == LOWCOMM_ACCUMULATE_UNSUPPORTED)
+		{
+			return MPI_ERR_OP;
+		}
+
+		rc = mpc_lowcomm_iaccumulate(origin_addr, NULL, origin_count, origin_dt, target, target_disp, lowcomm_op,
+			win->win_module, lowcomm_request);
+		if (rc == MPC_LOWCOMM_NOT_SUPPORTED)
+		{
+			rc = mpc_mpi_osc_accumulate(origin_addr, origin_count, origin_dt, target,
+				target_disp, target_count, target_dt, op, win);
+			mpc_lowcomm_osc_request_complete(rc, lowcomm_request, origin_count);
+		}
 	}
-	mpc_lowcomm_osc_request_complete(rc, lowcomm_request, origin_count);
+	else
+	{
+		mpc_lowcomm_osc_request_complete(rc, lowcomm_request, origin_count);
+	}
 
 	return rc;
 }
 
-int mpc_mpi_osc_rget_accumulate(const void *origin_addr, const int origin_count, mpc_lowcomm_datatype_t origin_datatype,
-                                void *result_addr, const int result_count, mpc_lowcomm_datatype_t result_datatype,
+int mpc_mpi_osc_rget_accumulate(const void *origin_addr, const int origin_count, mpc_lowcomm_datatype_t origin_dt,
+                                void *result_addr, const int result_count, mpc_lowcomm_datatype_t result_dt,
                                 const int target, const ptrdiff_t target_disp, const int target_count,
                                 mpc_lowcomm_datatype_t target_datatype, MPI_Op op,
                                 mpc_mpi_win_t *win, MPI_Request *request)
@@ -1066,16 +1167,37 @@ int mpc_mpi_osc_rget_accumulate(const void *origin_addr, const int origin_count,
 	MPI_internal_request_t *mpi_request     = *request = mpc_mpi_alloc_request();
 	mpc_lowcomm_request_t * lowcomm_request = _mpc_cl_get_lowcomm_request(mpi_request);
 
+
+
 	// We do not need to do the comm if target == MPC_PROC_NULL but we still need to complete the request
 	if (target != MPC_PROC_NULL)
 	{
-		rc = mpc_mpi_osc_get_accumulate(origin_addr, origin_count, origin_datatype,
-			result_addr, result_count, result_datatype,
-			target, target_disp, target_count,
-			target_datatype, op, win);
-	}
+		mpc_lowcomm_accumulate_op_t lowcomm_op = __mpi_osc_convert_op(op);
 
-	mpc_lowcomm_osc_request_complete(rc, lowcomm_request, origin_count);
+		if (lowcomm_op == LOWCOMM_ACCUMULATE_UNSUPPORTED)
+		{
+			return MPI_ERR_OP;
+		}
+
+		rc = mpc_lowcomm_iaccumulate(origin_addr, result_addr, origin_count, origin_dt, target, target_disp,
+			lowcomm_op, win->win_module, lowcomm_request);
+		if (rc == MPC_LOWCOMM_NOT_SUPPORTED)
+		{
+			rc = mpc_mpi_osc_get_accumulate(origin_addr, origin_count, origin_dt,
+				result_addr, result_count, result_dt,
+				target, target_disp, target_count,
+				target_datatype, op, win);
+			mpc_lowcomm_osc_request_complete(rc, lowcomm_request, origin_count);
+		}
+	}
+	else
+	{
+		mpc_lowcomm_request_init(lowcomm_request, 1, NULL, NULL, 0);
+		mpc_lowcomm_request_set_null(lowcomm_request, 0);
+		lowcomm_request->request_type    = REQUEST_SEND;
+		lowcomm_request->completion_flag = MPC_LOWCOMM_MESSAGE_PENDING;
+		mpc_lowcomm_osc_request_complete(rc, lowcomm_request, origin_count);
+	}
 
 	return rc;
 }
@@ -1156,7 +1278,6 @@ int mpc_mpi_osc_fetch_and_op(const void *origin_addr, void *result_addr, mpc_low
 			break;
 		}
 	}
-
 
 	if (op_code != -1)
 	{

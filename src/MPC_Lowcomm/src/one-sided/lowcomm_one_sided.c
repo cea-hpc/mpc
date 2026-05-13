@@ -26,7 +26,9 @@
  */
 
 #include "lowcomm_one_sided_internal.h"
+#include "mpc_keywords.h"
 #include "mpc_lowcomm_msg.h"     // For MPC_LOWCOMM_MESSAGE_DONE
+#include "mpc_lowcomm_types.h"
 #include "rma/lcp_rma.h"         // For atomic type and sizes
 
 #include <mpc_common_rank.h>     // For mpc_common_get_task_rank
@@ -344,4 +346,21 @@ int mpc_lowcomm_iatomic(const void *const origin_buffer, void *fetch_buffer, con
 
 err:
 	return rc;
+}
+
+int mpc_lowcomm_iaccumulate(const void *const origin_buffer, void *fetch_buffer, const size_t count,
+                            const mpc_lowcomm_datatype_t datatype, const int target, const intptr_t offset,
+                            const mpc_lowcomm_accumulate_op_t op, mpc_lowcomm_window_t *win,
+                            mpc_lowcomm_request_t *req)
+{
+	UNUSED(origin_buffer);
+	UNUSED(fetch_buffer);
+	UNUSED(count);
+	UNUSED(datatype);
+	UNUSED(target);
+	UNUSED(offset);
+	UNUSED(op);
+	UNUSED(win);
+	UNUSED(req);
+	return MPC_LOWCOMM_NOT_SUPPORTED;
 }

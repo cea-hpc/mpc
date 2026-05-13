@@ -204,12 +204,59 @@ bool mpc_lowcomm_atomic_dt_is_compatible(const mpc_lowcomm_datatype_t datatype);
  * @param[in]  op             Operation identifier (see @ref mpc_lowcomm_atomic_op_t)
  * @param[in]  window         Handle on the window to use
  * @param[out] req            Request tracking the completion of the operation
+ *
+ * @return                    Lowcomm errorcode
  */
 int mpc_lowcomm_iatomic(const void *const origin_buffer, void *fetch_buffer, const void *const compare_buffer,
                         const mpc_lowcomm_datatype_t datatype,
                         const int target, const intptr_t offset, const mpc_lowcomm_atomic_op_t op,
                         mpc_lowcomm_window_t *win, mpc_lowcomm_request_t *req);
 
+/**@ingroup LOWCOMM_ONE_SIDED
+ * LOWCOMM accumulate operation identifiers
+ */
+typedef enum mpc_lowcomm_accumulate_op_e
+{
+	LOWCOMM_ACCUMULATE_REPLACE,     /**< Replace the target buffer with the origin buffer */
+	LOWCOMM_ACCUMULATE_MAX,         /**< Element wise max operation */
+	LOWCOMM_ACCUMULATE_MIN,         /**< Element wise min operation */
+	LOWCOMM_ACCUMULATE_SUM,         /**< Element wise addition operation */
+	LOWCOMM_ACCUMULATE_PROD,        /**< Element wise product operation */
+	LOWCOMM_ACCUMULATE_LAND,        /**< Element wise logical AND operation */
+	LOWCOMM_ACCUMULATE_BAND,        /**< Element wise bitwise AND operation */
+	LOWCOMM_ACCUMULATE_LOR,         /**< Element wise logical OR operation */
+	LOWCOMM_ACCUMULATE_BOR,         /**< Element wise bitwise OR operation */
+	LOWCOMM_ACCUMULATE_LXOR,        /**< Element wise logical XOR operation */
+	LOWCOMM_ACCUMULATE_BXOR,        /**< Element wise bitwise XOR operation */
+	LOWCOMM_ACCUMULATE_UNSUPPORTED, /**< Unsupported operation (used for error handling) */
+} mpc_lowcomm_accumulate_op_t;
+
+/**@ingroup LOWCOMM_ONE_SIDED
+ * @brief Performs an distant accumulate operation
+ *
+ * The type of operation and the argument usage is decided by the op argument.
+ * For more information about the available operations see @ref mpc_lowcomm_accumulate_op_t.
+ *
+ * @note Completion is assessed either by a synchronization routine or by waiting the request
+ * @warning Depending on the backend this routine may be unsupported. In such cases, it will return
+ * MPC_LOWCOMM_NOT_SUPPORTED.
+ *
+ * @param[in]  origin_buffer Address of the buffer to read from
+ * @param[in]  fetch_buffer  Address of the buffer to write to (NULL for accumulate without get)
+ * @param[in]  count         Number of elements of type datatype
+ * @param[in]  datatype      Datatype of the element communicated
+ * @param[in]  target        Rank of the target task
+ * @param[in]  offset        Offset (in Bytes) in the target window to read from
+ * @param[in]  op            Operation identifier (see @ref mpc_lowcomm_accumulate_op_t)
+ * @param[in]  window        Handle on the window to use
+ * @param[out] req           Request tracking the completion of the operation
+ *
+ * @return                   Lowcomm errorcode
+ */
+int mpc_lowcomm_iaccumulate(const void *const origin_buffer, void *fetch_buffer, const size_t count,
+                            const mpc_lowcomm_datatype_t datatype, const int target, const intptr_t offset,
+                            const mpc_lowcomm_accumulate_op_t op, mpc_lowcomm_window_t *win,
+                            mpc_lowcomm_request_t *req);
 
 /********************
  * Synchronizations *
