@@ -3518,8 +3518,7 @@ AC_OUTPUT([Makefile
            pkgconfig/Makefile
            pkgconfig/libmpclowcomm.pc
            pkgconfig/libmpcthread.pc
-           pkgconfig/libmpcmpi.pc
-           cmake/Makefile])
+           pkgconfig/libmpcmpi.pc])
 
 
 printf "${ALL_LIBS_CONFIGURATION}\n\n"
