@@ -53,6 +53,7 @@ MPC_DMTCP_BUILD_PARAMETERS="--enable-pthread-mutex-wrappers"
 MPC_GDB_BUILD_PARAMETERS="--without-zlib --disable-werror"
 DEBUG="no"
 MPC_OPTIM_OPTION_SPECIFIED="no"
+USE_CMAKE="no"
 
 # Stop on error
 set -e
@@ -1223,6 +1224,7 @@ You may track issued commands using the "-v" flag.
   -jN                                     : Allow N jobs at once (parallel install)
   --enable-lsp                            : Use bear to generate a compile_commands.json file, used by Language Server Protocols
   --disable-lsp                           : Do not generate a compile_commands.json file (default)
+  --cmake                                 : Build MPC using CMake instead of autotools
 
 # Features
   --with-hydra                            : Build MPC with Hydra launcher support
@@ -1662,6 +1664,9 @@ do
 		--disable-lsp)
 			LSP="no"
 			;;
+		--cmake)
+			USE_CMAKE="yes"
+			;;
 		--spack|--enable-spack)
 			assert_cmd "spack"
 			SPACK_LOCATE_DEPENDENCY="yes"
@@ -1977,6 +1982,11 @@ if test -f "${BUILD_CONF_PATH}" ; then
 	ok
 fi
 
+if test "x${USE_CMAKE}" != "xyes"; then
+	#
+	# Autotools build
+	#
+
 # Enable native march to have the more release build by default
 if [ $MPC_OPTIM_OPTION_SPECIFIED == "no" ]; then
 	MPCFRAMEWORK_BUILD_PARAMETERS="$MPCFRAMEWORK_BUILD_PARAMETERS --enable-opt-native"
@@ -2044,5 +2054,38 @@ else
 
 	checking "Installing MPC"
 	wrap_output make install -j ${MAKE_J}
+	ok
+fi
+else
+	#
+	# CMake build
+	#
+
+	assert_cmd "cmake"
+
+	# Ensure PKG_CONFIG_PATH points to the prefix where dependencies were installed
+	test -d "${PREFIX}/lib/pkgconfig" && PKG_CONFIG_PATH=$(clean_env_path_var "${PREFIX}/lib/pkgconfig/:$PKG_CONFIG_PATH")
+	test -d "${PREFIX}/lib64/pkgconfig" && PKG_CONFIG_PATH=$(clean_env_path_var "${PREFIX}/lib64/pkgconfig/:$PKG_CONFIG_PATH")
+	export PKG_CONFIG_PATH
+
+	checking "Configuring MPC with CMake"
+
+	CMAKE_OPTS="-DCMAKE_INSTALL_PREFIX=${PREFIX}"
+
+	if test "${MPC_COMP_ADD_PREFIX}" != "disabled"; then
+		CMAKE_OPTS="$CMAKE_OPTS -DCMAKE_C_COMPILER=$(command -v apcc) -DCMAKE_CXX_COMPILER=$(command -v ap++)"
+	fi
+
+	# we want parameter expansion
+	# shellcheck disable=SC2086
+	wrap_output cmake -S "$SCRIPTPATH" -B "${PROJECT_BUILD_DIR}" $CMAKE_OPTS
+	ok
+
+	checking "Building MPC"
+	wrap_output cmake --build "${PROJECT_BUILD_DIR}" -- -j ${MAKE_J}
+	ok
+
+	checking "Installing MPC"
+	wrap_output cmake --install "${PROJECT_BUILD_DIR}"
 	ok
 fi
