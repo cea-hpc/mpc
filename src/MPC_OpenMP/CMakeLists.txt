@@ -101,9 +101,20 @@ install(TARGETS mpcomp
 )
 
 # Install public headers
-install(DIRECTORY include/
+install(FILES
+    include/omp_abi.h
+    include/mpc_omp_abi.h
+    include/mpc_omp_task_label.h
+    include/mpc_omp_interop_mpi.h
+    include/mpc_omp_interop_cuda.h
+    include/mpc_omp.h
+    include/mpc_omp_task_property.h
+    include/mpc_omp_task_trace.h
+    include/omp.h
+    include/ompt.h
+    include/omp-tools.h
+    include/omp_gomp_constants.h
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mpcframework
-    FILES_MATCHING PATTERN "*.h"
 )
 
 # Compatibility libraries (empty stubs that link to libmpcomp)

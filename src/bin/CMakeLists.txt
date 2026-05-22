@@ -8,7 +8,6 @@ set(MPC_BIN_SCRIPTS
     mpc_cflags
     mpc_ldflags
     mpc_status
-    mpcvars.sh
     mpcrun
     tmux_gdb
 )
@@ -63,6 +62,21 @@ endforeach()
 
 # Install scripts
 install(PROGRAMS ${INSTALL_SCRIPTS}
+    DESTINATION ${CMAKE_INSTALL_BINDIR}
+)
+
+# mpcvars.sh goes to install prefix root and bin/ (matches autotools)
+set(_MPCVARS_SRC "${CMAKE_CURRENT_SOURCE_DIR}/mpcvars.sh")
+set(_MPCVARS_DST "${CMAKE_CURRENT_BINARY_DIR}/mpcvars.sh")
+if(EXISTS "${_MPCVARS_SRC}.in")
+    configure_file("${_MPCVARS_SRC}.in" "${_MPCVARS_DST}" @ONLY)
+else()
+    configure_file("${_MPCVARS_SRC}" "${_MPCVARS_DST}" COPYONLY)
+endif()
+install(PROGRAMS "${_MPCVARS_DST}"
+    DESTINATION "."
+)
+install(PROGRAMS "${_MPCVARS_DST}"
     DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
 

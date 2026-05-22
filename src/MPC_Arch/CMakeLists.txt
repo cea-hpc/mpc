@@ -73,9 +73,4 @@ install(TARGETS mpcarch
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
 )
 
-# Install headers
-install(FILES
-    "${CMAKE_CURRENT_BINARY_DIR}/include/mpc_arch.h"
-    "${CMAKE_CURRENT_SOURCE_DIR}/include/mpc_arch_context.h"
-    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mpcframework
-)
+# Headers are noinst (internal only, not installed)

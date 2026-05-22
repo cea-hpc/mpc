@@ -97,3 +97,9 @@ set_target_properties(mpclaunch PROPERTIES
     OUTPUT_NAME mpclaunch
     POSITION_INDEPENDENT_CODE ON
 )
+
+# Install public headers
+install(FILES
+    include/mpc_launch_pmi.h
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mpcframework
+)

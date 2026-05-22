@@ -130,14 +130,10 @@ set_target_properties(mpccommon PROPERTIES
 # Install public headers
 install(FILES
     "${CMAKE_CURRENT_BINARY_DIR}/include/mpc_common_types.h"
-    "${CMAKE_CURRENT_BINARY_DIR}/include/mpc_common_spinlock.h"
-    "${CMAKE_CURRENT_BINARY_DIR}/include/mpc_keywords.h"
     include/mpc_common_debugger.h
     include/mpc_common_aio.h
     include/mpc_common_recycler.h
     include/mpc_common_bit.h
-    include/mpc_common_asm.h
-    include/mpc_common_debug.h
     include/uthash.h
     include/mpc_common_progress.h
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mpcframework

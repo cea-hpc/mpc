@@ -150,7 +150,9 @@ install(TARGETS mpcmpi
 )
 
 # Install public headers
-install(DIRECTORY include/
+install(FILES
+    include/mpc_mpi_comm_lib.h
+    include/mpc_mpi.h
+    include/mpc_mpi_fortran.h
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mpcframework
-    FILES_MATCHING PATTERN "*.h"
 )

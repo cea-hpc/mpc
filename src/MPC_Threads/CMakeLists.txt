@@ -111,7 +111,10 @@ install(TARGETS mpcthread
 )
 
 # Install public headers
-install(DIRECTORY include/
+install(FILES
+    include/mpc_thread.h
+    include/mpc_thread_engines.h
+    include/mpcposix/pthread.h
+    include/mpcposix/semaphore.h
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mpcframework
-    FILES_MATCHING PATTERN "*.h"
 )

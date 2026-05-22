@@ -57,10 +57,4 @@ set_target_properties(mpctopology PROPERTIES
     POSITION_INDEPENDENT_CODE ON
 )
 
-# Install public headers
-install(FILES
-    include/mpc_topology_device.h
-    include/mpc_topology.h
-    include/mpc_topology_render.h
-    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mpcframework
-)
+# Headers are noinst (internal only, not installed)
