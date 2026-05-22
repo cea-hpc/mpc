@@ -41,6 +41,7 @@
 #include <am/lcp_eager.h>
 #include <rndv/lcp_rndv.h>
 #include "mpc_common_debug.h"
+#include "sctk_alloc.h"
 
 #define MPC_MODULE "LCP/AM"
 

@@ -33,6 +33,7 @@
 #include "lcp.h"
 #include "mpc_common_debug.h"
 #include "mpc_common_flags.h"
+#include "sctk_alloc.h"
 
 #include "lcp_def.h"
 #include "lcp_manager.h"
