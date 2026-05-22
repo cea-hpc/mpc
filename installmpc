@@ -212,7 +212,7 @@ notapplicable()
 #
 
 LIST_OF_FOUND_CMD=""
-COMMON_CMD="bear cmake spack patch cut ls pwd grep rm rev basename dirname make bzip2 gcc g++ ldd pkg-config mktemp getconf nproc lscpu wget curl mpiexec.hydra srun"
+COMMON_CMD="bear cmake spack patch cut ls pwd grep rm basename dirname make bzip2 gcc g++ ldd pkg-config mktemp getconf nproc lscpu wget curl mpiexec.hydra srun"
 check_for_commands()
 {
 	# Check already done
@@ -737,7 +737,9 @@ package_download_address()
 #
 package_filename()
 {
-	package_download_address "$1" "$2" | rev | cut -d "/" -f 1 | rev
+	local url
+	url=$(package_download_address "$1" "$2")
+	echo "${url##*/}"
 }
 
 # Download a dependency
@@ -938,7 +940,6 @@ build_configure_based_package()
 	#
 
 	assert_cmd "cut"
-	assert_cmd "rev"
 	assert_cmd "grep"
 
 	# Check if another version of the dependency is not already installed
@@ -946,7 +947,7 @@ build_configure_based_package()
 
 	if test -n "$installed_vers"; then
 		# There is already a version
-		installed_version=$(echo "$installed_vers" | rev | cut -d "-" -f 1 | rev)
+		installed_version="${installed_vers##*-}"
 		if test "x${installed_version}" != "x${version}"; then
 			info "there is $package $installed_version in $PREFIX and MPC provides $version"
 			die "MPC does not support installing mismatching $package versions in the same prefix"
@@ -1896,7 +1897,7 @@ check_glibc_is_compatible()
        fi
 
        if test "x${HAVE_CMD}" = "xyes"; then
-               GLIBC=$(ldd --version | head -n 1 | rev | cut -d " " -f 1 | rev | sed "s/\.//g")
+               GLIBC=$(ldd --version | head -n 1 | awk '{print $NF}' | sed "s/\.//g")
                # Check for incompatibilities in versions >= 2.27
                if test $GLIBC -gt 227; then
 			   			if test "${WORKSHARE_ENABLED}" = "yes"; then
