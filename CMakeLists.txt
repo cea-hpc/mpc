@@ -26,6 +26,11 @@ project(MPC
     LANGUAGES C
 )
 
+# Enable ASM language for architecture-specific assembly sources
+enable_language(ASM)
+
+
+
 # ------------------------------------------------------------------
 # Default build type
 # ------------------------------------------------------------------
@@ -145,6 +150,11 @@ if(MPC_ENABLE_MPIIO AND NOT MPC_ENABLE_MPI)
     message(FATAL_ERROR "MPI-IO requires MPI (enable MPC_ENABLE_MPI)")
 endif()
 
+# Enable Fortran language after options are resolved
+if(MPC_ENABLE_FORTRAN)
+    enable_language(Fortran)
+endif()
+
 # ------------------------------------------------------------------
 # Find external dependencies
 # ------------------------------------------------------------------
@@ -227,6 +237,13 @@ if(PORTALS_FOUND)
     list(APPEND MPC_NETWORK_LIST "portals4" "portals4_am")
 endif()
 
+# ROMIO template variables (for mpcio.h.in)
+set(DEFINE_HAVE_MPI_GREQUEST "#define HAVE_MPI_GREQUEST")
+set(DEFINE_MPI_OFFSET "/* MPI OFFSET is in mpi.h */")
+set(NEEDS_MPI_FINT "")
+set(HAVE_MPI_INFO "#define HAVE_MPI_INFO")
+set(HAVE_MPI_DARRAY_SUBARRAY "#define HAVE_MPI_DARRAY_SUBARRAY")
+
 # libvmem (optional)
 pkg_check_modules(VMEM libvmem)
 if(VMEM_FOUND)
@@ -283,6 +300,61 @@ check_include_file(wchar.h HAVE_WCHAR_H)
 check_include_file(semaphore.h HAVE_SEMAPHORE_H)
 check_include_file(pthread.h HAVE_PTHREAD_H)
 check_include_file(sys/uio.h HAVE_UIO_H)
+check_include_file(string.h HAVE_STRING_H)
+check_include_file(fcntl.h HAVE_FCNTL_H)
+check_include_file(sys/types.h HAVE_SYS_TYPES_H)
+check_include_file(sys/vfs.h HAVE_SYS_VFS_H)
+check_include_file(sys/statvfs.h HAVE_SYS_STATVFS_H)
+check_include_file(sys/param.h HAVE_SYS_PARAM_H)
+check_include_file(sys/mount.h HAVE_SYS_MOUNT_H)
+check_function_exists(statfs HAVE_STATFS)
+
+# Check for struct statfs with f_type and f_fstypename (needed by ROMIO)
+set(_STATFS_INCLUDES "#include <sys/types.h>")
+if(HAVE_SYS_VFS_H)
+    set(_STATFS_INCLUDES "${_STATFS_INCLUDES}\n#include <sys/vfs.h>")
+endif()
+if(HAVE_SYS_STATVFS_H)
+    set(_STATFS_INCLUDES "${_STATFS_INCLUDES}\n#include <sys/statvfs.h>")
+endif()
+if(HAVE_SYS_PARAM_H)
+    set(_STATFS_INCLUDES "${_STATFS_INCLUDES}\n#include <sys/param.h>")
+endif()
+if(HAVE_SYS_MOUNT_H)
+    set(_STATFS_INCLUDES "${_STATFS_INCLUDES}\n#include <sys/mount.h>")
+endif()
+if(HAVE_STRING_H)
+    set(_STATFS_INCLUDES "${_STATFS_INCLUDES}\n#include <string.h>")
+endif()
+
+check_c_source_compiles("
+${_STATFS_INCLUDES}
+int main() {
+    struct statfs f;
+    memset(&f, 0, sizeof(f));
+    return 0;
+}
+" HAVE_STRUCT_STATFS)
+
+check_c_source_compiles("
+${_STATFS_INCLUDES}
+int main() {
+    struct statfs f;
+    memset(&f, 0, sizeof(f));
+    f.f_type = 0;
+    return 0;
+}
+" ROMIO_HAVE_STRUCT_STATFS_WITH_F_TYPE)
+
+check_c_source_compiles("
+${_STATFS_INCLUDES}
+int main() {
+    struct statfs f;
+    memset(&f, 0, sizeof(f));
+    strncmp(\"nfs\", f.f_fstypename, 3);
+    return 0;
+}
+" ROMIO_HAVE_STRUCT_STATFS_WITH_F_FSTYPENAME)
 
 check_function_exists(memcpy HAVE_MEMCPY)
 check_function_exists(memmove HAVE_MEMMOVE)
@@ -303,7 +375,7 @@ check_function_exists(mremap HAVE_MREMAP)
 check_function_exists(munmap HAVE_MUNMAP)
 check_function_exists(posix_memalign HAVE_POSIX_MEMALIGN)
 check_function_exists(memalign HAVE_MEMALIGN)
-check_function_exists(setenv HAVE_SETPENV)
+check_function_exists(setenv HAVE_SETENV)
 check_function_exists(getenv HAVE_GETENV)
 check_function_exists(uname HAVE_UNAME)
 check_function_exists(regcomp HAVE_REGCOMP)
@@ -312,6 +384,9 @@ check_function_exists(connect HAVE_CONNECT)
 check_function_exists(accept HAVE_ACCEPT)
 check_function_exists(dup2 HAVE_DUP2)
 check_function_exists(fdatasync HAVE_FDATASYNC)
+check_function_exists(fork HAVE_FORK)
+check_function_exists(malloc HAVE_MALLOC)
+check_function_exists(realloc HAVE_REALLOC)
 check_function_exists(makecontext HAVE_MAKECONTEXT)
 check_function_exists(setcontext HAVE_SETCONTEXT)
 check_function_exists(getcontext HAVE_GETCONTEXT)
@@ -383,6 +458,9 @@ if(NOT SIZEOF_CPU_SET_T)
 endif()
 if(NOT SIZEOF_SEM_T)
     set(SIZEOF_SEM_T 32 CACHE INTERNAL "Size of sem_t" FORCE)
+endif()
+if(NOT SIZEOF_PTHREAD_SPINLOCK_T)
+    set(SIZEOF_PTHREAD_SPINLOCK_T 4 CACHE INTERNAL "Size of pthread_spinlock_t" FORCE)
 endif()
 
 # ------------------------------------------------------------------
@@ -831,6 +909,46 @@ if(MPC_ENABLE_OPTIM)
     set(MPC_OPT_FLAGS "-O3")
 elseif(MPC_ENABLE_DEBUG)
     set(MPC_OPT_FLAGS "-g -Wall -Wextra")
+endif()
+
+# ------------------------------------------------------------------
+# Compiler flags (applied globally to all targets)
+# ------------------------------------------------------------------
+
+# Native architecture optimization
+if(MPC_ENABLE_OPT_NATIVE)
+    add_compile_options(-march=native)
+endif()
+
+# Debug warnings
+if(MPC_ENABLE_DEBUG)
+    add_compile_options(-Wall -Wextra)
+endif()
+
+# ASAN (Address Sanitizer)
+if(MPC_ENABLE_DEBUG_MEM)
+    add_compile_options(-fsanitize=address -fno-omit-frame-pointer)
+    add_link_options(-fsanitize=address)
+endif()
+
+# CMake variables for #cmakedefine in mpc_config.h.in
+if(MPC_ENABLE_THREADS)
+    set(MPC_THREAD_ENABLED 1)
+endif()
+if(MPC_ENABLE_FORTRAN)
+    set(MPC_FORTRAN_ENABLED 1)
+endif()
+if(MPC_ENABLE_MPIIO)
+    set(MPC_MPIIO_ENABLED 1)
+endif()
+if(MPC_ENABLE_OPENMP)
+    set(MPC_OPENMP_ENABLED 1)
+endif()
+if(MPC_ENABLE_LOWCOMM)
+    set(MPC_LOWCOMM_ENABLED 1)
+endif()
+if(MPC_ENABLE_MPI)
+    set(MPC_MPI_ENABLED 1)
 endif()
 
 # ------------------------------------------------------------------

@@ -120,14 +120,13 @@ install(FILES
 # Compatibility libraries (empty stubs that link to libmpcomp)
 # These allow linking with -liomp5, -lgomp, -lomp
 foreach(_COMPAT_LIB iomp5 gomp omp)
-    add_library(${_COMPAT_LIB} SHARED IMPORTED)
+    add_library(${_COMPAT_LIB} SHARED src/fakelib/fakelib.c)
     set_target_properties(${_COMPAT_LIB} PROPERTIES
-        IMPORTED_LOCATION "$<TARGET_FILE:mpcomp>"
+        VERSION ${MPC_VERSION}
+        SOVERSION ${MPC_VERSION_MAJOR}
+        POSITION_INDEPENDENT_CODE ON
     )
-    install(CODE "
-        execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
-            libmpcomp.so
-            \$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/lib${_COMPAT_LIB}.so
-        )
-    ")
+    install(TARGETS ${_COMPAT_LIB}
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    )
 endforeach()

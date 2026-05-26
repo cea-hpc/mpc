@@ -45,6 +45,7 @@ target_include_directories(mpcarch
         ${CMAKE_CURRENT_SOURCE_DIR}/include
         ${CMAKE_CURRENT_BINARY_DIR}/include
     PRIVATE
+        ${CMAKE_BINARY_DIR}
         ${OPA_INCLUDE_DIRS}
 )
 

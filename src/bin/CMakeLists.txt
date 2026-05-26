@@ -122,38 +122,72 @@ foreach(_PLUGIN IN LISTS MPCRUN_PLUGINS)
     )
 endforeach()
 
+# mpc_print_config binary
+add_executable(mpc_print_config ${CMAKE_SOURCE_DIR}/src/MPC_Config/src/print_config.c)
+target_compile_definitions(mpc_print_config PRIVATE ${MPC_COMPILE_DEFINITIONS})
+target_include_directories(mpc_print_config
+    PRIVATE
+        ${CMAKE_SOURCE_DIR}/src/MPC_Config/include
+        ${CMAKE_SOURCE_DIR}/src/MPC_Arch/include
+        ${CMAKE_BINARY_DIR}/src/MPC_Arch/include
+        ${CMAKE_SOURCE_DIR}/src/include
+        ${CMAKE_BINARY_DIR}/src/include
+        ${CMAKE_BINARY_DIR}
+)
+target_link_libraries(mpc_print_config PRIVATE
+    -Wl,--start-group
+    mpcconfig
+    mpcmpi
+    mpcomp
+    mpclowcomm
+    mpcthread
+    mpcarch
+    ${OPA_LIBRARIES}
+    ${OFI_LIBRARIES}
+    ${CMAKE_RT_LIBS}
+    Threads::Threads
+    -Wl,--end-group
+)
+if(MPCALLOC_FOUND)
+    target_include_directories(mpc_print_config PRIVATE ${MPCALLOC_INCLUDE_DIRS})
+    target_link_libraries(mpc_print_config PRIVATE ${MPCALLOC_LDFLAGS})
+endif()
+install(TARGETS mpc_print_config
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+)
+
 # mpc_sets binary (conditional)
-# Deferred: circular dependency between mpcthread and mpclowcomm
-# if(MPC_ENABLE_LOWCOMM)
-#     add_executable(mpc_sets mpc_sets.c)
-#
-#     target_include_directories(mpc_sets
-#         PRIVATE
-#             ${CMAKE_SOURCE_DIR}/src/MPC_Lowcomm/include
-#             ${CMAKE_SOURCE_DIR}/src/MPC_Common/include
-#             ${CMAKE_BINARY_DIR}/src/MPC_Common/include
-#             ${CMAKE_SOURCE_DIR}/src/include
-#             ${CMAKE_BINARY_DIR}/src/include
-#             ${CMAKE_SOURCE_DIR}/src/MPC_MPI/include
-#     )
-#
-#     set(ALL_MPC_LIBS mpcconfig)
-#     if(MPC_ENABLE_THREADS)
-#         list(APPEND ALL_MPC_LIBS mpcthread)
-#     endif()
-#     if(MPC_ENABLE_OPENMP)
-#         list(APPEND ALL_MPC_LIBS mpcomp)
-#     endif()
-#     if(MPC_ENABLE_LOWCOMM)
-#         list(APPEND ALL_MPC_LIBS mpclowcomm)
-#     endif()
-#     if(MPC_ENABLE_MPI)
-#         list(APPEND ALL_MPC_LIBS mpcmpi)
-#     endif()
-#
-#     target_link_libraries(mpc_sets PRIVATE ${ALL_MPC_LIBS})
-#
-#     install(TARGETS mpc_sets
-#         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-#     )
-# endif()
+if(MPC_ENABLE_LOWCOMM)
+    add_executable(mpc_sets mpc_sets.c)
+    target_compile_definitions(mpc_sets PRIVATE ${MPC_COMPILE_DEFINITIONS})
+
+    target_include_directories(mpc_sets
+        PRIVATE
+            ${CMAKE_BINARY_DIR}
+            ${CMAKE_SOURCE_DIR}/src/MPC_Lowcomm/include
+            ${CMAKE_SOURCE_DIR}/src/MPC_Common/include
+            ${CMAKE_BINARY_DIR}/src/MPC_Common/include
+            ${CMAKE_SOURCE_DIR}/src/include
+            ${CMAKE_BINARY_DIR}/src/include
+            ${CMAKE_SOURCE_DIR}/src/MPC_MPI/include
+    )
+
+    target_link_libraries(mpc_sets PRIVATE
+        -Wl,--start-group
+        mpcconfig
+        mpcmpi
+        mpcomp
+        mpclowcomm
+        mpcthread
+        mpcarch
+        ${OPA_LIBRARIES}
+        ${OFI_LIBRARIES}
+        ${CMAKE_RT_LIBS}
+        Threads::Threads
+        -Wl,--end-group
+    )
+
+    install(TARGETS mpc_sets
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    )
+endif()

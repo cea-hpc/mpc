@@ -42,7 +42,7 @@
 #cmakedefine01 HAVE_MUNMAP
 #cmakedefine01 HAVE_POSIX_MEMALIGN
 #cmakedefine01 HAVE_MEMALIGN
-#cmakedefine01 HAVE_SETPENV
+#cmakedefine01 HAVE_SETENV
 #cmakedefine01 HAVE_GETENV
 #cmakedefine01 HAVE_UNAME
 #cmakedefine01 HAVE_REGCOMP
@@ -80,6 +80,16 @@
 #cmakedefine01 HAVE_MALLOC
 #cmakedefine01 HAVE_REALLOC
 #cmakedefine01 HAVE_STATFS
+#cmakedefine HAVE_STRUCT_STATFS
+#cmakedefine ROMIO_HAVE_STRUCT_STATFS_WITH_F_TYPE
+#cmakedefine ROMIO_HAVE_STRUCT_STATFS_WITH_F_FSTYPENAME
+#cmakedefine01 HAVE_SYS_VFS_H
+#cmakedefine01 HAVE_SYS_STATVFS_H
+#cmakedefine01 HAVE_SYS_PARAM_H
+#cmakedefine01 HAVE_SYS_MOUNT_H
+#cmakedefine01 HAVE_FCNTL_H
+#cmakedefine01 HAVE_SYS_TYPES_H
+#cmakedefine01 HAVE_STRING_H
 
 /* Type sizes */
 #define SIZEOF_INT @SIZEOF_INT@
@@ -102,7 +112,7 @@
 #define SIZEOF_CPU_SET_T @SIZEOF_CPU_SET_T@
 #define SIZEOF_SEM_T @SIZEOF_SEM_T@
 #define SIZEOF_SIGSET_T @SIZEOF_SIGSET_T@
-#define SIZEOF_PTHREAD_SPINLOCK_T 0
+#define SIZEOF_PTHREAD_SPINLOCK_T @SIZEOF_PTHREAD_SPINLOCK_T@
 
 /* NSIG */
 #define MPC_CONFIG_NSIG @MPC_CONFIG_NSIG@
@@ -158,7 +168,7 @@
 #cmakedefine MPC_Lowcomm
 #cmakedefine MPC_MPI
 #cmakedefine MPC_FORTRAN
-#cmakedefine MPC_FORTRAN_ENABLED
+#cmakedefine01 MPC_FORTRAN_ENABLED
 #cmakedefine MPC_MPIIO
 #cmakedefine MPC_Profiler
 #cmakedefine MPC_USE_CUDA
@@ -168,7 +178,7 @@
 #cmakedefine MPC_HAVE_LIBUNWIND
 #cmakedefine MPC_USE_OFI
 #cmakedefine MPC_USE_PORTALS
-#cmakedefine MPC_ENABLE_SHELL_COLORS
+#cmakedefine01 MPC_ENABLE_SHELL_COLORS
 #cmakedefine MPC_USE_CMA
 #cmakedefine MPC_ENABLE_DEBUG_MESSAGES
 #cmakedefine MPC_ENABLE_WORKSHARE

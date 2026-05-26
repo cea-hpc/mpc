@@ -55,7 +55,7 @@ if(MPC_ENABLE_LOWCOMM)
             ${CMAKE_SOURCE_DIR}/src/MPC_Lowcomm/src
             ${CMAKE_SOURCE_DIR}/src/MPC_Lowcomm/include
     )
-    target_link_libraries(mpcthread PRIVATE mpclowcomm)
+    # Include dirs only; do NOT link mpclowcomm (circular dep resolved at runtime)
 endif()
 
 if(MPC_ENABLE_MPI)

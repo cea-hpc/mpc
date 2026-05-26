@@ -20,6 +20,14 @@ if(MPC_ENABLE_MPI)
     list(APPEND ALL_MPC_LIBS mpcmpi)
 endif()
 
+if(MPC_ENABLE_MPIIO)
+    list(APPEND ALL_MPC_LIBS mpcio)
+endif()
+
+if(MPC_ENABLE_FORTRAN)
+    list(APPEND ALL_MPC_LIBS mpcfortran)
+endif()
+
 # Create the umbrella shared library
 add_library(mpcframework SHARED IMPORTED)
 
