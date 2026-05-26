@@ -2066,14 +2066,214 @@ else
 	# Ensure PKG_CONFIG_PATH points to the prefix where dependencies were installed
 	test -d "${PREFIX}/lib/pkgconfig" && PKG_CONFIG_PATH=$(clean_env_path_var "${PREFIX}/lib/pkgconfig/:$PKG_CONFIG_PATH")
 	test -d "${PREFIX}/lib64/pkgconfig" && PKG_CONFIG_PATH=$(clean_env_path_var "${PREFIX}/lib64/pkgconfig/:$PKG_CONFIG_PATH")
+
+	# Add pkgconfig paths from all dependency prefixes
+	for _pc_prefix in "${MPC_HWLOC_PREFIX}" "${MPC_OPENPA_PREFIX}" "${MPC_PMIX_PREFIX}" "${MPC_PMI_PREFIX}" "${MPC_LIBFABRIC_PREFIX}" "${MPC_MPCALLOC_PREFIX}" "${MPC_DMTCP_PREFIX}"; do
+		test -n "$_pc_prefix" && test -d "${_pc_prefix}/lib/pkgconfig" && PKG_CONFIG_PATH=$(clean_env_path_var "${_pc_prefix}/lib/pkgconfig/:$PKG_CONFIG_PATH")
+		test -n "$_pc_prefix" && test -d "${_pc_prefix}/lib64/pkgconfig" && PKG_CONFIG_PATH=$(clean_env_path_var "${_pc_prefix}/lib64/pkgconfig/:$PKG_CONFIG_PATH")
+	done
 	export PKG_CONFIG_PATH
 
 	checking "Configuring MPC with CMake"
 
+	#
+	# Build CMake options from installmpc variables
+	#
 	CMAKE_OPTS="-DCMAKE_INSTALL_PREFIX=${PREFIX}"
 
+	# --- Build type / optimization ---
+	if test "${DEBUG}" = "yes"; then
+		CMAKE_OPTS="$CMAKE_OPTS -DCMAKE_BUILD_TYPE=Debug -DMPC_ENABLE_DEBUG=ON -DMPC_ENABLE_OPTIM=OFF"
+	elif echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -q -- '--enable-debug'; then
+		# --enable-debug or --relwithdebinfo (DEBUG not "yes" but --enable-debug in params)
+		if echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -q -- '--enable-debug-optim'; then
+			# --enable-debug path: --enable-debug-optim is present
+			CMAKE_OPTS="$CMAKE_OPTS -DCMAKE_BUILD_TYPE=Debug -DMPC_ENABLE_DEBUG=ON"
+		else
+			# --relwithdebinfo path: --enable-debug-optim is NOT present
+			CMAKE_OPTS="$CMAKE_OPTS -DCMAKE_BUILD_TYPE=RelWithDebInfo -DMPC_ENABLE_DEBUG=ON"
+		fi
+	elif test "${MPC_OPTIM_OPTION_SPECIFIED}" = "no"; then
+		CMAKE_OPTS="$CMAKE_OPTS -DCMAKE_BUILD_TYPE=Release -DMPC_ENABLE_OPT_NATIVE=ON"
+	else
+		CMAKE_OPTS="$CMAKE_OPTS -DCMAKE_BUILD_TYPE=Release"
+	fi
+
+	# --- Compiler (mpc-compiler-additions / autopriv) ---
 	if test "${MPC_COMP_ADD_PREFIX}" != "disabled"; then
 		CMAKE_OPTS="$CMAKE_OPTS -DCMAKE_C_COMPILER=$(command -v apcc) -DCMAKE_CXX_COMPILER=$(command -v ap++)"
+		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_PROCESS_MODE=OFF"
+	else
+		# No mpc-compiler-additions: let CMake try extls first, fall back to process mode (matches autotools)
+		# Don't override MPC_ENABLE_PROCESS_MODE — CMakeLists.txt default (OFF) + extls detection handles it
+		:
+	fi
+
+	# --- Launcher selection ---
+	# Determine launcher from MPCFRAMEWORK_BUILD_PARAMETERS (set by installmpc arg parsing)
+	# This matches autotools: --with-hydra => HYDRA, --with-pmi1 => PMI1, --with-pmix => PMIX, --with-slurm => auto-detect PMI1/PMIX
+	if echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -q -- '--with-pmix'; then
+		CMAKE_OPTS="$CMAKE_OPTS -DMPC_LAUNCHER=PMIX"
+	elif echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -q -- '--with-pmi1'; then
+		CMAKE_OPTS="$CMAKE_OPTS -DMPC_LAUNCHER=PMI1"
+	elif test "${HYDRA_PREFIX}" != "disabled"; then
+		# HYDRA_PREFIX is "enabled", "" (default), or explicitly set; only disabled means off
+		CMAKE_OPTS="$CMAKE_OPTS -DMPC_LAUNCHER=HYDRA"
+	else
+		# Hydra disabled and no PMI1/PMIX explicitly set — default to PMI1
+		CMAKE_OPTS="$CMAKE_OPTS -DMPC_LAUNCHER=PMI1"
+	fi
+
+	# --- SLURM ---
+	if test "${ENABLE_SLURM}" = "yes"; then
+		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_SLURM=ON"
+	fi
+
+	# --- CUDA ---
+	if test -n "${CUDA_PREFIX}" && test "${CUDA_PREFIX}" != "disabled"; then
+		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_CUDA=ON -DMPC_CUDA_PREFIX=${CUDA_PREFIX}"
+	else
+		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_CUDA=OFF"
+	fi
+
+	# --- ROCm ---
+	if test -n "${ROCM_PREFIX}" && test "${ROCM_PREFIX}" != "disabled"; then
+		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_ROCM=ON -DMPC_ROCM_PREFIX=${ROCM_PREFIX}"
+	else
+		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_ROCM=OFF"
+	fi
+
+	# --- OFI / libfabric ---
+	if test "${OFI_PREFIX}" = "disabled"; then
+		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_OFI=OFF"
+	elif test -n "${OFI_PREFIX}"; then
+		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_OFI=ON -DMPC_LIBFABRIC_PREFIX=${OFI_PREFIX}"
+	else
+		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_OFI=AUTO"
+	fi
+
+	# --- Fortran ---
+	if echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -q -- '--disable-fortran'; then
+		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_FORTRAN=OFF"
+	else
+		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_FORTRAN=ON"
+	fi
+
+	# --- MPI ---
+	if echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -q -- '--disable-mpi'; then
+		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_MPI=OFF"
+	else
+		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_MPI=ON"
+	fi
+
+	# --- ROMIO / MPI-IO ---
+	if echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -q -- '--disable-mpiio'; then
+		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_MPIIO=OFF"
+	else
+		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_MPIIO=ON"
+	fi
+
+	# --- Shell colors ---
+	if test "${USE_COLOR}" = "yes"; then
+		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_SHELL_COLORS=ON"
+	else
+		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_SHELL_COLORS=OFF"
+	fi
+
+	# --- Topology simulation ---
+	if echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -q -- '--enable-topology-simulation'; then
+		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_TOPOLOGY_SIMULATION=ON"
+	fi
+
+	# --- Workshare ---
+	if test "${WORKSHARE_ENABLED}" = "yes"; then
+		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_WORKSHARE=ON"
+	fi
+
+	# --- CK (Concurrency-Kit) ---
+	if test -n "${CK_PREFIX}" && test "${CK_PREFIX}" != "disabled"; then
+		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_CK=ON"
+	else
+		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_CK=OFF"
+	fi
+
+	# --- MPC Allocator ---
+	if test "${MPCALLOC_PREFIX}" = "disabled"; then
+		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_MPCALLOC=OFF"
+	elif test -n "${MPCALLOC_PREFIX}"; then
+		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_MPCALLOC=ON -DMPC_MPCALLOC_PREFIX=${MPCALLOC_PREFIX}"
+	else
+		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_MPCALLOC=ON"
+	fi
+
+	# --- DMTCP ---
+	if test -n "${MPC_DMTCP_PREFIX}" && test "${MPC_DMTCP_PREFIX}" != "disabled"; then
+		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_DMTCP=ON -DMPC_DMTCP_PREFIX=${MPC_DMTCP_PREFIX}"
+	else
+		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_DMTCP=OFF"
+	fi
+
+	# --- Active Messages (AM) ---
+	if echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -q -- '--enable-am'; then
+		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_AM=ON"
+	elif echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -q -- '--disable-am'; then
+		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_AM=OFF"
+	fi
+
+	# --- Profiler ---
+	if echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -q -- '--enable-profiler'; then
+		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_PROFILER=ON"
+	fi
+
+	# --- CMA ---
+	if echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -q -- '--disable-cma'; then
+		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_CMA=OFF"
+	else
+		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_CMA=ON"
+	fi
+
+	# --- Debug messages ---
+	if echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -q -- '--enable-debug-messages'; then
+		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_DEBUG_MESSAGES=ON"
+	fi
+
+	# --- Debug memory (ASAN) ---
+	if echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -q -- '--enable-debug-mem'; then
+		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_DEBUG_MEM=ON"
+	fi
+
+	# --- hwloc prefix ---
+	if test -n "${HWLOC_PREFIX}" && test "${HWLOC_PREFIX}" != "disabled"; then
+		CMAKE_OPTS="$CMAKE_OPTS -DMPC_HWLOC_PREFIX=${HWLOC_PREFIX}"
+	fi
+
+	# --- OpenPA prefix ---
+	if test -n "${OPENPA_PREFIX}" && test "${OPENPA_PREFIX}" != "disabled"; then
+		CMAKE_OPTS="$CMAKE_OPTS -DMPC_OPENPA_PREFIX=${OPENPA_PREFIX}"
+	fi
+
+	# --- PMIx prefix ---
+	if test -n "${PMIX_PREFIX}" && test "${PMIX_PREFIX}" != "disabled"; then
+		CMAKE_OPTS="$CMAKE_OPTS -DMPC_PMIX_PREFIX=${PMIX_PREFIX}"
+	fi
+
+	# --- PMI1 prefix ---
+	if echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -q -- '--with-pmi1'; then
+		# Extract PMI1 prefix if specified
+		local_pmi1_prefix=$(echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -o -- '--with-pmi1=[^ ]*' | cut -d= -f2)
+		if test -n "${local_pmi1_prefix}"; then
+			CMAKE_OPTS="$CMAKE_OPTS -DMPC_PMI_PREFIX=${local_pmi1_prefix}"
+		fi
+	fi
+
+	# --- MPCFRAMEWORK_BUILD_PARAMETERS passthrough ---
+	# Any remaining --mpcframework= or --mpc-option= entries are passed as-is
+	# These are already captured in MPCFRAMEWORK_BUILD_PARAMETERS but may contain
+	# additional flags not mapped above.
+
+	# --- CMAKE_PREFIX_PATH for dependency discovery ---
+	if test -n "${PREFIX}"; then
+		CMAKE_OPTS="$CMAKE_OPTS -DCMAKE_PREFIX_PATH=${PREFIX}"
 	fi
 
 	# we want parameter expansion

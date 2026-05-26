@@ -172,6 +172,11 @@
 #cmakedefine MPC_USE_CMA
 #cmakedefine MPC_ENABLE_DEBUG_MESSAGES
 #cmakedefine MPC_ENABLE_WORKSHARE
+#cmakedefine MPC_ENABLE_SLURM
+#cmakedefine MPC_ENABLE_TOPOLOGY_SIMULATION
+#cmakedefine MPC_HAVE_CK
+#cmakedefine MPC_HAVE_DMTCP
+#cmakedefine MPC_USE_EXTLS
 #cmakedefine MPC_USE_PMIX
 #cmakedefine MPC_USE_PMI1
 #cmakedefine MPC_USE_HYDRA
