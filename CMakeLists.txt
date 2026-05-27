@@ -14,16 +14,55 @@ foreach(_LINE IN LISTS _VERSION_LINES)
     endif()
 endforeach()
 set(_MPC_VERSION_TAINT "")
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/.git")
+    execute_process(
+        COMMAND git -C "${CMAKE_CURRENT_SOURCE_DIR}" rev-parse --short HEAD
+        OUTPUT_VARIABLE _MPC_GIT_HASH
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        ERROR_QUIET
+    )
+    if(_MPC_GIT_HASH)
+        set(_MPC_VERSION_TAINT "@${_MPC_GIT_HASH}")
+        execute_process(
+            COMMAND git -C "${CMAKE_CURRENT_SOURCE_DIR}" diff --quiet
+            RESULT_VARIABLE _MPC_GIT_DIRTY
+            ERROR_QUIET
+        )
+        if(NOT _MPC_GIT_DIRTY EQUAL 0)
+            set(_MPC_VERSION_TAINT "${_MPC_VERSION_TAINT}-dirty")
+        endif()
+    endif()
+endif()
 set(MPC_VERSION_PRE "${_MPC_VERSION_TAINT}")
 
 # ------------------------------------------------------------------
 # Project definition
 # ------------------------------------------------------------------
+# Set default compilers to match autotools (AC_PROG_CC/CXX/FC)
+if(NOT CMAKE_C_COMPILER)
+    find_program(DEFAULT_CC gcc)
+    if(DEFAULT_CC)
+        set(CMAKE_C_COMPILER "${DEFAULT_CC}" CACHE STRING "C compiler" FORCE)
+    endif()
+endif()
+if(NOT CMAKE_CXX_COMPILER)
+    find_program(DEFAULT_CXX g++)
+    if(DEFAULT_CXX)
+        set(CMAKE_CXX_COMPILER "${DEFAULT_CXX}" CACHE STRING "CXX compiler" FORCE)
+    endif()
+endif()
+if(NOT CMAKE_Fortran_COMPILER)
+    find_program(DEFAULT_FC gfortran)
+    if(DEFAULT_FC)
+        set(CMAKE_Fortran_COMPILER "${DEFAULT_FC}" CACHE STRING "Fortran compiler" FORCE)
+    endif()
+endif()
+
 project(MPC
     VERSION ${_MPC_VERSION_MAJOR}.${_MPC_VERSION_MINOR}.${_MPC_VERSION_PATCH}
     DESCRIPTION "Multi-Processor Computing Framework"
     HOMEPAGE_URL "https://mpc.hpcframework.com"
-    LANGUAGES C
+    LANGUAGES C CXX
 )
 
 # Enable ASM language for architecture-specific assembly sources
@@ -733,19 +772,35 @@ string(TIMESTAMP MPC_GENERATION_DATE "%s")
 
 # Package info
 set(PACKAGE_BUGREPORT "france@paratools.com")
-set(MPC_VERSION_STRING "${MPC_VERSION}")
+set(MPC_VERSION_STRING "${MPC_VERSION}${_MPC_VERSION_TAINT}")
 
 # Allocator (default: Standard)
 set(MPC_ALLOCATOR "Standard")
-set(MPC_ALLOCATOR_PRELOAD "libmpcalloc.so")
 set(ALLOC_CFLAGS "")
 set(ALLOC_LIBS "")
 if(MPC_ENABLE_MPCALLOC)
     pkg_check_modules(MPCALLOC mpcalloc)
     if(MPCALLOC_FOUND)
         set(MPC_ALLOCATOR "mpcalloc")
+        set(MPC_ALLOCATOR_PRELOAD "libmpcalloc.so")
+        find_program(ALLOC_PRELOAD_BIN mpcalloc_preload)
+        if(ALLOC_PRELOAD_BIN)
+            get_filename_component(ALLOC_BIN_DIR "${ALLOC_PRELOAD_BIN}" DIRECTORY)
+            get_filename_component(ALLOC_PREFIX "${ALLOC_BIN_DIR}" DIRECTORY)
+            set(CANDIDATE_ALLOC_LIB_PATH "${ALLOC_PREFIX}/lib/libmpcalloc.so")
+            if(EXISTS "${CANDIDATE_ALLOC_LIB_PATH}")
+                set(MPC_ALLOCATOR_PRELOAD "${CANDIDATE_ALLOC_LIB_PATH}")
+            endif()
+        endif()
         set(ALLOC_CFLAGS "${MPCALLOC_CFLAGS}")
-        set(ALLOC_LIBS "${MPCALLOC_LIBRARIES}")
+        set(ALLOC_LIBS_CMAKE "${MPCALLOC_LIBRARIES}")
+        set(ALLOC_LIBS "")
+        foreach(_alloc_dir ${MPCALLOC_LIBRARY_DIRS})
+            set(ALLOC_LIBS "${ALLOC_LIBS} -Wl,-rpath=${_alloc_dir} -L${_alloc_dir}")
+        endforeach()
+        foreach(_alloc_lib ${MPCALLOC_LIBRARIES})
+            set(ALLOC_LIBS "${ALLOC_LIBS} -l${_alloc_lib}")
+        endforeach()
     else()
         message(WARNING "MPC allocator requested but not found, using Standard")
     endif()
@@ -757,11 +812,25 @@ set(EXTLS_LIBS "")
 
 # HWLOC flags from pkg-config
 set(HWLOC_CFLAGS "${HWLOC_CFLAGS}")
-set(HWLOC_LIBS "${HWLOC_LIBRARIES}")
+set(HWLOC_LIBS_CMAKE "${HWLOC_LIBRARIES}")
+set(HWLOC_LIBS "")
+foreach(_hwloc_dir ${HWLOC_LIBRARY_DIRS})
+    set(HWLOC_LIBS "${HWLOC_LIBS} -Wl,-rpath=${_hwloc_dir} -L${_hwloc_dir}")
+endforeach()
+foreach(_hwloc_lib ${HWLOC_LIBRARIES})
+    set(HWLOC_LIBS "${HWLOC_LIBS} -l${_hwloc_lib}")
+endforeach()
 
 # OPA flags from pkg-config
 set(OPA_CFLAGS "${OPA_CFLAGS}")
-set(OPA_LIBS "${OPA_LIBRARIES}")
+set(OPA_LIBS_CMAKE "${OPA_LIBRARIES}")
+set(OPA_LIBS "")
+foreach(_opa_dir ${OPA_LIBRARY_DIRS})
+    set(OPA_LIBS "${OPA_LIBS} -Wl,-rpath=${_opa_dir} -L${_opa_dir}")
+endforeach()
+foreach(_opa_lib ${OPA_LIBRARIES})
+    set(OPA_LIBS "${OPA_LIBS} -l${_opa_lib}")
+endforeach()
 
 # Compiler paths (from CMake)
 # CC, CXX, FC are set by CMake automatically
@@ -835,7 +904,7 @@ set(MPC_COMPILE_DEFINITIONS
     MPC_VERSION_MAJOR=${MPC_VERSION_MAJOR}
     MPC_VERSION_MINOR=${MPC_VERSION_MINOR}
     MPC_VERSION_PATCH=${MPC_VERSION_PATCH}
-    MPC_VERSION_STRING="${MPC_VERSION}"
+    MPC_VERSION_STRING="${MPC_VERSION}${_MPC_VERSION_TAINT}"
     MPC_PREFIX_PATH="${CMAKE_INSTALL_PREFIX}"
     MPC_CONFIG_NSIG=${MPC_CONFIG_NSIG}
     TLS_SUPPORT=${TLS_SUPPORT}

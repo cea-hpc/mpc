@@ -31,7 +31,7 @@ target_include_directories(mpcio PRIVATE
     ${CMAKE_CURRENT_BINARY_DIR}/romio/include
 )
 
-target_link_libraries(mpcio PRIVATE mpcmpi romio promio ${OPA_LIBS} Threads::Threads)
+target_link_libraries(mpcio PRIVATE mpcmpi romio promio ${OPA_LIBS_CMAKE} Threads::Threads)
 
 set_target_properties(mpcio PROPERTIES
     VERSION ${MPC_VERSION}

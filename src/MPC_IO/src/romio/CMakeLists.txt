@@ -292,7 +292,7 @@ target_include_directories(romio PRIVATE
     ${CMAKE_BINARY_DIR}
 )
 
-target_link_libraries(romio PRIVATE mpcmpi mpcarch ${OPA_LIBS} Threads::Threads)
+target_link_libraries(romio PRIVATE mpcmpi mpcarch ${OPA_LIBS_CMAKE} Threads::Threads)
 
 # ------------------------------------------------------------------
 # libpromio (static, noinst, profiling variant)
@@ -329,4 +329,4 @@ target_include_directories(promio PRIVATE
     ${CMAKE_BINARY_DIR}
 )
 
-target_link_libraries(promio PRIVATE mpcmpi mpcarch ${OPA_LIBS} Threads::Threads)
+target_link_libraries(promio PRIVATE mpcmpi mpcarch ${OPA_LIBS_CMAKE} Threads::Threads)
