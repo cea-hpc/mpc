@@ -264,7 +264,8 @@ if(MPC_ENABLE_FORTRAN)
     list(APPEND ROMIO_ALL_SOURCES ${ROMIO_FORTRAN_SOURCES})
 endif()
 
-add_library(romio STATIC ${ROMIO_ALL_SOURCES})
+add_library(romio OBJECT ${ROMIO_ALL_SOURCES})
+set_target_properties(romio PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 target_compile_definitions(romio PRIVATE ${MPC_COMPILE_DEFINITIONS})
 
@@ -293,6 +294,7 @@ target_include_directories(romio PRIVATE
 )
 
 target_link_libraries(romio PRIVATE mpcmpi mpcarch ${OPA_LIBS_CMAKE} Threads::Threads)
+target_link_options(romio PRIVATE ${OPA_LDFLAGS})
 
 # ------------------------------------------------------------------
 # libpromio (static, noinst, profiling variant)
@@ -302,7 +304,8 @@ set(PROMIO_ALL_SOURCES
     ${ROMIO_MPI_SOURCES}
 )
 
-add_library(promio STATIC ${PROMIO_ALL_SOURCES})
+add_library(promio OBJECT ${PROMIO_ALL_SOURCES})
+set_target_properties(promio PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 target_compile_definitions(promio PRIVATE MPIO_BUILD_PROFILING ${MPC_COMPILE_DEFINITIONS})
 target_compile_options(promio PRIVATE -include limits.h)
@@ -330,3 +333,4 @@ target_include_directories(promio PRIVATE
 )
 
 target_link_libraries(promio PRIVATE mpcmpi mpcarch ${OPA_LIBS_CMAKE} Threads::Threads)
+target_link_options(promio PRIVATE ${OPA_LDFLAGS})

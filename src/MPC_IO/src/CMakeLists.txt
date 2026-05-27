@@ -31,7 +31,13 @@ target_include_directories(mpcio PRIVATE
     ${CMAKE_CURRENT_BINARY_DIR}/romio/include
 )
 
-target_link_libraries(mpcio PRIVATE mpcmpi romio promio ${OPA_LIBS_CMAKE} Threads::Threads)
+target_link_libraries(mpcio PRIVATE mpcmpi ${OPA_LIBS_CMAKE} Threads::Threads)
+target_link_options(mpcio PRIVATE ${OPA_LDFLAGS})
+# Embed ALL romio/promio objects (matches autotools noinst_LTLIBRARIES behavior)
+target_sources(mpcio PRIVATE
+    $<TARGET_OBJECTS:romio>
+    $<TARGET_OBJECTS:promio>
+)
 
 set_target_properties(mpcio PROPERTIES
     VERSION ${MPC_VERSION}
