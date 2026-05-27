@@ -706,6 +706,9 @@ if(MPC_LAUNCHER STREQUAL "PMIX")
     endif()
 endif()
 
+# Prefix for configure_file() @prefix@ substitution (matches autoconf)
+set(prefix "${CMAKE_INSTALL_PREFIX}")
+
 # PKG paths for pkg-config
 set(PKG_DATADIR "${CMAKE_INSTALL_PREFIX}/share/mpcframework/")
 set(PKG_INCDIR "${CMAKE_INSTALL_PREFIX}/include/mpcframework/")
@@ -787,8 +790,33 @@ find_program(MPIEXEC_HYDRA mpiexec.hydra)
 # MPC_LINK_ARGS (empty for now, was computed by autotools)
 set(MPC_LINK_ARGS "")
 
-# Fortran args
-set(FORTRAN_ARG_MISMATCH_ARG "")
+# Compiler variables for configure_file() @CC@, @CXX@, @FC@ substitution
+set(CC "${CMAKE_C_COMPILER}")
+set(CXX "${CMAKE_CXX_COMPILER}")
+if(MPC_ENABLE_FORTRAN)
+    set(FC "${CMAKE_Fortran_COMPILER}")
+else()
+    set(FC "")
+endif()
+
+# Fortran -fallow-argument-mismatch check (matches autotools)
+if(MPC_ENABLE_FORTRAN)
+    file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/fortran_test_check.f90" "PROGRAM foo\nEND PROGRAM\n")
+    try_compile(FORTRAN_ARG_MISMATCH_SUPPORTED
+        "${CMAKE_CURRENT_BINARY_DIR}/fortran_test_compile"
+        "${CMAKE_CURRENT_BINARY_DIR}/fortran_test_check.f90"
+        CMAKE_FLAGS "CMAKE_TRY_COMPILE_TARGET_TYPE:STATIC_LIBRARY"
+        COMPILE_DEFINITIONS "-fallow-argument-mismatch"
+    )
+    if(FORTRAN_ARG_MISMATCH_SUPPORTED)
+        set(FORTRAN_ARG_MISMATCH_ARG "-fallow-argument-mismatch")
+    else()
+        set(FORTRAN_ARG_MISMATCH_ARG "")
+    endif()
+    file(REMOVE "${CMAKE_CURRENT_BINARY_DIR}/fortran_test_check.f90")
+else()
+    set(FORTRAN_ARG_MISMATCH_ARG "")
+endif()
 
 # ------------------------------------------------------------------
 # Global compile definitions
@@ -870,7 +898,7 @@ if(MPC_ENABLE_CK)
     list(APPEND MPC_COMPILE_DEFINITIONS MPC_HAVE_CK=1)
 endif()
 if(MPC_HAVE_DMTCP)
-    list(APPEND MPC_COMPILE_DEFINITIONS MPC_HAVE_DMTCP=1)
+    list(APPEND MPC_COMPILE_DEFINITIONS MPC_USE_DMTCP=1)
 endif()
 if(HAVE_EXTLS)
     list(APPEND MPC_COMPILE_DEFINITIONS MPC_USE_EXTLS=1)
@@ -989,6 +1017,9 @@ if(MPC_ENABLE_LOWCOMM)
 endif()
 if(MPC_ENABLE_MPI)
     set(MPC_MODULE_LIST "${MPC_MODULE_LIST} MPC_MPI_ENABLED")
+endif()
+if(MPC_ENABLE_MPIIO)
+    set(MPC_MODULE_LIST "${MPC_MODULE_LIST} MPC_MPIIO_ENABLED")
 endif()
 if(MPC_ENABLE_FORTRAN)
     set(MPC_MODULE_LIST "${MPC_MODULE_LIST} MPC_FORTRAN_ENABLED")
