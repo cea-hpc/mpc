@@ -79,13 +79,36 @@ if(MPC_ENABLE_OPENMP)
 endif()
 
 # Link dependencies
+# Link OBJECT targets for include dirs/compile defs, embed OBJECTS for actual code
 target_link_libraries(mpcthread
-    PUBLIC
-        mpclaunch
     PRIVATE
-        Threads::Threads
+        mpclaunch
+        mpctopology
+        mpccommon
+        mpcconfig
+        ${CMAKE_DL_LIBS}
+        ${CMAKE_RT_LIBS}
         ${OPA_LIBRARIES}
+        ${HWLOC_LIBS_CMAKE}
+        Threads::Threads
 )
+target_sources(mpcthread PRIVATE
+    $<TARGET_OBJECTS:mpclaunch>
+    $<TARGET_OBJECTS:mpctopology>
+    $<TARGET_OBJECTS:mpccommon>
+)
+target_link_options(mpcthread PRIVATE ${OPA_LDFLAGS} ${HWLOC_LDFLAGS})
+if(ALLOC_LIBS)
+    string(STRIP "${ALLOC_LIBS}" _ALLOC_LIBS_CLEAN)
+    separate_arguments(_ALLOC_LIBS_LIST NATIVE_COMMAND "${_ALLOC_LIBS_CLEAN}")
+    target_link_libraries(mpcthread PRIVATE ${_ALLOC_LIBS_LIST})
+endif()
+
+if(MPC_LAUNCHER STREQUAL "PMIX")
+    target_link_libraries(mpcthread PRIVATE ${PMIX_LIBRARIES})
+elseif(MPC_LAUNCHER STREQUAL "PMI1")
+    target_link_libraries(mpcthread PRIVATE ${PMI_LIBRARIES})
+endif()
 
 if(MPC_CUDA_ENABLED)
     target_link_libraries(mpcthread PRIVATE CUDA::cuda_driver)

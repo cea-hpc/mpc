@@ -7,10 +7,11 @@ set(MPC_TOPOLOGY_SOURCES
     src/topology_render.c
 )
 
-# Create the library
-add_library(mpctopology SHARED ${MPC_TOPOLOGY_SOURCES})
+# Create the library (OBJECT — matches autotools noinst_LTLIBRARIES)
+add_library(mpctopology OBJECT ${MPC_TOPOLOGY_SOURCES})
+set_target_properties(mpctopology PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
-# Include directories
+# Include directories (PUBLIC for propagation to consumers)
 target_include_directories(mpctopology
     PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -36,11 +37,12 @@ if(MPC_ENABLE_THREADS)
     )
 endif()
 
-# Link dependencies
+# Link dependencies (PUBLIC for include propagation)
 target_link_libraries(mpctopology
     PUBLIC
         mpccommon
         mpcconfig
+    PRIVATE
         ${HWLOC_LDFLAGS}
         ${OPA_LDFLAGS}
 )
@@ -49,12 +51,6 @@ target_link_libraries(mpctopology
 target_compile_definitions(mpctopology
     PRIVATE
         ${MPC_COMPILE_DEFINITIONS}
-)
-
-# Set output name
-set_target_properties(mpctopology PROPERTIES
-    OUTPUT_NAME mpctopology
-    POSITION_INDEPENDENT_CODE ON
 )
 
 # Headers are noinst (internal only, not installed)

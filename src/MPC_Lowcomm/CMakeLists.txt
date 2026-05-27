@@ -182,15 +182,37 @@ if(FFI_FOUND)
 endif()
 
 # Link dependencies
+# Link OBJECT targets for include dirs/compile defs, embed OBJECTS for actual code
 target_link_libraries(mpclowcomm
-    PUBLIC
-        mpclaunch
     PRIVATE
+        mpclaunch
+        mpctopology
+        mpccommon
+        mpcconfig
         m
+        ${CMAKE_DL_LIBS}
         ${CMAKE_RT_LIBS}
         ${OPA_LIBRARIES}
+        ${HWLOC_LIBS_CMAKE}
         Threads::Threads
 )
+target_sources(mpclowcomm PRIVATE
+    $<TARGET_OBJECTS:mpclaunch>
+    $<TARGET_OBJECTS:mpctopology>
+    $<TARGET_OBJECTS:mpccommon>
+)
+target_link_options(mpclowcomm PRIVATE ${OPA_LDFLAGS} ${HWLOC_LDFLAGS})
+if(ALLOC_LIBS)
+    string(STRIP "${ALLOC_LIBS}" _ALLOC_LIBS_CLEAN)
+    separate_arguments(_ALLOC_LIBS_LIST NATIVE_COMMAND "${_ALLOC_LIBS_CLEAN}")
+    target_link_libraries(mpclowcomm PRIVATE ${_ALLOC_LIBS_LIST})
+endif()
+
+if(MPC_LAUNCHER STREQUAL "PMIX")
+    target_link_libraries(mpclowcomm PRIVATE ${PMIX_LIBRARIES})
+elseif(MPC_LAUNCHER STREQUAL "PMI1")
+    target_link_libraries(mpclowcomm PRIVATE ${PMI_LIBRARIES})
+endif()
 
 if(FFI_FOUND AND MPC_HAVE_AM)
     target_link_libraries(mpclowcomm PRIVATE ${FFI_LIBRARIES})

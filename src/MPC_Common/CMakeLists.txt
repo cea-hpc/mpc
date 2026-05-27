@@ -66,10 +66,11 @@ add_custom_command(
 )
 list(APPEND MPC_COMMON_SOURCES "${CMAKE_CURRENT_BINARY_DIR}/src/elf_64.c")
 
-# Create the library (OBJECT library so it links into other libraries)
-add_library(mpccommon SHARED ${MPC_COMMON_SOURCES})
+# Create the library (OBJECT — matches autotools noinst_LTLIBRARIES)
+add_library(mpccommon OBJECT ${MPC_COMMON_SOURCES})
+set_target_properties(mpccommon PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
-# Include directories
+# Include directories (PUBLIC for propagation to consumers)
 target_include_directories(mpccommon
     PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -84,6 +85,9 @@ target_include_directories(mpccommon
         ${CMAKE_BINARY_DIR}/src/include
         ${CMAKE_BINARY_DIR}
 )
+if(MPCALLOC_FOUND)
+    target_include_directories(mpccommon PUBLIC ${MPCALLOC_INCLUDE_DIRS})
+endif()
 
 if(MPC_ENABLE_PROFILER)
     target_include_directories(mpccommon
@@ -101,7 +105,7 @@ if(MPC_ENABLE_THREADS)
     )
 endif()
 
-# Link dependencies
+# Link dependencies (PUBLIC for include propagation, PRIVATE for compile-time only)
 target_link_libraries(mpccommon
     PUBLIC
         mpcarch
@@ -121,11 +125,7 @@ target_compile_definitions(mpccommon
         HAVE_BUILTIN_EXPECT=1
 )
 
-# Set output name
-set_target_properties(mpccommon PROPERTIES
-    OUTPUT_NAME mpccommon
-    POSITION_INDEPENDENT_CODE ON
-)
+
 
 # Install public headers
 install(FILES

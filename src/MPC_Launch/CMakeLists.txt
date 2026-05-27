@@ -26,10 +26,11 @@ if(MPC_LAUNCHER STREQUAL "HYDRA")
     )
 endif()
 
-# Create the library
-add_library(mpclaunch SHARED ${MPC_LAUNCH_SOURCES})
+# Create the library (OBJECT — matches autotools noinst_LTLIBRARIES)
+add_library(mpclaunch OBJECT ${MPC_LAUNCH_SOURCES})
+set_target_properties(mpclaunch PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
-# Include directories
+# Include directories (PUBLIC for propagation to consumers)
 target_include_directories(mpclaunch
     PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -63,7 +64,7 @@ if(MPC_ENABLE_THREADS)
     )
 endif()
 
-# Link dependencies
+# Link dependencies (PUBLIC for include propagation)
 target_link_libraries(mpclaunch
     PUBLIC
         mpctopology
@@ -91,12 +92,6 @@ target_compile_definitions(mpclaunch
 if(MPC_LAUNCHER STREQUAL "HYDRA")
     target_compile_definitions(mpclaunch PRIVATE HYDRA_LAUNCHER_ENABLED=1)
 endif()
-
-# Set output name
-set_target_properties(mpclaunch PROPERTIES
-    OUTPUT_NAME mpclaunch
-    POSITION_INDEPENDENT_CODE ON
-)
 
 # Install public headers
 install(FILES
