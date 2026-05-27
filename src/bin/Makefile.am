@@ -8,6 +8,10 @@ if MPC_MPI_ENABLED
   bin_SCRIPTS += mpicc mpicxx mpic++
 endif
 
+if MPC_OPENSHMEM_ENABLED
+  bin_SCRIPTS += oshcc oshc++ oshcxx oshrun
+endif
+
 if MPC_FORTRAN_ENABLED
   bin_SCRIPTS += mpc_f77
 

@@ -3512,6 +3512,7 @@ AC_OUTPUT([Makefile
            src/bin/mpc_ldflags
            src/bin/mpcrun
            src/bin/mpirun
+           src/bin/oshrun
            src/bin/mpcvars.sh
            src/bin/mpc_status
            pkgconfig/Makefile
