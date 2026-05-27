@@ -971,23 +971,42 @@ endif()
 
 # CMake variables for #cmakedefine in mpc_config.h.in
 if(MPC_ENABLE_THREADS)
-    set(MPC_THREAD_ENABLED 1)
+    set(MPC_THREAD_ENABLED yes)
+else()
+    set(MPC_THREAD_ENABLED no)
 endif()
-if(MPC_ENABLE_FORTRAN)
-    set(MPC_FORTRAN_ENABLED 1)
-endif()
-if(MPC_ENABLE_MPIIO)
-    set(MPC_MPIIO_ENABLED 1)
-endif()
-if(MPC_ENABLE_OPENMP)
-    set(MPC_OPENMP_ENABLED 1)
-endif()
+
 if(MPC_ENABLE_LOWCOMM)
-    set(MPC_LOWCOMM_ENABLED 1)
+    set(MPC_LOWCOMM_ENABLED yes)
+else()
+    set(MPC_LOWCOMM_ENABLED no)
 endif()
+
 if(MPC_ENABLE_MPI)
-    set(MPC_MPI_ENABLED 1)
+    set(MPC_MPI_ENABLED yes)
+else()
+    set(MPC_MPI_ENABLED no)
 endif()
+
+
+if(MPC_ENABLE_FORTRAN)
+    set(MPC_FORTRAN_ENABLED yes)
+else()
+    set(MPC_FORTRAN_ENABLED no)
+endif()
+
+if(MPC_ENABLE_OPENMP)
+    set(MPC_OPENMP_ENABLED yes)
+else()
+    set(MPC_OPENMP_ENABLED no)
+endif()
+
+if(MPC_ENABLE_MPIIO)
+    set(MPC_MPIIO_ENABLED yes)
+else()
+    set(MPC_MPIIO_ENABLED no)
+endif()
+
 
 # ------------------------------------------------------------------
 # Generate config headers
