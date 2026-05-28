@@ -13,9 +13,6 @@
 
 #define MPL_UNREFERENCED_ARG(arg) (void)(arg)
 
-#define MPIO_Request_c2f MPI_Request_c2f
-#define MPIO_Request_f2c MPI_Request_f2c
-
 #define MPL_malloc(a, b)     malloc(a)
 #define MPL_calloc(a, b, c)  calloc(a, b)
 #define MPL_realloc(a, b, c) realloc(a, b)
