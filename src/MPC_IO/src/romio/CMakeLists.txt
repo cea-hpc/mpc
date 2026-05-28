@@ -1,10 +1,10 @@
 # MPC_IO/src/romio/CMakeLists.txt
 # Builds libromio.a and libpromio.a (static, noinst)
 
-# Generate internal ROMIO mpio.h
+# Generate internal ROMIO mpio.h (use same template as autotools)
 configure_file(
-    "${CMAKE_CURRENT_SOURCE_DIR}/include/mpio.h.in"
-    "${CMAKE_CURRENT_BINARY_DIR}/include/mpio.h"
+    "${CMAKE_SOURCE_DIR}/src/MPC_IO/include/mpio.h.in"
+    "${CMAKE_BINARY_DIR}/src/MPC_IO/include/mpio.h"
     @ONLY
 )
 
@@ -90,6 +90,8 @@ set(ROMIO_OTHER_SOURCES
     mpi-io/mpir_cst_filesys.c
     mpi-io/get_errh.c
     mpi-io/set_errh.c
+    mpi-io/ioreq_c2f.c
+    mpi-io/ioreq_f2c.c
 )
 
 # ADIO common sources (always)
@@ -275,7 +277,7 @@ target_include_directories(romio PRIVATE
     ${CMAKE_SOURCE_DIR}/src/MPC_IO/include
     ${CMAKE_SOURCE_DIR}/src/MPC_IO/src
     ${CMAKE_CURRENT_SOURCE_DIR}/adio/include
-    ${CMAKE_CURRENT_BINARY_DIR}/include
+    ${CMAKE_BINARY_DIR}/src/MPC_IO/include
     ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${CMAKE_CURRENT_SOURCE_DIR}/mpi-io
     ${CMAKE_SOURCE_DIR}/src/MPC_Common/include
@@ -314,7 +316,7 @@ target_include_directories(promio PRIVATE
     ${CMAKE_SOURCE_DIR}/src/MPC_IO/include
     ${CMAKE_SOURCE_DIR}/src/MPC_IO/src
     ${CMAKE_CURRENT_SOURCE_DIR}/adio/include
-    ${CMAKE_CURRENT_BINARY_DIR}/include
+    ${CMAKE_BINARY_DIR}/src/MPC_IO/include
     ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${CMAKE_CURRENT_SOURCE_DIR}/mpi-io
     ${CMAKE_SOURCE_DIR}/src/MPC_Common/include
