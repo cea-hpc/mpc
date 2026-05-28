@@ -188,6 +188,10 @@
 #cmakedefine MPC_HAVE_DMTCP
 #cmakedefine MPC_USE_EXTLS
 #cmakedefine MPC_Allocator
+#cmakedefine FORTRANDOUBLEUNDERSCORE
+#cmakedefine FORTRANUNDERSCORE
+#cmakedefine FORTRANLOWER
+#cmakedefine FORTRANCAPS
 #cmakedefine MPC_USE_PMIX
 #cmakedefine MPC_USE_PMI1
 #cmakedefine MPC_USE_HYDRA
