@@ -715,7 +715,7 @@ elseif(NOT HAVE_EXTLS)
     set(MPC_IN_PROCESS_MODE "yes")
     set(MPC_IN_PROCESS_MODE_INT 1)
 else()
-    set(MPC_IN_PROCESS_MODE "no")
+    unset(MPC_IN_PROCESS_MODE)
     set(MPC_IN_PROCESS_MODE_INT 0)
 endif()
 
