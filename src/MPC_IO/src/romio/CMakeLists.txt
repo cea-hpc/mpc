@@ -16,8 +16,15 @@ configure_file(
 set(ROMIO_GLUE_SOURCES
     mpi-io/glue/mpich/mpio_file.c
     mpi-io/glue/mpich/mpio_err.c
-    mpi-io/glue/large_count.c
 )
+
+# large_count.c provides fallback MPI_Type_size_x when ROMIO is built
+# standalone against an external MPI.  When embedded in MPC (default,
+# matching autotools BUILD_ROMIO_EMBEDDED=true), it is excluded to
+# avoid infinite recursion through the internal MPI implementation.
+if(NOT BUILD_ROMIO_EMBEDDED)
+    list(APPEND ROMIO_GLUE_SOURCES mpi-io/glue/large_count.c)
+endif()
 
 # MPI-I/O API sources (always)
 set(ROMIO_MPI_SOURCES
