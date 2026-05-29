@@ -1037,31 +1037,35 @@ elseif(MPC_ARCH_MICROTASK_ARCH STREQUAL "x86")
     list(APPEND MPC_COMPILE_DEFINITIONS KMP_ARCH_X86=1)
 endif()
 
-# Optimizations
-if(MPC_ENABLE_OPTIM)
-    set(MPC_OPT_FLAGS "-O3")
-elseif(MPC_ENABLE_DEBUG)
-    set(MPC_OPT_FLAGS "-g -Wall -Wextra")
-endif()
-
 # ------------------------------------------------------------------
 # Compiler flags (applied globally to all targets)
 # ------------------------------------------------------------------
 
-# Native architecture optimization
-if(MPC_ENABLE_OPT_NATIVE)
-    add_compile_options(-march=native)
+# Optimizations
+set(MPC_OPT_FLAGS "")
+if(MPC_ENABLE_OPTIM)
+    list(APPEND MPC_OPT_FLAGS "-O3")
 endif()
 
-# Debug warnings
+# Debug
 if(MPC_ENABLE_DEBUG)
-    add_compile_options(-Wall -Wextra)
+    list(APPEND MPC_OPT_FLAGS "-g" "-Wall" "-Wextra")
+endif()
+
+# Native architecture optimization
+if(MPC_ENABLE_OPT_NATIVE)
+    list(APPEND MPC_OPT_FLAGS "-march=native")
 endif()
 
 # ASAN (Address Sanitizer)
 if(MPC_ENABLE_DEBUG_MEM)
-    add_compile_options(-fsanitize=address -fno-omit-frame-pointer)
+    list(APPEND MPC_OPT_FLAGS "-fsanitize=address" "-fno-omit-frame-pointer")
     add_link_options(-fsanitize=address)
+endif()
+
+# Apply all accumulated flags
+if(MPC_OPT_FLAGS)
+    add_compile_options(${MPC_OPT_FLAGS})
 endif()
 
 # CMake variables for #cmakedefine in mpc_config.h.in
@@ -1069,6 +1073,12 @@ if(MPC_ENABLE_THREADS)
     set(MPC_THREAD_ENABLED yes)
 else()
     set(MPC_THREAD_ENABLED no)
+endif()
+
+if(MPC_ENABLE_OPENMP)
+    set(MPC_OPENMP_ENABLED yes)
+else()
+    set(MPC_OPENMP_ENABLED no)
 endif()
 
 if(MPC_ENABLE_LOWCOMM)
@@ -1083,17 +1093,10 @@ else()
     set(MPC_MPI_ENABLED no)
 endif()
 
-
 if(MPC_ENABLE_FORTRAN)
     set(MPC_FORTRAN_ENABLED yes)
 else()
     set(MPC_FORTRAN_ENABLED no)
-endif()
-
-if(MPC_ENABLE_OPENMP)
-    set(MPC_OPENMP_ENABLED yes)
-else()
-    set(MPC_OPENMP_ENABLED no)
 endif()
 
 if(MPC_ENABLE_MPIIO)
@@ -1152,6 +1155,7 @@ endif()
 # ------------------------------------------------------------------
 # Summary (setup)
 # ------------------------------------------------------------------
+string(JOIN " " MPC_OPT_FLAGS_STR ${MPC_OPT_FLAGS})
 set(MPC_CONFIG_RESULT "
 ########## MPC Configuration Summary ##########
   Install prefix : ${CMAKE_INSTALL_PREFIX}
@@ -1173,7 +1177,7 @@ set(MPC_CONFIG_RESULT "
   CK             : ${MPC_ENABLE_CK}
   MPC Alloc      : ${MPC_ENABLE_MPCALLOC}
   DMTCP          : ${MPC_HAVE_DMTCP}
-  Optimizations  : ${MPC_OPT_FLAGS}
+  Compil Flags   : ${MPC_OPT_FLAGS_STR}
 #############################################
 ")
 
