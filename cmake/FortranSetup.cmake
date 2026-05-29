@@ -1,6 +1,10 @@
-# Fortran setup: -fallow-argument-mismatch check and symbol naming convention detection
+# ==================================================================
+# FortranSetup.cmake — Fortran compiler feature detection
+# ==================================================================
 
+# ------------------------------------------------------------------
 # Fortran -fallow-argument-mismatch check (matches autotools)
+# ------------------------------------------------------------------
 if(MPC_ENABLE_FORTRAN)
     file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/fortran_test_check.f90" "PROGRAM foo\nEND PROGRAM\n")
     try_compile(FORTRAN_ARG_MISMATCH_SUPPORTED
@@ -19,7 +23,9 @@ else()
     set(FORTRAN_ARG_MISMATCH_ARG "")
 endif()
 
+# ------------------------------------------------------------------
 # Fortran symbol naming convention detection (matches autotools)
+# ------------------------------------------------------------------
 if(MPC_ENABLE_FORTRAN)
     file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/fortran_name_test.f90" "      subroutine fortran_name()\n      end subroutine\n")
     try_compile(FORTRAN_NAME_COMPILE
