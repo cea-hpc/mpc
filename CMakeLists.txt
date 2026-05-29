@@ -138,10 +138,9 @@ option(MPC_ENABLE_DEBUG "Compile with debug symbols" OFF)
 option(MPC_ENABLE_DEBUG_MEM "Compile with ASAN" OFF)
 option(MPC_ENABLE_OPTIM "Enable standard optimizations (-O3)" ON)
 option(MPC_ENABLE_OPT_NATIVE "Build for current architecture (-march=native)" OFF)
-option(MPC_ENABLE_SLURM "Enable SLURM support" OFF)
 option(MPC_ENABLE_TOPOLOGY_SIMULATION "Enable topology simulation" OFF)
 option(MPC_ENABLE_CK "Enable Concurrency-Kit" OFF)
-option(MPC_ENABLE_MPCALLOC "Enable MPC allocator" OFF)
+option(MPC_ENABLE_MPCALLOC "Enable MPC allocator" ON)
 set(MPC_ENABLE_OFI "AUTO" CACHE STRING "Enable libfabric/OFI: AUTO (auto-detect), ON, or OFF")
 set_property(CACHE MPC_ENABLE_OFI PROPERTY STRINGS AUTO ON OFF)
 
@@ -175,9 +174,9 @@ if(NOT MPC_ENABLE_LOWCOMM)
 endif()
 
 if(NOT MPC_ENABLE_MPI)
-	message(WARNING "Disabling MPI means disabling Fortran and MPIIO")
-	set(MPC_ENABLE_FORTRAN OFF)
-	set(MPC_ENABLE_MPIIO OFF)
+    message(WARNING "Disabling MPI means disabling Fortran and MPIIO")
+    set(MPC_ENABLE_FORTRAN OFF)
+    set(MPC_ENABLE_MPIIO OFF)
 endif()
 
 if(MPC_ENABLE_MPI AND NOT MPC_ENABLE_LOWCOMM)
@@ -189,7 +188,7 @@ if(MPC_ENABLE_OPENMP AND NOT MPC_ENABLE_THREADS)
 endif()
 
 if(MPC_ENABLE_MPI AND NOT MPC_ENABLE_THREADS)
-	message(FATAL_ERROR "MPI requires threads (enable MPC_ENABLE_THREADS)")
+    message(FATAL_ERROR "MPI requires threads (enable MPC_ENABLE_THREADS)")
 endif()
 
 if(MPC_ENABLE_FORTRAN AND NOT MPC_ENABLE_MPI)
@@ -722,6 +721,7 @@ if(MPC_ENABLE_PROCESS_MODE)
     set(MPC_IN_PROCESS_MODE_INT 1)
 elseif(NOT HAVE_EXTLS)
     # No extls available, fall back to process mode (matches autotools)
+    message(WARNING "No extls available, fall back to process mode.")
     set(MPC_IN_PROCESS_MODE "yes")
     set(MPC_IN_PROCESS_MODE_INT 1)
 else()
@@ -996,9 +996,6 @@ if(MPC_ENABLE_CMA AND HAVE_UIO_H)
     list(APPEND MPC_COMPILE_DEFINITIONS MPC_USE_CMA=1)
 endif()
 
-if(MPC_ENABLE_SLURM)
-    list(APPEND MPC_COMPILE_DEFINITIONS MPC_ENABLE_SLURM=1)
-endif()
 if(MPC_ENABLE_TOPOLOGY_SIMULATION)
     list(APPEND MPC_COMPILE_DEFINITIONS MPC_ENABLE_TOPOLOGY_SIMULATION=1)
 endif()
@@ -1174,7 +1171,6 @@ Active Messages: ${MPC_HAVE_AM}
 Launcher: ${MPC_LAUNCHER}
 Networks: ${MPC_NETWORK_LIST}
 CMA: ${MPC_ENABLE_CMA}
-SLURM: ${MPC_ENABLE_SLURM}
 Topology simulation: ${MPC_ENABLE_TOPOLOGY_SIMULATION}
 CK: ${MPC_ENABLE_CK}
 MPC Allocator: ${MPC_ENABLE_MPCALLOC}
@@ -1205,7 +1201,6 @@ message(STATUS "  Active Messages: ${MPC_HAVE_AM}")
 message(STATUS "  Launcher       : ${MPC_LAUNCHER}")
 message(STATUS "  Networks       : ${MPC_NETWORK_LIST}")
 message(STATUS "  CMA            : ${MPC_ENABLE_CMA}")
-message(STATUS "  SLURM          : ${MPC_ENABLE_SLURM}")
 message(STATUS "  Topo sim       : ${MPC_ENABLE_TOPOLOGY_SIMULATION}")
 message(STATUS "  CK             : ${MPC_ENABLE_CK}")
 message(STATUS "  MPC Alloc      : ${MPC_ENABLE_MPCALLOC}")

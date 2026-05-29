@@ -54,6 +54,7 @@ MPC_GDB_BUILD_PARAMETERS="--without-zlib --disable-werror"
 DEBUG="no"
 MPC_OPTIM_OPTION_SPECIFIED="no"
 USE_CMAKE="no"
+CMAKE_OPTS=""
 
 # Stop on error
 set -e
@@ -61,6 +62,40 @@ set -e
 #
 # Utilities
 #
+
+#
+# CMake option helpers (called during arg parsing)
+#
+
+add_cmake_opt()
+{
+	CMAKE_OPTS="$CMAKE_OPTS $1"
+}
+
+set_cuda_on()
+{
+	add_cmake_opt "-DMPC_ENABLE_CUDA=ON"
+	if test -n "$1"; then
+		CUDA_PREFIX="$1"
+		add_cmake_opt "-DMPC_CUDA_PREFIX=${CUDA_PREFIX}"
+	fi
+}
+
+set_rocm_on()
+{
+	add_cmake_opt "-DMPC_ENABLE_ROCM=ON"
+	if test -n "$1"; then
+		ROCM_PREFIX="$1"
+		add_cmake_opt "-DMPC_ROCM_PREFIX=${ROCM_PREFIX}"
+	fi
+}
+
+set_rocm_nvidia_on()
+{
+	set_cuda_on ""
+	set_rocm_on "$1"
+	add_cmake_opt "-DMPC_ROCM_MOD=nvidia"
+}
 
 #
 # Output MGT
@@ -1335,6 +1370,7 @@ WORKSHARE_ENABLED="no"
 add_process_mode_flag_to_mpc()
 {
 	MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --enable-process-mode"
+	add_cmake_opt "-DMPC_ENABLE_PROCESS_MODE=ON"
 }
 
 enable_src_fixes()
@@ -1347,6 +1383,7 @@ enable_src_fixes()
 enable_real_with_debug()
 {
 	MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --enable-debug-messages --enable-debug"
+	add_cmake_opt "-DMPC_ENABLE_DEBUG_MESSAGES=ON -DMPC_ENABLE_DEBUG=ON"
 	enable_src_fixes
 }
 
@@ -1355,6 +1392,7 @@ enable_debug()
 	MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --enable-debug-messages --enable-debug --enable-debug-optim"
 	MPC_COMP_ADD_BUILD_PARAMETERS="${MPC_COMP_ADD_BUILD_PARAMETERS} --opts=--enable-debug"
 	OFI_BUILD_PARAMETERS="${OFI_BUILD_PARAMETERS} --enable-debug"
+	add_cmake_opt "-DMPC_ENABLE_DEBUG=ON -DMPC_ENABLE_DEBUG_MESSAGES=ON -DMPC_ENABLE_OPTIM=OFF"
 	# tell the install script to remove always inline in libfabric sub projects
 	export DEBUG="yes"
 	enable_src_fixes
@@ -1379,15 +1417,18 @@ do
 		--with-hydra)
 			HYDRA_PREFIX="enabled"
 			ENABLE_SLURM="no"
+			add_cmake_opt "-DMPC_LAUNCHER=HYDRA"
 			;;
 		--with-hydra=*)
 			ENABLE_SLURM="no"
 			extractParamValue 'HYDRA_PREFIX' 'with-hydra' "$arg"
+			add_cmake_opt "-DMPC_LAUNCHER=HYDRA -DMPC_HYDRA_PREFIX=${HYDRA_PREFIX}"
 			;;
 		--hydra=*)
 			ENABLE_SLURM="no"
 			extractAndAddPackageOption 'HYDRA_BUILD_PARAMETERS' 'hydra=' "$arg"
 			HYDRA_PREFIX="enabled"
+			add_cmake_opt "-DMPC_LAUNCHER=HYDRA"
 			;;
 		--disable-mpc-hydra|--disable-hydra)
 			HYDRA_PREFIX='disabled'
@@ -1395,6 +1436,7 @@ do
 		#################### OPENPA #################
 		--with-openpa=*)
 			extractParamValue 'OPENPA_PREFIX' 'with-openpa' "$arg"
+			add_cmake_opt "-DMPC_OPENPA_PREFIX=${OPENPA_PREFIX}"
 			;;
 		--openpa=*)
 			extractAndAddPackageOption 'OPENPA_BUILD_PARAMETERS' 'openpa=' "$arg"
@@ -1444,10 +1486,12 @@ do
 		################# FORTRAN GCC ###############
 		--disable-mpc-fortran|--disable-fortran)
 			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --disable-fortran"
+			add_cmake_opt "-DMPC_ENABLE_FORTRAN=OFF"
 			;;
 		################### HWLOC ###################
 		--with-hwloc=*)
 			extractParamValue 'HWLOC_PREFIX' 'with-hwloc' "$arg"
+			add_cmake_opt "-DMPC_HWLOC_PREFIX=${HWLOC_PREFIX}"
 			;;
 		--hwloc=*)
 			extractAndAddPackageOption 'HWLOC_BUILD_PARAMETERS' 'hwloc=' "$arg"
@@ -1455,25 +1499,31 @@ do
 		################### CUDA ###################
 		--with-cuda)
 			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --with-cuda"
+			set_cuda_on ""
 			;;
 		--with-cuda=*)
 			extractParamValue 'CUDA_PREFIX' 'with-cuda' "$arg"
 			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --with-cuda=${CUDA_PREFIX}"
+			set_cuda_on "${CUDA_PREFIX}"
 			;;
 		################### ROCM ###################
 		--with-rocm)
 			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --with-rocm"
+			set_rocm_on ""
 			;;
 		--with-rocm=*)
 			extractParamValue 'ROCM_PREFIX' 'with-rocm' "$arg"
 			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --with-rocm=${ROCM_PREFIX}"
+			set_rocm_on "${ROCM_PREFIX}"
 			;;
 		--with-rocm-nvidia)
 			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --with-cuda --with-rocm --with-rocm-mod=nvidia"
+			set_rocm_nvidia_on ""
 			;;
 		--with-rocm-nvidia=*)
 			extractParamValue 'ROCM_PREFIX' 'with-rocm' "$arg"
 			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --with-cuda --with-rocm=${ROCM_PREFIX} --with-rocm-mod=nvidia"
+			set_rocm_nvidia_on "${ROCM_PREFIX}"
 			;;
 		################### OTHER GPU ###################
 		--with-openacc=*)
@@ -1498,9 +1548,11 @@ do
 		#### OFI ##########
 		--enable-ofi|--enable-libfabric)
 			OFI_PREFIX=""
+			add_cmake_opt "-DMPC_ENABLE_OFI=ON"
 			;;
 		--disable-ofi|--disable-libfabric)
 			OFI_PREFIX="disabled"
+			add_cmake_opt "-DMPC_ENABLE_OFI=OFF"
 			;;
 		#### BXI ##########
 		--with-bxi)
@@ -1514,6 +1566,7 @@ do
 		--enable-ck)
 			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --enable-ck"
             CK_PREFIX="enabled"
+			add_cmake_opt "-DMPC_ENABLE_CK=ON"
 			;;
 		--ofi=*)
 			extractAndAddPackageOption 'OFI_BUILD_PARAMETERS' 'ofi=' "$arg"
@@ -1521,24 +1574,37 @@ do
 		#### MPC Allocator ##########
 		--enable-mpc-allocator|--enable-mpcalloc)
 			MPCALLOC_PREFIX=""
+			add_cmake_opt "-DMPC_ENABLE_MPCALLOC=ON"
 			;;
 		--disable-mpc-allocator|--disable-mpcalloc)
 			MPCALLOC_PREFIX="disabled"
+			add_cmake_opt "-DMPC_ENABLE_MPCALLOC=OFF"
 			;;
 		--mpcalloc=*)
+			# this should probably be setting up MPCALLOC_PREFIX
 			extractAndAddPackageOption 'MPCALLOC_BUILD_PARAMETERS' 'mpcalloc=' "$arg"
+			add_cmake_opt "-DMPC_ENABLE_MPCALLOC=ON"
 			;;
 		################### DMTCP ###################
 		--with-dmtcp=*)
 			extractParamValue 'MPC_DMTCP_PREFIX' 'with-dmtcp' "$arg"
+			add_cmake_opt "-DMPC_ENABLE_DMTCP=ON"
+			if test -n "${MPC_DMTCP_PREFIX}"; then
+				add_cmake_opt "-DMPC_DMTCP_PREFIX=${MPC_DMTCP_PREFIX}"
+			fi
 			;;
 		--dmtcp=*)
 			extractAndAddPackageOption 'MPC_DMTCP_BUILD_PARAMETERS' 'dmtcp=' "$arg"
+			add_cmake_opt "-DMPC_ENABLE_DMTCP=ON"
+			if test -n "${MPC_DMTCP_PREFIX}"; then
+				add_cmake_opt "-DMPC_DMTCP_PREFIX=${MPC_DMTCP_PREFIX}"
+			fi
 			;;
 		################### GENERIC FT ###################
 		--enable-mpc-ft)
 			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --with-dmtcp"
 			enableParamIfNot 'MPC_DMTCP_PREFIX' "$MPC_DMTCP_PREFIX" 'disabled' 'internal'
+			add_cmake_opt "-DMPC_ENABLE_DMTCP=ON"
 			;;
 		--disable-mpc-ft)
 			MPC_DMTCP_PREFIX="disabled"
@@ -1553,18 +1619,18 @@ do
 			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --enable-shell-colors"
 			MPC_COMP_ADD_BUILD_PARAMETERS="${MPC_COMP_ADD_BUILD_PARAMETERS} --opts=--enable-color"
 			USE_COLOR="yes"
+			add_cmake_opt "-DMPC_ENABLE_SHELL_COLORS=ON"
 			;;
 		--disable-color)
 			MPCFRAMEWORK_BUILD_PARAMETERS=$(echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | sed "s/--enable-shell-colors//")
-			MPC_COMP_ADD_BUILD_PARAMETERS=$(echo "$MPC_COMP_ADD_BUILD_PARAMETER"  | sed "s/--opts=--enable-color//")
+			MPC_COMP_ADD_BUILD_PARAMETERS=$(echo "$MPC_COMP_ADD_BUILD_PARAMETERS"  | sed "s/--opts=--enable-color//")
 			USE_COLOR="no"
+			add_cmake_opt "-DMPC_ENABLE_SHELL_COLORS=OFF"
 			;;
 		--enable-debug)
-			MPC_OPTIM_OPTION_SPECIFIED="yes"
 			enable_debug
 			;;
 		--debug)
-			MPC_OPTIM_OPTION_SPECIFIED="yes"
 			enable_debug
 			;;
 		--relwithdebinfo)
@@ -1573,26 +1639,37 @@ do
 			;;
 		--enable-topology-simulation)
 			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --enable-topology-simulation"
+			add_cmake_opt "-DMPC_ENABLE_TOPOLOGY_SIMULATION=ON"
 			;;
 		--with-pmi1=*)
 			PMIX_PREFIX=""
 			extractParamValue 'PMIX_PREFIX' 'with-pmi1=' "$arg"
 			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} ${PMIX_PREFIX}"
 			ENABLE_SLURM='no'
+			add_cmake_opt "-DMPC_LAUNCHER=PMI1"
+			if test -n "${PMIX_PREFIX}"; then
+				add_cmake_opt "-DMPC_PMI_PREFIX=${PMIX_PREFIX}"
+			fi
 			;;
 		--with-pmi1)
 			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --with-pmi1"
 			ENABLE_SLURM='no'
+			add_cmake_opt "-DMPC_LAUNCHER=PMI1"
 			;;
 		--with-pmix=*)
 			PMIX_PREFIX=""
 			extractParamValue 'PMIX_PREFIX' 'with-pmix=' "$arg"
 			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} ${PMIX_PREFIX}"
 			ENABLE_SLURM='no'
+			add_cmake_opt "-DMPC_LAUNCHER=PMIX"
+			if test -n "${PMIX_PREFIX}"; then
+				add_cmake_opt "-DMPC_PMIX_PREFIX=${PMIX_PREFIX}"
+			fi
 			;;
 		--with-pmix)
 			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --with-pmix"
 			ENABLE_SLURM='no'
+			add_cmake_opt "-DMPC_LAUNCHER=PMIX"
 			;;
 		--with-slurm=*)
 			SLURM_PREFIX=""
@@ -1602,12 +1679,14 @@ do
 			;;
 		--disable-MPC_MPI|--lib-mode)
 			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --disable-mpi"
+			add_cmake_opt "-DMPC_ENABLE_MPI=OFF"
 			;;
         --disable-openshmem)
 			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --disable-openshmem"
             ;;
 		--disable-romio)
 			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --disable-mpiio"
+			add_cmake_opt "-DMPC_ENABLE_MPIIO=OFF"
 			;;
 		--disable-prefix-check|--disable-check-install)
 			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --disable-prefix-check"
@@ -1707,6 +1786,7 @@ do
     	--enable-workshare)
 			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --enable-workshare"
 			WORKSHARE_ENABLED="yes"
+			add_cmake_opt "-DMPC_ENABLE_WORKSHARE=ON"
 			# Workshare is only on 7.3.0 try to force it
 			GCC_VERSION="7.3.0"
       	;;
@@ -1834,7 +1914,9 @@ if [ "$ENABLE_SLURM" == "yes" ]; then
 			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --with-slurm"
 		else
 			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} ${SLURM_PREFIX}"
+			add_cmake_opt "-DMPC_PMIX_PREFIX=${SLURM_PREFIX}"
 		fi
+		add_cmake_opt "-DMPC_LAUNCHER=PMIX"
 	fi
 fi
 
@@ -2076,213 +2158,29 @@ else
 
 	#
 	# Build CMake options from installmpc variables
+	# Options from MPCFRAMEWORK_BUILD_PARAMETERS are already in CMAKE_OPTS (set during arg parsing).
+	# This section only handles defaults and options not driven by MPCFRAMEWORK_BUILD_PARAMETERS.
 	#
-	CMAKE_OPTS="-DCMAKE_INSTALL_PREFIX=${PREFIX}"
+	CMAKE_OPTS="-DCMAKE_INSTALL_PREFIX=${PREFIX} $CMAKE_OPTS"
 
-	# --- Build type / optimization ---
+	# --- Build type / optimization defaults ---
 	if test "${DEBUG}" = "yes"; then
-		CMAKE_OPTS="$CMAKE_OPTS -DCMAKE_BUILD_TYPE=Debug -DMPC_ENABLE_DEBUG=ON -DMPC_ENABLE_OPTIM=OFF"
-	elif echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -qE -- '--enable-debug($| )'; then
-		# --enable-debug or --relwithdebinfo (DEBUG not "yes" but --enable-debug in params)
-		if echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -qE -- '--enable-debug-optim($| )'; then
-			# --enable-debug path: --enable-debug-optim is present
-			CMAKE_OPTS="$CMAKE_OPTS -DCMAKE_BUILD_TYPE=Debug -DMPC_ENABLE_DEBUG=ON"
-		else
-			# --relwithdebinfo path: --enable-debug-optim is NOT present
-			CMAKE_OPTS="$CMAKE_OPTS -DCMAKE_BUILD_TYPE=RelWithDebInfo -DMPC_ENABLE_DEBUG=ON"
-		fi
-	elif test "${MPC_OPTIM_OPTION_SPECIFIED}" = "no"; then
-		CMAKE_OPTS="$CMAKE_OPTS -DCMAKE_BUILD_TYPE=Release -DMPC_ENABLE_OPT_NATIVE=ON"
+		CMAKE_OPTS="$CMAKE_OPTS -DCMAKE_BUILD_TYPE=Debug"
+	elif test "${MPC_OPTIM_OPTION_SPECIFIED}" = "yes"; then
+		CMAKE_OPTS="$CMAKE_OPTS -DCMAKE_BUILD_TYPE=RelWithDebInfo"
 	else
-		CMAKE_OPTS="$CMAKE_OPTS -DCMAKE_BUILD_TYPE=Release"
+		CMAKE_OPTS="$CMAKE_OPTS -DCMAKE_BUILD_TYPE=Release -DMPC_ENABLE_OPT_NATIVE=ON"
 	fi
 
 	# --- Compiler (mpc-compiler-additions / autopriv) ---
 	if test "${MPC_COMP_ADD_PREFIX}" != "disabled"; then
-		CMAKE_OPTS="$CMAKE_OPTS -DCMAKE_C_COMPILER=$(command -v apcc) -DCMAKE_CXX_COMPILER=$(command -v ap++)"
+		CMAKE_OPTS="$CMAKE_OPTS -DCMAKE_C_COMPILER=$(command -v apcc) -DCMAKE_CXX_COMPILER=$(command -v ap++) -DCMAKE_FC_COMPILER=$(command -v apfortran)"
 		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_PROCESS_MODE=OFF"
 	else
 		# No mpc-compiler-additions: let CMake try extls first, fall back to process mode (matches autotools)
 		# Don't override MPC_ENABLE_PROCESS_MODE — CMakeLists.txt default (OFF) + extls detection handles it
 		:
 	fi
-
-	# --- Launcher selection ---
-	# Determine launcher from MPCFRAMEWORK_BUILD_PARAMETERS (set by installmpc arg parsing)
-	# This matches autotools: --with-hydra => HYDRA, --with-pmi1 => PMI1, --with-pmix => PMIX, --with-slurm => auto-detect PMI1/PMIX
-	if echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -qE -- '--with-pmix($| |=)'; then
-		CMAKE_OPTS="$CMAKE_OPTS -DMPC_LAUNCHER=PMIX"
-	elif echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -qE -- '--with-pmi1($| |=)'; then
-		CMAKE_OPTS="$CMAKE_OPTS -DMPC_LAUNCHER=PMI1"
-	elif test "${HYDRA_PREFIX}" != "disabled"; then
-		# HYDRA_PREFIX is "enabled", "" (default), or explicitly set; only disabled means off
-		CMAKE_OPTS="$CMAKE_OPTS -DMPC_LAUNCHER=HYDRA"
-	else
-		# Hydra disabled and no PMI1/PMIX explicitly set — default to PMI1
-		CMAKE_OPTS="$CMAKE_OPTS -DMPC_LAUNCHER=PMI1"
-	fi
-
-	# --- SLURM ---
-	if test "${ENABLE_SLURM}" = "yes"; then
-		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_SLURM=ON"
-	fi
-
-	# --- CUDA ---
-	if test -n "${CUDA_PREFIX}" && test "${CUDA_PREFIX}" != "disabled"; then
-		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_CUDA=ON -DMPC_CUDA_PREFIX=${CUDA_PREFIX}"
-	else
-		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_CUDA=OFF"
-	fi
-
-	# --- ROCm ---
-	if test -n "${ROCM_PREFIX}" && test "${ROCM_PREFIX}" != "disabled"; then
-		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_ROCM=ON -DMPC_ROCM_PREFIX=${ROCM_PREFIX}"
-	else
-		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_ROCM=OFF"
-	fi
-
-	# --- OFI / libfabric ---
-	if test "${OFI_PREFIX}" = "disabled"; then
-		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_OFI=OFF"
-	elif test -n "${OFI_PREFIX}"; then
-		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_OFI=ON -DMPC_LIBFABRIC_PREFIX=${OFI_PREFIX}"
-	else
-		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_OFI=AUTO"
-	fi
-
-	# --- Module enable/disable options (threads, openmp, lowcomm, mpi, mpiio, fortran) ---
-	if echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -qE -- '--enable-threads($| )'; then
-		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_THREADS=ON"
-	elif echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -qE -- '--disable-threads($| )'; then
-		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_THREADS=OFF"
-	fi
-
-	if echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -qE -- '--enable-openmp($| )'; then
-		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_OPENMP=ON"
-	elif echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -qE -- '--disable-openmp($| )'; then
-		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_OPENMP=OFF"
-	fi
-
-	if echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -qE -- '--enable-lowcomm($| )'; then
-		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_LOWCOMM=ON"
-	elif echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -qE -- '--disable-lowcomm($| )'; then
-		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_LOWCOMM=OFF"
-	fi
-
-	if echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -qE -- '--enable-mpi($| )'; then
-		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_MPI=ON"
-	elif echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -qE -- '--disable-mpi($| )'; then
-		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_MPI=OFF"
-	fi
-
-	if echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -qE -- '--enable-mpiio($| )'; then
-		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_MPIIO=ON"
-	elif echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -qE -- '--disable-mpiio($| )'; then
-		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_MPIIO=OFF"
-	fi
-
-	if echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -qE -- '--enable-fortran($| )'; then
-		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_FORTRAN=ON"
-	elif echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -qE -- '--disable-fortran($| )'; then
-		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_FORTRAN=OFF"
-	fi
-
-	# --- Features enable/disable options (cma, am) ---
-	if echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -qE -- '--enable-cma($| )'; then
-		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_CMA=ON"
-	elif echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -qE -- '--disable-cma($| )'; then
-		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_CMA=OFF"
-	fi
-
-	if echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -qE -- '--enable-am($| )'; then
-		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_AM=ON"
-	elif echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -qE -- '--disable-am($| )'; then
-		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_AM=OFF"
-	fi
-
-	# --- Shell colors ---
-	if test "${USE_COLOR}" = "yes"; then
-		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_SHELL_COLORS=ON"
-	else
-		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_SHELL_COLORS=OFF"
-	fi
-
-	# --- Topology simulation ---
-	if echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -qE -- '--enable-topology-simulation($| )'; then
-		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_TOPOLOGY_SIMULATION=ON"
-	fi
-
-	# --- Workshare ---
-	if test "${WORKSHARE_ENABLED}" = "yes"; then
-		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_WORKSHARE=ON"
-	fi
-
-	# --- CK (Concurrency-Kit) ---
-	if test -n "${CK_PREFIX}" && test "${CK_PREFIX}" != "disabled"; then
-		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_CK=ON"
-	else
-		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_CK=OFF"
-	fi
-
-	# --- MPC Allocator ---
-	if test "${MPCALLOC_PREFIX}" = "disabled"; then
-		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_MPCALLOC=OFF"
-	elif test -n "${MPCALLOC_PREFIX}"; then
-		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_MPCALLOC=ON -DMPC_MPCALLOC_PREFIX=${MPCALLOC_PREFIX}"
-	else
-		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_MPCALLOC=ON"
-	fi
-
-	# --- DMTCP ---
-	if test -n "${MPC_DMTCP_PREFIX}" && test "${MPC_DMTCP_PREFIX}" != "disabled"; then
-		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_DMTCP=ON -DMPC_DMTCP_PREFIX=${MPC_DMTCP_PREFIX}"
-	else
-		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_DMTCP=OFF"
-	fi
-
-	# --- Profiler ---
-	if echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -qE -- '--enable-profiler($| )'; then
-		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_PROFILER=ON"
-	fi
-
-	# --- Debug messages ---
-	if echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -qE -- '--enable-debug-messages($| )'; then
-		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_DEBUG_MESSAGES=ON"
-	fi
-
-	# --- Debug memory (ASAN) ---
-	if echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -qE -- '--enable-debug-mem($| )'; then
-		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_DEBUG_MEM=ON"
-	fi
-
-	# --- hwloc prefix ---
-	if test -n "${HWLOC_PREFIX}" && test "${HWLOC_PREFIX}" != "disabled"; then
-		CMAKE_OPTS="$CMAKE_OPTS -DMPC_HWLOC_PREFIX=${HWLOC_PREFIX}"
-	fi
-
-	# --- OpenPA prefix ---
-	if test -n "${OPENPA_PREFIX}" && test "${OPENPA_PREFIX}" != "disabled"; then
-		CMAKE_OPTS="$CMAKE_OPTS -DMPC_OPENPA_PREFIX=${OPENPA_PREFIX}"
-	fi
-
-	# --- PMIx prefix ---
-	if test -n "${PMIX_PREFIX}" && test "${PMIX_PREFIX}" != "disabled"; then
-		CMAKE_OPTS="$CMAKE_OPTS -DMPC_PMIX_PREFIX=${PMIX_PREFIX}"
-	fi
-
-	# --- PMI1 prefix ---
-	if echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -qE -- '--with-pmi1($| |=)'; then
-		# Extract PMI1 prefix if specified
-		local_pmi1_prefix=$(echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -o -- '--with-pmi1=[^ ]*' | cut -d= -f2)
-		if test -n "${local_pmi1_prefix}"; then
-			CMAKE_OPTS="$CMAKE_OPTS -DMPC_PMI_PREFIX=${local_pmi1_prefix}"
-		fi
-	fi
-
-	# --- MPCFRAMEWORK_BUILD_PARAMETERS passthrough ---
-	# Any remaining --mpcframework= or --mpc-option= entries are passed as-is
-	# These are already captured in MPCFRAMEWORK_BUILD_PARAMETERS but may contain
-	# additional flags not mapped above.
 
 	# --- CMAKE_PREFIX_PATH for dependency discovery ---
 	if test -n "${PREFIX}"; then

@@ -183,7 +183,6 @@
 #cmakedefine MPC_USE_CMA
 #cmakedefine MPC_ENABLE_DEBUG_MESSAGES
 #cmakedefine MPC_ENABLE_WORKSHARE
-#cmakedefine MPC_ENABLE_SLURM
 #cmakedefine MPC_ENABLE_TOPOLOGY_SIMULATION
 #cmakedefine MPC_HAVE_CK
 #cmakedefine MPC_HAVE_DMTCP
