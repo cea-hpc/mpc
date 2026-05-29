@@ -2152,25 +2152,54 @@ else
 		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_OFI=AUTO"
 	fi
 
-	# --- Fortran ---
-	if echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -q -- '--disable-fortran'; then
-		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_FORTRAN=OFF"
-	else
-		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_FORTRAN=ON"
+	# --- Module enable/disable options (threads, openmp, lowcomm, mpi, mpiio, fortran) ---
+	if echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -q -- '--enable-threads'; then
+		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_THREADS=ON"
+	elif echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -q -- '--disable-threads'; then
+		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_THREADS=OFF"
 	fi
 
-	# --- MPI ---
-	if echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -q -- '--disable-mpi'; then
-		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_MPI=OFF"
-	else
+	if echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -q -- '--enable-openmp'; then
+		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_OPENMP=ON"
+	elif echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -q -- '--disable-openmp'; then
+		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_OPENMP=OFF"
+	fi
+
+	if echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -q -- '--enable-lowcomm'; then
+		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_LOWCOMM=ON"
+	elif echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -q -- '--disable-lowcomm'; then
+		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_LOWCOMM=OFF"
+	fi
+
+	if echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -q -- '--enable-mpi'; then
 		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_MPI=ON"
+	elif echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -q -- '--disable-mpi'; then
+		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_MPI=OFF"
 	fi
 
-	# --- ROMIO / MPI-IO ---
-	if echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -q -- '--disable-mpiio'; then
-		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_MPIIO=OFF"
-	else
+	if echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -q -- '--enable-mpiio'; then
 		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_MPIIO=ON"
+	elif echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -q -- '--disable-mpiio'; then
+		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_MPIIO=OFF"
+	fi
+
+	if echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -q -- '--enable-fortran'; then
+		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_FORTRAN=ON"
+	elif echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -q -- '--disable-fortran'; then
+		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_FORTRAN=OFF"
+	fi
+
+	# --- Features enable/disable options (cma, am) ---
+	if echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -q -- '--enable-cma'; then
+		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_CMA=ON"
+	elif echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -q -- '--disable-cma'; then
+		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_CMA=OFF"
+	fi
+
+	if echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -q -- '--enable-am'; then
+		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_AM=ON"
+	elif echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -q -- '--disable-am'; then
+		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_AM=OFF"
 	fi
 
 	# --- Shell colors ---
@@ -2213,23 +2242,9 @@ else
 		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_DMTCP=OFF"
 	fi
 
-	# --- Active Messages (AM) ---
-	if echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -q -- '--enable-am'; then
-		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_AM=ON"
-	elif echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -q -- '--disable-am'; then
-		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_AM=OFF"
-	fi
-
 	# --- Profiler ---
 	if echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -q -- '--enable-profiler'; then
 		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_PROFILER=ON"
-	fi
-
-	# --- CMA ---
-	if echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -q -- '--disable-cma'; then
-		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_CMA=OFF"
-	else
-		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_CMA=ON"
 	fi
 
 	# --- Debug messages ---

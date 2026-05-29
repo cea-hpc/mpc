@@ -174,12 +174,22 @@ if(NOT MPC_ENABLE_LOWCOMM)
     set(MPC_ENABLE_MPI OFF)
 endif()
 
+if(NOT MPC_ENABLE_MPI)
+	message(WARNING "Disabling MPI means disabling Fortran and MPIIO")
+	set(MPC_ENABLE_FORTRAN OFF)
+	set(MPC_ENABLE_MPIIO OFF)
+endif()
+
 if(MPC_ENABLE_MPI AND NOT MPC_ENABLE_LOWCOMM)
     message(FATAL_ERROR "MPI requires Lowcomm (enable MPC_ENABLE_LOWCOMM)")
 endif()
 
 if(MPC_ENABLE_OPENMP AND NOT MPC_ENABLE_THREADS)
     message(FATAL_ERROR "OpenMP requires threads (enable MPC_ENABLE_THREADS)")
+endif()
+
+if(MPC_ENABLE_MPI AND NOT MPC_ENABLE_THREADS)
+	message(FATAL_ERROR "MPI requires threads (enable MPC_ENABLE_THREADS)")
 endif()
 
 if(MPC_ENABLE_FORTRAN AND NOT MPC_ENABLE_MPI)
