@@ -2082,9 +2082,9 @@ else
 	# --- Build type / optimization ---
 	if test "${DEBUG}" = "yes"; then
 		CMAKE_OPTS="$CMAKE_OPTS -DCMAKE_BUILD_TYPE=Debug -DMPC_ENABLE_DEBUG=ON -DMPC_ENABLE_OPTIM=OFF"
-	elif echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -q -- '--enable-debug'; then
+	elif echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -qE -- '--enable-debug($| )'; then
 		# --enable-debug or --relwithdebinfo (DEBUG not "yes" but --enable-debug in params)
-		if echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -q -- '--enable-debug-optim'; then
+		if echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -qE -- '--enable-debug-optim($| )'; then
 			# --enable-debug path: --enable-debug-optim is present
 			CMAKE_OPTS="$CMAKE_OPTS -DCMAKE_BUILD_TYPE=Debug -DMPC_ENABLE_DEBUG=ON"
 		else
@@ -2110,9 +2110,9 @@ else
 	# --- Launcher selection ---
 	# Determine launcher from MPCFRAMEWORK_BUILD_PARAMETERS (set by installmpc arg parsing)
 	# This matches autotools: --with-hydra => HYDRA, --with-pmi1 => PMI1, --with-pmix => PMIX, --with-slurm => auto-detect PMI1/PMIX
-	if echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -q -- '--with-pmix'; then
+	if echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -qE -- '--with-pmix($| |=)'; then
 		CMAKE_OPTS="$CMAKE_OPTS -DMPC_LAUNCHER=PMIX"
-	elif echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -q -- '--with-pmi1'; then
+	elif echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -qE -- '--with-pmi1($| |=)'; then
 		CMAKE_OPTS="$CMAKE_OPTS -DMPC_LAUNCHER=PMI1"
 	elif test "${HYDRA_PREFIX}" != "disabled"; then
 		# HYDRA_PREFIX is "enabled", "" (default), or explicitly set; only disabled means off
@@ -2151,52 +2151,52 @@ else
 	fi
 
 	# --- Module enable/disable options (threads, openmp, lowcomm, mpi, mpiio, fortran) ---
-	if echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -q -- '--enable-threads'; then
+	if echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -qE -- '--enable-threads($| )'; then
 		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_THREADS=ON"
-	elif echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -q -- '--disable-threads'; then
+	elif echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -qE -- '--disable-threads($| )'; then
 		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_THREADS=OFF"
 	fi
 
-	if echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -q -- '--enable-openmp'; then
+	if echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -qE -- '--enable-openmp($| )'; then
 		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_OPENMP=ON"
-	elif echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -q -- '--disable-openmp'; then
+	elif echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -qE -- '--disable-openmp($| )'; then
 		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_OPENMP=OFF"
 	fi
 
-	if echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -q -- '--enable-lowcomm'; then
+	if echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -qE -- '--enable-lowcomm($| )'; then
 		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_LOWCOMM=ON"
-	elif echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -q -- '--disable-lowcomm'; then
+	elif echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -qE -- '--disable-lowcomm($| )'; then
 		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_LOWCOMM=OFF"
 	fi
 
-	if echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -q -- '--enable-mpi'; then
+	if echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -qE -- '--enable-mpi($| )'; then
 		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_MPI=ON"
-	elif echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -q -- '--disable-mpi'; then
+	elif echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -qE -- '--disable-mpi($| )'; then
 		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_MPI=OFF"
 	fi
 
-	if echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -q -- '--enable-mpiio'; then
+	if echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -qE -- '--enable-mpiio($| )'; then
 		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_MPIIO=ON"
-	elif echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -q -- '--disable-mpiio'; then
+	elif echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -qE -- '--disable-mpiio($| )'; then
 		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_MPIIO=OFF"
 	fi
 
-	if echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -q -- '--enable-fortran'; then
+	if echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -qE -- '--enable-fortran($| )'; then
 		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_FORTRAN=ON"
-	elif echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -q -- '--disable-fortran'; then
+	elif echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -qE -- '--disable-fortran($| )'; then
 		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_FORTRAN=OFF"
 	fi
 
 	# --- Features enable/disable options (cma, am) ---
-	if echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -q -- '--enable-cma'; then
+	if echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -qE -- '--enable-cma($| )'; then
 		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_CMA=ON"
-	elif echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -q -- '--disable-cma'; then
+	elif echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -qE -- '--disable-cma($| )'; then
 		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_CMA=OFF"
 	fi
 
-	if echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -q -- '--enable-am'; then
+	if echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -qE -- '--enable-am($| )'; then
 		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_AM=ON"
-	elif echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -q -- '--disable-am'; then
+	elif echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -qE -- '--disable-am($| )'; then
 		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_AM=OFF"
 	fi
 
@@ -2208,7 +2208,7 @@ else
 	fi
 
 	# --- Topology simulation ---
-	if echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -q -- '--enable-topology-simulation'; then
+	if echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -qE -- '--enable-topology-simulation($| )'; then
 		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_TOPOLOGY_SIMULATION=ON"
 	fi
 
@@ -2241,17 +2241,17 @@ else
 	fi
 
 	# --- Profiler ---
-	if echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -q -- '--enable-profiler'; then
+	if echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -qE -- '--enable-profiler($| )'; then
 		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_PROFILER=ON"
 	fi
 
 	# --- Debug messages ---
-	if echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -q -- '--enable-debug-messages'; then
+	if echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -qE -- '--enable-debug-messages($| )'; then
 		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_DEBUG_MESSAGES=ON"
 	fi
 
 	# --- Debug memory (ASAN) ---
-	if echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -q -- '--enable-debug-mem'; then
+	if echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -qE -- '--enable-debug-mem($| )'; then
 		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_DEBUG_MEM=ON"
 	fi
 
@@ -2271,7 +2271,7 @@ else
 	fi
 
 	# --- PMI1 prefix ---
-	if echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -q -- '--with-pmi1'; then
+	if echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -qE -- '--with-pmi1($| |=)'; then
 		# Extract PMI1 prefix if specified
 		local_pmi1_prefix=$(echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | grep -o -- '--with-pmi1=[^ ]*' | cut -d= -f2)
 		if test -n "${local_pmi1_prefix}"; then
