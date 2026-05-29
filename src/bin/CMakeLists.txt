@@ -1,6 +1,33 @@
 # bin/CMakeLists.txt
 # Installs compiler wrapper scripts and builds mpc_sets binary
 
+# Build *_LIBS strings for mpc_ldflags.in template
+set(OPA_LIBS "")
+foreach(_opa_dir ${OPA_LIBRARY_DIRS})
+    set(OPA_LIBS "${OPA_LIBS} -Wl,-rpath=${_opa_dir} -L${_opa_dir}")
+endforeach()
+foreach(_opa_lib ${OPA_LIBRARIES})
+    set(OPA_LIBS "${OPA_LIBS} -l${_opa_lib}")
+endforeach()
+
+set(HWLOC_LIBS "")
+foreach(_hwloc_dir ${HWLOC_LIBRARY_DIRS})
+    set(HWLOC_LIBS "${HWLOC_LIBS} -Wl,-rpath=${_hwloc_dir} -L${_hwloc_dir}")
+endforeach()
+foreach(_hwloc_lib ${HWLOC_LIBRARIES})
+    set(HWLOC_LIBS "${HWLOC_LIBS} -l${_hwloc_lib}")
+endforeach()
+
+set(ALLOC_LIBS "")
+if(MPCALLOC_FOUND)
+    foreach(_alloc_dir ${MPCALLOC_LIBRARY_DIRS})
+        set(ALLOC_LIBS "${ALLOC_LIBS} -Wl,-rpath=${_alloc_dir} -L${_alloc_dir}")
+    endforeach()
+    foreach(_alloc_lib ${MPCALLOC_LIBRARIES})
+        set(ALLOC_LIBS "${ALLOC_LIBS} -l${_alloc_lib}")
+    endforeach()
+endif()
+
 # Compiler wrapper scripts
 set(MPC_BIN_SCRIPTS
     mpc_cc
@@ -137,10 +164,6 @@ target_include_directories(mpc_print_config
 target_link_libraries(mpc_print_config PRIVATE
     -Wl,--start-group
     mpcconfig
-    mpcmpi
-    mpcomp
-    mpclowcomm
-    mpcthread
     mpcarch
     ${OPA_LIBRARIES}
     ${OFI_LIBRARIES}
@@ -148,6 +171,18 @@ target_link_libraries(mpc_print_config PRIVATE
     Threads::Threads
     -Wl,--end-group
 )
+if(MPC_ENABLE_THREADS)
+    target_link_libraries(mpc_print_config PRIVATE mpcthread)
+endif()
+if(MPC_ENABLE_LOWCOMM)
+    target_link_libraries(mpc_print_config PRIVATE mpclowcomm)
+endif()
+if(MPC_ENABLE_OPENMP)
+    target_link_libraries(mpc_print_config PRIVATE mpcomp)
+endif()
+if(MPC_ENABLE_MPI)
+    target_link_libraries(mpc_print_config PRIVATE mpcmpi)
+endif()
 if(MPCALLOC_FOUND)
     target_include_directories(mpc_print_config PRIVATE ${MPCALLOC_INCLUDE_DIRS})
     target_link_libraries(mpc_print_config PRIVATE ${MPCALLOC_LDFLAGS})
@@ -175,10 +210,7 @@ if(MPC_ENABLE_LOWCOMM)
     target_link_libraries(mpc_sets PRIVATE
         -Wl,--start-group
         mpcconfig
-        mpcmpi
-        mpcomp
         mpclowcomm
-        mpcthread
         mpcarch
         ${OPA_LIBRARIES}
         ${OFI_LIBRARIES}
@@ -186,6 +218,15 @@ if(MPC_ENABLE_LOWCOMM)
         Threads::Threads
         -Wl,--end-group
     )
+    if(MPC_ENABLE_THREADS)
+        target_link_libraries(mpc_sets PRIVATE mpcthread)
+    endif()
+    if(MPC_ENABLE_OPENMP)
+        target_link_libraries(mpc_sets PRIVATE mpcomp)
+    endif()
+    if(MPC_ENABLE_MPI)
+        target_link_libraries(mpc_sets PRIVATE mpcmpi)
+    endif()
 
     install(TARGETS mpc_sets
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}

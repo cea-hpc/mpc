@@ -202,10 +202,8 @@ target_sources(mpclowcomm PRIVATE
     $<TARGET_OBJECTS:mpccommon>
 )
 target_link_options(mpclowcomm PRIVATE ${OPA_LDFLAGS} ${HWLOC_LDFLAGS})
-if(ALLOC_LIBS)
-    string(STRIP "${ALLOC_LIBS}" _ALLOC_LIBS_CLEAN)
-    separate_arguments(_ALLOC_LIBS_LIST NATIVE_COMMAND "${_ALLOC_LIBS_CLEAN}")
-    target_link_libraries(mpclowcomm PRIVATE ${_ALLOC_LIBS_LIST})
+if(MPCALLOC_FOUND)
+    target_link_libraries(mpclowcomm PRIVATE ${ALLOC_LIBS_CMAKE})
 endif()
 
 if(MPC_LAUNCHER STREQUAL "PMIX")
