@@ -2074,8 +2074,6 @@ else
 	done
 	export PKG_CONFIG_PATH
 
-	checking "Configuring MPC with CMake"
-
 	#
 	# Build CMake options from installmpc variables
 	#
@@ -2291,8 +2289,17 @@ else
 		CMAKE_OPTS="$CMAKE_OPTS -DCMAKE_PREFIX_PATH=${PREFIX}"
 	fi
 
+	# Clean CMake cache so stale options don't persist across reruns
+	if test -f "${PROJECT_BUILD_DIR}/CMakeCache.txt"; then
+		checking "Removing stale CMake cache"
+		rm -f "${PROJECT_BUILD_DIR}/CMakeCache.txt"
+		rm -rf "${PROJECT_BUILD_DIR}/CMakeFiles"
+		ok
+	fi
+
 	# we want parameter expansion
 	# shellcheck disable=SC2086
+	checking "Configuring MPC with CMake"
 	wrap_output cmake -S "$SCRIPTPATH" -B "${PROJECT_BUILD_DIR}" $CMAKE_OPTS
 	ok
 
