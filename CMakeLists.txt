@@ -1068,6 +1068,10 @@ if(MPC_OPT_FLAGS)
     add_compile_options(${MPC_OPT_FLAGS})
 endif()
 
+# ------------------------------------------------------------------
+# CMake MPC MODULES setup
+# ------------------------------------------------------------------
+
 # CMake variables for #cmakedefine in mpc_config.h.in
 if(MPC_ENABLE_THREADS)
     set(MPC_THREAD_ENABLED yes)
@@ -1105,6 +1109,26 @@ else()
     set(MPC_MPIIO_ENABLED no)
 endif()
 
+# MPC_MODULE_LIST (for mpc_cflags script)
+set(MPC_MODULE_LIST "")
+if(MPC_ENABLE_THREADS)
+    set(MPC_MODULE_LIST "${MPC_MODULE_LIST} MPC_THREAD_ENABLED")
+endif()
+if(MPC_ENABLE_OPENMP)
+    set(MPC_MODULE_LIST "${MPC_MODULE_LIST} MPC_OPENMP_ENABLED")
+endif()
+if(MPC_ENABLE_LOWCOMM)
+    set(MPC_MODULE_LIST "${MPC_MODULE_LIST} MPC_LOWCOMM_ENABLED")
+endif()
+if(MPC_ENABLE_MPI)
+    set(MPC_MODULE_LIST "${MPC_MODULE_LIST} MPC_MPI_ENABLED")
+endif()
+if(MPC_ENABLE_MPIIO)
+    set(MPC_MODULE_LIST "${MPC_MODULE_LIST} MPC_MPIIO_ENABLED")
+endif()
+if(MPC_ENABLE_FORTRAN)
+    set(MPC_MODULE_LIST "${MPC_MODULE_LIST} MPC_FORTRAN_ENABLED")
+endif()
 
 # ------------------------------------------------------------------
 # Generate config headers
@@ -1130,27 +1154,6 @@ configure_file(
     "${CMAKE_CURRENT_BINARY_DIR}/src/include/mpc.h"
     @ONLY
 )
-
-# MPC_MODULE_LIST (for mpc_cflags script)
-set(MPC_MODULE_LIST "")
-if(MPC_ENABLE_THREADS)
-    set(MPC_MODULE_LIST "${MPC_MODULE_LIST} MPC_THREAD_ENABLED")
-endif()
-if(MPC_ENABLE_OPENMP)
-    set(MPC_MODULE_LIST "${MPC_MODULE_LIST} MPC_OPENMP_ENABLED")
-endif()
-if(MPC_ENABLE_LOWCOMM)
-    set(MPC_MODULE_LIST "${MPC_MODULE_LIST} MPC_LOWCOMM_ENABLED")
-endif()
-if(MPC_ENABLE_MPI)
-    set(MPC_MODULE_LIST "${MPC_MODULE_LIST} MPC_MPI_ENABLED")
-endif()
-if(MPC_ENABLE_MPIIO)
-    set(MPC_MODULE_LIST "${MPC_MODULE_LIST} MPC_MPIIO_ENABLED")
-endif()
-if(MPC_ENABLE_FORTRAN)
-    set(MPC_MODULE_LIST "${MPC_MODULE_LIST} MPC_FORTRAN_ENABLED")
-endif()
 
 # ------------------------------------------------------------------
 # Summary (setup)
