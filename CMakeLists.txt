@@ -204,16 +204,16 @@ if(MPC_ENABLE_FORTRAN)
     enable_language(Fortran)
 endif()
 
-# ------------------------------------------------------------------
+# ==================================================================
 # Find external dependencies
+# ==================================================================
+
+# ------------------------------------------------------------------
+# CMake modules and helper target
 # ------------------------------------------------------------------
 include(GNUInstallDirs)
 include(CheckIncludeFile)
 include(CheckLibraryExists)
-
-# Global mpc_config.h include: generated in build root, needed by all subprojects
-add_library(mpc_config_headers INTERFACE)
-target_include_directories(mpc_config_headers INTERFACE ${CMAKE_BINARY_DIR})
 include(CheckSymbolExists)
 include(CheckTypeSize)
 include(CheckFunctionExists)
@@ -221,8 +221,15 @@ include(CheckCSourceCompiles)
 include(CheckCSourceRuns)
 include(FindPackageHandleStandardArgs)
 
+# Global mpc_config.h include: generated in build root, needed by all subprojects
+add_library(mpc_config_headers INTERFACE)
+target_include_directories(mpc_config_headers INTERFACE ${CMAKE_BINARY_DIR})
+
 find_package(PkgConfig REQUIRED)
 
+# ------------------------------------------------------------------
+# Required dependencies
+# ------------------------------------------------------------------
 # hwloc (REQUIRED)
 pkg_check_modules(HWLOC REQUIRED hwloc>=2.0.0)
 
@@ -235,15 +242,14 @@ endif()
 # pthread
 find_package(Threads REQUIRED)
 
-# math library
+# Standard system libraries
 check_library_exists(m log "" HAVE_LIBM)
-
-# rt library
 check_library_exists(rt clock_gettime "" HAVE_LIBRT)
-
-# dl library
 check_library_exists(dl dlopen "" HAVE_LIBDL)
 
+# ------------------------------------------------------------------
+# Optional dependencies
+# ------------------------------------------------------------------
 # libffi (optional, for active messages)
 if(MPC_ENABLE_AM)
     pkg_check_modules(FFI libffi)
@@ -259,6 +265,25 @@ else()
     set(MPC_HAVE_AM NO)
 endif()
 
+# libvmem (optional)
+pkg_check_modules(VMEM libvmem)
+if(VMEM_FOUND)
+    set(MPC_HAVE_LIBVMEM YES)
+else()
+    set(MPC_HAVE_LIBVMEM NO)
+endif()
+
+# libunwind (optional)
+pkg_check_modules(UNW libunwind)
+if(UNW_FOUND)
+    set(MPC_HAVE_LIBUNWIND YES)
+else()
+    set(MPC_HAVE_LIBUNWIND NO)
+endif()
+
+# ------------------------------------------------------------------
+# Network drivers
+# ------------------------------------------------------------------
 # libfabric (optional) - AUTO matches autotools behavior: probe and enable if found
 if(MPC_ENABLE_OFI STREQUAL "OFF")
     set(OFI_DRIVER_ENABLED NO)
@@ -286,29 +311,18 @@ if(PORTALS_FOUND)
     list(APPEND MPC_NETWORK_LIST "portals4" "portals4_am")
 endif()
 
+# ------------------------------------------------------------------
 # ROMIO template variables (for mpcio.h.in)
+# ------------------------------------------------------------------
 set(DEFINE_HAVE_MPI_GREQUEST "#define HAVE_MPI_GREQUEST")
 set(DEFINE_MPI_OFFSET "/* MPI OFFSET is in mpi.h */")
 set(NEEDS_MPI_FINT "")
 set(HAVE_MPI_INFO "#define HAVE_MPI_INFO")
 set(HAVE_MPI_DARRAY_SUBARRAY "#define HAVE_MPI_DARRAY_SUBARRAY")
 
-# libvmem (optional)
-pkg_check_modules(VMEM libvmem)
-if(VMEM_FOUND)
-    set(MPC_HAVE_LIBVMEM YES)
-else()
-    set(MPC_HAVE_LIBVMEM NO)
-endif()
-
-# libunwind (optional)
-pkg_check_modules(UNW libunwind)
-if(UNW_FOUND)
-    set(MPC_HAVE_LIBUNWIND YES)
-else()
-    set(MPC_HAVE_LIBUNWIND NO)
-endif()
-
+# ------------------------------------------------------------------
+# GPU support
+# ------------------------------------------------------------------
 # CUDA (optional)
 if(MPC_ENABLE_CUDA)
     if(MPC_CUDA_PREFIX)
@@ -341,6 +355,9 @@ else()
     set(MPC_ROCM_ENABLED NO)
 endif()
 
+# ------------------------------------------------------------------
+# Launcher dependencies
+# ------------------------------------------------------------------
 # PMIx (optional, for launcher)
 if(MPC_LAUNCHER STREQUAL "PMIX")
     pkg_check_modules(PMIX REQUIRED pmix)
@@ -348,8 +365,12 @@ elseif(MPC_LAUNCHER STREQUAL "PMI1")
     pkg_check_modules(PMI REQUIRED pmi)
 endif()
 
-# ------------------------------------------------------------------
+# ==================================================================
 # Compiler checks
+# ==================================================================
+
+# ------------------------------------------------------------------
+# Header file checks
 # ------------------------------------------------------------------
 check_include_file(stdbool.h HAVE_STDBOOL_H)
 check_include_file(stdint.h HAVE_STDINT_H)
@@ -364,8 +385,95 @@ check_include_file(sys/vfs.h HAVE_SYS_VFS_H)
 check_include_file(sys/statvfs.h HAVE_SYS_STATVFS_H)
 check_include_file(sys/param.h HAVE_SYS_PARAM_H)
 check_include_file(sys/mount.h HAVE_SYS_MOUNT_H)
+
+# ------------------------------------------------------------------
+# Function checks - memory and string
+# ------------------------------------------------------------------
+check_function_exists(memcpy HAVE_MEMCPY)
+check_function_exists(memmove HAVE_MEMMOVE)
+check_function_exists(memset HAVE_MEMSET)
+check_function_exists(strcasecmp HAVE_STRCASECMP)
+check_function_exists(strchr HAVE_STRCHR)
+check_function_exists(strdup HAVE_STRDUP)
+check_function_exists(strerror HAVE_STRERROR)
+check_function_exists(strstr HAVE_STRSTR)
+check_function_exists(strtol HAVE_STRTOL)
+check_function_exists(snprintf HAVE_SNPRINTF)
+check_function_exists(vsnprintf HAVE_VSNPRINTF)
+
+# ------------------------------------------------------------------
+# Function checks - system and network
+# ------------------------------------------------------------------
+check_function_exists(gethostbyname HAVE_GETHOSTBYNAME)
+check_function_exists(gethostname HAVE_GETHOSTNAME)
+check_function_exists(gettimeofday HAVE_GETTIMEOFDAY)
+check_function_exists(uname HAVE_UNAME)
+check_function_exists(regcomp HAVE_REGCOMP)
+check_function_exists(socket HAVE_SOCKET)
+check_function_exists(connect HAVE_CONNECT)
+check_function_exists(accept HAVE_ACCEPT)
+check_function_exists(dup2 HAVE_DUP2)
+
+# ------------------------------------------------------------------
+# Function checks - memory management
+# ------------------------------------------------------------------
+check_function_exists(mmap HAVE_MMAP)
+check_function_exists(mremap HAVE_MREMAP)
+check_function_exists(munmap HAVE_MUNMAP)
+check_function_exists(posix_memalign HAVE_POSIX_MEMALIGN)
+check_function_exists(memalign HAVE_MEMALIGN)
+check_function_exists(malloc HAVE_MALLOC)
+check_function_exists(realloc HAVE_REALLOC)
+
+# ------------------------------------------------------------------
+# Function checks - environment and process
+# ------------------------------------------------------------------
+check_function_exists(setenv HAVE_SETENV)
+check_function_exists(getenv HAVE_GETENV)
+check_function_exists(fdatasync HAVE_FDATASYNC)
+check_function_exists(fork HAVE_FORK)
 check_function_exists(statfs HAVE_STATFS)
 
+# ------------------------------------------------------------------
+# Function checks - context switching
+# ------------------------------------------------------------------
+check_function_exists(makecontext HAVE_MAKECONTEXT)
+check_function_exists(setcontext HAVE_SETCONTEXT)
+check_function_exists(getcontext HAVE_GETCONTEXT)
+check_function_exists(swapcontext HAVE_SWAPCONTEXT)
+
+# ------------------------------------------------------------------
+# Function checks - pthreads
+# ------------------------------------------------------------------
+check_function_exists(pthread_yield HAVE_PTHREAD_YIELD)
+check_function_exists(pthread_atfork HAVE_PTHREAD_ATFORK)
+check_function_exists(pthread_cancel HAVE_PTHREAD_CANCEL)
+check_function_exists(pthread_create HAVE_PTHREAD_CREATE)
+check_function_exists(pthread_detach HAVE_PTHREAD_DETACH)
+check_function_exists(pthread_equal HAVE_PTHREAD_EQUAL)
+check_function_exists(pthread_exit HAVE_PTHREAD_EXIT)
+check_function_exists(pthread_getconcurrency HAVE_PTHREAD_GETCONCURRENCY)
+check_function_exists(pthread_getcpuclockid HAVE_PTHREAD_GETCPUCLOCKID)
+check_function_exists(pthread_getschedparam HAVE_PTHREAD_GETSCHEDPARAM)
+check_function_exists(pthread_getspecific HAVE_PTHREAD_GETSPECIFIC)
+check_function_exists(pthread_join HAVE_PTHREAD_JOIN)
+check_function_exists(pthread_key_create HAVE_PTHREAD_KEY_CREATE)
+check_function_exists(pthread_key_delete HAVE_PTHREAD_KEY_DELETE)
+check_function_exists(pthread_once HAVE_PTHREAD_ONCE)
+check_function_exists(pthread_self HAVE_PTHREAD_SELF)
+check_function_exists(pthread_setspecific HAVE_PTHREAD_SETSPECIFIC)
+check_function_exists(pthread_sigmask HAVE_PTHREAD_SIGMASK)
+check_function_exists(pthread_kill HAVE_PTHREAD_KILL)
+
+# ------------------------------------------------------------------
+# Function checks - scheduling
+# ------------------------------------------------------------------
+check_function_exists(sched_get_priority_max HAVE_SCHED_GET_PRIORITY_MAX)
+check_function_exists(sched_get_priority_min HAVE_SCHED_GET_PRIORITY_MIN)
+
+# ------------------------------------------------------------------
+# ROMIO statfs struct checks
+# ------------------------------------------------------------------
 # Check for struct statfs with f_type and f_fstypename (needed by ROMIO)
 set(_STATFS_INCLUDES "#include <sys/types.h>")
 if(HAVE_SYS_VFS_H)
@@ -413,70 +521,18 @@ int main() {
 }
 " ROMIO_HAVE_STRUCT_STATFS_WITH_F_FSTYPENAME)
 
-check_function_exists(memcpy HAVE_MEMCPY)
-check_function_exists(memmove HAVE_MEMMOVE)
-check_function_exists(memset HAVE_MEMSET)
-check_function_exists(strcasecmp HAVE_STRCASECMP)
-check_function_exists(strchr HAVE_STRCHR)
-check_function_exists(strdup HAVE_STRDUP)
-check_function_exists(strerror HAVE_STRERROR)
-check_function_exists(strstr HAVE_STRSTR)
-check_function_exists(strtol HAVE_STRTOL)
-check_function_exists(snprintf HAVE_SNPRINTF)
-check_function_exists(vsnprintf HAVE_VSNPRINTF)
-check_function_exists(gethostbyname HAVE_GETHOSTBYNAME)
-check_function_exists(gethostname HAVE_GETHOSTNAME)
-check_function_exists(gettimeofday HAVE_GETTIMEOFDAY)
-check_function_exists(mmap HAVE_MMAP)
-check_function_exists(mremap HAVE_MREMAP)
-check_function_exists(munmap HAVE_MUNMAP)
-check_function_exists(posix_memalign HAVE_POSIX_MEMALIGN)
-check_function_exists(memalign HAVE_MEMALIGN)
-check_function_exists(setenv HAVE_SETENV)
-check_function_exists(getenv HAVE_GETENV)
-check_function_exists(uname HAVE_UNAME)
-check_function_exists(regcomp HAVE_REGCOMP)
-check_function_exists(socket HAVE_SOCKET)
-check_function_exists(connect HAVE_CONNECT)
-check_function_exists(accept HAVE_ACCEPT)
-check_function_exists(dup2 HAVE_DUP2)
-check_function_exists(fdatasync HAVE_FDATASYNC)
-check_function_exists(fork HAVE_FORK)
-check_function_exists(malloc HAVE_MALLOC)
-check_function_exists(realloc HAVE_REALLOC)
-check_function_exists(makecontext HAVE_MAKECONTEXT)
-check_function_exists(setcontext HAVE_SETCONTEXT)
-check_function_exists(getcontext HAVE_GETCONTEXT)
-check_function_exists(swapcontext HAVE_SWAPCONTEXT)
-check_function_exists(pthread_yield HAVE_PTHREAD_YIELD)
-check_function_exists(pthread_atfork HAVE_PTHREAD_ATFORK)
-check_function_exists(pthread_cancel HAVE_PTHREAD_CANCEL)
-check_function_exists(pthread_create HAVE_PTHREAD_CREATE)
-check_function_exists(pthread_detach HAVE_PTHREAD_DETACH)
-check_function_exists(pthread_equal HAVE_PTHREAD_EQUAL)
-check_function_exists(pthread_exit HAVE_PTHREAD_EXIT)
-check_function_exists(pthread_getconcurrency HAVE_PTHREAD_GETCONCURRENCY)
-check_function_exists(pthread_getcpuclockid HAVE_PTHREAD_GETCPUCLOCKID)
-check_function_exists(pthread_getschedparam HAVE_PTHREAD_GETSCHEDPARAM)
-check_function_exists(pthread_getspecific HAVE_PTHREAD_GETSPECIFIC)
-check_function_exists(pthread_join HAVE_PTHREAD_JOIN)
-check_function_exists(pthread_key_create HAVE_PTHREAD_KEY_CREATE)
-check_function_exists(pthread_key_delete HAVE_PTHREAD_KEY_DELETE)
-check_function_exists(pthread_once HAVE_PTHREAD_ONCE)
-check_function_exists(pthread_self HAVE_PTHREAD_SELF)
-check_function_exists(pthread_setspecific HAVE_PTHREAD_SETSPECIFIC)
-check_function_exists(pthread_sigmask HAVE_PTHREAD_SIGMASK)
-check_function_exists(pthread_kill HAVE_PTHREAD_KILL)
-check_function_exists(sched_get_priority_max HAVE_SCHED_GET_PRIORITY_MAX)
-check_function_exists(sched_get_priority_min HAVE_SCHED_GET_PRIORITY_MIN)
-
-# Type sizes
+# ------------------------------------------------------------------
+# Type size checks - basic types
+# ------------------------------------------------------------------
 check_type_size("int" SIZEOF_INT LANGUAGE C)
 check_type_size("long" SIZEOF_LONG LANGUAGE C)
 check_type_size("size_t" SIZEOF_SIZE_T LANGUAGE C)
 check_type_size("ssize_t" SIZEOF_SSIZE_T LANGUAGE C)
 check_type_size("void*" SIZEOF_VOID_PTR LANGUAGE C)
 
+# ------------------------------------------------------------------
+# Type size checks - pthread types
+# ------------------------------------------------------------------
 if(HAVE_PTHREAD_H)
     set(CMAKE_REQUIRED_LIBRARIES Threads::Threads)
     set(CMAKE_REQUIRED_DEFINITIONS "-D_GNU_SOURCE")
@@ -500,6 +556,9 @@ if(HAVE_PTHREAD_H)
     unset(CMAKE_REQUIRED_LIBRARIES)
 endif()
 
+# ------------------------------------------------------------------
+# Type size checks - semaphore and signal types
+# ------------------------------------------------------------------
 if(HAVE_SEMAPHORE_H)
     set(CMAKE_REQUIRED_DEFINITIONS "-D_GNU_SOURCE")
     check_type_size("sem_t" SIZEOF_SEM_T LANGUAGE C)
@@ -520,8 +579,12 @@ if(NOT SIZEOF_PTHREAD_SPINLOCK_T)
     set(SIZEOF_PTHREAD_SPINLOCK_T 4 CACHE INTERNAL "Size of pthread_spinlock_t" FORCE)
 endif()
 
+# ==================================================================
+# Runtime constant extraction and feature detection
+# ==================================================================
+
 # ------------------------------------------------------------------
-# Runtime constant extraction via try_run
+# Helper: extract C preprocessor define values at runtime
 # ------------------------------------------------------------------
 function(mpc_extract_define HEADER DEFINE CMAKE_VAR)
     set(_TEST_SRC "
@@ -553,6 +616,9 @@ int main() {
     file(REMOVE "${CMAKE_CURRENT_BINARY_DIR}/define_test.c" "${CMAKE_CURRENT_BINARY_DIR}/define_val.out")
 endfunction()
 
+# ------------------------------------------------------------------
+# Runtime constants - signal
+# ------------------------------------------------------------------
 # NSIG / _NSIG
 mpc_extract_define("signal.h" "NSIG" MPC_CONFIG_NSIG)
 if(NOT MPC_CONFIG_NSIG OR MPC_CONFIG_NSIG STREQUAL "0")
@@ -562,45 +628,76 @@ if(NOT MPC_CONFIG_NSIG OR MPC_CONFIG_NSIG STREQUAL "0")
     endif()
 endif()
 
-# Pthread constants
+# ------------------------------------------------------------------
+# Runtime constants - pthreads
+# ------------------------------------------------------------------
+# Mutex types
 mpc_extract_define("pthread.h" "PTHREAD_MUTEX_NORMAL" MPC_CONFIG_PTHREAD_MUTEX_NORMAL)
 mpc_extract_define("pthread.h" "PTHREAD_MUTEX_RECURSIVE" MPC_CONFIG_PTHREAD_MUTEX_RECURSIVE)
 mpc_extract_define("pthread.h" "PTHREAD_MUTEX_ERRORCHECK" MPC_CONFIG_PTHREAD_MUTEX_ERRORCHECK)
 mpc_extract_define("pthread.h" "PTHREAD_MUTEX_DEFAULT" MPC_CONFIG_PTHREAD_MUTEX_DEFAULT)
+
+# Priority inheritance
 mpc_extract_define("pthread.h" "PTHREAD_PRIO_NONE" MPC_CONFIG_PTHREAD_PRIO_NONE)
 mpc_extract_define("pthread.h" "PTHREAD_PRIO_INHERIT" MPC_CONFIG_PTHREAD_PRIO_INHERIT)
 mpc_extract_define("pthread.h" "PTHREAD_PRIO_PROTECT" MPC_CONFIG_PTHREAD_PRIO_PROTECT)
+
+# Thread creation attributes
 mpc_extract_define("pthread.h" "PTHREAD_CREATE_JOINABLE" MPC_CONFIG_PTHREAD_CREATE_JOINABLE)
 mpc_extract_define("pthread.h" "PTHREAD_CREATE_DETACHED" MPC_CONFIG_PTHREAD_CREATE_DETACHED)
+
+# Scheduling attributes
 mpc_extract_define("pthread.h" "PTHREAD_INHERIT_SCHED" MPC_CONFIG_PTHREAD_INHERIT_SCHED)
 mpc_extract_define("pthread.h" "PTHREAD_EXPLICIT_SCHED" MPC_CONFIG_PTHREAD_EXPLICIT_SCHED)
 mpc_extract_define("pthread.h" "PTHREAD_SCOPE_SYSTEM" MPC_CONFIG_PTHREAD_SCOPE_SYSTEM)
 mpc_extract_define("pthread.h" "PTHREAD_SCOPE_PROCESS" MPC_CONFIG_PTHREAD_SCOPE_PROCESS)
+
+# Shared/private attributes
 mpc_extract_define("pthread.h" "PTHREAD_PROCESS_PRIVATE" MPC_CONFIG_PTHREAD_PROCESS_PRIVATE)
 mpc_extract_define("pthread.h" "PTHREAD_PROCESS_SHARED" MPC_CONFIG_PTHREAD_PROCESS_SHARED)
+
+# Cancellation
 mpc_extract_define("pthread.h" "PTHREAD_CANCEL_ENABLE" MPC_CONFIG_PTHREAD_CANCEL_ENABLE)
 mpc_extract_define("pthread.h" "PTHREAD_CANCEL_DISABLE" MPC_CONFIG_PTHREAD_CANCEL_DISABLE)
 mpc_extract_define("pthread.h" "PTHREAD_CANCEL_DEFERRED" MPC_CONFIG_PTHREAD_CANCEL_DEFERRED)
 mpc_extract_define("pthread.h" "PTHREAD_BARRIER_SERIAL_THREAD" MPC_CONFIG_PTHREAD_BARRIER_SERIAL_THREAD)
 mpc_extract_define("pthread.h" "PTHREAD_CANCEL_ASYNCHRONOUS" MPC_CONFIG_PTHREAD_CANCEL_ASYNCHRONOUS)
 mpc_extract_define("pthread.h" "PTHREAD_CANCELED" MPC_CONFIG_PTHREAD_CANCELED)
+
+# Thread keys limit
 mpc_extract_define("pthread.h" "PTHREAD_KEYS_MAX" MPC_THREAD_KEYS_MAX)
 if(NOT MPC_THREAD_KEYS_MAX OR MPC_THREAD_KEYS_MAX STREQUAL "0")
     set(MPC_THREAD_KEYS_MAX 1024)
 endif()
 
+# PTHREAD_STACK_MIN
+mpc_extract_define("pthread.h" "PTHREAD_STACK_MIN" MPC_CONFIG_PTHREAD_STACK_MIN)
+if(NOT MPC_CONFIG_PTHREAD_STACK_MIN OR MPC_CONFIG_PTHREAD_STACK_MIN STREQUAL "0")
+    mpc_extract_define("limits.h" "PTHREAD_STACK_MIN" MPC_CONFIG_PTHREAD_STACK_MIN)
+    if(NOT MPC_CONFIG_PTHREAD_STACK_MIN OR MPC_CONFIG_PTHREAD_STACK_MIN STREQUAL "0")
+        set(MPC_CONFIG_PTHREAD_STACK_MIN "8192")
+    endif()
+endif()
+
+# ------------------------------------------------------------------
+# Runtime constants - scheduling
+# ------------------------------------------------------------------
 mpc_extract_define("sched.h" "SCHED_OTHER" MPC_CONFIG_SCHED_OTHER)
 mpc_extract_define("sched.h" "SCHED_RR" MPC_CONFIG_SCHED_RR)
 mpc_extract_define("sched.h" "SCHED_FIFO" MPC_CONFIG_SCHED_FIFO)
 
-# SEM constants
+# ------------------------------------------------------------------
+# Runtime constants - semaphores
+# ------------------------------------------------------------------
 mpc_extract_define("semaphore.h" "SEM_VALUE_MAX" MPC_CONFIG_SEM_VALUE_MAX)
 if(NOT MPC_CONFIG_SEM_VALUE_MAX OR MPC_CONFIG_SEM_VALUE_MAX STREQUAL "0")
     set(MPC_CONFIG_SEM_VALUE_MAX "2147483647")
 endif()
 mpc_extract_define("semaphore.h" "SEM_FAILED" MPC_CONFIG_SEM_FAILED)
 
-# Compiler detection
+# ------------------------------------------------------------------
+# Compiler feature detection - compiler ID
+# ------------------------------------------------------------------
 check_c_source_compiles("
 #ifndef __GNUC__
 #error
@@ -615,6 +712,9 @@ check_c_source_compiles("
 int main() { return 0; }
 " MPC_COMPILER_IS_CLANG)
 
+# ------------------------------------------------------------------
+# Compiler feature detection - language features
+# ------------------------------------------------------------------
 # TLS support
 set(CMAKE_REQUIRED_FLAGS "")
 check_c_source_compiles("
@@ -640,6 +740,33 @@ int main() {
 " HAVE_PRAGMA_MESSAGE)
 set(CMAKE_C_FLAGS "${_OLD_CFLAGS}")
 
+# visibility attribute
+check_c_source_compiles("
+__attribute__((visibility(\"default\"))) int foo(void);
+int main() { return 0; }
+" HAVE_VISIBILITY)
+if(HAVE_VISIBILITY)
+    set(HAVE_VISIBILITY 1)
+else()
+    set(HAVE_VISIBILITY 0)
+endif()
+
+# __builtin_expect support
+check_c_source_compiles("
+int main() {
+    int x = 1;
+    return __builtin_expect(x, 0);
+}
+" HAVE_BUILTIN_EXPECT)
+if(HAVE_BUILTIN_EXPECT)
+    set(HAVE_BUILTIN_EXPECT 1)
+else()
+    set(HAVE_BUILTIN_EXPECT 0)
+endif()
+
+# ------------------------------------------------------------------
+# Compiler feature detection - macros and variables
+# ------------------------------------------------------------------
 # __func__ support
 check_c_source_compiles("
 #include <stdio.h>
@@ -661,17 +788,6 @@ else()
     message(FATAL_ERROR "Missing __STRING macro (GCC/Clang required)")
 endif()
 
-# visibility attribute
-check_c_source_compiles("
-__attribute__((visibility(\"default\"))) int foo(void);
-int main() { return 0; }
-" HAVE_VISIBILITY)
-if(HAVE_VISIBILITY)
-    set(HAVE_VISIBILITY 1)
-else()
-    set(HAVE_VISIBILITY 0)
-endif()
-
 # environ variable
 check_c_source_compiles("
 #include <stdlib.h>
@@ -679,29 +795,9 @@ extern char **environ;
 int main() { return (int)(long)environ; }
 " HAVE_ENVIRON_VAR)
 
-# __builtin_expect support
-check_c_source_compiles("
-int main() {
-    int x = 1;
-    return __builtin_expect(x, 0);
-}
-" HAVE_BUILTIN_EXPECT)
-if(HAVE_BUILTIN_EXPECT)
-    set(HAVE_BUILTIN_EXPECT 1)
-else()
-    set(HAVE_BUILTIN_EXPECT 0)
-endif()
-
-# PTHREAD_STACK_MIN
-mpc_extract_define("pthread.h" "PTHREAD_STACK_MIN" MPC_CONFIG_PTHREAD_STACK_MIN)
-if(NOT MPC_CONFIG_PTHREAD_STACK_MIN OR MPC_CONFIG_PTHREAD_STACK_MIN STREQUAL "0")
-    mpc_extract_define("limits.h" "PTHREAD_STACK_MIN" MPC_CONFIG_PTHREAD_STACK_MIN)
-    if(NOT MPC_CONFIG_PTHREAD_STACK_MIN OR MPC_CONFIG_PTHREAD_STACK_MIN STREQUAL "0")
-        set(MPC_CONFIG_PTHREAD_STACK_MIN "8192")
-    endif()
-endif()
-
-# Process mode / extls (matches autotools: default no, auto-enables if extls not found)
+# ------------------------------------------------------------------
+# Process mode and extls detection
+# ------------------------------------------------------------------
 option(MPC_ENABLE_PROCESS_MODE "Compile MPC in process mode (OFF=try extls first)" OFF)
 
 # Detect extls (autopriv) for TLS privatization
@@ -729,17 +825,9 @@ else()
     set(MPC_IN_PROCESS_MODE_INT 0)
 endif()
 
-# CMAKE_RT_LIBS and CMAKE_DL_LIBS
-set(CMAKE_RT_LIBS "")
-if(HAVE_LIBRT)
-    set(CMAKE_RT_LIBS rt)
-endif()
-set(CMAKE_DL_LIBS "")
-if(HAVE_LIBDL)
-    set(CMAKE_DL_LIBS dl)
-endif()
-
+# ------------------------------------------------------------------
 # Launcher program detection
+# ------------------------------------------------------------------
 set(MPC_LAUNCHER_PROGRAM "none")
 if(MPC_LAUNCHER STREQUAL "HYDRA")
     set(MPC_LAUNCHER_PROGRAM "HYDRA")
@@ -764,6 +852,9 @@ if(MPC_LAUNCHER STREQUAL "PMIX")
     endif()
 endif()
 
+# ------------------------------------------------------------------
+# Config header variables - paths and environment
+# ------------------------------------------------------------------
 # Prefix for configure_file() @prefix@ substitution (matches autoconf)
 set(prefix "${CMAKE_INSTALL_PREFIX}")
 
@@ -785,7 +876,34 @@ string(TIMESTAMP MPC_GENERATION_DATE "%s")
 set(PACKAGE_BUGREPORT "france@paratools.com")
 set(MPC_VERSION_STRING "${MPC_VERSION}${_MPC_VERSION_TAINT}")
 
-# Allocator (default: Standard)
+# ------------------------------------------------------------------
+# Config header variables - library flags
+# ------------------------------------------------------------------
+# CMAKE_RT_LIBS and CMAKE_DL_LIBS
+set(CMAKE_RT_LIBS "")
+if(HAVE_LIBRT)
+    set(CMAKE_RT_LIBS rt)
+endif()
+set(CMAKE_DL_LIBS "")
+if(HAVE_LIBDL)
+    set(CMAKE_DL_LIBS dl)
+endif()
+
+# HWLOC flags from pkg-config
+set(HWLOC_CFLAGS "${HWLOC_CFLAGS}")
+set(HWLOC_LIBS_CMAKE "${HWLOC_LIBRARIES}")
+
+# OPA flags from pkg-config
+set(OPA_CFLAGS "${OPA_CFLAGS}")
+set(OPA_LIBS_CMAKE "${OPA_LIBRARIES}")
+
+# Extls (privatization support)
+set(EXTLS_CFLAGS "")
+set(EXTLS_LIBS "")
+
+# ------------------------------------------------------------------
+# Config header variables - allocator
+# ------------------------------------------------------------------
 set(MPC_ALLOCATOR "Standard")
 set(ALLOC_CFLAGS "")
 if(MPC_ENABLE_MPCALLOC)
@@ -814,30 +932,9 @@ else()
     unset(MPC_Allocator)
 endif()
 
-# Extls (privatization support)
-set(EXTLS_CFLAGS "")
-set(EXTLS_LIBS "")
-
-# HWLOC flags from pkg-config
-set(HWLOC_CFLAGS "${HWLOC_CFLAGS}")
-set(HWLOC_LIBS_CMAKE "${HWLOC_LIBRARIES}")
-
-# OPA flags from pkg-config
-set(OPA_CFLAGS "${OPA_CFLAGS}")
-set(OPA_LIBS_CMAKE "${OPA_LIBRARIES}")
-
-# Compiler paths (from CMake)
-# CC, CXX, FC are set by CMake automatically
-
-# ASAN flags
-set(USING_ASAN "no")
-set(USING_ASAN_DYNAMIC "no")
-if(MPC_ENABLE_DEBUG_MEM)
-    set(USING_ASAN "yes")
-    set(USING_ASAN_DYNAMIC "yes")
-endif()
-
-# DMTCP
+# ------------------------------------------------------------------
+# Config header variables - DMTCP
+# ------------------------------------------------------------------
 if(MPC_ENABLE_DMTCP)
     pkg_check_modules(DMTCP dmtcp)
     if(DMTCP_FOUND)
@@ -850,18 +947,34 @@ else()
     set(MPC_HAVE_DMTCP "no")
 endif()
 
-# Profiler
+# ------------------------------------------------------------------
+# Config header variables - profiler
+# ------------------------------------------------------------------
 if(MPC_ENABLE_PROFILER)
     set(MPC_HAVE_PROFILER "yes")
 else()
     set(MPC_HAVE_PROFILER "no")
 endif()
 
+# ------------------------------------------------------------------
+# Config header variables - misc
+# ------------------------------------------------------------------
 # Hydra
 find_program(MPIEXEC_HYDRA mpiexec.hydra)
 
 # MPC_LINK_ARGS (empty for now, was computed by autotools)
 set(MPC_LINK_ARGS "")
+
+# Compiler paths (from CMake)
+# CC, CXX, FC are set by CMake automatically
+
+# ASAN flags
+set(USING_ASAN "no")
+set(USING_ASAN_DYNAMIC "no")
+if(MPC_ENABLE_DEBUG_MEM)
+    set(USING_ASAN "yes")
+    set(USING_ASAN_DYNAMIC "yes")
+endif()
 
 # Compiler variables for configure_file() @CC@, @CXX@, @FC@ substitution
 set(CC "${CMAKE_C_COMPILER}")
@@ -871,6 +984,10 @@ if(MPC_ENABLE_FORTRAN)
 else()
     set(FC "")
 endif()
+
+# ------------------------------------------------------------------
+# Fortran setup: -fallow-argument-mismatch check and symbol naming convention detection
+# ------------------------------------------------------------------
 
 # Fortran -fallow-argument-mismatch check (matches autotools)
 if(MPC_ENABLE_FORTRAN)
@@ -891,9 +1008,7 @@ else()
     set(FORTRAN_ARG_MISMATCH_ARG "")
 endif()
 
-# ------------------------------------------------------------------
 # Fortran symbol naming convention detection (matches autotools)
-# ------------------------------------------------------------------
 if(MPC_ENABLE_FORTRAN)
     file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/fortran_name_test.f90" "      subroutine fortran_name()\n      end subroutine\n")
     try_compile(FORTRAN_NAME_COMPILE
