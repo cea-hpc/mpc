@@ -26,12 +26,13 @@ target_include_directories(gen_constants PRIVATE
     ${CMAKE_SOURCE_DIR}/src/MPC_Topology/include
     ${CMAKE_SOURCE_DIR}/src/MPC_Launch/include
 )
-if(MPC_ENABLE_MPIIO)
+# TODO: should fix gen_constants.c so MPC_Fortran can build without MPC_IO headers
+#if(MPC_ENABLE_MPIIO)
     target_include_directories(gen_constants PRIVATE
         ${CMAKE_BINARY_DIR}/src/MPC_IO/include
         ${CMAKE_SOURCE_DIR}/src/MPC_IO/include
     )
-endif()
+#endif()
 target_link_libraries(gen_constants PRIVATE mpcconfig mpclowcomm mpcmpi)
 
 add_custom_command(
