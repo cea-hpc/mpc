@@ -897,10 +897,6 @@ set(HWLOC_LIBS_CMAKE "${HWLOC_LIBRARIES}")
 set(OPA_CFLAGS "${OPA_CFLAGS}")
 set(OPA_LIBS_CMAKE "${OPA_LIBRARIES}")
 
-# Extls (privatization support)
-set(EXTLS_CFLAGS "")
-set(EXTLS_LIBS "")
-
 # ------------------------------------------------------------------
 # Config header variables - allocator
 # ------------------------------------------------------------------
