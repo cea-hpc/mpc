@@ -68,7 +68,7 @@ project(MPC
 # Enable ASM language for architecture-specific assembly sources
 enable_language(ASM)
 
-
+# Fortran is optionnal activated after optionnal dependencies enforcement
 
 # ------------------------------------------------------------------
 # Default build type
@@ -1150,66 +1150,44 @@ if(MPC_ENABLE_FORTRAN)
 endif()
 
 # ------------------------------------------------------------------
-# Summary
+# Summary (setup)
 # ------------------------------------------------------------------
-# MPC_CONFIG_RESULT (for mpc_status script)
 set(MPC_CONFIG_RESULT "
-########## MPC Configuration Script ##########
-Installation prefix: ${CMAKE_INSTALL_PREFIX}
-Version: ${MPC_VERSION}
-Architecture: ${MPC_TARGET_ARCHITECTURE}
-Threads: ${MPC_ENABLE_THREADS}
-OpenMP: ${MPC_ENABLE_OPENMP}
-Lowcomm: ${MPC_ENABLE_LOWCOMM}
-MPI: ${MPC_ENABLE_MPI}
-Fortran: ${MPC_ENABLE_FORTRAN}
-MPI-IO: ${MPC_ENABLE_MPIIO}
-Profiler: ${MPC_ENABLE_PROFILER}
-CUDA: ${MPC_CUDA_ENABLED}
-ROCM: ${MPC_ROCM_ENABLED}
-Active Messages: ${MPC_HAVE_AM}
-Launcher: ${MPC_LAUNCHER}
-Networks: ${MPC_NETWORK_LIST}
-CMA: ${MPC_ENABLE_CMA}
-Topology simulation: ${MPC_ENABLE_TOPOLOGY_SIMULATION}
-CK: ${MPC_ENABLE_CK}
-MPC Allocator: ${MPC_ENABLE_MPCALLOC}
-DMTCP: ${MPC_HAVE_DMTCP}
-Optimizations: ${MPC_OPT_FLAGS}
+########## MPC Configuration Summary ##########
+  Install prefix : ${CMAKE_INSTALL_PREFIX}
+  Architecture   : ${MPC_TARGET_ARCHITECTURE}
+  Threads        : ${MPC_ENABLE_THREADS}
+  OpenMP         : ${MPC_ENABLE_OPENMP}
+  Lowcomm        : ${MPC_ENABLE_LOWCOMM}
+  MPI            : ${MPC_ENABLE_MPI}
+  Fortran        : ${MPC_ENABLE_FORTRAN}
+  MPI-IO         : ${MPC_ENABLE_MPIIO}
+  Profiler       : ${MPC_ENABLE_PROFILER}
+  CUDA           : ${MPC_CUDA_ENABLED}
+  ROCM           : ${MPC_ROCM_ENABLED}
+  Active Messages: ${MPC_HAVE_AM}
+  Launcher       : ${MPC_LAUNCHER}
+  Networks       : ${MPC_NETWORK_LIST}
+  CMA            : ${MPC_ENABLE_CMA}
+  Topo sim       : ${MPC_ENABLE_TOPOLOGY_SIMULATION}
+  CK             : ${MPC_ENABLE_CK}
+  MPC Alloc      : ${MPC_ENABLE_MPCALLOC}
+  DMTCP          : ${MPC_HAVE_DMTCP}
+  Optimizations  : ${MPC_OPT_FLAGS}
 #############################################
 ")
-
-# ------------------------------------------------------------------
-# Summary
-# ------------------------------------------------------------------
-message(STATUS "")
-message(STATUS "MPC ${MPC_VERSION} Configuration Summary")
-message(STATUS "  Install prefix : ${CMAKE_INSTALL_PREFIX}")
-message(STATUS "  Architecture   : ${MPC_TARGET_ARCHITECTURE}")
-message(STATUS "  Context switch : ${MPC_ARCH_CONTEXT_SWITCH}")
-message(STATUS "  Microtask arch : ${MPC_ARCH_MICROTASK_ARCH}")
-message(STATUS "  Threads        : ${MPC_ENABLE_THREADS}")
-message(STATUS "  OpenMP         : ${MPC_ENABLE_OPENMP}")
-message(STATUS "  Lowcomm        : ${MPC_ENABLE_LOWCOMM}")
-message(STATUS "  MPI            : ${MPC_ENABLE_MPI}")
-message(STATUS "  Fortran        : ${MPC_ENABLE_FORTRAN}")
-message(STATUS "  MPI-IO         : ${MPC_ENABLE_MPIIO}")
-message(STATUS "  Profiler       : ${MPC_ENABLE_PROFILER}")
-message(STATUS "  CUDA           : ${MPC_CUDA_ENABLED}")
-message(STATUS "  ROCM           : ${MPC_ROCM_ENABLED}")
-message(STATUS "  Active Messages: ${MPC_HAVE_AM}")
-message(STATUS "  Launcher       : ${MPC_LAUNCHER}")
-message(STATUS "  Networks       : ${MPC_NETWORK_LIST}")
-message(STATUS "  CMA            : ${MPC_ENABLE_CMA}")
-message(STATUS "  Topo sim       : ${MPC_ENABLE_TOPOLOGY_SIMULATION}")
-message(STATUS "  CK             : ${MPC_ENABLE_CK}")
-message(STATUS "  MPC Alloc      : ${MPC_ENABLE_MPCALLOC}")
-message(STATUS "  DMTCP          : ${MPC_HAVE_DMTCP}")
-message(STATUS "  Optimizations  : ${MPC_OPT_FLAGS}")
-message(STATUS "")
 
 # ------------------------------------------------------------------
 # Subdirectories
 # ------------------------------------------------------------------
 add_subdirectory(src)
 add_subdirectory(pkgconfig)
+
+# ------------------------------------------------------------------
+# Summary (display)
+# ------------------------------------------------------------------
+message(STATUS "")
+message(STATUS "MPC ${MPC_VERSION} Configuration Summary")
+message("${MPC_CONFIG_RESULT}")
+message(STATUS "")
+
