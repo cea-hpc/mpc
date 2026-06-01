@@ -68,7 +68,7 @@ project(MPC
 # Enable ASM language for architecture-specific assembly sources
 enable_language(ASM)
 
-# Fortran is optionnal activated after optionnal dependencies enforcement
+# Fortran is optionally activated after optional dependencies enforcement
 
 # ------------------------------------------------------------------
 # Default build type

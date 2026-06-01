@@ -203,5 +203,3 @@ endif()
 set(CMAKE_EXTRA_INCLUDE_FILES "signal.h")
 check_type_size("sigset_t" SIZEOF_SIGSET_T LANGUAGE C)
 unset(CMAKE_EXTRA_INCLUDE_FILES)
-
-
