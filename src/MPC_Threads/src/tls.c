@@ -45,7 +45,7 @@
 #include <utlist.h>
 #include <dlfcn.h>
 
-#if MPC_USE_EXTLS
+#ifdef MPC_USE_EXTLS
 #include <extls.h>
 #include <extls_dynamic.h>
 #endif
@@ -103,7 +103,7 @@ int sctk_call_dynamic_initializers()
  */
 int MPC_Config_Status_MPC_HAVE_OPTION_ETLS_OPTIMIZED()
 {
-#if MPC_USE_EXTLS
+#ifdef MPC_USE_EXTLS
 		return 1;
 #else
 		return 0;

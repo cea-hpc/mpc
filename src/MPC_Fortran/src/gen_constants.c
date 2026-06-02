@@ -19,6 +19,7 @@
 /* #   - PERACHE Marc marc.perache@cea.fr                                 # */
 /* #                                                                      # */
 /* ######################################################################## */
+#include <mpc_config.h>
 #include <stdio.h>
 #include <assert.h>
 #include <mpc_lowcomm.h>

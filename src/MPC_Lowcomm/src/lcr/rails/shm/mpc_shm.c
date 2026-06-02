@@ -373,7 +373,7 @@ static inline struct _mpc_shm_cell * _mpc_shm_list_head_try_get(struct _mpc_shm_
  * CROSS MEMORY ATTACH *
  ***********************/
 
- #if MPC_USE_CMA
+ #ifdef MPC_USE_CMA
 
 int __do_cma_read(pid_t pid, void *src, void *dest, size_t size)
 {
@@ -762,7 +762,7 @@ int mpc_shm_get_zcopy(_mpc_lowcomm_endpoint_t *ep,
                       lcr_completion_t *comp)
 {
 	UNUSED(local_key);
- #if MPC_USE_CMA
+ #ifdef MPC_USE_CMA
 		int cma = mpc_shm_has_cma_support(&ep->rail->network.shm.storage);
 
 		if (cma)
@@ -783,7 +783,7 @@ int mpc_shm_put_zcopy(_mpc_lowcomm_endpoint_t *ep,
                       lcr_completion_t *comp)
 {
 	    UNUSED(local_key);
- #if MPC_USE_CMA
+ #ifdef MPC_USE_CMA
 		int cma = mpc_shm_has_cma_support(&ep->rail->network.shm.storage);
 
 		if (cma)
@@ -1082,7 +1082,7 @@ int _mpc_shm_storage_init(struct _mpc_shm_storage *storage)
 	}
 
 	mpc_launch_pmi_barrier();
-	#if MPC_USE_CMA
+	#ifdef MPC_USE_CMA
 		mpc_shm_has_cma_support(storage);
 	#endif
 
@@ -1243,7 +1243,7 @@ int mpc_shm_iface_is_reachable(sctk_rail_info_t *rail, uint64_t uid)
 int mpc_shm_get_attr(__UNUSED__ sctk_rail_info_t *rail,
                      lcr_rail_attr_t *attr)
 {
-#if MPC_USE_CMA
+#ifdef MPC_USE_CMA
 		attr->iface.cap.am.max_iovecs = sysconf(_SC_IOV_MAX);
 #else
 		attr->iface.cap.am.max_iovecs = 1;

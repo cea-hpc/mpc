@@ -122,7 +122,6 @@ endif()
 target_compile_definitions(mpccommon
     PRIVATE
         ${MPC_COMPILE_DEFINITIONS}
-        HAVE_BUILTIN_EXPECT=1
 )
 
 

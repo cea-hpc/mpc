@@ -1283,7 +1283,6 @@ You may track issued commands using the "-v" flag.
   --disable-fortran                       : Disable fortran
   --disable-hydra                         : Disable Hydra
   --disable-romio                         : Disable ROMIO MPI-IO support
-  --enable-ck                             : Enable Concurrency-Kit (spack only)
   --{enable,disable}-gdb                  : Enable/Disable gdb
   --{enable,disable}-tbb                  : Enable/Disable TBB
 
@@ -1356,8 +1355,6 @@ OFI_PREFIX=""
 MPC_DMTCP_PREFIX="disabled"
 MPC_GDB_PREFIX='disabled'
 TBB_PREFIX="disabled"
-# Concurrency Kit disabled by default
-CK_PREFIX="disabled"
 
 # Empty means mpc-compiler-additions's default
 [ "x$GCC_VERSION" = "x" ] && GCC_VERSION=""
@@ -1561,12 +1558,6 @@ do
 		--with-bxi=*)
 			extractParamValue 'BXI_PREFIX' 'with-bxi' "$arg"
 			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --with-bxi=${BXI_PREFIX}"
-			;;
-		#################### Concurrency Kit #################
-		--enable-ck)
-			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --enable-ck"
-            CK_PREFIX="enabled"
-			add_cmake_opt "-DMPC_ENABLE_CK=ON"
 			;;
 		--ofi=*)
 			extractAndAddPackageOption 'OFI_BUILD_PARAMETERS' 'ofi=' "$arg"
@@ -1884,12 +1875,6 @@ if test "x${DEP_FOUND}" = "xno"; then
 	build_configure_based_package "openpa" "$(package_version "openpa")" "$OPENPA_BUILD_PARAMETERS"
 fi
 
-find_in_prefix_or_use_spack "concurrency-kit" "$(package_version "concurrency-kit")" "${CK_PREFIX}"
-
-# Concurrency Kit only available through spack
-if test "x${DEP_FOUND}" = "xno" && test "x$CK_PREFIX" != "xdisabled"; then
-	build_configure_based_package "concurrency-kit" "$(package_version "concurrency-kit")" "$ck_build_parameters"
-fi
 
 find_in_prefix_or_use_spack "hwloc" "$(package_version "hwloc")" "${HWLOC_PREFIX}" "-libudev"
 

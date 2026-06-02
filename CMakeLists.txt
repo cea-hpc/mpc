@@ -33,6 +33,9 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/.git")
         endif()
     endif()
 endif()
+set(MPC_VERSION_MAJOR "${_MPC_VERSION_MAJOR}")
+set(MPC_VERSION_MINOR "${_MPC_VERSION_MINOR}")
+set(MPC_VERSION_PATCH "${_MPC_VERSION_PATCH}")
 set(MPC_VERSION_PRE "${_MPC_VERSION_TAINT}")
 
 # ------------------------------------------------------------------
@@ -139,7 +142,6 @@ option(MPC_ENABLE_DEBUG_MEM "Compile with ASAN" OFF)
 option(MPC_ENABLE_OPTIM "Enable standard optimizations (-O3)" ON)
 option(MPC_ENABLE_OPT_NATIVE "Build for current architecture (-march=native)" OFF)
 option(MPC_ENABLE_TOPOLOGY_SIMULATION "Enable topology simulation" OFF)
-option(MPC_ENABLE_CK "Enable Concurrency-Kit" OFF)
 option(MPC_ENABLE_MPCALLOC "Enable MPC allocator" ON)
 set(MPC_ENABLE_OFI "AUTO" CACHE STRING "Enable libfabric/OFI: AUTO (auto-detect), ON, or OFF")
 set_property(CACHE MPC_ENABLE_OFI PROPERTY STRINGS AUTO ON OFF)
@@ -261,7 +263,6 @@ set(MPC_CONFIG_RESULT "
   Networks       : ${MPC_NETWORK_LIST}
   CMA            : ${MPC_ENABLE_CMA}
   Topo sim       : ${MPC_ENABLE_TOPOLOGY_SIMULATION}
-  CK             : ${MPC_ENABLE_CK}
   MPC Alloc      : ${MPC_ENABLE_MPCALLOC}
   DMTCP          : ${MPC_HAVE_DMTCP}
   Compil Flags   : ${MPC_OPT_FLAGS_STR}

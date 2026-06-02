@@ -47,7 +47,7 @@
 
 
 #include "mpc_config.h"
-#if MPC_MPI
+#ifdef MPC_MPI
 #include "mpc_mpi.h"
 #endif
 
@@ -57,7 +57,7 @@
 	static int
 	__getpid(void)
 	{
-#if MPC_MPI
+#ifdef MPC_MPI
 			int mpi_context;
 			MPI_Initialized(&mpi_context);
 			if (mpi_context)
