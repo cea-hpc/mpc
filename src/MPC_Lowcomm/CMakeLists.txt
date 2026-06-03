@@ -224,6 +224,10 @@ if(PORTALS4_DRIVER_ENABLED)
     target_link_libraries(mpclowcomm PRIVATE ${PORTALS_LIBRARIES})
 endif()
 
+if(MPC_ENABLE_THREADS)
+    target_link_libraries(mpclowcomm PRIVATE mpcthread)
+endif()
+
 if(PORTALS4_DRIVER_ENABLED)
     target_compile_definitions(mpclowcomm PRIVATE PORTALS4_DRIVER_ENABLED=1)
 endif()

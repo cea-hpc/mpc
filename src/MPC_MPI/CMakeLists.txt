@@ -130,6 +130,10 @@ target_link_libraries(mpcmpi
         Threads::Threads
 )
 
+if(MPC_ENABLE_THREADS)
+    target_link_libraries(mpcmpi PRIVATE mpcthread)
+endif()
+
 # Set output name
 set_target_properties(mpcmpi PROPERTIES
     OUTPUT_NAME mpcmpi

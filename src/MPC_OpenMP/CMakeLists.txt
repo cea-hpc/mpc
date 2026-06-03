@@ -98,6 +98,10 @@ elseif(MPC_LAUNCHER STREQUAL "PMI1")
     target_link_libraries(mpcomp PRIVATE ${PMI_LINK_LIBRARIES})
 endif()
 
+if(MPC_ENABLE_THREADS)
+    target_link_libraries(mpcomp PRIVATE mpcthread)
+endif()
+
 if(VMEM_FOUND)
     target_link_libraries(mpcomp PRIVATE ${VMEM_LIBRARIES})
 endif()

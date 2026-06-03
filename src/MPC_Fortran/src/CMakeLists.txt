@@ -10,7 +10,7 @@ set(CMAKE_Fortran_MODULE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
 # ==================================================================
 # Step 1: Build gen_constants executable and generate constants.json
 # ==================================================================
-add_executable(gen_constants gen_constants.c)
+add_executable(gen_constants gen_constants.c gen_constants_stub.c)
 target_include_directories(gen_constants PRIVATE
     ${CMAKE_BINARY_DIR}
     ${CMAKE_SOURCE_DIR}/src/MPC_Lowcomm/include
@@ -33,6 +33,12 @@ target_include_directories(gen_constants PRIVATE
     )
 #endif()
 target_link_libraries(gen_constants PRIVATE mpcconfig mpclowcomm mpcmpi)
+if(MPC_ENABLE_THREADS)
+    target_link_libraries(gen_constants PRIVATE mpcthread)
+endif()
+if(MPC_ENABLE_OPENMP)
+    target_link_libraries(gen_constants PRIVATE mpcomp)
+endif()
 
 add_custom_command(
     OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/constants.json"
