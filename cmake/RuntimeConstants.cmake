@@ -138,14 +138,14 @@ int main() { return 0; }
 set(CMAKE_REQUIRED_FLAGS "")
 check_c_source_compiles("
 int main() {
-    _Thread_local int x = 0;
+    static _Thread_local int x = 0;
     return x;
 }
 " TLS_SUPPORT)
-if(NOT TLS_SUPPORT)
-    set(TLS_SUPPORT 0)
-else()
+if(TLS_SUPPORT)
     set(TLS_SUPPORT 1)
+else()
+    set(TLS_SUPPORT 0)
 endif()
 
 # pragma message support

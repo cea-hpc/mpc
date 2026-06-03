@@ -96,7 +96,7 @@
 #define MPC_CONFIG_SEM_FAILED @MPC_CONFIG_SEM_FAILED@
 
 /* TLS support */
-#define TLS_SUPPORT @TLS_SUPPORT@
+#cmakedefine TLS_SUPPORT
 
 /* Compiler features */
 #cmakedefine HAVE_PRAGMA_MESSAGE
