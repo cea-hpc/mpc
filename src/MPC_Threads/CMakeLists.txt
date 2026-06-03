@@ -103,9 +103,9 @@ if(MPCALLOC_FOUND)
 endif()
 
 if(MPC_LAUNCHER STREQUAL "PMIX")
-    target_link_libraries(mpcthread PRIVATE ${PMIX_LIBRARIES})
+    target_link_libraries(mpcthread PRIVATE ${PMIX_LINK_LIBRARIES})
 elseif(MPC_LAUNCHER STREQUAL "PMI1")
-    target_link_libraries(mpcthread PRIVATE ${PMI_LIBRARIES})
+    target_link_libraries(mpcthread PRIVATE ${PMI_LINK_LIBRARIES})
 endif()
 
 if(MPC_CUDA_ENABLED)

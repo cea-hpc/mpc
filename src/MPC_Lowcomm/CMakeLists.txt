@@ -207,9 +207,9 @@ if(MPCALLOC_FOUND)
 endif()
 
 if(MPC_LAUNCHER STREQUAL "PMIX")
-    target_link_libraries(mpclowcomm PRIVATE ${PMIX_LIBRARIES})
+    target_link_libraries(mpclowcomm PRIVATE ${PMIX_LINK_LIBRARIES})
 elseif(MPC_LAUNCHER STREQUAL "PMI1")
-    target_link_libraries(mpclowcomm PRIVATE ${PMI_LIBRARIES})
+    target_link_libraries(mpclowcomm PRIVATE ${PMI_LINK_LIBRARIES})
 endif()
 
 if(FFI_FOUND AND MPC_HAVE_AM)

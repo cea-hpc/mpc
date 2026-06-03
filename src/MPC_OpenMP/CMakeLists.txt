@@ -93,9 +93,9 @@ if(MPCALLOC_FOUND)
 endif()
 
 if(MPC_LAUNCHER STREQUAL "PMIX")
-    target_link_libraries(mpcomp PRIVATE ${PMIX_LIBRARIES})
+    target_link_libraries(mpcomp PRIVATE ${PMIX_LINK_LIBRARIES})
 elseif(MPC_LAUNCHER STREQUAL "PMI1")
-    target_link_libraries(mpcomp PRIVATE ${PMI_LIBRARIES})
+    target_link_libraries(mpcomp PRIVATE ${PMI_LINK_LIBRARIES})
 endif()
 
 if(VMEM_FOUND)

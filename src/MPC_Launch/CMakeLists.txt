@@ -77,10 +77,10 @@ target_link_libraries(mpclaunch
 
 if(MPC_LAUNCHER STREQUAL "PMIX")
     target_include_directories(mpclaunch PRIVATE ${PMIX_INCLUDE_DIRS})
-    target_link_libraries(mpclaunch PRIVATE ${PMIX_LIBRARIES})
+    target_link_libraries(mpclaunch PRIVATE ${PMIX_LINK_LIBRARIES})
 elseif(MPC_LAUNCHER STREQUAL "PMI1")
     target_include_directories(mpclaunch PRIVATE ${PMI_INCLUDE_DIRS})
-    target_link_libraries(mpclaunch PRIVATE ${PMI_LIBRARIES})
+    target_link_libraries(mpclaunch PRIVATE ${PMI_LINK_LIBRARIES})
 endif()
 
 if(MPC_LAUNCHER STREQUAL "HYDRA")
