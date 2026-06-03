@@ -23,7 +23,7 @@ variables:
   # pcvs-benchmarks path
   GL_PCVS_BENCHMARKS_PATH: '$CI_BUILDS_DIR/$CI_PIPELINE_ID/pcvs-benchmarks'
   # Installation option used by all configuration
-  GL_INSTALL_COMMON_OPTS: --relwithdebinfo -j32
+  GL_INSTALL_COMMON_OPTS: --cmake --relwithdebinfo -j32
   # Default pipeline name for the workflow
   GL_PIPELINE_NAME: 'Manually launched on $CI_COMMIT_BRANCH'
   # Enable the extended CI testings
