@@ -6,8 +6,6 @@ add_subdirectory(romio)
 # libmpcio shared library
 add_library(mpcio SHARED mpl.c mpir_ext.c)
 
-target_compile_definitions(mpcio PRIVATE ${MPC_COMPILE_DEFINITIONS})
-
 target_include_directories(mpcio PRIVATE
     ${CMAKE_BINARY_DIR}
     ${CMAKE_SOURCE_DIR}/src/MPC_Common/include

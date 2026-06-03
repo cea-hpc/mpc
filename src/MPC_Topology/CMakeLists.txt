@@ -47,10 +47,4 @@ target_link_libraries(mpctopology
         ${OPA_LDFLAGS}
 )
 
-# Compile definitions
-target_compile_definitions(mpctopology
-    PRIVATE
-        ${MPC_COMPILE_DEFINITIONS}
-)
-
 # Headers are noinst (internal only, not installed)

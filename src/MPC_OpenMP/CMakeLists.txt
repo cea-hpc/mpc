@@ -102,12 +102,6 @@ if(VMEM_FOUND)
     target_link_libraries(mpcomp PRIVATE ${VMEM_LIBRARIES})
 endif()
 
-# Compile definitions
-target_compile_definitions(mpcomp
-    PRIVATE
-        ${MPC_COMPILE_DEFINITIONS}
-)
-
 # Set output name & link flags
 set_target_properties(mpcomp PROPERTIES
     OUTPUT_NAME mpcomp

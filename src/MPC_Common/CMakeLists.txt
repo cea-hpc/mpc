@@ -118,14 +118,6 @@ if(UNW_FOUND)
     target_link_libraries(mpccommon PRIVATE ${UNW_LIBRARIES})
 endif()
 
-# Compile definitions
-target_compile_definitions(mpccommon
-    PRIVATE
-        ${MPC_COMPILE_DEFINITIONS}
-)
-
-
-
 # Install public headers
 install(FILES
     "${CMAKE_CURRENT_BINARY_DIR}/include/mpc_common_types.h"

@@ -276,8 +276,6 @@ endif()
 add_library(romio OBJECT ${ROMIO_ALL_SOURCES})
 set_target_properties(romio PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
-target_compile_definitions(romio PRIVATE ${MPC_COMPILE_DEFINITIONS})
-
 target_compile_options(romio PRIVATE -include limits.h)
 
 target_include_directories(romio PRIVATE
@@ -316,7 +314,7 @@ set(PROMIO_ALL_SOURCES
 add_library(promio OBJECT ${PROMIO_ALL_SOURCES})
 set_target_properties(promio PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
-target_compile_definitions(promio PRIVATE MPIO_BUILD_PROFILING ${MPC_COMPILE_DEFINITIONS})
+target_compile_definitions(promio PRIVATE MPIO_BUILD_PROFILING)
 target_compile_options(promio PRIVATE -include limits.h)
 
 target_include_directories(promio PRIVATE

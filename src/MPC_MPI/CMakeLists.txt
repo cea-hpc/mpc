@@ -130,12 +130,6 @@ target_link_libraries(mpcmpi
         Threads::Threads
 )
 
-# Compile definitions
-target_compile_definitions(mpcmpi
-    PRIVATE
-        ${MPC_COMPILE_DEFINITIONS}
-)
-
 # Set output name
 set_target_properties(mpcmpi PROPERTIES
     OUTPUT_NAME mpcmpi

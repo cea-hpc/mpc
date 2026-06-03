@@ -3,93 +3,6 @@
 # ==================================================================
 
 # ------------------------------------------------------------------
-# Global compile definitions
-# ------------------------------------------------------------------
-set(MPC_COMPILE_DEFINITIONS "")
-
-if(MPC_ENABLE_THREADS)
-    set(MPC_Threads 1)
-    list(APPEND MPC_COMPILE_DEFINITIONS HAVE_MPC_THREAD=1)
-    set(HAVE_MPC_THREAD 1)
-else()
-    set(MPC_Threads 0)
-    list(APPEND MPC_COMPILE_DEFINITIONS HAVE_MPC_THREAD=0)
-    set(HAVE_MPC_THREAD 0)
-endif()
-if(MPC_ENABLE_OPENMP)
-    set(MPC_OpenMP 1)
-else()
-    set(MPC_OpenMP 0)
-endif()
-if(MPC_ENABLE_LOWCOMM)
-    set(MPC_Lowcomm 1)
-else()
-    set(MPC_Lowcomm 0)
-endif()
-
-if(MPC_ENABLE_FORTRAN)
-    set(MPC_FORTRAN 1)
-else()
-    set(MPC_FORTRAN 0)
-endif()
-
-if(MPC_ENABLE_PROFILER)
-    set(MPC_Profiler 1)
-else()
-    set(MPC_Profiler 0)
-endif()
-if(MPC_CUDA_ENABLED)
-    set(MPC_USE_CUDA 1)
-else()
-    set(MPC_USE_CUDA 0)
-endif()
-if(MPC_ROCM_ENABLED)
-    set(MPC_USE_ROCM 1)
-else()
-    set(MPC_USE_ROCM 0)
-endif()
-
-
-
-if(PORTALS4_DRIVER_ENABLED)
-    set(MPC_USE_PORTALS 1)
-endif()
-
-if(MPC_ENABLE_CMA AND HAVE_UIO_H)
-    set(MPC_USE_CMA 1)
-endif()
-
-if(MPC_HAVE_DMTCP)
-    set(MPC_USE_DMTCP 1)
-endif()
-
-# PTHREAD_STACK_MIN (not in autotools mpc_config.h.in)
-list(APPEND MPC_COMPILE_DEFINITIONS "MPC_CONFIG_PTHREAD_STACK_MIN=${MPC_CONFIG_PTHREAD_STACK_MIN}")
-
-# MPC_ARCH_DETECTED_FUNCTION (not in autotools mpc_config.h.in)
-list(APPEND MPC_COMPILE_DEFINITIONS "MPC_ARCH_DETECTED_FUNCTION=${MPC_ARCH_DETECTED_FUNCTION}")
-
-# MPC_ARCH_DETECTED_STRING (not in autotools mpc_config.h.in)
-list(APPEND MPC_COMPILE_DEFINITIONS "MPC_ARCH_DETECTED_STRING=${MPC_ARCH_DETECTED_STRING}")
-
-# Launcher defines (set CMake variables for #cmakedefine in mpc_config.h.in)
-if(MPC_LAUNCHER STREQUAL "PMIX")
-    set(MPC_USE_PMIX 1)
-elseif(MPC_LAUNCHER STREQUAL "PMI1")
-    set(MPC_USE_PMI1 1)
-elseif(MPC_LAUNCHER STREQUAL "HYDRA")
-    set(MPC_USE_HYDRA 1)
-    set(USE_PMI_PORT 1)
-endif()
-
-# KMP arch defines
-if(MPC_ARCH_MICROTASK_ARCH STREQUAL "x86_64")
-    set(KMP_ARCH_X86_64 1)
-elseif(MPC_ARCH_MICROTASK_ARCH STREQUAL "x86")
-    set(KMP_ARCH_X86 1)
-endif()
-
-# ------------------------------------------------------------------
 # Compiler flags (applied globally to all targets)
 # ------------------------------------------------------------------
 
@@ -127,20 +40,28 @@ endif()
 # CMake variables for #cmakedefine in mpc_config.h.in
 if(MPC_ENABLE_THREADS)
     set(MPC_THREAD_ENABLED yes)
+    set(HAVE_MPC_THREAD 1)
+    set(MPC_Threads 1)
 else()
     set(MPC_THREAD_ENABLED no)
+    set(HAVE_MPC_THREAD 0)
+    set(MPC_Threads 0)
 endif()
 
 if(MPC_ENABLE_OPENMP)
     set(MPC_OPENMP_ENABLED yes)
+    set(MPC_OpenMP 1)
 else()
     set(MPC_OPENMP_ENABLED no)
+    set(MPC_OpenMP 0)
 endif()
 
 if(MPC_ENABLE_LOWCOMM)
     set(MPC_LOWCOMM_ENABLED yes)
+    set(MPC_Lowcomm 1)
 else()
     set(MPC_LOWCOMM_ENABLED no)
+    set(MPC_Lowcomm 0)
 endif()
 
 if(MPC_ENABLE_MPI)
@@ -153,8 +74,10 @@ endif()
 
 if(MPC_ENABLE_FORTRAN)
     set(MPC_FORTRAN_ENABLED yes)
+    set(MPC_FORTRAN 1)
 else()
     set(MPC_FORTRAN_ENABLED no)
+    set(MPC_FORTRAN 0)
 endif()
 
 if(MPC_ENABLE_MPIIO)
@@ -163,6 +86,37 @@ if(MPC_ENABLE_MPIIO)
 else()
     set(MPC_MPIIO_ENABLED no)
     set(MPC_MPIIO 0)
+endif()
+
+if(MPC_ENABLE_PROFILER)
+    set(MPC_Profiler 1)
+else()
+    set(MPC_Profiler 0)
+endif()
+
+if(MPC_CUDA_ENABLED)
+    set(MPC_USE_CUDA 1)
+else()
+    set(MPC_USE_CUDA 0)
+endif()
+
+if(MPC_ROCM_ENABLED)
+    set(MPC_USE_ROCM 1)
+else()
+    set(MPC_USE_ROCM 0)
+endif()
+
+# Libraries
+if(MPC_ENABLE_CMA AND HAVE_UIO_H)
+    set(MPC_USE_CMA 1)
+endif()
+
+if(PORTALS4_DRIVER_ENABLED)
+    set(MPC_USE_PORTALS 1)
+endif()
+
+if(MPC_HAVE_DMTCP)
+    set(MPC_USE_DMTCP 1)
 endif()
 
 # MPC_MODULE_LIST (for mpc_cflags script)
@@ -185,3 +139,25 @@ endif()
 if(MPC_ENABLE_FORTRAN)
     set(MPC_MODULE_LIST "${MPC_MODULE_LIST} MPC_FORTRAN_ENABLED")
 endif()
+
+# ------------------------------------------------------------------
+# Launcher & Arch Defines
+# ------------------------------------------------------------------
+
+# Launcher defines (set CMake variables for #cmakedefine in mpc_config.h.in)
+if(MPC_LAUNCHER STREQUAL "PMIX")
+    set(MPC_USE_PMIX 1)
+elseif(MPC_LAUNCHER STREQUAL "PMI1")
+    set(MPC_USE_PMI1 1)
+elseif(MPC_LAUNCHER STREQUAL "HYDRA")
+    set(MPC_USE_HYDRA 1)
+    set(USE_PMI_PORT 1)
+endif()
+
+# KMP arch defines
+if(MPC_ARCH_MICROTASK_ARCH STREQUAL "x86_64")
+    set(KMP_ARCH_X86_64 1)
+elseif(MPC_ARCH_MICROTASK_ARCH STREQUAL "x86")
+    set(KMP_ARCH_X86 1)
+endif()
+

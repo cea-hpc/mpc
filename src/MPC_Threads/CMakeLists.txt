@@ -112,12 +112,6 @@ if(MPC_CUDA_ENABLED)
     target_link_libraries(mpcthread PRIVATE CUDA::cuda_driver)
 endif()
 
-# Compile definitions
-target_compile_definitions(mpcthread
-    PRIVATE
-        ${MPC_COMPILE_DEFINITIONS}
-)
-
 # Set output name
 set_target_properties(mpcthread PROPERTIES
     OUTPUT_NAME mpcthread

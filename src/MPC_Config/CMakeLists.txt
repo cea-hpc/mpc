@@ -32,12 +32,6 @@ target_link_libraries(mpcconfig
         ${CMAKE_DL_LIBS}
 )
 
-# Compile definitions
-target_compile_definitions(mpcconfig
-    PRIVATE
-        ${MPC_COMPILE_DEFINITIONS}
-)
-
 # Set output name to match autotools
 set_target_properties(mpcconfig PROPERTIES
     OUTPUT_NAME mpcconfig

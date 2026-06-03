@@ -151,7 +151,6 @@ endforeach()
 
 # mpc_print_config binary
 add_executable(mpc_print_config ${CMAKE_SOURCE_DIR}/src/MPC_Config/src/print_config.c)
-target_compile_definitions(mpc_print_config PRIVATE ${MPC_COMPILE_DEFINITIONS})
 target_include_directories(mpc_print_config
     PRIVATE
         ${CMAKE_SOURCE_DIR}/src/MPC_Config/include
@@ -194,7 +193,6 @@ install(TARGETS mpc_print_config
 # mpc_sets binary (conditional)
 if(MPC_ENABLE_LOWCOMM)
     add_executable(mpc_sets mpc_sets.c)
-    target_compile_definitions(mpc_sets PRIVATE ${MPC_COMPILE_DEFINITIONS})
 
     target_include_directories(mpc_sets
         PRIVATE

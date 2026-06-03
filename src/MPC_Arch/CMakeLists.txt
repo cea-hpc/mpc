@@ -55,12 +55,6 @@ target_link_libraries(mpcarch
         ${OPA_LDFLAGS}
 )
 
-# Compile definitions
-target_compile_definitions(mpcarch
-    PRIVATE
-        ${MPC_COMPILE_DEFINITIONS}
-)
-
 # Set output name to match autotools
 set_target_properties(mpcarch PROPERTIES
     OUTPUT_NAME mpcarch

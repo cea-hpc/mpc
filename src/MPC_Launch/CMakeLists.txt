@@ -83,12 +83,6 @@ elseif(MPC_LAUNCHER STREQUAL "PMI1")
     target_link_libraries(mpclaunch PRIVATE ${PMI_LIBRARIES})
 endif()
 
-# Compile definitions
-target_compile_definitions(mpclaunch
-    PRIVATE
-        ${MPC_COMPILE_DEFINITIONS}
-)
-
 if(MPC_LAUNCHER STREQUAL "HYDRA")
     target_compile_definitions(mpclaunch PRIVATE HYDRA_LAUNCHER_ENABLED=1)
 endif()

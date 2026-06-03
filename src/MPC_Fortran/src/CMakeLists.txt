@@ -11,7 +11,6 @@ set(CMAKE_Fortran_MODULE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
 # Step 1: Build gen_constants executable and generate constants.json
 # ==================================================================
 add_executable(gen_constants gen_constants.c)
-target_compile_definitions(gen_constants PRIVATE ${MPC_COMPILE_DEFINITIONS})
 target_include_directories(gen_constants PRIVATE
     ${CMAKE_BINARY_DIR}
     ${CMAKE_SOURCE_DIR}/src/MPC_Lowcomm/include
@@ -148,8 +147,6 @@ add_library(mpcfortran SHARED
     mpc_fortran_helpers.c
     omp.f90
 )
-
-target_compile_definitions(mpcfortran PRIVATE ${MPC_COMPILE_DEFINITIONS})
 
 target_include_directories(mpcfortran PRIVATE
     ${CMAKE_BINARY_DIR}
