@@ -103,6 +103,7 @@
 #cmakedefine01 HAVE_VISIBILITY
 #cmakedefine HAVE_ENVIRON_VAR
 #cmakedefine MPC_IN_PROCESS_MODE
+
 /* Module features */
 #cmakedefine MPC_Threads
 #cmakedefine MPC_OpenMP
@@ -110,6 +111,9 @@
 #cmakedefine MPC_MPI
 #cmakedefine MPC_FORTRAN
 #cmakedefine MPC_FORTRAN_ENABLED
+#cmakedefine FORTRANDOUBLEUNDERSCORE
+#cmakedefine FORTRANUNDERSCORE
+#cmakedefine FORTRANCAPS
 #cmakedefine MPC_MPIIO
 #cmakedefine MPC_Profiler
 #cmakedefine MPC_USE_CUDA
@@ -126,9 +130,6 @@
 #cmakedefine MPC_USE_DMTCP
 #cmakedefine MPC_USE_EXTLS
 #cmakedefine MPC_Allocator
-#cmakedefine FORTRANDOUBLEUNDERSCORE
-#cmakedefine FORTRANUNDERSCORE
-#cmakedefine FORTRANCAPS
 #cmakedefine MPC_USE_PMIX
 #cmakedefine MPC_USE_PMI1
 #cmakedefine MPC_USE_HYDRA
