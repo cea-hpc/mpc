@@ -41,6 +41,7 @@ check_function_exists(statfs HAVE_STATFS)
 # ------------------------------------------------------------------
 # Function checks - pthreads
 # ------------------------------------------------------------------
+set(CMAKE_REQUIRED_LIBRARIES Threads::Threads)
 check_function_exists(pthread_atfork HAVE_PTHREAD_ATFORK)
 check_function_exists(pthread_cancel HAVE_PTHREAD_CANCEL)
 check_function_exists(pthread_create HAVE_PTHREAD_CREATE)
@@ -49,6 +50,7 @@ check_function_exists(pthread_getconcurrency HAVE_PTHREAD_GETCONCURRENCY)
 check_function_exists(pthread_once HAVE_PTHREAD_ONCE)
 check_function_exists(pthread_sigmask HAVE_PTHREAD_SIGMASK)
 check_function_exists(pthread_kill HAVE_PTHREAD_KILL)
+unset(CMAKE_REQUIRED_LIBRARIES)
 
 # ------------------------------------------------------------------
 # ROMIO statfs struct checks
