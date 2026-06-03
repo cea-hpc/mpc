@@ -135,7 +135,6 @@
 #cmakedefine USE_PMI_PORT
 #cmakedefine01 KMP_ARCH_X86_64
 #cmakedefine01 KMP_ARCH_X86
-#cmakedefine NDEBUG
 
 /* Launcher */
 #define MPC_LAUNCHER "@MPC_LAUNCHER@"

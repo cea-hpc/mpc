@@ -22,7 +22,7 @@ if(MPC_LAUNCHER STREQUAL "HYDRA")
         src/hydra_client/simple_pmi.c
         src/hydra_client/simple_pmiutil.c
         PROPERTIES
-        COMPILE_DEFINITIONS "HAVE_STDLIB_H=1;HAVE_UNISTD_H=1;HAVE_SYS_SOCKET_H=1;HAVE_STRING_H=1;HAVE_STRINGS_H=1"
+        COMPILE_DEFINITIONS "HAVE_STDLIB_H=1;HAVE_UNISTD_H=1;HAVE_SYS_SOCKET_H=1"
     )
 endif()
 
