@@ -161,27 +161,19 @@ target_include_directories(mpc_print_config
         ${CMAKE_BINARY_DIR}
 )
 target_link_libraries(mpc_print_config PRIVATE
-    -Wl,--start-group
     mpcconfig
     mpcarch
     ${OPA_LIBRARIES}
     ${OFI_LIBRARIES}
     ${CMAKE_RT_LIBS}
     Threads::Threads
-    -Wl,--end-group
+    -Wl,--no-as-needed
+    mpcmpi
+    mpclowcomm
+    mpcomp
+    mpcthread
+    -Wl,--as-needed
 )
-if(MPC_ENABLE_THREADS)
-    target_link_libraries(mpc_print_config PRIVATE mpcthread)
-endif()
-if(MPC_ENABLE_LOWCOMM)
-    target_link_libraries(mpc_print_config PRIVATE mpclowcomm)
-endif()
-if(MPC_ENABLE_OPENMP)
-    target_link_libraries(mpc_print_config PRIVATE mpcomp)
-endif()
-if(MPC_ENABLE_MPI)
-    target_link_libraries(mpc_print_config PRIVATE mpcmpi)
-endif()
 if(MPCALLOC_FOUND)
     target_include_directories(mpc_print_config PRIVATE ${MPCALLOC_INCLUDE_DIRS})
     target_link_libraries(mpc_print_config PRIVATE ${MPCALLOC_LDFLAGS})
@@ -206,25 +198,19 @@ if(MPC_ENABLE_LOWCOMM)
     )
 
     target_link_libraries(mpc_sets PRIVATE
-        -Wl,--start-group
         mpcconfig
         mpclowcomm
         mpcarch
+        -Wl,--no-as-needed
+        mpcmpi
+        mpcomp
+        mpcthread
+        -Wl,--as-needed
         ${OPA_LIBRARIES}
         ${OFI_LIBRARIES}
         ${CMAKE_RT_LIBS}
         Threads::Threads
-        -Wl,--end-group
     )
-    if(MPC_ENABLE_THREADS)
-        target_link_libraries(mpc_sets PRIVATE mpcthread)
-    endif()
-    if(MPC_ENABLE_OPENMP)
-        target_link_libraries(mpc_sets PRIVATE mpcomp)
-    endif()
-    if(MPC_ENABLE_MPI)
-        target_link_libraries(mpc_sets PRIVATE mpcmpi)
-    endif()
 
     install(TARGETS mpc_sets
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
