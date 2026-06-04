@@ -127,8 +127,15 @@ target_link_libraries(mpcmpi
         mpclowcomm
     PRIVATE
         ${CMAKE_RT_LIBS}
+        ${CMAKE_DL_LIBS}
+        m
         Threads::Threads
 )
+
+if(MPCALLOC_FOUND)
+    target_link_directories(mpcmpi PRIVATE ${MPCALLOC_LIBRARY_DIRS})
+    target_link_libraries(mpcmpi PRIVATE ${ALLOC_LIBS_CMAKE})
+endif()
 
 if(MPC_ENABLE_THREADS)
     target_link_libraries(mpcmpi PRIVATE mpcthread)
