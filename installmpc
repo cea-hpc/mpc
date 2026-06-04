@@ -2159,7 +2159,7 @@ else
 
 	# --- Compiler (mpc-compiler-additions / autopriv) ---
 	if test "${MPC_COMP_ADD_PREFIX}" != "disabled"; then
-		CMAKE_OPTS="$CMAKE_OPTS -DCMAKE_C_COMPILER=$(command -v apcc) -DCMAKE_CXX_COMPILER=$(command -v ap++) -DCMAKE_FC_COMPILER=$(command -v apfortran)"
+		CMAKE_OPTS="$CMAKE_OPTS -DCMAKE_C_COMPILER=$(command -v apcc) -DCMAKE_CXX_COMPILER=$(command -v ap++) -DCMAKE_Fortran_COMPILER=$(command -v apfortran)"
 		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_PROCESS_MODE=OFF"
 	else
 		# No mpc-compiler-additions: let CMake try extls first, fall back to process mode (matches autotools)
