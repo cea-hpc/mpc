@@ -223,9 +223,11 @@ option(MPC_ENABLE_PROCESS_MODE "Compile MPC in process mode (OFF=try extls first
 pkg_check_modules(EXTLS autopriv)
 if(EXTLS_FOUND)
     set(HAVE_EXTLS YES)
+    set(MPC_USE_EXTLS YES)
     set(EXTLS_CFLAGS "${EXTLS_CFLAGS}")
 else()
     set(HAVE_EXTLS NO)
+    unset(MPC_USE_EXTLS)
     set(EXTLS_CFLAGS "")
 endif()
 
