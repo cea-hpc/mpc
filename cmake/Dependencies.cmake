@@ -76,18 +76,18 @@ endif()
 # ------------------------------------------------------------------
 # Network drivers
 # ------------------------------------------------------------------
+set(MPC_NETWORK_LIST "tcp shm")
+
 # libfabric (optional) - AUTO matches autotools behavior: probe and enable if found
 if(MPC_ENABLE_OFI STREQUAL "OFF")
     set(OFI_DRIVER_ENABLED NO)
-    set(MPC_NETWORK_LIST "tcp shm")
 else()
     pkg_check_modules(OFI libfabric)
     if(OFI_FOUND)
         set(OFI_DRIVER_ENABLED YES)
-        set(MPC_NETWORK_LIST "tcp shm ofi")
+        list(APPEND MPC_NETWORK_LIST "ofi")
     else()
         set(OFI_DRIVER_ENABLED NO)
-        set(MPC_NETWORK_LIST "tcp shm")
         if(MPC_ENABLE_OFI STREQUAL "ON")
             message(FATAL_ERROR "libfabric requested but not found")
         else()
@@ -96,8 +96,8 @@ else()
     endif()
 endif()
 
-# Portals4 (optional)
-pkg_check_modules(PORTALS portals4)
+# Portals (optional)
+pkg_check_modules(PORTALS portals)
 if(PORTALS_FOUND)
     set(PORTALS4_DRIVER_ENABLED YES)
     list(APPEND MPC_NETWORK_LIST "portals4" "portals4_am")
