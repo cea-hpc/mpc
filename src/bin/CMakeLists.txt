@@ -28,6 +28,16 @@ if(MPCALLOC_FOUND)
     endforeach()
 endif()
 
+set(EXTLS_LIBS "")
+if(HAVE_EXTLS)
+    foreach(_extls_dir ${EXTLS_LIBRARY_DIRS})
+        set(EXTLS_LIBS "${EXTLS_LIBS} -Wl,-rpath=${_extls_dir} -L${_extls_dir}")
+    endforeach()
+    foreach(_extls_lib ${EXTLS_LIBRARIES})
+        set(EXTLS_LIBS "${EXTLS_LIBS} -l${_extls_lib}")
+    endforeach()
+endif()
+
 # Compiler wrapper scripts
 set(MPC_BIN_SCRIPTS
     mpc_cc
