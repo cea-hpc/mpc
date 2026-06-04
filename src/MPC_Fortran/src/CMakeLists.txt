@@ -181,7 +181,74 @@ set_target_properties(mpcfortran PROPERTIES
 )
 
 # ==================================================================
-# Step 6: Install library and Fortran module files
+# Step 6: Build privatized libmpcfortran_priv (when autopriv is available)
+# ==================================================================
+if(HAVE_EXTLS)
+    # Generate .priv versions of the source files (same content, different names to avoid .mod conflicts)
+    add_custom_command(
+        OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/mpi08_module_priv.f90"
+        COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BINARY_DIR}/mpi08_module.f90" "${CMAKE_CURRENT_BINARY_DIR}/mpi08_module_priv.f90"
+        DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/mpi08_module.f90" mpcfortran
+    )
+
+    add_custom_command(
+        OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/mpi_module_priv.f90"
+        COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BINARY_DIR}/mpi_module.f90" "${CMAKE_CURRENT_BINARY_DIR}/mpi_module_priv.f90"
+        DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/mpi_module.f90" mpcfortran
+    )
+
+    add_custom_command(
+        OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/omp_priv.f90"
+        COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_SOURCE_DIR}/omp.f90" "${CMAKE_CURRENT_BINARY_DIR}/omp_priv.f90"
+        DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/omp.f90" mpcfortran
+    )
+
+    add_library(mpcfortran_priv SHARED
+        "${CMAKE_CURRENT_BINARY_DIR}/mpi08_module_priv.f90"
+        "${CMAKE_CURRENT_BINARY_DIR}/mpi_module_priv.f90"
+        mpc_fortran.c
+        mpc_fortran_helpers.c
+        "${CMAKE_CURRENT_BINARY_DIR}/omp_priv.f90"
+    )
+
+    target_compile_options(mpcfortran_priv PRIVATE -fmpc-privatize)
+
+    target_include_directories(mpcfortran_priv PRIVATE
+        ${CMAKE_BINARY_DIR}
+        ${CMAKE_SOURCE_DIR}/src/MPC_Lowcomm/include
+        ${CMAKE_SOURCE_DIR}/src/include
+        ${CMAKE_BINARY_DIR}/src/include
+        ${CMAKE_SOURCE_DIR}/src/MPC_IO/include
+        ${CMAKE_BINARY_DIR}/src/MPC_IO/include
+        ${CMAKE_SOURCE_DIR}/src/MPC_MPI/include
+        ${CMAKE_SOURCE_DIR}/src/MPC_Common/include
+        ${CMAKE_BINARY_DIR}/src/MPC_Common/include
+        ${CMAKE_SOURCE_DIR}/src/MPC_Arch/include
+        ${CMAKE_BINARY_DIR}/src/MPC_Arch/include
+        ${CMAKE_CURRENT_BINARY_DIR}
+    )
+
+    target_link_libraries(mpcfortran_priv PRIVATE mpcmpi)
+    if(MPC_ENABLE_MPIIO)
+        target_link_libraries(mpcfortran_priv PRIVATE mpcio)
+    endif()
+
+    set_target_properties(mpcfortran_priv PROPERTIES
+        VERSION ${MPC_VERSION}
+        SOVERSION ${MPC_VERSION_MAJOR}
+        POSITION_INDEPENDENT_CODE ON
+    )
+
+    # Force sequential build: priv target depends on non-priv to avoid .mod file conflicts
+    add_dependencies(mpcfortran_priv mpcfortran)
+
+    install(TARGETS mpcfortran_priv
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    )
+endif()
+
+# ==================================================================
+# Step 7: Install library and Fortran module files
 # ==================================================================
 install(TARGETS mpcfortran
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
