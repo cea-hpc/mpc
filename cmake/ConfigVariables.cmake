@@ -20,7 +20,7 @@ set(CONFIGURE_CPATH "$ENV{CPATH}")
 set(CONFIGURE_LIBRARY_PATH "$ENV{LIBRARY_PATH}")
 
 # Package info
-set(PACKAGE_BUGREPORT "france@paratools.com")
+set(PACKAGE_BUGREPORT "https://github.com/cea-hpc/mpc/issues")
 set(MPC_VERSION_STRING "${MPC_VERSION}${_MPC_VERSION_TAINT}")
 
 # ------------------------------------------------------------------
