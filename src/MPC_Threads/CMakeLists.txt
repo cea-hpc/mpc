@@ -89,7 +89,7 @@ target_link_libraries(mpcthread
         ${CMAKE_DL_LIBS}
         ${CMAKE_RT_LIBS}
         ${OPA_LIBRARIES}
-        ${HWLOC_LIBS_CMAKE}
+        ${HWLOC_LIBRARIES}
         Threads::Threads
 )
 target_sources(mpcthread PRIVATE

@@ -39,14 +39,6 @@ if(HAVE_LIBDL)
     set(CMAKE_DL_LIBS dl)
 endif()
 
-# HWLOC flags from pkg-config
-set(HWLOC_CFLAGS "${HWLOC_CFLAGS}")
-set(HWLOC_LIBS_CMAKE "${HWLOC_LIBRARIES}")
-
-# OPA flags from pkg-config
-set(OPA_CFLAGS "${OPA_CFLAGS}")
-set(OPA_LIBS_CMAKE "${OPA_LIBRARIES}")
-
 # ------------------------------------------------------------------
 # Allocator
 # ------------------------------------------------------------------
