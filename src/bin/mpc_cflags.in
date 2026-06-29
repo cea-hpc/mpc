@@ -29,7 +29,6 @@
 MPC_INSTALL_PREFIX="@prefix@"
 MPC_SHARE_DIR="@PKG_DATADIR@"
 MPC_INCLUDEDIR="@PKG_INCDIR@"
-MPC_GENERATION_DATE="@MPC_GENERATION_DATE@"
 
 #
 # Default compiler environment
@@ -173,9 +172,6 @@ for arg in "$@" ; do
 		;;
 	-cxx|-cpp)
 		print_var "CXX" "$CXX"
-		;;
-	-t)
-		print_var "MPC_GENERATION_DATE" "$MPC_GENERATION_DATE"
 		;;
 	-f|--cflags)
 		print_var "CFLAGS" "$FLAGS"
