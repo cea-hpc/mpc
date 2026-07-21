@@ -22,7 +22,7 @@
 
 #include "mpc_lowcomm_msg.h"
 #include "mpc_lowcomm_workshare.h"
-#include "mpc_thread_accessor.h"
+#include <mpc_common_rank.h>
 #include <sctk_alloc.h>
 #include "lowcomm_request.h"
 #include <mpc_common_progress.h>

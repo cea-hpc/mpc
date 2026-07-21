@@ -28,7 +28,7 @@
 
 
 #include "lowcomm_request.h"
-#include "mpc_thread_accessor.h"
+#include <mpc_common_rank.h>
 
 lcp_context_h lcp_ctx_loc  = NULL;
 lcp_manager_h lcp_mngr_loc = NULL;
