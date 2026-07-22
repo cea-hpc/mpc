@@ -29,7 +29,7 @@
 #include "communicator.h"
 #include "lowcomm.h"
 #include "mpc_lowcomm_communicator.h"
-
+#include <mpc_common_debug.h>
 #ifdef MPC_Threads
 
 	/* This is needed to rewrite pthread primitives

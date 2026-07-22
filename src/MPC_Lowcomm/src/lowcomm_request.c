@@ -20,24 +20,25 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
+#include "lowcomm_request.h"
 #include "mpc_lowcomm_msg.h"
 #include "mpc_lowcomm_workshare.h"
+#include <mpc_common_debug.h>
+#include <mpc_common_progress.h>
 #include <mpc_common_rank.h>
 #include <sctk_alloc.h>
-#include "lowcomm_request.h"
-#include <mpc_common_progress.h>
-
 
 mpc_lowcomm_request_t __request_null;
 
-mpc_lowcomm_request_t * mpc_lowcomm_request_null(void)
+mpc_lowcomm_request_t *mpc_lowcomm_request_null(void)
 {
 	return &__request_null;
 }
 
 struct mpi_request_info mpi_req_info = { 0 };
 
-int mpc_lowcomm_pass_mpi_request_info(size_t request_size, void (*request_init_func)(void *))
+int mpc_lowcomm_pass_mpi_request_info(size_t request_size,
+                                      void (*request_init_func)(void *))
 {
 	mpi_req_info.size = request_size;
 	mpi_req_info.request_init_func = request_init_func;
@@ -45,7 +46,8 @@ int mpc_lowcomm_pass_mpi_request_info(size_t request_size, void (*request_init_f
 	return MPC_LOWCOMM_SUCCESS;
 }
 
-int _mpc_lowcomm_request_send_complete(int status, void *request, size_t length)
+int _mpc_lowcomm_request_send_complete(int status, void *request,
+                                       size_t length)
 {
 	mpc_lowcomm_request_t *req = (mpc_lowcomm_request_t *)request;
 
@@ -88,15 +90,13 @@ void mpc_lowcomm_request_initialize(void *request)
 /*Message pack creation                                             */
 /********************************************************************/
 
-
 void mpc_lowcomm_request_pack(void *request, void *buffer)
 {
 	mpc_lowcomm_request_t *req = (mpc_lowcomm_request_t *)request;
 
 	switch (req->dt_type)
 	{
-	case MPC_LOWCOMM_MESSAGE_PACK:
-	{
+	case MPC_LOWCOMM_MESSAGE_PACK: {
 		size_t i;
 		size_t j;
 		size_t size;
@@ -108,12 +108,14 @@ void mpc_lowcomm_request_pack(void *request, void *buffer)
 			{
 				for (j = 0; j < req->dt.list.std[i].count; j++)
 				{
-					size = (req->dt.list.std[i].ends[j]
-					        - req->dt.list.std[i].begins[j]
-					        + 1) * req->dt.list.std[i].elem_size;
-					memcpy(buffer, (( char * )(req->dt.list.std[i].addr))
+					size = (req->dt.list.std[i].ends[j] - req->dt.list.std[i].begins[j]
+					        + 1)
+					       * req->dt.list.std[i].elem_size;
+					memcpy(buffer,
+						((char *)(req->dt.list.std[i].addr))
 						+ req->dt.list.std[i].begins[j]
-						* req->dt.list.std[i].elem_size, size);
+						* req->dt.list.std[i].elem_size,
+						size);
 					buffer += size;
 				}
 			}
@@ -122,8 +124,7 @@ void mpc_lowcomm_request_pack(void *request, void *buffer)
 		break;
 	}
 
-	case MPC_LOWCOMM_MESSAGE_PACK_ABSOLUTE:
-	{
+	case MPC_LOWCOMM_MESSAGE_PACK_ABSOLUTE: {
 		size_t i;
 		size_t j;
 		size_t size;
@@ -136,11 +137,13 @@ void mpc_lowcomm_request_pack(void *request, void *buffer)
 				for (j = 0; j < req->dt.list.absolute[i].count; j++)
 				{
 					size = (req->dt.list.absolute[i].ends[j]
-					        - req->dt.list.absolute[i].begins[j]
-					        + 1) * req->dt.list.absolute[i].elem_size;
-					memcpy(buffer, (( char * )(req->dt.list.absolute[i].addr))
+					        - req->dt.list.absolute[i].begins[j] + 1)
+					       * req->dt.list.absolute[i].elem_size;
+					memcpy(buffer,
+						((char *)(req->dt.list.absolute[i].addr))
 						+ req->dt.list.absolute[i].begins[j]
-						* req->dt.list.absolute[i].elem_size, size);
+						* req->dt.list.absolute[i].elem_size,
+						size);
 					buffer += size;
 				}
 			}
@@ -173,9 +176,9 @@ void mpc_lowcomm_request_unpack(void *request, void *buffer)
 			{
 				for (j = 0; (j < req->dt.list.std[i].count) && !skip; j++)
 				{
-					size = (req->dt.list.std[i].ends[j]
-					        - req->dt.list.std[i].begins[j]
-					        + 1) * req->dt.list.std[i].elem_size;
+					size = (req->dt.list.std[i].ends[j] - req->dt.list.std[i].begins[j]
+					        + 1)
+					       * req->dt.list.std[i].elem_size;
 
 					mpc_common_nodebug("%p - %p \n", req->dt.list.std[i].begins[j],
 						req->dt.list.std[i].ends[j]);
@@ -187,7 +190,8 @@ void mpc_lowcomm_request_unpack(void *request, void *buffer)
 
 					memcpy(((char *)(req->dt.list.std[i].addr))
 						+ req->dt.list.std[i].begins[j]
-						* req->dt.list.std[i].elem_size, buffer, size);
+						* req->dt.list.std[i].elem_size,
+						buffer, size);
 					buffer += size;
 					total  += size;
 					assume(total <= req->header.msg_size);
@@ -208,8 +212,8 @@ void mpc_lowcomm_request_unpack(void *request, void *buffer)
 				for (j = 0; (j < req->dt.list.absolute[i].count) && !skip; j++)
 				{
 					size = (req->dt.list.absolute[i].ends[j]
-					        - req->dt.list.absolute[i].begins[j]
-					        + 1) * req->dt.list.absolute[i].elem_size;
+					        - req->dt.list.absolute[i].begins[j] + 1)
+					       * req->dt.list.absolute[i].elem_size;
 
 					mpc_common_nodebug("%p - %p \n", req->dt.list.std[i].begins[j],
 						req->dt.list.std[i].ends[j]);
@@ -219,9 +223,10 @@ void mpc_lowcomm_request_unpack(void *request, void *buffer)
 						size = req->header.msg_size - total;
 					}
 
-					memcpy((( char * )(req->dt.list.absolute[i].addr))
+					memcpy(((char *)(req->dt.list.absolute[i].addr))
 						+ req->dt.list.absolute[i].begins[j]
-						* req->dt.list.absolute[i].elem_size, buffer, size);
+						* req->dt.list.absolute[i].elem_size,
+						buffer, size);
 					buffer += size;
 					total  += size;
 					assume(total <= req->header.msg_size);
@@ -238,8 +243,7 @@ void mpc_lowcomm_request_unpack(void *request, void *buffer)
 #define SCTK_PACK_REALLOC_STEP 10
 void mpc_lowcomm_request_add_pack(mpc_lowcomm_request_t *req, void *adr,
                                   const unsigned int nb_items,
-                                  const size_t elem_size,
-                                  unsigned long *begins,
+                                  const size_t elem_size, unsigned long *begins,
                                   unsigned long *ends)
 {
 	size_t step;
@@ -249,10 +253,9 @@ void mpc_lowcomm_request_add_pack(mpc_lowcomm_request_t *req, void *adr,
 	if (req->dt.count >= req->dt.max_count)
 	{
 		req->dt.max_count += SCTK_PACK_REALLOC_STEP;
-		req->dt.list.std   =
-			sctk_realloc(req->dt.list.std,
-				req->dt.max_count
-				* sizeof(mpc_lowcomm_request_pack_std_list_t));
+		req->dt.list.std   = sctk_realloc(
+			req->dt.list.std,
+			req->dt.max_count * sizeof(mpc_lowcomm_request_pack_std_list_t));
 	}
 
 	step = req->dt.count;
@@ -265,9 +268,9 @@ void mpc_lowcomm_request_add_pack(mpc_lowcomm_request_t *req, void *adr,
 }
 
 void mpc_lowcomm_request_add_pack_absolute(mpc_lowcomm_request_t *req,
-                                           const void *adr, const unsigned int nb_items,
-                                           const size_t elem_size,
-                                           long *begins,
+                                           const void *adr,
+                                           const unsigned int nb_items,
+                                           const size_t elem_size, long *begins,
                                            long *ends)
 {
 	size_t step;
@@ -277,10 +280,9 @@ void mpc_lowcomm_request_add_pack_absolute(mpc_lowcomm_request_t *req,
 	if (req->dt.count >= req->dt.max_count)
 	{
 		req->dt.max_count    += SCTK_PACK_REALLOC_STEP;
-		req->dt.list.absolute =
-			sctk_realloc(req->dt.list.absolute,
-				req->dt.max_count
-				* sizeof(mpc_lowcomm_request_pack_absolute_list_t));
+		req->dt.list.absolute = sctk_realloc(
+			req->dt.list.absolute,
+			req->dt.max_count * sizeof(mpc_lowcomm_request_pack_absolute_list_t));
 	}
 
 	step = req->dt.count;
@@ -296,7 +298,7 @@ static void __mpc_comm_perform_req_wfv(void *a)
 {
 	mpc_lowcomm_request_t *req = (mpc_lowcomm_request_t *)a;
 
-	if (( volatile int )req->completion_flag != MPC_LOWCOMM_MESSAGE_DONE)
+	if ((volatile int)req->completion_flag != MPC_LOWCOMM_MESSAGE_DONE)
 	{
 		mpc_common_progress();
 		MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL();
@@ -378,7 +380,7 @@ int mpc_lowcomm_request_wait(mpc_lowcomm_request_t *request)
 #ifdef MPC_MPI
 		if (request->request_type == REQUEST_GENERALIZED)
 		{
-			mpc_lowcomm_perform_idle(( int * )&(request->completion_flag),
+			mpc_lowcomm_perform_idle((int *)&(request->completion_flag),
 				MPC_LOWCOMM_MESSAGE_DONE, __egreq_poll, NULL);
 		}
 		else
@@ -389,14 +391,14 @@ int mpc_lowcomm_request_wait(mpc_lowcomm_request_t *request)
 		{
 			mpc_common_progress();
 			trials++;
-		} while ((request->completion_flag != MPC_LOWCOMM_MESSAGE_DONE) && (trials < 16));
+		} while ((request->completion_flag != MPC_LOWCOMM_MESSAGE_DONE)
+		         && (trials < 16));
 
 		if (request->completion_flag != MPC_LOWCOMM_MESSAGE_DONE)
 		{
 			mpc_lowcomm_perform_idle(
-				( int * )&(request->completion_flag), MPC_LOWCOMM_MESSAGE_DONE,
-				(void (*)(void *)) __mpc_comm_perform_req_wfv,
-				request);
+				(int *)&(request->completion_flag), MPC_LOWCOMM_MESSAGE_DONE,
+				(void (*)(void *)) __mpc_comm_perform_req_wfv, request);
 		}
 	}
 
