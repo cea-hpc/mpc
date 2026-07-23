@@ -22,6 +22,7 @@
 #ifndef MPC_LOWCOMM_PROTOCOL_H
 #define MPC_LOWCOMM_PROTOCOL_H
 
+#include "mpc_lowcomm_types.h"
 #include <stddef.h>
 #ifdef __cplusplus
 	extern "C" {
@@ -34,6 +35,9 @@ void mpc_lowcomm_protocol_finalize_driver();
 void mpc_lowcomm_init_protocol_per_task();
 int mpc_comm_progress(void);
 void mpc_lowcomm_release_protocol_per_task();
+void mpc_lowcomm_ep_free(mpc_lowcomm_ep_t *eps);
+
+
 
 #ifdef __cplusplus
 	}

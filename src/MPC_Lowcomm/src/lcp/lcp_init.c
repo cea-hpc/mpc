@@ -22,20 +22,17 @@
 #ifndef MPC_LCP_INIT_H
 #define MPC_LCP_INIT_H
 
-#include <mpc_common_debug.h>
-#include <mpc_common_rank.h>
-#include <mpc_common_helper.h>
-#include <sctk_alloc.h>
-#include <mpc_common_flags.h>
-#include <lcp.h>
-#include "lowcomm_request.h"
-#include "lcp/lcp_init.h"
 #include "lowcomm_protocol.h"
+#include "lowcomm_request.h"
 #include "mpc_lowcomm_ep.h"
 #include "mpc_lowcomm_monitor.h"
 #include "mpc_lowcomm_types.h"
-
-int mpc_comm_progress();
+#include <lcp.h>
+#include <mpc_common_debug.h>
+#include <mpc_common_flags.h>
+#include <mpc_common_helper.h>
+#include <mpc_common_rank.h>
+#include <sctk_alloc.h>
 
 extern lcp_context_h           lcp_ctx_loc;
 extern lcp_manager_h           lcp_mngr_loc;
@@ -49,10 +46,8 @@ void mpc_lowcomm_protocol_init_driver()
 	//       mpc_common_get_local_task_count() is not setup yet.
 	lcp_context_param_t ctx_params =
 	{
-		.field_mask   = LCP_CONTEXT_DATATYPE_OPS
-		                | LCP_CONTEXT_NUM_TASKS
-		                | LCP_CONTEXT_PROCESS_UID
-		                | LCP_CONTEXT_REQUEST_SIZE
+		.field_mask   = LCP_CONTEXT_DATATYPE_OPS | LCP_CONTEXT_NUM_TASKS
+		                | LCP_CONTEXT_PROCESS_UID | LCP_CONTEXT_REQUEST_SIZE
 		                | LCP_CONTEXT_REQUEST_CB,
 		.dt_ops       =
 		{

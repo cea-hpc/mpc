@@ -76,7 +76,6 @@ exclude: |-
     ^src/MPC_IO/src/romio|
     ^src/MPC_IO/include/mpio.h.in|
     ^src/MPC_Lowcomm/src/portals|
-    ^src/MPC_Lowcomm/src/ubcl|
     modex|
     ^src/MPC_MPI/src/dataloop|
     ^src/MPC_MPI/src/mpitypes|

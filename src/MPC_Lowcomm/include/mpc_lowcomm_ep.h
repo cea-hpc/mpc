@@ -22,13 +22,8 @@
 #ifndef MPC_LOWCOMM_EP_H
 #define MPC_LOWCOMM_EP_H
 
-#ifdef LOWCOMM_UBCL
-#include "ubcl/lowcomm_ubcl.h"
-	typedef mpc_lowcomm_ubcl_ep_t    mpc_lowcomm_ep_t;
-#else
 #include <lcp.h>
-	typedef lcp_ep_h                 mpc_lowcomm_ep_t;
-#endif
+typedef     lcp_ep_h mpc_lowcomm_ep_t;
 void mpc_lowcomm_ep_free(mpc_lowcomm_ep_t *);
 
 #endif
