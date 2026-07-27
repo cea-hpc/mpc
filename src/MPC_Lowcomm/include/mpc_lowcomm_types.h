@@ -27,7 +27,6 @@
 #include "mpc_lowcomm_communicator.h"
 #include "mpc_lowcomm_def.h"
 
-
 #ifdef __cplusplus
 	extern "C" {
 #endif
@@ -72,6 +71,14 @@ typedef enum
 	MPC_LOWCOMM_REQUEST_PACK_UNDEFINED,
 	MPC_LOWCOMM_REQUEST_NETWORK
 } mpc_lowcomm_rtype_t;
+
+typedef enum
+{
+	MPC_LOWCOMM_SEND_STANDARD,
+	MPC_LOWCOMM_SEND_SYNCHRONIZED,
+	MPC_LOWCOMM_SEND_BUFFERED,
+	MPC_LOWCOMM_SEND_READY,
+} mpc_lowcomm_sendmode_t;
 
 /** MPC_LOWCOMM_REQUEST_CONTIGUOUS */
 typedef struct

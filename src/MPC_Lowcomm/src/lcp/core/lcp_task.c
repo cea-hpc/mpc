@@ -39,6 +39,7 @@
 #include "lcp_manager.h"
 #include "lcp_context.h"
 #include "lcp_request.h"
+#include <sctk_alloc.h>
 
 #define NUM_QUEUES UINT16_MAX
 
