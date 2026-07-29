@@ -593,8 +593,8 @@ err:
 		mpc_common_spinlock_unlock(&txq->lock);
 
 		mpc_common_nodebug("LCR PTL: local key. lkey size=%llu, addr=%p, "
-			             "local offset=%llu, remote offset=%llu, "
-			             "mdh=%llu.", lctx->size,
+			               "local offset=%llu, remote offset=%llu, "
+			               "mdh=%llu.", lctx->size,
 			lctx->start, op->rma.local_offset,
 			op->rma.remote_offset,
 			op->rma.lkey->mdh);

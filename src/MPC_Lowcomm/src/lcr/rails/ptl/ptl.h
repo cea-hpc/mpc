@@ -100,17 +100,17 @@
 #endif
 
 	#define _lcr_ptl_init_op_common(_op, _id, _mdh, _success, _addr, _pti, \
-									_type, _size, _comp, _txq)   \
-			(_op)->id   = _id;                                   \
-			(_op)->hdr  = 0;                                     \
-			(_op)->mdh  = _mdh;                                  \
-			(_op)->success  = _success;                          \
-			(_op)->addr = _addr;                                 \
-			(_op)->pti  = _pti;                                  \
-			(_op)->type = _type;                                 \
-			(_op)->size = _size;                                 \
-			(_op)->comp = _comp;                                 \
-			(_op)->txq  = _txq;
+									_type, _size, _comp, _txq)             \
+			(_op)->id      = _id;                                          \
+			(_op)->hdr     = 0;                                            \
+			(_op)->mdh     = _mdh;                                         \
+			(_op)->success = _success;                                     \
+			(_op)->addr    = _addr;                                        \
+			(_op)->pti     = _pti;                                         \
+			(_op)->type    = _type;                                        \
+			(_op)->size    = _size;                                        \
+			(_op)->comp    = _comp;                                        \
+			(_op)->txq     = _txq;
 
 	#define LCR_PTL_PROCESS_TO_UINT64(_key, _process_id)            \
 			_key |= (_process_id).phys.nid & 0x00000000ffffffffull; \
@@ -214,9 +214,9 @@
 		ptl_handle_md_t        mdh;      /**< Portals Memory Descriptor handle.*/
 		uint64_t               success;  /**< Counter for operations completed successfully on the Memory Descriptor. */
 #ifdef BXI_VERSION_3_R6_LITE
-		ptl_handle_le_t        leh;      /**< Portals List Entry handle */
+			ptl_handle_le_t    leh;      /**< Portals List Entry handle */
 #else
-		ptl_handle_me_t        meh;      /**< Portals Matching List Entry handle */
+			ptl_handle_me_t    meh;      /**< Portals Matching List Entry handle */
 #endif
 		lcr_ptl_txq_t *        txqt;     /**< List of operations associated with this memory */
 		uint64_t               op_count; /**< Sequence number of the last pushed op. */
@@ -262,16 +262,16 @@
 	/** Description of a ptl operation */
 	typedef struct lcr_ptl_op
 	{
-		int64_t           id;   /**< Operation identifier. */
-		ptl_handle_md_t   mdh;  /**< MD from which to perform the operation. */
-		ptl_process_t     addr; /**< Target process identifier */
-		ptl_hdr_data_t    hdr;  /**< Header data to be added to the message */
-		ptl_pt_index_t    pti;  /**< Portals Table index to match on */
-		lcr_ptl_op_type_t type; /**< Type of operation */
-		size_t            size; /**< Data size of the operation */
-		lcr_completion_t *comp; /**< Completion callback */
-		lcr_ptl_txq_t *   txq;  /**< TX Queue where the operation was pushed. */
-		uint64_t *        success;  /**< Counter for operations completed successfully on the Memory Descriptor. */
+		int64_t           id;      /**< Operation identifier. */
+		ptl_handle_md_t   mdh;     /**< MD from which to perform the operation. */
+		ptl_process_t     addr;    /**< Target process identifier */
+		ptl_hdr_data_t    hdr;     /**< Header data to be added to the message */
+		ptl_pt_index_t    pti;     /**< Portals Table index to match on */
+		lcr_ptl_op_type_t type;    /**< Type of operation */
+		size_t            size;    /**< Data size of the operation */
+		lcr_completion_t *comp;    /**< Completion callback */
+		lcr_ptl_txq_t *   txq;     /**< TX Queue where the operation was pushed. */
+		uint64_t *        success; /**< Counter for operations completed successfully on the Memory Descriptor. */
 
 		union
 		{
@@ -281,12 +281,12 @@
 			} iov;
 			struct
 			{
-				lcr_tag_context_t *tag_ctx;
-				void *             bcopy_buf;
+				lcr_tag_context_t * tag_ctx;
+				void *              bcopy_buf;
 #ifdef BXI_VERSION_3_R6_LITE
-				ptl_handle_le_t    leh;
+					ptl_handle_le_t leh;
 #else
-				ptl_handle_me_t    meh;
+					ptl_handle_me_t meh;
 #endif
 			} tag;
 			struct
@@ -503,7 +503,7 @@
 		case PTL_NI_NO_MATCH: return "PTL_NI_NO_MATCH"; break;
 
 #ifdef BXI_VERSION_2
-		case PTL_NI_TARGET_INVALID: return "PTL_NI_TARGET_INVALID"; break; // NOTE: BXI specific error
+				case PTL_NI_TARGET_INVALID: return "PTL_NI_TARGET_INVALID"; break; // NOTE: BXI specific error
 #endif
 
 		case PTL_NI_OP_VIOLATION: return "PTL_NI_OP_VIOLATION"; break;

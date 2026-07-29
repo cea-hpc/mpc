@@ -42,9 +42,9 @@ typedef struct lcr_ptl_recv_block
 
 	lcr_ptl_rail_info_t *rail;
 #ifdef BXI_VERSION_3_R6_LITE
-	ptl_handle_le_t      leh;
+		ptl_handle_le_t  leh;
 #else
-	ptl_handle_me_t      meh;
+		ptl_handle_me_t  meh;
 #endif
 	lcr_ptl_op_t         op;
 	mpc_list_elem_t      elem;

@@ -953,7 +953,7 @@ err:
 	{
 		sctk_free(mem->txqt);
 
-		    lcr_ptl_chk(PtlMDRelease(mem->mdh));
+		lcr_ptl_chk(PtlMDRelease(mem->mdh));
 
 #ifdef BXI_VERSION_3_R6_LITE
 			int rc = PtlLEUnlink(mem->leh);
