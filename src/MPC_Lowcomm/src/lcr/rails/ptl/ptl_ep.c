@@ -405,7 +405,7 @@ err:
 
 		assert(iov && iovcnt == 1);
 
-#ifdef BXI_VERSION_3_R6_LITE
+#ifdef BXI_VERSION_3
 			/* complete the LE data, this LE will be appended to the PRIORITY_LIST */
 			ptl_le_t le = (ptl_le_t) {
 				.ct_handle = PTL_CT_NONE,
@@ -461,7 +461,7 @@ err:
 		// FIXME: move to _lcr_ptl_do_op
 		if (search)
 		{
-#ifdef BXI_VERSION_3_R6_LITE
+#ifdef BXI_VERSION_3
 				lcr_ptl_chk(PtlLESearch(srail->net.nih,
 				srail->net.tag.pti,
 				&le,
@@ -477,7 +477,7 @@ err:
 		}
 		else
 		{
-#ifdef BXI_VERSION_3_R6_LITE
+#ifdef BXI_VERSION_3
 				lcr_ptl_chk(PtlLEAppend(srail->net.nih,
 				srail->net.tag.pti,
 				&le,

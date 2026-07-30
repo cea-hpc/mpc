@@ -67,7 +67,7 @@
 			goto err;
 		}
 
-#ifdef BXI_VERSION_3_R6_LITE
+#ifdef BXI_VERSION_3
 			block->leh = PTL_INVALID_HANDLE;
 #else
 			block->meh = PTL_INVALID_HANDLE;
@@ -87,7 +87,7 @@ err:
 			return MPC_LOWCOMM_ERROR;
 		}
 
-#ifdef BXI_VERSION_3_R6_LITE
+#ifdef BXI_VERSION_3
 			ptl_le_t le;
 
 
@@ -180,7 +180,7 @@ err:
 
 	void lcr_ptl_recv_block_free(lcr_ptl_recv_block_t *block)
 	{
-#ifdef BXI_VERSION_3_R6_LITE
+#ifdef BXI_VERSION_3
 			PtlLEUnlink(block->leh);
 #else
 			PtlMEUnlink(block->meh);

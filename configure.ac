@@ -2880,10 +2880,10 @@ then
 	then
 		printf "Configure with BXI version 2 specialization\n"
 		AC_DEFINE([BXI_VERSION_2], [], [BXI version 2 used for Portals])
-	elif [[ $bxi_version == "3_R6_LITE" ]]
+	elif [[ $bxi_version == "3" ]]
 	then
 		printf "Configure with BXI version 3 R6-LITE specialization\n"
-		AC_DEFINE([BXI_VERSION_3_R6_LITE], [], [BXI version 3 R6-LITE used for Portals])
+		AC_DEFINE([BXI_VERSION_3], [], [BXI version 3 used for Portals])
 	else
 		printf "Warning: No specialization for BXI version $bxi_version\n"
 	fi

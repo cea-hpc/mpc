@@ -385,7 +385,6 @@ wrap_output()
 
 	if test "x$?" = "x0"; then
 		rm "$outfile"
-		:
 	else
 		nok
 

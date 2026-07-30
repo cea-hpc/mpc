@@ -50,7 +50,7 @@
 	{
 		*l = (ptl_ni_limits_t){
 			.max_entries = INT_MAX,                /* Max number of entries allocated at any time */
-#ifdef BXI_VERSION_3_R6_LITE
+#ifdef BXI_VERSION_3
 				.max_unexpected_headers = 0,       /* max number of headers at any time */
 #else
 				.max_unexpected_headers = INT_MAX, /* max number of headers at any time */
@@ -69,7 +69,7 @@
 			.max_waw_ordered_size  = PTL_SIZE_MAX, /* Max length for ordering-guarantee */
 			.max_war_ordered_size  = PTL_SIZE_MAX, /* max length for ordering guarantee */
 			.max_volatile_size     = PTL_SIZE_MAX, /* Max length for MD w/ VOLATILE flag */
-#ifdef BXI_VERSION_3_R6_LITE
+#ifdef BXI_VERSION_3
 				.features = PTL_BXI3_LE_EXTENSION
 #else
 				.features = 0                      /* could be a combination or TARGET_BIND_INACCESSIBLE |
@@ -670,7 +670,7 @@ err:
 		/* init one physical interface */
 		lcr_ptl_chk(PtlNIInit(
 			iface,                                    /* Type of interface */
-#ifdef BXI_VERSION_3_R6_LITE
+#ifdef BXI_VERSION_3
 				PTL_NI_NO_MATCHING | PTL_NI_PHYSICAL, /* physical NI, w/o matching enabled */
 #else
 				PTL_NI_MATCHING | PTL_NI_PHYSICAL,    /* physical NI, w/ matching enabled */
@@ -888,7 +888,7 @@ err:
 
 		mem->match = atomic_fetch_add(&srail->net.rma.mem_uid, 1);
 
-#ifdef BXI_VERSION_3_R6_LITE
+#ifdef BXI_VERSION_3
 			ptl_le_t le = (ptl_le_t) {
 				.ct_handle = PTL_CT_NONE,
 				.uid       = PTL_UID_ANY,
@@ -955,7 +955,7 @@ err:
 
 		lcr_ptl_chk(PtlMDRelease(mem->mdh));
 
-#ifdef BXI_VERSION_3_R6_LITE
+#ifdef BXI_VERSION_3
 			int rc = PtlLEUnlink(mem->leh);
 #else
 			int rc = PtlMEUnlink(mem->meh);
@@ -969,7 +969,7 @@ err:
 					mpc_thread_yield();
 #endif
 				mpc_common_progress();
-#ifdef BXI_VERSION_3_R6_LITE
+#ifdef BXI_VERSION_3
 					rc = PtlLEUnlink(mem->leh);
 #else
 					rc = PtlMEUnlink(mem->meh);

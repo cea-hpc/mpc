@@ -46,7 +46,7 @@
 #include <sctk_alloc.h> // For sctk_malloc, sctk_free
 
 #include <portals4.h>
-#ifdef BXI_VERSION_3_R6_LITE
+#ifdef BXI_VERSION_3
 #include <portals4_bxiext.h>
 #endif
 
@@ -213,7 +213,7 @@
 		mpc_list_elem_t        elem;     /**< Element in list. */
 		ptl_handle_md_t        mdh;      /**< Portals Memory Descriptor handle.*/
 		uint64_t               success;  /**< Counter for operations completed successfully on the Memory Descriptor. */
-#ifdef BXI_VERSION_3_R6_LITE
+#ifdef BXI_VERSION_3
 			ptl_handle_le_t    leh;      /**< Portals List Entry handle */
 #else
 			ptl_handle_me_t    meh;      /**< Portals Matching List Entry handle */
@@ -283,7 +283,7 @@
 			{
 				lcr_tag_context_t * tag_ctx;
 				void *              bcopy_buf;
-#ifdef BXI_VERSION_3_R6_LITE
+#ifdef BXI_VERSION_3
 					ptl_handle_le_t leh;
 #else
 					ptl_handle_me_t meh;
