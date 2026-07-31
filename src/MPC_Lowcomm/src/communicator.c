@@ -29,7 +29,6 @@
 #include "communicator.h"
 #include "group.h"
 
-#include "coll.h"
 
 #include <mpc_config.h>
 
@@ -39,7 +38,6 @@
 
 #include <mpc_common_datastructure.h>
 #include <lowcomm_config.h>
-#include "lowcomm.h"
 #include <mpc_lowcomm.h>
 
 #ifdef MPC_Threads
