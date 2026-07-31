@@ -41,7 +41,11 @@ typedef struct lcr_ptl_recv_block
 	size_t               size;
 
 	lcr_ptl_rail_info_t *rail;
-	ptl_handle_me_t      meh;
+#ifdef BXI_VERSION_3
+		ptl_handle_le_t  leh;
+#else
+		ptl_handle_me_t  meh;
+#endif
 	lcr_ptl_op_t         op;
 	mpc_list_elem_t      elem;
 } lcr_ptl_recv_block_t;

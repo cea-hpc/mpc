@@ -74,7 +74,6 @@
 		if (flags & LCR_IFACE_REGISTER_MEM_DYN)
 		{
 			ctx->mem = srail->net.rma.dynamic_mem;
-			assert(!PtlHandleIsEqual(ctx->mem->cth, PTL_INVALID_HANDLE));
 		}
 		else
 		{
@@ -271,6 +270,7 @@ err:
 		assert(mem != NULL && ep != NULL);
 
 		_lcr_ptl_init_op_common(op, 0, mem->mdh,
+			&mem->success,
 			ptl_ep->addr.id,
 			ptl_ep->addr.pte.rma,
 			LCR_PTL_OP_RMA_FLUSH,
@@ -347,6 +347,7 @@ err:
 		}
 
 		_lcr_ptl_init_op_common(op, 0, PTL_INVALID_HANDLE,
+			NULL,
 			ptl_ep->addr.id,
 			ptl_ep->addr.pte.rma,
 			LCR_PTL_OP_RMA_FLUSH,
@@ -438,6 +439,7 @@ err:
 
 		assert(mem != NULL);
 		_lcr_ptl_init_op_common(op, 0, mem->mdh,
+			&mem->success,
 			LCR_PTL_PROCESS_ANY,
 			srail->net.rma.pti,
 			LCR_PTL_OP_RMA_FLUSH,
@@ -531,6 +533,7 @@ err:
 
 		// FIXME: no need for underscore in function name. To be removed.
 		_lcr_ptl_init_op_common(op, 0, PTL_INVALID_HANDLE,
+			NULL,
 			LCR_PTL_PROCESS_ANY,
 			srail->net.rma.pti,
 			LCR_PTL_OP_RMA_FLUSH,

@@ -6,6 +6,9 @@ All notable changes to this project will be documented in this file. The format 
 
 ### Added
 
+- **Rail Portals**
+    - Added BXI version 3 support
+
 ### Changed
 
 - **MPI**

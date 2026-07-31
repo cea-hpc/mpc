@@ -1236,6 +1236,7 @@ You may track issued commands using the "-v" flag.
   --debug                                 : Same as above
   --relwithdebinfo                        : Assert, debug message and symbols, but with optimisation, and no debug for subpackages (gcc, libfabric, ...).
   --enable-topology-simulation            : Enable fake network topology simulation
+  --with-bxi=*                            : Enable version specific features for Portal4 rail on BXI (default version 2)
 
 # Disable sub packages
   --disable-ofi                           : Disable libfabric support
@@ -1497,6 +1498,14 @@ do
 			;;
 		--disable-ofi|--disable-libfabric)
 			OFI_PREFIX="disabled"
+			;;
+		#### BXI ##########
+		--with-bxi)
+			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --with-bxi=2"
+			;;
+		--with-bxi=*)
+			extractParamValue 'BXI_PREFIX' 'with-bxi' "$arg"
+			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --with-bxi=${BXI_PREFIX}"
 			;;
 		#################### Concurrency Kit #################
 		--enable-ck)

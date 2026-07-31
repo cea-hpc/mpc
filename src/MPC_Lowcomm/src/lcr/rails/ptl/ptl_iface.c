@@ -49,8 +49,12 @@
 	static inline void __ptl_set_limits(ptl_ni_limits_t *l)
 	{
 		*l = (ptl_ni_limits_t){
-			.max_entries            = INT_MAX,     /* Max number of entries allocated at any time */
-			.max_unexpected_headers = INT_MAX,     /* max number of headers at any time */
+			.max_entries = INT_MAX,                /* Max number of entries allocated at any time */
+#ifdef BXI_VERSION_3
+				.max_unexpected_headers = 0,       /* max number of headers at any time */
+#else
+				.max_unexpected_headers = INT_MAX, /* max number of headers at any time */
+#endif
 			.max_mds           = INT_MAX,          /* Max number of MD allocated at any time */
 			.max_cts           = INT_MAX,          /* Max number of CT allocated at any time */
 			.max_eqs           = INT_MAX,          /* Max number of EQ allocated at any time */
@@ -65,8 +69,12 @@
 			.max_waw_ordered_size  = PTL_SIZE_MAX, /* Max length for ordering-guarantee */
 			.max_war_ordered_size  = PTL_SIZE_MAX, /* max length for ordering guarantee */
 			.max_volatile_size     = PTL_SIZE_MAX, /* Max length for MD w/ VOLATILE flag */
-			.features = 0                          /* could be a combination or TARGET_BIND_INACCESSIBLE |
+#ifdef BXI_VERSION_3
+				.features = PTL_BXI3_LE_EXTENSION
+#else
+				.features = 0                      /* could be a combination or TARGET_BIND_INACCESSIBLE |
 		                                            * TOTAL_DATA_ORDERING | COHERENT_ATOMIC */
+#endif
 		};
 	}
 
@@ -460,16 +468,7 @@ err:
 	// NOTE: must be called with mem lock
 	ptl_size_t lcr_ptl_poll_mem(lcr_ptl_mem_t *mem)
 	{
-		ptl_ct_event_t ct_ev;
-
-		/* Poll CT and update operation count atomically. */
-		lcr_ptl_chk(PtlCTGet(mem->cth, &ct_ev));
-		if (ct_ev.failure > 0)
-		{
-			/* Failure will be treated with full events. */
-			mpc_common_debug_warning("LCR PTL: %llu event failures.", ct_ev.failure);
-		}
-		return ct_ev.success;
+		return mem->success;
 	}
 
 	/** @brief Progress the pending queues and flush ops on all registered memories
@@ -536,6 +535,11 @@ err:
 					ev.start,
 					ev.remote_offset,
 					srail->net.nih);
+
+				if ((op->success != NULL))
+				{
+					(*(op->success))++;
+				}
 
 				if (ev.type == PTL_EVENT_PT_DISABLED)
 				{
@@ -665,12 +669,16 @@ err:
 
 		/* init one physical interface */
 		lcr_ptl_chk(PtlNIInit(
-			iface,                             /* Type of interface */
-			PTL_NI_MATCHING | PTL_NI_PHYSICAL, /* physical NI, w/ matching enabled */
-			PTL_PID_ANY,                       /* Let Portals decide process's PID */
-			&l,                                /* desired Portals boundaries */
-			&res.config.max_limits,            /* effective Portals limits */
-			&res.net.nih                       /* THE handler */
+			iface,                                    /* Type of interface */
+#ifdef BXI_VERSION_3
+				PTL_NI_NO_MATCHING | PTL_NI_PHYSICAL, /* physical NI, w/o matching enabled */
+#else
+				PTL_NI_MATCHING | PTL_NI_PHYSICAL,    /* physical NI, w/ matching enabled */
+#endif
+			PTL_PID_ANY,                              /* Let Portals decide process's PID */
+			&l,                                       /* desired Portals boundaries */
+			&res.config.max_limits,                   /* effective Portals limits */
+			&res.net.nih                              /* THE handler */
 			));
 		/* retrieve the process identifier */
 		lcr_ptl_chk(PtlGetPhysId(
@@ -864,47 +872,60 @@ err:
 		int      rc = MPC_LOWCOMM_SUCCESS;
 		int      i;
 		ptl_md_t md;
-		ptl_me_t me;
-
-		lcr_ptl_chk(PtlCTAlloc(srail->net.nih, &mem->cth));
 
 		// FIXME: For now, the MD attached to the memory is not used by any of
 		//       the upper layer calls. Maybe this could be removed?
 		md = (ptl_md_t) {
-			.ct_handle = mem->cth,
+			.ct_handle = PTL_CT_NONE,
 			.eq_handle = srail->net.eqh,
 			.length    = length,
 			.start     = (void *)start,
 			.options   = PTL_MD_EVENT_SEND_DISABLE
-			             | PTL_MD_EVENT_CT_ACK
-			             | PTL_MD_EVENT_CT_REPLY,
 		};
-		lcr_ptl_chk(PtlMDBind(srail->net.nih, &md, &mem->mdh));
+		    lcr_ptl_chk(PtlMDBind(srail->net.nih, &md, &mem->mdh));
 
-		mem->match = atomic_fetch_add(&srail->net.rma.mem_uid, 0);
+		mem->success = 0;
 
-		me = (ptl_me_t) {
-			.ct_handle   = PTL_CT_NONE,
-			.ignore_bits = 0,
-			.match_bits  = mem->match,
-			.match_id    =
-			{
-				.phys.nid = PTL_NID_ANY,
-				.phys.pid = PTL_PID_ANY
-			},
-			.uid      = PTL_UID_ANY,
-			.min_free = 0,
-			.options  = PTL_ME_OP_PUT
-			            | PTL_ME_OP_GET
-			            | PTL_ME_EVENT_LINK_DISABLE
-			            | PTL_ME_EVENT_UNLINK_DISABLE
-			            | PTL_ME_EVENT_SUCCESS_DISABLE,
-			.start  = 0,
-			.length = PTL_SIZE_MAX
-		};
+		mem->match = atomic_fetch_add(&srail->net.rma.mem_uid, 1);
 
-		lcr_ptl_chk(PtlMEAppend(srail->net.nih, srail->net.rma.pti, &me, PTL_PRIORITY_LIST, srail, &mem->meh));
+#ifdef BXI_VERSION_3
+			ptl_le_t le = (ptl_le_t) {
+				.ct_handle = PTL_CT_NONE,
+				.uid       = PTL_UID_ANY,
+				.min_free  = 0,
+				.options   = PTL_LE_OP_PUT
+				             | PTL_LE_OP_GET
+				             | PTL_LE_EVENT_LINK_DISABLE
+				             | PTL_LE_EVENT_UNLINK_DISABLE
+				             | PTL_LE_EVENT_SUCCESS_DISABLE,
+				.start  = 0,
+				.length = PTL_SIZE_MAX
+			};
 
+			lcr_ptl_chk(PtlLEAppend(srail->net.nih, srail->net.rma.pti, &le, PTL_PRIORITY_LIST, srail, &mem->leh));
+#else
+			ptl_me_t me = (ptl_me_t) {
+				.ct_handle   = PTL_CT_NONE,
+				.ignore_bits = 0,
+				.match_bits  = mem->match,
+				.match_id    =
+				{
+					.phys.nid = PTL_NID_ANY,
+					.phys.pid = PTL_PID_ANY
+				},
+				.uid      = PTL_UID_ANY,
+				.min_free = 0,
+				.options  = PTL_ME_OP_PUT
+				            | PTL_ME_OP_GET
+				            | PTL_ME_EVENT_LINK_DISABLE
+				            | PTL_ME_EVENT_UNLINK_DISABLE
+				            | PTL_ME_EVENT_SUCCESS_DISABLE,
+				.start  = 0,
+				.length = PTL_SIZE_MAX
+			};
+
+			lcr_ptl_chk(PtlMEAppend(srail->net.nih, srail->net.rma.pti, &me, PTL_PRIORITY_LIST, srail, &mem->meh));
+#endif
 		mem->start    = (uint64_t)start;
 		mem->lifetime = lt;
 		mpc_common_spinlock_init(&mem->lock, 0);
@@ -932,11 +953,13 @@ err:
 	{
 		sctk_free(mem->txqt);
 
-		lcr_ptl_chk(PtlCTFree(mem->cth));
-
 		lcr_ptl_chk(PtlMDRelease(mem->mdh));
 
-		int rc = PtlMEUnlink(mem->meh);
+#ifdef BXI_VERSION_3
+			int rc = PtlLEUnlink(mem->leh);
+#else
+			int rc = PtlMEUnlink(mem->meh);
+#endif
 		if (rc == PTL_IN_USE)
 		{
 			// In a multithreaded context, the PT may still be in use by other threads
@@ -946,7 +969,11 @@ err:
 					mpc_thread_yield();
 #endif
 				mpc_common_progress();
-				rc = PtlMEUnlink(mem->meh);
+#ifdef BXI_VERSION_3
+					rc = PtlLEUnlink(mem->leh);
+#else
+					rc = PtlMEUnlink(mem->meh);
+#endif
 			}
 		}
 		lcr_ptl_chk(rc);
