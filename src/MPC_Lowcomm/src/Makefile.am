@@ -52,6 +52,11 @@ libmpclowcomm_la_SOURCES = coll.c comm.c checksum.c ft.c group.c communicator.c 
 libmpclowcomm_la_SOURCES += lowcomm.c lowcomm_comm.c msg_copy.c lowcomm_thread.c mqd.c datatypes_common.c lowcomm_request.c
 libmpclowcomm_la_SOURCES += rail.c reorder.c endpoint.c pset.c handle_ctx.c
 
+# One sided
+AM_CPPFLAGS += -I$(abs_srcdir)/one-sided
+libmpclowcomm_la_SOURCES += ./one-sided/lowcomm_one_sided.c ./one-sided/lowcomm_one_sided_common.c ./one-sided/lowcomm_one_sided_helpers.c
+libmpclowcomm_la_SOURCES += ./one-sided/lowcomm_one_sided_sync.c ./one-sided/lowcomm_one_sided_window.c
+
 if ENABLE_WORKSHARE
 libmpclowcomm_la_SOURCES += workshare.c
 endif

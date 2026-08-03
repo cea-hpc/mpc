@@ -77,6 +77,8 @@ int mpc_lowcomm_get_process_rank(void);
  * REQUESTS *
  ************/
 
+int mpc_lowcomm_request_complete(mpc_lowcomm_request_t *request);
+
 /**
  * @brief Extract status information from a request
  *    @warning request should be completed or canceled

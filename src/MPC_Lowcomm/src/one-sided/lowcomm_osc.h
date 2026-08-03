@@ -1,5 +1,5 @@
 /* ############################# MPC License ############################## */
-/* # Thu May  6 10:26:16 CEST 2021                                        # */
+/* # Wed Nov 19 15:19:19 CET 2008                                         # */
 /* # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          # */
 /* #                                                                      # */
 /* # IDDN.FR.001.230040.000.S.P.2007.000.10000                            # */
@@ -15,18 +15,33 @@
 /* # had knowledge of the CeCILL-C license and that you accept its        # */
 /* # terms.                                                               # */
 /* #                                                                      # */
-/* # Maintainers:                                                         # */
-/* # - CARRIBAULT Patrick patrick.carribault@cea.fr                       # */
-/* # - JAEGER Julien julien.jaeger@cea.fr                                 # */
-/* # - PERACHE Marc marc.perache@cea.fr                                   # */
-/* # - ROUSSEL Adrien adrien.roussel@cea.fr                               # */
-/* # - TABOADA Hugo hugo.taboada@cea.fr                                   # */
-/* #                                                                      # */
 /* # Authors:                                                             # */
-/* # - CANAT Paul pcanat@paratools.fr                                     # */
-/* # - BESNARD Jean-Baptiste jbbesnard@paratools.com                      # */
-/* # - MOREAU Gilles gilles.moreau@cea.fr                                 # */
+/* #   - MOREAU Gilles gilles.moreau@cea.fr                               # */
+/* #   - BEAULIEU Corentin coretin.beaulieu@cea.fr                        # */
 /* #                                                                      # */
 /* ######################################################################## */
 
-#include "osc_mpi.h"
+/**@file
+ * LowComm OSC intramodule interface
+ *
+ * This file defines the OSC interface used elsewhere in LowComm
+ */
+
+#ifndef LOWCOMM_OSC_H_
+#define LOWCOMM_OSC_H_
+
+/**@ingroup LOWCOMM_ONE_SIDED
+ * @brief Initializes the one-sided part of lowcomm
+ *
+ * @return An errorcode
+ */
+int lowcomm_osc_init(void);
+
+/**@ingroup LOWCOMM_ONE_SIDED
+ * @brief Deinitializes the one-sided part of lowcomm
+ *
+ * @return An errorcode
+ */
+int lowcomm_osc_deinit(void);
+
+#endif // LOWCOMM_OSC_H_

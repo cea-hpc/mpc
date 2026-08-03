@@ -18,6 +18,7 @@
 /* # Authors:                                                             # */
 /* #   - PERACHE Marc marc.perache@cea.fr                                 # */
 /* #   - JAEGER Julien julien.jaeger@cea.fr                               # */
+/* #   - BEAULIEU Corentin coretin.beaulieu@cea.fr                        # */
 /* #                                                                      # */
 /* ######################################################################## */
 #include "mpc_mpi.h"
@@ -42,6 +43,7 @@
 #include "mpi_conf.h"
 
 #include "mpc_mpi_halo.h"
+#include "osc_mpi_internal.h"
 
 
 #ifndef SCTK_DO_NOT_HAVE_WEAK_SYMBOLS
@@ -14955,25 +14957,6 @@ int PMPI_Finalize(void)
 
 	PMPI_Barrier(MPI_COMM_WORLD);
 
-	osc_module_fini();
-#if defined (MPC_USE_PORTALS_CONTROL_FLOW)
-		// NOTE: Because Portals uses control flow, it may "lie" to the upper
-		//      layer by saying that the message was sent while it actually
-		//      needs a token before sending the message. To progress the
-		//      communication, it is such needed to call LCP progression
-		//      function.
-		//      This is a known problem, see ompi_mpi_finalize from OpenMPI, to
-		//      overcome this, they use asynchronous PMIx call when possible.
-		//      Otherwise, they do not solve the problem.
-		int i = 0;
-		while (i < 15)
-		{
-			lcp_progress(lcp_mngr_loc);
-			usleep(100);
-			i++;
-		}
-#endif
-
 #ifdef MPC_Profiler
 		mpc_common_init_callback_register("MPC Profile reduce",
 		"Reduce profile data before rendering them",
@@ -16048,87 +16031,113 @@ int PMPI_Win_call_errhandler(MPI_Win win, int errorcode)
 
 int PMPI_Win_set_info(MPI_Win win, MPI_Info info)
 {
-	/* Retrieve the MPI Desc */
-	if (!win)
-	{
-		return MPI_ERR_ARG;
-	}
+	mpi_check_win(win, MPI_COMM_WORLD);
+	mpc_mpi_win_t *const mpc_win = (mpc_mpi_win_t *)win;
+	MPI_Comm             comm    = mpc_mpi_osc_win_get_comm(mpc_win);
 
-	if (win->info != MPI_INFO_NULL)
+	/* Retrieve the MPI Desc */
+	if (mpc_win->info != MPI_INFO_NULL)
 	{
-		PMPI_Info_free(&win->info);
+		PMPI_Info_free(&mpc_win->info);
 	}
 
 	// The created info object may be released before the Window: the handle must stay valid
-	PMPI_Info_dup(info, &win->info);
-
-	return MPI_SUCCESS;
+	const int rc = PMPI_Info_dup(info, &mpc_win->info);
+	MPI_HANDLE_RETURN_VAL(rc, comm);
 }
 
 int PMPI_Win_get_info(MPI_Win win, MPI_Info *info)
 {
-	/* Retrieve the MPI Desc */
-	if (!win)
+	mpi_check_win(win, MPI_COMM_WORLD);
+
+	mpc_mpi_win_t *const mpc_win = (mpc_mpi_win_t *)win;
+	MPI_Comm             comm    = mpc_mpi_osc_win_get_comm(mpc_win);
+	if (info == NULL)
 	{
-		return MPI_ERR_ARG;
+		MPI_HANDLE_ERROR(MPI_ERR_INFO, comm, "Error Invalid Info pointer");
 	}
 
-	PMPI_Info_dup(win->info, info);
-
-	return MPI_SUCCESS;
+	const int rc = PMPI_Info_dup(mpc_win->info, info);
+	MPI_HANDLE_RETURN_VAL(rc, comm);
 }
 
 /* MPI Window Naming                                                    */
 
 int PMPI_Win_set_name(MPI_Win win, const char *name)
 {
-	/* Retrieve the MPI Desc */
-	if (!win)
-	{
-		return MPI_ERR_ARG;
-	}
+	mpi_check_win(win, MPI_COMM_WORLD);
 
+	mpc_mpi_win_t *const mpc_win = (mpc_mpi_win_t *)win;
+	MPI_Comm             comm    = mpc_mpi_osc_win_get_comm(mpc_win);
+	if (name == NULL)
+	{
+		MPI_HANDLE_ERROR(MPI_ERR_INFO, comm, "Error Invalid name pointer");
+	}
 	if (MPI_MAX_OBJECT_NAME <= strlen(name))
 	{
-		return MPI_ERR_ARG;
+		MPI_HANDLE_ERROR(MPI_ERR_ARG, comm, "Error Provided name is too long");
 	}
 
-	strcpy(win->win_name, name);
+	strncpy(mpc_win->win_name, name, MPI_MAX_OBJECT_NAME - 1);
 
 	return MPI_SUCCESS;
 }
 
 int PMPI_Win_get_name(MPI_Win win, char *name, int *len)
 {
+	if (name == NULL || len == NULL)
+	{
+		MPI_HANDLE_ERROR(MPI_ERR_INFO, MPI_COMM_WORLD, "Error Invalid name or len pointer");
+	}
+	if (win == MPI_WIN_NULL)
+	{
+		*len = sprintf(name, "%s", "MPI_WIN_NULL");
+		return MPI_SUCCESS;
+	}
+
+	mpc_mpi_win_t *const mpc_win = (mpc_mpi_win_t *)win;
+
 	/* Retrieve the MPI Desc */
-	sprintf(name, "%s", win->win_name);
-	*len = strlen(win->win_name);
+	*len = sprintf(name, "%s", mpc_win->win_name);
 
 	return MPI_SUCCESS;
 }
 
 /* MPI Window Creation/Release                                          */
 
-int PMPI_Win_create(void *base, MPI_Aint size, int disp_unit, MPI_Info info,
-                    MPI_Comm comm, MPI_Win *win)
+int PMPI_Win_create(void *base, MPI_Aint size, int disp_unit, MPI_Info info, MPI_Comm comm, MPI_Win *win)
 {
-	return mpc_win_create(&base, size, disp_unit, info, comm, win);
+	mpi_check_comm(comm);
+
+	if (win == NULL)
+	{
+		MPI_HANDLE_ERROR(MPI_ERR_INFO, comm, "Error Invalid win pointer");
+	}
+
+	return mpc_mpi_osc_win_create(&base, size, disp_unit, info, comm, (mpc_mpi_win_t **)win);
 }
 
 int PMPI_Win_allocate(MPI_Aint size, int disp_unit, MPI_Info info,
                       MPI_Comm comm, void *baseptr, MPI_Win *win)
 {
+	mpi_check_comm(comm);
+
+	if (win == NULL)
+	{
+		MPI_HANDLE_ERROR(MPI_ERR_INFO, comm, "Error Invalid win pointer");
+	}
+
 	void *base;
-	int   rc = mpc_win_allocate(&base, size, disp_unit, info, comm, win);
+	int   rc = mpc_mpi_osc_win_allocate(&base, size, disp_unit, info, comm, (mpc_mpi_win_t **)win);
 
 	if (rc != MPI_SUCCESS)
 	{
-		return rc;
+		MPI_HANDLE_RETURN_VAL(rc, comm);
 	}
 
 	*((void **)baseptr) = base;
 
-	return rc;
+	MPI_HANDLE_RETURN_VAL(rc, comm);
 }
 
 int PMPI_Win_allocate_shared(MPI_Aint size, int disp_unit, MPI_Info info,
@@ -16146,16 +16155,47 @@ int PMPI_Win_allocate_shared(MPI_Aint size, int disp_unit, MPI_Info info,
 
 int PMPI_Win_create_dynamic(MPI_Info info, MPI_Comm comm, MPI_Win *win)
 {
-	return mpc_win_create_dynamic(info, comm, win);
+	mpi_check_comm(comm);
+
+	if (win == NULL)
+	{
+		MPI_HANDLE_ERROR(MPI_ERR_INFO, comm, "Error Invalid win pointer");
+	}
+
+	const int rc = mpc_mpi_osc_win_create_dynamic(info, comm, (mpc_mpi_win_t **)win);
+	MPI_HANDLE_RETURN_VAL(rc, comm);
 }
 
-int PMPI_Win_attach(MPI_Win, void *, MPI_Aint);
-int PMPI_Win_detach(MPI_Win, const void *);
+int PMPI_Win_attach(MPI_Win win, void *base, MPI_Aint size)
+{
+	mpi_check_win(win, MPI_COMM_WORLD);
+	mpc_mpi_win_t *const mpc_win = (mpc_mpi_win_t *)win;
+	MPI_Comm             comm    = mpc_mpi_osc_win_get_comm(mpc_win);
+
+	const int rc = mpc_mpi_osc_win_attach(mpc_win, base, size);
+	MPI_HANDLE_RETURN_VAL(rc, comm);
+}
+
+int PMPI_Win_detach(MPI_Win win, const void *base)
+{
+	mpi_check_win(win, MPI_COMM_WORLD);
+	mpc_mpi_win_t *const mpc_win = (mpc_mpi_win_t *)win;
+	MPI_Comm             comm    = mpc_mpi_osc_win_get_comm(mpc_win);
+
+	const int rc = mpc_mpi_osc_win_detach((mpc_mpi_win_t *)win, base);
+	MPI_HANDLE_RETURN_VAL(rc, comm);
+}
 
 int PMPI_Win_free(MPI_Win *win)
 {
-	const MPI_Comm comm = ((mpc_win_t *)*win)->comm;
-	const int      rc   = mpc_win_free(*win);
+	if (win == NULL)
+	{
+		MPI_HANDLE_ERROR(MPI_ERR_INFO, MPI_COMM_WORLD, "Error Invalid win pointer");
+	}
+
+	mpc_mpi_win_t *mpc_win = (mpc_mpi_win_t *)*win;
+	const MPI_Comm comm    = mpc_mpi_osc_win_get_comm(mpc_win);
+	const int      rc      = mpc_mpi_osc_win_free(mpc_win);
 
 	*win = MPI_WIN_NULL;
 
@@ -16173,9 +16213,27 @@ int PMPI_Get(void *origin_addr, int origin_count, MPI_Datatype origin_datatype,
 		return MPI_SUCCESS;
 	}
 
-	return mpc_osc_get(origin_addr, origin_count, origin_datatype,
+	mpi_check_win(win, MPI_COMM_WORLD);
+	mpc_mpi_win_t *const mpc_win = (mpc_mpi_win_t *)win;
+	MPI_Comm             comm    = mpc_mpi_osc_win_get_comm(mpc_win);
+	int comm_size = 0;
+	_mpc_cl_comm_size(comm, &comm_size);
+
+	mpi_check_rank_send(target_rank, comm_size, comm);
+
+	mpi_check_type(origin_datatype, comm);
+	mpi_check_type_committed(origin_datatype, comm);
+	mpi_check_count(origin_count, comm);
+
+	mpi_check_type(target_datatype, comm);
+	mpi_check_type_committed(target_datatype, comm);
+	mpi_check_count(target_count, comm);
+
+	const int rc = mpc_mpi_osc_get(origin_addr, origin_count, origin_datatype,
 		target_rank, target_disp, target_count,
-		target_datatype, win);
+		target_datatype, mpc_win);
+
+	MPI_HANDLE_RETURN_VAL(rc, comm);
 }
 
 int PMPI_Put(const void *origin_addr, int origin_count,
@@ -16188,9 +16246,26 @@ int PMPI_Put(const void *origin_addr, int origin_count,
 		return MPI_SUCCESS;
 	}
 
-	return mpc_osc_put(origin_addr, origin_count, origin_datatype,
+	mpi_check_win(win, MPI_COMM_WORLD);
+	mpc_mpi_win_t *const mpc_win = (mpc_mpi_win_t *)win;
+	MPI_Comm             comm    = mpc_mpi_osc_win_get_comm(mpc_win);
+	int comm_size = 0;
+	_mpc_cl_comm_size(comm, &comm_size);
+
+	mpi_check_rank_send(target_rank, comm_size, comm);
+
+	mpi_check_type(origin_datatype, comm);
+	mpi_check_type_committed(origin_datatype, comm);
+	mpi_check_count(origin_count, comm);
+
+	mpi_check_type(target_datatype, comm);
+	mpi_check_type_committed(target_datatype, comm);
+	mpi_check_count(target_count, comm);
+
+	const int rc = mpc_mpi_osc_put(origin_addr, origin_count, origin_datatype,
 		target_rank, target_disp, target_count,
-		target_datatype, win);
+		target_datatype, mpc_win);
+	MPI_HANDLE_RETURN_VAL(rc, comm);
 }
 
 int PMPI_Rput(const void *origin_addr, int origin_count,
@@ -16198,86 +16273,199 @@ int PMPI_Rput(const void *origin_addr, int origin_count,
               MPI_Aint target_disp, int target_count,
               MPI_Datatype target_datatype, MPI_Win win, MPI_Request *request)
 {
+	mpi_check_win(win, MPI_COMM_WORLD);
+	mpc_mpi_win_t *const mpc_win = (mpc_mpi_win_t *)win;
+	MPI_Comm             comm    = mpc_mpi_osc_win_get_comm(mpc_win);
+	int comm_size = 0;
+	_mpc_cl_comm_size(comm, &comm_size);
+
+	mpi_check_rank_send(target_rank, comm_size, comm);
+
+	mpi_check_type(origin_datatype, comm);
+	mpi_check_type_committed(origin_datatype, comm);
+	mpi_check_count(origin_count, comm);
+
+	mpi_check_type(target_datatype, comm);
+	mpi_check_type_committed(target_datatype, comm);
+	mpi_check_count(target_count, comm);
+
+	if (request == NULL)
+	{
+		MPI_HANDLE_ERROR(MPI_ERR_REQUEST, comm, "Error Invalid Request pointer");
+	}
+
 	// We will handle the target == MPI_PROC_NULL below to have a valid request
-	return mpc_osc_rput(origin_addr, origin_count, origin_datatype,
+	const int rc = mpc_mpi_osc_rput(origin_addr, origin_count, origin_datatype,
 		target_rank, target_disp, target_count,
-		target_datatype, win, request);
+		target_datatype, mpc_win, (MPI_internal_request_t **)request);
+	MPI_HANDLE_RETURN_VAL(rc, comm);
 }
 
 int PMPI_Rget(void *origin_addr, int origin_count, MPI_Datatype origin_datatype,
               int target_rank, MPI_Aint target_disp, int target_count,
               MPI_Datatype target_datatype, MPI_Win win, MPI_Request *request)
 {
+	mpi_check_win(win, MPI_COMM_WORLD);
+	mpc_mpi_win_t *const mpc_win = (mpc_mpi_win_t *)win;
+	MPI_Comm             comm    = mpc_mpi_osc_win_get_comm(mpc_win);
+	int comm_size = 0;
+	_mpc_cl_comm_size(comm, &comm_size);
+
+	mpi_check_rank_send(target_rank, comm_size, comm);
+
+	mpi_check_type(origin_datatype, comm);
+	mpi_check_type_committed(origin_datatype, comm);
+	mpi_check_count(origin_count, comm);
+
+	mpi_check_type(target_datatype, comm);
+	mpi_check_type_committed(target_datatype, comm);
+	mpi_check_count(target_count, comm);
+
+	if (request == NULL)
+	{
+		MPI_HANDLE_ERROR(MPI_ERR_REQUEST, comm, "Error Invalid Request pointer");
+	}
+
 	// We will handle the target == MPI_PROC_NULL below to have a valid request
-	return mpc_osc_rget(origin_addr, origin_count, origin_datatype,
+	const int rc = mpc_mpi_osc_rget(origin_addr, origin_count, origin_datatype,
 		target_rank, target_disp, target_count,
-		target_datatype, win, request);
+		target_datatype, mpc_win, (MPI_internal_request_t **)request);
+	MPI_HANDLE_RETURN_VAL(rc, comm);
 }
 
 /* Synchronization calls Epochs */
 
 int PMPI_Win_fence(int assert, MPI_Win win)
 {
-	return mpc_osc_fence(assert, win);
+	mpi_check_win(win, MPI_COMM_WORLD);
+	mpc_mpi_win_t *const mpc_win = (mpc_mpi_win_t *)win;
+	MPI_Comm             comm    = mpc_mpi_osc_win_get_comm(mpc_win);
+
+	const int rc = mpc_mpi_osc_fence(assert, (mpc_mpi_win_t *)win);
+	MPI_HANDLE_RETURN_VAL(rc, comm);
 }
 
 /* Active target sync */
 
 int PMPI_Win_start(MPI_Group group, int assert, MPI_Win win)
 {
-	return mpc_osc_start(group, assert, win);
+	mpi_check_win(win, MPI_COMM_WORLD);
+	mpc_mpi_win_t *const mpc_win = (mpc_mpi_win_t *)win;
+	MPI_Comm             comm    = mpc_mpi_osc_win_get_comm(mpc_win);
+	if (group == MPI_GROUP_NULL)
+	{
+		MPI_HANDLE_ERROR(MPI_ERR_GROUP, comm, "Error Invalid Group handle provided");
+	}
+	const int rc = mpc_mpi_osc_start(group, assert, mpc_win);
+	MPI_HANDLE_RETURN_VAL(rc, comm);
 }
 
 int PMPI_Win_complete(MPI_Win win)
 {
-	return mpc_osc_complete(win);
+	mpi_check_win(win, MPI_COMM_WORLD);
+	mpc_mpi_win_t *const mpc_win = (mpc_mpi_win_t *)win;
+	MPI_Comm             comm    = mpc_mpi_osc_win_get_comm(mpc_win);
+
+	const int rc = mpc_mpi_osc_complete(mpc_win);
+	MPI_HANDLE_RETURN_VAL(rc, comm);
 }
 
 int PMPI_Win_post(MPI_Group group, int assert, MPI_Win win)
 {
-	return mpc_osc_post(group, assert, win);
+	mpi_check_win(win, MPI_COMM_WORLD);
+	mpc_mpi_win_t *const mpc_win = (mpc_mpi_win_t *)win;
+	MPI_Comm             comm    = mpc_mpi_osc_win_get_comm(mpc_win);
+	if (group == MPI_GROUP_NULL)
+	{
+		MPI_HANDLE_ERROR(MPI_ERR_GROUP, comm, "Error Invalid Group handle provided");
+	}
+
+	const int rc = mpc_mpi_osc_post(group, assert, mpc_win);
+	MPI_HANDLE_RETURN_VAL(rc, comm);
 }
 
 int PMPI_Win_wait(MPI_Win win)
 {
-	return mpc_osc_wait(win);
+	mpi_check_win(win, MPI_COMM_WORLD);
+	mpc_mpi_win_t *const mpc_win = (mpc_mpi_win_t *)win;
+	MPI_Comm             comm    = mpc_mpi_osc_win_get_comm(mpc_win);
+
+	const int rc = mpc_mpi_osc_wait(mpc_win);
+	MPI_HANDLE_RETURN_VAL(rc, comm);
 }
 
 int PMPI_Win_test(MPI_Win win, int *flag)
 {
-	return mpc_osc_test(win, flag);
+	mpi_check_win(win, MPI_COMM_WORLD);
+	mpc_mpi_win_t *const mpc_win = (mpc_mpi_win_t *)win;
+	MPI_Comm             comm    = mpc_mpi_osc_win_get_comm(mpc_win);
+	if (flag == NULL)
+	{
+		MPI_HANDLE_ERROR(MPI_ERR_ARG, comm, "Error Invalid flag pointer provided");
+	}
+	const int rc = mpc_mpi_osc_test(mpc_win, flag);
+	MPI_HANDLE_RETURN_VAL(rc, comm);
 }
 
 /* Passive Target Sync */
 
 int PMPI_Win_lock(int lock_type, int rank, int assert, MPI_Win win)
 {
+	mpi_check_win(win, MPI_COMM_WORLD);
+	mpc_mpi_win_t *mpc_win = (mpc_mpi_win_t *)win;
+	MPI_Comm       comm    = mpc_mpi_osc_win_get_comm(mpc_win);
+
+	if (lock_type != MPI_LOCK_SHARED && lock_type != MPI_LOCK_EXCLUSIVE)
+	{
+		MPI_HANDLE_ERROR(MPI_ERR_LOCKTYPE, comm, "Error Invalid lock_type provided");
+	}
+
 	if (rank == MPI_PROC_NULL)
 	{
 		return MPI_SUCCESS;
 	}
 
-	return mpc_osc_lock(lock_type, rank, assert, win);
+	int comm_size = 0;
+	_mpc_cl_comm_size(comm, &comm_size);
+	mpi_check_rank(rank, comm_size, comm);
+
+	const int rc = mpc_mpi_osc_lock(lock_type, rank, assert, mpc_win);
+	MPI_HANDLE_RETURN_VAL(rc, comm);
 }
 
 int PMPI_Win_unlock(int rank, MPI_Win win)
 {
+	mpi_check_win(win, MPI_COMM_WORLD);
+	mpc_mpi_win_t *mpc_win = (mpc_mpi_win_t *)win;
+	MPI_Comm       comm    = mpc_mpi_osc_win_get_comm(mpc_win);
+
 	if (rank == MPI_PROC_NULL)
 	{
 		return MPI_SUCCESS;
 	}
 
-	return mpc_osc_unlock(rank, win);
+	int comm_size = 0;
+	_mpc_cl_comm_size(comm, &comm_size);
+	mpi_check_rank(rank, comm_size, comm);
+
+	const int rc = mpc_mpi_osc_unlock(rank, mpc_win);
+	MPI_HANDLE_RETURN_VAL(rc, comm);
 }
 
 int PMPI_Win_lock_all(int assert, MPI_Win win)
 {
-	return mpc_osc_lock_all(assert, win);
+	mpi_check_win(win, MPI_COMM_WORLD);
+
+	const int rc = mpc_mpi_osc_lock_all(assert, (mpc_mpi_win_t *)win);
+	MPI_HANDLE_RETURN_VAL(rc, MPI_COMM_WORLD);
 }
 
 int PMPI_Win_unlock_all(MPI_Win win)
 {
-	return mpc_osc_unlock_all(win);
+	mpi_check_win(win, MPI_COMM_WORLD);
+
+	const int rc = mpc_mpi_osc_unlock_all((mpc_mpi_win_t *)win);
+	MPI_HANDLE_RETURN_VAL(rc, MPI_COMM_WORLD);
 }
 
 /* Error Handling */
@@ -16285,64 +16473,119 @@ int PMPI_Win_unlock_all(MPI_Win win)
 int PMPI_Win_create_errhandler(MPI_Win_errhandler_function *win_errhandler_fn,
                                MPI_Errhandler *errhandler)
 {
-	return _mpc_cl_errhandler_create((MPC_Handler_function *)win_errhandler_fn,
-		errhandler);
+	if (errhandler == NULL)
+	{
+		MPI_HANDLE_ERROR(MPI_ERR_ERRHANDLER, MPI_COMM_WORLD, "Error Invalid Errhandler pointer provided");
+	}
+
+	const int rc = _mpc_cl_errhandler_create((MPC_Handler_function *)win_errhandler_fn, errhandler);
+	MPI_HANDLE_RETURN_VAL(rc, MPI_COMM_WORLD);
 }
 
 int PMPI_Win_set_errhandler(MPI_Win win, MPI_Errhandler errhandler)
 {
-	_mpc_mpi_handle_set_errhandler((sctk_handle)win, _MPC_MPI_HANDLE_WIN,
-		(_mpc_mpi_errhandler_t)errhandler);
-	return MPI_SUCCESS;
+	mpi_check_win(win, MPI_COMM_WORLD);
+	mpc_mpi_win_t *mpc_win = (mpc_mpi_win_t *)win;
+	MPI_Comm       comm    = mpc_mpi_osc_win_get_comm(mpc_win);
+
+	if (errhandler == MPI_ERRHANDLER_NULL)
+	{
+		MPI_HANDLE_ERROR(MPI_ERR_ERRHANDLER, comm, "Error Invalid Errhandler provided");
+	}
+
+	_mpc_mpi_handle_set_errhandler((sctk_handle)win, _MPC_MPI_HANDLE_WIN, (_mpc_mpi_errhandler_t)errhandler);
+	MPI_HANDLE_RETURN_VAL(MPI_SUCCESS, comm);
 }
 
 int PMPI_Win_get_errhandler(MPI_Win win, MPI_Errhandler *errhandler)
 {
-	*errhandler = (MPC_Errhandler)_mpc_mpi_handle_get_errhandler((sctk_handle)win,
-		_MPC_MPI_HANDLE_WIN);
-	return MPI_SUCCESS;
+	mpi_check_win(win, MPI_COMM_WORLD);
+	mpc_mpi_win_t *mpc_win = (mpc_mpi_win_t *)win;
+	MPI_Comm       comm    = mpc_mpi_osc_win_get_comm(mpc_win);
+	if (errhandler == NULL)
+	{
+		MPI_HANDLE_ERROR(MPI_ERR_ERRHANDLER, comm, "Error Invalid Errhandler pointer provided");
+	}
+
+	*errhandler = (MPC_Errhandler)_mpc_mpi_handle_get_errhandler((sctk_handle)win, _MPC_MPI_HANDLE_WIN);
+	MPI_HANDLE_RETURN_VAL(MPI_SUCCESS, comm);
 }
 
 /* Window Flush Calls */
 
 int PMPI_Win_sync(MPI_Win win)
 {
-	return mpc_osc_sync(win);
+	mpi_check_win(win, MPI_COMM_WORLD);
+	const int rc = mpc_mpi_osc_sync((mpc_mpi_win_t *)win);
+	MPI_HANDLE_RETURN_VAL(rc, MPI_COMM_WORLD);
 }
 
 int PMPI_Win_flush(int rank, MPI_Win win)
 {
+	mpi_check_win(win, MPI_COMM_WORLD);
+
 	if (rank == MPI_PROC_NULL)
 	{
 		return MPI_SUCCESS;
 	}
 
-	return mpc_osc_flush(rank, win);
+	mpc_mpi_win_t *mpc_win   = (mpc_mpi_win_t *)win;
+	MPI_Comm       comm      = mpc_mpi_osc_win_get_comm(mpc_win);
+	int            comm_size = 0;
+	_mpc_cl_comm_size(comm, &comm_size);
+	mpi_check_rank(rank, comm_size, comm);
+
+	const int rc = mpc_mpi_osc_flush(rank, mpc_win);
+	MPI_HANDLE_RETURN_VAL(rc, comm);
 }
 
 int PMPI_Win_flush_local(int rank, MPI_Win win)
 {
+	mpi_check_win(win, MPI_COMM_WORLD);
 	if (rank == MPI_PROC_NULL)
 	{
 		return MPI_SUCCESS;
 	}
 
-	return mpc_osc_flush_local(rank, win);
+	mpc_mpi_win_t *mpc_win   = (mpc_mpi_win_t *)win;
+	MPI_Comm       comm      = mpc_mpi_osc_win_get_comm(mpc_win);
+	int            comm_size = 0;
+	_mpc_cl_comm_size(comm, &comm_size);
+	mpi_check_rank(rank, comm_size, comm);
+
+	const int rc = mpc_mpi_osc_flush(rank, mpc_win);
+	MPI_HANDLE_RETURN_VAL(rc, comm);
 }
 
 int PMPI_Win_flush_all(MPI_Win win)
 {
-	return mpc_osc_flush_all(win);
+	mpi_check_win(win, MPI_COMM_WORLD);
+
+	const int rc = mpc_mpi_osc_flush_all((mpc_mpi_win_t *)win);
+	MPI_HANDLE_RETURN_VAL(rc, MPI_COMM_WORLD);
 }
 
 int PMPI_Win_flush_local_all(MPI_Win win)
 {
-	return mpc_osc_flush_local_all(win);
+	mpi_check_win(win, MPI_COMM_WORLD);
+
+	const int rc = mpc_mpi_osc_flush_all((mpc_mpi_win_t *)win);
+	MPI_HANDLE_RETURN_VAL(rc, MPI_COMM_WORLD);
 }
 
 int PMPI_Win_get_group(MPI_Win win, MPI_Group *group)
 {
-	return MPI_Comm_group(win->comm, group);
+	mpi_check_win(win, MPI_COMM_WORLD);
+	mpc_mpi_win_t *const mpc_win = (mpc_mpi_win_t *)win;
+	MPI_Comm             comm    = mpc_mpi_osc_win_get_comm(mpc_win);
+	if (group == NULL)
+	{
+		MPI_HANDLE_ERROR(MPI_ERR_GROUP, comm, "Error Invalid Group pointer provided");
+	}
+
+	*group = mpc_mpi_osc_win_get_group(mpc_win);
+
+	MPI_HANDLE_RETURN_VAL(MPI_SUCCESS, comm);
 }
 
 int PMPI_Accumulate(const void *origin_addr, int origin_count,
@@ -16350,14 +16593,33 @@ int PMPI_Accumulate(const void *origin_addr, int origin_count,
                     MPI_Aint target_disp, int target_count,
                     MPI_Datatype target_datatype, MPI_Op op, MPI_Win win)
 {
+	mpi_check_win(win, MPI_COMM_WORLD);
+	mpc_mpi_win_t *const mpc_win = (mpc_mpi_win_t *)win;
+	MPI_Comm             comm    = mpc_mpi_osc_win_get_comm(mpc_win);
+	int comm_size = 0;
+	_mpc_cl_comm_size(comm, &comm_size);
+
+	mpi_check_rank_send(target_rank, comm_size, comm);
+
+	mpi_check_type(origin_datatype, comm);
+	mpi_check_type_committed(origin_datatype, comm);
+	mpi_check_op(op, origin_datatype, comm);
+	mpi_check_count(origin_count, comm);
+
+	mpi_check_type(target_datatype, comm);
+	mpi_check_type_committed(target_datatype, comm);
+	mpi_check_op(op, target_datatype, comm);
+	mpi_check_count(target_count, comm);
+
 	if (target_rank == MPI_PROC_NULL)
 	{
 		return MPI_SUCCESS;
 	}
 
-	return mpc_osc_accumulate(origin_addr, origin_count, origin_datatype,
+	const int rc = mpc_mpi_osc_accumulate(origin_addr, origin_count, origin_datatype,
 		target_rank, target_disp, target_count,
-		target_datatype, op, win);
+		target_datatype, op, mpc_win);
+	MPI_HANDLE_RETURN_VAL(rc, comm);
 }
 
 int PMPI_Raccumulate(const void *origin_addr, int origin_count,
@@ -16366,10 +16628,34 @@ int PMPI_Raccumulate(const void *origin_addr, int origin_count,
                      MPI_Datatype target_datatype, MPI_Op op, MPI_Win win,
                      MPI_Request *request)
 {
+	mpi_check_win(win, MPI_COMM_WORLD);
+	mpc_mpi_win_t *const mpc_win = (mpc_mpi_win_t *)win;
+	MPI_Comm             comm    = mpc_mpi_osc_win_get_comm(mpc_win);
+	int comm_size = 0;
+	_mpc_cl_comm_size(comm, &comm_size);
+
+	mpi_check_rank_send(target_rank, comm_size, comm);
+
+	mpi_check_type(origin_datatype, comm);
+	mpi_check_type_committed(origin_datatype, comm);
+	mpi_check_op(op, origin_datatype, comm);
+	mpi_check_count(origin_count, comm);
+
+	mpi_check_type(target_datatype, comm);
+	mpi_check_type_committed(target_datatype, comm);
+	mpi_check_count(target_count, comm);
+	mpi_check_op(op, target_datatype, comm);
+
+	if (request == NULL)
+	{
+		MPI_HANDLE_ERROR(MPI_ERR_REQUEST, comm, "Error Invalid Request pointer");
+	}
+
 	// We will handle the target == MPI_PROC_NULL below to have a valid request
-	return mpc_osc_raccumulate(origin_addr, origin_count, origin_datatype,
+	const int rc = mpc_mpi_osc_raccumulate(origin_addr, origin_count, origin_datatype,
 		target_rank, target_disp, target_count,
-		target_datatype, op, win, request);
+		target_datatype, op, (mpc_mpi_win_t *)win, (MPI_internal_request_t **)request);
+	MPI_HANDLE_RETURN_VAL(rc, comm);
 }
 
 int PMPI_Get_accumulate(const void *origin_addr, int origin_count,
@@ -16378,16 +16664,44 @@ int PMPI_Get_accumulate(const void *origin_addr, int origin_count,
                         int target_rank, MPI_Aint target_disp, int target_count,
                         MPI_Datatype target_datatype, MPI_Op op, MPI_Win win)
 {
+	mpi_check_win(win, MPI_COMM_WORLD);
+	mpc_mpi_win_t *const mpc_win = (mpc_mpi_win_t *)win;
+	MPI_Comm             comm    = mpc_mpi_osc_win_get_comm(mpc_win);
+	int comm_size = 0;
+	_mpc_cl_comm_size(comm, &comm_size);
+
+	mpi_check_rank_send(target_rank, comm_size, comm);
+
+	mpi_check_type(origin_datatype, comm);
+	mpi_check_type_committed(origin_datatype, comm);
+	mpi_check_op(op, origin_datatype, comm);
+	mpi_check_count(origin_count, comm);
+
+	mpi_check_type(result_datatype, comm);
+	mpi_check_type_committed(result_datatype, comm);
+	mpi_check_count(result_count, comm);
+
+	mpi_check_type(target_datatype, comm);
+	mpi_check_type_committed(target_datatype, comm);
+	mpi_check_op(op, target_datatype, comm);
+	mpi_check_count(target_count, comm);
+
+	if (result_addr == NULL)
+	{
+		MPI_HANDLE_ERROR(MPI_ERR_BUFFER, comm, "Error Invalid Result address pointer");
+	}
+
 	if (target_rank == MPI_PROC_NULL)
 	{
 		return MPI_SUCCESS;
 	}
 
-	return mpc_osc_get_accumulate(origin_addr, origin_count,
+	const int rc = mpc_mpi_osc_get_accumulate(origin_addr, origin_count,
 		origin_datatype, result_addr,
 		result_count, result_datatype,
 		target_rank, target_disp, target_count,
-		target_datatype, op, win);
+		target_datatype, op, mpc_win);
+	MPI_HANDLE_RETURN_VAL(rc, comm);
 }
 
 int PMPI_Rget_accumulate(const void *origin_addr, int origin_count,
@@ -16397,75 +16711,183 @@ int PMPI_Rget_accumulate(const void *origin_addr, int origin_count,
                          int target_count, MPI_Datatype target_datatype,
                          MPI_Op op, MPI_Win win, MPI_Request *request)
 {
+	mpi_check_win(win, MPI_COMM_WORLD);
+	mpc_mpi_win_t *const mpc_win = (mpc_mpi_win_t *)win;
+	MPI_Comm             comm    = mpc_mpi_osc_win_get_comm(mpc_win);
+	int comm_size = 0;
+	_mpc_cl_comm_size(comm, &comm_size);
+
+	mpi_check_rank_send(target_rank, comm_size, comm);
+
+	mpi_check_type(origin_datatype, comm);
+	mpi_check_type_committed(origin_datatype, comm);
+	mpi_check_op(op, origin_datatype, comm);
+	mpi_check_count(origin_count, comm);
+
+	mpi_check_type(result_datatype, comm);
+	mpi_check_type_committed(result_datatype, comm);
+	mpi_check_count(result_count, comm);
+
+	mpi_check_type(target_datatype, comm);
+	mpi_check_type_committed(target_datatype, comm);
+	mpi_check_op(op, target_datatype, comm);
+	mpi_check_count(target_count, comm);
+
+	if (result_addr == NULL)
+	{
+		MPI_HANDLE_ERROR(MPI_ERR_BUFFER, comm, "Error Invalid Result address pointer");
+	}
+
+	if (request == NULL)
+	{
+		MPI_HANDLE_ERROR(MPI_ERR_REQUEST, comm, "Error Invalid Request pointer");
+	}
+
 	// We will handle the target == MPI_PROC_NULL below to have a valid request
-	return mpc_osc_rget_accumulate(origin_addr, origin_count,
+	MPI_internal_request_t **req = (MPI_internal_request_t **)request;
+	const int rc = mpc_mpi_osc_rget_accumulate(origin_addr, origin_count,
 		origin_datatype, result_addr,
 		result_count, result_datatype,
 		target_rank, target_disp, target_count,
-		target_datatype, op, win, request);
+		target_datatype, op, mpc_win, req);
+	MPI_HANDLE_RETURN_VAL(rc, comm);
 }
 
 int PMPI_Fetch_and_op(const void *origin_addr, void *result_addr,
                       MPI_Datatype datatype, int target_rank,
                       MPI_Aint target_disp, MPI_Op op, MPI_Win win)
 {
+	mpi_check_win(win, MPI_COMM_WORLD);
+	mpc_mpi_win_t *const mpc_win = (mpc_mpi_win_t *)win;
+	MPI_Comm             comm    = mpc_mpi_osc_win_get_comm(mpc_win);
+	int comm_size = 0;
+	_mpc_cl_comm_size(comm, &comm_size);
+
+	mpi_check_rank_send(target_rank, comm_size, comm);
+
+	mpi_check_type(datatype, comm);
+	mpi_check_type_committed(datatype, comm);
+	mpi_check_op(op, datatype, comm);
+
+	if (result_addr == NULL)
+	{
+		MPI_HANDLE_ERROR(MPI_ERR_BUFFER, comm, "Error Invalid Result address pointer");
+	}
+
 	if (target_rank == MPI_PROC_NULL)
 	{
 		return MPI_SUCCESS;
 	}
 
-	return mpc_osc_fetch_and_op(origin_addr, result_addr, datatype,
-		target_rank, target_disp, op, win);
+	const int rc = mpc_mpi_osc_fetch_and_op(origin_addr, result_addr, datatype, target_rank, target_disp, op, mpc_win);
+	MPI_HANDLE_RETURN_VAL(rc, comm);
 }
 
 int PMPI_Compare_and_swap(const void *origin_addr, const void *compare_addr,
                           void *result_addr, MPI_Datatype datatype,
                           int target_rank, MPI_Aint target_disp, MPI_Win win)
 {
+	mpi_check_win(win, MPI_COMM_WORLD);
+	mpc_mpi_win_t *const mpc_win = (mpc_mpi_win_t *)win;
+	MPI_Comm             comm    = mpc_mpi_osc_win_get_comm(mpc_win);
+	int comm_size = 0;
+	_mpc_cl_comm_size(comm, &comm_size);
+
+	mpi_check_rank_send(target_rank, comm_size, comm);
+
+	mpi_check_type(datatype, comm);
+	mpi_check_type_committed(datatype, comm);
+
+	if (compare_addr == NULL)
+	{
+		MPI_HANDLE_ERROR(MPI_ERR_BUFFER, comm, "Error Invalid Compare address pointer");
+	}
+	if (result_addr == NULL)
+	{
+		MPI_HANDLE_ERROR(MPI_ERR_BUFFER, comm, "Error Invalid Result address pointer");
+	}
+
 	if (target_rank == MPI_PROC_NULL)
 	{
 		return MPI_SUCCESS;
 	}
 
-	return mpc_osc_compare_and_swap(origin_addr, compare_addr, result_addr,
-		datatype, target_rank, target_disp,
-		win);
+	const int rc = mpc_mpi_osc_compare_and_swap(origin_addr, compare_addr, result_addr,
+		datatype, target_rank, target_disp, mpc_win);
+	MPI_HANDLE_RETURN_VAL(rc, comm);
 }
 
 /* ATTR handling */
 
 int PMPI_Win_set_attr(MPI_Win win, int win_keyval, void *attribute_val)
 {
-	return mpc_osc_win_set_attr(win, win_keyval, attribute_val);
+	mpi_check_win(win, MPI_COMM_WORLD);
+	mpc_mpi_win_t *const mpc_win = (mpc_mpi_win_t *)win;
+	MPI_Comm             comm    = mpc_mpi_osc_win_get_comm(mpc_win);
+	if (attribute_val == NULL)
+	{
+		MPI_HANDLE_ERROR(MPI_ERR_ARG, comm, "Error Invalid Attribute val pointer");
+	}
+
+	const int rc = mpc_mpi_osc_win_set_attr(mpc_win, win_keyval, attribute_val);
+	MPI_HANDLE_RETURN_VAL(rc, comm);
 }
 
-int PMPI_Win_get_attr(MPI_Win win, int keyval, void *attr_val,
-                      int *flag)
+int PMPI_Win_get_attr(MPI_Win win, int keyval, void *attr_val, int *flag)
 {
-	return mpc_osc_win_get_attr(win, keyval, attr_val, flag);
+	mpi_check_win(win, MPI_COMM_WORLD);
+	mpc_mpi_win_t *const mpc_win = (mpc_mpi_win_t *)win;
+	MPI_Comm             comm    = mpc_mpi_osc_win_get_comm(mpc_win);
+	if (attr_val == NULL)
+	{
+		MPI_HANDLE_ERROR(MPI_ERR_ARG, comm, "Error Invalid Attribute val pointer");
+	}
+	if (flag == NULL)
+	{
+		MPI_HANDLE_ERROR(MPI_ERR_ARG, comm, "Error Invalid flag pointer");
+	}
+
+	const int rc = mpc_mpi_osc_win_get_attr(mpc_win, keyval, attr_val, flag);
+	MPI_HANDLE_RETURN_VAL(rc, comm);
 }
 
 int PMPI_Win_free_keyval(int *win_keyval)
 {
-	return mpc_osc_win_free_keyval(win_keyval);
+	if (win_keyval == NULL)
+	{
+		MPI_HANDLE_ERROR(MPI_ERR_ARG, MPI_COMM_WORLD, "Error Invalid keyval pointer");
+	}
+
+	const int rc = mpc_mpi_osc_win_free_keyval(*win_keyval);
+	*win_keyval = MPI_KEYVAL_INVALID;
+	MPI_HANDLE_RETURN_VAL(rc, MPI_COMM_WORLD);
 }
 
 int PMPI_Win_delete_attr(MPI_Win win, int win_keyval)
 {
-	return mpc_osc_win_delete_attr(win, win_keyval);
+	mpi_check_win(win, MPI_COMM_WORLD);
+
+	mpc_mpi_win_t *mpc_win = (mpc_mpi_win_t *)win;
+
+	const int rc = mpc_mpi_osc_win_delete_attr(mpc_win, win_keyval);
+	MPI_HANDLE_RETURN_VAL(rc, MPI_COMM_WORLD);
 }
 
 int PMPI_Win_create_keyval(MPI_Win_copy_attr_function *win_copy_attr_fn,
                            MPI_Win_delete_attr_function *win_delete_attr_fn,
                            int *win_keyval, void *extra_state)
 {
-	return mpc_osc_win_create_keyval(win_copy_attr_fn, win_delete_attr_fn, win_keyval, extra_state);
+	if (win_keyval == NULL)
+	{
+		MPI_HANDLE_ERROR(MPI_ERR_ARG, MPI_COMM_WORLD, "Error Invalid keyval pointer");
+	}
+	const int rc = mpc_mpi_osc_win_create_keyval(win_copy_attr_fn, win_delete_attr_fn, win_keyval, extra_state);
+	MPI_HANDLE_RETURN_VAL(rc, MPI_COMM_WORLD);
 }
 
 /* Win shared */
 
-int PMPI_Win_shared_query(MPI_Win win, int rank, MPI_Aint *size, int *disp_unit,
-                          void *baseptr)
+int PMPI_Win_shared_query(MPI_Win win, int rank, MPI_Aint *size, int *disp_unit, void *baseptr)
 {
 	UNUSED(win);
 	UNUSED(rank);
@@ -16474,16 +16896,6 @@ int PMPI_Win_shared_query(MPI_Win win, int rank, MPI_Aint *size, int *disp_unit,
 	UNUSED(baseptr);
 	not_implemented();
 	return 0;
-}
-
-int PMPI_Win_attach(MPI_Win win, void *base, MPI_Aint size)
-{
-	return mpc_osc_win_attach(win, base, size);
-}
-
-int PMPI_Win_detach(MPI_Win win, const void *base)
-{
-	return mpc_osc_win_detach(win, base);
 }
 
 /* Checkpointing */

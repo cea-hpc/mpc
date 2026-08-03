@@ -649,6 +649,10 @@ int _mpc_mpi_init_counter(int *counter);
 		if (count < 0)               \
 		MPI_ERROR_REPORT(comm, MPI_ERR_COUNT, "Error count cannot be negative")
 
+#define mpi_check_win(win, comm) \
+		if (win == MPI_WIN_NULL) \
+		MPI_ERROR_REPORT(comm, MPI_ERR_WIN, "Error invalid Win");
+
 #define mpi_check_rank(task, max_rank, comm)                                             \
 		do                                                                               \
 		{                                                                                \

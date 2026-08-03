@@ -17,9 +17,29 @@
 /* #                                                                      # */
 /* # Authors:                                                             # */
 /* #   - MOREAU Gilles gilles.moreau@cea.fr                               # */
+/* #   - BEAULIEU Corentin coretin.beaulieu@cea.fr                        # */
 /* #                                                                      # */
 /* ######################################################################## */
 
-#include <mpc_common_datastructure.h>
+/**@file
+ * One sided getter routines implementation
+ */
 
-int mpc_osc_win_attr_ht_release(struct mpc_common_hashtable *atht);
+#include "lowcomm_one_sided_internal.h"
+#include "communicator.h"
+
+mpc_lowcomm_communicator_t mpc_lowcomm_osc_win_get_comm(const mpc_lowcomm_window_t *const win)
+{
+	_mpc_lowcomm_communicator_acquire(win->comm);
+	return win->comm;
+}
+
+mpc_lowcomm_group_t *mpc_lowcomm_osc_win_get_group(const mpc_lowcomm_window_t *const win)
+{
+	return mpc_lowcomm_group_dup(win->comm->group);
+}
+
+mpc_lowcomm_osc_win_attr_t mpc_lowcomm_osc_win_get_attr(const mpc_lowcomm_window_t *const win)
+{
+	return (mpc_lowcomm_osc_win_attr_t){ .base_data = win->base_data };
+}

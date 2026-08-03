@@ -141,6 +141,8 @@
 					op->comp->sent = op->size;
 					op->comp->comp_cb(op->comp);
 				}
+				// FIXME: This sync is necessary to make sure host memory is synchronised
+				PtlAtomicSync();
 			}
 			else
 			{
@@ -498,11 +500,6 @@ err:
 			}
 		}
 		mpc_common_spinlock_unlock(&srail->net.rma.lock);
-
-		// FIXME: this sync is necessary to make sure host memory is
-		//       synchronised, see lockcontention2.c from mpich test suite.
-		// FIXME2: disabled for now for performance reasons.
-		// PtlAtomicSync();
 
 		return rc;
 	}
@@ -886,7 +883,9 @@ err:
 
 		mem->success = 0;
 
-		mem->match = atomic_fetch_add(&srail->net.rma.mem_uid, 1);
+		// FIXME: Disabling matching on the mem_uid due to one sided issue.
+		//        Should be deal properly with matching activated.
+		mem->match = atomic_fetch_add(&srail->net.rma.mem_uid, 0);
 
 #ifdef BXI_VERSION_3
 			ptl_le_t le = (ptl_le_t) {

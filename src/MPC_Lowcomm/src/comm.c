@@ -52,6 +52,7 @@
 #include <mpc_common_progress.h>
 
 
+#include "one-sided/lowcomm_osc.h"
 #include "mpc_lowcomm_workshare.h"
 #include "lowcomm_config.h"
 #include "monitor.h"
@@ -954,6 +955,8 @@ static void __lowcomm_init_per_task()
 		_mpc_lowcomm_pset_bootstrap();
 
 		mpc_lowcomm_allocmem_pool_init();
+		lowcomm_osc_init();
+		mpc_lowcomm_termination_barrier();
 	}
 }
 
@@ -965,13 +968,13 @@ static void __lowcomm_release_per_task()
 	{
 		mpc_common_nodebug("mpc_lowcomm_termination_barrier");
 		mpc_lowcomm_termination_barrier();
+
+		lowcomm_osc_deinit();
 		_mpc_lowcomm_release_psets();
-		// mpc_lowcomm_release_per_task(task_rank);
-
-
-		mpc_lowcomm_release_protocol_per_task();
 
 		_mpc_lowcomm_communicator_release_task();
+
+		mpc_lowcomm_release_protocol_per_task();
 
 		mpc_common_nodebug("mpc_lowcomm_termination_barrier done");
 		_mpc_lowcomm_monitor_teardown_per_task();

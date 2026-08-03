@@ -42,10 +42,6 @@
 #include "lowcomm.h"
 #include <mpc_lowcomm.h>
 
-#ifdef MPC_LOWCOMM_PROTOCOL
-#include <lcp.h>
-#endif
-
 #ifdef MPC_Threads
 #include <mpc_thread.h>
 #endif
@@ -883,6 +879,11 @@ static inline mpc_lowcomm_internal_communicator_t *__init_communicator_with_id(m
 		_mpc_lowcomm_group_acquire(group);
 
 		ret->process_span = _mpc_lowcomm_group_process_count(group);
+
+		const int group_size = mpc_lowcomm_group_size(group);
+		// TODO: add memory check
+		ret->eps = sctk_malloc(group_size * sizeof(mpc_lowcomm_ep_t));
+		memset(ret->eps, 0, group_size * sizeof(mpc_lowcomm_ep_t));
 	}
 
 	/* The comm is initialized with one reference to it */
@@ -1221,6 +1222,7 @@ static inline void __comm_free(mpc_lowcomm_communicator_t comm)
 
 	/* Relax the groups */
 	mpc_lowcomm_group_free(&comm->group);
+	mpc_lowcomm_ep_free(comm->eps);
 
 	if (comm->left_comm)
 	{
@@ -1654,32 +1656,31 @@ mpc_lowcomm_ep_t mpc_lowcomm_communicator_lookup(mpc_lowcomm_communicator_t comm
 
 	if (mpc_lowcomm_communicator_is_intercomm(comm))
 	{
-		return tcomm->right_comm->group->eps[rank];
+		return tcomm->right_comm->eps[rank];
 	}
 	else
 	{
-		return tcomm->group->eps[rank];
+		return tcomm->eps[rank];
 	}
 }
 
 void mpc_lowcomm_communicator_add_ep(mpc_lowcomm_communicator_t comm, int rank, mpc_lowcomm_ep_t ep)
 {
-	lcp_ep_h lcp_ep = (lcp_ep_h)ep;
 	mpc_lowcomm_communicator_t tcomm = __mpc_lowcomm_communicator_from_predefined(comm);
 
 	if (tcomm->is_comm_self)
 	{
-		__comm_self_ep = lcp_ep;
+		__comm_self_ep = ep;
 	}
 	else if (mpc_lowcomm_communicator_is_intercomm(tcomm))
 	{
 		assert(rank >= 0 && rank < (int)mpc_lowcomm_group_size(tcomm->left_comm->group));
-		tcomm->right_comm->group->eps[rank] = lcp_ep;
+		tcomm->right_comm->eps[rank] = ep;
 	}
 	else
 	{
 		assert(rank >= 0 && rank < (int)mpc_lowcomm_group_size(tcomm->group));
-		tcomm->group->eps[rank] = lcp_ep;
+		tcomm->eps[rank] = ep;
 	}
 }
 

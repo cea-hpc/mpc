@@ -428,7 +428,6 @@ static inline void __group_free(mpc_lowcomm_group_t *g)
 	g->size            = 0;
 	g->process_count   = 0;
 	sctk_free(g->process_list);
-	mpc_lowcomm_ep_free(g->eps);
 	g->process_list           = NULL;
 	g->local_leader           = MPC_PROC_NULL;
 	g->tasks_count_in_process = MPC_PROC_NULL;
@@ -1014,9 +1013,6 @@ mpc_lowcomm_group_t *_mpc_lowcomm_group_create(unsigned int size,
 	/* As we create we set refcounter to 1 */
 	OPA_store_int(&ret->refcount, 1);
 
-	// TODO: add memory check
-	ret->eps = sctk_malloc(size * sizeof(mpc_lowcomm_ep_t));
-	memset(ret->eps, 0, size * sizeof(mpc_lowcomm_ep_t));
 	/* Force compute of local leader */
 	ret->local_leader = mpc_lowcomm_group_get_local_leader(ret);
 
