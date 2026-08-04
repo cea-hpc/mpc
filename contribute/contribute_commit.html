@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Write a commit message &mdash; MPC 4.3.1 documentation</title>
+  <title>Write a commit message &mdash; MPC 4.4.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
       <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
 
@@ -14,7 +14,7 @@
     <link rel="shortcut icon" href="../_static/mpc_logo.png"/>
       <script src="../_static/jquery.js?v=5d32c60e"></script>
       <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../_static/documentation_options.js?v=0503a316"></script>
+      <script src="../_static/documentation_options.js?v=2f20d6c1"></script>
       <script src="../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/js/theme.js"></script>
@@ -56,7 +56,7 @@
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Contribution Guide</span></p>
 <ul class="current">
-<li class="toctree-l1 current"><a class="reference internal" href="main.html">Contribution Guide</a><ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="main.html">Integrate with the VCS</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="contribute_setup.html">Prerequisites before starting to contribute</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">Write a commit message</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#properly-format-a-commit-message">Properly format a commit message</a></li>
@@ -72,6 +72,7 @@
 <li class="toctree-l2"><a class="reference internal" href="contribute_pipeline.html">Run a pipeline over existing branches</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="main.html#contribute-in-code">Contribute in code</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Developer Documentation</span></p>
 <ul>
@@ -100,7 +101,7 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
-          <li class="breadcrumb-item"><a href="main.html">Contribution Guide</a></li>
+          <li class="breadcrumb-item"><a href="main.html">Integrate with the VCS</a></li>
       <li class="breadcrumb-item active">Write a commit message</li>
       <li class="wy-breadcrumbs-aside">
             <a href="../_sources/contribute/contribute_commit.rst.txt" rel="nofollow"> View page source</a>
@@ -228,7 +229,7 @@ In case, there is only one suggested correction, you can automatically fix it by
 <h4>uncrustify<a class="headerlink" href="#uncrustify" title="Link to this heading"></a></h4>
 <p>To avoid undesired formatting, the <code class="docutils literal notranslate"><span class="pre">uncrustify</span></code> hook does not automatically reformat the files.
 You have to run it manually</p>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>uncrustify<span class="w"> </span>-c<span class="w"> </span>uncrustify.cfg<span class="w"> </span>-f<span class="w"> </span>&lt;path/to/file&gt;<span class="w"> </span>--replace
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>uncrustify<span class="w"> </span>-c<span class="w"> </span>uncrustify.cfg<span class="w"> </span>--replace<span class="w"> </span>&lt;path/to/file&gt;
 </pre></div>
 </div>
 <p>Then, it advised to check the formatting as it can be a bit strange sometimes.

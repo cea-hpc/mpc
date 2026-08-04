@@ -1,6 +1,6 @@
-==================
-Contribution Guide
-==================
+======================
+Integrate with the VCS
+======================
 
 .. FIXME: What is the procedure for external contributors now that ParaTools GitLab is unavailable
 .. How to use Gitlab (MPC-related)?
@@ -35,3 +35,14 @@ Contribution Guide
    contribute_issue
    contribute_merge_request
    contribute_pipeline
+
+==================
+Contribute in code
+==================
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Contents:
+
+   code_logging
+   code_rank_scope

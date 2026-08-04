@@ -1,0 +1,1721 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>One Sided communication &mdash; MPC 4.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=fa44fd50" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
+
+  
+    <link rel="shortcut icon" href="../../_static/mpc_logo.png"/>
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=2f20d6c1"></script>
+      <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="MPC_MPI" href="../mpi/mpi.html" />
+    <link rel="prev" title="LowComm Protocol layer (LCP)" href="lcp.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html">
+            
+              <img src="../../_static/mpc_logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../start.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../build.html">Building &amp; Installing MPC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../usage.html">Using MPC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../features.html">Advanced Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../faq.html">Frequently Asked Questions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../issues.html">Known issues</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../changelog.html">Changelog</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Contribution Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../contribute/main.html">Integrate with the VCS</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../contribute/main.html#contribute-in-code">Contribute in code</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer Documentation</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../main.html">Multi-Processor Computing (MPC) Framework Documentation</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../main.html#modules-documentation">Modules Documentation</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../arch.html">MPC_Arch</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../common.html">MPC_Common</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../config.html">MPC_Config</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../fortran.html">MPC_Fortran</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../io.html">MPC_IO</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../launch/launch.html">MPC_Launch</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="lowcomm.html">MPC_Lowcomm</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="lowcomm.html#module-mpc-lowcomm">Module MPC_Lowcomm</a></li>
+<li class="toctree-l3 current"><a class="reference internal" href="lowcomm.html#api">API</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="lcp.html">LowComm Protocol layer (LCP)</a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#">One Sided communication</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../mpi/mpi.html">MPC_MPI</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../openmp.html">MPC_OpenMP</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../openshmem.html">MPC_OpenSHMEM</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../threads.html">MPC_Threads</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../topology.html">MPC_Topology</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../main.html#code-documentation">Code Documentation</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Links</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference external" href="https://mpc.hpcframework.com">Official Website (mpc.hpcframework.com)</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/cea-hpc/mpc">Repository (github.com)</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://mpc.hpcframework.com/publications-2/">Publications (mpc.hpcframework.com)</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">MPC</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../main.html">Multi-Processor Computing (MPC) Framework Documentation</a></li>
+          <li class="breadcrumb-item"><a href="lowcomm.html">MPC_Lowcomm</a></li>
+      <li class="breadcrumb-item active">One Sided communication</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/api/lowcomm/one_sided.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="one-sided-communication">
+<h1>One Sided communication<a class="headerlink" href="#one-sided-communication" title="Link to this heading"></a></h1>
+<section id="lowcomm-one-sided-communications">
+<h2>LowComm One-Sided communications<a class="headerlink" href="#lowcomm-one-sided-communications" title="Link to this heading"></a></h2>
+<section id="summary">
+<h3>SUMMARY:<a class="headerlink" href="#summary" title="Link to this heading"></a></h3>
+<p>Here are described the internal of the One-Sided communications Lowcomm top level API.</p>
+</section>
+<section id="contents">
+<h3>CONTENTS:<a class="headerlink" href="#contents" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><strong>lowcomm_one_sided.c</strong> : Communication routines</p></li>
+<li><p><strong>lowcomm_one_sided_common.c</strong> : Common routines within this submodule</p></li>
+<li><p><strong>lowcomm_one_sided_helpers.c</strong> : Getter routines</p></li>
+<li><p><strong>lowcomm_one_sided_internal.h</strong> : Definition of all the internal structure and common routines</p></li>
+<li><p><strong>lowcomm_one_sided_sync.c</strong> : Synchronization routines</p></li>
+<li><p><strong>lowcomm_one_sided_window.c</strong> : Window management routines</p></li>
+</ul>
+<p><strong>This representation is temporary before the integration of UBCL</strong></p>
+</section>
+</section>
+<section id="public-api">
+<h2>Public API<a class="headerlink" href="#public-api" title="Link to this heading"></a></h2>
+<dl>
+<dt class="sig sig-object cpp">
+<span class="target" id="de/d3d/group__LOWCOMM__ONE__SIDED"></span><em><span class="pre">group</span></em> <span class="sig-name descname"><span class="pre">MPC</span> <span class="pre">LowComm</span> <span class="pre">one</span> <span class="pre">sided</span> <span class="pre">communications</span> <span class="pre">API</span></span></dt>
+<dd><div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-typedefs">Typedefs</p>
+<dl class="c type">
+<dt class="sig sig-object c" id="c.mpc_lowcomm_window_t">
+<span class="target" id="de/d3d/group__LOWCOMM__ONE__SIDED_1ga694a21b6922644df007ad6c6b6e215cb"></span><span class="k"><span class="pre">typedef</span></span><span class="w"> </span><span class="k"><span class="pre">struct</span></span><span class="w"> </span><a class="reference internal" href="#c.mpc_lowcomm_window_s" title="mpc_lowcomm_window_s"><span class="n"><span class="pre">mpc_lowcomm_window_s</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_lowcomm_window_t</span></span></span><a class="headerlink" href="#c.mpc_lowcomm_window_t" title="Link to this definition"></a><br /></dt>
+<dd><p>Opaque object representing a window. </p>
+</dd></dl>
+
+<dl class="c type">
+<dt class="sig sig-object c" id="c.mpc_lowcomm_window_flag_t">
+<span class="target" id="de/d3d/group__LOWCOMM__ONE__SIDED_1ga813c63d7e0ed69fcc61f1bd8ee14fb01"></span><span class="k"><span class="pre">typedef</span></span><span class="w"> </span><span class="k"><span class="pre">enum</span></span><span class="w"> </span><a class="reference internal" href="#c.mpc_lowcomm_window_flag_e" title="mpc_lowcomm_window_flag_e"><span class="n"><span class="pre">mpc_lowcomm_window_flag_e</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_lowcomm_window_flag_t</span></span></span><a class="headerlink" href="#c.mpc_lowcomm_window_flag_t" title="Link to this definition"></a><br /></dt>
+<dd><p>Window creation flags. </p>
+</dd></dl>
+
+<dl class="c type">
+<dt class="sig sig-object c" id="c.mpc_lowcomm_atomic_op_t">
+<span class="target" id="de/d3d/group__LOWCOMM__ONE__SIDED_1ga137eab5d828fb6ba401506801a16bc85"></span><span class="k"><span class="pre">typedef</span></span><span class="w"> </span><span class="k"><span class="pre">enum</span></span><span class="w"> </span><a class="reference internal" href="#c.mpc_lowcomm_atomic_op_e" title="mpc_lowcomm_atomic_op_e"><span class="n"><span class="pre">mpc_lowcomm_atomic_op_e</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_lowcomm_atomic_op_t</span></span></span><a class="headerlink" href="#c.mpc_lowcomm_atomic_op_t" title="Link to this definition"></a><br /></dt>
+<dd><p>LOWCOMM atomics operation identifiers. </p>
+</dd></dl>
+
+<dl class="c type">
+<dt class="sig sig-object c" id="c.mpc_lowcomm_accumulate_op_t">
+<span class="target" id="de/d3d/group__LOWCOMM__ONE__SIDED_1ga3ca9eb8e4e298785edb1188aa5f3e19b"></span><span class="k"><span class="pre">typedef</span></span><span class="w"> </span><span class="k"><span class="pre">enum</span></span><span class="w"> </span><a class="reference internal" href="#c.mpc_lowcomm_accumulate_op_e" title="mpc_lowcomm_accumulate_op_e"><span class="n"><span class="pre">mpc_lowcomm_accumulate_op_e</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_lowcomm_accumulate_op_t</span></span></span><a class="headerlink" href="#c.mpc_lowcomm_accumulate_op_t" title="Link to this definition"></a><br /></dt>
+<dd><p>LOWCOMM accumulate operation identifiers. </p>
+</dd></dl>
+
+<dl class="c type">
+<dt class="sig sig-object c" id="c.mpc_lowcomm_osc_win_attr_t">
+<span class="target" id="de/d3d/group__LOWCOMM__ONE__SIDED_1ga05649fb4ed816ba7a1945a192f2b354b"></span><span class="k"><span class="pre">typedef</span></span><span class="w"> </span><span class="k"><span class="pre">struct</span></span><span class="w"> </span><a class="reference internal" href="#c.mpc_lowcomm_osc_win_attr_s" title="mpc_lowcomm_osc_win_attr_s"><span class="n"><span class="pre">mpc_lowcomm_osc_win_attr_s</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_lowcomm_osc_win_attr_t</span></span></span><a class="headerlink" href="#c.mpc_lowcomm_osc_win_attr_t" title="Link to this definition"></a><br /></dt>
+<dd><p>Attributes of a window that can be retrieved. </p>
+</dd></dl>
+
+</div>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-enums">Enums</p>
+<dl class="c enum">
+<dt class="sig sig-object c" id="c.mpc_lowcomm_window_flag_e">
+<span class="target" id="de/d3d/group__LOWCOMM__ONE__SIDED_1gaa026dfb7cb821037d0977e1d46095543"></span><span class="k"><span class="pre">enum</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_lowcomm_window_flag_e</span></span></span><a class="headerlink" href="#c.mpc_lowcomm_window_flag_e" title="Link to this definition"></a><br /></dt>
+<dd><p>Window creation flags. </p>
+<p><em>Values:</em></p>
+<dl class="c enumerator">
+<dt class="sig sig-object c" id="c.mpc_lowcomm_window_flag_e.MPC_LOWCOMM_WINDOW_FLAG_CREATE">
+<span class="target" id="de/d3d/group__LOWCOMM__ONE__SIDED_1ggaa026dfb7cb821037d0977e1d46095543ab35980c9bba26d1d373937a242d5a1f7"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">MPC_LOWCOMM_WINDOW_FLAG_CREATE</span></span></span><a class="headerlink" href="#c.mpc_lowcomm_window_flag_e.MPC_LOWCOMM_WINDOW_FLAG_CREATE" title="Link to this definition"></a><br /></dt>
+<dd><p>Create with a pre existing buffer. </p>
+</dd></dl>
+
+<dl class="c enumerator">
+<dt class="sig sig-object c" id="c.mpc_lowcomm_window_flag_e.MPC_LOWCOMM_WINDOW_FLAG_ALLOCATE">
+<span class="target" id="de/d3d/group__LOWCOMM__ONE__SIDED_1ggaa026dfb7cb821037d0977e1d46095543a3ba80193f6dac867235ba5ff45a891e3"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">MPC_LOWCOMM_WINDOW_FLAG_ALLOCATE</span></span></span><a class="headerlink" href="#c.mpc_lowcomm_window_flag_e.MPC_LOWCOMM_WINDOW_FLAG_ALLOCATE" title="Link to this definition"></a><br /></dt>
+<dd><p>Create by allocating a buffer. </p>
+</dd></dl>
+
+<dl class="c enumerator">
+<dt class="sig sig-object c" id="c.mpc_lowcomm_window_flag_e.MPC_LOWCOMM_WINDOW_FLAG_DYNAMIC">
+<span class="target" id="de/d3d/group__LOWCOMM__ONE__SIDED_1ggaa026dfb7cb821037d0977e1d46095543a7b3e9568739efafe596b43e72c197595"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">MPC_LOWCOMM_WINDOW_FLAG_DYNAMIC</span></span></span><a class="headerlink" href="#c.mpc_lowcomm_window_flag_e.MPC_LOWCOMM_WINDOW_FLAG_DYNAMIC" title="Link to this definition"></a><br /></dt>
+<dd><p>Create a dynamic window. </p>
+</dd></dl>
+
+<dl class="c enumerator">
+<dt class="sig sig-object c" id="c.mpc_lowcomm_window_flag_e.MPC_LOWCOMM_WINDOW_FLAG_SHARED">
+<span class="target" id="de/d3d/group__LOWCOMM__ONE__SIDED_1ggaa026dfb7cb821037d0977e1d46095543a5d2397742b8b2031c084dddf46f25fd9"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">MPC_LOWCOMM_WINDOW_FLAG_SHARED</span></span></span><a class="headerlink" href="#c.mpc_lowcomm_window_flag_e.MPC_LOWCOMM_WINDOW_FLAG_SHARED" title="Link to this definition"></a><br /></dt>
+<dd><p>Create a window shared in memory (implemented) </p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="c enum">
+<dt class="sig sig-object c" id="c.mpc_lowcomm_atomic_op_e">
+<span class="target" id="de/d3d/group__LOWCOMM__ONE__SIDED_1ga2039c60720579a7bfa58606682b3f39c"></span><span class="k"><span class="pre">enum</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_lowcomm_atomic_op_e</span></span></span><a class="headerlink" href="#c.mpc_lowcomm_atomic_op_e" title="Link to this definition"></a><br /></dt>
+<dd><p>LOWCOMM atomics operation identifiers. </p>
+<p><em>Values:</em></p>
+<dl class="c enumerator">
+<dt class="sig sig-object c" id="c.mpc_lowcomm_atomic_op_e.LOWCOMM_ATOMIC_OP_FETCH_ADD">
+<span class="target" id="de/d3d/group__LOWCOMM__ONE__SIDED_1gga2039c60720579a7bfa58606682b3f39ca7b8a7244ad3f57d8da4f5f1b87ecd986"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">LOWCOMM_ATOMIC_OP_FETCH_ADD</span></span></span><a class="headerlink" href="#c.mpc_lowcomm_atomic_op_e.LOWCOMM_ATOMIC_OP_FETCH_ADD" title="Link to this definition"></a><br /></dt>
+<dd><p>Atomic addition. </p>
+</dd></dl>
+
+<dl class="c enumerator">
+<dt class="sig sig-object c" id="c.mpc_lowcomm_atomic_op_e.LOWCOMM_ATOMIC_OP_FETCH_SUB">
+<span class="target" id="de/d3d/group__LOWCOMM__ONE__SIDED_1gga2039c60720579a7bfa58606682b3f39ca007baed3c61b6cec41a795694bf06a96"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">LOWCOMM_ATOMIC_OP_FETCH_SUB</span></span></span><a class="headerlink" href="#c.mpc_lowcomm_atomic_op_e.LOWCOMM_ATOMIC_OP_FETCH_SUB" title="Link to this definition"></a><br /></dt>
+<dd><p>Atomic subtraction. </p>
+</dd></dl>
+
+<dl class="c enumerator">
+<dt class="sig sig-object c" id="c.mpc_lowcomm_atomic_op_e.LOWCOMM_ATOMIC_OP_FETCH_AND">
+<span class="target" id="de/d3d/group__LOWCOMM__ONE__SIDED_1gga2039c60720579a7bfa58606682b3f39cafcc36ef956168268a4352e27a02b7328"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">LOWCOMM_ATOMIC_OP_FETCH_AND</span></span></span><a class="headerlink" href="#c.mpc_lowcomm_atomic_op_e.LOWCOMM_ATOMIC_OP_FETCH_AND" title="Link to this definition"></a><br /></dt>
+<dd><p>Atomic bitwise and. </p>
+</dd></dl>
+
+<dl class="c enumerator">
+<dt class="sig sig-object c" id="c.mpc_lowcomm_atomic_op_e.LOWCOMM_ATOMIC_OP_FETCH_OR">
+<span class="target" id="de/d3d/group__LOWCOMM__ONE__SIDED_1gga2039c60720579a7bfa58606682b3f39ca5f230a66ae3f6e9b1fd2265299ede783"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">LOWCOMM_ATOMIC_OP_FETCH_OR</span></span></span><a class="headerlink" href="#c.mpc_lowcomm_atomic_op_e.LOWCOMM_ATOMIC_OP_FETCH_OR" title="Link to this definition"></a><br /></dt>
+<dd><p>Atomic bitwise or. </p>
+</dd></dl>
+
+<dl class="c enumerator">
+<dt class="sig sig-object c" id="c.mpc_lowcomm_atomic_op_e.LOWCOMM_ATOMIC_OP_FETCH_XOR">
+<span class="target" id="de/d3d/group__LOWCOMM__ONE__SIDED_1gga2039c60720579a7bfa58606682b3f39ca8df272cf78329861f14c53d60c2e1d91"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">LOWCOMM_ATOMIC_OP_FETCH_XOR</span></span></span><a class="headerlink" href="#c.mpc_lowcomm_atomic_op_e.LOWCOMM_ATOMIC_OP_FETCH_XOR" title="Link to this definition"></a><br /></dt>
+<dd><p>Atomic bitwise xor. </p>
+</dd></dl>
+
+<dl class="c enumerator">
+<dt class="sig sig-object c" id="c.mpc_lowcomm_atomic_op_e.LOWCOMM_ATOMIC_OP_SWAP">
+<span class="target" id="de/d3d/group__LOWCOMM__ONE__SIDED_1gga2039c60720579a7bfa58606682b3f39ca6bbd7833c3c094d747bceb7e6a855ea4"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">LOWCOMM_ATOMIC_OP_SWAP</span></span></span><a class="headerlink" href="#c.mpc_lowcomm_atomic_op_e.LOWCOMM_ATOMIC_OP_SWAP" title="Link to this definition"></a><br /></dt>
+<dd><p>Atomic swap. </p>
+</dd></dl>
+
+<dl class="c enumerator">
+<dt class="sig sig-object c" id="c.mpc_lowcomm_atomic_op_e.LOWCOMM_ATOMIC_OP_CSWAP">
+<span class="target" id="de/d3d/group__LOWCOMM__ONE__SIDED_1gga2039c60720579a7bfa58606682b3f39ca1d9e8df6900cd159d534be4b88365482"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">LOWCOMM_ATOMIC_OP_CSWAP</span></span></span><a class="headerlink" href="#c.mpc_lowcomm_atomic_op_e.LOWCOMM_ATOMIC_OP_CSWAP" title="Link to this definition"></a><br /></dt>
+<dd><p>Atomic compare and swap. </p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="c enum">
+<dt class="sig sig-object c" id="c.mpc_lowcomm_accumulate_op_e">
+<span class="target" id="de/d3d/group__LOWCOMM__ONE__SIDED_1ga1986f0bac74ae84b9f94f11f4a666040"></span><span class="k"><span class="pre">enum</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_lowcomm_accumulate_op_e</span></span></span><a class="headerlink" href="#c.mpc_lowcomm_accumulate_op_e" title="Link to this definition"></a><br /></dt>
+<dd><p>LOWCOMM accumulate operation identifiers. </p>
+<p><em>Values:</em></p>
+<dl class="c enumerator">
+<dt class="sig sig-object c" id="c.mpc_lowcomm_accumulate_op_e.LOWCOMM_ACCUMULATE_REPLACE">
+<span class="target" id="de/d3d/group__LOWCOMM__ONE__SIDED_1gga1986f0bac74ae84b9f94f11f4a666040a52de3a045e199db07663515a36ae185b"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">LOWCOMM_ACCUMULATE_REPLACE</span></span></span><a class="headerlink" href="#c.mpc_lowcomm_accumulate_op_e.LOWCOMM_ACCUMULATE_REPLACE" title="Link to this definition"></a><br /></dt>
+<dd><p>Replace the target buffer with the origin buffer. </p>
+</dd></dl>
+
+<dl class="c enumerator">
+<dt class="sig sig-object c" id="c.mpc_lowcomm_accumulate_op_e.LOWCOMM_ACCUMULATE_MAX">
+<span class="target" id="de/d3d/group__LOWCOMM__ONE__SIDED_1gga1986f0bac74ae84b9f94f11f4a666040a70f1af053e767d412ae9d6468293bf71"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">LOWCOMM_ACCUMULATE_MAX</span></span></span><a class="headerlink" href="#c.mpc_lowcomm_accumulate_op_e.LOWCOMM_ACCUMULATE_MAX" title="Link to this definition"></a><br /></dt>
+<dd><p>Element wise max operation. </p>
+</dd></dl>
+
+<dl class="c enumerator">
+<dt class="sig sig-object c" id="c.mpc_lowcomm_accumulate_op_e.LOWCOMM_ACCUMULATE_MIN">
+<span class="target" id="de/d3d/group__LOWCOMM__ONE__SIDED_1gga1986f0bac74ae84b9f94f11f4a666040a4a3d6a2150af1be938fa7fceae7fd68d"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">LOWCOMM_ACCUMULATE_MIN</span></span></span><a class="headerlink" href="#c.mpc_lowcomm_accumulate_op_e.LOWCOMM_ACCUMULATE_MIN" title="Link to this definition"></a><br /></dt>
+<dd><p>Element wise min operation. </p>
+</dd></dl>
+
+<dl class="c enumerator">
+<dt class="sig sig-object c" id="c.mpc_lowcomm_accumulate_op_e.LOWCOMM_ACCUMULATE_SUM">
+<span class="target" id="de/d3d/group__LOWCOMM__ONE__SIDED_1gga1986f0bac74ae84b9f94f11f4a666040a0c0e8197cea28708135b0849334101de"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">LOWCOMM_ACCUMULATE_SUM</span></span></span><a class="headerlink" href="#c.mpc_lowcomm_accumulate_op_e.LOWCOMM_ACCUMULATE_SUM" title="Link to this definition"></a><br /></dt>
+<dd><p>Element wise addition operation. </p>
+</dd></dl>
+
+<dl class="c enumerator">
+<dt class="sig sig-object c" id="c.mpc_lowcomm_accumulate_op_e.LOWCOMM_ACCUMULATE_PROD">
+<span class="target" id="de/d3d/group__LOWCOMM__ONE__SIDED_1gga1986f0bac74ae84b9f94f11f4a666040a68c11a336150740a5df15bdc2b892feb"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">LOWCOMM_ACCUMULATE_PROD</span></span></span><a class="headerlink" href="#c.mpc_lowcomm_accumulate_op_e.LOWCOMM_ACCUMULATE_PROD" title="Link to this definition"></a><br /></dt>
+<dd><p>Element wise product operation. </p>
+</dd></dl>
+
+<dl class="c enumerator">
+<dt class="sig sig-object c" id="c.mpc_lowcomm_accumulate_op_e.LOWCOMM_ACCUMULATE_LAND">
+<span class="target" id="de/d3d/group__LOWCOMM__ONE__SIDED_1gga1986f0bac74ae84b9f94f11f4a666040a630859387895b051a389e463d9c64caa"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">LOWCOMM_ACCUMULATE_LAND</span></span></span><a class="headerlink" href="#c.mpc_lowcomm_accumulate_op_e.LOWCOMM_ACCUMULATE_LAND" title="Link to this definition"></a><br /></dt>
+<dd><p>Element wise logical AND operation. </p>
+</dd></dl>
+
+<dl class="c enumerator">
+<dt class="sig sig-object c" id="c.mpc_lowcomm_accumulate_op_e.LOWCOMM_ACCUMULATE_BAND">
+<span class="target" id="de/d3d/group__LOWCOMM__ONE__SIDED_1gga1986f0bac74ae84b9f94f11f4a666040a8b12a178deb5edd047f4bfe77ae0537a"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">LOWCOMM_ACCUMULATE_BAND</span></span></span><a class="headerlink" href="#c.mpc_lowcomm_accumulate_op_e.LOWCOMM_ACCUMULATE_BAND" title="Link to this definition"></a><br /></dt>
+<dd><p>Element wise bitwise AND operation. </p>
+</dd></dl>
+
+<dl class="c enumerator">
+<dt class="sig sig-object c" id="c.mpc_lowcomm_accumulate_op_e.LOWCOMM_ACCUMULATE_LOR">
+<span class="target" id="de/d3d/group__LOWCOMM__ONE__SIDED_1gga1986f0bac74ae84b9f94f11f4a666040ac926d62f67d1b150e05f12bf34f7a399"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">LOWCOMM_ACCUMULATE_LOR</span></span></span><a class="headerlink" href="#c.mpc_lowcomm_accumulate_op_e.LOWCOMM_ACCUMULATE_LOR" title="Link to this definition"></a><br /></dt>
+<dd><p>Element wise logical OR operation. </p>
+</dd></dl>
+
+<dl class="c enumerator">
+<dt class="sig sig-object c" id="c.mpc_lowcomm_accumulate_op_e.LOWCOMM_ACCUMULATE_BOR">
+<span class="target" id="de/d3d/group__LOWCOMM__ONE__SIDED_1gga1986f0bac74ae84b9f94f11f4a666040affdd0ce7d8bdcae3c4219e24ba8d08a9"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">LOWCOMM_ACCUMULATE_BOR</span></span></span><a class="headerlink" href="#c.mpc_lowcomm_accumulate_op_e.LOWCOMM_ACCUMULATE_BOR" title="Link to this definition"></a><br /></dt>
+<dd><p>Element wise bitwise OR operation. </p>
+</dd></dl>
+
+<dl class="c enumerator">
+<dt class="sig sig-object c" id="c.mpc_lowcomm_accumulate_op_e.LOWCOMM_ACCUMULATE_LXOR">
+<span class="target" id="de/d3d/group__LOWCOMM__ONE__SIDED_1gga1986f0bac74ae84b9f94f11f4a666040a1e4feb21ad37b54df77ddf0283485e0a"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">LOWCOMM_ACCUMULATE_LXOR</span></span></span><a class="headerlink" href="#c.mpc_lowcomm_accumulate_op_e.LOWCOMM_ACCUMULATE_LXOR" title="Link to this definition"></a><br /></dt>
+<dd><p>Element wise logical XOR operation. </p>
+</dd></dl>
+
+<dl class="c enumerator">
+<dt class="sig sig-object c" id="c.mpc_lowcomm_accumulate_op_e.LOWCOMM_ACCUMULATE_BXOR">
+<span class="target" id="de/d3d/group__LOWCOMM__ONE__SIDED_1gga1986f0bac74ae84b9f94f11f4a666040ac35948d9a68d82d369d34f0a9ca3a075"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">LOWCOMM_ACCUMULATE_BXOR</span></span></span><a class="headerlink" href="#c.mpc_lowcomm_accumulate_op_e.LOWCOMM_ACCUMULATE_BXOR" title="Link to this definition"></a><br /></dt>
+<dd><p>Element wise bitwise XOR operation. </p>
+</dd></dl>
+
+<dl class="c enumerator">
+<dt class="sig sig-object c" id="c.mpc_lowcomm_accumulate_op_e.LOWCOMM_ACCUMULATE_UNSUPPORTED">
+<span class="target" id="de/d3d/group__LOWCOMM__ONE__SIDED_1gga1986f0bac74ae84b9f94f11f4a666040a9970c130393fd0936eff61c0cc732d13"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">LOWCOMM_ACCUMULATE_UNSUPPORTED</span></span></span><a class="headerlink" href="#c.mpc_lowcomm_accumulate_op_e.LOWCOMM_ACCUMULATE_UNSUPPORTED" title="Link to this definition"></a><br /></dt>
+<dd><p>Unsupported operation (used for error handling) </p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="c enum">
+<dt class="sig sig-object c" id="c.mpc_lowcomm_osc_lock_type_t">
+<span class="target" id="de/d3d/group__LOWCOMM__ONE__SIDED_1ga4f1600c3d6d0f2a8984af7a4fd8b566d"></span><span class="k"><span class="pre">enum</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_lowcomm_osc_lock_type_t</span></span></span><a class="headerlink" href="#c.mpc_lowcomm_osc_lock_type_t" title="Link to this definition"></a><br /></dt>
+<dd><p>LOWCOMM Lock types. </p>
+<p><em>Values:</em></p>
+<dl class="c enumerator">
+<dt class="sig sig-object c" id="c.mpc_lowcomm_osc_lock_type_t.MPC_LOWCOMM_WINDOW_LOCK_EXCLUSIVE">
+<span class="target" id="de/d3d/group__LOWCOMM__ONE__SIDED_1gga4f1600c3d6d0f2a8984af7a4fd8b566daa5298d365c282cff51866cf49619f5b2"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">MPC_LOWCOMM_WINDOW_LOCK_EXCLUSIVE</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">301</span></span><a class="headerlink" href="#c.mpc_lowcomm_osc_lock_type_t.MPC_LOWCOMM_WINDOW_LOCK_EXCLUSIVE" title="Link to this definition"></a><br /></dt>
+<dd><p>Exclusive access to distant memory. </p>
+</dd></dl>
+
+<dl class="c enumerator">
+<dt class="sig sig-object c" id="c.mpc_lowcomm_osc_lock_type_t.MPC_LOWCOMM_WINDOW_LOCK_SHARED">
+<span class="target" id="de/d3d/group__LOWCOMM__ONE__SIDED_1gga4f1600c3d6d0f2a8984af7a4fd8b566da0af4f595ab6ded06c8e4ec82ff6863f3"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">MPC_LOWCOMM_WINDOW_LOCK_SHARED</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">302</span></span><a class="headerlink" href="#c.mpc_lowcomm_osc_lock_type_t.MPC_LOWCOMM_WINDOW_LOCK_SHARED" title="Link to this definition"></a><br /></dt>
+<dd><p>Shared access to distant memory. </p>
+</dd></dl>
+
+<dl class="c enumerator">
+<dt class="sig sig-object c" id="c.mpc_lowcomm_osc_lock_type_t.MPC_LOWCOMM_WINDOW_LOCK_ATOMIC">
+<span class="target" id="de/d3d/group__LOWCOMM__ONE__SIDED_1gga4f1600c3d6d0f2a8984af7a4fd8b566da84afdb9422c7143e353023430110ebfd"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">MPC_LOWCOMM_WINDOW_LOCK_ATOMIC</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">666</span></span><a class="headerlink" href="#c.mpc_lowcomm_osc_lock_type_t.MPC_LOWCOMM_WINDOW_LOCK_ATOMIC" title="Link to this definition"></a><br /></dt>
+<dd><p>For internal use. </p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-functions">Functions</p>
+<dl class="c function">
+<dt class="sig sig-object c" id="c.mpc_lowcomm_window_create">
+<span class="target" id="de/d3d/group__LOWCOMM__ONE__SIDED_1ga35a0f516c0d9b007aeb6f6eb9ca0b9e7"></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_lowcomm_window_create</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">buffer</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">size_t</span></span><span class="w"> </span><span class="n"><span class="pre">size</span></span>, <a class="reference internal" href="../whole_index.html#c.mpc_lowcomm_communicator_t" title="mpc_lowcomm_communicator_t"><span class="n"><span class="pre">mpc_lowcomm_communicator_t</span></span></a><span class="w"> </span><span class="n"><span class="pre">comm</span></span>, <a class="reference internal" href="#c.mpc_lowcomm_window_flag_t" title="mpc_lowcomm_window_flag_t"><span class="n"><span class="pre">mpc_lowcomm_window_flag_t</span></span></a><span class="w"> </span><span class="n"><span class="pre">flag</span></span>, <a class="reference internal" href="#c.mpc_lowcomm_window_t" title="mpc_lowcomm_window_t"><span class="n"><span class="pre">mpc_lowcomm_window_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">window_p</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.mpc_lowcomm_window_create" title="Link to this definition"></a><br /></dt>
+<dd><p>Creates a window for one sided communications use. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>buffer</strong> – <strong>[in]</strong> Underlying buffer of the window It will be set when allocating and unused for dynamic windows </p></li>
+<li><p><strong>size</strong> – <strong>[in]</strong> Size (in Bytes) of the requested window (unused for dynamic windows) </p></li>
+<li><p><strong>comm</strong> – <strong>[in]</strong> Comunicator on which the one sided operations will happen </p></li>
+<li><p><strong>flag</strong> – <strong>[in]</strong> Creation flag to modify the behaviour </p></li>
+<li><p><strong>window_p</strong> – <strong>[out]</strong> Pointer to store an handle on the created window</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return values<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>MPC_LOWCOMM_SUCCESS</strong> – on success </p></li>
+<li><p><strong>an</strong> – errorcode otherwise </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.mpc_lowcomm_window_free">
+<span class="target" id="de/d3d/group__LOWCOMM__ONE__SIDED_1ga608f03deab4f112c0767725d257c4361"></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_lowcomm_window_free</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="#c.mpc_lowcomm_window_t" title="mpc_lowcomm_window_t"><span class="n"><span class="pre">mpc_lowcomm_window_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">window_p</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.mpc_lowcomm_window_free" title="Link to this definition"></a><br /></dt>
+<dd><p>Frees a window. </p>
+<p>The handle is set to NULL upon success to avoid any misusage of a released window</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>window_p</strong> – <strong>[in]</strong> Reference on the window handle</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>MPC_LOWCOMM_SUCCESS upon success </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.mpc_lowcomm_window_attach">
+<span class="target" id="de/d3d/group__LOWCOMM__ONE__SIDED_1gaf0b8ff47556e3daf663e738a228e9067"></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_lowcomm_window_attach</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="#c.mpc_lowcomm_window_t" title="mpc_lowcomm_window_t"><span class="n"><span class="pre">mpc_lowcomm_window_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">window</span></span>, <span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">base</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">size_t</span></span><span class="w"> </span><span class="n"><span class="pre">len</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.mpc_lowcomm_window_attach" title="Link to this definition"></a><br /></dt>
+<dd><p>Attaches a buffer to a dynamic window. </p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Attaching a buffer to any other type of window is erroneous</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>window</strong> – <strong>[in]</strong> Handle on the window on which the memory should be attached </p></li>
+<li><p><strong>base</strong> – <strong>[in]</strong> Address of the buffer to attach </p></li>
+<li><p><strong>len</strong> – <strong>[in]</strong> Size (in Bytes) of the buffer to attach</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>MPC_LOWCOMM_SUCCESS upon success </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.mpc_lowcomm_window_detach">
+<span class="target" id="de/d3d/group__LOWCOMM__ONE__SIDED_1gaf59354af9685f05b3ff182d38a2dbb68"></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_lowcomm_window_detach</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="#c.mpc_lowcomm_window_t" title="mpc_lowcomm_window_t"><span class="n"><span class="pre">mpc_lowcomm_window_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">window</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">base</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.mpc_lowcomm_window_detach" title="Link to this definition"></a><br /></dt>
+<dd><p>Detaches a buffer from a dynamic window. </p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Detaching a buffer to any other type of window is erroneous</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>window</strong> – <strong>[in]</strong> Handle on the window from which the memory should be detached </p></li>
+<li><p><strong>base</strong> – <strong>[in]</strong> Address of the buffer to detach</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>MPC_LOWCOMM_SUCCESS upon success </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.mpc_lowcomm_iput">
+<span class="target" id="de/d3d/group__LOWCOMM__ONE__SIDED_1ga89845ef1347415fb1295e263dd175d03"></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_lowcomm_iput</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">origin_buffer</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">size</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">target</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">intptr_t</span></span><span class="w"> </span><span class="n"><span class="pre">offset</span></span>, <a class="reference internal" href="#c.mpc_lowcomm_window_t" title="mpc_lowcomm_window_t"><span class="n"><span class="pre">mpc_lowcomm_window_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">win</span></span>, <a class="reference internal" href="../whole_index.html#c.mpc_lowcomm_request_t" title="mpc_lowcomm_request_t"><span class="n"><span class="pre">mpc_lowcomm_request_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">req</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.mpc_lowcomm_iput" title="Link to this definition"></a><br /></dt>
+<dd><p>Register an non blocking put communication. </p>
+<p>If the request is set to <a class="reference internal" href="../whole_index.html#dc/db3/mpc__lowcomm__types_8h_1a69195b0b65092e4cc742a9d0409050a6"><span class="std std-ref">MPC_REQUEST_NULL</span></a>, the completion can be checked with synchronisations only. Otherwise, the req should have been allocated used <a class="reference internal" href="../whole_index.html#d4/d7c/mpc__lowcomm_8h_1af93cb4158f24fe38e736954bce5ba585"><span class="std std-ref">mpc_lowcomm_request_alloc</span></a>.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Completion is assessed either by a synchronization routine or by waiting the request</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>origin_buffer</strong> – <strong>[in]</strong> Address of the buffer to read from </p></li>
+<li><p><strong>size</strong> – <strong>[in]</strong> Size (in Bytes) of the data to read </p></li>
+<li><p><strong>target</strong> – <strong>[in]</strong> Rank of the target task </p></li>
+<li><p><strong>offset</strong> – <strong>[in]</strong> Offset (in Bytes) in the target window to write to </p></li>
+<li><p><strong>window</strong> – <strong>[in]</strong> Handle on the window to use </p></li>
+<li><p><strong>req</strong> – <strong>[out]</strong> Request tracking the completion of the operation</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>MPC_LOWCOMM_SUCCESS upon success </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.mpc_lowcomm_iget">
+<span class="target" id="de/d3d/group__LOWCOMM__ONE__SIDED_1gacd03de4e36efd5faa5d7da1741b2107b"></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_lowcomm_iget</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">origin_buffer</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">size</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">target</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">intptr_t</span></span><span class="w"> </span><span class="n"><span class="pre">offset</span></span>, <a class="reference internal" href="#c.mpc_lowcomm_window_t" title="mpc_lowcomm_window_t"><span class="n"><span class="pre">mpc_lowcomm_window_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">win</span></span>, <a class="reference internal" href="../whole_index.html#c.mpc_lowcomm_request_t" title="mpc_lowcomm_request_t"><span class="n"><span class="pre">mpc_lowcomm_request_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">req</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.mpc_lowcomm_iget" title="Link to this definition"></a><br /></dt>
+<dd><p>Register an non blocking get communication. </p>
+<p>If the request is set to <a class="reference internal" href="../whole_index.html#dc/db3/mpc__lowcomm__types_8h_1a69195b0b65092e4cc742a9d0409050a6"><span class="std std-ref">MPC_REQUEST_NULL</span></a>, the completion can be checked with synchronisations only. Otherwise, the req should have been allocated used <a class="reference internal" href="../whole_index.html#d4/d7c/mpc__lowcomm_8h_1af93cb4158f24fe38e736954bce5ba585"><span class="std std-ref">mpc_lowcomm_request_alloc</span></a>.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Completion is assessed either by a synchronization routine or by waiting the request</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>origin_buffer</strong> – <strong>[in]</strong> Address of the buffer to write to </p></li>
+<li><p><strong>size</strong> – <strong>[in]</strong> Size (in Bytes) of the data to write </p></li>
+<li><p><strong>target</strong> – <strong>[in]</strong> Rank of the target task </p></li>
+<li><p><strong>offset</strong> – <strong>[in]</strong> Offset (in Bytes) in the target window to read from </p></li>
+<li><p><strong>window</strong> – <strong>[in]</strong> Handle on the window to use </p></li>
+<li><p><strong>req</strong> – <strong>[out]</strong> Request tracking the completion of the operation</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>MPC_LOWCOMM_SUCCESS upon success </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.mpc_lowcomm_atomic_dt_is_compatible">
+<span class="target" id="de/d3d/group__LOWCOMM__ONE__SIDED_1ga5b2e4eb6cf0d21edfebf81d4a9860d71"></span><span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_lowcomm_atomic_dt_is_compatible</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="../whole_index.html#c.mpc_lowcomm_datatype_t" title="mpc_lowcomm_datatype_t"><span class="n"><span class="pre">mpc_lowcomm_datatype_t</span></span></a><span class="w"> </span><span class="n"><span class="pre">datatype</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.mpc_lowcomm_atomic_dt_is_compatible" title="Link to this definition"></a><br /></dt>
+<dd><p>Test if a MPC datatype is compatible with atomic operations. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>datatype</strong> – <strong>[in]</strong> Datatype to test</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return values<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>true</strong> – if the datatype is compatible </p></li>
+<li><p><strong>false</strong> – if the datatype is not compatible </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.mpc_lowcomm_iatomic">
+<span class="target" id="de/d3d/group__LOWCOMM__ONE__SIDED_1gaf0cd6856caf9d4e0e54851648dab779c"></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_lowcomm_iatomic</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">origin_buffer</span></span>, <span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">fetch_buffer</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">compare_buffer</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="../whole_index.html#c.mpc_lowcomm_datatype_t" title="mpc_lowcomm_datatype_t"><span class="n"><span class="pre">mpc_lowcomm_datatype_t</span></span></a><span class="w"> </span><span class="n"><span class="pre">datatype</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">target</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">intptr_t</span></span><span class="w"> </span><span class="n"><span class="pre">offset</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="#c.mpc_lowcomm_atomic_op_t" title="mpc_lowcomm_atomic_op_t"><span class="n"><span class="pre">mpc_lowcomm_atomic_op_t</span></span></a><span class="w"> </span><span class="n"><span class="pre">op</span></span>, <a class="reference internal" href="#c.mpc_lowcomm_window_t" title="mpc_lowcomm_window_t"><span class="n"><span class="pre">mpc_lowcomm_window_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">win</span></span>, <a class="reference internal" href="../whole_index.html#c.mpc_lowcomm_request_t" title="mpc_lowcomm_request_t"><span class="n"><span class="pre">mpc_lowcomm_request_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">req</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.mpc_lowcomm_iatomic" title="Link to this definition"></a><br /></dt>
+<dd><p>Performs an distant atomic operation. </p>
+<p>The type of operation and the argument usage is decided by the op argument. For more information about the available operations see <a class="reference internal" href="../whole_index.html#de/d3d/group__LOWCOMM__ONE__SIDED_1ga137eab5d828fb6ba401506801a16bc85"><span class="std std-ref">mpc_lowcomm_atomic_op_t</span></a>.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Completion is assessed either by a synchronization routine or by waiting the request</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>origin_buffer</strong> – <strong>[in]</strong> Address of the buffer to read from </p></li>
+<li><p><strong>fetch_buffer</strong> – <strong>[in]</strong> Address of the buffer to write to </p></li>
+<li><p><strong>compare_buffer</strong> – <strong>[in]</strong> Address of the buffer containing the operand for comparison (used for CSWAP) </p></li>
+<li><p><strong>datatype</strong> – <strong>[in]</strong> Datatype of the element communicated </p></li>
+<li><p><strong>target</strong> – <strong>[in]</strong> Rank of the target task </p></li>
+<li><p><strong>offset</strong> – <strong>[in]</strong> Offset (in Bytes) in the target window to read from </p></li>
+<li><p><strong>op</strong> – <strong>[in]</strong> Operation identifier (see <a class="reference internal" href="../whole_index.html#de/d3d/group__LOWCOMM__ONE__SIDED_1ga137eab5d828fb6ba401506801a16bc85"><span class="std std-ref">mpc_lowcomm_atomic_op_t</span></a>) </p></li>
+<li><p><strong>window</strong> – <strong>[in]</strong> Handle on the window to use </p></li>
+<li><p><strong>req</strong> – <strong>[out]</strong> Request tracking the completion of the operation</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Lowcomm errorcode </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.mpc_lowcomm_iaccumulate">
+<span class="target" id="de/d3d/group__LOWCOMM__ONE__SIDED_1gacb17807e8c318656da69b68c0b3c63ac"></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_lowcomm_iaccumulate</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">origin_buffer</span></span>, <span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">fetch_buffer</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">size_t</span></span><span class="w"> </span><span class="n"><span class="pre">count</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="../whole_index.html#c.mpc_lowcomm_datatype_t" title="mpc_lowcomm_datatype_t"><span class="n"><span class="pre">mpc_lowcomm_datatype_t</span></span></a><span class="w"> </span><span class="n"><span class="pre">datatype</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">target</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">intptr_t</span></span><span class="w"> </span><span class="n"><span class="pre">offset</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="#c.mpc_lowcomm_accumulate_op_t" title="mpc_lowcomm_accumulate_op_t"><span class="n"><span class="pre">mpc_lowcomm_accumulate_op_t</span></span></a><span class="w"> </span><span class="n"><span class="pre">op</span></span>, <a class="reference internal" href="#c.mpc_lowcomm_window_t" title="mpc_lowcomm_window_t"><span class="n"><span class="pre">mpc_lowcomm_window_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">win</span></span>, <a class="reference internal" href="../whole_index.html#c.mpc_lowcomm_request_t" title="mpc_lowcomm_request_t"><span class="n"><span class="pre">mpc_lowcomm_request_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">req</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.mpc_lowcomm_iaccumulate" title="Link to this definition"></a><br /></dt>
+<dd><p>Performs an distant accumulate operation. </p>
+<p>The type of operation and the argument usage is decided by the op argument. For more information about the available operations see <a class="reference internal" href="../whole_index.html#de/d3d/group__LOWCOMM__ONE__SIDED_1ga3ca9eb8e4e298785edb1188aa5f3e19b"><span class="std std-ref">mpc_lowcomm_accumulate_op_t</span></a>.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Completion is assessed either by a synchronization routine or by waiting the request </p>
+</div>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Depending on the backend this routine may be unsupported. In such cases, it will return MPC_LOWCOMM_NOT_SUPPORTED.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>origin_buffer</strong> – <strong>[in]</strong> Address of the buffer to read from </p></li>
+<li><p><strong>fetch_buffer</strong> – <strong>[in]</strong> Address of the buffer to write to (NULL for accumulate without get) </p></li>
+<li><p><strong>count</strong> – <strong>[in]</strong> Number of elements of type datatype </p></li>
+<li><p><strong>datatype</strong> – <strong>[in]</strong> Datatype of the element communicated </p></li>
+<li><p><strong>target</strong> – <strong>[in]</strong> Rank of the target task </p></li>
+<li><p><strong>offset</strong> – <strong>[in]</strong> Offset (in Bytes) in the target window to read from </p></li>
+<li><p><strong>op</strong> – <strong>[in]</strong> Operation identifier (see <a class="reference internal" href="../whole_index.html#de/d3d/group__LOWCOMM__ONE__SIDED_1ga3ca9eb8e4e298785edb1188aa5f3e19b"><span class="std std-ref">mpc_lowcomm_accumulate_op_t</span></a>) </p></li>
+<li><p><strong>window</strong> – <strong>[in]</strong> Handle on the window to use </p></li>
+<li><p><strong>req</strong> – <strong>[out]</strong> Request tracking the completion of the operation</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Lowcomm errorcode </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.mpc_lowcomm_osc_lock">
+<span class="target" id="de/d3d/group__LOWCOMM__ONE__SIDED_1ga7c8eed954cf102f1cacff26301ab7532"></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_lowcomm_osc_lock</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="#c.mpc_lowcomm_osc_lock_type_t" title="mpc_lowcomm_osc_lock_type_t"><span class="n"><span class="pre">mpc_lowcomm_osc_lock_type_t</span></span></a><span class="w"> </span><span class="n"><span class="pre">lock</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">target</span></span>, <a class="reference internal" href="#c.mpc_lowcomm_window_t" title="mpc_lowcomm_window_t"><span class="n"><span class="pre">mpc_lowcomm_window_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">win</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="n"><span class="pre">is_no_check</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.mpc_lowcomm_osc_lock" title="Link to this definition"></a><br /></dt>
+<dd><p>Locks a target window. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>lock</strong> – <strong>[in]</strong> Type of lock to perform (see &#64;mpc_lowcomm_osc_lock_type_t) </p></li>
+<li><p><strong>target</strong> – <strong>[in]</strong> Rank of the target task </p></li>
+<li><p><strong>win</strong> – <strong>[in]</strong> Handle on the window to lock </p></li>
+<li><p><strong>is_no_check</strong> – <strong>[in]</strong> Whether to perform an actual lock or not</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return values<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>MPC_LOWCOMM_SUCCESS</strong> – upon success </p></li>
+<li><p><strong>MPC_LOWCOMM_OSC_ALREADY_LOCKED</strong> – if the lock is already taken </p></li>
+<li><p><strong>An</strong> – error code otherwise </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.mpc_lowcomm_osc_unlock">
+<span class="target" id="de/d3d/group__LOWCOMM__ONE__SIDED_1gace4b7e14143fd834d2157d9c5a7369c1"></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_lowcomm_osc_unlock</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">target_rank</span></span>, <a class="reference internal" href="#c.mpc_lowcomm_window_t" title="mpc_lowcomm_window_t"><span class="n"><span class="pre">mpc_lowcomm_window_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">win</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="n"><span class="pre">is_atomic</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.mpc_lowcomm_osc_unlock" title="Link to this definition"></a><br /></dt>
+<dd><p>Unlocks a target window. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>target</strong> – <strong>[in]</strong> Rank of the target task </p></li>
+<li><p><strong>win</strong> – <strong>[in]</strong> Handle on the window to unlock </p></li>
+<li><p><strong>is_atomic</strong> – <strong>[in]</strong> Whether the lock is of atomic type (special case)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return values<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>MPC_LOWCOMM_SUCCESS</strong> – upon success </p></li>
+<li><p><strong>An</strong> – error code otherwise </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.mpc_lowcomm_osc_lock_all">
+<span class="target" id="de/d3d/group__LOWCOMM__ONE__SIDED_1ga167983e16a60ff82a6c01db40a2cae7c"></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_lowcomm_osc_lock_all</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="#c.mpc_lowcomm_window_t" title="mpc_lowcomm_window_t"><span class="n"><span class="pre">mpc_lowcomm_window_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">win</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="n"><span class="pre">is_no_check</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.mpc_lowcomm_osc_lock_all" title="Link to this definition"></a><br /></dt>
+<dd><p>Locks all windows. </p>
+<p>The definition of “all” is based on the communicator embedded in the window.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>win</strong> – <strong>[in]</strong> Handle on the window </p></li>
+<li><p><strong>is_no_check</strong> – <strong>[in]</strong> Whether to perform an actual lock or not</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>MPC_LOWCOMM_SUCCESS upon success </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.mpc_lowcomm_osc_unlock_all">
+<span class="target" id="de/d3d/group__LOWCOMM__ONE__SIDED_1gac40dfbe197cb4bbb6ed41c2b408d6c40"></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_lowcomm_osc_unlock_all</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="#c.mpc_lowcomm_window_t" title="mpc_lowcomm_window_t"><span class="n"><span class="pre">mpc_lowcomm_window_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">win</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.mpc_lowcomm_osc_unlock_all" title="Link to this definition"></a><br /></dt>
+<dd><p>Unlocks all windows. </p>
+<p>The definition of “all” is based on the communicator embedded in the window.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>win</strong> – <strong>[in]</strong> Handle on the window</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>MPC_LOWCOMM_SUCCESS upon success </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.mpc_lowcomm_osc_sync">
+<span class="target" id="de/d3d/group__LOWCOMM__ONE__SIDED_1gac584d71753e3fe483f05267254a32b28"></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_lowcomm_osc_sync</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="#c.mpc_lowcomm_window_t" title="mpc_lowcomm_window_t"><span class="n"><span class="pre">mpc_lowcomm_window_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">win</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.mpc_lowcomm_osc_sync" title="Link to this definition"></a><br /></dt>
+<dd><p>Synchronises the outstanding communications with the network. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>win</strong> – <strong>[in]</strong> Handle on the window to sync</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>MPC_LOWCOMM_SUCCESS upon success </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.mpc_lowcomm_osc_start">
+<span class="target" id="de/d3d/group__LOWCOMM__ONE__SIDED_1ga94b586ff969ef70bd9c3e1ac8849ea7b"></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_lowcomm_osc_start</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="../whole_index.html#c.mpc_lowcomm_group_t" title="mpc_lowcomm_group_t"><span class="n"><span class="pre">mpc_lowcomm_group_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">group</span></span>, <a class="reference internal" href="#c.mpc_lowcomm_window_t" title="mpc_lowcomm_window_t"><span class="n"><span class="pre">mpc_lowcomm_window_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">win</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="n"><span class="pre">is_no_check</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.mpc_lowcomm_osc_start" title="Link to this definition"></a><br /></dt>
+<dd><p>Opens the window access of the specified group. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>group</strong> – <strong>[in]</strong> Group to get access to </p></li>
+<li><p><strong>win</strong> – <strong>[in]</strong> Handle on the window </p></li>
+<li><p><strong>is_no_check</strong> – <strong>[in]</strong> Whether to perform an actual lock or not</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>MPC_LOWCOMM_SUCCESS upon success </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c">
+<span class="target" id="de/d3d/group__LOWCOMM__ONE__SIDED_1gad7fce891ec60ca4bfab764a1c6ae9d74"></span><span class="sig-name descname"><span class="pre">int</span> <span class="pre">mpc_lowcomm_osc_post</span> <span class="pre">(mpc_lowcomm_group_t</span> <span class="pre">*group,</span> <span class="pre">mpc_lowcomm_window_t</span> <span class="pre">*win,</span> <span class="pre">__UNUSED__</span> <span class="pre">const</span> <span class="pre">bool</span> <span class="pre">is_no_check)</span></span></dt>
+<dd><p>Opens the window exposure to the specified group. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>group</strong> – <strong>[in]</strong> Group to provide access to </p></li>
+<li><p><strong>win</strong> – <strong>[in]</strong> Handle on the window </p></li>
+<li><p><strong>is_no_check</strong> – <strong>[in]</strong> Whether to perform an actual lock or not (UNUSED)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>MPC_LOWCOMM_SUCCESS upon success </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.mpc_lowcomm_osc_complete">
+<span class="target" id="de/d3d/group__LOWCOMM__ONE__SIDED_1ga94f4daa5dfece2f8cf6c85f2e64e6dba"></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_lowcomm_osc_complete</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="#c.mpc_lowcomm_window_t" title="mpc_lowcomm_window_t"><span class="n"><span class="pre">mpc_lowcomm_window_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">win</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.mpc_lowcomm_osc_complete" title="Link to this definition"></a><br /></dt>
+<dd><p>Closes the access to the windows of the specified group. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>win</strong> – <strong>[in]</strong> Handle on the window</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>MPC_LOWCOMM_SUCCESS upon success </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.mpc_lowcomm_osc_wait">
+<span class="target" id="de/d3d/group__LOWCOMM__ONE__SIDED_1ga5c1141fa1cc194d5d388b5c42059602a"></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_lowcomm_osc_wait</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="#c.mpc_lowcomm_window_t" title="mpc_lowcomm_window_t"><span class="n"><span class="pre">mpc_lowcomm_window_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">win</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.mpc_lowcomm_osc_wait" title="Link to this definition"></a><br /></dt>
+<dd><p>Waits for outstanding communication and Closes the exposure. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>win</strong> – <strong>[in]</strong> Handle on the window</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>MPC_LOWCOMM_SUCCESS upon success </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.mpc_lowcomm_osc_test">
+<span class="target" id="de/d3d/group__LOWCOMM__ONE__SIDED_1ga1f5cae04f473fe646795b25c3616ba27"></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_lowcomm_osc_test</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="#c.mpc_lowcomm_window_t" title="mpc_lowcomm_window_t"><span class="n"><span class="pre">mpc_lowcomm_window_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">win</span></span>, <span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">is_completed</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.mpc_lowcomm_osc_test" title="Link to this definition"></a><br /></dt>
+<dd><p>Looks for outstanding communication and Closes the exposure if none are left. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>win</strong> – <strong>[in]</strong> Handle on the window </p></li>
+<li><p><strong>is_completed</strong> – <strong>[out]</strong> Whether all the communications are completed and the exposure closed</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>MPC_LOWCOMM_SUCCESS upon success </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.mpc_lowcomm_osc_request_complete">
+<span class="target" id="de/d3d/group__LOWCOMM__ONE__SIDED_1ga1c562ee6ce32c4eb5c97c114351b030c"></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_lowcomm_osc_request_complete</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">status</span></span>, <a class="reference internal" href="../whole_index.html#c.mpc_lowcomm_request_t" title="mpc_lowcomm_request_t"><span class="n"><span class="pre">mpc_lowcomm_request_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">request</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">size_t</span></span><span class="w"> </span><span class="n"><span class="pre">length</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.mpc_lowcomm_osc_request_complete" title="Link to this definition"></a><br /></dt>
+<dd><p>Completes a request given by any of the communication or synchronization routine. </p>
+<p>This is useful to mimic a meta communication and still use the same type of request</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>status</strong> – <strong>[in]</strong> Status on which the request is completed </p></li>
+<li><p><strong>request</strong> – <strong>[in]</strong> Request to complete </p></li>
+<li><p><strong>length</strong> – <strong>[in]</strong> Length of the message mimicked, written in request for future retrieving</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>MPC_LOWCOMM_SUCCESS upon success </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.mpc_lowcomm_osc_win_get_comm">
+<span class="target" id="de/d3d/group__LOWCOMM__ONE__SIDED_1ga3cf5ef4160c876303d54e551b436373b"></span><a class="reference internal" href="../whole_index.html#c.mpc_lowcomm_communicator_t" title="mpc_lowcomm_communicator_t"><span class="n"><span class="pre">mpc_lowcomm_communicator_t</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_lowcomm_osc_win_get_comm</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="#c.mpc_lowcomm_window_t" title="mpc_lowcomm_window_t"><span class="n"><span class="pre">mpc_lowcomm_window_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">win</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.mpc_lowcomm_osc_win_get_comm" title="Link to this definition"></a><br /></dt>
+<dd><p>Retrieves the communicator embedded in the window. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>win</strong> – <strong>[in]</strong> Window from which the communicator should be retrieved</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A reference on the communicator </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.mpc_lowcomm_osc_win_get_group">
+<span class="target" id="de/d3d/group__LOWCOMM__ONE__SIDED_1gad22a06adbf9e00c5d968955708f714d5"></span><a class="reference internal" href="../whole_index.html#c.mpc_lowcomm_group_t" title="mpc_lowcomm_group_t"><span class="n"><span class="pre">mpc_lowcomm_group_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">mpc_lowcomm_osc_win_get_group</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="#c.mpc_lowcomm_window_t" title="mpc_lowcomm_window_t"><span class="n"><span class="pre">mpc_lowcomm_window_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">win</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.mpc_lowcomm_osc_win_get_group" title="Link to this definition"></a><br /></dt>
+<dd><p>Retrieves the group embedded in the window. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>win</strong> – <strong>[in]</strong> Window from which the group should be retrieved</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A copy of the group </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.mpc_lowcomm_osc_win_get_attr">
+<span class="target" id="de/d3d/group__LOWCOMM__ONE__SIDED_1ga63f88c69450819a3f01a4236964c608a"></span><a class="reference internal" href="#c.mpc_lowcomm_osc_win_attr_t" title="mpc_lowcomm_osc_win_attr_t"><span class="n"><span class="pre">mpc_lowcomm_osc_win_attr_t</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_lowcomm_osc_win_get_attr</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="#c.mpc_lowcomm_window_t" title="mpc_lowcomm_window_t"><span class="n"><span class="pre">mpc_lowcomm_window_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">win</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.mpc_lowcomm_osc_win_get_attr" title="Link to this definition"></a><br /></dt>
+<dd><p>Retrieves the attributes of a window. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>win</strong> – <strong>[in]</strong> Window from which the attributes should be retrieved</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A copy of the attributes </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.lowcomm_osc_init">
+<span class="target" id="de/d3d/group__LOWCOMM__ONE__SIDED_1ga70079ab23b938e706321a78b0f7c98ed"></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">lowcomm_osc_init</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">void</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.lowcomm_osc_init" title="Link to this definition"></a><br /></dt>
+<dd><p>Initializes the one-sided part of lowcomm. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>An errorcode </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.lowcomm_osc_deinit">
+<span class="target" id="de/d3d/group__LOWCOMM__ONE__SIDED_1gaca49d096ce73830ffa7bab31b292d5b9"></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">lowcomm_osc_deinit</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">void</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.lowcomm_osc_deinit" title="Link to this definition"></a><br /></dt>
+<dd><p>Deinitializes the one-sided part of lowcomm. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>An errorcode </p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-variables">Variables</p>
+<dl class="c var">
+<dt class="sig sig-object c" id="c.MPC_LOWCOMM_OSC_ALREADY_LOCKED">
+<span class="target" id="de/d3d/group__LOWCOMM__ONE__SIDED_1gade68da89096c6b507c73bc4f5da6244c"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">MPC_LOWCOMM_OSC_ALREADY_LOCKED</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">15990</span></span><a class="headerlink" href="#c.MPC_LOWCOMM_OSC_ALREADY_LOCKED" title="Link to this definition"></a><br /></dt>
+<dd><p>Special value to significate that a window is already locked. </p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>It do not have to be an error </p>
+</div>
+</dd></dl>
+
+</div>
+<dl class="c struct">
+<dt class="sig sig-object c" id="c.mpc_lowcomm_osc_win_attr_s">
+<span class="target" id="d1/ddc/structmpc__lowcomm__osc__win__attr__s"></span><span class="k"><span class="pre">struct</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_lowcomm_osc_win_attr_s</span></span></span><a class="headerlink" href="#c.mpc_lowcomm_osc_win_attr_s" title="Link to this definition"></a><br /></dt>
+<dd><p>Attributes of a window that can be retrieved. </p>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-members">Public Members</p>
+<dl class="c var">
+<dt class="sig sig-object c" id="c.mpc_lowcomm_osc_win_attr_s.base_data">
+<span class="target" id="d1/ddc/structmpc__lowcomm__osc__win__attr__s_1ab26c4844f576818e439d3aa1ba8c9857"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">base_data</span></span></span><a class="headerlink" href="#c.mpc_lowcomm_osc_win_attr_s.base_data" title="Link to this definition"></a><br /></dt>
+<dd><p>Address of the underlying buffer. </p>
+</dd></dl>
+
+</div>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="internal-api">
+<h2>Internal API<a class="headerlink" href="#internal-api" title="Link to this heading"></a></h2>
+<dl>
+<dt class="sig sig-object cpp">
+<span class="target" id="dd/d9c/group__LOWCOMM__ONE__SIDED__INTERNAL"></span><em><span class="pre">group</span></em> <span class="sig-name descname"><span class="pre">Internal</span> <span class="pre">LowComm</span> <span class="pre">one</span> <span class="pre">sided</span> <span class="pre">API</span></span></dt>
+<dd><p>Internals of the LowComm one sided communication API. </p>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-defines">Defines</p>
+<dl class="c macro">
+<dt class="sig sig-object c" id="c.OSC_POST_PEER_MAX">
+<span class="target" id="dd/d9c/group__LOWCOMM__ONE__SIDED__INTERNAL_1ga5a59e27e05d08c08a1c035eb9fe5c04b"></span><span class="sig-name descname"><span class="n"><span class="pre">OSC_POST_PEER_MAX</span></span></span> <span class="pre">32</span><a class="headerlink" href="#c.OSC_POST_PEER_MAX" title="Link to this definition"></a><br /></dt>
+<dd><p>Maximum number of peers in an active target mode. </p>
+</dd></dl>
+
+<dl class="c macro">
+<dt class="sig sig-object c" id="c.OSC_LOCK_UNLOCK">
+<span class="target" id="dd/d9c/group__LOWCOMM__ONE__SIDED__INTERNAL_1ga8ba816adb1274b4b1b154c69193bf2ed"></span><span class="sig-name descname"><span class="n"><span class="pre">OSC_LOCK_UNLOCK</span></span></span> <span class="pre">0x0000000000000000ull</span><a class="headerlink" href="#c.OSC_LOCK_UNLOCK" title="Link to this definition"></a><br /></dt>
+<dd><p>Special value for an unlocked window. </p>
+</dd></dl>
+
+<dl class="c macro">
+<dt class="sig sig-object c" id="c.OSC_LOCK_EXCLUSIVE">
+<span class="target" id="dd/d9c/group__LOWCOMM__ONE__SIDED__INTERNAL_1ga868fe5753d1a696732e11c7b89625c73"></span><span class="sig-name descname"><span class="n"><span class="pre">OSC_LOCK_EXCLUSIVE</span></span></span> <span class="pre">0x0000000100000000ull</span><a class="headerlink" href="#c.OSC_LOCK_EXCLUSIVE" title="Link to this definition"></a><br /></dt>
+<dd><p>Special value for an exclusivity locked window. </p>
+</dd></dl>
+
+<dl class="c macro">
+<dt class="sig sig-object c" id="c.OCS_LCP_RKEY_BUF_SIZE_MAX">
+<span class="target" id="dd/d9c/group__LOWCOMM__ONE__SIDED__INTERNAL_1ga15719969a93f63d4aeccdadee5795884"></span><span class="sig-name descname"><span class="n"><span class="pre">OCS_LCP_RKEY_BUF_SIZE_MAX</span></span></span> <span class="pre">1024</span><a class="headerlink" href="#c.OCS_LCP_RKEY_BUF_SIZE_MAX" title="Link to this definition"></a><br /></dt>
+<dd><p>Maximum Size of a remote memory key. </p>
+</dd></dl>
+
+<dl class="c macro">
+<dt class="sig sig-object c" id="c.OSC_DYNAMIC_WIN_ATTACH_MAX">
+<span class="target" id="dd/d9c/group__LOWCOMM__ONE__SIDED__INTERNAL_1ga6e8e31bc4e8c7f696fbbfc81f0ab8728"></span><span class="sig-name descname"><span class="n"><span class="pre">OSC_DYNAMIC_WIN_ATTACH_MAX</span></span></span> <span class="pre">128</span><a class="headerlink" href="#c.OSC_DYNAMIC_WIN_ATTACH_MAX" title="Link to this definition"></a><br /></dt>
+<dd><p>Maximum number of memory attached to a dynamic window. </p>
+</dd></dl>
+
+<dl class="c macro">
+<dt class="sig sig-object c" id="c.OSC_STATE_COMPLETION_COUNTER_OFFSET">
+<span class="target" id="dd/d9c/group__LOWCOMM__ONE__SIDED__INTERNAL_1gaf614a1911b1d14fa3bd26a31959c42a1"></span><span class="sig-name descname"><span class="n"><span class="pre">OSC_STATE_COMPLETION_COUNTER_OFFSET</span></span></span> <span class="pre">0</span><a class="headerlink" href="#c.OSC_STATE_COMPLETION_COUNTER_OFFSET" title="Link to this definition"></a><br /></dt>
+<dd><p>Offset in the state part of the window of the completion counter. </p>
+</dd></dl>
+
+<dl class="c macro">
+<dt class="sig sig-object c" id="c.OSC_STATE_POST_COUNTER_OFFSET">
+<span class="target" id="dd/d9c/group__LOWCOMM__ONE__SIDED__INTERNAL_1ga508c5e5ac342ebb3bb87ad516218b45b"></span><span class="sig-name descname"><span class="n"><span class="pre">OSC_STATE_POST_COUNTER_OFFSET</span></span></span> <span class="pre">(</span><a class="reference internal" href="../whole_index.html#dd/d9c/group__LOWCOMM__ONE__SIDED__INTERNAL_1gaf614a1911b1d14fa3bd26a31959c42a1"><span class="std std-ref"><span class="pre">OSC_STATE_COMPLETION_COUNTER_OFFSET</span></span></a> <span class="pre">+</span> <a class="reference internal" href="../whole_index.html#d6/d80/group__MPC__OPENSHMEM__API__ATO_1ga8a850078f95585c20c624755a05d61b9"><span class="std std-ref"><span class="pre">sizeof</span></span></a><span class="pre">(uint64_t))</span><a class="headerlink" href="#c.OSC_STATE_POST_COUNTER_OFFSET" title="Link to this definition"></a><br /></dt>
+<dd><p>Offset in the state part of the window of the post counter. </p>
+</dd></dl>
+
+<dl class="c macro">
+<dt class="sig sig-object c" id="c.OSC_STATE_POST_OFFSET">
+<span class="target" id="dd/d9c/group__LOWCOMM__ONE__SIDED__INTERNAL_1ga703b87583d2ca49806f2a4b01f0de28b"></span><span class="sig-name descname"><span class="n"><span class="pre">OSC_STATE_POST_OFFSET</span></span></span> <span class="pre">(</span><a class="reference internal" href="../whole_index.html#dd/d9c/group__LOWCOMM__ONE__SIDED__INTERNAL_1ga508c5e5ac342ebb3bb87ad516218b45b"><span class="std std-ref"><span class="pre">OSC_STATE_POST_COUNTER_OFFSET</span></span></a> <span class="pre">+</span> <a class="reference internal" href="../whole_index.html#d6/d80/group__MPC__OPENSHMEM__API__ATO_1ga8a850078f95585c20c624755a05d61b9"><span class="std std-ref"><span class="pre">sizeof</span></span></a><span class="pre">(uint64_t))</span><a class="headerlink" href="#c.OSC_STATE_POST_OFFSET" title="Link to this definition"></a><br /></dt>
+<dd><p>Offset in the state part of the window of the posts. </p>
+</dd></dl>
+
+<dl class="c macro">
+<dt class="sig sig-object c" id="c.OSC_STATE_ACC_LOCK_OFFSET">
+<span class="target" id="dd/d9c/group__LOWCOMM__ONE__SIDED__INTERNAL_1gaa24ebf7695cf8dafcfd2dfcca5ec69c5"></span><span class="sig-name descname"><span class="n"><span class="pre">OSC_STATE_ACC_LOCK_OFFSET</span></span></span> <span class="pre">(</span><a class="reference internal" href="../whole_index.html#dd/d9c/group__LOWCOMM__ONE__SIDED__INTERNAL_1ga703b87583d2ca49806f2a4b01f0de28b"><span class="std std-ref"><span class="pre">OSC_STATE_POST_OFFSET</span></span></a> <span class="pre">+</span> <span class="pre">(</span><a class="reference internal" href="../whole_index.html#dd/d9c/group__LOWCOMM__ONE__SIDED__INTERNAL_1ga5a59e27e05d08c08a1c035eb9fe5c04b"><span class="std std-ref"><span class="pre">OSC_POST_PEER_MAX</span></span></a> <span class="pre">*</span> <a class="reference internal" href="../whole_index.html#d6/d80/group__MPC__OPENSHMEM__API__ATO_1ga8a850078f95585c20c624755a05d61b9"><span class="std std-ref"><span class="pre">sizeof</span></span></a><span class="pre">(uint64_t)))</span><a class="headerlink" href="#c.OSC_STATE_ACC_LOCK_OFFSET" title="Link to this definition"></a><br /></dt>
+<dd><p>Offset in the state part of the window of the accumulate lock. </p>
+</dd></dl>
+
+<dl class="c macro">
+<dt class="sig sig-object c" id="c.OSC_STATE_GLOBAL_LOCK_OFFSET">
+<span class="target" id="dd/d9c/group__LOWCOMM__ONE__SIDED__INTERNAL_1ga04bfbbeeb0efe16792a14aa4bcd9f1d1"></span><span class="sig-name descname"><span class="n"><span class="pre">OSC_STATE_GLOBAL_LOCK_OFFSET</span></span></span> <span class="pre">(</span><a class="reference internal" href="../whole_index.html#dd/d9c/group__LOWCOMM__ONE__SIDED__INTERNAL_1gaa24ebf7695cf8dafcfd2dfcca5ec69c5"><span class="std std-ref"><span class="pre">OSC_STATE_ACC_LOCK_OFFSET</span></span></a> <span class="pre">+</span> <a class="reference internal" href="../whole_index.html#d6/d80/group__MPC__OPENSHMEM__API__ATO_1ga8a850078f95585c20c624755a05d61b9"><span class="std std-ref"><span class="pre">sizeof</span></span></a><span class="pre">(uint64_t))</span><a class="headerlink" href="#c.OSC_STATE_GLOBAL_LOCK_OFFSET" title="Link to this definition"></a><br /></dt>
+<dd><p>Offset in the state part of the window of the lock. </p>
+</dd></dl>
+
+<dl class="c macro">
+<dt class="sig sig-object c" id="c.OSC_STATE_REGION_LOCK_OFFSET">
+<span class="target" id="dd/d9c/group__LOWCOMM__ONE__SIDED__INTERNAL_1ga32d83c1040d747f27f28410b685023c3"></span><span class="sig-name descname"><span class="n"><span class="pre">OSC_STATE_REGION_LOCK_OFFSET</span></span></span> <span class="pre">(</span><a class="reference internal" href="../whole_index.html#dd/d9c/group__LOWCOMM__ONE__SIDED__INTERNAL_1ga04bfbbeeb0efe16792a14aa4bcd9f1d1"><span class="std std-ref"><span class="pre">OSC_STATE_GLOBAL_LOCK_OFFSET</span></span></a> <span class="pre">+</span> <a class="reference internal" href="../whole_index.html#d6/d80/group__MPC__OPENSHMEM__API__ATO_1ga8a850078f95585c20c624755a05d61b9"><span class="std std-ref"><span class="pre">sizeof</span></span></a><span class="pre">(uint64_t))</span><a class="headerlink" href="#c.OSC_STATE_REGION_LOCK_OFFSET" title="Link to this definition"></a><br /></dt>
+<dd><p>Offset in the state part of the window of the local lock. </p>
+</dd></dl>
+
+<dl class="c macro">
+<dt class="sig sig-object c" id="c.OSC_STATE_DYNAMIC_WIN_COUNT_OFFSET">
+<span class="target" id="dd/d9c/group__LOWCOMM__ONE__SIDED__INTERNAL_1ga06fa5aff689521dfb13891ad8d07a628"></span><span class="sig-name descname"><span class="n"><span class="pre">OSC_STATE_DYNAMIC_WIN_COUNT_OFFSET</span></span></span> <span class="pre">(</span><a class="reference internal" href="../whole_index.html#dd/d9c/group__LOWCOMM__ONE__SIDED__INTERNAL_1ga32d83c1040d747f27f28410b685023c3"><span class="std std-ref"><span class="pre">OSC_STATE_REGION_LOCK_OFFSET</span></span></a> <span class="pre">+</span> <a class="reference internal" href="../whole_index.html#d6/d80/group__MPC__OPENSHMEM__API__ATO_1ga8a850078f95585c20c624755a05d61b9"><span class="std std-ref"><span class="pre">sizeof</span></span></a><span class="pre">(uint64_t))</span><a class="headerlink" href="#c.OSC_STATE_DYNAMIC_WIN_COUNT_OFFSET" title="Link to this definition"></a><br /></dt>
+<dd><p>Offset in the state part of the window of the dynamic attached memories count. </p>
+</dd></dl>
+
+<dl class="c macro">
+<dt class="sig sig-object c" id="c.OSC_STATE_DYNAMIC_WIN_OFFSET">
+<span class="target" id="dd/d9c/group__LOWCOMM__ONE__SIDED__INTERNAL_1ga742fecc0e5759018990b931d474928e3"></span><span class="sig-name descname"><span class="n"><span class="pre">OSC_STATE_DYNAMIC_WIN_OFFSET</span></span></span> <span class="pre">(</span><a class="reference internal" href="../whole_index.html#dd/d9c/group__LOWCOMM__ONE__SIDED__INTERNAL_1ga06fa5aff689521dfb13891ad8d07a628"><span class="std std-ref"><span class="pre">OSC_STATE_DYNAMIC_WIN_COUNT_OFFSET</span></span></a> <span class="pre">+</span> <a class="reference internal" href="../whole_index.html#d6/d80/group__MPC__OPENSHMEM__API__ATO_1ga8a850078f95585c20c624755a05d61b9"><span class="std std-ref"><span class="pre">sizeof</span></span></a><span class="pre">(uint64_t))</span><a class="headerlink" href="#c.OSC_STATE_DYNAMIC_WIN_OFFSET" title="Link to this definition"></a><br /></dt>
+<dd><p>Offset in the state part of the window of the dynamic attached memories array. </p>
+</dd></dl>
+
+</div>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-typedefs">Typedefs</p>
+<dl class="c type">
+<dt class="sig sig-object c" id="c._lowcomm_osc_dynamic_win_t">
+<span class="target" id="dd/d9c/group__LOWCOMM__ONE__SIDED__INTERNAL_1ga25c8b3470b9959115009a6f217d77b90"></span><span class="k"><span class="pre">typedef</span></span><span class="w"> </span><span class="k"><span class="pre">struct</span></span><span class="w"> </span><a class="reference internal" href="#c._lowcomm_osc_dynamic_win_s" title="_lowcomm_osc_dynamic_win_s"><span class="n"><span class="pre">_lowcomm_osc_dynamic_win_s</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">_lowcomm_osc_dynamic_win_t</span></span></span><a class="headerlink" href="#c._lowcomm_osc_dynamic_win_t" title="Link to this definition"></a><br /></dt>
+<dd><p>Dynamic memory description. </p>
+</dd></dl>
+
+<dl class="c type">
+<dt class="sig sig-object c" id="c._lowcomm_osc_module_state_t">
+<span class="target" id="dd/d9c/group__LOWCOMM__ONE__SIDED__INTERNAL_1gac926519296d2c9ebc8993da2873e75c9"></span><span class="k"><span class="pre">typedef</span></span><span class="w"> </span><span class="k"><span class="pre">struct</span></span><span class="w"> </span><a class="reference internal" href="#c._lowcomm_osc_module_state_s" title="_lowcomm_osc_module_state_s"><span class="n"><span class="pre">_lowcomm_osc_module_state_s</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">_lowcomm_osc_module_state_t</span></span></span><a class="headerlink" href="#c._lowcomm_osc_module_state_t" title="Link to this definition"></a><br /></dt>
+<dd><p>Synchronization states specific values. </p>
+</dd></dl>
+
+<dl class="c type">
+<dt class="sig sig-object c" id="c._lowcomm_osc_win_info_t">
+<span class="target" id="dd/d9c/group__LOWCOMM__ONE__SIDED__INTERNAL_1ga15ced5b85054ff77b170daa22d29021b"></span><span class="k"><span class="pre">typedef</span></span><span class="w"> </span><span class="k"><span class="pre">struct</span></span><span class="w"> </span><a class="reference internal" href="#c._lowcomm_osc_win_info_s" title="_lowcomm_osc_win_info_s"><span class="n"><span class="pre">_lowcomm_osc_win_info_s</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">_lowcomm_osc_win_info_t</span></span></span><a class="headerlink" href="#c._lowcomm_osc_win_info_t" title="Link to this definition"></a><br /></dt>
+<dd><p>Description of a window. </p>
+</dd></dl>
+
+<dl class="c type">
+<dt class="sig sig-object c" id="c._lowcomm_osc_pending_post_t">
+<span class="target" id="dd/d9c/group__LOWCOMM__ONE__SIDED__INTERNAL_1ga8617c8ac8be94503127d31222770cc99"></span><span class="k"><span class="pre">typedef</span></span><span class="w"> </span><span class="k"><span class="pre">struct</span></span><span class="w"> </span><a class="reference internal" href="#c._lowcomm_osc_pending_post_s" title="_lowcomm_osc_pending_post_s"><span class="n"><span class="pre">_lowcomm_osc_pending_post_s</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">_lowcomm_osc_pending_post_t</span></span></span><a class="headerlink" href="#c._lowcomm_osc_pending_post_t" title="Link to this definition"></a><br /></dt>
+<dd><p>Description of a pending post operation. </p>
+</dd></dl>
+
+<dl class="c type">
+<dt class="sig sig-object c" id="c._lowcomm_osc_local_dynamic_win_info_t">
+<span class="target" id="dd/d9c/group__LOWCOMM__ONE__SIDED__INTERNAL_1ga732d8ee96b59f1a92a935a25009b32b1"></span><span class="k"><span class="pre">typedef</span></span><span class="w"> </span><span class="k"><span class="pre">struct</span></span><span class="w"> </span><a class="reference internal" href="#c._lowcomm_osc_local_dynamic_win_info_s" title="_lowcomm_osc_local_dynamic_win_info_s"><span class="n"><span class="pre">_lowcomm_osc_local_dynamic_win_info_s</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">_lowcomm_osc_local_dynamic_win_info_t</span></span></span><a class="headerlink" href="#c._lowcomm_osc_local_dynamic_win_info_t" title="Link to this definition"></a><br /></dt>
+<dd><p>Description of an attached memory region. </p>
+</dd></dl>
+
+<dl class="c type">
+<dt class="sig sig-object c" id="c._lowcomm_osc_lock_t">
+<span class="target" id="dd/d9c/group__LOWCOMM__ONE__SIDED__INTERNAL_1gac012255209ee929ec7cff7aa026009eb"></span><span class="k"><span class="pre">typedef</span></span><span class="w"> </span><span class="k"><span class="pre">struct</span></span><span class="w"> </span><a class="reference internal" href="#c._lowcomm_osc_lock_s" title="_lowcomm_osc_lock_s"><span class="n"><span class="pre">_lowcomm_osc_lock_s</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">_lowcomm_osc_lock_t</span></span></span><a class="headerlink" href="#c._lowcomm_osc_lock_t" title="Link to this definition"></a><br /></dt>
+<dd><p>Description of a distant lock. </p>
+</dd></dl>
+
+<dl class="c type">
+<dt class="sig sig-object c">
+<span class="target" id="dd/d9c/group__LOWCOMM__ONE__SIDED__INTERNAL_1ga694a21b6922644df007ad6c6b6e215cb"></span><span class="k"><span class="pre">typedef</span></span><span class="w"> </span><span class="k"><span class="pre">struct</span></span><span class="w"> </span><a class="reference internal" href="#c.mpc_lowcomm_window_s" title="mpc_lowcomm_window_s"><span class="n"><span class="pre">mpc_lowcomm_window_s</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_lowcomm_window_t</span></span></span><br /></dt>
+<dd><p>Internal structure of a LCP backed window. </p>
+</dd></dl>
+
+</div>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-functions">Functions</p>
+<dl class="c function">
+<dt class="sig sig-object c" id="c.__osc_common_get_dynamic_win_info">
+<span class="target" id="dd/d9c/group__LOWCOMM__ONE__SIDED__INTERNAL_1ga93a91a781073d0163170c967e6c079e4"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">__osc_common_get_dynamic_win_info</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="../whole_index.html#c.lcp_task_h" title="lcp_task_h"><span class="n"><span class="pre">lcp_task_h</span></span></a><span class="w"> </span><span class="n"><span class="pre">task</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">target</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">uint64_t</span></span><span class="w"> </span><span class="n"><span class="pre">remote_addr</span></span>, <a class="reference internal" href="#c.mpc_lowcomm_window_t" title="mpc_lowcomm_window_t"><span class="n"><span class="pre">mpc_lowcomm_window_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">win</span></span>, <a class="reference internal" href="../whole_index.html#c.lcp_mem_h" title="lcp_mem_h"><span class="n"><span class="pre">lcp_mem_h</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">rmem_p</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.__osc_common_get_dynamic_win_info" title="Link to this definition"></a><br /></dt>
+<dd><p>Get information about a dynamic window from a distant target. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>task</strong> – <strong>[in]</strong> Current LCP task </p></li>
+<li><p><strong>target</strong> – <strong>[in]</strong> Rank of the target task </p></li>
+<li><p><strong>remote_addr</strong> – <strong>[in]</strong> Address of the buffer in case of dynamic window </p></li>
+<li><p><strong>win</strong> – <strong>[in]</strong> Window on which the communication happens </p></li>
+<li><p><strong>rmem_p</strong> – <strong>[out]</strong> Retrieved remote memory</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>MPC_LOWCOMM_SUCCESS upon success </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c._lowcomm_osc_perform_atomic">
+<span class="target" id="dd/d9c/group__LOWCOMM__ONE__SIDED__INTERNAL_1ga6dd3021fd8bd768a702cbdb105aeb699"></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">_lowcomm_osc_perform_atomic</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="../whole_index.html#c.lcp_task_h" title="lcp_task_h"><span class="n"><span class="pre">lcp_task_h</span></span></a><span class="w"> </span><span class="n"><span class="pre">task</span></span>, <a class="reference internal" href="../whole_index.html#c.lcp_ep_h" title="lcp_ep_h"><span class="n"><span class="pre">lcp_ep_h</span></span></a><span class="w"> </span><span class="n"><span class="pre">ep</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">uint64_t</span></span><span class="w"> </span><span class="n"><span class="pre">value</span></span>, <span class="n"><span class="pre">uint64_t</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">result</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">uint64_t</span></span><span class="w"> </span><span class="n"><span class="pre">remote_addr</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="../whole_index.html#c.lcp_mem_h" title="lcp_mem_h"><span class="n"><span class="pre">lcp_mem_h</span></span></a><span class="w"> </span><span class="n"><span class="pre">rkey</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="../whole_index.html#c.lcp_atomic_dt_t" title="lcp_atomic_dt_t"><span class="n"><span class="pre">lcp_atomic_dt_t</span></span></a><span class="w"> </span><span class="n"><span class="pre">atomic_datatype</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="../whole_index.html#c.lcp_atomic_op_t" title="lcp_atomic_op_t"><span class="n"><span class="pre">lcp_atomic_op_t</span></span></a><span class="w"> </span><span class="n"><span class="pre">op</span></span>, <a class="reference internal" href="#c.mpc_lowcomm_window_t" title="mpc_lowcomm_window_t"><span class="n"><span class="pre">mpc_lowcomm_window_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">win</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c._lowcomm_osc_perform_atomic" title="Link to this definition"></a><br /></dt>
+<dd><p>Perform a blocking atomic operation assessing the completion at return. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>task</strong> – <strong>[in]</strong> Current LCP task </p></li>
+<li><p><strong>ep</strong> – <strong>[in]</strong> Endpoint to flush </p></li>
+<li><p><strong>value</strong> – <strong>[in]</strong> Element to write in the distant memory </p></li>
+<li><p><strong>result</strong> – <strong>[out]</strong> Pointer to store the fetched value (should contain the compare element for cswap) </p></li>
+<li><p><strong>remote_addr</strong> – <strong>[in]</strong> Address at the target where the operation should happen </p></li>
+<li><p><strong>rkey</strong> – <strong>[in]</strong> Remote key of the target memory </p></li>
+<li><p><strong>atomic_datatype</strong> – <strong>[in]</strong> datatype of the element (see <a class="reference internal" href="../whole_index.html#d8/df5/lcp_8h_1a8f80730bab4e749df391153c99a6782e"><span class="std std-ref">lcp_atomic_dt_t</span></a>) </p></li>
+<li><p><strong>op</strong> – <strong>[in]</strong> Atomic operation to perform (see <a class="reference internal" href="../whole_index.html#d8/df5/lcp_8h_1afcac86ed8df72a48c3ec146a28bffe2e"><span class="std std-ref">lcp_atomic_op_t</span></a>) </p></li>
+<li><p><strong>win</strong> – <strong>[in]</strong> Window on which the communication happens</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>MPC_LOWCOMM_SUCCESS upon success </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c._lowcomm_osc_perform_flush">
+<span class="target" id="dd/d9c/group__LOWCOMM__ONE__SIDED__INTERNAL_1gab8dc6e85569cfc8fbab1e66b17d3781b"></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">_lowcomm_osc_perform_flush</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="../whole_index.html#c.lcp_task_h" title="lcp_task_h"><span class="n"><span class="pre">lcp_task_h</span></span></a><span class="w"> </span><span class="n"><span class="pre">task</span></span>, <a class="reference internal" href="../whole_index.html#c.lcp_ep_h" title="lcp_ep_h"><span class="n"><span class="pre">lcp_ep_h</span></span></a><span class="w"> </span><span class="n"><span class="pre">ep</span></span>, <a class="reference internal" href="../whole_index.html#c.lcp_mem_h" title="lcp_mem_h"><span class="n"><span class="pre">lcp_mem_h</span></span></a><span class="w"> </span><span class="n"><span class="pre">mem</span></span>, <a class="reference internal" href="#c.mpc_lowcomm_window_t" title="mpc_lowcomm_window_t"><span class="n"><span class="pre">mpc_lowcomm_window_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">win</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c._lowcomm_osc_perform_flush" title="Link to this definition"></a><br /></dt>
+<dd><p>Perform a blocking flush assessing all the communication are completed. </p>
+<p>If the ep is NULL then, all endpoints will be flushed. If the mem is NULL then, all memories will be flushed. If both are NULL, the entire manager will be flushed (all endpoints and all memories).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>task</strong> – <strong>[in]</strong> Current LCP task </p></li>
+<li><p><strong>ep</strong> – <strong>[in]</strong> Endpoint to flush </p></li>
+<li><p><strong>mem</strong> – <strong>[in]</strong> Memory to flush </p></li>
+<li><p><strong>win</strong> – <strong>[in]</strong> Window on which the flush happens</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>MPC_LOWCOMM_SUCCESS upon success </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c._lowcomm_osc_get_target_ep">
+<span class="target" id="dd/d9c/group__LOWCOMM__ONE__SIDED__INTERNAL_1gad29ab4ba539e0e787149d99f5f630e9a"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">_lowcomm_osc_get_target_ep</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">target</span></span>, <a class="reference internal" href="#c.mpc_lowcomm_window_t" title="mpc_lowcomm_window_t"><span class="n"><span class="pre">mpc_lowcomm_window_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">win</span></span>, <a class="reference internal" href="../whole_index.html#c.lcp_ep_h" title="lcp_ep_h"><span class="n"><span class="pre">lcp_ep_h</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">ep_p</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c._lowcomm_osc_get_target_ep" title="Link to this definition"></a><br /></dt>
+<dd><p>Retrieves the LCP endpoint to the target in the window. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>target</strong> – <strong>[in]</strong> Rank of the target task </p></li>
+<li><p><strong>win</strong> – <strong>[in]</strong> Window from which the endpoint should be retrieved </p></li>
+<li><p><strong>ep_p</strong> – <strong>[out]</strong> Pointer to store the retrieved endpoint </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c._lowcomm_osc_get_remote_memory">
+<span class="target" id="dd/d9c/group__LOWCOMM__ONE__SIDED__INTERNAL_1gaf79a74f9b538a524e7ff7473036b273a"></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">_lowcomm_osc_get_remote_memory</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="../whole_index.html#c.lcp_task_h" title="lcp_task_h"><span class="n"><span class="pre">lcp_task_h</span></span></a><span class="w"> </span><span class="n"><span class="pre">task</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">target</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">uint64_t</span></span><span class="w"> </span><span class="n"><span class="pre">remote_addr</span></span>, <a class="reference internal" href="#c.mpc_lowcomm_window_t" title="mpc_lowcomm_window_t"><span class="n"><span class="pre">mpc_lowcomm_window_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">win</span></span>, <a class="reference internal" href="../whole_index.html#c.lcp_mem_h" title="lcp_mem_h"><span class="n"><span class="pre">lcp_mem_h</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">rmem_p</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c._lowcomm_osc_get_remote_memory" title="Link to this definition"></a><br /></dt>
+<dd><p>Retrieves remote memory key of the target. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>task</strong> – <strong>[in]</strong> Current LCP task </p></li>
+<li><p><strong>target</strong> – <strong>[in]</strong> Rank of the target task </p></li>
+<li><p><strong>remote_addr</strong> – <strong>[in]</strong> Address of the buffer in case of dynamic window </p></li>
+<li><p><strong>win</strong> – <strong>[in]</strong> Window on which the communication happens </p></li>
+<li><p><strong>rmem_p</strong> – <strong>[out]</strong> Retrieved remote memory</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>MPC_LOWCOMM_SUCCESS upon success </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c._lowcomm_osc_release_remote_memory">
+<span class="target" id="dd/d9c/group__LOWCOMM__ONE__SIDED__INTERNAL_1ga489fe01dac66bce0556c4b76a3a12800"></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">_lowcomm_osc_release_remote_memory</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="../whole_index.html#c.lcp_mem_h" title="lcp_mem_h"><span class="n"><span class="pre">lcp_mem_h</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">rmem</span></span>, <a class="reference internal" href="#c.mpc_lowcomm_window_t" title="mpc_lowcomm_window_t"><span class="n"><span class="pre">mpc_lowcomm_window_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">win</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c._lowcomm_osc_release_remote_memory" title="Link to this definition"></a><br /></dt>
+<dd><p>Release a remote memory created with <a class="reference internal" href="#dd/d9c/group__LOWCOMM__ONE__SIDED__INTERNAL_1gaf79a74f9b538a524e7ff7473036b273a"><span class="std std-ref">_lowcomm_osc_get_remote_memory</span></a>. </p>
+<p>This function set the memory handle to NULL to avoid any misusage</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>rmem</strong> – <strong>[in]</strong> Reference on the remote memory to release </p></li>
+<li><p><strong>win</strong> – <strong>[in]</strong> Window associated with the retrieval</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>MPC_LOWCOMM_SUCCESS upon success </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c._lowcomm_osc_find_attached_region_position">
+<span class="target" id="dd/d9c/group__LOWCOMM__ONE__SIDED__INTERNAL_1ga63e1af0d585e92a91256bf193cecb0d2"></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">_lowcomm_osc_find_attached_region_position</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="#c._lowcomm_osc_dynamic_win_t" title="_lowcomm_osc_dynamic_win_t"><span class="n"><span class="pre">_lowcomm_osc_dynamic_win_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">regions</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">min_idx</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">max_idx</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">uint64_t</span></span><span class="w"> </span><span class="n"><span class="pre">base</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">size_t</span></span><span class="w"> </span><span class="n"><span class="pre">len</span></span>, <span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">insert_idx</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c._lowcomm_osc_find_attached_region_position" title="Link to this definition"></a><br /></dt>
+<dd><p>Finds the attached memory corresponding with base of size len. </p>
+<p>This function is a dichotomic search implemented in a recursive manner</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>regions</strong> – <strong>[in]</strong> Array containing the dynamic memories of a window </p></li>
+<li><p><strong>min_idx</strong> – <strong>[in]</strong> Start index for the search </p></li>
+<li><p><strong>max_idx</strong> – <strong>[in]</strong> Stop index for the search </p></li>
+<li><p><strong>base</strong> – <strong>[in]</strong> Address of the buffer associated with the memory to search </p></li>
+<li><p><strong>len</strong> – <strong>[in]</strong> Size of the memory to find </p></li>
+<li><p><strong>insert_idx</strong> – <strong>[out]</strong> Pointer to store the first free index in case the memory was not found</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return values<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>index</strong> – of found memory </p></li>
+<li><p><strong>-1</strong> – if not found </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c._lowcomm_osc_end_exclusive_lock">
+<span class="target" id="dd/d9c/group__LOWCOMM__ONE__SIDED__INTERNAL_1ga93f7af234cbbf9cb5d01b9f005e38a40"></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">_lowcomm_osc_end_exclusive_lock</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="../whole_index.html#c.lcp_task_h" title="lcp_task_h"><span class="n"><span class="pre">lcp_task_h</span></span></a><span class="w"> </span><span class="n"><span class="pre">task</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">target</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">uint64_t</span></span><span class="w"> </span><span class="n"><span class="pre">lock_offset</span></span>, <a class="reference internal" href="#c.mpc_lowcomm_window_t" title="mpc_lowcomm_window_t"><span class="n"><span class="pre">mpc_lowcomm_window_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">window</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c._lowcomm_osc_end_exclusive_lock" title="Link to this definition"></a><br /></dt>
+<dd><p>Locks a window in exclusive mode. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>task</strong> – <strong>[in]</strong> Current LCP Task </p></li>
+<li><p><strong>target</strong> – <strong>[in]</strong> Rank of the target task </p></li>
+<li><p><strong>lock_offset</strong> – <strong>[in]</strong> Offset (in Bytes) of the lock state in the target window </p></li>
+<li><p><strong>window</strong> – <strong>[in]</strong> Window to lock</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>MPC_LOWCOMM_SUCCESS upon success </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c._lowcomm_osc_start_exclusive_lock">
+<span class="target" id="dd/d9c/group__LOWCOMM__ONE__SIDED__INTERNAL_1ga96cea11197dc79a4d12f1efa399e47d1"></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">_lowcomm_osc_start_exclusive_lock</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="../whole_index.html#c.lcp_task_h" title="lcp_task_h"><span class="n"><span class="pre">lcp_task_h</span></span></a><span class="w"> </span><span class="n"><span class="pre">task</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">target</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">uint64_t</span></span><span class="w"> </span><span class="n"><span class="pre">lock_offset</span></span>, <a class="reference internal" href="#c.mpc_lowcomm_window_t" title="mpc_lowcomm_window_t"><span class="n"><span class="pre">mpc_lowcomm_window_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">window</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c._lowcomm_osc_start_exclusive_lock" title="Link to this definition"></a><br /></dt>
+<dd><p>Unlocks a window in exclusive mode. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>task</strong> – <strong>[in]</strong> Current LCP Task </p></li>
+<li><p><strong>target</strong> – <strong>[in]</strong> Rank of the target task </p></li>
+<li><p><strong>lock_offset</strong> – <strong>[in]</strong> Offset (in Bytes) of the lock state in the target window </p></li>
+<li><p><strong>window</strong> – <strong>[in]</strong> Window to unlock</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>MPC_LOWCOMM_SUCCESS upon success </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.__sync_need_atomic_lock">
+<span class="target" id="dd/d9c/group__LOWCOMM__ONE__SIDED__INTERNAL_1ga4c0bcab473b817639d450b5a5892896d"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">__sync_need_atomic_lock</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">target</span></span>, <a class="reference internal" href="#c.mpc_lowcomm_window_t" title="mpc_lowcomm_window_t"><span class="n"><span class="pre">mpc_lowcomm_window_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">window</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.__sync_need_atomic_lock" title="Link to this definition"></a><br /></dt>
+<dd><p>Tests if a window is already locked in exclusive mode. </p>
+<p>This function is used to know if an atomic lock is necessary as those two type of locks are very similar.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>target</strong> – <strong>[in]</strong> Rank of the target task </p></li>
+<li><p><strong>window</strong> – <strong>[in]</strong> Window to check the if the lock is held</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return values<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>true</strong> – if an atomic lock is needed (no exclusive lock found) </p></li>
+<li><p><strong>false</strong> – if no atomic lock is needed (exclusive lock found) </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.__sync_start_shared_lock">
+<span class="target" id="dd/d9c/group__LOWCOMM__ONE__SIDED__INTERNAL_1ga38383541e03d935dd52e4a299936ce19"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">__sync_start_shared_lock</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="../whole_index.html#c.lcp_task_h" title="lcp_task_h"><span class="n"><span class="pre">lcp_task_h</span></span></a><span class="w"> </span><span class="n"><span class="pre">task</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">target</span></span>, <a class="reference internal" href="#c.mpc_lowcomm_window_t" title="mpc_lowcomm_window_t"><span class="n"><span class="pre">mpc_lowcomm_window_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">window</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.__sync_start_shared_lock" title="Link to this definition"></a><br /></dt>
+<dd><p>Locks a window in shared mode. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>task</strong> – <strong>[in]</strong> Current LCP Task </p></li>
+<li><p><strong>target</strong> – <strong>[in]</strong> Rank of the target task </p></li>
+<li><p><strong>window</strong> – <strong>[in]</strong> Window to lock</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>MPC_LOWCOMM_SUCCESS upon success </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.__sync_end_shared_lock">
+<span class="target" id="dd/d9c/group__LOWCOMM__ONE__SIDED__INTERNAL_1ga9021b7c414cab74d58dda18a3248bb48"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">__sync_end_shared_lock</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="../whole_index.html#c.lcp_task_h" title="lcp_task_h"><span class="n"><span class="pre">lcp_task_h</span></span></a><span class="w"> </span><span class="n"><span class="pre">task</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">target</span></span>, <a class="reference internal" href="#c.mpc_lowcomm_window_t" title="mpc_lowcomm_window_t"><span class="n"><span class="pre">mpc_lowcomm_window_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">window</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.__sync_end_shared_lock" title="Link to this definition"></a><br /></dt>
+<dd><p>Unlocks a window in shared mode. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>task</strong> – <strong>[in]</strong> Current LCP Task </p></li>
+<li><p><strong>target</strong> – <strong>[in]</strong> Rank of the target task </p></li>
+<li><p><strong>window</strong> – <strong>[in]</strong> Window to unlock</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>MPC_LOWCOMM_SUCCESS upon success </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.__sync_start_atomic_lock">
+<span class="target" id="dd/d9c/group__LOWCOMM__ONE__SIDED__INTERNAL_1gab3bd9d59a94437aed14c18308c47f041"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">__sync_start_atomic_lock</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="../whole_index.html#c.lcp_task_h" title="lcp_task_h"><span class="n"><span class="pre">lcp_task_h</span></span></a><span class="w"> </span><span class="n"><span class="pre">task</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">target</span></span>, <a class="reference internal" href="#c.mpc_lowcomm_window_t" title="mpc_lowcomm_window_t"><span class="n"><span class="pre">mpc_lowcomm_window_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">window</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.__sync_start_atomic_lock" title="Link to this definition"></a><br /></dt>
+<dd><p>Locks a window in atomic mode. </p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>If the window is already locked in exclusive mode, this function does nothing</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>task</strong> – <strong>[in]</strong> Current LCP Task </p></li>
+<li><p><strong>target</strong> – <strong>[in]</strong> Rank of the target task </p></li>
+<li><p><strong>window</strong> – <strong>[in]</strong> Window to lock</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return values<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>MPC_LOWCOMM_SUCCESS</strong> – upon success </p></li>
+<li><p><strong>MPC_LOWCOMM_OSC_ALREADY_LOCKED</strong> – if the lock is already taken (no need to unlock) </p></li>
+<li><p><strong>A</strong> – LowComm errorcode otherwise </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.__sync_end_atomic_lock">
+<span class="target" id="dd/d9c/group__LOWCOMM__ONE__SIDED__INTERNAL_1ga384f54b898bb7bdd61f91ef664f20449"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">__sync_end_atomic_lock</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="../whole_index.html#c.lcp_task_h" title="lcp_task_h"><span class="n"><span class="pre">lcp_task_h</span></span></a><span class="w"> </span><span class="n"><span class="pre">task</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">target</span></span>, <a class="reference internal" href="#c.mpc_lowcomm_window_t" title="mpc_lowcomm_window_t"><span class="n"><span class="pre">mpc_lowcomm_window_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">window</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.__sync_end_atomic_lock" title="Link to this definition"></a><br /></dt>
+<dd><p>Unlocks a window in atomic mode. </p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>If the window is already locked in exclusive mode, this function does nothing</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>task</strong> – <strong>[in]</strong> Current LCP Task </p></li>
+<li><p><strong>target</strong> – <strong>[in]</strong> Rank of the target task </p></li>
+<li><p><strong>window</strong> – <strong>[in]</strong> Window to unlock</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>MPC_LOWCOMM_SUCCESS upon success </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.__sync_handle_incoming_post">
+<span class="target" id="dd/d9c/group__LOWCOMM__ONE__SIDED__INTERNAL_1gae0aed004cd0465bf1987f75ffd52879f"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">__sync_handle_incoming_post</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">volatile</span></span><span class="w"> </span><span class="n"><span class="pre">uint64_t</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">post_ptr</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">size</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">ranks_in_grp_win</span></span><span class="p"><span class="pre">[</span></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="#c.__sync_handle_incoming_post" title="size"><span class="n"><span class="pre">size</span></span></a><span class="p"><span class="pre">]</span></span>, <a class="reference internal" href="#c.mpc_lowcomm_window_t" title="mpc_lowcomm_window_t"><span class="n"><span class="pre">mpc_lowcomm_window_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">window</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.__sync_handle_incoming_post" title="Link to this definition"></a><br /></dt>
+<dd><p>Updates the pending posts list on receiving a post from another task. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>post_ptr</strong> – <strong>[in]</strong> Some internal state </p></li>
+<li><p><strong>size</strong> – <strong>[in]</strong> Number of tasks in the group </p></li>
+<li><p><strong>ranks_in_grp_win</strong> – <strong>[in]</strong> Translation table between tasks in group and global task ranks </p></li>
+<li><p><strong>window</strong> – <strong>[in]</strong> Window for which the post are handled </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.lowcomm_osc_progress">
+<span class="target" id="dd/d9c/group__LOWCOMM__ONE__SIDED__INTERNAL_1gad90486f706ec3441218b8a3f2ed823a3"></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">lowcomm_osc_progress</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#c.lowcomm_osc_progress" title="Link to this definition"></a><br /></dt>
+<dd><p>Progression function for the LowComm one-sided subpart. </p>
+<p>This function is meant to be registered in mpc_common_progress</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>lcp_progress errorcode </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c._win_init">
+<span class="target" id="dd/d9c/group__LOWCOMM__ONE__SIDED__INTERNAL_1ga65a1078b61beb0a352201af71b6c84cd"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">_win_init</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="#c.mpc_lowcomm_window_flag_t" title="mpc_lowcomm_window_flag_t"><span class="n"><span class="pre">mpc_lowcomm_window_flag_t</span></span></a><span class="w"> </span><span class="n"><span class="pre">flavor</span></span>, <a class="reference internal" href="../whole_index.html#c.mpc_lowcomm_communicator_t" title="mpc_lowcomm_communicator_t"><span class="n"><span class="pre">mpc_lowcomm_communicator_t</span></span></a><span class="w"> </span><span class="n"><span class="pre">comm</span></span>, <span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">base</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">size_t</span></span><span class="w"> </span><span class="n"><span class="pre">size</span></span>, <a class="reference internal" href="#c.mpc_lowcomm_window_t" title="mpc_lowcomm_window_t"><span class="n"><span class="pre">mpc_lowcomm_window_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">win_p</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c._win_init" title="Link to this definition"></a><br /></dt>
+<dd><p>Creates and initializes a window. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>flavor</strong> – <strong>[in]</strong> Type of creation to perform </p></li>
+<li><p><strong>comm</strong> – <strong>[in]</strong> Communicator to embed in the new window </p></li>
+<li><p><strong>base</strong> – <strong>[in]</strong> Pointer to the address of the underlying memory buffer </p></li>
+<li><p><strong>size</strong> – <strong>[in]</strong> Requested size (in Bytes) of the underlying memory buffer </p></li>
+<li><p><strong>win_p</strong> – <strong>[out]</strong> Pointer to store an handle on the newly created window</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>MPC_LOWCOMM_SUCCESS upon success </p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-variables">Variables</p>
+<dl class="c var">
+<dt class="sig sig-object c" id="c.mpc2lcp_atomic_dt_table">
+<span class="target" id="dd/d9c/group__LOWCOMM__ONE__SIDED__INTERNAL_1ga3ed0b6c25729b29ef3ed1c7f73b2c46d"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="../whole_index.html#c.lcp_atomic_dt_t" title="lcp_atomic_dt_t"><span class="n"><span class="pre">lcp_atomic_dt_t</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc2lcp_atomic_dt_table</span></span></span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">]</span></span><a class="headerlink" href="#c.mpc2lcp_atomic_dt_table" title="Link to this definition"></a><br /></dt>
+<dd><p>Translation table from MPC datatypes to LCP atomic datatypes. </p>
+</dd></dl>
+
+<dl class="c var">
+<dt class="sig sig-object c">
+<span class="target" id="dd/d9c/group__LOWCOMM__ONE__SIDED__INTERNAL_1gac017ac9721f6c48847a6b2f461d424b7"></span><span class="sig-name descname"><span class="pre">static</span> <span class="pre">const</span> <span class="pre">lcp_atomic_op_t</span> <span class="pre">mpc2lcp_atomic_op_table</span> <span class="pre">[]</span> <span class="pre">={[LOWCOMM_ATOMIC_OP_FETCH_ADD]</span> <span class="pre">=</span> <span class="pre">LCP_ATOMIC_OP_ADD,[LOWCOMM_ATOMIC_OP_FETCH_SUB]</span> <span class="pre">=</span> <span class="pre">LCP_ATOMIC_OP_SUB,[LOWCOMM_ATOMIC_OP_FETCH_AND]</span> <span class="pre">=</span> <span class="pre">LCP_ATOMIC_OP_AND,[LOWCOMM_ATOMIC_OP_FETCH_OR]</span>&#160; <span class="pre">=</span> <span class="pre">LCP_ATOMIC_OP_OR,[LOWCOMM_ATOMIC_OP_FETCH_XOR]</span> <span class="pre">=</span> <span class="pre">LCP_ATOMIC_OP_XOR,[LOWCOMM_ATOMIC_OP_SWAP]</span>&#160;&#160;&#160;&#160;&#160; <span class="pre">=</span> <span class="pre">LCP_ATOMIC_OP_SWAP,[LOWCOMM_ATOMIC_OP_CSWAP]</span>&#160;&#160;&#160;&#160; <span class="pre">=</span> <span class="pre">LCP_ATOMIC_OP_CSWAP,}</span></span></dt>
+<dd><p>Translation table from MPC Atomic operations to LCP atomic operations. </p>
+</dd></dl>
+
+<dl class="c var">
+<dt class="sig sig-object c" id="c.osc_is_initialized">
+<span class="target" id="dd/d9c/group__LOWCOMM__ONE__SIDED__INTERNAL_1ga8f496314664b104bd3f1d4543bf0001c"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">osc_is_initialized</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#c.osc_is_initialized" title="Link to this definition"></a><br /></dt>
+<dd><p>Whether the One Sided part of LowComm is already initialized. </p>
+</dd></dl>
+
+<dl class="c var">
+<dt class="sig sig-object c" id="c.osc_mngr">
+<span class="target" id="dd/d9c/group__LOWCOMM__ONE__SIDED__INTERNAL_1ga8d02182d1f44fbc6a6c89bf3fb9119e9"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><a class="reference internal" href="../whole_index.html#c.lcp_manager_h" title="lcp_manager_h"><span class="n"><span class="pre">lcp_manager_h</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">osc_mngr</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="n"><span class="pre">NULL</span></span><a class="headerlink" href="#c.osc_mngr" title="Link to this definition"></a><br /></dt>
+<dd><p>Specific manager for the one-sided communications. </p>
+</dd></dl>
+
+<dl class="c var">
+<dt class="sig sig-object c" id="c.osc_win_lock">
+<span class="target" id="dd/d9c/group__LOWCOMM__ONE__SIDED__INTERNAL_1ga60c520ebe92cec84e19e07c5200c7210"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="n"><span class="pre">mpc_common_spinlock_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">osc_win_lock</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="n"><span class="pre">MPC_COMMON_SPINLOCK_INITIALIZER</span></span><a class="headerlink" href="#c.osc_win_lock" title="Link to this definition"></a><br /></dt>
+<dd><p>Mutex lock for accessing the global state of the submodule. </p>
+</dd></dl>
+
+</div>
+<dl class="c struct">
+<dt class="sig sig-object c" id="c._lowcomm_osc_dynamic_win_s">
+<span class="target" id="d1/dac/struct__lowcomm__osc__dynamic__win__s"></span><span class="k"><span class="pre">struct</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">_lowcomm_osc_dynamic_win_s</span></span></span><a class="headerlink" href="#c._lowcomm_osc_dynamic_win_s" title="Link to this definition"></a><br /></dt>
+<dd><p>Dynamic memory description. </p>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-members">Public Members</p>
+<dl class="c var">
+<dt class="sig sig-object c" id="c._lowcomm_osc_dynamic_win_s.base">
+<span class="target" id="d1/dac/struct__lowcomm__osc__dynamic__win__s_1a6f56ca9447dc952548a323daeaac16a4"></span><span class="n"><span class="pre">uint64_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">base</span></span></span><a class="headerlink" href="#c._lowcomm_osc_dynamic_win_s.base" title="Link to this definition"></a><br /></dt>
+<dd><p>Address of the base of the buffer. </p>
+</dd></dl>
+
+<dl class="c var">
+<dt class="sig sig-object c" id="c._lowcomm_osc_dynamic_win_s.size">
+<span class="target" id="d1/dac/struct__lowcomm__osc__dynamic__win__s_1a47fa88ff09e358323cdc07f00135fefe"></span><span class="n"><span class="pre">size_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">size</span></span></span><a class="headerlink" href="#c._lowcomm_osc_dynamic_win_s.size" title="Link to this definition"></a><br /></dt>
+<dd><p>Size (in Bytes) of the memory region. </p>
+</dd></dl>
+
+<dl class="c var">
+<dt class="sig sig-object c" id="c._lowcomm_osc_dynamic_win_s.rkey_len">
+<span class="target" id="d1/dac/struct__lowcomm__osc__dynamic__win__s_1a0e9d08282f99a768a4a4ac458b3188ea"></span><span class="n"><span class="pre">size_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">rkey_len</span></span></span><a class="headerlink" href="#c._lowcomm_osc_dynamic_win_s.rkey_len" title="Link to this definition"></a><br /></dt>
+<dd><p>Size (in Bytes) of the remote memory key. </p>
+</dd></dl>
+
+<dl class="c var">
+<dt class="sig sig-object c" id="c._lowcomm_osc_dynamic_win_s.rkey_buf">
+<span class="target" id="d1/dac/struct__lowcomm__osc__dynamic__win__s_1a5d0f78d50e8a14dba6118d5352fb0652"></span><span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">rkey_buf</span></span></span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#c.OCS_LCP_RKEY_BUF_SIZE_MAX" title="OCS_LCP_RKEY_BUF_SIZE_MAX"><span class="n"><span class="pre">OCS_LCP_RKEY_BUF_SIZE_MAX</span></span></a><span class="p"><span class="pre">]</span></span><a class="headerlink" href="#c._lowcomm_osc_dynamic_win_s.rkey_buf" title="Link to this definition"></a><br /></dt>
+<dd><p>Remote memory key. </p>
+</dd></dl>
+
+</div>
+</dd></dl>
+
+<dl class="c struct">
+<dt class="sig sig-object c" id="c._lowcomm_osc_module_state_s">
+<span class="target" id="d8/db3/struct__lowcomm__osc__module__state__s"></span><span class="k"><span class="pre">struct</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">_lowcomm_osc_module_state_s</span></span></span><a class="headerlink" href="#c._lowcomm_osc_module_state_s" title="Link to this definition"></a><br /></dt>
+<dd><p>Synchronization states specific values. </p>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-members">Public Members</p>
+<dl class="c var">
+<dt class="sig sig-object c" id="c._lowcomm_osc_module_state_s.completion_counter">
+<span class="target" id="d8/db3/struct__lowcomm__osc__module__state__s_1aab51fb8ba43354d52f9dd53960236bc2"></span><span class="k"><span class="pre">volatile</span></span><span class="w"> </span><span class="n"><span class="pre">uint64_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">completion_counter</span></span></span><a class="headerlink" href="#c._lowcomm_osc_module_state_s.completion_counter" title="Link to this definition"></a><br /></dt>
+<dd><p>Number of complete received. </p>
+</dd></dl>
+
+<dl class="c var">
+<dt class="sig sig-object c" id="c._lowcomm_osc_module_state_s.post_counter">
+<span class="target" id="d8/db3/struct__lowcomm__osc__module__state__s_1a1f33681c5239df9e331d0d9b0857a16f"></span><span class="k"><span class="pre">volatile</span></span><span class="w"> </span><span class="n"><span class="pre">uint64_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">post_counter</span></span></span><a class="headerlink" href="#c._lowcomm_osc_module_state_s.post_counter" title="Link to this definition"></a><br /></dt>
+<dd><p>Number of post received. </p>
+</dd></dl>
+
+<dl class="c var">
+<dt class="sig sig-object c" id="c._lowcomm_osc_module_state_s.post_state">
+<span class="target" id="d8/db3/struct__lowcomm__osc__module__state__s_1ab91c905893577c9df871bf273d10324d"></span><span class="k"><span class="pre">volatile</span></span><span class="w"> </span><span class="n"><span class="pre">uint64_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">post_state</span></span></span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#c.OSC_POST_PEER_MAX" title="OSC_POST_PEER_MAX"><span class="n"><span class="pre">OSC_POST_PEER_MAX</span></span></a><span class="p"><span class="pre">]</span></span><a class="headerlink" href="#c._lowcomm_osc_module_state_s.post_state" title="Link to this definition"></a><br /></dt>
+<dd><p>State of each post. </p>
+</dd></dl>
+
+<dl class="c var">
+<dt class="sig sig-object c" id="c._lowcomm_osc_module_state_s.acc_lock">
+<span class="target" id="d8/db3/struct__lowcomm__osc__module__state__s_1a48b75fd18417f7a8812661ba0e998fd7"></span><span class="k"><span class="pre">volatile</span></span><span class="w"> </span><span class="n"><span class="pre">uint64_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">acc_lock</span></span></span><a class="headerlink" href="#c._lowcomm_osc_module_state_s.acc_lock" title="Link to this definition"></a><br /></dt>
+<dd><p>State of the accumulate lock. </p>
+</dd></dl>
+
+<dl class="c var">
+<dt class="sig sig-object c" id="c._lowcomm_osc_module_state_s.global_lock">
+<span class="target" id="d8/db3/struct__lowcomm__osc__module__state__s_1ad18366710363991c93ae30a205633669"></span><span class="k"><span class="pre">volatile</span></span><span class="w"> </span><span class="n"><span class="pre">uint64_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">global_lock</span></span></span><a class="headerlink" href="#c._lowcomm_osc_module_state_s.global_lock" title="Link to this definition"></a><br /></dt>
+<dd><p>State of the global lock. </p>
+</dd></dl>
+
+<dl class="c var">
+<dt class="sig sig-object c" id="c._lowcomm_osc_module_state_s.region_lock">
+<span class="target" id="d8/db3/struct__lowcomm__osc__module__state__s_1a2006673e8197119eec9c12353092628c"></span><span class="k"><span class="pre">volatile</span></span><span class="w"> </span><span class="n"><span class="pre">uint64_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">region_lock</span></span></span><a class="headerlink" href="#c._lowcomm_osc_module_state_s.region_lock" title="Link to this definition"></a><br /></dt>
+<dd><p>State of the regional lock. </p>
+</dd></dl>
+
+<dl class="c var">
+<dt class="sig sig-object c" id="c._lowcomm_osc_module_state_s.dynamic_win_count">
+<span class="target" id="d8/db3/struct__lowcomm__osc__module__state__s_1a30ac1849e33ff5d851f5a1bbf77678da"></span><span class="k"><span class="pre">volatile</span></span><span class="w"> </span><span class="n"><span class="pre">uint64_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">dynamic_win_count</span></span></span><a class="headerlink" href="#c._lowcomm_osc_module_state_s.dynamic_win_count" title="Link to this definition"></a><br /></dt>
+<dd><p>Number memory regions attached. </p>
+</dd></dl>
+
+<dl class="c var">
+<dt class="sig sig-object c" id="c._lowcomm_osc_module_state_s.dynamic_wins">
+<span class="target" id="d8/db3/struct__lowcomm__osc__module__state__s_1ab11a64a7fb8437cf4cb3867c1c208eac"></span><span class="k"><span class="pre">volatile</span></span><span class="w"> </span><a class="reference internal" href="#c._lowcomm_osc_dynamic_win_t" title="_lowcomm_osc_dynamic_win_t"><span class="n"><span class="pre">_lowcomm_osc_dynamic_win_t</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">dynamic_wins</span></span></span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#c.OSC_DYNAMIC_WIN_ATTACH_MAX" title="OSC_DYNAMIC_WIN_ATTACH_MAX"><span class="n"><span class="pre">OSC_DYNAMIC_WIN_ATTACH_MAX</span></span></a><span class="p"><span class="pre">]</span></span><a class="headerlink" href="#c._lowcomm_osc_module_state_s.dynamic_wins" title="Link to this definition"></a><br /></dt>
+<dd><p>Memory regions. </p>
+</dd></dl>
+
+</div>
+</dd></dl>
+
+<dl class="c struct">
+<dt class="sig sig-object c" id="c._lowcomm_osc_win_info_s">
+<span class="target" id="d0/d75/struct__lowcomm__osc__win__info__s"></span><span class="k"><span class="pre">struct</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">_lowcomm_osc_win_info_s</span></span></span><a class="headerlink" href="#c._lowcomm_osc_win_info_s" title="Link to this definition"></a><br /></dt>
+<dd><p>Description of a window. </p>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-members">Public Members</p>
+<dl class="c var">
+<dt class="sig sig-object c" id="c._lowcomm_osc_win_info_s.addr">
+<span class="target" id="d0/d75/struct__lowcomm__osc__win__info__s_1abb5e056f7ca76fdbeb42e6663782fabf"></span><span class="n"><span class="pre">uint64_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">addr</span></span></span><a class="headerlink" href="#c._lowcomm_osc_win_info_s.addr" title="Link to this definition"></a><br /></dt>
+<dd><p>Address of the described memory. </p>
+</dd></dl>
+
+<dl class="c var">
+<dt class="sig sig-object c" id="c._lowcomm_osc_win_info_s.rkey">
+<span class="target" id="d0/d75/struct__lowcomm__osc__win__info__s_1a1385191e2ec4d565c4c5beedf4a5679d"></span><a class="reference internal" href="../whole_index.html#c.lcp_mem_h" title="lcp_mem_h"><span class="n"><span class="pre">lcp_mem_h</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">rkey</span></span></span><a class="headerlink" href="#c._lowcomm_osc_win_info_s.rkey" title="Link to this definition"></a><br /></dt>
+<dd><p>Remote key of the described memory. </p>
+</dd></dl>
+
+</div>
+</dd></dl>
+
+<dl class="c struct">
+<dt class="sig sig-object c" id="c._lowcomm_osc_pending_post_s">
+<span class="target" id="d1/dbe/struct__lowcomm__osc__pending__post__s"></span><span class="k"><span class="pre">struct</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">_lowcomm_osc_pending_post_s</span></span></span><a class="headerlink" href="#c._lowcomm_osc_pending_post_s" title="Link to this definition"></a><br /></dt>
+<dd><p>Description of a pending post operation. </p>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-members">Public Members</p>
+<dl class="c var">
+<dt class="sig sig-object c" id="c._lowcomm_osc_pending_post_s.rank">
+<span class="target" id="d1/dbe/struct__lowcomm__osc__pending__post__s_1ae44ec3ab2e255dcb9a598d8d3724b327"></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">rank</span></span></span><a class="headerlink" href="#c._lowcomm_osc_pending_post_s.rank" title="Link to this definition"></a><br /></dt>
+<dd><p>Rank of the source task. </p>
+</dd></dl>
+
+<dl class="c var">
+<dt class="sig sig-object c" id="c._lowcomm_osc_pending_post_s.elem">
+<span class="target" id="d1/dbe/struct__lowcomm__osc__pending__post__s_1a9fdfd8942fed66affdc320eb4a473f3c"></span><a class="reference internal" href="../whole_index.html#c.mpc_list_elem_t" title="mpc_list_elem_t"><span class="n"><span class="pre">mpc_list_elem_t</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">elem</span></span></span><a class="headerlink" href="#c._lowcomm_osc_pending_post_s.elem" title="Link to this definition"></a><br /></dt>
+<dd><p>Structure to make the pending post a queue. </p>
+</dd></dl>
+
+</div>
+</dd></dl>
+
+<dl class="c struct">
+<dt class="sig sig-object c" id="c._lowcomm_osc_local_dynamic_win_info_s">
+<span class="target" id="dd/d67/struct__lowcomm__osc__local__dynamic__win__info__s"></span><span class="k"><span class="pre">struct</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">_lowcomm_osc_local_dynamic_win_info_s</span></span></span><a class="headerlink" href="#c._lowcomm_osc_local_dynamic_win_info_s" title="Link to this definition"></a><br /></dt>
+<dd><p>Description of an attached memory region. </p>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-members">Public Members</p>
+<dl class="c var">
+<dt class="sig sig-object c" id="c._lowcomm_osc_local_dynamic_win_info_s.memh">
+<span class="target" id="dd/d67/struct__lowcomm__osc__local__dynamic__win__info__s_1ae09c35cd2c0f554012b0c1c6f365f756"></span><a class="reference internal" href="../whole_index.html#c.lcp_mem_h" title="lcp_mem_h"><span class="n"><span class="pre">lcp_mem_h</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">memh</span></span></span><a class="headerlink" href="#c._lowcomm_osc_local_dynamic_win_info_s.memh" title="Link to this definition"></a><br /></dt>
+<dd><p>Memory describer. </p>
+</dd></dl>
+
+<dl class="c var">
+<dt class="sig sig-object c" id="c._lowcomm_osc_local_dynamic_win_info_s.refcnt">
+<span class="target" id="dd/d67/struct__lowcomm__osc__local__dynamic__win__info__s_1aef162bc23d30837337adcac916920671"></span><span class="k"><span class="pre">volatile</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">refcnt</span></span></span><a class="headerlink" href="#c._lowcomm_osc_local_dynamic_win_info_s.refcnt" title="Link to this definition"></a><br /></dt>
+<dd><p>Reference counting to avoid duplicates. </p>
+</dd></dl>
+
+</div>
+</dd></dl>
+
+<dl class="c struct">
+<dt class="sig sig-object c" id="c._lowcomm_osc_lock_s">
+<span class="target" id="db/d47/struct__lowcomm__osc__lock__s"></span><span class="k"><span class="pre">struct</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">_lowcomm_osc_lock_s</span></span></span><a class="headerlink" href="#c._lowcomm_osc_lock_s" title="Link to this definition"></a><br /></dt>
+<dd><p>Description of a distant lock. </p>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-members">Public Members</p>
+<dl class="c var">
+<dt class="sig sig-object c" id="c._lowcomm_osc_lock_s.is_no_check">
+<span class="target" id="db/d47/struct__lowcomm__osc__lock__s_1a9d1cf444a44a3953c740910df16e086a"></span><span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">is_no_check</span></span></span><a class="headerlink" href="#c._lowcomm_osc_lock_s.is_no_check" title="Link to this definition"></a><br /></dt>
+<dd><p>Does the lock should not really lock. </p>
+</dd></dl>
+
+<dl class="c var">
+<dt class="sig sig-object c" id="c._lowcomm_osc_lock_s.type">
+<span class="target" id="db/d47/struct__lowcomm__osc__lock__s_1a62d76deb5444e6792a8f698493d8f7da"></span><a class="reference internal" href="#c.mpc_lowcomm_osc_lock_type_t" title="mpc_lowcomm_osc_lock_type_t"><span class="n"><span class="pre">mpc_lowcomm_osc_lock_type_t</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">type</span></span></span><a class="headerlink" href="#c._lowcomm_osc_lock_s.type" title="Link to this definition"></a><br /></dt>
+<dd><p>Type of lock (see <a class="reference internal" href="../whole_index.html#de/d3d/group__LOWCOMM__ONE__SIDED_1ga4f1600c3d6d0f2a8984af7a4fd8b566d"><span class="std std-ref">mpc_lowcomm_osc_lock_type_t</span></a>) </p>
+</dd></dl>
+
+<dl class="c var">
+<dt class="sig sig-object c" id="c._lowcomm_osc_lock_s.target">
+<span class="target" id="db/d47/struct__lowcomm__osc__lock__s_1a188c3871abc3d90bb292c712862833ad"></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">target</span></span></span><a class="headerlink" href="#c._lowcomm_osc_lock_s.target" title="Link to this definition"></a><br /></dt>
+<dd><p>Rank of the target task. </p>
+</dd></dl>
+
+</div>
+</dd></dl>
+
+<dl class="c struct">
+<dt class="sig sig-object c" id="c.mpc_lowcomm_window_s">
+<span class="target" id="d3/da2/structmpc__lowcomm__window__s"></span><span class="k"><span class="pre">struct</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_lowcomm_window_s</span></span></span><a class="headerlink" href="#c.mpc_lowcomm_window_s" title="Link to this definition"></a><br /></dt>
+<dd><p>Internal structure of a LCP backed window. </p>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-members">Public Members</p>
+<dl class="c var">
+<dt class="sig sig-object c" id="c.mpc_lowcomm_window_s.mngr">
+<span class="target" id="d3/da2/structmpc__lowcomm__window__s_1ae0e0a1f5413db1abd483954370c11e23"></span><a class="reference internal" href="../whole_index.html#c.lcp_manager_h" title="lcp_manager_h"><span class="n"><span class="pre">lcp_manager_h</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mngr</span></span></span><a class="headerlink" href="#c.mpc_lowcomm_window_s.mngr" title="Link to this definition"></a><br /></dt>
+<dd><p>Communication manager. </p>
+</dd></dl>
+
+<dl class="c var">
+<dt class="sig sig-object c" id="c.mpc_lowcomm_window_s.ctx">
+<span class="target" id="d3/da2/structmpc__lowcomm__window__s_1aba2d4b6121293d60c123bc35418598f5"></span><a class="reference internal" href="../whole_index.html#c.lcp_context_h" title="lcp_context_h"><span class="n"><span class="pre">lcp_context_h</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">ctx</span></span></span><a class="headerlink" href="#c.mpc_lowcomm_window_s.ctx" title="Link to this definition"></a><br /></dt>
+<dd><p>Communication context. </p>
+</dd></dl>
+
+<dl class="c var">
+<dt class="sig sig-object c" id="c.mpc_lowcomm_window_s.comm">
+<span class="target" id="d3/da2/structmpc__lowcomm__window__s_1abcb094673403bdc3dcd99a809e3ad643"></span><a class="reference internal" href="../whole_index.html#c.mpc_lowcomm_communicator_t" title="mpc_lowcomm_communicator_t"><span class="n"><span class="pre">mpc_lowcomm_communicator_t</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">comm</span></span></span><a class="headerlink" href="#c.mpc_lowcomm_window_s.comm" title="Link to this definition"></a><br /></dt>
+<dd><p>Communicator. </p>
+</dd></dl>
+
+<dl class="c var">
+<dt class="sig sig-object c" id="c.mpc_lowcomm_window_s.win_flag">
+<span class="target" id="d3/da2/structmpc__lowcomm__window__s_1aca10c65330f784146bf0b454d82d4418"></span><a class="reference internal" href="#c.mpc_lowcomm_window_flag_t" title="mpc_lowcomm_window_flag_t"><span class="n"><span class="pre">mpc_lowcomm_window_flag_t</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">win_flag</span></span></span><a class="headerlink" href="#c.mpc_lowcomm_window_s.win_flag" title="Link to this definition"></a><br /></dt>
+<dd><p>Window creation flag. </p>
+</dd></dl>
+
+<dl class="c var">
+<dt class="sig sig-object c" id="c.mpc_lowcomm_window_s.base_data">
+<span class="target" id="d3/da2/structmpc__lowcomm__window__s_1a86bccf35008093873bf4ca392a5641c9"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">base_data</span></span></span><a class="headerlink" href="#c.mpc_lowcomm_window_s.base_data" title="Link to this definition"></a><br /></dt>
+<dd><p>Address of the underlying user buffer. </p>
+</dd></dl>
+
+<dl class="c var">
+<dt class="sig sig-object c" id="c.mpc_lowcomm_window_s.lkey_data">
+<span class="target" id="d3/da2/structmpc__lowcomm__window__s_1a4ae960be33f1c877641a6e22e2be6099"></span><a class="reference internal" href="../whole_index.html#c.lcp_mem_h" title="lcp_mem_h"><span class="n"><span class="pre">lcp_mem_h</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">lkey_data</span></span></span><a class="headerlink" href="#c.mpc_lowcomm_window_s.lkey_data" title="Link to this definition"></a><br /></dt>
+<dd><p>Local memory key of the user buffer memory. </p>
+</dd></dl>
+
+<dl class="c var">
+<dt class="sig sig-object c" id="c.mpc_lowcomm_window_s.rdata_win_info">
+<span class="target" id="d3/da2/structmpc__lowcomm__window__s_1aba2c3317fce2ae7d043914d8bf9ff318"></span><a class="reference internal" href="#c._lowcomm_osc_win_info_t" title="_lowcomm_osc_win_info_t"><span class="n"><span class="pre">_lowcomm_osc_win_info_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">rdata_win_info</span></span></span><a class="headerlink" href="#c.mpc_lowcomm_window_s.rdata_win_info" title="Link to this definition"></a><br /></dt>
+<dd><p>Remote windows information about user buffer. </p>
+</dd></dl>
+
+<dl class="c var">
+<dt class="sig sig-object c" id="c.mpc_lowcomm_window_s.state">
+<span class="target" id="d3/da2/structmpc__lowcomm__window__s_1ad36cb44fd50244a7e0e26d4e2740a49f"></span><a class="reference internal" href="#c._lowcomm_osc_module_state_t" title="_lowcomm_osc_module_state_t"><span class="n"><span class="pre">_lowcomm_osc_module_state_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">state</span></span></span><a class="headerlink" href="#c.mpc_lowcomm_window_s.state" title="Link to this definition"></a><br /></dt>
+<dd><p>Address of the state values. </p>
+</dd></dl>
+
+<dl class="c var">
+<dt class="sig sig-object c" id="c.mpc_lowcomm_window_s.lkey_state">
+<span class="target" id="d3/da2/structmpc__lowcomm__window__s_1af98c3becd65d597c20fff47e78a7e506"></span><a class="reference internal" href="../whole_index.html#c.lcp_mem_h" title="lcp_mem_h"><span class="n"><span class="pre">lcp_mem_h</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">lkey_state</span></span></span><a class="headerlink" href="#c.mpc_lowcomm_window_s.lkey_state" title="Link to this definition"></a><br /></dt>
+<dd><p>Local memory key of the state values memory. </p>
+</dd></dl>
+
+<dl class="c var">
+<dt class="sig sig-object c" id="c.mpc_lowcomm_window_s.rstate_win_info">
+<span class="target" id="d3/da2/structmpc__lowcomm__window__s_1a3bd5ac98c7218e17194b319a29397f63"></span><a class="reference internal" href="#c._lowcomm_osc_win_info_t" title="_lowcomm_osc_win_info_t"><span class="n"><span class="pre">_lowcomm_osc_win_info_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">rstate_win_info</span></span></span><a class="headerlink" href="#c.mpc_lowcomm_window_s.rstate_win_info" title="Link to this definition"></a><br /></dt>
+<dd><p>Remote windows information about state. </p>
+</dd></dl>
+
+<dl class="c var">
+<dt class="sig sig-object c" id="c.mpc_lowcomm_window_s.outstanding_locks">
+<span class="target" id="d3/da2/structmpc__lowcomm__window__s_1ac081c2aa33c97f760de39068cad4d40c"></span><span class="k"><span class="pre">struct</span></span><span class="w"> </span><a class="reference internal" href="../whole_index.html#c.mpc_common_hashtable" title="mpc_common_hashtable"><span class="n"><span class="pre">mpc_common_hashtable</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">outstanding_locks</span></span></span><a class="headerlink" href="#c.mpc_lowcomm_window_s.outstanding_locks" title="Link to this definition"></a><br /></dt>
+<dd><p>Locks currently held. </p>
+</dd></dl>
+
+<dl class="c var">
+<dt class="sig sig-object c" id="c.mpc_lowcomm_window_s.lock_all_is_no_check">
+<span class="target" id="d3/da2/structmpc__lowcomm__window__s_1a51419db4e34aa4241537751a229f6ea6"></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">lock_all_is_no_check</span></span></span><a class="headerlink" href="#c.mpc_lowcomm_window_s.lock_all_is_no_check" title="Link to this definition"></a><br /></dt>
+<dd><p>Does the lock all really lock. </p>
+</dd></dl>
+
+<dl class="c var">
+<dt class="sig sig-object c" id="c.mpc_lowcomm_window_s.post_count">
+<span class="target" id="d3/da2/structmpc__lowcomm__window__s_1ab6fbb216c9c83281b592d2aa3fbeeb06"></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">post_count</span></span></span><a class="headerlink" href="#c.mpc_lowcomm_window_s.post_count" title="Link to this definition"></a><br /></dt>
+<dd><p>Number of pending posts. </p>
+</dd></dl>
+
+<dl class="c var">
+<dt class="sig sig-object c" id="c.mpc_lowcomm_window_s.pending_posts">
+<span class="target" id="d3/da2/structmpc__lowcomm__window__s_1aa98bdc1be370dbb8cbcf0722ca013d8d"></span><a class="reference internal" href="../whole_index.html#c.mpc_list_elem_t" title="mpc_list_elem_t"><span class="n"><span class="pre">mpc_list_elem_t</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">pending_posts</span></span></span><a class="headerlink" href="#c.mpc_lowcomm_window_s.pending_posts" title="Link to this definition"></a><br /></dt>
+<dd><p>Queue with the pending posts. </p>
+</dd></dl>
+
+<dl class="c var">
+<dt class="sig sig-object c" id="c.mpc_lowcomm_window_s.start_group">
+<span class="target" id="d3/da2/structmpc__lowcomm__window__s_1a038aeb8d4f2821a239ef2c7a3ce9e623"></span><a class="reference internal" href="../whole_index.html#c.mpc_lowcomm_group_t" title="mpc_lowcomm_group_t"><span class="n"><span class="pre">mpc_lowcomm_group_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">start_group</span></span></span><a class="headerlink" href="#c.mpc_lowcomm_window_s.start_group" title="Link to this definition"></a><br /></dt>
+<dd><p>Group with granted access through start. </p>
+</dd></dl>
+
+<dl class="c var">
+<dt class="sig sig-object c" id="c.mpc_lowcomm_window_s.post_group">
+<span class="target" id="d3/da2/structmpc__lowcomm__window__s_1a59027094c5e9d4f79219e979824a6279"></span><a class="reference internal" href="../whole_index.html#c.mpc_lowcomm_group_t" title="mpc_lowcomm_group_t"><span class="n"><span class="pre">mpc_lowcomm_group_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">post_group</span></span></span><a class="headerlink" href="#c.mpc_lowcomm_window_s.post_group" title="Link to this definition"></a><br /></dt>
+<dd><p>Group with granted exposure through post. </p>
+</dd></dl>
+
+<dl class="c var">
+<dt class="sig sig-object c" id="c.mpc_lowcomm_window_s.start_grp_ranks">
+<span class="target" id="d3/da2/structmpc__lowcomm__window__s_1a028b6e2d612107a54953f9000cdf9898"></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">start_grp_ranks</span></span></span><a class="headerlink" href="#c.mpc_lowcomm_window_s.start_grp_ranks" title="Link to this definition"></a><br /></dt>
+<dd><p>Translation table between start group ranks. </p>
+</dd></dl>
+
+<dl class="c var">
+<dt class="sig sig-object c" id="c.mpc_lowcomm_window_s.local_dynamic_win_infos">
+<span class="target" id="d3/da2/structmpc__lowcomm__window__s_1a783bdfd503bfa412053880983412e49e"></span><a class="reference internal" href="#c._lowcomm_osc_local_dynamic_win_info_t" title="_lowcomm_osc_local_dynamic_win_info_t"><span class="n"><span class="pre">_lowcomm_osc_local_dynamic_win_info_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">local_dynamic_win_infos</span></span></span><a class="headerlink" href="#c.mpc_lowcomm_window_s.local_dynamic_win_infos" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+</div>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="lcp.html" class="btn btn-neutral float-left" title="LowComm Protocol layer (LCP)" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../mpi/mpi.html" class="btn btn-neutral float-right" title="MPC_MPI" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Commissariat à l&#39;Énergie Atomique et aux Énergies Alternatives.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

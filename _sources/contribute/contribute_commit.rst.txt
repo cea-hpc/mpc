@@ -152,7 +152,7 @@ You have to run it manually
 
 .. code-block:: console
 
-   $ uncrustify -c uncrustify.cfg -f <path/to/file> --replace
+   $ uncrustify -c uncrustify.cfg --replace <path/to/file>
 
 Then, it advised to check the formatting as it can be a bit strange sometimes.
 Finally, you stage and commit your changes as usual.

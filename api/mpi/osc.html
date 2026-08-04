@@ -1,0 +1,1307 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>One Sided Communications &mdash; MPC 4.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=fa44fd50" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
+
+  
+    <link rel="shortcut icon" href="../../_static/mpc_logo.png"/>
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=2f20d6c1"></script>
+      <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="MPC_OpenMP" href="../openmp.html" />
+    <link rel="prev" title="CommLib" href="commlib.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html">
+            
+              <img src="../../_static/mpc_logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../start.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../build.html">Building &amp; Installing MPC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../usage.html">Using MPC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../features.html">Advanced Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../faq.html">Frequently Asked Questions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../issues.html">Known issues</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../changelog.html">Changelog</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Contribution Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../contribute/main.html">Integrate with the VCS</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../contribute/main.html#contribute-in-code">Contribute in code</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer Documentation</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../main.html">Multi-Processor Computing (MPC) Framework Documentation</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../main.html#modules-documentation">Modules Documentation</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../arch.html">MPC_Arch</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../common.html">MPC_Common</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../config.html">MPC_Config</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../fortran.html">MPC_Fortran</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../io.html">MPC_IO</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../launch/launch.html">MPC_Launch</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../lowcomm/lowcomm.html">MPC_Lowcomm</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="mpi.html">MPC_MPI</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="mpi.html#module-mpc-mpi">Module MPC_MPI</a></li>
+<li class="toctree-l3 current"><a class="reference internal" href="mpi.html#api">API</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="commlib.html">CommLib</a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#">One Sided Communications</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../openmp.html">MPC_OpenMP</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../openshmem.html">MPC_OpenSHMEM</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../threads.html">MPC_Threads</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../topology.html">MPC_Topology</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../main.html#code-documentation">Code Documentation</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Links</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference external" href="https://mpc.hpcframework.com">Official Website (mpc.hpcframework.com)</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/cea-hpc/mpc">Repository (github.com)</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://mpc.hpcframework.com/publications-2/">Publications (mpc.hpcframework.com)</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">MPC</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../main.html">Multi-Processor Computing (MPC) Framework Documentation</a></li>
+          <li class="breadcrumb-item"><a href="mpi.html">MPC_MPI</a></li>
+      <li class="breadcrumb-item active">One Sided Communications</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/api/mpi/osc.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="one-sided-communications">
+<h1>One Sided Communications<a class="headerlink" href="#one-sided-communications" title="Link to this heading"></a></h1>
+<section id="public-api">
+<h2>Public API<a class="headerlink" href="#public-api" title="Link to this heading"></a></h2>
+<dl>
+<dt class="sig sig-object cpp">
+<span class="target" id="d8/d69/group__MPI__OSC"></span><em><span class="pre">group</span></em> <span class="sig-name descname"><span class="pre">MPI</span> <span class="pre">One-Sided</span> <span class="pre">MPC</span> <span class="pre">API</span></span></dt>
+<dd><p>API of the MPI module to perform RMA operations. </p>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-typedefs">Typedefs</p>
+<dl class="c type">
+<dt class="sig sig-object c" id="c.mpc_mpi_win_h">
+<span class="target" id="d8/d69/group__MPI__OSC_1gaba9206d7c6f47fff8ae68cb5ac5a6777"></span><span class="k"><span class="pre">typedef</span></span><span class="w"> </span><span class="k"><span class="pre">struct</span></span><span class="w"> </span><a class="reference internal" href="#c.mpc_mpi_win_s" title="mpc_mpi_win_s"><span class="n"><span class="pre">mpc_mpi_win_s</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">mpc_mpi_win_h</span></span></span><a class="headerlink" href="#c.mpc_mpi_win_h" title="Link to this definition"></a><br /></dt>
+<dd><p>MPI Window opaque handle. </p>
+</dd></dl>
+
+</div>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-functions">Functions</p>
+<dl class="c function">
+<dt class="sig sig-object c" id="c.mpc_mpi_osc_win_create">
+<span class="target" id="d8/d69/group__MPI__OSC_1gac40912a2104f4b4e5d379b8cb964348f"></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_mpi_osc_win_create</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">base</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">size_t</span></span><span class="w"> </span><span class="n"><span class="pre">size</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">disp_unit</span></span>, <a class="reference internal" href="../whole_index.html#c.MPI_Info" title="MPI_Info"><span class="n"><span class="pre">MPI_Info</span></span></a><span class="w"> </span><span class="n"><span class="pre">info</span></span>, <a class="reference internal" href="../whole_index.html#c.mpc_lowcomm_communicator_t" title="mpc_lowcomm_communicator_t"><span class="n"><span class="pre">mpc_lowcomm_communicator_t</span></span></a><span class="w"> </span><span class="n"><span class="pre">comm</span></span>, <a class="reference internal" href="#c.mpc_mpi_win_h" title="mpc_mpi_win_h"><span class="n"><span class="pre">mpc_mpi_win_h</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">win_p</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.mpc_mpi_osc_win_create" title="Link to this definition"></a><br /></dt>
+<dd><p>Creates a window from a user provided buffer. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>base</strong> – <strong>[in]</strong> Address of the underlying buffer </p></li>
+<li><p><strong>size</strong> – <strong>[in]</strong> Minimum size requested for the window </p></li>
+<li><p><strong>disp_unit</strong> – <strong>[in]</strong> Displacement unit to use in the window </p></li>
+<li><p><strong>info</strong> – <strong>[in]</strong> Info object to store in the window at creation </p></li>
+<li><p><strong>comm</strong> – <strong>[in]</strong> Communicator associated with the created window </p></li>
+<li><p><strong>win_p</strong> – <strong>[out]</strong> Pointer to store the resulting handle on the created window</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>MPI errorcode </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.mpc_mpi_osc_win_allocate">
+<span class="target" id="d8/d69/group__MPI__OSC_1gaadb0c4a42399d4af74ccbd0dc32a8e5d"></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_mpi_osc_win_allocate</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">base</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">size_t</span></span><span class="w"> </span><span class="n"><span class="pre">size</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">disp_unit</span></span>, <a class="reference internal" href="../whole_index.html#c.MPI_Info" title="MPI_Info"><span class="n"><span class="pre">MPI_Info</span></span></a><span class="w"> </span><span class="n"><span class="pre">info</span></span>, <a class="reference internal" href="../whole_index.html#c.mpc_lowcomm_communicator_t" title="mpc_lowcomm_communicator_t"><span class="n"><span class="pre">mpc_lowcomm_communicator_t</span></span></a><span class="w"> </span><span class="n"><span class="pre">comm</span></span>, <a class="reference internal" href="#c.mpc_mpi_win_h" title="mpc_mpi_win_h"><span class="n"><span class="pre">mpc_mpi_win_h</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">win_p</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.mpc_mpi_osc_win_allocate" title="Link to this definition"></a><br /></dt>
+<dd><p>Creates a window by allocating a buffer for the user. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>base</strong> – <strong>[in]</strong> Address of the allocated buffer </p></li>
+<li><p><strong>size</strong> – <strong>[in]</strong> Minimum size requested for the window </p></li>
+<li><p><strong>disp_unit</strong> – <strong>[in]</strong> Displacement unit to use in the window </p></li>
+<li><p><strong>info</strong> – <strong>[in]</strong> Info object to store in the window at creation </p></li>
+<li><p><strong>comm</strong> – <strong>[in]</strong> Communicator associated with the created window </p></li>
+<li><p><strong>win_p</strong> – <strong>[out]</strong> Pointer to store the resulting handle on the created window</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>MPI errorcode </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.mpc_mpi_osc_win_create_dynamic">
+<span class="target" id="d8/d69/group__MPI__OSC_1ga1edd2ea3b269c974245228e7a91b24eb"></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_mpi_osc_win_create_dynamic</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="../whole_index.html#c.MPI_Info" title="MPI_Info"><span class="n"><span class="pre">MPI_Info</span></span></a><span class="w"> </span><span class="n"><span class="pre">info</span></span>, <a class="reference internal" href="../whole_index.html#c.mpc_lowcomm_communicator_t" title="mpc_lowcomm_communicator_t"><span class="n"><span class="pre">mpc_lowcomm_communicator_t</span></span></a><span class="w"> </span><span class="n"><span class="pre">comm</span></span>, <a class="reference internal" href="#c.mpc_mpi_win_h" title="mpc_mpi_win_h"><span class="n"><span class="pre">mpc_mpi_win_h</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">win_p</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.mpc_mpi_osc_win_create_dynamic" title="Link to this definition"></a><br /></dt>
+<dd><p>Creates an empty dynamic window. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>info</strong> – <strong>[in]</strong> Info object to store in the window at creation </p></li>
+<li><p><strong>comm</strong> – <strong>[in]</strong> Communicator associated with the created window </p></li>
+<li><p><strong>win_p</strong> – <strong>[out]</strong> Pointer to store the resulting handle on the created window</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>MPI errorcode </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.mpc_mpi_osc_win_free">
+<span class="target" id="d8/d69/group__MPI__OSC_1gaf26089e06f7b23aaf67638ca684b9dd8"></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_mpi_osc_win_free</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="#c.mpc_mpi_win_h" title="mpc_mpi_win_h"><span class="n"><span class="pre">mpc_mpi_win_h</span></span></a><span class="w"> </span><span class="n"><span class="pre">win</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.mpc_mpi_osc_win_free" title="Link to this definition"></a><br /></dt>
+<dd><p>Frees a window. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>win</strong> – <strong>[in]</strong> Handle on the window to free</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>MPI errorcode </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.mpc_mpi_osc_win_attach">
+<span class="target" id="d8/d69/group__MPI__OSC_1ga5caa6fefafe8126e4d2089d316d974e6"></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_mpi_osc_win_attach</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="#c.mpc_mpi_win_h" title="mpc_mpi_win_h"><span class="n"><span class="pre">mpc_mpi_win_h</span></span></a><span class="w"> </span><span class="n"><span class="pre">win</span></span>, <span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">base</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">size_t</span></span><span class="w"> </span><span class="n"><span class="pre">len</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.mpc_mpi_osc_win_attach" title="Link to this definition"></a><br /></dt>
+<dd><p>Attaches a buffer to a dynamic window. </p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Trying to attach memory to a created or allocated window will fail</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>win</strong> – <strong>[in]</strong> Handle of the window the memory will be attached to </p></li>
+<li><p><strong>base</strong> – <strong>[in]</strong> Address of the buffer to attach </p></li>
+<li><p><strong>len</strong> – <strong>[in]</strong> Size of the buffer to attach</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>MPI errorcode </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.mpc_mpi_osc_win_detach">
+<span class="target" id="d8/d69/group__MPI__OSC_1ga401718af4bba93c3dc1358f8b6c8d300"></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_mpi_osc_win_detach</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="#c.mpc_mpi_win_h" title="mpc_mpi_win_h"><span class="n"><span class="pre">mpc_mpi_win_h</span></span></a><span class="w"> </span><span class="n"><span class="pre">win</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">base</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.mpc_mpi_osc_win_detach" title="Link to this definition"></a><br /></dt>
+<dd><p>Attaches a buffer to a dynamic window. </p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Trying to detach memory from a created or allocated window will fail</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>win</strong> – <strong>[in]</strong> Handle of the window the memory will be attached to </p></li>
+<li><p><strong>base</strong> – <strong>[in]</strong> Address of the buffer to attach </p></li>
+<li><p><strong>len</strong> – <strong>[in]</strong> Size of the buffer to attach</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>MPI errorcode </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.mpc_mpi_osc_put">
+<span class="target" id="d8/d69/group__MPI__OSC_1ga56e605a2ebf4d257571006f1f64adea8"></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_mpi_osc_put</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">origin_addr</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">origin_count</span></span>, <a class="reference internal" href="../whole_index.html#c.mpc_lowcomm_datatype_t" title="mpc_lowcomm_datatype_t"><span class="n"><span class="pre">mpc_lowcomm_datatype_t</span></span></a><span class="w"> </span><span class="n"><span class="pre">origin_dt</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">target</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">ptrdiff_t</span></span><span class="w"> </span><span class="n"><span class="pre">target_disp</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">target_count</span></span>, <a class="reference internal" href="../whole_index.html#c.mpc_lowcomm_datatype_t" title="mpc_lowcomm_datatype_t"><span class="n"><span class="pre">mpc_lowcomm_datatype_t</span></span></a><span class="w"> </span><span class="n"><span class="pre">target_dt</span></span>, <a class="reference internal" href="#c.mpc_mpi_win_h" title="mpc_mpi_win_h"><span class="n"><span class="pre">mpc_mpi_win_h</span></span></a><span class="w"> </span><span class="n"><span class="pre">win</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.mpc_mpi_osc_put" title="Link to this definition"></a><br /></dt>
+<dd><p>Performs a put one-sided operation. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>origin_addr</strong> – <strong>[in]</strong> Address of the buffer to read from </p></li>
+<li><p><strong>origin_count</strong> – <strong>[in]</strong> Number of elements to read at the origin </p></li>
+<li><p><strong>origin_dt</strong> – <strong>[in]</strong> Datatype of the elements to read at the origin </p></li>
+<li><p><strong>target</strong> – <strong>[in]</strong> Rank of the target task </p></li>
+<li><p><strong>target_disp</strong> – <strong>[in]</strong> Offset at the target location (multiplied by the disp_unit of the target) </p></li>
+<li><p><strong>target_count</strong> – <strong>[in]</strong> Number of elements to write at the target </p></li>
+<li><p><strong>target_dt</strong> – <strong>[in]</strong> Datatype of the elements to write at the target </p></li>
+<li><p><strong>win</strong> – <strong>[in]</strong> Handle of the window used for the communication</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>MPI errorcode </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.mpc_mpi_osc_get">
+<span class="target" id="d8/d69/group__MPI__OSC_1ga6c6021f71455e80a2a06fcb6e3dc351e"></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_mpi_osc_get</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">origin_addr</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">origin_count</span></span>, <a class="reference internal" href="../whole_index.html#c.mpc_lowcomm_datatype_t" title="mpc_lowcomm_datatype_t"><span class="n"><span class="pre">mpc_lowcomm_datatype_t</span></span></a><span class="w"> </span><span class="n"><span class="pre">origin_dt</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">target</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">ptrdiff_t</span></span><span class="w"> </span><span class="n"><span class="pre">target_disp</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">target_count</span></span>, <a class="reference internal" href="../whole_index.html#c.mpc_lowcomm_datatype_t" title="mpc_lowcomm_datatype_t"><span class="n"><span class="pre">mpc_lowcomm_datatype_t</span></span></a><span class="w"> </span><span class="n"><span class="pre">target_dt</span></span>, <a class="reference internal" href="#c.mpc_mpi_win_h" title="mpc_mpi_win_h"><span class="n"><span class="pre">mpc_mpi_win_h</span></span></a><span class="w"> </span><span class="n"><span class="pre">win</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.mpc_mpi_osc_get" title="Link to this definition"></a><br /></dt>
+<dd><p>Performs a get one-sided operation. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>origin_addr</strong> – <strong>[in]</strong> Address of the buffer to write to </p></li>
+<li><p><strong>origin_count</strong> – <strong>[in]</strong> Number of elements to write at the origin </p></li>
+<li><p><strong>origin_dt</strong> – <strong>[in]</strong> Datatype of the elements to write at the origin </p></li>
+<li><p><strong>target</strong> – <strong>[in]</strong> Rank of the target task </p></li>
+<li><p><strong>target_disp</strong> – <strong>[in]</strong> Offset at the target location (multiplied by the disp_unit of the target) </p></li>
+<li><p><strong>target_count</strong> – <strong>[in]</strong> Number of elements to read at the target </p></li>
+<li><p><strong>target_dt</strong> – <strong>[in]</strong> Datatype of the elements to read at the target </p></li>
+<li><p><strong>win</strong> – <strong>[in]</strong> Handle of the window used for the communication</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>MPI errorcode </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.mpc_mpi_osc_accumulate">
+<span class="target" id="d8/d69/group__MPI__OSC_1ga84e8f8a689606fc571973d252e12943a"></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_mpi_osc_accumulate</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">origin_addr</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">origin_count</span></span>, <a class="reference internal" href="../whole_index.html#c.mpc_lowcomm_datatype_t" title="mpc_lowcomm_datatype_t"><span class="n"><span class="pre">mpc_lowcomm_datatype_t</span></span></a><span class="w"> </span><span class="n"><span class="pre">origin_dt</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">target</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">ptrdiff_t</span></span><span class="w"> </span><span class="n"><span class="pre">target_disp</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">target_count</span></span>, <a class="reference internal" href="../whole_index.html#c.mpc_lowcomm_datatype_t" title="mpc_lowcomm_datatype_t"><span class="n"><span class="pre">mpc_lowcomm_datatype_t</span></span></a><span class="w"> </span><span class="n"><span class="pre">target_dt</span></span>, <a class="reference internal" href="../whole_index.html#c.MPI_Op" title="MPI_Op"><span class="n"><span class="pre">MPI_Op</span></span></a><span class="w"> </span><span class="n"><span class="pre">op</span></span>, <a class="reference internal" href="#c.mpc_mpi_win_h" title="mpc_mpi_win_h"><span class="n"><span class="pre">mpc_mpi_win_h</span></span></a><span class="w"> </span><span class="n"><span class="pre">win</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.mpc_mpi_osc_accumulate" title="Link to this definition"></a><br /></dt>
+<dd><p>Performs an accumulate one-sided operation. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>origin_addr</strong> – <strong>[in]</strong> Address of the buffer to read from </p></li>
+<li><p><strong>origin_count</strong> – <strong>[in]</strong> Number of elements to read at the origin </p></li>
+<li><p><strong>origin_dt</strong> – <strong>[in]</strong> Datatype of the elements to read at the origin </p></li>
+<li><p><strong>target</strong> – <strong>[in]</strong> Rank of the target task </p></li>
+<li><p><strong>target_disp</strong> – <strong>[in]</strong> Offset at the target location (multiplied by the disp_unit of the target) </p></li>
+<li><p><strong>target_count</strong> – <strong>[in]</strong> Number of elements to write at the target </p></li>
+<li><p><strong>target_dt</strong> – <strong>[in]</strong> Datatype of the elements to write at the target </p></li>
+<li><p><strong>op</strong> – <strong>[in]</strong> Operation to execute </p></li>
+<li><p><strong>win</strong> – <strong>[in]</strong> Handle of the window used for the communication</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>MPI errorcode </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.mpc_mpi_osc_get_accumulate">
+<span class="target" id="d8/d69/group__MPI__OSC_1gabd44d0ef155b2a65d734d905f672c507"></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_mpi_osc_get_accumulate</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">origin_addr</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">origin_count</span></span>, <a class="reference internal" href="../whole_index.html#c.mpc_lowcomm_datatype_t" title="mpc_lowcomm_datatype_t"><span class="n"><span class="pre">mpc_lowcomm_datatype_t</span></span></a><span class="w"> </span><span class="n"><span class="pre">origin_dt</span></span>, <span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">result_addr</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">result_count</span></span>, <a class="reference internal" href="../whole_index.html#c.mpc_lowcomm_datatype_t" title="mpc_lowcomm_datatype_t"><span class="n"><span class="pre">mpc_lowcomm_datatype_t</span></span></a><span class="w"> </span><span class="n"><span class="pre">result_dt</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">target_rank</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">ptrdiff_t</span></span><span class="w"> </span><span class="n"><span class="pre">target_disp</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">target_count</span></span>, <a class="reference internal" href="../whole_index.html#c.mpc_lowcomm_datatype_t" title="mpc_lowcomm_datatype_t"><span class="n"><span class="pre">mpc_lowcomm_datatype_t</span></span></a><span class="w"> </span><span class="n"><span class="pre">target_dt</span></span>, <a class="reference internal" href="../whole_index.html#c.MPI_Op" title="MPI_Op"><span class="n"><span class="pre">MPI_Op</span></span></a><span class="w"> </span><span class="n"><span class="pre">op</span></span>, <a class="reference internal" href="#c.mpc_mpi_win_h" title="mpc_mpi_win_h"><span class="n"><span class="pre">mpc_mpi_win_h</span></span></a><span class="w"> </span><span class="n"><span class="pre">win</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.mpc_mpi_osc_get_accumulate" title="Link to this definition"></a><br /></dt>
+<dd><p>Performs a get and accumulate one-sided operation. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>origin_addr</strong> – <strong>[in]</strong> Address of the buffer to read from </p></li>
+<li><p><strong>origin_count</strong> – <strong>[in]</strong> Number of elements to read at the origin </p></li>
+<li><p><strong>origin_dt</strong> – <strong>[in]</strong> Datatype of the elements to read at the origin </p></li>
+<li><p><strong>result_addr</strong> – <strong>[in]</strong> Address of the buffer to write to </p></li>
+<li><p><strong>result_count</strong> – <strong>[in]</strong> Number of elements to write at the origin </p></li>
+<li><p><strong>result_dt</strong> – <strong>[in]</strong> Datatype of the elements to write at the origin </p></li>
+<li><p><strong>target</strong> – <strong>[in]</strong> Rank of the target task </p></li>
+<li><p><strong>target_disp</strong> – <strong>[in]</strong> Offset at the target location (multiplied by the disp_unit of the target) </p></li>
+<li><p><strong>target_count</strong> – <strong>[in]</strong> Number of elements to write at the target </p></li>
+<li><p><strong>target_dt</strong> – <strong>[in]</strong> Datatype of the elements to write at the target </p></li>
+<li><p><strong>op</strong> – <strong>[in]</strong> Operation to execute </p></li>
+<li><p><strong>win</strong> – <strong>[in]</strong> Handle of the window used for the communication</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>MPI errorcode </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.mpc_mpi_osc_compare_and_swap">
+<span class="target" id="d8/d69/group__MPI__OSC_1gadae8360e5d59a7d16a13539f73b2cc93"></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_mpi_osc_compare_and_swap</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">origin_addr</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">compare_addr</span></span>, <span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">result_addr</span></span>, <a class="reference internal" href="../whole_index.html#c.mpc_lowcomm_datatype_t" title="mpc_lowcomm_datatype_t"><span class="n"><span class="pre">mpc_lowcomm_datatype_t</span></span></a><span class="w"> </span><span class="n"><span class="pre">dt</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">target</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">ptrdiff_t</span></span><span class="w"> </span><span class="n"><span class="pre">target_disp</span></span>, <a class="reference internal" href="#c.mpc_mpi_win_h" title="mpc_mpi_win_h"><span class="n"><span class="pre">mpc_mpi_win_h</span></span></a><span class="w"> </span><span class="n"><span class="pre">win</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.mpc_mpi_osc_compare_and_swap" title="Link to this definition"></a><br /></dt>
+<dd><p>Performs an atomic compare and swap one-sided operation. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>origin_addr</strong> – <strong>[in]</strong> Address of the buffer to read from to replace </p></li>
+<li><p><strong>compare_addr</strong> – <strong>[in]</strong> Address of the buffer to read from to have the compare element </p></li>
+<li><p><strong>result_addr</strong> – <strong>[in]</strong> Address of the buffer to write to </p></li>
+<li><p><strong>dt</strong> – <strong>[in]</strong> Datatype of the element </p></li>
+<li><p><strong>target</strong> – <strong>[in]</strong> Rank of the target task </p></li>
+<li><p><strong>target_disp</strong> – <strong>[in]</strong> Offset at the target location (multiplied by the disp_unit of the target) </p></li>
+<li><p><strong>win</strong> – <strong>[in]</strong> Handle of the window used for the communication</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>MPI errorcode </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.mpc_mpi_osc_fetch_and_op">
+<span class="target" id="d8/d69/group__MPI__OSC_1ga21dbb16677bb99ede816289ef3050cd9"></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_mpi_osc_fetch_and_op</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">origin_addr</span></span>, <span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">result_addr</span></span>, <a class="reference internal" href="../whole_index.html#c.mpc_lowcomm_datatype_t" title="mpc_lowcomm_datatype_t"><span class="n"><span class="pre">mpc_lowcomm_datatype_t</span></span></a><span class="w"> </span><span class="n"><span class="pre">dt</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">target</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">ptrdiff_t</span></span><span class="w"> </span><span class="n"><span class="pre">target_disp</span></span>, <a class="reference internal" href="../whole_index.html#c.MPI_Op" title="MPI_Op"><span class="n"><span class="pre">MPI_Op</span></span></a><span class="w"> </span><span class="n"><span class="pre">op</span></span>, <a class="reference internal" href="#c.mpc_mpi_win_h" title="mpc_mpi_win_h"><span class="n"><span class="pre">mpc_mpi_win_h</span></span></a><span class="w"> </span><span class="n"><span class="pre">win</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.mpc_mpi_osc_fetch_and_op" title="Link to this definition"></a><br /></dt>
+<dd><p>Performs an atomic fetch and operation one-sided operation. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>origin_addr</strong> – <strong>[in]</strong> Address of the buffer to read from to replace </p></li>
+<li><p><strong>result_addr</strong> – <strong>[in]</strong> Address of the buffer to write to </p></li>
+<li><p><strong>dt</strong> – <strong>[in]</strong> Datatype of the element </p></li>
+<li><p><strong>target</strong> – <strong>[in]</strong> Rank of the target task </p></li>
+<li><p><strong>target_disp</strong> – <strong>[in]</strong> Offset at the target location (multiplied by the disp_unit of the target) </p></li>
+<li><p><strong>op</strong> – <strong>[in]</strong> Operation to execute </p></li>
+<li><p><strong>win</strong> – <strong>[in]</strong> Handle of the window used for the communication</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>MPI errorcode </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.mpc_mpi_osc_rput">
+<span class="target" id="d8/d69/group__MPI__OSC_1ga6a5de88f87bedeb15d1d2a0af7f2d852"></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_mpi_osc_rput</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">origin_addr</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">origin_count</span></span>, <a class="reference internal" href="../whole_index.html#c.mpc_lowcomm_datatype_t" title="mpc_lowcomm_datatype_t"><span class="n"><span class="pre">mpc_lowcomm_datatype_t</span></span></a><span class="w"> </span><span class="n"><span class="pre">origin_dt</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">target</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">ptrdiff_t</span></span><span class="w"> </span><span class="n"><span class="pre">target_disp</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">target_count</span></span>, <a class="reference internal" href="../whole_index.html#c.mpc_lowcomm_datatype_t" title="mpc_lowcomm_datatype_t"><span class="n"><span class="pre">mpc_lowcomm_datatype_t</span></span></a><span class="w"> </span><span class="n"><span class="pre">target_dt</span></span>, <a class="reference internal" href="#c.mpc_mpi_win_h" title="mpc_mpi_win_h"><span class="n"><span class="pre">mpc_mpi_win_h</span></span></a><span class="w"> </span><span class="n"><span class="pre">win</span></span>, <a class="reference internal" href="../whole_index.html#c.MPI_internal_request_t" title="MPI_internal_request_t"><span class="n"><span class="pre">MPI_internal_request_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">req</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.mpc_mpi_osc_rput" title="Link to this definition"></a><br /></dt>
+<dd><p>Performs a put one-sided operation with a request to be completed. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>origin_addr</strong> – <strong>[in]</strong> Address of the buffer to read from </p></li>
+<li><p><strong>origin_count</strong> – <strong>[in]</strong> Number of elements to read at the origin </p></li>
+<li><p><strong>origin_dt</strong> – <strong>[in]</strong> Datatype of the elements to read at the origin </p></li>
+<li><p><strong>target</strong> – <strong>[in]</strong> Rank of the target task </p></li>
+<li><p><strong>target_disp</strong> – <strong>[in]</strong> Offset at the target location (multiplied by the disp_unit of the target) </p></li>
+<li><p><strong>target_count</strong> – <strong>[in]</strong> Number of elements to write at the target </p></li>
+<li><p><strong>target_dt</strong> – <strong>[in]</strong> Datatype of the elements to write at the target </p></li>
+<li><p><strong>win</strong> – <strong>[in]</strong> Handle of the window used for the communication </p></li>
+<li><p><strong>req</strong> – <strong>[out]</strong> Request associated with the communication</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>MPI errorcode </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.mpc_mpi_osc_rget">
+<span class="target" id="d8/d69/group__MPI__OSC_1ga704a0b93270ec67c39d37c90b0eee42f"></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_mpi_osc_rget</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">origin_addr</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">origin_count</span></span>, <a class="reference internal" href="../whole_index.html#c.mpc_lowcomm_datatype_t" title="mpc_lowcomm_datatype_t"><span class="n"><span class="pre">mpc_lowcomm_datatype_t</span></span></a><span class="w"> </span><span class="n"><span class="pre">origin_dt</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">target</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">ptrdiff_t</span></span><span class="w"> </span><span class="n"><span class="pre">target_disp</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">target_count</span></span>, <a class="reference internal" href="../whole_index.html#c.mpc_lowcomm_datatype_t" title="mpc_lowcomm_datatype_t"><span class="n"><span class="pre">mpc_lowcomm_datatype_t</span></span></a><span class="w"> </span><span class="n"><span class="pre">target_dt</span></span>, <a class="reference internal" href="#c.mpc_mpi_win_h" title="mpc_mpi_win_h"><span class="n"><span class="pre">mpc_mpi_win_h</span></span></a><span class="w"> </span><span class="n"><span class="pre">win</span></span>, <a class="reference internal" href="../whole_index.html#c.MPI_internal_request_t" title="MPI_internal_request_t"><span class="n"><span class="pre">MPI_internal_request_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">req</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.mpc_mpi_osc_rget" title="Link to this definition"></a><br /></dt>
+<dd><p>Performs a get one-sided operation with a request to be completed. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>origin_addr</strong> – <strong>[in]</strong> Address of the buffer to write to </p></li>
+<li><p><strong>origin_count</strong> – <strong>[in]</strong> Number of elements to write at the origin </p></li>
+<li><p><strong>origin_dt</strong> – <strong>[in]</strong> Datatype of the elements to write at the origin </p></li>
+<li><p><strong>target</strong> – <strong>[in]</strong> Rank of the target task </p></li>
+<li><p><strong>target_disp</strong> – <strong>[in]</strong> Offset at the target location (multiplied by the disp_unit of the target) </p></li>
+<li><p><strong>target_count</strong> – <strong>[in]</strong> Number of elements to read at the target </p></li>
+<li><p><strong>target_dt</strong> – <strong>[in]</strong> Datatype of the elements to read at the target </p></li>
+<li><p><strong>win</strong> – <strong>[in]</strong> Handle of the window used for the communication </p></li>
+<li><p><strong>req</strong> – <strong>[out]</strong> Request associated with the communication</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>MPI errorcode </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.mpc_mpi_osc_raccumulate">
+<span class="target" id="d8/d69/group__MPI__OSC_1ga351f1ecf16c76c328d7048bbc77dc21e"></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_mpi_osc_raccumulate</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">origin_addr</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">origin_count</span></span>, <a class="reference internal" href="../whole_index.html#c.mpc_lowcomm_datatype_t" title="mpc_lowcomm_datatype_t"><span class="n"><span class="pre">mpc_lowcomm_datatype_t</span></span></a><span class="w"> </span><span class="n"><span class="pre">origin_dt</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">target</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">ptrdiff_t</span></span><span class="w"> </span><span class="n"><span class="pre">target_disp</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">target_count</span></span>, <a class="reference internal" href="../whole_index.html#c.mpc_lowcomm_datatype_t" title="mpc_lowcomm_datatype_t"><span class="n"><span class="pre">mpc_lowcomm_datatype_t</span></span></a><span class="w"> </span><span class="n"><span class="pre">target_dt</span></span>, <a class="reference internal" href="../whole_index.html#c.MPI_Op" title="MPI_Op"><span class="n"><span class="pre">MPI_Op</span></span></a><span class="w"> </span><span class="n"><span class="pre">op</span></span>, <a class="reference internal" href="#c.mpc_mpi_win_h" title="mpc_mpi_win_h"><span class="n"><span class="pre">mpc_mpi_win_h</span></span></a><span class="w"> </span><span class="n"><span class="pre">win</span></span>, <a class="reference internal" href="../whole_index.html#c.MPI_internal_request_t" title="MPI_internal_request_t"><span class="n"><span class="pre">MPI_internal_request_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">request</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.mpc_mpi_osc_raccumulate" title="Link to this definition"></a><br /></dt>
+<dd><p>Performs an accumulate one-sided operation with a request to be completed. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>origin_addr</strong> – <strong>[in]</strong> Address of the buffer to read from </p></li>
+<li><p><strong>origin_count</strong> – <strong>[in]</strong> Number of elements to read at the origin </p></li>
+<li><p><strong>origin_dt</strong> – <strong>[in]</strong> Datatype of the elements to read at the origin </p></li>
+<li><p><strong>target</strong> – <strong>[in]</strong> Rank of the target task </p></li>
+<li><p><strong>target_disp</strong> – <strong>[in]</strong> Offset at the target location (multiplied by the disp_unit of the target) </p></li>
+<li><p><strong>target_count</strong> – <strong>[in]</strong> Number of elements to write at the target </p></li>
+<li><p><strong>target_dt</strong> – <strong>[in]</strong> Datatype of the elements to write at the target </p></li>
+<li><p><strong>op</strong> – <strong>[in]</strong> Operation to execute </p></li>
+<li><p><strong>win</strong> – <strong>[in]</strong> Handle of the window used for the communication </p></li>
+<li><p><strong>req</strong> – <strong>[out]</strong> Request associated with the communication</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>MPI errorcode </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.mpc_mpi_osc_rget_accumulate">
+<span class="target" id="d8/d69/group__MPI__OSC_1ga445d0e1b32f0478c34d32e97282d30e1"></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_mpi_osc_rget_accumulate</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">origin_addr</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">origin_count</span></span>, <a class="reference internal" href="../whole_index.html#c.mpc_lowcomm_datatype_t" title="mpc_lowcomm_datatype_t"><span class="n"><span class="pre">mpc_lowcomm_datatype_t</span></span></a><span class="w"> </span><span class="n"><span class="pre">origin_dt</span></span>, <span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">result_addr</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">result_count</span></span>, <a class="reference internal" href="../whole_index.html#c.mpc_lowcomm_datatype_t" title="mpc_lowcomm_datatype_t"><span class="n"><span class="pre">mpc_lowcomm_datatype_t</span></span></a><span class="w"> </span><span class="n"><span class="pre">result_dt</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">target_rank</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">ptrdiff_t</span></span><span class="w"> </span><span class="n"><span class="pre">target_disp</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">target_count</span></span>, <a class="reference internal" href="../whole_index.html#c.mpc_lowcomm_datatype_t" title="mpc_lowcomm_datatype_t"><span class="n"><span class="pre">mpc_lowcomm_datatype_t</span></span></a><span class="w"> </span><span class="n"><span class="pre">target_dt</span></span>, <a class="reference internal" href="../whole_index.html#c.MPI_Op" title="MPI_Op"><span class="n"><span class="pre">MPI_Op</span></span></a><span class="w"> </span><span class="n"><span class="pre">op</span></span>, <a class="reference internal" href="#c.mpc_mpi_win_h" title="mpc_mpi_win_h"><span class="n"><span class="pre">mpc_mpi_win_h</span></span></a><span class="w"> </span><span class="n"><span class="pre">win</span></span>, <a class="reference internal" href="../whole_index.html#c.MPI_internal_request_t" title="MPI_internal_request_t"><span class="n"><span class="pre">MPI_internal_request_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">request</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.mpc_mpi_osc_rget_accumulate" title="Link to this definition"></a><br /></dt>
+<dd><p>Performs a get and accumulate one-sided operation with a request to be completed. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>origin_addr</strong> – <strong>[in]</strong> Address of the buffer to read from </p></li>
+<li><p><strong>origin_count</strong> – <strong>[in]</strong> Number of elements to read at the origin </p></li>
+<li><p><strong>origin_dt</strong> – <strong>[in]</strong> Datatype of the elements to read at the origin </p></li>
+<li><p><strong>result_addr</strong> – <strong>[in]</strong> Address of the buffer to write to </p></li>
+<li><p><strong>result_count</strong> – <strong>[in]</strong> Number of elements to write at the origin </p></li>
+<li><p><strong>result_dt</strong> – <strong>[in]</strong> Datatype of the elements to write at the origin </p></li>
+<li><p><strong>target</strong> – <strong>[in]</strong> Rank of the target task </p></li>
+<li><p><strong>target_disp</strong> – <strong>[in]</strong> Offset at the target location (multiplied by the disp_unit of the target) </p></li>
+<li><p><strong>target_count</strong> – <strong>[in]</strong> Number of elements to write at the target </p></li>
+<li><p><strong>target_dt</strong> – <strong>[in]</strong> Datatype of the elements to write at the target </p></li>
+<li><p><strong>op</strong> – <strong>[in]</strong> Operation to execute </p></li>
+<li><p><strong>win</strong> – <strong>[in]</strong> Handle of the window used for the communication </p></li>
+<li><p><strong>req</strong> – <strong>[out]</strong> Request associated with the communication</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>MPI errorcode </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.mpc_mpi_osc_lock">
+<span class="target" id="d8/d69/group__MPI__OSC_1ga52d330cad3541b9ccf23336a0d6402f9"></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_mpi_osc_lock</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">lock_type</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">target</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">mpi_assert</span></span>, <a class="reference internal" href="#c.mpc_mpi_win_h" title="mpc_mpi_win_h"><span class="n"><span class="pre">mpc_mpi_win_h</span></span></a><span class="w"> </span><span class="n"><span class="pre">win</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.mpc_mpi_osc_lock" title="Link to this definition"></a><br /></dt>
+<dd><p>Locks a window either to be share or to have exclusive access. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>lock_type</strong> – <strong>[in]</strong> Type of locking to perform (SHARED or EXCLUSIVE) </p></li>
+<li><p><strong>target</strong> – <strong>[in]</strong> Rank of the target task </p></li>
+<li><p><strong>mpi_assert</strong> – <strong>[in]</strong> Special bitfield to atler the lock behaviour </p></li>
+<li><p><strong>win</strong> – <strong>[in]</strong> Handle of the window used</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>MPI errorcode </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.mpc_mpi_osc_unlock">
+<span class="target" id="d8/d69/group__MPI__OSC_1gaadeaabe64cc49d8d57d21516eb09c2ba"></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_mpi_osc_unlock</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">target</span></span>, <a class="reference internal" href="#c.mpc_mpi_win_h" title="mpc_mpi_win_h"><span class="n"><span class="pre">mpc_mpi_win_h</span></span></a><span class="w"> </span><span class="n"><span class="pre">win</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.mpc_mpi_osc_unlock" title="Link to this definition"></a><br /></dt>
+<dd><p>Unlocks a window previously locked. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>target</strong> – <strong>[in]</strong> Rank of the target task </p></li>
+<li><p><strong>win</strong> – <strong>[in]</strong> Handle of the window used</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>MPI errorcode </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.mpc_mpi_osc_lock_all">
+<span class="target" id="d8/d69/group__MPI__OSC_1ga1dc6cd74bfbd4d32fd7cd6a28025536e"></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_mpi_osc_lock_all</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">mpi_assert</span></span>, <a class="reference internal" href="#c.mpc_mpi_win_h" title="mpc_mpi_win_h"><span class="n"><span class="pre">mpc_mpi_win_h</span></span></a><span class="w"> </span><span class="n"><span class="pre">win</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.mpc_mpi_osc_lock_all" title="Link to this definition"></a><br /></dt>
+<dd><p>Locks all the target in the window for shared access. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mpi_assert</strong> – <strong>[in]</strong> Special bitfield to atler the lock behaviour </p></li>
+<li><p><strong>win</strong> – <strong>[in]</strong> Handle of the window used</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>MPI errorcode </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.mpc_mpi_osc_unlock_all">
+<span class="target" id="d8/d69/group__MPI__OSC_1ga6fa69782ab1fc5ae5b35512c496d9ef0"></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_mpi_osc_unlock_all</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="#c.mpc_mpi_win_h" title="mpc_mpi_win_h"><span class="n"><span class="pre">mpc_mpi_win_h</span></span></a><span class="w"> </span><span class="n"><span class="pre">win</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.mpc_mpi_osc_unlock_all" title="Link to this definition"></a><br /></dt>
+<dd><p>Unlocks all the target in the window. </p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The window should be locked with <a class="reference internal" href="../whole_index.html#d4/d7f/osc__mpi_8c_1af70f2ed70bcbacb837827e6684ec97bf"><span class="std std-ref">mpc_mpi_osc_lock_all</span></a></p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>win</strong> – <strong>[in]</strong> Handle of the window used</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>MPI errorcode </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.mpc_mpi_osc_sync">
+<span class="target" id="d8/d69/group__MPI__OSC_1ga3209074d51e3297c73870c9bbd926434"></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_mpi_osc_sync</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="#c.mpc_mpi_win_h" title="mpc_mpi_win_h"><span class="n"><span class="pre">mpc_mpi_win_h</span></span></a><span class="w"> </span><span class="n"><span class="pre">win</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.mpc_mpi_osc_sync" title="Link to this definition"></a><br /></dt>
+<dd><p>Synchronizes the outstanding communications with the network. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>win</strong> – <strong>[in]</strong> Handle of the window used</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>MPI errorcode </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.mpc_mpi_osc_flush">
+<span class="target" id="d8/d69/group__MPI__OSC_1gaf7f6447742d84721a6f13fc86f50c1d5"></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_mpi_osc_flush</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">target</span></span>, <a class="reference internal" href="#c.mpc_mpi_win_h" title="mpc_mpi_win_h"><span class="n"><span class="pre">mpc_mpi_win_h</span></span></a><span class="w"> </span><span class="n"><span class="pre">win</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.mpc_mpi_osc_flush" title="Link to this definition"></a><br /></dt>
+<dd><p>Flushes the outstanding communications. </p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This routine assess local and distant completion of the communications upon return</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>target</strong> – <strong>[in]</strong> Rank of the target task </p></li>
+<li><p><strong>win</strong> – <strong>[in]</strong> Handle of the window used</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>MPI errorcode </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.mpc_mpi_osc_flush_all">
+<span class="target" id="d8/d69/group__MPI__OSC_1ga46b8cace8d4e2ff03ddc2f36dbd54b71"></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_mpi_osc_flush_all</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="#c.mpc_mpi_win_h" title="mpc_mpi_win_h"><span class="n"><span class="pre">mpc_mpi_win_h</span></span></a><span class="w"> </span><span class="n"><span class="pre">win</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.mpc_mpi_osc_flush_all" title="Link to this definition"></a><br /></dt>
+<dd><p>Flushes the outstanding communications for all targets in the window. </p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This routine assess local and distant completion of the communications upon return</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>win</strong> – <strong>[in]</strong> Handle of the window used</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>MPI errorcode </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.mpc_mpi_osc_fence">
+<span class="target" id="d8/d69/group__MPI__OSC_1gac8823e4f1fb12e30ca389112b53b4a99"></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_mpi_osc_fence</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">mpi_assert</span></span>, <a class="reference internal" href="#c.mpc_mpi_win_h" title="mpc_mpi_win_h"><span class="n"><span class="pre">mpc_mpi_win_h</span></span></a><span class="w"> </span><span class="n"><span class="pre">win</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.mpc_mpi_osc_fence" title="Link to this definition"></a><br /></dt>
+<dd><p>Synchronizes the target in the window. </p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This routine assess local and distant completion of the communications upon return</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mpi_assert</strong> – <strong>[in]</strong> Special bitfield to atler the lock behaviour </p></li>
+<li><p><strong>win</strong> – <strong>[in]</strong> Handle of the window used</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>MPI errorcode </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.mpc_mpi_osc_start">
+<span class="target" id="d8/d69/group__MPI__OSC_1gae3f3dc5891e8c2ebed2898ff33b1b260"></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_mpi_osc_start</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="../whole_index.html#c.mpc_lowcomm_group_t" title="mpc_lowcomm_group_t"><span class="n"><span class="pre">mpc_lowcomm_group_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">group</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">mpi_assert</span></span>, <a class="reference internal" href="#c.mpc_mpi_win_h" title="mpc_mpi_win_h"><span class="n"><span class="pre">mpc_mpi_win_h</span></span></a><span class="w"> </span><span class="n"><span class="pre">win</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.mpc_mpi_osc_start" title="Link to this definition"></a><br /></dt>
+<dd><p>Opens an access epoch on the specified group. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>group</strong> – <strong>[in]</strong> Group on which the access epoch will be opened </p></li>
+<li><p><strong>mpi_assert</strong> – <strong>[in]</strong> Special bitfield to atler the lock behaviour </p></li>
+<li><p><strong>win</strong> – <strong>[in]</strong> Handle of the window used</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>MPI errorcode </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.mpc_mpi_osc_complete">
+<span class="target" id="d8/d69/group__MPI__OSC_1ga2058e6ed258425efcce999d8c7d7cf63"></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_mpi_osc_complete</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="#c.mpc_mpi_win_h" title="mpc_mpi_win_h"><span class="n"><span class="pre">mpc_mpi_win_h</span></span></a><span class="w"> </span><span class="n"><span class="pre">win</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.mpc_mpi_osc_complete" title="Link to this definition"></a><br /></dt>
+<dd><p>Closes an access epoch on the specified group. </p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This routine assess local completion of the communications upon return</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>win</strong> – <strong>[in]</strong> Handle of the window used</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>MPI errorcode </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.mpc_mpi_osc_post">
+<span class="target" id="d8/d69/group__MPI__OSC_1gaa173aba95acd14f00e660fc5306d95da"></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_mpi_osc_post</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="../whole_index.html#c.mpc_lowcomm_group_t" title="mpc_lowcomm_group_t"><span class="n"><span class="pre">mpc_lowcomm_group_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">group</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">mpi_assert</span></span>, <a class="reference internal" href="#c.mpc_mpi_win_h" title="mpc_mpi_win_h"><span class="n"><span class="pre">mpc_mpi_win_h</span></span></a><span class="w"> </span><span class="n"><span class="pre">win</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.mpc_mpi_osc_post" title="Link to this definition"></a><br /></dt>
+<dd><p>Opens an exposure epoch on the specified group. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>group</strong> – <strong>[in]</strong> Group on which the exposure epoch will be opened </p></li>
+<li><p><strong>mpi_assert</strong> – <strong>[in]</strong> Special bitfield to atler the lock behaviour </p></li>
+<li><p><strong>win</strong> – <strong>[in]</strong> Handle of the window used</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>MPI errorcode </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.mpc_mpi_osc_wait">
+<span class="target" id="d8/d69/group__MPI__OSC_1ga2726ba29d6020bb7b9fcddaf6473d336"></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_mpi_osc_wait</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="#c.mpc_mpi_win_h" title="mpc_mpi_win_h"><span class="n"><span class="pre">mpc_mpi_win_h</span></span></a><span class="w"> </span><span class="n"><span class="pre">win</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.mpc_mpi_osc_wait" title="Link to this definition"></a><br /></dt>
+<dd><p>Closes an exposure epoch on the specified group. </p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This routine assess distant completion of the communications upon return</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>win</strong> – <strong>[in]</strong> Handle of the window used</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>MPI errorcode </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.mpc_mpi_osc_test">
+<span class="target" id="d8/d69/group__MPI__OSC_1gaf18b6857d373df95f5e641378706bd42"></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_mpi_osc_test</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="#c.mpc_mpi_win_h" title="mpc_mpi_win_h"><span class="n"><span class="pre">mpc_mpi_win_h</span></span></a><span class="w"> </span><span class="n"><span class="pre">win</span></span>, <span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">flag</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.mpc_mpi_osc_test" title="Link to this definition"></a><br /></dt>
+<dd><p>Tries to close an exposure epoch on the specified group. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>win</strong> – <strong>[in]</strong> Handle of the window used </p></li>
+<li><p><strong>flag</strong> – <strong>[out]</strong> Success status (1 if the epoch was closed)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>MPI errorcode </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.mpc_mpi_osc_win_get_comm">
+<span class="target" id="d8/d69/group__MPI__OSC_1ga0353b1905733b30de5ae6a5cc3333bb0"></span><a class="reference internal" href="../whole_index.html#c.MPI_Comm" title="MPI_Comm"><span class="n"><span class="pre">MPI_Comm</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_mpi_osc_win_get_comm</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="#c.mpc_mpi_win_h" title="mpc_mpi_win_h"><span class="n"><span class="pre">mpc_mpi_win_h</span></span></a><span class="w"> </span><span class="n"><span class="pre">win</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.mpc_mpi_osc_win_get_comm" title="Link to this definition"></a><br /></dt>
+<dd><p>Retrieves the communicator associated with a win. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>win</strong> – <strong>[in]</strong> Handle of the window to retrieve from</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A reference on the communicator </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.mpc_mpi_osc_win_get_group">
+<span class="target" id="d8/d69/group__MPI__OSC_1ga2eb5dc259ab80ae24825846458e15b4f"></span><a class="reference internal" href="../whole_index.html#c.MPI_Group" title="MPI_Group"><span class="n"><span class="pre">MPI_Group</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_mpi_osc_win_get_group</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="#c.mpc_mpi_win_h" title="mpc_mpi_win_h"><span class="n"><span class="pre">mpc_mpi_win_h</span></span></a><span class="w"> </span><span class="n"><span class="pre">win</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.mpc_mpi_osc_win_get_group" title="Link to this definition"></a><br /></dt>
+<dd><p>Retrieves the group associated with a win. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>win</strong> – <strong>[in]</strong> Handle of the window to retrieve from</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A copy of the group </p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+</dd></dl>
+
+</section>
+<section id="internal-api">
+<h2>Internal API<a class="headerlink" href="#internal-api" title="Link to this heading"></a></h2>
+<dl>
+<dt class="sig sig-object cpp">
+<span class="target" id="d1/dcb/group__MPI__OSC__INTERNAL"></span><em><span class="pre">group</span></em> <span class="sig-name descname"><span class="pre">Internal</span> <span class="pre">implementation</span> <span class="pre">of</span> <span class="pre">MPI</span> <span class="pre">One-Sided</span></span></dt>
+<dd><p>Internals of the MPI module to perform RMA operations. </p>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-defines">Defines</p>
+<dl class="c macro">
+<dt class="sig sig-object c" id="c.OSC_GET_DISP">
+<span class="target" id="d1/dcb/group__MPI__OSC__INTERNAL_1ga9c798c1e9d7ff415537cee8a4a899ae1"></span><span class="sig-name descname"><span class="n"><span class="pre">OSC_GET_DISP</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">_module</span></span>, <span class="n"><span class="pre">_target</span></span><span class="sig-paren">)</span> <span class="pre">		((</span><a class="reference internal" href="../whole_index.html#d6/d80/group__MPC__OPENSHMEM__API__ATO_1ga8a850078f95585c20c624755a05d61b9"><span class="std std-ref"><span class="pre">_module</span></span></a><span class="pre">)-&gt;disp_unit</span> <span class="pre">&lt;</span> <span class="pre">0</span> <span class="pre">?</span> <span class="pre">(</span><a class="reference internal" href="../whole_index.html#d6/d80/group__MPC__OPENSHMEM__API__ATO_1ga8a850078f95585c20c624755a05d61b9"><span class="std std-ref"><span class="pre">_module</span></span></a><span class="pre">)-&gt;disp_units[</span><a class="reference internal" href="../whole_index.html#d6/d80/group__MPC__OPENSHMEM__API__ATO_1ga8a850078f95585c20c624755a05d61b9"><span class="std std-ref"><span class="pre">_target</span></span></a><span class="pre">]</span> <span class="pre">:</span> <span class="pre">(</span><a class="reference internal" href="../whole_index.html#d6/d80/group__MPC__OPENSHMEM__API__ATO_1ga8a850078f95585c20c624755a05d61b9"><span class="std std-ref"><span class="pre">_module</span></span></a><span class="pre">)-&gt;disp_unit)</span><a class="headerlink" href="#c.OSC_GET_DISP" title="Link to this definition"></a><br /></dt>
+<dd><p>Helper to get the displacement unit at the target window. </p>
+</dd></dl>
+
+</div>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-typedefs">Typedefs</p>
+<dl class="c type">
+<dt class="sig sig-object c" id="c.mpc_mpi_osc_epoch_t">
+<span class="target" id="d1/dcb/group__MPI__OSC__INTERNAL_1ga1e33143b39cf9476b2d5108abaea008c"></span><span class="k"><span class="pre">typedef</span></span><span class="w"> </span><span class="k"><span class="pre">enum</span></span><span class="w"> </span><a class="reference internal" href="#c.mpc_mpi_osc_epoch_e" title="mpc_mpi_osc_epoch_e"><span class="n"><span class="pre">mpc_mpi_osc_epoch_e</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_mpi_osc_epoch_t</span></span></span><a class="headerlink" href="#c.mpc_mpi_osc_epoch_t" title="Link to this definition"></a><br /></dt>
+<dd><p>Possible epoch (access and exposure) </p>
+</dd></dl>
+
+<dl class="c type">
+<dt class="sig sig-object c" id="c.mpc_mpi_osc_epoch_type_t">
+<span class="target" id="d1/dcb/group__MPI__OSC__INTERNAL_1ga45b0e845d53dc5a2f336f817c92c16e2"></span><span class="k"><span class="pre">typedef</span></span><span class="w"> </span><span class="k"><span class="pre">struct</span></span><span class="w"> </span><a class="reference internal" href="#c.mpc_mpi_osc_epoch_type_s" title="mpc_mpi_osc_epoch_type_s"><span class="n"><span class="pre">mpc_mpi_osc_epoch_type_s</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_mpi_osc_epoch_type_t</span></span></span><a class="headerlink" href="#c.mpc_mpi_osc_epoch_type_t" title="Link to this definition"></a><br /></dt>
+<dd><p>Structure keeping the epoch state for both access and exposure. </p>
+</dd></dl>
+
+<dl class="c type">
+<dt class="sig sig-object c" id="c.mpc_mpi_win_t">
+<span class="target" id="d1/dcb/group__MPI__OSC__INTERNAL_1gac0c65b46146e6f2f6b807a1f339acb9e"></span><span class="k"><span class="pre">typedef</span></span><span class="w"> </span><span class="k"><span class="pre">struct</span></span><span class="w"> </span><a class="reference internal" href="#c.mpc_mpi_win_s" title="mpc_mpi_win_s"><span class="n"><span class="pre">mpc_mpi_win_s</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_mpi_win_t</span></span></span><a class="headerlink" href="#c.mpc_mpi_win_t" title="Link to this definition"></a><br /></dt>
+<dd><p>Internal structure of an MPI window. </p>
+</dd></dl>
+
+</div>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-enums">Enums</p>
+<dl class="c enum">
+<dt class="sig sig-object c" id="c.mpc_mpi_osc_epoch_e">
+<span class="target" id="d1/dcb/group__MPI__OSC__INTERNAL_1gabcc8f4e9784fc6e07737ca417659a469"></span><span class="k"><span class="pre">enum</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_mpi_osc_epoch_e</span></span></span><a class="headerlink" href="#c.mpc_mpi_osc_epoch_e" title="Link to this definition"></a><br /></dt>
+<dd><p>Possible epoch (access and exposure) </p>
+<p><em>Values:</em></p>
+<dl class="c enumerator">
+<dt class="sig sig-object c" id="c.mpc_mpi_osc_epoch_e.NONE_EPOCH">
+<span class="target" id="d1/dcb/group__MPI__OSC__INTERNAL_1ggabcc8f4e9784fc6e07737ca417659a469a1be56ffd642c764506894f6acef51950"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">NONE_EPOCH</span></span></span><a class="headerlink" href="#c.mpc_mpi_osc_epoch_e.NONE_EPOCH" title="Link to this definition"></a><br /></dt>
+<dd><p>No epoch opened. </p>
+</dd></dl>
+
+<dl class="c enumerator">
+<dt class="sig sig-object c" id="c.mpc_mpi_osc_epoch_e.FENCE_EPOCH">
+<span class="target" id="d1/dcb/group__MPI__OSC__INTERNAL_1ggabcc8f4e9784fc6e07737ca417659a469aa8f1e1e45b38df12ef7ae7b80a093bf0"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">FENCE_EPOCH</span></span></span><a class="headerlink" href="#c.mpc_mpi_osc_epoch_e.FENCE_EPOCH" title="Link to this definition"></a><br /></dt>
+<dd><p>Fence epoch opened. </p>
+</dd></dl>
+
+<dl class="c enumerator">
+<dt class="sig sig-object c" id="c.mpc_mpi_osc_epoch_e.POST_WAIT_EPOCH">
+<span class="target" id="d1/dcb/group__MPI__OSC__INTERNAL_1ggabcc8f4e9784fc6e07737ca417659a469a7fa6cd8c41929e5b5ff476587e696369"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">POST_WAIT_EPOCH</span></span></span><a class="headerlink" href="#c.mpc_mpi_osc_epoch_e.POST_WAIT_EPOCH" title="Link to this definition"></a><br /></dt>
+<dd><p>Post wait epoch opened (between a post and a wait) </p>
+</dd></dl>
+
+<dl class="c enumerator">
+<dt class="sig sig-object c" id="c.mpc_mpi_osc_epoch_e.START_COMPLETE_EPOCH">
+<span class="target" id="d1/dcb/group__MPI__OSC__INTERNAL_1ggabcc8f4e9784fc6e07737ca417659a469a2f708c9b0269a2ec07ed422d5f72aee8"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">START_COMPLETE_EPOCH</span></span></span><a class="headerlink" href="#c.mpc_mpi_osc_epoch_e.START_COMPLETE_EPOCH" title="Link to this definition"></a><br /></dt>
+<dd><p>Start complete epoch opened (between a start and a complete) </p>
+</dd></dl>
+
+<dl class="c enumerator">
+<dt class="sig sig-object c" id="c.mpc_mpi_osc_epoch_e.PASSIVE_EPOCH">
+<span class="target" id="d1/dcb/group__MPI__OSC__INTERNAL_1ggabcc8f4e9784fc6e07737ca417659a469a4e2fe526e41ea3c71086987d4867fb23"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">PASSIVE_EPOCH</span></span></span><a class="headerlink" href="#c.mpc_mpi_osc_epoch_e.PASSIVE_EPOCH" title="Link to this definition"></a><br /></dt>
+<dd><p>Passive epoch opened (between lock and unlock) </p>
+</dd></dl>
+
+<dl class="c enumerator">
+<dt class="sig sig-object c" id="c.mpc_mpi_osc_epoch_e.PASSIVE_ALL_EPOCH">
+<span class="target" id="d1/dcb/group__MPI__OSC__INTERNAL_1ggabcc8f4e9784fc6e07737ca417659a469a6aaa8e61ff6ebc33a2a4836ddb8157b1"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">PASSIVE_ALL_EPOCH</span></span></span><a class="headerlink" href="#c.mpc_mpi_osc_epoch_e.PASSIVE_ALL_EPOCH" title="Link to this definition"></a><br /></dt>
+<dd><p>Passive all epoch opened (between lock_all and unlock_all) </p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-functions">Functions</p>
+<dl class="c function">
+<dt class="sig sig-object c" id="c.__osc_min_op_long">
+<span class="target" id="d1/dcb/group__MPI__OSC__INTERNAL_1ga3136b922b99dcc71257fedb64832319f"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">__osc_min_op_long</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">in</span></span>, <span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">out</span></span>, <span class="n"><span class="pre">size_t</span></span><span class="w"> </span><span class="n"><span class="pre">length</span></span>, <a class="reference internal" href="../whole_index.html#c.mpc_lowcomm_datatype_t" title="mpc_lowcomm_datatype_t"><span class="n"><span class="pre">mpc_lowcomm_datatype_t</span></span></a><span class="w"> </span><span class="n"><span class="pre">dt</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.__osc_min_op_long" title="Link to this definition"></a><br /></dt>
+<dd><p>Reduction operation performing a min on long int. </p>
+<p>This function is used to check the difference in displacement unit in the window creation across the tasks.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>in</strong> – <strong>[in]</strong> Array of the reference longs </p></li>
+<li><p><strong>out</strong> – <strong>[out]</strong> Arary of long to be compared </p></li>
+<li><p><strong>length</strong> – <strong>[in]</strong> Size (in elements) of in and out </p></li>
+<li><p><strong>dt</strong> – <strong>[in]</strong> Datatype of the arrays (UNUSED) </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.__osc_win_setup_after_creation">
+<span class="target" id="d1/dcb/group__MPI__OSC__INTERNAL_1ga52887468f58af3fbceaf092f2752128d"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">__osc_win_setup_after_creation</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="#c.mpc_mpi_win_t" title="mpc_mpi_win_t"><span class="n"><span class="pre">mpc_mpi_win_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">win</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">size_t</span></span><span class="w"> </span><span class="n"><span class="pre">size</span></span>, <span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">disp_unit</span></span>, <a class="reference internal" href="../whole_index.html#c.MPI_Info" title="MPI_Info"><span class="n"><span class="pre">MPI_Info</span></span></a><span class="w"> </span><span class="n"><span class="pre">info</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">flavor</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.__osc_win_setup_after_creation" title="Link to this definition"></a><br /></dt>
+<dd><p>Setup the MPI specific operations on the MPI Window after LowComm window creation. </p>
+<p>This function setup the MPI specific objects and characteristics (MPI_Info, epoch, disp_unit, flavor, model…). The most significant part is the gathering of all the disp_unit of the tasks.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>win</strong> – <strong>[out]</strong> MPI Window to fill </p></li>
+<li><p><strong>size</strong> – <strong>[in]</strong> Size of the Window underlying buffer </p></li>
+<li><p><strong>disp_unit</strong> – <strong>[in]</strong> Displacement unit of the current task for this window </p></li>
+<li><p><strong>info</strong> – <strong>[in]</strong> MPI Info object to associate with the newly created window </p></li>
+<li><p><strong>flavor</strong> – <strong>[in]</strong> MPI Creation Flavor of the window</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>MPI errorcode </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.__osc_create_dt_blocks">
+<span class="target" id="d1/dcb/group__MPI__OSC__INTERNAL_1gaea352d245d952eceac8849a2dce486ca"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">__osc_create_dt_blocks</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">typebuf</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">count</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="../whole_index.html#c.mpc_lowcomm_datatype_t" title="mpc_lowcomm_datatype_t"><span class="n"><span class="pre">mpc_lowcomm_datatype_t</span></span></a><span class="w"> </span><span class="n"><span class="pre">dt</span></span>, <span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">blocks_p</span></span>, <span class="n"><span class="pre">intptr_t</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">disps_p</span></span>, <span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">intblockct_p</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.__osc_create_dt_blocks" title="Link to this definition"></a><br /></dt>
+<dd><p>Creates contiguous data blocks from a non-contiguous datatype. </p>
+<p>A non-contiguous datatype can be describe as contiguous blocks of various sizes displaced from one another.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>typebuf</strong> – <strong>[in]</strong> Buffer containing the data of type dt </p></li>
+<li><p><strong>count</strong> – <strong>[in]</strong> Number of element of type dt in <a class="reference internal" href="../whole_index.html#d6/d80/group__MPC__OPENSHMEM__API__ATO_1ga8a850078f95585c20c624755a05d61b9"><span class="std std-ref">typebuf</span></a></p></li>
+<li><p><strong>dt</strong> – <strong>[in]</strong> Datype of the elements in <a class="reference internal" href="../whole_index.html#d6/d80/group__MPC__OPENSHMEM__API__ATO_1ga8a850078f95585c20c624755a05d61b9"><span class="std std-ref">typebuf</span></a></p></li>
+<li><p><strong>blocks_p</strong> – <strong>[out]</strong> Pointer to store an array of block size </p></li>
+<li><p><strong>disps_p</strong> – <strong>[out]</strong> Pointer to store an array of displacement for the blocks </p></li>
+<li><p><strong>intblockct_p</strong> – <strong>[out]</strong> Pointer to store the number of blocks</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>MPI errorcode </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.__osc_discontig_common">
+<span class="target" id="d1/dcb/group__MPI__OSC__INTERNAL_1gac29b1f8bfcc33d89c94f82e0485cf844"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">__osc_discontig_common</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">origin_addr</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">origin_count</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="../whole_index.html#c.mpc_lowcomm_datatype_t" title="mpc_lowcomm_datatype_t"><span class="n"><span class="pre">mpc_lowcomm_datatype_t</span></span></a><span class="w"> </span><span class="n"><span class="pre">origin_dt</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="n"><span class="pre">is_orig_dt_contig</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">target</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">uint64_t</span></span><span class="w"> </span><span class="n"><span class="pre">target_disp</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">target_count</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="../whole_index.html#c.mpc_lowcomm_datatype_t" title="mpc_lowcomm_datatype_t"><span class="n"><span class="pre">mpc_lowcomm_datatype_t</span></span></a><span class="w"> </span><span class="n"><span class="pre">target_dt</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="n"><span class="pre">is_target_dt_contig</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="n"><span class="pre">do_get</span></span>, <a class="reference internal" href="../lowcomm/one_sided.html#c.mpc_lowcomm_window_t" title="mpc_lowcomm_window_t"><span class="n"><span class="pre">mpc_lowcomm_window_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">win</span></span>, <a class="reference internal" href="../whole_index.html#c.mpc_lowcomm_request_t" title="mpc_lowcomm_request_t"><span class="n"><span class="pre">mpc_lowcomm_request_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">request</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.__osc_discontig_common" title="Link to this definition"></a><br /></dt>
+<dd><p>Perform a RMA operation on a non-contiguous datatype. </p>
+<p>This function handles both put and get type of RMA.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>origin_addr</strong> – <strong>[in]</strong> Buffer address at the origin </p></li>
+<li><p><strong>origin_count</strong> – <strong>[in]</strong> Number of elements in <a class="reference internal" href="../whole_index.html#d6/d80/group__MPC__OPENSHMEM__API__ATO_1ga8a850078f95585c20c624755a05d61b9"><span class="std std-ref">origin_addr</span></a></p></li>
+<li><p><strong>origin_dt</strong> – <strong>[in]</strong> Datatype of the elements in <a class="reference internal" href="../whole_index.html#d6/d80/group__MPC__OPENSHMEM__API__ATO_1ga8a850078f95585c20c624755a05d61b9"><span class="std std-ref">origin_addr</span></a></p></li>
+<li><p><strong>is_orig_dt_contig</strong> – <strong>[in]</strong> Boolean on whether the origin datatype is contiguous or not </p></li>
+<li><p><strong>target</strong> – <strong>[in]</strong> Rank of the target task </p></li>
+<li><p><strong>target_disp</strong> – <strong>[in]</strong> Remote offset at the target </p></li>
+<li><p><strong>target_count</strong> – <strong>[in]</strong> Number of elements to put/get from the target </p></li>
+<li><p><strong>target_dt</strong> – <strong>[in]</strong> Datatype of the elements at the target </p></li>
+<li><p><strong>is_target_dt_contig</strong> – <strong>[in]</strong> Boolean on whether the origin datatype is contiguous or not </p></li>
+<li><p><strong>do_get</strong> – <strong>[in]</strong> Whether to perform a get (true) or a put (false) </p></li>
+<li><p><strong>win</strong> – <strong>[in]</strong> Window on which the operation is performed </p></li>
+<li><p><strong>request</strong> – <strong>[out]</strong> Request associated with the ongoing communication</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>MPI errorcode </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.__osc_put_common">
+<span class="target" id="d1/dcb/group__MPI__OSC__INTERNAL_1ga4ef4024a6858b3b48dd528c3ba0b3797"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">__osc_put_common</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">origin_addr</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">origin_count</span></span>, <a class="reference internal" href="../whole_index.html#c.mpc_lowcomm_datatype_t" title="mpc_lowcomm_datatype_t"><span class="n"><span class="pre">mpc_lowcomm_datatype_t</span></span></a><span class="w"> </span><span class="n"><span class="pre">origin_dt</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">target</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">ptrdiff_t</span></span><span class="w"> </span><span class="n"><span class="pre">target_disp</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">target_count</span></span>, <a class="reference internal" href="../whole_index.html#c.mpc_lowcomm_datatype_t" title="mpc_lowcomm_datatype_t"><span class="n"><span class="pre">mpc_lowcomm_datatype_t</span></span></a><span class="w"> </span><span class="n"><span class="pre">target_dt</span></span>, <a class="reference internal" href="#c.mpc_mpi_win_t" title="mpc_mpi_win_t"><span class="n"><span class="pre">mpc_mpi_win_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">win</span></span>, <a class="reference internal" href="../whole_index.html#c.mpc_lowcomm_request_t" title="mpc_lowcomm_request_t"><span class="n"><span class="pre">mpc_lowcomm_request_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">request</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.__osc_put_common" title="Link to this definition"></a><br /></dt>
+<dd><p>Common entry point to perform a put operation. </p>
+<p>This function unwraps the datatypes and compute the correct offset based on the datatype lb and target_disp. It performs a put directly if both datatypes are contiguous otherwise it relies on <a class="reference internal" href="../whole_index.html#d6/d80/group__MPC__OPENSHMEM__API__ATO_1ga8a850078f95585c20c624755a05d61b9"><span class="std std-ref">mpc_osc_discontig_common</span></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>origin_addr</strong> – <strong>[in]</strong> Buffer address at the origin </p></li>
+<li><p><strong>origin_count</strong> – <strong>[in]</strong> Number of elements in <a class="reference internal" href="../whole_index.html#d6/d80/group__MPC__OPENSHMEM__API__ATO_1ga8a850078f95585c20c624755a05d61b9"><span class="std std-ref">origin_addr</span></a></p></li>
+<li><p><strong>origin_dt</strong> – <strong>[in]</strong> Datatype of the elements in <a class="reference internal" href="../whole_index.html#d6/d80/group__MPC__OPENSHMEM__API__ATO_1ga8a850078f95585c20c624755a05d61b9"><span class="std std-ref">origin_addr</span></a></p></li>
+<li><p><strong>target</strong> – <strong>[in]</strong> Rank of the target task </p></li>
+<li><p><strong>target_disp</strong> – <strong>[in]</strong> Remote offset at the target </p></li>
+<li><p><strong>target_count</strong> – <strong>[in]</strong> Number of elements to put/get from the target </p></li>
+<li><p><strong>target_dt</strong> – <strong>[in]</strong> Datatype of the elements at the target </p></li>
+<li><p><strong>win</strong> – <strong>[in]</strong> Window on which the operation is performed </p></li>
+<li><p><strong>request</strong> – <strong>[out]</strong> Request associated with the ongoing communication</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>MPI errorcode </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.__osc_get_common">
+<span class="target" id="d1/dcb/group__MPI__OSC__INTERNAL_1ga7941c12812d4c0659e0248e4615d0f34"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">__osc_get_common</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">origin_addr</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">origin_count</span></span>, <a class="reference internal" href="../whole_index.html#c.mpc_lowcomm_datatype_t" title="mpc_lowcomm_datatype_t"><span class="n"><span class="pre">mpc_lowcomm_datatype_t</span></span></a><span class="w"> </span><span class="n"><span class="pre">origin_dt</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">target</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">ptrdiff_t</span></span><span class="w"> </span><span class="n"><span class="pre">target_disp</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">target_count</span></span>, <a class="reference internal" href="../whole_index.html#c.mpc_lowcomm_datatype_t" title="mpc_lowcomm_datatype_t"><span class="n"><span class="pre">mpc_lowcomm_datatype_t</span></span></a><span class="w"> </span><span class="n"><span class="pre">target_dt</span></span>, <a class="reference internal" href="#c.mpc_mpi_win_t" title="mpc_mpi_win_t"><span class="n"><span class="pre">mpc_mpi_win_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">win</span></span>, <a class="reference internal" href="../whole_index.html#c.mpc_lowcomm_request_t" title="mpc_lowcomm_request_t"><span class="n"><span class="pre">mpc_lowcomm_request_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">request</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.__osc_get_common" title="Link to this definition"></a><br /></dt>
+<dd><p>Common entry point to perform a get operation. </p>
+<p>This function unwraps the datatypes and compute the correct offset based on the datatype lb and target_disp. It performs a get directly if both datatypes are contiguous otherwise it relies on <a class="reference internal" href="../whole_index.html#d6/d80/group__MPC__OPENSHMEM__API__ATO_1ga8a850078f95585c20c624755a05d61b9"><span class="std std-ref">mpc_osc_discontig_common</span></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>origin_addr</strong> – <strong>[in]</strong> Buffer address at the origin </p></li>
+<li><p><strong>origin_count</strong> – <strong>[in]</strong> Number of elements in <a class="reference internal" href="../whole_index.html#d6/d80/group__MPC__OPENSHMEM__API__ATO_1ga8a850078f95585c20c624755a05d61b9"><span class="std std-ref">origin_addr</span></a></p></li>
+<li><p><strong>origin_dt</strong> – <strong>[in]</strong> Datatype of the elements in <a class="reference internal" href="../whole_index.html#d6/d80/group__MPC__OPENSHMEM__API__ATO_1ga8a850078f95585c20c624755a05d61b9"><span class="std std-ref">origin_addr</span></a></p></li>
+<li><p><strong>target</strong> – <strong>[in]</strong> Rank of the target task </p></li>
+<li><p><strong>target_disp</strong> – <strong>[in]</strong> Remote offset at the target </p></li>
+<li><p><strong>target_count</strong> – <strong>[in]</strong> Number of elements to put/get from the target </p></li>
+<li><p><strong>target_dt</strong> – <strong>[in]</strong> Datatype of the elements at the target </p></li>
+<li><p><strong>win</strong> – <strong>[in]</strong> Window on which the operation is performed </p></li>
+<li><p><strong>request</strong> – <strong>[out]</strong> Request associated with the ongoing communication</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>MPI errorcode </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.osc_win_attr_ht_release">
+<span class="target" id="d1/dcb/group__MPI__OSC__INTERNAL_1ga39147c89622beb92d4d4bd2399adc7c6"></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">osc_win_attr_ht_release</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">struct</span></span><span class="w"> </span><a class="reference internal" href="../whole_index.html#c.mpc_common_hashtable" title="mpc_common_hashtable"><span class="n"><span class="pre">mpc_common_hashtable</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">atht</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.osc_win_attr_ht_release" title="Link to this definition"></a><br /></dt>
+<dd><p>Release the attributes hashtable of a window. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>atht</strong> – <strong>[in]</strong> Hashtable to release </p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>MPI errorcode </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.__osc_win_keyval_ht_init_once">
+<span class="target" id="d1/dcb/group__MPI__OSC__INTERNAL_1gad185608a833b2a2b2e229db89e8f0a08"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">__osc_win_keyval_ht_init_once</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#c.__osc_win_keyval_ht_init_once" title="Link to this definition"></a><br /></dt>
+<dd><p>Initiates the global keyval hashtable is not done already. </p>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.__osc_get_per_rank_keyval_key">
+<span class="target" id="d1/dcb/group__MPI__OSC__INTERNAL_1ga9f574302c4a4d6cccc96df2ea80bf28a"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="n"><span class="pre">uint64_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">__osc_get_per_rank_keyval_key</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">keyval</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.__osc_get_per_rank_keyval_key" title="Link to this definition"></a><br /></dt>
+<dd><p>Retrieves the per rank keyval. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>keyval</strong> – <strong>[in]</strong> Global keyval identifier</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Keyval for the current task </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.__osc_win_keyval_init">
+<span class="target" id="d1/dcb/group__MPI__OSC__INTERNAL_1ga4016a7e4fac15eb1243e3da0d0e37368"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="k"><span class="pre">struct</span></span><span class="w"> </span><a class="reference internal" href="#c.osc_win_keyval_s" title="osc_win_keyval_s"><span class="n"><span class="pre">osc_win_keyval_s</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">__osc_win_keyval_init</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">MPI_Win_copy_attr_function</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">copy_fn</span></span>, <span class="n"><span class="pre">MPI_Win_delete_attr_function</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">delete_fn</span></span>, <span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">extra_state</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.__osc_win_keyval_init" title="Link to this definition"></a><br /></dt>
+<dd><p>Allocates and initializes a new keyval. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>copy_fn</strong> – <strong>[in]</strong> Copy function to associate with the keyval </p></li>
+<li><p><strong>delete_fn</strong> – <strong>[in]</strong> Deletion function to associate with the keyval </p></li>
+<li><p><strong>extra_state</strong> – <strong>[in]</strong> Additional information stored in the keyval</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Allocated and initialized keyval </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.__osc_win_attr_init">
+<span class="target" id="d1/dcb/group__MPI__OSC__INTERNAL_1ga5006df1bc3623faac3a42d86a7673d23"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="k"><span class="pre">struct</span></span><span class="w"> </span><a class="reference internal" href="#c.osc_win_attr_s" title="osc_win_attr_s"><span class="n"><span class="pre">osc_win_attr_s</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">__osc_win_attr_init</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">keyval</span></span>, <span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">value</span></span>, <span class="k"><span class="pre">struct</span></span><span class="w"> </span><a class="reference internal" href="#c.osc_win_keyval_s" title="osc_win_keyval_s"><span class="n"><span class="pre">osc_win_keyval_s</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">keyval_pl</span></span>, <a class="reference internal" href="#c.mpc_mpi_win_t" title="mpc_mpi_win_t"><span class="n"><span class="pre">mpc_mpi_win_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">win</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.__osc_win_attr_init" title="Link to this definition"></a><br /></dt>
+<dd><p>Allocates and initializes a new attribute. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>keyval</strong> – <strong>[in]</strong> Unique identifier of the attribute </p></li>
+<li><p><strong>value</strong> – <strong>[in]</strong> Value stored in the attribute </p></li>
+<li><p><strong>keyval_pl</strong> – <strong>[in]</strong> Keyval used by this attribute </p></li>
+<li><p><strong>win</strong> – <strong>[in]</strong> Window associated with the attribute</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Allocated and initialized attribute </p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-variables">Variables</p>
+<dl class="c var">
+<dt class="sig sig-object c" id="c.__osc_win_keyval_ht">
+<span class="target" id="d1/dcb/group__MPI__OSC__INTERNAL_1gaa311f0faadde8ae94cea91fa479a70f8"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="k"><span class="pre">struct</span></span><span class="w"> </span><a class="reference internal" href="../whole_index.html#c.mpc_common_hashtable" title="mpc_common_hashtable"><span class="n"><span class="pre">mpc_common_hashtable</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">__osc_win_keyval_ht</span></span></span><a class="headerlink" href="#c.__osc_win_keyval_ht" title="Link to this definition"></a><br /></dt>
+<dd><p>Shared keyval hashtable. </p>
+</dd></dl>
+
+<dl class="c var">
+<dt class="sig sig-object c" id="c.__osc_win_keyval_ht_lock">
+<span class="target" id="d1/dcb/group__MPI__OSC__INTERNAL_1gad2ece0b90b43cc7794267db8a85f338d"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="n"><span class="pre">mpc_common_spinlock_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">__osc_win_keyval_ht_lock</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="n"><span class="pre">MPC_COMMON_SPINLOCK_INITIALIZER</span></span><a class="headerlink" href="#c.__osc_win_keyval_ht_lock" title="Link to this definition"></a><br /></dt>
+<dd><p>Global keyval hashtable lock. </p>
+</dd></dl>
+
+<dl class="c var">
+<dt class="sig sig-object c" id="c.__osc_win_keyval_ht_init_done">
+<span class="target" id="d1/dcb/group__MPI__OSC__INTERNAL_1ga5c9f053a70959a95e44bff10862fb1fb"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">__osc_win_keyval_ht_init_done</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#c.__osc_win_keyval_ht_init_done" title="Link to this definition"></a><br /></dt>
+<dd><p>State of the keyval hashtable (1 for initialized) </p>
+</dd></dl>
+
+<dl class="c var">
+<dt class="sig sig-object c" id="c.__win_attr_counter">
+<span class="target" id="d1/dcb/group__MPI__OSC__INTERNAL_1gaa97fdf9421fee37d13c9e0c57d8c01cb"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="n"><span class="pre">OPA_int_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">__win_attr_counter</span></span></span><a class="headerlink" href="#c.__win_attr_counter" title="Link to this definition"></a><br /></dt>
+<dd><p>Global attributes counter. </p>
+</dd></dl>
+
+</div>
+<dl class="c struct">
+<dt class="sig sig-object c" id="c.mpc_mpi_osc_epoch_type_s">
+<span class="target" id="d2/d72/structmpc__mpi__osc__epoch__type__s"></span><span class="k"><span class="pre">struct</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_mpi_osc_epoch_type_s</span></span></span><a class="headerlink" href="#c.mpc_mpi_osc_epoch_type_s" title="Link to this definition"></a><br /></dt>
+<dd><p>Structure keeping the epoch state for both access and exposure. </p>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-members">Public Members</p>
+<dl class="c var">
+<dt class="sig sig-object c" id="c.mpc_mpi_osc_epoch_type_s.access">
+<span class="target" id="d2/d72/structmpc__mpi__osc__epoch__type__s_1a27dd4e7e7abf8e937b23bf0b479fd660"></span><a class="reference internal" href="#c.mpc_mpi_osc_epoch_t" title="mpc_mpi_osc_epoch_t"><span class="n"><span class="pre">mpc_mpi_osc_epoch_t</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">access</span></span></span><a class="headerlink" href="#c.mpc_mpi_osc_epoch_type_s.access" title="Link to this definition"></a><br /></dt>
+<dd><p>Epoch state for window access. </p>
+</dd></dl>
+
+<dl class="c var">
+<dt class="sig sig-object c" id="c.mpc_mpi_osc_epoch_type_s.exposure">
+<span class="target" id="d2/d72/structmpc__mpi__osc__epoch__type__s_1a3b7bc14b992e1ba72cbb82ea33efd14f"></span><a class="reference internal" href="#c.mpc_mpi_osc_epoch_t" title="mpc_mpi_osc_epoch_t"><span class="n"><span class="pre">mpc_mpi_osc_epoch_t</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">exposure</span></span></span><a class="headerlink" href="#c.mpc_mpi_osc_epoch_type_s.exposure" title="Link to this definition"></a><br /></dt>
+<dd><p>Epoch state for window exposure. </p>
+</dd></dl>
+
+</div>
+</dd></dl>
+
+<dl class="c struct">
+<dt class="sig sig-object c" id="c.mpc_mpi_win_s">
+<span class="target" id="d5/db2/structmpc__mpi__win__s"></span><span class="k"><span class="pre">struct</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_mpi_win_s</span></span></span><a class="headerlink" href="#c.mpc_mpi_win_s" title="Link to this definition"></a><br /></dt>
+<dd><p>Internal structure of an MPI window. </p>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-members">Public Members</p>
+<dl class="c var">
+<dt class="sig sig-object c" id="c.mpc_mpi_win_s.win_module">
+<span class="target" id="d5/db2/structmpc__mpi__win__s_1a71eeb7d4e6bffa2ffe690651790a63ce"></span><a class="reference internal" href="../lowcomm/one_sided.html#c.mpc_lowcomm_window_t" title="mpc_lowcomm_window_t"><span class="n"><span class="pre">mpc_lowcomm_window_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">win_module</span></span></span><a class="headerlink" href="#c.mpc_mpi_win_s.win_module" title="Link to this definition"></a><br /></dt>
+<dd><p>Lowcomm window. </p>
+</dd></dl>
+
+<dl class="c var">
+<dt class="sig sig-object c" id="c.mpc_mpi_win_s.win_name">
+<span class="target" id="d5/db2/structmpc__mpi__win__s_1a8ec58ee3ae41f58cc539ee3f127e3c3d"></span><span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">win_name</span></span></span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="../whole_index.html#c.MPI_MAX_OBJECT_NAME" title="MPI_MAX_OBJECT_NAME"><span class="n"><span class="pre">MPI_MAX_OBJECT_NAME</span></span></a><span class="p"><span class="pre">]</span></span><a class="headerlink" href="#c.mpc_mpi_win_s.win_name" title="Link to this definition"></a><br /></dt>
+<dd><p>Name of the window. </p>
+</dd></dl>
+
+<dl class="c var">
+<dt class="sig sig-object c" id="c.mpc_mpi_win_s.flavor">
+<span class="target" id="d5/db2/structmpc__mpi__win__s_1aa8a1537c3691ade7777880373e41e0df"></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">flavor</span></span></span><a class="headerlink" href="#c.mpc_mpi_win_s.flavor" title="Link to this definition"></a><br /></dt>
+<dd><p>Creation flavor of the window. </p>
+</dd></dl>
+
+<dl class="c var">
+<dt class="sig sig-object c" id="c.mpc_mpi_win_s.model">
+<span class="target" id="d5/db2/structmpc__mpi__win__s_1abec2e899c47961551251dd05087f041c"></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">model</span></span></span><a class="headerlink" href="#c.mpc_mpi_win_s.model" title="Link to this definition"></a><br /></dt>
+<dd><p>Model of the window. </p>
+</dd></dl>
+
+<dl class="c var">
+<dt class="sig sig-object c" id="c.mpc_mpi_win_s.size">
+<span class="target" id="d5/db2/structmpc__mpi__win__s_1a34c2f36c2ece0cea73d00f7a18f6eea8"></span><span class="n"><span class="pre">size_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">size</span></span></span><a class="headerlink" href="#c.mpc_mpi_win_s.size" title="Link to this definition"></a><br /></dt>
+<dd><p>Size of the underlying buffer. </p>
+</dd></dl>
+
+<dl class="c var">
+<dt class="sig sig-object c" id="c.mpc_mpi_win_s.epoch">
+<span class="target" id="d5/db2/structmpc__mpi__win__s_1a0f23557f318fdcd669cb9408cd15d1d5"></span><a class="reference internal" href="#c.mpc_mpi_osc_epoch_type_t" title="mpc_mpi_osc_epoch_type_t"><span class="n"><span class="pre">mpc_mpi_osc_epoch_type_t</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">epoch</span></span></span><a class="headerlink" href="#c.mpc_mpi_win_s.epoch" title="Link to this definition"></a><br /></dt>
+<dd><p>Epoch states for access and exposure. </p>
+</dd></dl>
+
+<dl class="c var">
+<dt class="sig sig-object c" id="c.mpc_mpi_win_s.lock_count">
+<span class="target" id="d5/db2/structmpc__mpi__win__s_1a7f0a66c27758f0b59629f378d61224b7"></span><span class="n"><span class="pre">OPA_int_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">lock_count</span></span></span><a class="headerlink" href="#c.mpc_mpi_win_s.lock_count" title="Link to this definition"></a><br /></dt>
+<dd><p>Number of lock on the window. </p>
+</dd></dl>
+
+<dl class="c var">
+<dt class="sig sig-object c" id="c.mpc_mpi_win_s.disp_unit">
+<span class="target" id="d5/db2/structmpc__mpi__win__s_1acdc729634138cfe7d9ba32fc50881050"></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">disp_unit</span></span></span><a class="headerlink" href="#c.mpc_mpi_win_s.disp_unit" title="Link to this definition"></a><br /></dt>
+<dd><p>Displacement unit if it is the same across tasks. </p>
+</dd></dl>
+
+<dl class="c var">
+<dt class="sig sig-object c" id="c.mpc_mpi_win_s.disp_units">
+<span class="target" id="d5/db2/structmpc__mpi__win__s_1a8c00c406156fd9a73b7944bd4277dd25"></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">disp_units</span></span></span><a class="headerlink" href="#c.mpc_mpi_win_s.disp_units" title="Link to this definition"></a><br /></dt>
+<dd><p>Displacement units of the all the tasks. </p>
+</dd></dl>
+
+<dl class="c var">
+<dt class="sig sig-object c" id="c.mpc_mpi_win_s.attrs">
+<span class="target" id="d5/db2/structmpc__mpi__win__s_1ab87e8f31e90cb1edd04efe8cf4e84bae"></span><span class="k"><span class="pre">struct</span></span><span class="w"> </span><a class="reference internal" href="../whole_index.html#c.mpc_common_hashtable" title="mpc_common_hashtable"><span class="n"><span class="pre">mpc_common_hashtable</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">attrs</span></span></span><a class="headerlink" href="#c.mpc_mpi_win_s.attrs" title="Link to this definition"></a><br /></dt>
+<dd><p>Attributes of the window. </p>
+</dd></dl>
+
+<dl class="c var">
+<dt class="sig sig-object c" id="c.mpc_mpi_win_s.info">
+<span class="target" id="d5/db2/structmpc__mpi__win__s_1a92a6a4947a73f4d7f85570f914310314"></span><a class="reference internal" href="../whole_index.html#c.MPI_Info" title="MPI_Info"><span class="n"><span class="pre">MPI_Info</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">info</span></span></span><a class="headerlink" href="#c.mpc_mpi_win_s.info" title="Link to this definition"></a><br /></dt>
+<dd><p>Info stored in the window. </p>
+</dd></dl>
+
+</div>
+</dd></dl>
+
+<dl class="c struct">
+<dt class="sig sig-object c" id="c.osc_win_keyval_s">
+<span class="target" id="db/d36/structosc__win__keyval__s"></span><span class="k"><span class="pre">struct</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">osc_win_keyval_s</span></span></span><a class="headerlink" href="#c.osc_win_keyval_s" title="Link to this definition"></a><br /></dt>
+<dd><p>Internal structure of an osc keyval. </p>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-members">Public Members</p>
+<dl class="c var">
+<dt class="sig sig-object c" id="c.osc_win_keyval_s.keyval">
+<span class="target" id="db/d36/structosc__win__keyval__s_1ace9b4a7daac9982399136553d0e3bdf9"></span><span class="n"><span class="pre">uint64_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">keyval</span></span></span><a class="headerlink" href="#c.osc_win_keyval_s.keyval" title="Link to this definition"></a><br /></dt>
+<dd><p>Unique identifier of the keyval. </p>
+</dd></dl>
+
+<dl class="c var">
+<dt class="sig sig-object c" id="c.osc_win_keyval_s.copy_fn">
+<span class="target" id="db/d36/structosc__win__keyval__s_1a53ae191430e9f146fcf66f2f24fd08ca"></span><span class="n"><span class="pre">MPI_Win_copy_attr_function</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">copy_fn</span></span></span><a class="headerlink" href="#c.osc_win_keyval_s.copy_fn" title="Link to this definition"></a><br /></dt>
+<dd><p>Copy function. </p>
+</dd></dl>
+
+<dl class="c var">
+<dt class="sig sig-object c" id="c.osc_win_keyval_s.delete_fn">
+<span class="target" id="db/d36/structosc__win__keyval__s_1ab695e7bb6efd74d0e3e3ab3ed89da052"></span><span class="n"><span class="pre">MPI_Win_delete_attr_function</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">delete_fn</span></span></span><a class="headerlink" href="#c.osc_win_keyval_s.delete_fn" title="Link to this definition"></a><br /></dt>
+<dd><p>Deletion function. </p>
+</dd></dl>
+
+<dl class="c var">
+<dt class="sig sig-object c" id="c.osc_win_keyval_s.extra_state">
+<span class="target" id="db/d36/structosc__win__keyval__s_1ad5dca3a294e433d46383413d5e482e5b"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">extra_state</span></span></span><a class="headerlink" href="#c.osc_win_keyval_s.extra_state" title="Link to this definition"></a><br /></dt>
+<dd><p>Additional information. </p>
+</dd></dl>
+
+</div>
+</dd></dl>
+
+<dl class="c struct">
+<dt class="sig sig-object c" id="c.osc_win_attr_s">
+<span class="target" id="d9/d0b/structosc__win__attr__s"></span><span class="k"><span class="pre">struct</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">osc_win_attr_s</span></span></span><a class="headerlink" href="#c.osc_win_attr_s" title="Link to this definition"></a><br /></dt>
+<dd><p>Internal structure of an osc attribute. </p>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-members">Public Members</p>
+<dl class="c var">
+<dt class="sig sig-object c" id="c.osc_win_attr_s.keyval">
+<span class="target" id="d9/d0b/structosc__win__attr__s_1ab3b46dfbdd8bba4246db7d917b8254a8"></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">keyval</span></span></span><a class="headerlink" href="#c.osc_win_attr_s.keyval" title="Link to this definition"></a><br /></dt>
+<dd><p>Unique identifier of the attribute. </p>
+</dd></dl>
+
+<dl class="c var">
+<dt class="sig sig-object c" id="c.osc_win_attr_s.value">
+<span class="target" id="d9/d0b/structosc__win__attr__s_1a696740e7a630043fea342ed6aba75277"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">value</span></span></span><a class="headerlink" href="#c.osc_win_attr_s.value" title="Link to this definition"></a><br /></dt>
+<dd><p>Information stored in the attribute. </p>
+</dd></dl>
+
+<dl class="c var">
+<dt class="sig sig-object c" id="c.osc_win_attr_s.keyval_pl">
+<span class="target" id="d9/d0b/structosc__win__attr__s_1a6d8b995b5a0c7ff3c301f1df634a2079"></span><span class="k"><span class="pre">struct</span></span><span class="w"> </span><a class="reference internal" href="#c.osc_win_keyval_s" title="osc_win_keyval_s"><span class="n"><span class="pre">osc_win_keyval_s</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">keyval_pl</span></span></span><a class="headerlink" href="#c.osc_win_attr_s.keyval_pl" title="Link to this definition"></a><br /></dt>
+<dd><p>Associated keyval structure. </p>
+</dd></dl>
+
+<dl class="c var">
+<dt class="sig sig-object c" id="c.osc_win_attr_s.win">
+<span class="target" id="d9/d0b/structosc__win__attr__s_1a1b5e148ea86d70e973c6a00b64670b0d"></span><a class="reference internal" href="#c.mpc_mpi_win_t" title="mpc_mpi_win_t"><span class="n"><span class="pre">mpc_mpi_win_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">win</span></span></span><a class="headerlink" href="#c.osc_win_attr_s.win" title="Link to this definition"></a><br /></dt>
+<dd><p>Associated window. </p>
+</dd></dl>
+
+</div>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="commlib.html" class="btn btn-neutral float-left" title="CommLib" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../openmp.html" class="btn btn-neutral float-right" title="MPC_OpenMP" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Commissariat à l&#39;Énergie Atomique et aux Énergies Alternatives.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

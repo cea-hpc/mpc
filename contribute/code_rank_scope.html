@@ -1,0 +1,238 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MPC scopes disambiguation &mdash; MPC 4.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+    <link rel="shortcut icon" href="../_static/mpc_logo.png"/>
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=2f20d6c1"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Multi-Processor Computing (MPC) Framework Documentation" href="../api/main.html" />
+    <link rel="prev" title="Logging while developing" href="code_logging.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html">
+            
+              <img src="../_static/mpc_logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../start.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../build.html">Building &amp; Installing MPC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usage.html">Using MPC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../features.html">Advanced Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../faq.html">Frequently Asked Questions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../issues.html">Known issues</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../changelog.html">Changelog</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Contribution Guide</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="main.html">Integrate with the VCS</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="main.html#contribute-in-code">Contribute in code</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="code_logging.html">Logging while developing</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">MPC scopes disambiguation</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer Documentation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../api/main.html">Multi-Processor Computing (MPC) Framework Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/main.html#modules-documentation">Modules Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/main.html#code-documentation">Code Documentation</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Links</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference external" href="https://mpc.hpcframework.com">Official Website (mpc.hpcframework.com)</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/cea-hpc/mpc">Repository (github.com)</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://mpc.hpcframework.com/publications-2/">Publications (mpc.hpcframework.com)</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">MPC</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="main.html">Integrate with the VCS</a></li>
+      <li class="breadcrumb-item active">MPC scopes disambiguation</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/contribute/code_rank_scope.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="mpc-scopes-disambiguation">
+<h1>MPC scopes disambiguation<a class="headerlink" href="#mpc-scopes-disambiguation" title="Link to this heading"></a></h1>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Ranks</p></th>
+<th class="head"><p>Scopes</p></th>
+<th class="head"><p>Description</p></th>
+<th class="head"><p>Indexes</p></th>
+<th class="head"><p>Sizes</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Node</p></td>
+<td><p>Global</p></td>
+<td><p>The number of nodes.</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">mpc_common_get_node_rank</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">mpc_common_get_node_count</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p>Process</p></td>
+<td><p>Global</p></td>
+<td><p>The total number of process.</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">mpc_common_get_process_rank</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">mpc_common_get_process_count</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p>Local Process</p></td>
+<td><p>Node</p></td>
+<td><p>The number of process on the current node.</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">mpc_common_get_local_process_rank</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">mpc_common_get_local_process_count</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p>MPI Task</p></td>
+<td><p>Global</p></td>
+<td><p>The total number of tasks. (As define by MPI)</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">mpc_common_get_task_rank</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">mpc_common_get_task_count</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p>Local Task</p></td>
+<td><p>Process</p></td>
+<td><p>The number of tasks in the current process.</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">mpc_common_get_local_task_rank</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">mpc_common_get_local_task_count</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p>OMP Rank</p></td>
+<td><p>MPI Task</p></td>
+<td><p>The number of Omp threads in the current MPI tasks. (As expected by the user)</p></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>Thread</p></td>
+<td><p>Process</p></td>
+<td><p>The number of thead on the current process.</p></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>Example of index and sizes:</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head" colspan="5"><p>Node 1/2</p></th>
+<th class="head"><p>Node 2/2</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td colspan="4"><p>Process 1/3</p></td>
+<td><p>Process 2/3</p></td>
+<td><p>Process 3/3</p></td>
+</tr>
+<tr class="row-odd"><td colspan="4"><p>Local Process 1/2</p></td>
+<td><p>Local Process 2/2</p></td>
+<td><p>Local Process 1/2</p></td>
+</tr>
+<tr class="row-even"><td colspan="3"><p>MPI Task 1/4</p></td>
+<td><p>MPI Task 2/4</p></td>
+<td><p>MPI Task 3/4</p></td>
+<td><p>MPI Task 4/4</p></td>
+</tr>
+<tr class="row-odd"><td colspan="3"><p>Local Task 1/2</p></td>
+<td><p>Local Task 2/2</p></td>
+<td><p>Local Task 1/1</p></td>
+<td><p>Local Task 1/1</p></td>
+</tr>
+<tr class="row-even"><td colspan="2"><p>OMP Rank 1/2</p></td>
+<td><p>OMP Rank 2/2</p></td>
+<td><p>OMP Rank 1/1</p></td>
+<td><p>OMP Rank 1/1</p></td>
+<td><p>OMP Rank 1/1</p></td>
+</tr>
+<tr class="row-odd"><td><p>Thread 1/4</p></td>
+<td><p>Thread 4/4</p></td>
+<td><p>Thread 2/4</p></td>
+<td><p>Thread 3/4</p></td>
+<td><p>Thread 1/1</p></td>
+<td><p>Thread 1/1</p></td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Thread should be names ‘Local Thread’ to be consistent with process naming</p>
+</div>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="code_logging.html" class="btn btn-neutral float-left" title="Logging while developing" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../api/main.html" class="btn btn-neutral float-right" title="Multi-Processor Computing (MPC) Framework Documentation" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Commissariat à l&#39;Énergie Atomique et aux Énergies Alternatives.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

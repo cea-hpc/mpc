@@ -1,0 +1,279 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Logging while developing &mdash; MPC 4.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+    <link rel="shortcut icon" href="../_static/mpc_logo.png"/>
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=2f20d6c1"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="MPC scopes disambiguation" href="code_rank_scope.html" />
+    <link rel="prev" title="Run a pipeline over existing branches" href="contribute_pipeline.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html">
+            
+              <img src="../_static/mpc_logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../start.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../build.html">Building &amp; Installing MPC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usage.html">Using MPC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../features.html">Advanced Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../faq.html">Frequently Asked Questions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../issues.html">Known issues</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../changelog.html">Changelog</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Contribution Guide</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="main.html">Integrate with the VCS</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="main.html#contribute-in-code">Contribute in code</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Logging while developing</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#understanding-the-verbosity-levels">Understanding the verbosity levels</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#using-the-logging-interface">Using the logging interface</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#errors">Errors</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#warnings">Warnings</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#logs">Logs</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#infos">Infos</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#debugs">Debugs</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#other-debugging-utilities">Other debugging utilities</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="code_rank_scope.html">MPC scopes disambiguation</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer Documentation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../api/main.html">Multi-Processor Computing (MPC) Framework Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/main.html#modules-documentation">Modules Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/main.html#code-documentation">Code Documentation</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Links</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference external" href="https://mpc.hpcframework.com">Official Website (mpc.hpcframework.com)</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/cea-hpc/mpc">Repository (github.com)</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://mpc.hpcframework.com/publications-2/">Publications (mpc.hpcframework.com)</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">MPC</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="main.html">Integrate with the VCS</a></li>
+      <li class="breadcrumb-item active">Logging while developing</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/contribute/code_logging.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="logging-while-developing">
+<h1>Logging while developing<a class="headerlink" href="#logging-while-developing" title="Link to this heading"></a></h1>
+<p>One may need to log information on the parts one is developing.
+To do so, MPC proposes a unify API for logging which incorporates multiple levels of verbosity and a clean
+standardized output with the tasks, processes and nodes identified.</p>
+<section id="understanding-the-verbosity-levels">
+<h2>Understanding the verbosity levels<a class="headerlink" href="#understanding-the-verbosity-levels" title="Link to this heading"></a></h2>
+<p>The logging interface of MPC can be seen through the aspect of the level of verbosity considered:</p>
+<ol class="arabic simple">
+<li><p>The level 0 is the default with no logging outputs. It corresponds to the most important information to give to
+user (mainly warnings and errors).</p></li>
+<li><p>The level 1 is made to communicate extra information to the user. It is mainly meant to show launching parameters
+and basic configurations.</p></li>
+<li><p>The level 2 is the developer extra information stage. It allows to print more complex and specific configurations
+of the various MPC modules. It can also be used to log the most important events occurring
+during the lifetime of the program.</p></li>
+<li><p>The level 3 is the debugging printing. It can be very verbose and is meant to be turn off
+when developers are not actively debugging the section of code logged.
+It is thought to track any event needed in the localisation of a bug</p></li>
+</ol>
+<p>Those levels are directly tied to the verbose option of <code class="docutils literal notranslate"><span class="pre">mpcrun</span></code></p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>mpcrun<span class="w">      </span><span class="c1"># -&gt; warnings and errors</span>
+mpcrun<span class="w"> </span>-v<span class="w">   </span><span class="c1"># -&gt; basic logs</span>
+mpcrun<span class="w"> </span>-vv<span class="w">  </span><span class="c1"># -&gt; developer info</span>
+mpcrun<span class="w"> </span>-vvv<span class="w"> </span><span class="c1"># -&gt; debugging</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The debugging messages are not available when MPC is compiled in release mode.</p>
+</div>
+</section>
+<section id="using-the-logging-interface">
+<h2>Using the logging interface<a class="headerlink" href="#using-the-logging-interface" title="Link to this heading"></a></h2>
+<p>The whole interface can be accessed by including the <code class="docutils literal notranslate"><span class="pre">mpc_common_debug.h</span></code> header.</p>
+<p>The logging functions are prefixed <code class="docutils literal notranslate"><span class="pre">mpc_common_debug</span></code> and follows the <code class="docutils literal notranslate"><span class="pre">printf</span></code> usage and format.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>A final linefeed is introduced so you don’t need to add <code class="docutils literal notranslate"><span class="pre">\n</span></code> in the format.</p>
+</div>
+<p>Defining the <code class="docutils literal notranslate"><span class="pre">MPC_MODULE</span></code> constant in your source file will append this string to the each logging coming from the file.
+It is the preferred way to specify from where the logs are coming.</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define MPC_MODULE &quot;module/submodule/subpart&quot;</span>
+</pre></div>
+</div>
+<section id="errors">
+<h3>Errors<a class="headerlink" href="#errors" title="Link to this heading"></a></h3>
+<p>Errors can either be fatal or not. They will be displayed in red if the color support is enabled.</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="n">mpc_common_debug_error</span><span class="p">(</span><span class="s">&quot;This an error&quot;</span><span class="p">);</span><span class="w">  </span><span class="c1">// Does not abort, just print the message</span>
+<span class="n">mpc_common_debug_fatal</span><span class="p">(</span><span class="s">&quot;%s&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Aborting&quot;</span><span class="p">);</span><span class="w"> </span><span class="c1">// Print the message and aborts</span>
+</pre></div>
+</div>
+</section>
+<section id="warnings">
+<h3>Warnings<a class="headerlink" href="#warnings" title="Link to this heading"></a></h3>
+<p>Warnings are used to signify to the user that a fallback had to be used
+or that a controversial default choice have been made.
+The program should be able to recover.</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="n">mpc_common_debug_warning</span><span class="p">(</span><span class="s">&quot;Loading %s failed: using the default value&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">config</span><span class="p">);</span>
+</pre></div>
+</div>
+</section>
+<section id="logs">
+<h3>Logs<a class="headerlink" href="#logs" title="Link to this heading"></a></h3>
+<p>Logs are (in MPC) information meant to retrieve by a user at will.
+It should stay brief given only the most important information about the current execution.
+As an example, it is used to display the selected launching parameters such as the number of cores or of processes.</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="n">mpc_common_debug_log</span><span class="p">(</span><span class="s">&quot;Using network %s for this execution&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">network_name</span><span class="p">);</span>
+</pre></div>
+</div>
+</section>
+<section id="infos">
+<h3>Infos<a class="headerlink" href="#infos" title="Link to this heading"></a></h3>
+<p>Infos are (in MPC) more complex to understand information about the internal state of the library.
+It is mostly used to track the most important events occurring in the framework (<em>e.g.</em> module initialization…).
+It may gives some information about the configuration of the individual MPC modules and their state after a milestone
+(<em>e.g.</em> number of threads spawned after the OpenMP initialization… )</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="n">mpc_common_debug_info</span><span class="p">(</span><span class="s">&quot;World communicator created with success&quot;</span><span class="p">);</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>There are shortcut to print info only from process 0 or from task 0 using the following.
+This can be useful to not spam logs when information across processes or tasks/process is identical.</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="n">mpc_common_debug_info_process0</span><span class="p">(</span><span class="s">&quot;World communicator created with success&quot;</span><span class="p">);</span>
+<span class="n">mpc_common_debug_info_task0</span><span class="p">(</span><span class="s">&quot;World communicator created with success&quot;</span><span class="p">);</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="debugs">
+<h3>Debugs<a class="headerlink" href="#debugs" title="Link to this heading"></a></h3>
+<p>Debugs is the more verbose logging possible. It is meant to track event at a finer-grain while debugging.</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="n">mpc_common_debug</span><span class="p">(</span><span class="s">&quot;Send %p to %d&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">buffer</span><span class="p">,</span><span class="w"> </span><span class="n">target</span><span class="p">);</span>
+</pre></div>
+</div>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Most of them are meant to be deactivated most of the time.</p>
+<p>Please think about deactivating your logs once your debugging is finished.</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="n">mpc_common_nodebug</span><span class="p">(</span><span class="s">&quot;Send %p to %d&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">buffer</span><span class="p">,</span><span class="w"> </span><span class="n">target</span><span class="p">);</span>
+</pre></div>
+</div>
+</div>
+</section>
+</section>
+<section id="other-debugging-utilities">
+<h2>Other debugging utilities<a class="headerlink" href="#other-debugging-utilities" title="Link to this heading"></a></h2>
+<p>MPC comes with other tools in the <code class="docutils literal notranslate"><span class="pre">mpc_common_debug</span></code> interface you should consider:</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Function</p></th>
+<th class="head"><p>Usage</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">assert(condition)</span></code></p></td>
+<td><p>Aborts if the condition is false.
+It does nothing in release builds.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">assume(condition)</span></code></p></td>
+<td><p>Aborts if the condition is false.
+It only evaluates the condition in release builds.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">not_implemented()</span></code></p></td>
+<td><p>Aborts when evaluated.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="contribute_pipeline.html" class="btn btn-neutral float-left" title="Run a pipeline over existing branches" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="code_rank_scope.html" class="btn btn-neutral float-right" title="MPC scopes disambiguation" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Commissariat à l&#39;Énergie Atomique et aux Énergies Alternatives.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

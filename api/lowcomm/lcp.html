@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>LowComm Protocol layer (LCP) &mdash; MPC 4.3.1 documentation</title>
+  <title>LowComm Protocol layer (LCP) &mdash; MPC 4.4.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=fa44fd50" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
 
@@ -14,13 +14,13 @@
     <link rel="shortcut icon" href="../../_static/mpc_logo.png"/>
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=0503a316"></script>
+      <script src="../../_static/documentation_options.js?v=2f20d6c1"></script>
       <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-    <link rel="next" title="MPC_MPI" href="../mpi/mpi.html" />
+    <link rel="next" title="One Sided communication" href="one_sided.html" />
     <link rel="prev" title="MPC_Lowcomm" href="lowcomm.html" /> 
 </head>
 
@@ -56,7 +56,8 @@
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Contribution Guide</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../contribute/main.html">Contribution Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../contribute/main.html">Integrate with the VCS</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../contribute/main.html#contribute-in-code">Contribute in code</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Developer Documentation</span></p>
 <ul class="current">
@@ -72,12 +73,14 @@
 <li class="toctree-l3"><a class="reference internal" href="lowcomm.html#module-mpc-lowcomm">Module MPC_Lowcomm</a></li>
 <li class="toctree-l3 current"><a class="reference internal" href="lowcomm.html#api">API</a><ul class="current">
 <li class="toctree-l4 current"><a class="current reference internal" href="#">LowComm Protocol layer (LCP)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="one_sided.html">One Sided communication</a></li>
 </ul>
 </li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../mpi/mpi.html">MPC_MPI</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../openmp.html">MPC_OpenMP</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../openshmem.html">MPC_OpenSHMEM</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../threads.html">MPC_Threads</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../topology.html">MPC_Topology</a></li>
 </ul>
@@ -450,37 +453,37 @@
 <p class="breathe-sectiondef-title rubric" id="breathe-section-title-enums">Enums</p>
 <dl class="c enum">
 <dt class="sig sig-object c">
-<span class="target" id="d1/daa/group__LCP__COMM_1ga7ff5f2dff38e7639981794c43dc9167b"></span><span class="sig-name descname"></span></dt>
+<span class="target" id="d1/daa/group__LCP__COMM_1gaaf8fd5f0e57d456151c951e0f3715fc4"></span><span class="sig-name descname"></span></dt>
 <dd><p>Manager fields. </p>
 <p>Specifies fields present in <a class="reference internal" href="../whole_index.html#d1/daa/group__LCP__COMM_1gab0e3c1f89dec603fec2938cc6873b9c4"><span class="std std-ref">lcp_manager_param_t</span></a> during manager creation. </p>
 <p><em>Values:</em></p>
 <dl class="c enumerator">
 <dt class="sig sig-object c" id="c.PhonyNameDueToError.LCP_MANAGER_ESTIMATED_EPS">
-<span class="target" id="d1/daa/group__LCP__COMM_1gga7ff5f2dff38e7639981794c43dc9167ba9dc3b9bfa830a6270392444d9a32106b"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">LCP_MANAGER_ESTIMATED_EPS</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><a class="reference internal" href="../whole_index.html#c.MPC_BIT" title="MPC_BIT"><span class="n"><span class="pre">MPC_BIT</span></span></a><span class="p"><span class="pre">(</span></span><span class="m"><span class="pre">0</span></span><span class="p"><span class="pre">)</span></span><a class="headerlink" href="#c.PhonyNameDueToError.LCP_MANAGER_ESTIMATED_EPS" title="Link to this definition"></a><br /></dt>
+<span class="target" id="d1/daa/group__LCP__COMM_1ggaaf8fd5f0e57d456151c951e0f3715fc4a9dc3b9bfa830a6270392444d9a32106b"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">LCP_MANAGER_ESTIMATED_EPS</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><a class="reference internal" href="../whole_index.html#c.MPC_BIT" title="MPC_BIT"><span class="n"><span class="pre">MPC_BIT</span></span></a><span class="p"><span class="pre">(</span></span><span class="m"><span class="pre">0</span></span><span class="p"><span class="pre">)</span></span><a class="headerlink" href="#c.PhonyNameDueToError.LCP_MANAGER_ESTIMATED_EPS" title="Link to this definition"></a><br /></dt>
 <dd></dd></dl>
 
 <dl class="c enumerator">
 <dt class="sig sig-object c" id="c.PhonyNameDueToError.LCP_MANAGER_COMM_MODEL">
-<span class="target" id="d1/daa/group__LCP__COMM_1gga7ff5f2dff38e7639981794c43dc9167bae6064a488993dd7ec17faac5f3f07706"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">LCP_MANAGER_COMM_MODEL</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><a class="reference internal" href="../whole_index.html#c.MPC_BIT" title="MPC_BIT"><span class="n"><span class="pre">MPC_BIT</span></span></a><span class="p"><span class="pre">(</span></span><span class="m"><span class="pre">1</span></span><span class="p"><span class="pre">)</span></span><a class="headerlink" href="#c.PhonyNameDueToError.LCP_MANAGER_COMM_MODEL" title="Link to this definition"></a><br /></dt>
+<span class="target" id="d1/daa/group__LCP__COMM_1ggaaf8fd5f0e57d456151c951e0f3715fc4ae6064a488993dd7ec17faac5f3f07706"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">LCP_MANAGER_COMM_MODEL</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><a class="reference internal" href="../whole_index.html#c.MPC_BIT" title="MPC_BIT"><span class="n"><span class="pre">MPC_BIT</span></span></a><span class="p"><span class="pre">(</span></span><span class="m"><span class="pre">1</span></span><span class="p"><span class="pre">)</span></span><a class="headerlink" href="#c.PhonyNameDueToError.LCP_MANAGER_COMM_MODEL" title="Link to this definition"></a><br /></dt>
 <dd></dd></dl>
 
 </dd></dl>
 
 <dl class="c enum">
 <dt class="sig sig-object c">
-<span class="target" id="d1/daa/group__LCP__COMM_1gaabfcbcb5ac86a1edac4035264bc7d2b8"></span><span class="sig-name descname"></span></dt>
+<span class="target" id="d1/daa/group__LCP__COMM_1ga94798fdadfbf49a7c658ace669a1d310"></span><span class="sig-name descname"></span></dt>
 <dd><p>Manager instantiation flags. </p>
 <p>Specifies a set of flags that are proposed to improve performances in some situation. </p>
 <p><em>Values:</em></p>
 <dl class="c enumerator">
 <dt class="sig sig-object c" id="c.PhonyNameDueToError.LCP_MANAGER_TSC_MODEL">
-<span class="target" id="d1/daa/group__LCP__COMM_1ggaabfcbcb5ac86a1edac4035264bc7d2b8abd8324db3cc50c4d6fc6f502a8d67fa5"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">LCP_MANAGER_TSC_MODEL</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><a class="reference internal" href="../whole_index.html#c.MPC_BIT" title="MPC_BIT"><span class="n"><span class="pre">MPC_BIT</span></span></a><span class="p"><span class="pre">(</span></span><span class="m"><span class="pre">0</span></span><span class="p"><span class="pre">)</span></span><a class="headerlink" href="#c.PhonyNameDueToError.LCP_MANAGER_TSC_MODEL" title="Link to this definition"></a><br /></dt>
+<span class="target" id="d1/daa/group__LCP__COMM_1gga94798fdadfbf49a7c658ace669a1d310abd8324db3cc50c4d6fc6f502a8d67fa5"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">LCP_MANAGER_TSC_MODEL</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><a class="reference internal" href="../whole_index.html#c.MPC_BIT" title="MPC_BIT"><span class="n"><span class="pre">MPC_BIT</span></span></a><span class="p"><span class="pre">(</span></span><span class="m"><span class="pre">0</span></span><span class="p"><span class="pre">)</span></span><a class="headerlink" href="#c.PhonyNameDueToError.LCP_MANAGER_TSC_MODEL" title="Link to this definition"></a><br /></dt>
 <dd><p>Init interface Two-Sided Communication capabilities. </p>
 </dd></dl>
 
 <dl class="c enumerator">
 <dt class="sig sig-object c" id="c.PhonyNameDueToError.LCP_MANAGER_OSC_MODEL">
-<span class="target" id="d1/daa/group__LCP__COMM_1ggaabfcbcb5ac86a1edac4035264bc7d2b8a3273567d07a0b8f1de1860cc9e53ae67"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">LCP_MANAGER_OSC_MODEL</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><a class="reference internal" href="../whole_index.html#c.MPC_BIT" title="MPC_BIT"><span class="n"><span class="pre">MPC_BIT</span></span></a><span class="p"><span class="pre">(</span></span><span class="m"><span class="pre">1</span></span><span class="p"><span class="pre">)</span></span><a class="headerlink" href="#c.PhonyNameDueToError.LCP_MANAGER_OSC_MODEL" title="Link to this definition"></a><br /></dt>
+<span class="target" id="d1/daa/group__LCP__COMM_1gga94798fdadfbf49a7c658ace669a1d310a3273567d07a0b8f1de1860cc9e53ae67"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">LCP_MANAGER_OSC_MODEL</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><a class="reference internal" href="../whole_index.html#c.MPC_BIT" title="MPC_BIT"><span class="n"><span class="pre">MPC_BIT</span></span></a><span class="p"><span class="pre">(</span></span><span class="m"><span class="pre">1</span></span><span class="p"><span class="pre">)</span></span><a class="headerlink" href="#c.PhonyNameDueToError.LCP_MANAGER_OSC_MODEL" title="Link to this definition"></a><br /></dt>
 <dd><p>Init interface One-Sided Communication capabilities. </p>
 </dd></dl>
 
@@ -488,67 +491,67 @@
 
 <dl class="c enum">
 <dt class="sig sig-object c">
-<span class="target" id="d1/daa/group__LCP__COMM_1ga5d76b81b0ad4c19007a781d4edb8181f"></span><span class="sig-name descname"></span></dt>
+<span class="target" id="d1/daa/group__LCP__COMM_1gae4d5251432e1a9e6803c0240cc492e18"></span><span class="sig-name descname"></span></dt>
 <dd><p>Request field masks. </p>
 <p>Specifies the parameters that have been specified in <a class="reference internal" href="../whole_index.html#d1/daa/group__LCP__COMM_1ga2916b752e2d23d996a117e04e5b61c9e"><span class="std std-ref">lcp_request_param_t</span></a>. </p>
 <p><em>Values:</em></p>
 <dl class="c enumerator">
 <dt class="sig sig-object c" id="c.PhonyNameDueToError.LCP_REQUEST_TRY_OFFLOAD">
-<span class="target" id="d1/daa/group__LCP__COMM_1gga5d76b81b0ad4c19007a781d4edb8181faf689c98f37a1038c41d4b1a46dd8f920"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">LCP_REQUEST_TRY_OFFLOAD</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><a class="reference internal" href="../whole_index.html#c.MPC_BIT" title="MPC_BIT"><span class="n"><span class="pre">MPC_BIT</span></span></a><span class="p"><span class="pre">(</span></span><span class="m"><span class="pre">0</span></span><span class="p"><span class="pre">)</span></span><a class="headerlink" href="#c.PhonyNameDueToError.LCP_REQUEST_TRY_OFFLOAD" title="Link to this definition"></a><br /></dt>
+<span class="target" id="d1/daa/group__LCP__COMM_1ggae4d5251432e1a9e6803c0240cc492e18af689c98f37a1038c41d4b1a46dd8f920"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">LCP_REQUEST_TRY_OFFLOAD</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><a class="reference internal" href="../whole_index.html#c.MPC_BIT" title="MPC_BIT"><span class="n"><span class="pre">MPC_BIT</span></span></a><span class="p"><span class="pre">(</span></span><span class="m"><span class="pre">0</span></span><span class="p"><span class="pre">)</span></span><a class="headerlink" href="#c.PhonyNameDueToError.LCP_REQUEST_TRY_OFFLOAD" title="Link to this definition"></a><br /></dt>
 <dd><p>Try offload send mask. </p>
 </dd></dl>
 
 <dl class="c enumerator">
 <dt class="sig sig-object c" id="c.PhonyNameDueToError.LCP_REQUEST_USER_DATA">
-<span class="target" id="d1/daa/group__LCP__COMM_1gga5d76b81b0ad4c19007a781d4edb8181fa6c5a05c26e501f4c60d149e5a915ff53"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">LCP_REQUEST_USER_DATA</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><a class="reference internal" href="../whole_index.html#c.MPC_BIT" title="MPC_BIT"><span class="n"><span class="pre">MPC_BIT</span></span></a><span class="p"><span class="pre">(</span></span><span class="m"><span class="pre">1</span></span><span class="p"><span class="pre">)</span></span><a class="headerlink" href="#c.PhonyNameDueToError.LCP_REQUEST_USER_DATA" title="Link to this definition"></a><br /></dt>
+<span class="target" id="d1/daa/group__LCP__COMM_1ggae4d5251432e1a9e6803c0240cc492e18a6c5a05c26e501f4c60d149e5a915ff53"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">LCP_REQUEST_USER_DATA</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><a class="reference internal" href="../whole_index.html#c.MPC_BIT" title="MPC_BIT"><span class="n"><span class="pre">MPC_BIT</span></span></a><span class="p"><span class="pre">(</span></span><span class="m"><span class="pre">1</span></span><span class="p"><span class="pre">)</span></span><a class="headerlink" href="#c.PhonyNameDueToError.LCP_REQUEST_USER_DATA" title="Link to this definition"></a><br /></dt>
 <dd><p>User data mask. </p>
 </dd></dl>
 
 <dl class="c enumerator">
 <dt class="sig sig-object c" id="c.PhonyNameDueToError.LCP_REQUEST_USER_REQUEST">
-<span class="target" id="d1/daa/group__LCP__COMM_1gga5d76b81b0ad4c19007a781d4edb8181faee02a33dd2c89c41734be5dae6680a39"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">LCP_REQUEST_USER_REQUEST</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><a class="reference internal" href="../whole_index.html#c.MPC_BIT" title="MPC_BIT"><span class="n"><span class="pre">MPC_BIT</span></span></a><span class="p"><span class="pre">(</span></span><span class="m"><span class="pre">2</span></span><span class="p"><span class="pre">)</span></span><a class="headerlink" href="#c.PhonyNameDueToError.LCP_REQUEST_USER_REQUEST" title="Link to this definition"></a><br /></dt>
+<span class="target" id="d1/daa/group__LCP__COMM_1ggae4d5251432e1a9e6803c0240cc492e18aee02a33dd2c89c41734be5dae6680a39"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">LCP_REQUEST_USER_REQUEST</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><a class="reference internal" href="../whole_index.html#c.MPC_BIT" title="MPC_BIT"><span class="n"><span class="pre">MPC_BIT</span></span></a><span class="p"><span class="pre">(</span></span><span class="m"><span class="pre">2</span></span><span class="p"><span class="pre">)</span></span><a class="headerlink" href="#c.PhonyNameDueToError.LCP_REQUEST_USER_REQUEST" title="Link to this definition"></a><br /></dt>
 <dd><p>User request mask. </p>
 </dd></dl>
 
 <dl class="c enumerator">
 <dt class="sig sig-object c" id="c.PhonyNameDueToError.LCP_REQUEST_TAG_SYNC">
-<span class="target" id="d1/daa/group__LCP__COMM_1gga5d76b81b0ad4c19007a781d4edb8181fadcb25254607a3c8b18bc921f9d34e438"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">LCP_REQUEST_TAG_SYNC</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><a class="reference internal" href="../whole_index.html#c.MPC_BIT" title="MPC_BIT"><span class="n"><span class="pre">MPC_BIT</span></span></a><span class="p"><span class="pre">(</span></span><span class="m"><span class="pre">3</span></span><span class="p"><span class="pre">)</span></span><a class="headerlink" href="#c.PhonyNameDueToError.LCP_REQUEST_TAG_SYNC" title="Link to this definition"></a><br /></dt>
+<span class="target" id="d1/daa/group__LCP__COMM_1ggae4d5251432e1a9e6803c0240cc492e18adcb25254607a3c8b18bc921f9d34e438"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">LCP_REQUEST_TAG_SYNC</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><a class="reference internal" href="../whole_index.html#c.MPC_BIT" title="MPC_BIT"><span class="n"><span class="pre">MPC_BIT</span></span></a><span class="p"><span class="pre">(</span></span><span class="m"><span class="pre">3</span></span><span class="p"><span class="pre">)</span></span><a class="headerlink" href="#c.PhonyNameDueToError.LCP_REQUEST_TAG_SYNC" title="Link to this definition"></a><br /></dt>
 <dd><p>Sync request mask. </p>
 </dd></dl>
 
 <dl class="c enumerator">
 <dt class="sig sig-object c" id="c.PhonyNameDueToError.LCP_REQUEST_AM_SYNC">
-<span class="target" id="d1/daa/group__LCP__COMM_1gga5d76b81b0ad4c19007a781d4edb8181fa11e42c043c4bf2a0f270fc82196d370b"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">LCP_REQUEST_AM_SYNC</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><a class="reference internal" href="../whole_index.html#c.MPC_BIT" title="MPC_BIT"><span class="n"><span class="pre">MPC_BIT</span></span></a><span class="p"><span class="pre">(</span></span><span class="m"><span class="pre">4</span></span><span class="p"><span class="pre">)</span></span><a class="headerlink" href="#c.PhonyNameDueToError.LCP_REQUEST_AM_SYNC" title="Link to this definition"></a><br /></dt>
+<span class="target" id="d1/daa/group__LCP__COMM_1ggae4d5251432e1a9e6803c0240cc492e18a11e42c043c4bf2a0f270fc82196d370b"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">LCP_REQUEST_AM_SYNC</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><a class="reference internal" href="../whole_index.html#c.MPC_BIT" title="MPC_BIT"><span class="n"><span class="pre">MPC_BIT</span></span></a><span class="p"><span class="pre">(</span></span><span class="m"><span class="pre">4</span></span><span class="p"><span class="pre">)</span></span><a class="headerlink" href="#c.PhonyNameDueToError.LCP_REQUEST_AM_SYNC" title="Link to this definition"></a><br /></dt>
 <dd><p>AM sync request mask. </p>
 </dd></dl>
 
 <dl class="c enumerator">
 <dt class="sig sig-object c" id="c.PhonyNameDueToError.LCP_REQUEST_SEND_CALLBACK">
-<span class="target" id="d1/daa/group__LCP__COMM_1gga5d76b81b0ad4c19007a781d4edb8181fa7643d15af5e85fc37c5f8f52c02d9835"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">LCP_REQUEST_SEND_CALLBACK</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><a class="reference internal" href="../whole_index.html#c.MPC_BIT" title="MPC_BIT"><span class="n"><span class="pre">MPC_BIT</span></span></a><span class="p"><span class="pre">(</span></span><span class="m"><span class="pre">5</span></span><span class="p"><span class="pre">)</span></span><a class="headerlink" href="#c.PhonyNameDueToError.LCP_REQUEST_SEND_CALLBACK" title="Link to this definition"></a><br /></dt>
+<span class="target" id="d1/daa/group__LCP__COMM_1ggae4d5251432e1a9e6803c0240cc492e18a7643d15af5e85fc37c5f8f52c02d9835"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">LCP_REQUEST_SEND_CALLBACK</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><a class="reference internal" href="../whole_index.html#c.MPC_BIT" title="MPC_BIT"><span class="n"><span class="pre">MPC_BIT</span></span></a><span class="p"><span class="pre">(</span></span><span class="m"><span class="pre">5</span></span><span class="p"><span class="pre">)</span></span><a class="headerlink" href="#c.PhonyNameDueToError.LCP_REQUEST_SEND_CALLBACK" title="Link to this definition"></a><br /></dt>
 <dd><p>Send callback mask. </p>
 </dd></dl>
 
 <dl class="c enumerator">
 <dt class="sig sig-object c" id="c.PhonyNameDueToError.LCP_REQUEST_RECV_CALLBACK">
-<span class="target" id="d1/daa/group__LCP__COMM_1gga5d76b81b0ad4c19007a781d4edb8181faff2a3ca161d93045fae0aa696da01dc7"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">LCP_REQUEST_RECV_CALLBACK</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><a class="reference internal" href="../whole_index.html#c.MPC_BIT" title="MPC_BIT"><span class="n"><span class="pre">MPC_BIT</span></span></a><span class="p"><span class="pre">(</span></span><span class="m"><span class="pre">6</span></span><span class="p"><span class="pre">)</span></span><a class="headerlink" href="#c.PhonyNameDueToError.LCP_REQUEST_RECV_CALLBACK" title="Link to this definition"></a><br /></dt>
+<span class="target" id="d1/daa/group__LCP__COMM_1ggae4d5251432e1a9e6803c0240cc492e18aff2a3ca161d93045fae0aa696da01dc7"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">LCP_REQUEST_RECV_CALLBACK</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><a class="reference internal" href="../whole_index.html#c.MPC_BIT" title="MPC_BIT"><span class="n"><span class="pre">MPC_BIT</span></span></a><span class="p"><span class="pre">(</span></span><span class="m"><span class="pre">6</span></span><span class="p"><span class="pre">)</span></span><a class="headerlink" href="#c.PhonyNameDueToError.LCP_REQUEST_RECV_CALLBACK" title="Link to this definition"></a><br /></dt>
 <dd><p>Recv callback mask. </p>
 </dd></dl>
 
 <dl class="c enumerator">
 <dt class="sig sig-object c" id="c.PhonyNameDueToError.LCP_REQUEST_REPLY_BUFFER">
-<span class="target" id="d1/daa/group__LCP__COMM_1gga5d76b81b0ad4c19007a781d4edb8181fa1f335d88edc610fa484c63fe3a17cfa2"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">LCP_REQUEST_REPLY_BUFFER</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><a class="reference internal" href="../whole_index.html#c.MPC_BIT" title="MPC_BIT"><span class="n"><span class="pre">MPC_BIT</span></span></a><span class="p"><span class="pre">(</span></span><span class="m"><span class="pre">7</span></span><span class="p"><span class="pre">)</span></span><a class="headerlink" href="#c.PhonyNameDueToError.LCP_REQUEST_REPLY_BUFFER" title="Link to this definition"></a><br /></dt>
+<span class="target" id="d1/daa/group__LCP__COMM_1ggae4d5251432e1a9e6803c0240cc492e18a1f335d88edc610fa484c63fe3a17cfa2"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">LCP_REQUEST_REPLY_BUFFER</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><a class="reference internal" href="../whole_index.html#c.MPC_BIT" title="MPC_BIT"><span class="n"><span class="pre">MPC_BIT</span></span></a><span class="p"><span class="pre">(</span></span><span class="m"><span class="pre">7</span></span><span class="p"><span class="pre">)</span></span><a class="headerlink" href="#c.PhonyNameDueToError.LCP_REQUEST_REPLY_BUFFER" title="Link to this definition"></a><br /></dt>
 <dd><p>Result buffer for Atomics. </p>
 </dd></dl>
 
 <dl class="c enumerator">
 <dt class="sig sig-object c" id="c.PhonyNameDueToError.LCP_REQUEST_USER_MEMH">
-<span class="target" id="d1/daa/group__LCP__COMM_1gga5d76b81b0ad4c19007a781d4edb8181fa74a0958e8c0c3ecd0d51b5fa3bdbc695"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">LCP_REQUEST_USER_MEMH</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><a class="reference internal" href="../whole_index.html#c.MPC_BIT" title="MPC_BIT"><span class="n"><span class="pre">MPC_BIT</span></span></a><span class="p"><span class="pre">(</span></span><span class="m"><span class="pre">8</span></span><span class="p"><span class="pre">)</span></span><a class="headerlink" href="#c.PhonyNameDueToError.LCP_REQUEST_USER_MEMH" title="Link to this definition"></a><br /></dt>
+<span class="target" id="d1/daa/group__LCP__COMM_1ggae4d5251432e1a9e6803c0240cc492e18a74a0958e8c0c3ecd0d51b5fa3bdbc695"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">LCP_REQUEST_USER_MEMH</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><a class="reference internal" href="../whole_index.html#c.MPC_BIT" title="MPC_BIT"><span class="n"><span class="pre">MPC_BIT</span></span></a><span class="p"><span class="pre">(</span></span><span class="m"><span class="pre">8</span></span><span class="p"><span class="pre">)</span></span><a class="headerlink" href="#c.PhonyNameDueToError.LCP_REQUEST_USER_MEMH" title="Link to this definition"></a><br /></dt>
 <dd><p>User-provided local Memory handle. </p>
 </dd></dl>
 
 <dl class="c enumerator">
 <dt class="sig sig-object c" id="c.PhonyNameDueToError.LCP_REQUEST_USER_EPH">
-<span class="target" id="d1/daa/group__LCP__COMM_1gga5d76b81b0ad4c19007a781d4edb8181fa5c031ac18fdd6db2742d49f6294e9ed1"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">LCP_REQUEST_USER_EPH</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><a class="reference internal" href="../whole_index.html#c.MPC_BIT" title="MPC_BIT"><span class="n"><span class="pre">MPC_BIT</span></span></a><span class="p"><span class="pre">(</span></span><span class="m"><span class="pre">9</span></span><span class="p"><span class="pre">)</span></span><a class="headerlink" href="#c.PhonyNameDueToError.LCP_REQUEST_USER_EPH" title="Link to this definition"></a><br /></dt>
+<span class="target" id="d1/daa/group__LCP__COMM_1ggae4d5251432e1a9e6803c0240cc492e18a5c031ac18fdd6db2742d49f6294e9ed1"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">LCP_REQUEST_USER_EPH</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><a class="reference internal" href="../whole_index.html#c.MPC_BIT" title="MPC_BIT"><span class="n"><span class="pre">MPC_BIT</span></span></a><span class="p"><span class="pre">(</span></span><span class="m"><span class="pre">9</span></span><span class="p"><span class="pre">)</span></span><a class="headerlink" href="#c.PhonyNameDueToError.LCP_REQUEST_USER_EPH" title="Link to this definition"></a><br /></dt>
 <dd><p>User-provided Endpoint handle. </p>
 </dd></dl>
 
@@ -574,19 +577,19 @@
 
 <dl class="c enum">
 <dt class="sig sig-object c">
-<span class="target" id="d1/daa/group__LCP__COMM_1gaac34dfe6c6b73b43a4656c9dce041034"></span><span class="sig-name descname"></span></dt>
+<span class="target" id="d1/daa/group__LCP__COMM_1ga5d76b81b0ad4c19007a781d4edb8181f"></span><span class="sig-name descname"></span></dt>
 <dd><p>LCP Active Message flags. </p>
 <p>Flags identifying the type of message returned by the callback <a class="reference internal" href="../whole_index.html#d5/d49/lcp__def_8h_1a86b896a009371db3f624779a62acd2fc"><span class="std std-ref">lcp_am_callback_t</span></a>. </p>
 <p><em>Values:</em></p>
 <dl class="c enumerator">
 <dt class="sig sig-object c" id="c.PhonyNameDueToError.LCP_AM_EAGER">
-<span class="target" id="d1/daa/group__LCP__COMM_1ggaac34dfe6c6b73b43a4656c9dce041034a7ddf8a7aee3d7bb4de1fcda61247221b"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">LCP_AM_EAGER</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><a class="reference internal" href="../whole_index.html#c.MPC_BIT" title="MPC_BIT"><span class="n"><span class="pre">MPC_BIT</span></span></a><span class="p"><span class="pre">(</span></span><span class="m"><span class="pre">0</span></span><span class="p"><span class="pre">)</span></span><a class="headerlink" href="#c.PhonyNameDueToError.LCP_AM_EAGER" title="Link to this definition"></a><br /></dt>
+<span class="target" id="d1/daa/group__LCP__COMM_1gga5d76b81b0ad4c19007a781d4edb8181fa7ddf8a7aee3d7bb4de1fcda61247221b"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">LCP_AM_EAGER</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><a class="reference internal" href="../whole_index.html#c.MPC_BIT" title="MPC_BIT"><span class="n"><span class="pre">MPC_BIT</span></span></a><span class="p"><span class="pre">(</span></span><span class="m"><span class="pre">0</span></span><span class="p"><span class="pre">)</span></span><a class="headerlink" href="#c.PhonyNameDueToError.LCP_AM_EAGER" title="Link to this definition"></a><br /></dt>
 <dd><p>Message received is of type eager. </p>
 </dd></dl>
 
 <dl class="c enumerator">
 <dt class="sig sig-object c" id="c.PhonyNameDueToError.LCP_AM_RNDV">
-<span class="target" id="d1/daa/group__LCP__COMM_1ggaac34dfe6c6b73b43a4656c9dce041034aec758a005767ee985877f0fd537fe848"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">LCP_AM_RNDV</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><a class="reference internal" href="../whole_index.html#c.MPC_BIT" title="MPC_BIT"><span class="n"><span class="pre">MPC_BIT</span></span></a><span class="p"><span class="pre">(</span></span><span class="m"><span class="pre">1</span></span><span class="p"><span class="pre">)</span></span><a class="headerlink" href="#c.PhonyNameDueToError.LCP_AM_RNDV" title="Link to this definition"></a><br /></dt>
+<span class="target" id="d1/daa/group__LCP__COMM_1gga5d76b81b0ad4c19007a781d4edb8181faec758a005767ee985877f0fd537fe848"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">LCP_AM_RNDV</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><a class="reference internal" href="../whole_index.html#c.MPC_BIT" title="MPC_BIT"><span class="n"><span class="pre">MPC_BIT</span></span></a><span class="p"><span class="pre">(</span></span><span class="m"><span class="pre">1</span></span><span class="p"><span class="pre">)</span></span><a class="headerlink" href="#c.PhonyNameDueToError.LCP_AM_RNDV" title="Link to this definition"></a><br /></dt>
 <dd><p>Message received is of type rendez-vous. </p>
 </dd></dl>
 
@@ -665,6 +668,34 @@
 <dd class="field-even"><p>Error code returned. </p>
 </dd>
 </dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.lcp_init_driver">
+<span class="target" id="d1/daa/group__LCP__COMM_1ga25888fed2b46696f604da5bcf1d735ed"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">lcp_init_driver</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">void</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.lcp_init_driver" title="Link to this definition"></a><br /></dt>
+<dd><p>Initialize lcp. </p>
+<p>This must be called once before using lcp. </p>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.lcp_finalize_driver">
+<span class="target" id="d1/daa/group__LCP__COMM_1gab3a4dff927bd6aed17168f5f78131241"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">lcp_finalize_driver</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">void</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.lcp_finalize_driver" title="Link to this definition"></a><br /></dt>
+<dd><p>Finalize lcp. </p>
+<p>This must be called once to properly release lcp. </p>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.lcp_init_per_task">
+<span class="target" id="d1/daa/group__LCP__COMM_1ga10efbbb9371a2f65a00b42f1860748f0"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">lcp_init_per_task</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">void</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.lcp_init_per_task" title="Link to this definition"></a><br /></dt>
+<dd><p>Initialize lcp for the current task. </p>
+<p>This must be called for each task during initialization </p>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.lcp_release_per_task">
+<span class="target" id="d1/daa/group__LCP__COMM_1ga965da5474db3e3dd7a8eacf5c41d11f8"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">lcp_release_per_task</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">void</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.lcp_release_per_task" title="Link to this definition"></a><br /></dt>
+<dd><p>Release lcp for the current task. </p>
+<p>This must be called for each task during the finalize </p>
 </dd></dl>
 
 <dl class="c function">
@@ -834,7 +865,7 @@
 <dt class="sig sig-object c" id="c.lcp_am_recv_nb">
 <span class="target" id="d1/daa/group__LCP__COMM_1ga828c3ced019cbb6b0ef0eff7e2be9abf"></span><a class="reference internal" href="../whole_index.html#c.lcp_status_ptr_t" title="lcp_status_ptr_t"><span class="n"><span class="pre">lcp_status_ptr_t</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">lcp_am_recv_nb</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="../whole_index.html#c.lcp_manager_h" title="lcp_manager_h"><span class="n"><span class="pre">lcp_manager_h</span></span></a><span class="w"> </span><span class="n"><span class="pre">mngr</span></span>, <a class="reference internal" href="../whole_index.html#c.lcp_task_h" title="lcp_task_h"><span class="n"><span class="pre">lcp_task_h</span></span></a><span class="w"> </span><span class="n"><span class="pre">task</span></span>, <span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">data_ctnr</span></span>, <span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">buffer</span></span>, <span class="n"><span class="pre">size_t</span></span><span class="w"> </span><span class="n"><span class="pre">count</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="#c.lcp_request_param_t" title="lcp_request_param_t"><span class="n"><span class="pre">lcp_request_param_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">param</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.lcp_am_recv_nb" title="Link to this definition"></a><br /></dt>
 <dd><p>LCP receive AM communication. </p>
-<p>This routine may be called to provide to LCP the necessary user buffer to receive the data in case it is sent through the rendez-vous protocol. This routine may thus be used in conjunction with <a class="reference internal" href="../whole_index.html#d1/daa/group__LCP__COMM_1ggaac34dfe6c6b73b43a4656c9dce041034aec758a005767ee985877f0fd537fe848"><span class="std std-ref">LCP_AM_RNDV</span></a> flags that would have been set within the user callback through <a class="reference internal" href="../whole_index.html#d1/daa/group__LCP__COMM_1ga33e90315637dd3bfdc4554480e189a90"><span class="std std-ref">lcp_am_recv_param_t</span></a>. To be notified for completion, user must set the completion callback in <a class="reference internal" href="../whole_index.html#d1/daa/group__LCP__COMM_1ga2916b752e2d23d996a117e04e5b61c9e"><span class="std std-ref">lcp_request_param_t</span></a>.</p>
+<p>This routine may be called to provide to LCP the necessary user buffer to receive the data in case it is sent through the rendez-vous protocol. This routine may thus be used in conjunction with <a class="reference internal" href="../whole_index.html#d1/daa/group__LCP__COMM_1gga5d76b81b0ad4c19007a781d4edb8181faec758a005767ee985877f0fd537fe848"><span class="std std-ref">LCP_AM_RNDV</span></a> flags that would have been set within the user callback through <a class="reference internal" href="../whole_index.html#d1/daa/group__LCP__COMM_1ga33e90315637dd3bfdc4554480e189a90"><span class="std std-ref">lcp_am_recv_param_t</span></a>. To be notified for completion, user must set the completion callback in <a class="reference internal" href="../whole_index.html#d1/daa/group__LCP__COMM_1ga2916b752e2d23d996a117e04e5b61c9e"><span class="std std-ref">lcp_request_param_t</span></a>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -1174,17 +1205,17 @@
 <p class="breathe-sectiondef-title rubric" id="breathe-section-title-enums">Enums</p>
 <dl class="c enum">
 <dt class="sig sig-object c">
-<span class="target" id="d1/d8c/group__LCP__ATOMIC_1ga1be3860693af99a6c1da72580097294c"></span><span class="sig-name descname"></span></dt>
+<span class="target" id="d1/d8c/group__LCP__ATOMIC_1gabe974f22edeef8189603ba75fd90ff3c"></span><span class="sig-name descname"></span></dt>
 <dd><p><em>Values:</em></p>
 <dl class="c enumerator">
 <dt class="sig sig-object c" id="c.PhonyNameDueToError.LCP_ATO_PROTO_RMA">
-<span class="target" id="d1/d8c/group__LCP__ATOMIC_1gga1be3860693af99a6c1da72580097294ca646bfddf9a9dddc11d1d70bef8bddb30"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">LCP_ATO_PROTO_RMA</span></span></span><a class="headerlink" href="#c.PhonyNameDueToError.LCP_ATO_PROTO_RMA" title="Link to this definition"></a><br /></dt>
+<span class="target" id="d1/d8c/group__LCP__ATOMIC_1ggabe974f22edeef8189603ba75fd90ff3ca646bfddf9a9dddc11d1d70bef8bddb30"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">LCP_ATO_PROTO_RMA</span></span></span><a class="headerlink" href="#c.PhonyNameDueToError.LCP_ATO_PROTO_RMA" title="Link to this definition"></a><br /></dt>
 <dd><p>Use RMA channel to send atomics. </p>
 </dd></dl>
 
 <dl class="c enumerator">
 <dt class="sig sig-object c" id="c.PhonyNameDueToError.LCP_ATO_PROTO_SW">
-<span class="target" id="d1/d8c/group__LCP__ATOMIC_1gga1be3860693af99a6c1da72580097294caa60e30566635d3117f384c6792ef4638"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">LCP_ATO_PROTO_SW</span></span></span><a class="headerlink" href="#c.PhonyNameDueToError.LCP_ATO_PROTO_SW" title="Link to this definition"></a><br /></dt>
+<span class="target" id="d1/d8c/group__LCP__ATOMIC_1ggabe974f22edeef8189603ba75fd90ff3caa60e30566635d3117f384c6792ef4638"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">LCP_ATO_PROTO_SW</span></span></span><a class="headerlink" href="#c.PhonyNameDueToError.LCP_ATO_PROTO_SW" title="Link to this definition"></a><br /></dt>
 <dd><p>Use the software atomics. </p>
 </dd></dl>
 
@@ -1193,6 +1224,19 @@
 </div>
 <div class="breathe-sectiondef docutils container">
 <p class="breathe-sectiondef-title rubric" id="breathe-section-title-functions">Functions</p>
+<dl class="c function">
+<dt class="sig sig-object c" id="c.lcp_atomic_complete_local">
+<span class="target" id="d1/d8c/group__LCP__ATOMIC_1ga0e28dfb8feaa8d9702c0f0f49282627e"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">lcp_atomic_complete_local</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="../whole_index.html#c.lcr_completion_t" title="lcr_completion_t"><span class="n"><span class="pre">lcr_completion_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">comp</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.lcp_atomic_complete_local" title="Link to this definition"></a><br /></dt>
+<dd><p>Completes an atomic operation. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>comp</strong> – <strong>[in]</strong> Completion function to call on completion </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
 <dl class="c function">
 <dt class="sig sig-object c" id="c.lcp_atomic_complete">
 <span class="target" id="d1/d8c/group__LCP__ATOMIC_1ga47f002d4de6ab8cd57fc8fe31f26296a"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">lcp_atomic_complete</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="../whole_index.html#c.lcr_completion_t" title="lcr_completion_t"><span class="n"><span class="pre">lcr_completion_t</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">comp</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.lcp_atomic_complete" title="Link to this definition"></a><br /></dt>
@@ -1819,7 +1863,7 @@
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
         <a href="lowcomm.html" class="btn btn-neutral float-left" title="MPC_Lowcomm" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="../mpi/mpi.html" class="btn btn-neutral float-right" title="MPC_MPI" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="one_sided.html" class="btn btn-neutral float-right" title="One Sided communication" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>
