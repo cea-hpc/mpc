@@ -10,6 +10,8 @@ All notable changes to this project will be documented in this file. The format 
   - Added BXI version 3 support
 - **Low Comm**
   - New lowcomm top level one sided communication interface
+- **OpenSHMEM**
+  - New network module based on a subpart of the OpenSHMEM specification
 
 ### Changed
 

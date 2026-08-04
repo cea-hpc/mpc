@@ -1600,6 +1600,9 @@ do
 		--disable-MPC_MPI|--lib-mode)
 			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --disable-mpi"
 			;;
+        --disable-openshmem)
+			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --disable-openshmem"
+            ;;
 		--disable-romio)
 			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --disable-mpiio"
 			;;

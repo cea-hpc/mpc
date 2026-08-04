@@ -43,6 +43,7 @@ show_help()
 	echo " -h|--help    Print this help"
 	echo " -l|--ldflags Print ldflags"
 	echo " --fortran    Generate flags for Fortran"
+	echo " --openshmem  Generate flags for openshmem program"
 	echo " --priv       Flags for privatized binary (only for Fortran)"
 	echo " --sh         Output in shell format"
 	echo ""
@@ -55,6 +56,7 @@ show_help()
 HAS_SH_FLAG="no"
 IS_FORTRAN="no"
 IS_PRIV="no"
+ONLY_OPENSHMEM="no"
 
 for arg in "$@" ; do
 	case $arg in
@@ -63,6 +65,9 @@ for arg in "$@" ; do
 		;;
 		--fortran)
 			IS_FORTRAN="yes"
+		;;
+		--openshmem)
+			ONLY_OPENSHMEM="yes"
 		;;
 		--priv)
 			IS_PRIV="yes"
@@ -78,6 +83,7 @@ done
 MPC_THREAD_ENABLED="@MPC_THREAD_ENABLED@"
 MPC_LOWCOMM_ENABLED="@MPC_LOWCOMM_ENABLED@"
 MPC_MPI_ENABLED="@MPC_MPI_ENABLED@"
+MPC_OPENSHMEM_ENABLED="@MPC_OPENSHMEM_ENABLED@"
 MPC_OPENMP_ENABLED="@MPC_OPENMP_ENABLED@"
 MPC_MPIIO_ENABLED="@MPC_MPIIO_ENABLED@"
 
@@ -93,45 +99,59 @@ fi
 
 FLAGS="$FLAGS  -L${MPC_INSTALL_PREFIX}/lib"
 
-# MPC_Arch // MPC_Common // MPC_Config
-FLAGS="$FLAGS ${OPA_LDFLAGS} ${MPCALLOC_LDFLAGS}"
+if test "x${ONLY_OPENSHMEM}" = "xno"; then
 
-# MPC_Topology
-FLAGS="$FLAGS ${HWLOC_LDFLAGS}"
+	# MPC_Arch // MPC_Common // MPC_Config
+	FLAGS="$FLAGS ${OPA_LDFLAGS} ${MPCALLOC_LDFLAGS}"
 
-# MPC_Launch
-FLAGS="$FLAGS -ldl"
+	# MPC_Topology
+	FLAGS="$FLAGS ${HWLOC_LDFLAGS}"
 
-if test "x${MPC_THREAD_ENABLED}" = "xyes"; then
-	# MPC_Thread
-	FLAGS="$FLAGS -lmpcthread ${EXTLS_LDFLAGS}"
-fi
+	# MPC_Launch
+	FLAGS="$FLAGS -ldl"
 
-if test "x${MPC_OPENMP_ENABLED}" = "xyes"; then
-	# MPC_OpenMP
-	FLAGS="$FLAGS  -lmpcomp"
-fi
-
-if test "x${MPC_LOWCOMM_ENABLED}" = "xyes"; then
-	# MPC_Lowcomm
-	FLAGS="$FLAGS  -lmpclowcomm -lm"
-fi
-
-if test "x${MPC_MPI_ENABLED}" = "xyes"; then
-	# MPC_MPI
-	FLAGS="$FLAGS -lmpcmpi"
-
-	if test "x${MPC_MPIIO_ENABLED}" = "xyes"; then
-		# MPC_IO
-		FLAGS="$FLAGS -lmpcio"
+	if test "x${MPC_THREAD_ENABLED}" = "xyes"; then
+		# MPC_Thread
+		FLAGS="$FLAGS -lmpcthread ${EXTLS_LDFLAGS}"
 	fi
 
-	if test "x${IS_FORTRAN}" = "xyes"; then
-		if test "x${IS_PRIV}" = "xno"; then
-			FLAGS="$FLAGS -lmpcfortran"
-		else
-			FLAGS="$FLAGS -lmpcfortran_priv"
+	if test "x${MPC_OPENMP_ENABLED}" = "xyes"; then
+		# MPC_OpenMP
+		FLAGS="$FLAGS  -lmpcomp"
+	fi
+
+	if test "x${MPC_LOWCOMM_ENABLED}" = "xyes"; then
+		# MPC_Lowcomm
+		FLAGS="$FLAGS  -lmpclowcomm -lm"
+	fi
+
+	if test "x${MPC_MPI_ENABLED}" = "xyes"; then
+		# MPC_MPI
+		FLAGS="$FLAGS -lmpcmpi"
+
+		if test "x${MPC_MPIIO_ENABLED}" = "xyes"; then
+			# MPC_IO
+			FLAGS="$FLAGS -lmpcio"
 		fi
+
+		if test "x${IS_FORTRAN}" = "xyes"; then
+			if test "x${IS_PRIV}" = "xno"; then
+				FLAGS="$FLAGS -lmpcfortran"
+			else
+				FLAGS="$FLAGS -lmpcfortran_priv"
+			fi
+		fi
+	fi
+fi
+
+if test "x${MPC_OPENSHMEM_ENABLED}" = "xyes"; then
+	# MPC_OpenSHMEM
+	FLAGS="$FLAGS  -lmpcopenshmem"
+else
+	if test "x${ONLY_OPENSHMEM}" = "xyes"; then
+		echo "ERROR: OpenSHMEM explicitly requested but the module is disabled" >&2
+		show_help
+		exit 1
 	fi
 fi
 
@@ -163,12 +183,17 @@ for arg in "$@" ; do
 	-l|--ldflags)
 		print_var "CFLAGS" "$FLAGS"
 		;;
-	--sh|--fortran|--priv)
+	--sh|--fortran|--openshmem|--priv)
 		# Handled in the first pass
 		;;
-	*)
+	-h|--help)
 		show_help
 		exit 0
+		;;
+	*)
+		echo "ERROR: Unknown argument ${arg}" >&2
+		show_help
+		exit 2
 		;;
 	esac
 done
