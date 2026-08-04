@@ -29,12 +29,11 @@
 
 #include "thread.h"
 
-#include "ethread_engine.h"
 #include "kthread.h"
 
 #include "sctk_context.h"
 #include "mpc_common_spinlock.h"
-#include "sctk_alloc.h"
+#include <sctk_alloc.h>
 #include "ethread_pthread_struct.h"
 
 #if 0

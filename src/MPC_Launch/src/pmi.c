@@ -23,7 +23,7 @@
 
 #include <mpc_launch_pmi.h>
 
-#include "sctk_alloc.h"
+#include <sctk_alloc.h>
 #include "mpc_common_debug.h"
 #include <mpc_common_flags.h>
 #include <mpc_common_helper.h>

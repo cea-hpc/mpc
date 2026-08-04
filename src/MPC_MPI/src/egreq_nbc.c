@@ -5,8 +5,7 @@
 
 #include "mpc_common_debug.h"
 #include <mpc_thread.h>
-#include "sctk_alloc.h"
-#include "mpc_lowcomm_msg.h"
+#include <sctk_alloc.h>
 #include "egreq_nbc.h"
 
 #include "mpc_common_spinlock.h"

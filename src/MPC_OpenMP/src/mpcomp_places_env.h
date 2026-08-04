@@ -32,10 +32,9 @@
 #ifndef __MPC_OMP_PLACES_ENV_H__
 #define __MPC_OMP_PLACES_ENV_H__
 
-#include "hwloc.h"
-#include "utlist.h"
-#include "mpc_common_debug.h"
-#include "sctk_alloc.h"
+#include <hwloc.h>
+#include <mpc_common_debug.h>
+#include <sctk_alloc.h>
 
 typedef struct mpc_omp_places_info_s
 {

@@ -20,8 +20,7 @@
 /* #                                                                      # */
 /* ######################################################################## */
 #include "egreq_classes.h"
-#include <stdlib.h>
-#include "sctk_alloc.h"
+#include <sctk_alloc.h>
 
 void _mpc_egreq_classes_storage_init(struct _mpc_egreq_classes_storage *ctx)
 {

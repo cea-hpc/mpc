@@ -22,6 +22,7 @@
 /* ######################################################################## */
 #include <math.h>
 #include <stddef.h>
+#include <limits.h>
 
 #include "mpc_keywords.h"
 #include "mpc_mpi.h"

@@ -35,7 +35,7 @@
 #include <string.h>
 #include <mpc_common_debug.h>
 
-#include "sctk_alloc.h"
+#include <sctk_alloc.h>
 
 /* Init component list */
 lcr_component_t *lcr_component_list = NULL;

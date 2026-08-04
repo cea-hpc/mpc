@@ -42,7 +42,8 @@
 //                                 to the API. Let the user store the endpoints handles.
 
 #include "rail.h"
-#include "sctk_alloc.h"
+
+#include <sctk_alloc.h>
 
 lcp_am_handler_t lcp_am_handlers[LCP_AM_ID_LAST] = { { NULL, 0 } };
 

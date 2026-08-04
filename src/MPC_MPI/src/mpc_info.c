@@ -22,7 +22,7 @@
 #include "mpc_info.h"
 
 #include "mpc_common_debug.h"
-#include "sctk_alloc.h"
+#include <sctk_alloc.h>
 #include "string.h"
 #include "comm_lib.h"
 

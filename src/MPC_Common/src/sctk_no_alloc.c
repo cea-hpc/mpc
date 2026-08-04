@@ -31,11 +31,13 @@
 
 #include <unistd.h>
 #include <stdlib.h>
-#include "sctk_alloc.h"
-#include "mpc_common_debug.h"
 #include <unistd.h>
 #include <sys/mman.h>
 #include <mpc_keywords.h>
+
+#include "sctk_alloc.h"
+
+#include "mpc_common_debug.h"
 
 	/*******************  FUNCTION  *********************/
 	void sctk_dsm_prefetch(void *addr)

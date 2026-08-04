@@ -34,7 +34,6 @@
 #include <checksum.h>
 #include <reorder.h>
 #include "mpc_keywords.h"
-#include "rail.h"
 #include <mpc_launch.h>
 #include <mpc_common_profiler.h>
 #include <sctk_alloc.h>
@@ -53,7 +52,6 @@
 
 
 #include "one-sided/lowcomm_osc.h"
-#include "mpc_lowcomm_workshare.h"
 #include "lowcomm_config.h"
 #include "monitor.h"
 #include "pset.h"

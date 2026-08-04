@@ -21,16 +21,17 @@
 /* ######################################################################## */
 #define _GNU_SOURCE
 #include <sched.h>
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
+
+#include <sctk_alloc.h>
 
 #include "mpc_common_debug.h"
 #include "ethread_engine.h"
 #include "ethread_engine_internal.h"
 #include "mpc_thread.h"
-#include "sctk_alloc.h"
 #include "thread_ptr.h"
-#include <stdio.h>
-#include <string.h>
-#include <unistd.h>
 
 #include "mpc_topology.h"
 

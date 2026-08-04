@@ -30,7 +30,7 @@
 #include "mpc_common_spinlock.h"
 
 #include "tls.h"
-#include "sctk_alloc.h"
+#include <sctk_alloc.h>
 
 typedef struct
 {

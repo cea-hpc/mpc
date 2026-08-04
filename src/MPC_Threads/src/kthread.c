@@ -22,7 +22,6 @@
 #define _GNU_SOURCE
 #include <dlfcn.h>
 
-#include "mpc_common_asm.h"
 #include "pthread_engine.h"
 #include "kthread.h"
 #include "mpc_common_spinlock.h"
@@ -32,7 +31,7 @@
 
 #include "thread.h"
 
-#include "sctk_alloc.h"
+#include <sctk_alloc.h>
 #include "tls.h"
 
 #ifndef SCTK_KERNEL_THREAD_USE_TLS
