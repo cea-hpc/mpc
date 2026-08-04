@@ -6,7 +6,7 @@ set(MPCFRAMEWORK_DIR "${CMAKE_CURRENT_SOURCE_DIR}/cmake/")
 
 add_executable(main t.c)
 
-find_package(MPCFRAMEWORK REQUIRED VERSION 4.3.1)
+find_package(MPCFRAMEWORK REQUIRED VERSION 4.4.0)
 
 include_directories(${MPCFRAMEWORK_INCLUDE_DIRS})
 target_link_libraries(main ${MPCFRAMEWORK_LIBRARIES})

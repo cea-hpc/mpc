@@ -6,6 +6,19 @@ All notable changes to this project will be documented in this file. The format 
 
 ### Added
 
+### Changed
+
+### Removed
+
+### Deprecated
+
+### Fixed
+
+
+## [4.4.0] - 2026-08-04
+
+### Added
+
 - **Rail Portals**
   - Added BXI version 3 support
 - **Low Comm**
@@ -17,10 +30,8 @@ All notable changes to this project will be documented in this file. The format 
 
 - **MPI**
   - Added MPI 4.1 errors
-
-### Removed
-
-### Deprecated
+- **Low Comm**
+  - Unify Lowcomm API using sendmode preparing integration of UBCL component
 
 ### Fixed
 
@@ -598,4 +609,5 @@ Note that some components are dependent and cannot be installed if the dependenc
 [4.2.0]: https://github.com/cea-hpc/mpc/releases/tag/MPC_4.2.0
 [4.3.0]: https://github.com/cea-hpc/mpc/releases/tag/MPC_4.3.0
 [4.3.1]: https://github.com/cea-hpc/mpc/releases/tag/MPC_4.3.1
+[4.4.0]: https://github.com/cea-hpc/mpc/releases/tag/MPC_4.4.0
 [keep a changelog]: https://keepachangelog.com/
