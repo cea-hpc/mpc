@@ -145,7 +145,7 @@ Process Mode (network only):
     HAS_MPI: true
     USE_ONLY_NETWORK: true
 
-Privatization:
+Privatization (Release):
   stage: 'Build & Run'
   extends: ['.build_and_run']
   variables:
@@ -187,11 +187,11 @@ Without Threads:
     HAS_PRIVATIZATION: false
     HAS_MPI: true
 
-Without PMIx:
+Without PMIx (Debug):
   stage: 'Build Only'
   extends: ['.build_only']
   variables:
-    GL_INSTALL_OPTS: '--process-mode --relwithdebinfo -j32 --with-hydra'
+    GL_INSTALL_OPTS: '--enable-debug -j32 --process-mode --with-hydra'
     HAS_PRIVATIZATION: false
     HAS_MPI: true
 

@@ -28,7 +28,19 @@
 #include <mpc_common_rank.h>
 #include <sctk_alloc.h>
 
-mpc_lowcomm_request_t __request_null;
+mpc_lowcomm_request_t __request_null =
+{
+	.header.source_task = 0,
+	.datatype           = NULL,
+	.count            = 0,
+	.request_complete = NULL,
+	.flags            = 0,
+	.dt_magic         = 0,
+	.is_null          = 1,
+	.request_type     = REQUEST_NULL,
+	.comm             = MPC_COMM_NULL,
+	.completion_flag  = MPC_LOWCOMM_MESSAGE_DONE
+};
 
 mpc_lowcomm_request_t *mpc_lowcomm_request_null(void)
 {
@@ -71,6 +83,19 @@ int _mpc_lowcomm_request_send_complete(int status, void *request,
 	req->completion_flag = MPC_LOWCOMM_MESSAGE_DONE;
 
 	return MPC_LOWCOMM_SUCCESS;
+}
+
+void mpc_lowcomm_request_init(mpc_lowcomm_request_t *request,
+                              int count, mpc_lowcomm_datatype_t datatype,
+                              mpc_lowcomm_complete_callback_func_t cb,
+                              unsigned flags)
+{
+	request->header.source_task = 0;
+	request->datatype           = datatype;
+	request->count            = count;
+	request->request_complete = cb;
+	request->flags            = flags;
+	request->dt_magic         = 0;
 }
 
 void mpc_lowcomm_request_initialize(void *request)

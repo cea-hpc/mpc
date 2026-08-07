@@ -483,19 +483,6 @@ void mpc_lowcomm_message_probe_any_source_class_comm(int destination, int tag,
 /*Message Interface                                                 */
 /********************************************************************/
 
-void mpc_lowcomm_request_init(mpc_lowcomm_request_t *request,
-                              int count, mpc_lowcomm_datatype_t datatype,
-                              mpc_lowcomm_complete_callback_func_t cb,
-                              unsigned flags)
-{
-	request->header.source_task = 0;
-	request->datatype           = datatype;
-	request->count            = count;
-	request->request_complete = cb;
-	request->flags            = flags;
-	request->dt_magic         = 0;
-}
-
 int mpc_lowcomm_request_cancel(mpc_lowcomm_request_t *msg)
 {
 	UNUSED(msg);
@@ -1028,7 +1015,6 @@ static void __initialize_drivers()
 
 	mpc_lowcomm_protocol_init_driver();
 	mpc_common_progress_register(mpc_comm_progress);
-	__init_request_null();
 
 	/* This creates the world group */
 	_mpc_lowcomm_group_create_world();

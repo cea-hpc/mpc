@@ -34,15 +34,6 @@ struct mpi_request_info
 int mpc_lowcomm_request_complete(mpc_lowcomm_request_t *request);
 
 extern mpc_lowcomm_request_t __request_null;
-inline void __init_request_null()
-{
-	mpc_lowcomm_request_init(&__request_null,
-		0, NULL, NULL, 0);
-	__request_null.is_null         = 1;
-	__request_null.request_type    = REQUEST_NULL;
-	__request_null.comm            = MPC_COMM_NULL;
-	__request_null.completion_flag = MPC_LOWCOMM_MESSAGE_DONE;
-}
 
 int _mpc_lowcomm_request_send_complete(int status, void *request, size_t length);
 

@@ -63,6 +63,7 @@
 
 #include "mpc_launch_pmi.h"
 #include "mpc_lowcomm_workshare.h"
+#include "mpc_coll.h"
 
 #include "osc_mpi.h"
 
