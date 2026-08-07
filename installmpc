@@ -830,7 +830,7 @@ locate_tarball()
 		return
 	fi
 
-	TARBALL_PATH=$(find "${PROJECT_BUILD_DIR}/"  -iname "${tarball}*tar*" 2> /dev/null || true)
+	TARBALL_PATH=$(find "${PROJECT_BUILD_DIR}/" -maxdepth 1 -iname "${tarball}*tar*" 2> /dev/null || true)
 
 	if test -f "$TARBALL_PATH"; then
 		# Found in build dir
@@ -844,7 +844,7 @@ locate_tarball()
 		return
 	fi
 
-	TARBALL_PATH=$(find "${SCRIPTPATH}/" -iname "${tarball}*tar*" 2> /dev/null || true)
+	TARBALL_PATH=$(find "${SCRIPTPATH}/" -maxdepth 1 -iname "${tarball}*tar*" 2> /dev/null | head -n 1 || true)
 
 	if test -f "$TARBALL_PATH"; then
 		# Found in root source dir
