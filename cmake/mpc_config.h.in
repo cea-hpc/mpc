@@ -137,6 +137,11 @@
 #cmakedefine01 KMP_ARCH_X86_64
 #cmakedefine01 KMP_ARCH_X86
 
+/* BXI version defines */
+#cmakedefine USE_BXI
+#cmakedefine BXI_VERSION_2
+#cmakedefine BXI_VERSION_3
+
 /* Launcher */
 #define MPC_LAUNCHER "@MPC_LAUNCHER@"
 

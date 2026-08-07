@@ -166,3 +166,15 @@ if(MPC_ARCH_MICROTASK_ARCH STREQUAL "x86_64")
 elseif(MPC_ARCH_MICROTASK_ARCH STREQUAL "x86")
     set(KMP_ARCH_X86 1)
 endif()
+
+# ------------------------------------------------------------------
+# BXI version defines
+# ------------------------------------------------------------------
+if(MPC_BXI_VERSION)
+    set(USE_BXI 1)
+    if(MPC_BXI_VERSION STREQUAL "2")
+        set(BXI_VERSION_2 1)
+    elseif(MPC_BXI_VERSION STREQUAL "3")
+        set(BXI_VERSION_3 1)
+    endif()
+endif()

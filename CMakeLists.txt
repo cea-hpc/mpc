@@ -146,6 +146,9 @@ option(MPC_ENABLE_MPCALLOC "Enable MPC allocator" ON)
 set(MPC_ENABLE_OFI "AUTO" CACHE STRING "Enable libfabric/OFI: AUTO (auto-detect), ON, or OFF")
 set_property(CACHE MPC_ENABLE_OFI PROPERTY STRINGS AUTO ON OFF)
 
+# BXI version (optional, for Portals specialization)
+set(MPC_BXI_VERSION "" CACHE STRING "BXI version for Portals specialization (2 or 3)")
+
 # Dependency prefixes (overridden by installmpc or user)
 set(MPC_HWLOC_PREFIX "" CACHE PATH "hwloc install prefix")
 set(MPC_OPENPA_PREFIX "" CACHE PATH "openpa install prefix")
