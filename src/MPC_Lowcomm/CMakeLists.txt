@@ -13,15 +13,26 @@ set(MPC_LOWCOMM_SOURCES
     src/lowcomm_config.c
     src/alloc_mem.c
     src/lowcomm.c
+    src/lowcomm_comm.c
     src/msg_copy.c
     src/lowcomm_thread.c
     src/mqd.c
     src/datatypes_common.c
+    src/lowcomm_request.c
     src/rail.c
     src/reorder.c
     src/endpoint.c
     src/pset.c
     src/handle_ctx.c
+)
+
+# One sided
+list(APPEND MPC_LOWCOMM_SOURCES
+    src/one-sided/lowcomm_one_sided.c
+    src/one-sided/lowcomm_one_sided_common.c
+    src/one-sided/lowcomm_one_sided_helpers.c
+    src/one-sided/lowcomm_one_sided_sync.c
+    src/one-sided/lowcomm_one_sided_window.c
 )
 
 # Workshare (optional)
@@ -43,6 +54,8 @@ list(APPEND MPC_LOWCOMM_SOURCES
 
 # LCP core
 list(APPEND MPC_LOWCOMM_SOURCES
+    src/lcp/lcp_init.c
+    src/lcp/lowcomm_lcp.c
     src/lcr/rails/tbsm/tbsm.c
     src/lcp/core/lcp_context.c
     src/lcp/core/lcp_ep.c
@@ -149,6 +162,7 @@ target_include_directories(mpclowcomm
         ${CMAKE_CURRENT_SOURCE_DIR}/src/lcr/rails/tbsm
         ${CMAKE_CURRENT_SOURCE_DIR}/src/lcp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/lcr
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/one-sided
         ${CMAKE_BINARY_DIR}
         ${OPA_INCLUDE_DIRS}
 )
@@ -258,10 +272,12 @@ install(FILES
     include/mpc_lowcomm_communicator.h
     include/mpc_lowcomm_group.h
     include/mpc_lowcomm_types.h
+    include/mpc_lowcomm_ep.h
     include/mpc_lowcomm_def.h
     include/mpc_lowcomm_handle_ctx.h
     include/mpc_lowcomm_mqd.h
     include/mpc_lowcomm_datatypes.h
+    include/mpc_lowcomm_one_sided.h
     include/lcp.h
     include/lcp_def.h
     include/lowcomm_config.h

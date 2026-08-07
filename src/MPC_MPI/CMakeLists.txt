@@ -3,13 +3,8 @@
 
 # Core MPI sources
 set(MPC_MPI_SOURCES
-    src/osc/osc_win.c
-    src/osc/osc_active_target.c
-    src/osc/osc_comm.c
-    src/osc/osc_module.c
-    src/osc/osc_passive_target.c
+    src/osc/osc_mpi.c
     src/osc/osc_win_attr.c
-    src/osc/osc_common.c
     src/comm_lib.c
     src/egreq_nbc.c
     src/mpc_extern32.c
