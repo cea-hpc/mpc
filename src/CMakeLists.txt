@@ -28,6 +28,10 @@ if(MPC_ENABLE_MPI)
     add_subdirectory(MPC_MPI)
 endif()
 
+if(MPC_ENABLE_OPENSHMEM)
+    add_subdirectory(MPC_OpenSHMEM)
+endif()
+
 if(MPC_ENABLE_MPIIO)
     add_subdirectory(MPC_IO)
 endif()

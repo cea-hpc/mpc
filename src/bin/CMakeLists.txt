@@ -58,6 +58,16 @@ if(MPC_ENABLE_MPI)
     )
 endif()
 
+# OpenSHMEM scripts (conditional)
+if(MPC_ENABLE_OPENSHMEM)
+    list(APPEND MPC_BIN_SCRIPTS
+        oshcc
+        oshcxx
+        "oshc++"
+        oshrun
+    )
+endif()
+
 # Fortran scripts (conditional)
 if(MPC_ENABLE_FORTRAN)
     list(APPEND MPC_BIN_SCRIPTS mpc_f77)

@@ -109,6 +109,7 @@
 #cmakedefine MPC_OpenMP
 #cmakedefine MPC_Lowcomm
 #cmakedefine MPC_MPI
+#cmakedefine MPC_OpenSHMEM
 #cmakedefine MPC_FORTRAN
 #cmakedefine MPC_FORTRAN_ENABLED
 #cmakedefine FORTRANDOUBLEUNDERSCORE

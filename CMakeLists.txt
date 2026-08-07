@@ -124,6 +124,7 @@ option(MPC_ENABLE_THREADS "Enable pthread and user-level thread support" ON)
 option(MPC_ENABLE_OPENMP "Enable OpenMP interface" ON)
 option(MPC_ENABLE_LOWCOMM "Enable Lowcomm support" ON)
 option(MPC_ENABLE_MPI "Enable MPI interface" ON)
+option(MPC_ENABLE_OPENSHMEM "Enable OpenSHMEM interface" ON)
 option(MPC_ENABLE_FORTRAN "Enable Fortran support" ON)
 option(MPC_ENABLE_MPIIO "Enable MPI-IO (ROMIO)" ON)
 option(BUILD_ROMIO_EMBEDDED "Build ROMIO embedded in MPC (skip large_count.c fallback)" ON)
@@ -176,6 +177,7 @@ endif()
 if(NOT MPC_ENABLE_LOWCOMM)
     message(WARNING "Disabling lowcomm means disabling MPC's MPI layer")
     set(MPC_ENABLE_MPI OFF)
+    set(MPC_ENABLE_OPENSHMEM OFF)
 endif()
 
 if(NOT MPC_ENABLE_MPI)
@@ -256,6 +258,7 @@ set(MPC_CONFIG_RESULT "
   OpenMP         : ${MPC_ENABLE_OPENMP}
   Lowcomm        : ${MPC_ENABLE_LOWCOMM}
   MPI            : ${MPC_ENABLE_MPI}
+  OpenSHMEM      : ${MPC_ENABLE_OPENSHMEM}
   Fortran        : ${MPC_ENABLE_FORTRAN}
   MPI-IO         : ${MPC_ENABLE_MPIIO}
   Profiler       : ${MPC_ENABLE_PROFILER}

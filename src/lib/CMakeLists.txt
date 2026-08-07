@@ -20,6 +20,10 @@ if(MPC_ENABLE_MPI)
     list(APPEND ALL_MPC_LIBS mpcmpi)
 endif()
 
+if(MPC_ENABLE_OPENSHMEM)
+    list(APPEND ALL_MPC_LIBS mpcopenshmem)
+endif()
+
 if(MPC_ENABLE_MPIIO)
     list(APPEND ALL_MPC_LIBS mpcio)
 endif()
