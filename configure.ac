@@ -3125,7 +3125,7 @@ esac
 
 if test "x${mpc_enable_debug_opt}" = "xyes"
 then
-	CPPFLAGS+=" -Og"
+	CPPFLAGS+=" -O0 -g"
 	mpc_enable_opt="no"
 else
 	if test "x${mpc_enable_opt}" = "xyes"
