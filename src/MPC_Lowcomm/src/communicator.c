@@ -841,6 +841,7 @@ static inline mpc_lowcomm_internal_communicator_t *__init_communicator_with_id(m
 	ret->process_span   = 1;
 	ret->linear_comm_id = -1;
 	ret->extra_ctx_ptr  = MPC_LOWCOMM_HANDLE_CTX_NULL;
+	ret->eps            = NULL;
 
 	left_comm  = __mpc_lowcomm_communicator_from_predefined(left_comm);
 	right_comm = __mpc_lowcomm_communicator_from_predefined(right_comm);
