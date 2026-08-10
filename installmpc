@@ -1554,10 +1554,12 @@ do
 		#### BXI ##########
 		--with-bxi)
 			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --with-bxi=2"
+			add_cmake_opt "-DMPC_BXI_VERSION=2"
 			;;
 		--with-bxi=*)
 			extractParamValue 'BXI_PREFIX' 'with-bxi' "$arg"
 			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --with-bxi=${BXI_PREFIX}"
+			add_cmake_opt "-DMPC_BXI_VERSION=${BXI_PREFIX}"
 			;;
 		--ofi=*)
 			extractAndAddPackageOption 'OFI_BUILD_PARAMETERS' 'ofi=' "$arg"
@@ -1674,6 +1676,7 @@ do
 			;;
         --disable-openshmem)
 			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --disable-openshmem"
+			add_cmake_opt "-DMPC_ENABLE_OPENSHMEM=OFF"
             ;;
 		--disable-romio)
 			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --disable-mpiio"
