@@ -98,7 +98,7 @@ Installation:
     - echo "Step run from ${CI_PCVS_DIR}"
     - cp -r ${GL_MPC_CI_ROOT_PATH}/.pcvs .
     - |
-      if [ $USE_ONLY_NETWORK == "true" ]; then
+      if [ "$USE_ONLY_NETWORK" == "true" ]; then
         echo "args: '-net=ptlverbs'" >> .pcvs/runtime/mpc.yml
         cat .pcvs/runtime/mpc.yml
       fi
