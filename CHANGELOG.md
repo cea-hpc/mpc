@@ -6,6 +6,9 @@ All notable changes to this project will be documented in this file. The format 
 
 ### Added
 
+- **Build**
+  - Added support for building MPC with cmake. Use `installmpc --cmake`.
+
 ### Changed
 
 ### Removed
