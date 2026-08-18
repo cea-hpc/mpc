@@ -1,38 +1,29 @@
 cmake_minimum_required(VERSION 3.20.3)
 
 # ------------------------------------------------------------------
-# Version extraction from .VERSION file
+# Version extraction using config/mpc_get_version.sh
 # ------------------------------------------------------------------
-file(STRINGS "${CMAKE_CURRENT_SOURCE_DIR}/.VERSION" _VERSION_LINES)
-foreach(_LINE IN LISTS _VERSION_LINES)
-    if(_LINE MATCHES "^major=([0-9]+)$")
-        set(_MPC_VERSION_MAJOR "${CMAKE_MATCH_1}")
-    elseif(_LINE MATCHES "^minor=([0-9]+)$")
-        set(_MPC_VERSION_MINOR "${CMAKE_MATCH_1}")
-    elseif(_LINE MATCHES "^patch=([0-9]+)$")
-        set(_MPC_VERSION_PATCH "${CMAKE_MATCH_1}")
-    endif()
-endforeach()
-set(_MPC_VERSION_TAINT "")
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/.git")
-    execute_process(
-        COMMAND git -C "${CMAKE_CURRENT_SOURCE_DIR}" rev-parse --short HEAD
-        OUTPUT_VARIABLE _MPC_GIT_HASH
-        OUTPUT_STRIP_TRAILING_WHITESPACE
-        ERROR_QUIET
-    )
-    if(_MPC_GIT_HASH)
-        set(_MPC_VERSION_TAINT "@${_MPC_GIT_HASH}")
-        execute_process(
-            COMMAND git -C "${CMAKE_CURRENT_SOURCE_DIR}" diff --quiet
-            RESULT_VARIABLE _MPC_GIT_DIRTY
-            ERROR_QUIET
-        )
-        if(NOT _MPC_GIT_DIRTY EQUAL 0)
-            set(_MPC_VERSION_TAINT "${_MPC_VERSION_TAINT}-dirty")
-        endif()
-    endif()
-endif()
+set(_MPC_VERSION_SCRIPT "${CMAKE_CURRENT_SOURCE_DIR}/config/mpc_get_version.sh")
+execute_process(
+    COMMAND bash ${_MPC_VERSION_SCRIPT} --major
+    OUTPUT_VARIABLE _MPC_VERSION_MAJOR
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+execute_process(
+    COMMAND bash ${_MPC_VERSION_SCRIPT} --minor
+    OUTPUT_VARIABLE _MPC_VERSION_MINOR
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+execute_process(
+    COMMAND bash ${_MPC_VERSION_SCRIPT} --patch
+    OUTPUT_VARIABLE _MPC_VERSION_PATCH
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+execute_process(
+    COMMAND bash ${_MPC_VERSION_SCRIPT} --taint
+    OUTPUT_VARIABLE _MPC_VERSION_TAINT
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+)
 set(MPC_VERSION_MAJOR "${_MPC_VERSION_MAJOR}")
 set(MPC_VERSION_MINOR "${_MPC_VERSION_MINOR}")
 set(MPC_VERSION_PATCH "${_MPC_VERSION_PATCH}")
