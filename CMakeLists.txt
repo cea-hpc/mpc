@@ -282,6 +282,16 @@ add_subdirectory(src)
 add_subdirectory(pkgconfig)
 
 # ------------------------------------------------------------------
+# Install CMake package config and example files
+# ------------------------------------------------------------------
+install(FILES cmake/mpcframework-config.cmake
+    DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/mpcframework/cmake
+)
+install(FILES cmake/example/CMakeLists.txt cmake/example/t.c
+    DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/mpcframework/cmake/example
+)
+
+# ------------------------------------------------------------------
 # Summary (display)
 # ------------------------------------------------------------------
 message(STATUS "")
