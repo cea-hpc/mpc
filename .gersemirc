@@ -1,0 +1,3 @@
+line_length: 120
+list_expansion: favour-inlining
+warn_about_unknown_commands: false
