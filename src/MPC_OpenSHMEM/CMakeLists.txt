@@ -2,19 +2,15 @@
 # Builds libmpcopenshmem shared library
 
 # OpenSHMEM sources
-set(MPC_OPENSHMEM_SOURCES
-    src/mpc_openshmem.c
-    src/mpc_openshmem_elf.c
-    src/mpc_openshmem_memory.c
-)
+set(MPC_OPENSHMEM_SOURCES src/mpc_openshmem.c src/mpc_openshmem_elf.c src/mpc_openshmem_memory.c)
 
 # Create the shared library
 add_library(mpcopenshmem SHARED ${MPC_OPENSHMEM_SOURCES})
 
 # Include directories
-target_include_directories(mpcopenshmem
-    PUBLIC
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
+target_include_directories(
+    mpcopenshmem
+    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src
         ${CMAKE_SOURCE_DIR}/src/include
@@ -31,29 +27,20 @@ target_include_directories(mpcopenshmem
 )
 
 # Link dependencies
-target_link_libraries(mpcopenshmem
-    PRIVATE
-        mpclowcomm
-        ${CMAKE_RT_LIBS}
-)
+target_link_libraries(mpcopenshmem PRIVATE mpclowcomm ${CMAKE_RT_LIBS})
 
 # Set output name
-set_target_properties(mpcopenshmem PROPERTIES
-    OUTPUT_NAME mpcopenshmem
-    VERSION ${MPC_VERSION}
-    SOVERSION ${MPC_VERSION_MAJOR}
-    POSITION_INDEPENDENT_CODE ON
+set_target_properties(
+    mpcopenshmem
+    PROPERTIES
+        OUTPUT_NAME mpcopenshmem
+        VERSION ${MPC_VERSION}
+        SOVERSION ${MPC_VERSION_MAJOR}
+        POSITION_INDEPENDENT_CODE ON
 )
 
 # Install library
-install(TARGETS mpcopenshmem
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-)
+install(TARGETS mpcopenshmem LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 # Install public headers
-install(FILES
-    include/shmem.h
-    include/pshmem.h
-    include/shmemx.h
-    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mpcframework
-)
+install(FILES include/shmem.h include/pshmem.h include/shmemx.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mpcframework)

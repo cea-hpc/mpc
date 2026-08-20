@@ -30,9 +30,10 @@ configure_file(libmpclowcomm.pc.in "${CMAKE_CURRENT_BINARY_DIR}/libmpclowcomm.pc
 configure_file(libmpcmpi.pc.in "${CMAKE_CURRENT_BINARY_DIR}/libmpcmpi.pc" @ONLY)
 
 # Install .pc files
-install(FILES
-    "${CMAKE_CURRENT_BINARY_DIR}/libmpcthread.pc"
-    "${CMAKE_CURRENT_BINARY_DIR}/libmpclowcomm.pc"
-    "${CMAKE_CURRENT_BINARY_DIR}/libmpcmpi.pc"
+install(
+    FILES
+        "${CMAKE_CURRENT_BINARY_DIR}/libmpcthread.pc"
+        "${CMAKE_CURRENT_BINARY_DIR}/libmpclowcomm.pc"
+        "${CMAKE_CURRENT_BINARY_DIR}/libmpcmpi.pc"
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig
 )

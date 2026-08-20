@@ -31,9 +31,9 @@ endif()
 add_library(mpcthread SHARED ${MPC_THREADS_SOURCES})
 
 # Include directories
-target_include_directories(mpcthread
-    PUBLIC
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
+target_include_directories(
+    mpcthread
+    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src
         ${CMAKE_SOURCE_DIR}/src/MPC_Common/include
@@ -50,16 +50,16 @@ target_include_directories(mpcthread
 )
 
 if(MPC_ENABLE_LOWCOMM)
-    target_include_directories(mpcthread
-        PRIVATE
-            ${CMAKE_SOURCE_DIR}/src/MPC_Lowcomm/src
-            ${CMAKE_SOURCE_DIR}/src/MPC_Lowcomm/include
+    target_include_directories(
+        mpcthread
+        PRIVATE ${CMAKE_SOURCE_DIR}/src/MPC_Lowcomm/src ${CMAKE_SOURCE_DIR}/src/MPC_Lowcomm/include
     )
     # Include dirs only; do NOT link mpclowcomm (circular dep resolved at runtime)
 endif()
 
 if(MPC_ENABLE_MPI)
-    target_include_directories(mpcthread
+    target_include_directories(
+        mpcthread
         PRIVATE
             ${CMAKE_SOURCE_DIR}/src/MPC_MPI/include
             ${CMAKE_SOURCE_DIR}/src/MPC_MPI/src
@@ -68,7 +68,8 @@ if(MPC_ENABLE_MPI)
 endif()
 
 if(MPC_ENABLE_OPENMP)
-    target_include_directories(mpcthread
+    target_include_directories(
+        mpcthread
         PRIVATE
             ${CMAKE_SOURCE_DIR}/src/MPC_OpenMP/include
             ${CMAKE_SOURCE_DIR}/src/MPC_OpenMP/src
@@ -80,7 +81,8 @@ endif()
 
 # Link dependencies
 # Link OBJECT targets for include dirs/compile defs, embed OBJECTS for actual code
-target_link_libraries(mpcthread
+target_link_libraries(
+    mpcthread
     PRIVATE
         mpclaunch
         mpctopology
@@ -92,11 +94,7 @@ target_link_libraries(mpcthread
         ${HWLOC_LIBRARIES}
         Threads::Threads
 )
-target_sources(mpcthread PRIVATE
-    $<TARGET_OBJECTS:mpclaunch>
-    $<TARGET_OBJECTS:mpctopology>
-    $<TARGET_OBJECTS:mpccommon>
-)
+target_sources(mpcthread PRIVATE $<TARGET_OBJECTS:mpclaunch> $<TARGET_OBJECTS:mpctopology> $<TARGET_OBJECTS:mpccommon>)
 target_link_options(mpcthread PRIVATE ${OPA_LDFLAGS} ${HWLOC_LDFLAGS})
 if(MPCALLOC_FOUND)
     target_link_libraries(mpcthread PRIVATE ${ALLOC_LIBS_CMAKE})
@@ -113,23 +111,16 @@ if(MPC_CUDA_ENABLED)
 endif()
 
 # Set output name
-set_target_properties(mpcthread PROPERTIES
-    OUTPUT_NAME mpcthread
-    VERSION ${MPC_VERSION}
-    SOVERSION ${MPC_VERSION_MAJOR}
-    POSITION_INDEPENDENT_CODE ON
+set_target_properties(
+    mpcthread
+    PROPERTIES OUTPUT_NAME mpcthread VERSION ${MPC_VERSION} SOVERSION ${MPC_VERSION_MAJOR} POSITION_INDEPENDENT_CODE ON
 )
 
 # Install library
-install(TARGETS mpcthread
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-)
+install(TARGETS mpcthread LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 # Install public headers
-install(FILES
-    include/mpc_thread.h
-    include/mpc_thread_engines.h
-    include/mpcposix/pthread.h
-    include/mpcposix/semaphore.h
+install(
+    FILES include/mpc_thread.h include/mpc_thread_engines.h include/mpcposix/pthread.h include/mpcposix/semaphore.h
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mpcframework
 )

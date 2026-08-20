@@ -40,9 +40,9 @@ set(MPC_OPENMP_SOURCES
 add_library(mpcomp SHARED ${MPC_OPENMP_SOURCES})
 
 # Include directories
-target_include_directories(mpcomp
-    PUBLIC
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
+target_include_directories(
+    mpcomp
+    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src
         ${CMAKE_SOURCE_DIR}/src/MPC_Common/include
@@ -69,7 +69,8 @@ endif()
 
 # Link dependencies
 # Link OBJECT targets for include dirs/compile defs, embed OBJECTS for actual code
-target_link_libraries(mpcomp
+target_link_libraries(
+    mpcomp
     PRIVATE
         mpclaunch
         mpctopology
@@ -82,11 +83,7 @@ target_link_libraries(mpcomp
         ${HWLOC_LIBRARIES}
         Threads::Threads
 )
-target_sources(mpcomp PRIVATE
-    $<TARGET_OBJECTS:mpclaunch>
-    $<TARGET_OBJECTS:mpctopology>
-    $<TARGET_OBJECTS:mpccommon>
-)
+target_sources(mpcomp PRIVATE $<TARGET_OBJECTS:mpclaunch> $<TARGET_OBJECTS:mpctopology> $<TARGET_OBJECTS:mpccommon>)
 target_link_options(mpcomp PRIVATE ${OPA_LDFLAGS} ${HWLOC_LDFLAGS})
 if(MPCALLOC_FOUND)
     target_link_libraries(mpcomp PRIVATE ${ALLOC_LIBS_CMAKE})
@@ -107,33 +104,34 @@ if(VMEM_FOUND)
 endif()
 
 # Set output name & link flags
-set_target_properties(mpcomp PROPERTIES
-    OUTPUT_NAME mpcomp
-    VERSION ${MPC_VERSION}
-    SOVERSION ${MPC_VERSION_MAJOR}
-    POSITION_INDEPENDENT_CODE ON
-    LINK_FLAGS "-Wl,--version-script=${CMAKE_CURRENT_SOURCE_DIR}/version_gomp.txt"
+set_target_properties(
+    mpcomp
+    PROPERTIES
+        OUTPUT_NAME mpcomp
+        VERSION ${MPC_VERSION}
+        SOVERSION ${MPC_VERSION_MAJOR}
+        POSITION_INDEPENDENT_CODE ON
+        LINK_FLAGS "-Wl,--version-script=${CMAKE_CURRENT_SOURCE_DIR}/version_gomp.txt"
 )
 
 # Install library
-install(TARGETS mpcomp
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-)
+install(TARGETS mpcomp LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 # Install public headers
-install(FILES
-    include/omp_abi.h
-    include/mpc_omp_abi.h
-    include/mpc_omp_task_label.h
-    include/mpc_omp_interop_mpi.h
-    include/mpc_omp_interop_cuda.h
-    include/mpc_omp.h
-    include/mpc_omp_task_property.h
-    include/mpc_omp_task_trace.h
-    include/omp.h
-    include/ompt.h
-    include/omp-tools.h
-    include/omp_gomp_constants.h
+install(
+    FILES
+        include/omp_abi.h
+        include/mpc_omp_abi.h
+        include/mpc_omp_task_label.h
+        include/mpc_omp_interop_mpi.h
+        include/mpc_omp_interop_cuda.h
+        include/mpc_omp.h
+        include/mpc_omp_task_property.h
+        include/mpc_omp_task_trace.h
+        include/omp.h
+        include/ompt.h
+        include/omp-tools.h
+        include/omp_gomp_constants.h
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mpcframework
 )
 
@@ -141,12 +139,9 @@ install(FILES
 # These allow linking with -liomp5, -lgomp, -lomp
 foreach(_COMPAT_LIB iomp5 gomp omp)
     add_library(${_COMPAT_LIB} SHARED src/fakelib/fakelib.c)
-    set_target_properties(${_COMPAT_LIB} PROPERTIES
-        VERSION ${MPC_VERSION}
-        SOVERSION ${MPC_VERSION_MAJOR}
-        POSITION_INDEPENDENT_CODE ON
+    set_target_properties(
+        ${_COMPAT_LIB}
+        PROPERTIES VERSION ${MPC_VERSION} SOVERSION ${MPC_VERSION_MAJOR} POSITION_INDEPENDENT_CODE ON
     )
-    install(TARGETS ${_COMPAT_LIB}
-        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    )
+    install(TARGETS ${_COMPAT_LIB} LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
 endforeach()

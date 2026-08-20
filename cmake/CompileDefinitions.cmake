@@ -123,7 +123,7 @@ if(MPC_ENABLE_CMA AND HAVE_UIO_H)
     set(MPC_USE_CMA 1)
 endif()
 
-if (OFI_DRIVER_ENABLED)
+if(OFI_DRIVER_ENABLED)
     set(MPC_USE_OFI 1)
 else()
     set(MPC_USE_OFI 0)

@@ -11,7 +11,8 @@ set(MPC_LAUNCH_SOURCES
 
 # Hydra launcher sources (conditional)
 if(MPC_LAUNCHER STREQUAL "HYDRA")
-    list(APPEND MPC_LAUNCH_SOURCES
+    list(
+        APPEND MPC_LAUNCH_SOURCES
         src/hydra_client/safestr2.c
         src/hydra_client/simple_pmi.c
         src/hydra_client/simple_pmiutil.c
@@ -21,8 +22,7 @@ if(MPC_LAUNCHER STREQUAL "HYDRA")
         src/hydra_client/safestr2.c
         src/hydra_client/simple_pmi.c
         src/hydra_client/simple_pmiutil.c
-        PROPERTIES
-        COMPILE_DEFINITIONS "HAVE_STDLIB_H=1;HAVE_UNISTD_H=1;HAVE_SYS_SOCKET_H=1"
+        PROPERTIES COMPILE_DEFINITIONS "HAVE_STDLIB_H=1;HAVE_UNISTD_H=1;HAVE_SYS_SOCKET_H=1"
     )
 endif()
 
@@ -31,9 +31,9 @@ add_library(mpclaunch OBJECT ${MPC_LAUNCH_SOURCES})
 set_target_properties(mpclaunch PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 # Include directories (PUBLIC for propagation to consumers)
-target_include_directories(mpclaunch
-    PUBLIC
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
+target_include_directories(
+    mpclaunch
+    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include
     PRIVATE
         ${CMAKE_SOURCE_DIR}/src/MPC_Common/include
         ${CMAKE_BINARY_DIR}/src/MPC_Common/include
@@ -49,14 +49,12 @@ target_include_directories(mpclaunch
 )
 
 if(MPC_LAUNCHER STREQUAL "HYDRA")
-    target_include_directories(mpclaunch
-        PRIVATE
-            ${CMAKE_CURRENT_SOURCE_DIR}/src/hydra_client
-    )
+    target_include_directories(mpclaunch PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src/hydra_client)
 endif()
 
 if(MPC_ENABLE_THREADS)
-    target_include_directories(mpclaunch
+    target_include_directories(
+        mpclaunch
         PRIVATE
             ${CMAKE_SOURCE_DIR}/src/MPC_Threads/src
             ${CMAKE_SOURCE_DIR}/src/MPC_Threads/include
@@ -65,14 +63,10 @@ if(MPC_ENABLE_THREADS)
 endif()
 
 # Link dependencies (PUBLIC for include propagation)
-target_link_libraries(mpclaunch
-    PUBLIC
-        mpctopology
-    PRIVATE
-        ${CMAKE_DL_LIBS}
-        ${CMAKE_RT_LIBS}
-        ${OPA_LIBRARIES}
-        Threads::Threads
+target_link_libraries(
+    mpclaunch
+    PUBLIC mpctopology
+    PRIVATE ${CMAKE_DL_LIBS} ${CMAKE_RT_LIBS} ${OPA_LIBRARIES} Threads::Threads
 )
 
 if(MPC_LAUNCHER STREQUAL "PMIX")
@@ -88,7 +82,4 @@ if(MPC_LAUNCHER STREQUAL "HYDRA")
 endif()
 
 # Install public headers
-install(FILES
-    include/mpc_launch_pmi.h
-    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mpcframework
-)
+install(FILES include/mpc_launch_pmi.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mpcframework)

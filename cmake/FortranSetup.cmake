@@ -7,7 +7,8 @@
 # ------------------------------------------------------------------
 if(MPC_ENABLE_FORTRAN)
     file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/fortran_test_check.f90" "PROGRAM foo\nEND PROGRAM\n")
-    try_compile(FORTRAN_ARG_MISMATCH_SUPPORTED
+    try_compile(
+        FORTRAN_ARG_MISMATCH_SUPPORTED
         "${CMAKE_CURRENT_BINARY_DIR}/fortran_test_compile"
         "${CMAKE_CURRENT_BINARY_DIR}/fortran_test_check.f90"
         CMAKE_FLAGS "CMAKE_TRY_COMPILE_TARGET_TYPE:STATIC_LIBRARY"
@@ -27,8 +28,12 @@ endif()
 # Fortran symbol naming convention detection (matches autotools)
 # ------------------------------------------------------------------
 if(MPC_ENABLE_FORTRAN)
-    file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/fortran_name_test.f90" "      subroutine fortran_name()\n      end subroutine\n")
-    try_compile(FORTRAN_NAME_COMPILE
+    file(
+        WRITE "${CMAKE_CURRENT_BINARY_DIR}/fortran_name_test.f90"
+        "      subroutine fortran_name()\n      end subroutine\n"
+    )
+    try_compile(
+        FORTRAN_NAME_COMPILE
         "${CMAKE_CURRENT_BINARY_DIR}/fortran_name_test"
         "${CMAKE_CURRENT_BINARY_DIR}/fortran_name_test.f90"
         CMAKE_FLAGS "CMAKE_TRY_COMPILE_TARGET_TYPE:STATIC_LIBRARY"

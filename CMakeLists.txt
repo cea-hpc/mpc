@@ -52,7 +52,8 @@ if(NOT CMAKE_Fortran_COMPILER)
     endif()
 endif()
 
-project(MPC
+project(
+    MPC
     VERSION ${_MPC_VERSION_MAJOR}.${_MPC_VERSION_MINOR}.${_MPC_VERSION_PATCH}
     DESCRIPTION "Multi-Processor Computing Framework"
     HOMEPAGE_URL "https://mpc.hpcframework.com"
@@ -84,7 +85,14 @@ endif()
 set(MPC_TARGET_ARCHITECTURE "${CMAKE_SYSTEM_PROCESSOR}")
 string(TOLOWER "${MPC_TARGET_ARCHITECTURE}" MPC_TARGET_ARCHITECTURE)
 
-set(MPC_SUPPORTED_ARCHITECTURES "x86_64" "ia64" "i686" "arm" "aarch64" "powerpc64")
+set(MPC_SUPPORTED_ARCHITECTURES
+    "x86_64"
+    "ia64"
+    "i686"
+    "arm"
+    "aarch64"
+    "powerpc64"
+)
 list(FIND MPC_SUPPORTED_ARCHITECTURES "${MPC_TARGET_ARCHITECTURE}" _ARCH_INDEX)
 if(_ARCH_INDEX EQUAL -1)
     message(FATAL_ERROR "Architecture ${MPC_TARGET_ARCHITECTURE} is not supported")
@@ -215,11 +223,7 @@ include(cmake/CompileDefinitions.cmake)
 # ------------------------------------------------------------------
 # Generate config headers
 # ------------------------------------------------------------------
-configure_file(
-    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/mpc_config.h.in"
-    "${CMAKE_CURRENT_BINARY_DIR}/mpc_config.h"
-    @ONLY
-)
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/cmake/mpc_config.h.in" "${CMAKE_CURRENT_BINARY_DIR}/mpc_config.h" @ONLY)
 
 # Generate mpc_threads_config.h (needed by MPC_Common when threads enabled)
 if(MPC_ENABLE_THREADS)
@@ -231,17 +235,14 @@ if(MPC_ENABLE_THREADS)
 endif()
 
 # Generate mpc.h (needed by MPC_Lowcomm and others)
-configure_file(
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/include/mpc.h.in"
-    "${CMAKE_CURRENT_BINARY_DIR}/src/include/mpc.h"
-    @ONLY
-)
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/src/include/mpc.h.in" "${CMAKE_CURRENT_BINARY_DIR}/src/include/mpc.h" @ONLY)
 
 # ------------------------------------------------------------------
 # Summary (setup)
 # ------------------------------------------------------------------
 string(JOIN " " MPC_OPT_FLAGS_STR ${MPC_OPT_FLAGS})
-set(MPC_CONFIG_RESULT "
+set(MPC_CONFIG_RESULT
+    "
 ########## MPC Configuration Summary ##########
   Install prefix : ${CMAKE_INSTALL_PREFIX}
   Architecture   : ${MPC_TARGET_ARCHITECTURE}
@@ -264,7 +265,8 @@ set(MPC_CONFIG_RESULT "
   DMTCP          : ${MPC_HAVE_DMTCP}
   Compil Flags   : ${MPC_OPT_FLAGS_STR}
 #############################################
-")
+"
+)
 
 # ------------------------------------------------------------------
 # Subdirectories
@@ -275,10 +277,9 @@ add_subdirectory(pkgconfig)
 # ------------------------------------------------------------------
 # Install CMake package config and example files
 # ------------------------------------------------------------------
-install(FILES cmake/mpcframework-config.cmake
-    DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/mpcframework/cmake
-)
-install(FILES cmake/example/CMakeLists.txt cmake/example/t.c
+install(FILES cmake/mpcframework-config.cmake DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/mpcframework/cmake)
+install(
+    FILES cmake/example/CMakeLists.txt cmake/example/t.c
     DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/mpcframework/cmake/example
 )
 

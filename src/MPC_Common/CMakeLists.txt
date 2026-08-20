@@ -24,7 +24,8 @@ set(MPC_COMMON_SOURCES
 
 # Profiler sources (optional)
 if(MPC_ENABLE_PROFILER)
-    list(APPEND MPC_COMMON_SOURCES
+    list(
+        APPEND MPC_COMMON_SOURCES
         src/profiler/sctk_internal_profiler.c
         src/profiler/sctk_performance_tree.c
         src/profiler/sctk_profile_meta.c
@@ -60,8 +61,7 @@ add_custom_command(
     OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/src/elf_64.c"
     COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_CURRENT_BINARY_DIR}/src"
     COMMAND ${CMAKE_COMMAND} -E chdir "${CMAKE_CURRENT_BINARY_DIR}/src" ${CMAKE_CURRENT_SOURCE_DIR}/src/gen_elf64
-    DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/elf_32.c"
-            "${CMAKE_CURRENT_SOURCE_DIR}/src/gen_elf64"
+    DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/elf_32.c" "${CMAKE_CURRENT_SOURCE_DIR}/src/gen_elf64"
     COMMENT "Generating elf_64.c from elf_32.c"
 )
 list(APPEND MPC_COMMON_SOURCES "${CMAKE_CURRENT_BINARY_DIR}/src/elf_64.c")
@@ -71,11 +71,9 @@ add_library(mpccommon OBJECT ${MPC_COMMON_SOURCES})
 set_target_properties(mpccommon PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 # Include directories (PUBLIC for propagation to consumers)
-target_include_directories(mpccommon
-    PUBLIC
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
-        ${CMAKE_CURRENT_BINARY_DIR}/include
-        ${OPA_INCLUDE_DIRS}
+target_include_directories(
+    mpccommon
+    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include ${CMAKE_CURRENT_BINARY_DIR}/include ${OPA_INCLUDE_DIRS}
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src
         ${CMAKE_SOURCE_DIR}/src/MPC_Arch/include
@@ -90,14 +88,12 @@ if(MPCALLOC_FOUND)
 endif()
 
 if(MPC_ENABLE_PROFILER)
-    target_include_directories(mpccommon
-        PRIVATE
-            ${CMAKE_SOURCE_DIR}/src/MPC_MPI/src/profiler
-    )
+    target_include_directories(mpccommon PRIVATE ${CMAKE_SOURCE_DIR}/src/MPC_MPI/src/profiler)
 endif()
 
 if(MPC_ENABLE_THREADS)
-    target_include_directories(mpccommon
+    target_include_directories(
+        mpccommon
         PRIVATE
             ${CMAKE_SOURCE_DIR}/src/MPC_Threads/src
             ${CMAKE_SOURCE_DIR}/src/MPC_Threads/include
@@ -106,12 +102,7 @@ if(MPC_ENABLE_THREADS)
 endif()
 
 # Link dependencies (PUBLIC for include propagation, PRIVATE for compile-time only)
-target_link_libraries(mpccommon
-    PUBLIC
-        mpcarch
-    PRIVATE
-        ${OPA_LIBRARIES}
-)
+target_link_libraries(mpccommon PUBLIC mpcarch PRIVATE ${OPA_LIBRARIES})
 
 if(UNW_FOUND)
     target_include_directories(mpccommon PRIVATE ${UNW_INCLUDE_DIRS})
@@ -119,13 +110,14 @@ if(UNW_FOUND)
 endif()
 
 # Install public headers
-install(FILES
-    "${CMAKE_CURRENT_BINARY_DIR}/include/mpc_common_types.h"
-    include/mpc_common_debugger.h
-    include/mpc_common_aio.h
-    include/mpc_common_recycler.h
-    include/mpc_common_bit.h
-    include/uthash.h
-    include/mpc_common_progress.h
+install(
+    FILES
+        "${CMAKE_CURRENT_BINARY_DIR}/include/mpc_common_types.h"
+        include/mpc_common_debugger.h
+        include/mpc_common_aio.h
+        include/mpc_common_recycler.h
+        include/mpc_common_bit.h
+        include/uthash.h
+        include/mpc_common_progress.h
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mpcframework
 )
