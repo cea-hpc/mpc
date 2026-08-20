@@ -32,9 +32,8 @@ SCRIPTPATH=$(dirname "$SCRIPT")
 # - MPC_SHARE_DIR
 # - FC
 # - CC
-# - MPC_GENERATION_DATE
 # - CFLAGS
-eval $("${SCRIPTPATH}/mpc_cflags" --sh -p -s -fc -cc -f -t --fortran)
+eval $("${SCRIPTPATH}/mpc_cflags" --sh -p -s -fc -cc -f --fortran)
 
 COMPILER="$FC"
 

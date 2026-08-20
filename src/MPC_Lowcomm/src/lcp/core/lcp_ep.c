@@ -39,6 +39,7 @@
 #include "rail.h"
 #include <assert.h>
 #include <mpc_common_helper.h>
+#include "sctk_alloc.h"
 
 #define MPC_MODULE "LCP/EP"
 

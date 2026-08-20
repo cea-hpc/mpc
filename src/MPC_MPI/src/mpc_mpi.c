@@ -43,6 +43,7 @@
 #include "mpi_conf.h"
 
 #include "mpc_mpi_halo.h"
+#include "mpc_mpi_fortran.h"
 #include "osc_mpi_internal.h"
 
 

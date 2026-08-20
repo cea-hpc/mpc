@@ -327,10 +327,11 @@
 		int MPIO_Testsome(int incount, MPIO_Request array_of_requests[], int *outcount,
 		                  int array_of_indices[], MPI_Status array_of_statuses[]) ROMIO_API_PUBLIC;
 
+#endif /* HAVE_MPI_GREQUEST */
+
+	/* Request conversion functions (always needed for Fortran bindings) */
 		MPI_Fint MPIO_Request_c2f(MPIO_Request request) ROMIO_API_PUBLIC;
 		MPIO_Request MPIO_Request_f2c(MPI_Fint request) ROMIO_API_PUBLIC;
-
-#endif /* HAVE_MPI_GREQUEST */
 
 	/* info functions if not defined in the MPI implementation */
 #ifndef HAVE_MPI_INFO
@@ -541,10 +542,11 @@ MPI_Fint PMPI_File_c2f(MPI_File) ROMIO_API_PUBLIC;
 	int PMPIO_Waitsome(int, MPIO_Request *, int *, int *, MPI_Status *) ROMIO_API_PUBLIC;
 	int PMPIO_Testsome(int, MPIO_Request *, int *, int *, MPI_Status *) ROMIO_API_PUBLIC;
 
+#endif /* HAVE_MPI_GREQUEST */
+
+/* PMPI Request conversion functions (always needed for Fortran bindings) */
 	MPI_Fint     PMPIO_Request_c2f(MPIO_Request) ROMIO_API_PUBLIC;
 	MPIO_Request PMPIO_Request_f2c(MPI_Fint) ROMIO_API_PUBLIC;
-
-#endif /* HAVE_MPI_GREQUEST */
 
 /* info functions if not defined in the MPI implementation */
 #ifndef HAVE_MPI_INFO

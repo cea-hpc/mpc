@@ -98,7 +98,7 @@ Installation:
     - echo "Step run from ${CI_PCVS_DIR}"
     - cp -r ${GL_MPC_CI_ROOT_PATH}/.pcvs .
     - |
-      if [ $USE_ONLY_NETWORK == "true" ]; then
+      if [ "$USE_ONLY_NETWORK" == "true" ]; then
         echo "args: '-net=ptlverbs'" >> .pcvs/runtime/mpc.yml
         cat .pcvs/runtime/mpc.yml
       fi
@@ -336,7 +336,7 @@ MPICH:
   stage: 'Extended Network Testing'
   extends: ['.prepare_mpc_ci', '.extended_testing_rules', '.extended_MPI_deps']
   script:
-    - ${PCVS_COMMAND} "${GL_PCVS_BENCHMARKS_ROOT_PATH}/MPI/mpich-3.4.2"
+    - ${PCVS_COMMAND} "${GL_PCVS_BENCHMARKS_ROOT_PATH}/MPI/MPICH"
 
 PARCO:
   stage: 'Extended Network Testing'
@@ -423,7 +423,7 @@ MPI OSU:
   stage: 'Benchmarks'
   extends: ['.prepare_mpc_ci', '.extended_testing_rules', '.extended_MPI_deps']
   script:
-    - ${PCVS_COMMAND_BENCH} "${GL_PCVS_BENCHMARKS_ROOT_PATH}/performance/OSU" --run-filter MPI
+    - ${PCVS_COMMAND_BENCH} "${GL_PCVS_BENCHMARKS_ROOT_PATH}/Performance/OSU" --run-filter MPI
 
 
 # Applications
@@ -432,20 +432,20 @@ Corals:
   extends: ['.prepare_mpc_ci', '.extended_testing_rules', '.extended_all_deps']
   script:
     - |
-      ${PCVS_COMMAND} "${GL_PCVS_BENCHMARKS_ROOT_PATH}/applications/Corals/AMG2013"\
-                      "${GL_PCVS_BENCHMARKS_ROOT_PATH}/applications/Corals/UMT2013"\
-                      "${GL_PCVS_BENCHMARKS_ROOT_PATH}/applications/Corals/graph500-2.1.4"\
-                      "${GL_PCVS_BENCHMARKS_ROOT_PATH}/applications/Corals/mcb-20130723"
+      ${PCVS_COMMAND} "${GL_PCVS_BENCHMARKS_ROOT_PATH}/Applications/Corals/AMG2013"\
+                      "${GL_PCVS_BENCHMARKS_ROOT_PATH}/Applications/Corals/UMT2013"\
+                      "${GL_PCVS_BENCHMARKS_ROOT_PATH}/Applications/Corals/graph500-2.1.4"\
+                      "${GL_PCVS_BENCHMARKS_ROOT_PATH}/Applications/Corals/mcb-20130723"
 
 Mantevo:
   stage: 'Applications'
   extends: ['.prepare_mpc_ci', '.extended_testing_rules', '.extended_all_deps']
   script:
     - |
-      ${PCVS_COMMAND} "${GL_PCVS_BENCHMARKS_ROOT_PATH}/applications/Mantevo/CloverLeaf"\
-                      "${GL_PCVS_BENCHMARKS_ROOT_PATH}/applications/Mantevo/HPCCG"\
-                      "${GL_PCVS_BENCHMARKS_ROOT_PATH}/applications/Mantevo/miniAMR"\
-                      "${GL_PCVS_BENCHMARKS_ROOT_PATH}/applications/Mantevo/miniGhost"
+      ${PCVS_COMMAND} "${GL_PCVS_BENCHMARKS_ROOT_PATH}/Applications/Mantevo/CloverLeaf"\
+                      "${GL_PCVS_BENCHMARKS_ROOT_PATH}/Applications/Mantevo/HPCCG"\
+                      "${GL_PCVS_BENCHMARKS_ROOT_PATH}/Applications/Mantevo/miniAMR"\
+                      "${GL_PCVS_BENCHMARKS_ROOT_PATH}/Applications/Mantevo/miniGhost"
 
 
 ############################################

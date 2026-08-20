@@ -7,6 +7,7 @@
 #include <mpc_mpi_comm_lib.h>
 #include <mpc_launch_pmi.h>
 #include <mpc_common_rank.h>
+#include <mpc_mpi_fortran.h>
 
 /***********
  * YIEDING *

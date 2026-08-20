@@ -1,10 +1,10 @@
 **/.vscode/**
 BUILD/*
-build/*
+build*/*
 doc/build/*
 builddir/*
 INSTALL/*
-install/*
+install*/*
 installdir/*
 autom4te.cache/*
 /mpc_config.h.in~

@@ -122,7 +122,7 @@ void mpc_lowcomm_release_protocol_per_task()
 
 void mpc_lowcomm_ep_free(mpc_lowcomm_ep_t *eps)
 {
-	free(eps);
+	sctk_free(eps);
 }
 
 #endif
