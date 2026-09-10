@@ -19,7 +19,11 @@ endif()
 
 # Native architecture optimization
 if(MPC_ENABLE_OPT_NATIVE)
-    list(APPEND MPC_OPT_FLAGS "-march=native")
+    if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(aarch64|arm64)$")
+        list(APPEND MPC_OPT_FLAGS "-mcpu=native")
+    else()
+        list(APPEND MPC_OPT_FLAGS "-march=native")
+    endif()
 endif()
 
 # ASAN (Address Sanitizer)
