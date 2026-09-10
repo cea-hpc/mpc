@@ -1052,7 +1052,7 @@ static mpc_conf_config_entry_t *__mpc_lowcomm_cli_conf_init(void)
 	/* *INDENT-OFF* */
 	mpc_conf_config_entry_t *cliopt = mpc_conf_config_entry_init("options",
 		PARAM("shm",         ___mpc_lowcomm_cli_conf_option_init("shm",         "tbsmmpi",     "shmmpi",       NULL),                                 MPC_CONF_TYPE, "Combination of TBSM and SHM"),
-#if MPC_USE_OFI && MPC_USE_PORTALS
+#if defined(MPC_USE_OFI) && defined(MPC_USE_PORTALS)
 		PARAM("ptlverbsshm", ___mpc_lowcomm_cli_conf_option_init("ptlverbsshm", "tbsmmpi",     "shmmpi",       "portalsmpi",   "verbsofirail", NULL), MPC_CONF_TYPE, "Default: Combination of Portals, Open Fabric Interface with Verbs and SHM"),
 		PARAM("ptlverbs",    ___mpc_lowcomm_cli_conf_option_init("ptlverbs",    "portalsmpi",  "verbsofirail", NULL),                                 MPC_CONF_TYPE, "Combination of Portals and OFI with Verbs with no shm capabilities"),
 #endif
@@ -1083,11 +1083,11 @@ static mpc_conf_config_entry_t *__mpc_lowcomm_cli_conf_init(void)
 
 static inline void _mpc_lowcomm_net_config_default(void)
 {
-#if MPC_USE_OFI && MPC_USE_PORTALS
+#if defined(MPC_USE_OFI) && defined(MPC_USE_PORTALS)
 		snprintf(__net_config.cli_default_network, MPC_CONF_STRING_SIZE, "ptlverbsshm");
-#elif MPC_USE_PORTALS
+#elif defined(MPC_USE_PORTALS)
 		snprintf(__net_config.cli_default_network, MPC_CONF_STRING_SIZE, "ptlshm");
-#elif MPC_USE_OFI
+#elif defined(MPC_USE_OFI)
 		snprintf(__net_config.cli_default_network, MPC_CONF_STRING_SIZE, "verbsshm");
 #else
 		snprintf(__net_config.cli_default_network, MPC_CONF_STRING_SIZE, "shm");

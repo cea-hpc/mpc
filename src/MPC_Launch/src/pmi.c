@@ -911,7 +911,7 @@ void mpc_launch_pmi_abort(const int return_code)
  */
 int mpc_launch_pmi_get_job_id(uint64_t *id)
 {
-#if MPC_USE_HYDRA
+#ifdef MPC_USE_HYDRA
 		/* in mpich with pmi1, kvs name is used as job id. */
 
 		/* ID is in the form kvs_XXX_X */
