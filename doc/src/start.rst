@@ -52,10 +52,7 @@ Building MPC
 
 To ease the installation process of MPC and its dependencies, an unified
 installation script is provided , ``installmpc``. You can run it from the
-extracted directory. Note that if MPC has been cloned from the Git repository,
-``autoconf`` must be called beforehand to generate proper installation
-architecture (Makefile.in & configure scripts). From a release distribution,
-these files should be already provided.
+extracted directory, whether from a release tarball or a Git clone.
 
 .. code-block:: sh
 

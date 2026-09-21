@@ -30,7 +30,9 @@ installed dependencies are the following :
 
 MPC will look for pre-installed modules although you can specify paths for
 system modules. The option to specify a module path is ``--with-[module]=``.
-The option to disable a module is ``--disable-[module]``
+The option to disable a module is ``--disable-[module]``. When building with
+CMake directly, these map to the ``-DMPC_[MODULE]_PREFIX=`` and
+``-DMPC_ENABLE_[MODULE]=ON|OFF`` cache variables.
 
 Additionally you can specify paths for :
 
@@ -83,7 +85,7 @@ dependencies, one can use ``--<dep>-<arg>``. Here two examples for HWLOC support
 .. code-block:: sh
 
 	$ ./installmpc --with-hwloc=/app/hwloc/
-	$ ./installmpc --hwloc-disable-cuda # forwarded to hwloc configure as --disable-cuda
+	$ ./installmpc --hwloc=--disable-cuda # forwarded to the hwloc configure as --disable-cuda
 
 Beyond these basic options, some useful others are listed and detailed below :
 
@@ -91,9 +93,6 @@ Beyond these basic options, some useful others are listed and detailed below :
   threads and therefore do not need the privatization support
 * ``--enable-debug`` to enable full debugging for MPC purpose. Will build
   MPC in debug mode *AND* will build the GDB support for MPC.
-* ``--disable-prefix-check`` to confirm you want to erase any existing
-  installation specified by $PREFIX. Not used by default to prevent accidental
-  overrides.
 * ``--enable-color`` if MPC should be build with terminal color support.
 
 .. note::
@@ -105,10 +104,13 @@ Beyond these basic options, some useful others are listed and detailed below :
 
 	$ ../installmpc --prefix=$PREFIX -j8 --with-slurm
 
-Any MPC option (which can be found by running ``./configure --help``)
+A small set of MPC options (which can be found by running ``cmake -B BUILD -LH``)
 can be provided when invoking the ``installmpc`` script through the ``--mpc-option``
-argument. Ex:
+or ``--mpcframework`` arguments: only ``--disable-lowcomm``, ``--disable-mpi``
+and ``--disable-threads`` are accepted, any other value is rejected with an
+explicit error. Any other setting must be passed as a named ``installmpc`` flag
+or as a CMake cache variable. Ex:
 
 .. code-block:: console
 
-	$ ./installmpc --prefix=$PREFIX -j8 --mpcframework="--enable-cma"
+	$ ./installmpc --prefix=$PREFIX -j8 --mpcframework="--disable-mpi"

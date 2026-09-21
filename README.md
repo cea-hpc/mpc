@@ -33,7 +33,7 @@ The following prerequisites are required to compile MPC:
 
 - The main archive file from the [Downloads page](https://github.com/cea-hpc/mpc/tags)
 - A **C** compiler (e.g., `gcc`)
-- **GNU Autotools**
+- **CMake** (3.20.3 or higher)
 
 Other dependencies are automatically fetched by the `installmpc` helper script.
 
@@ -89,7 +89,7 @@ $ <path/to/mpc>/installmpc -h
 The most commonly used are
 
 - `--prefix` to specify the installation path
-- `--enable-lsp` to run *bear* and produce a `compile_commands.json` file
+- `--enable-lsp` to produce a `compile_commands.json` file (native CMake export)
 - `--with-slurm` to activate the support of *SLURM* using *PMIx*
 - `--with-hydra` to force *Hydra* support and deactivate *SLURM* support
 - `--process-mode` to deactivate the privatization features and remove the dependency on [MPC Compiler Additions]
@@ -109,13 +109,13 @@ If you decide to install MPC without the helper script, you will need the follow
 - Optionally *SLURM*
 - Optionally *libfabric* and network libraries (*portals*, *ibverbs*...)
 
-*MPC* relies on the *Autotools* toolchain as a build system. The standard way to install it without the convenience
+*MPC* relies on *CMake* as a build system. The standard way to install it without the convenience
 script is the following
 
 ```console
-$ ./autogen.sh
-$ cd <BUILD> && <path/to/mpc>/configure --prefix=<path/to/installation/directory>
-$ make install -j
+$ cmake -B BUILD -DCMAKE_INSTALL_PREFIX=<path/to/installation/directory>
+$ cmake --build BUILD --parallel
+$ cmake --install BUILD
 ```
 
 The previous section described the default installation and configuration of
@@ -123,31 +123,28 @@ MPC, but other alternatives are available. You can find out more details on the
 configuration by running:
 
 ```console
-$ <path/to/mpc>/configure --help
+$ cmake -B BUILD -LH
 ```
 
 Specify the PMI based launcher to be used by MPC as follows:
 
-- `--with-hydra[=prefix]`: Compile MPC with the **Hydra** launcher (embedded in the MPC
-  distribution). This option is enabled by default.
-- `--with-slurm[=prefix]` Compile MPC with the **SLURM** launcher.
+- `-DMPC_LAUNCHER=HYDRA`: Compile MPC with the **Hydra** launcher (see also `-DMPC_HYDRA_PREFIX`).
+  This is the default.
+- `-DMPC_LAUNCHER=PMIX`: Compile MPC with the **PMIx/SLURM** launcher (see also `-DMPC_PMIX_PREFIX`).
+- `-DMPC_LAUNCHER=PMI1`: Compile MPC with the **PMI1** launcher (see also `-DMPC_PMI_PREFIX`).
 
 Specify external libraries used by MPC:
 
-- `--with-hwloc=prefix`: Specify the prefix of hwloc library
-- `--with-openpa=prefix`: Specify the prefix of OpenPA library
-- `--with-mpc-binutils=prefix`: Specify the prefix of the binutils
+- `-DMPC_HWLOC_PREFIX=prefix`: Specify the prefix of the hwloc library
+- `-DMPC_OPENPA_PREFIX=prefix`: Specify the prefix of the OpenPA library
+- `-DMPC_LIBFABRIC_PREFIX=prefix`: Specify the prefix of the libfabric library
 
-Specify external libraries for gcc compilation:
+Enable or disable MPC modules:
 
-- `--with-gmp=prefix`: Specify the prefix of gmp library
-- `--with-mpfr=prefix`: Specify the prefix of mpfr library
-- `--with-mpc=prefix`: Specify the prefix of mpc multiprecision library
-
-Specify external gcc and gdb:
-
-- `--with-mpc-gcc=prefix`: Specify the prefix of the gcc used by MPC
-- `--with-mpc-gdb=prefix`: Specify the prefix of the gdb used by MPC
+- `-DMPC_ENABLE_<MODULE>=ON|OFF` to tune a module, e.g. `-DMPC_ENABLE_MPI=OFF`,
+  `-DMPC_ENABLE_THREADS=OFF`, `-DMPC_ENABLE_LOWCOMM=OFF`, `-DMPC_ENABLE_OPENMP=OFF`,
+  `-DMPC_ENABLE_OPENSHMEM=OFF`, `-DMPC_ENABLE_FORTRAN=OFF`, `-DMPC_ENABLE_MPIIO=OFF`
+  (see the root `CMakeLists.txt` for the full list of options)
 
 </details>
 
@@ -178,7 +175,7 @@ You can install MPC through spack following those instructions
   $ spack install mpcframework
   ```
 
-For more information concerning installation, please refer to [INSTALL](INSTALL).
+For more information concerning installation, please refer to the [documentation](https://cea-hpc.github.io/mpc/).
 
 ## Usage
 

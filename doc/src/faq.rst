@@ -21,10 +21,10 @@ dependencies, to ensure consistency between software revisions. It supports
 package extraction from different sources, loading package from Spack of even
 from direct PATH references. Once updates of MPC sources have been made, one may
 think re-run the complete process is time wasting. To ease the rebuilding
-process, the ``installmpc`` script generates a ``reconfigure`` script, directly
-located at the root of the build directory. This script may be reused to
-reconfigure MPC again (e.g. with new ``./configure`` options). ``make install``
-works as well.
+process, the build directory populated by ``installmpc`` contains a regular
+CMake build tree: it can be reconfigured with new options using
+``cmake -B <BUILD> -DNEW_OPTION=...``, then rebuilt and installed with
+``cmake --build <BUILD>`` and ``cmake --install <BUILD>``.
 
 
 
@@ -40,13 +40,14 @@ To enable debug mode within MPC (and some of its dependencies), the
 .. note::
     When privatisation is enabled (with ``--thread-based``) a patched debugger is provided to make user-level threads available through GDB. To install it, please use the ``--enable-gdb`` option (experimental).
 
-To avoid re-running the whole ``installmpc`` script, MPC provides a set of
-options to be given to the ``reconfigure`` script:
+To avoid re-running the whole ``installmpc`` script, the existing CMake build
+tree can be reconfigured with the relevant cache variables:
 
-* ``--enable-debug``: debug symbols
-* ``--enable-debug-messages``: debug messages
+* ``-DCMAKE_BUILD_TYPE=Debug`` and ``-DMPC_ENABLE_DEBUG=ON``: debug symbols
+* ``-DMPC_ENABLE_DEBUG_MESSAGES=ON``: debug messages
 
-Then, run ``make && make install`` to rebuild MPC in debug mode.
+Then, run ``cmake --build <BUILD>`` and ``cmake --install <BUILD>`` to rebuild
+MPC in debug mode.
 
 
 -------

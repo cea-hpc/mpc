@@ -7,7 +7,7 @@ Launcher options
 ----------------
 
 Options passed to the launcher options should be compatible with the launch mode
-chosen during *configure*. For more information you might read the
+chosen at configuration time. For more information you might read the
 documentations of mpiexec and srun respectively for Hydra and Slurm.
 
 - **Hydra**: If MPC is configured with Hydra, mpcrun should be used with
