@@ -56,7 +56,7 @@ MPC_DMTCP_BUILD_PARAMETERS="--enable-pthread-mutex-wrappers"
 MPC_GDB_BUILD_PARAMETERS="--without-zlib --disable-werror"
 DEBUG="no"
 MPC_OPTIM_OPTION_SPECIFIED="no"
-USE_CMAKE="no"
+USE_AUTOTOOLS="no"
 CMAKE_OPTS=""
 DO_CLEAN="no"
 DO_DISTCLEAN="no"
@@ -1322,7 +1322,7 @@ You may track issued commands using the "-v" flag.
   -jN                                     : Allow N jobs at once (parallel install)
   --enable-lsp                            : Generate a compile_commands.json file, used by Language Server Protocols (native CMake export, or bear with autotools)
   --disable-lsp                           : Do not generate a compile_commands.json file (default)
-  --cmake                                 : Build MPC using CMake instead of autotools
+  --autotools                             : Build MPC using the legacy autotools backend (deprecated)
 
 # Features
   --with-hydra                            : Build MPC with Hydra launcher support
@@ -1815,8 +1815,8 @@ do
 		--disable-lsp)
 			LSP="no"
 			;;
-		--cmake)
-			USE_CMAKE="yes"
+		--autotools)
+			USE_AUTOTOOLS="yes"
 			;;
 		--spack|--enable-spack)
 			assert_cmd "spack"
@@ -1887,12 +1887,12 @@ done
 
 #
 # Deferred argument handling, the backend is only fully known once
-# every argument has been parsed (e.g. --cmake may come last)
+# every argument has been parsed (e.g. --autotools may come last)
 #
 
 # Resolve --mpc-option= / --mpcframework= values for the selected backend
 if test -n "${MPC_USER_BUILD_PARAMETERS}"; then
-	if test "x${USE_CMAKE}" = "xyes"; then
+	if test "x${USE_AUTOTOOLS}" != "xyes"; then
 		# The CMake backend only accepts the whitelisted module toggles
 		for mpc_user_opt in ${MPC_USER_BUILD_PARAMETERS}; do
 			translate_mpc_user_option_to_cmake "${mpc_user_opt}"
@@ -1905,7 +1905,7 @@ fi
 
 # Handle clean / distclean according to the selected backend
 if test "x${DO_CLEAN}" = "xyes"; then
-	if test "x${USE_CMAKE}" = "xyes"; then
+	if test "x${USE_AUTOTOOLS}" != "xyes"; then
 		cmake --build "${PROJECT_BUILD_DIR}" --target clean
 	else
 		make clean
@@ -1917,7 +1917,7 @@ if test "x${DO_DISTCLEAN}" = "xyes"; then
 		die "Refusing to distclean the MPC source directory"
 	fi
 
-	if test "x${USE_CMAKE}" = "xyes"; then
+	if test "x${USE_AUTOTOOLS}" != "xyes"; then
 		rm -fr "${PROJECT_BUILD_DIR}"
 	else
 		make distclean
@@ -2171,7 +2171,7 @@ if test -f "${BUILD_CONF_PATH}" ; then
 	ok
 fi
 
-if test "x${USE_CMAKE}" != "xyes"; then
+if test "x${USE_AUTOTOOLS}" = "xyes"; then
 	#
 	# Autotools build
 	#
