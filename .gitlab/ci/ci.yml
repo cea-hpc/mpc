@@ -185,7 +185,7 @@ Without Threads:
   variables:
     GL_INSTALL_OPTS: '${GL_INSTALL_COMMON_OPTS} --process-mode --disable-threads'
     HAS_PRIVATIZATION: false
-    HAS_MPI: true
+    HAS_MPI: false
 
 Without PMIx (Debug):
   stage: 'Build Only'
