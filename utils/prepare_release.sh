@@ -94,10 +94,22 @@ prepare() {
 
 build() {
 	cd "\$srcdir/\$pkgname-\$pkgver"
-	cd BUILD
-	export DESTDIR=\$pkgdir
-	../configure --prefix=/usr/local --enable-rpmbuild
-	make
+	# Build the embedded contrib dependencies into a staging prefix
+	# so that the CMake build of MPC can consume them
+	STAGING="\$PWD/staging"
+	for dep in BUILD/openpa* BUILD/hydra*; do
+		(
+			cd "\$dep" &&
+			./configure --prefix="\$STAGING" &&
+			make -j &&
+			make install
+		)
+	done
+	cmake -B BUILD -DCMAKE_INSTALL_PREFIX=/usr/local \
+		-DMPC_OPENPA_PREFIX="\$STAGING" \
+		-DMPC_LAUNCHER=HYDRA \
+		-DMPC_HYDRA_PREFIX="\$STAGING"
+	cmake --build BUILD --parallel
 }
 
 check() {
@@ -105,8 +117,8 @@ check() {
 }
 
 package() {
-	cd "\$srcdir/\$pkgname-\$pkgver/BUILD"
-	DESTDIR="\$pkgdir/" make -j install
+	cd "\$srcdir/\$pkgname-\$pkgver"
+	DESTDIR="\$pkgdir/" cmake --install BUILD
 	mv \$pkgdir/usr/local/share/man \$pkgdir/usr/local/man
 }
 EOF
@@ -225,15 +237,18 @@ mpc
 %global debug_package %{nil}
 %prep
 %setup -q
-mkdir BUILD
 
 %build
 
-cd BUILD
-export DESTDIR=\$RPM_BUILD_ROOT
 export CFLAGS="\$CFLAGS -Wno-format-security -fno-lto"
 export PATH=%{_bindir}:\$PATH
-../configure --disable-prefix-check --enable-rpmbuild --prefix=/usr/local --disable-spack --disable-autopriv --disable-mpcalloc
+# Build the embedded contrib dependencies into a staging prefix
+# so that the CMake build of MPC can consume them
+STAGING=\$PWD/staging
+(cd contrib/openpa && ./configure --prefix=\$STAGING && make -j && make install)
+(cd contrib/hydra && ./configure --prefix=\$STAGING && make -j && make install)
+cmake -B BUILD -DCMAKE_INSTALL_PREFIX=/usr/local -DMPC_OPENPA_PREFIX=\$STAGING -DMPC_LAUNCHER=HYDRA -DMPC_HYDRA_PREFIX=\$STAGING -DMPC_ENABLE_PROCESS_MODE=ON -DMPC_ENABLE_MPCALLOC=OFF
+cmake --build BUILD -- -j
 
 %install
 
@@ -246,8 +261,7 @@ export PATH=%{_bindir}:\$PATH
 export QA_RPATHS=\$[0x0003]
 
 export DESTDIR=\$RPM_BUILD_ROOT
-cd BUILD
-make install -j
+DESTDIR=\$RPM_BUILD_ROOT cmake --install BUILD
 
 %files
 %defattr(-,root,root,-)

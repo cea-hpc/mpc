@@ -50,12 +50,12 @@ Requires:
 
 #build directives
 %build
-./configure
-make
+cmake -B BUILD
+cmake --build BUILD
 
 #install directives
 %install
-make install DESTDIR=$RPM_BUILD_ROOT
+DESTDIR=$RPM_BUILD_ROOT cmake --install BUILD
 
 #clean directives
 %clean
