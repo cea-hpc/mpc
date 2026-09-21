@@ -7,15 +7,24 @@ All notable changes to this project will be documented in this file. The format 
 ### Added
 
 - **Build**
-  - Added support for building MPC with cmake. Use `installmpc --cmake`.
+  - Added support for building MPC with CMake and new `installmpc` module flags
 
 ### Changed
 
+- **Build**
+  - CMake is now the default and only build system (CMake >= 3.20.3 required)
+
 ### Removed
+
+- **Build**
+  - Autotools backend and the `--cmake` / `--autotools` `installmpc` flags
 
 ### Deprecated
 
 ### Fixed
+
+- **Build**
+  - Link issues when modules where disabled
 
 
 ## [4.4.0] - 2026-08-04
