@@ -1,6 +1,21 @@
 # bin/CMakeLists.txt
 # Installs compiler wrapper scripts and builds mpc_sets binary
 
+# Optional framework libraries (only link what is built)
+set(MPC_FRAMEWORK_LIBS "")
+if(MPC_ENABLE_THREADS)
+    list(APPEND MPC_FRAMEWORK_LIBS mpcthread)
+endif()
+if(MPC_ENABLE_OPENMP)
+    list(APPEND MPC_FRAMEWORK_LIBS mpcomp)
+endif()
+if(MPC_ENABLE_LOWCOMM)
+    list(APPEND MPC_FRAMEWORK_LIBS mpclowcomm)
+endif()
+if(MPC_ENABLE_MPI)
+    list(APPEND MPC_FRAMEWORK_LIBS mpcmpi)
+endif()
+
 # Build *_LIBS strings for mpc_ldflags.in template
 set(OPA_LIBS "")
 foreach(_opa_dir ${OPA_LIBRARY_DIRS})
@@ -166,10 +181,7 @@ target_link_libraries(
         ${CMAKE_RT_LIBS}
         Threads::Threads
         -Wl,--no-as-needed
-        mpcmpi
-        mpclowcomm
-        mpcomp
-        mpcthread
+        ${MPC_FRAMEWORK_LIBS}
         -Wl,--as-needed
 )
 if(MPCALLOC_FOUND)
@@ -201,9 +213,7 @@ if(MPC_ENABLE_LOWCOMM)
             mpclowcomm
             mpcarch
             -Wl,--no-as-needed
-            mpcmpi
-            mpcomp
-            mpcthread
+            ${MPC_FRAMEWORK_LIBS}
             -Wl,--as-needed
             ${OPA_LIBRARIES}
             ${OFI_LIBRARIES}
