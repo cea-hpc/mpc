@@ -95,7 +95,11 @@ endif()
 # Misc
 # ------------------------------------------------------------------
 # Hydra
-find_program(MPIEXEC_HYDRA mpiexec.hydra)
+if(MPC_HYDRA_PREFIX)
+    find_program(MPIEXEC_HYDRA mpiexec.hydra HINTS "${MPC_HYDRA_PREFIX}/bin")
+else()
+    find_program(MPIEXEC_HYDRA mpiexec.hydra)
+endif()
 
 # MPC_LINK_ARGS (empty for now, was computed by autotools)
 set(MPC_LINK_ARGS "")
