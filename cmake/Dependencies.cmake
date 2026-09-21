@@ -82,7 +82,7 @@ endif()
 # ------------------------------------------------------------------
 set(MPC_NETWORK_LIST "tcp shm")
 
-# libfabric (optional) - AUTO matches autotools behavior: probe and enable if found
+# libfabric (optional) - AUTO: probe and enable if found
 if(MPC_ENABLE_OFI STREQUAL "OFF")
     set(OFI_DRIVER_ENABLED NO)
 else()

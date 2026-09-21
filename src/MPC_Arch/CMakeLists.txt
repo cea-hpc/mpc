@@ -43,7 +43,7 @@ target_include_directories(
 # Link dependencies
 target_link_libraries(mpcarch PUBLIC ${OPA_LDFLAGS})
 
-# Set output name to match autotools
+# Set output name
 set_target_properties(
     mpcarch
     PROPERTIES OUTPUT_NAME mpcarch VERSION ${MPC_VERSION} SOVERSION ${MPC_VERSION_MAJOR} POSITION_INDEPENDENT_CODE ON

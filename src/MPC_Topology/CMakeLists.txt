@@ -3,7 +3,7 @@
 
 set(MPC_TOPOLOGY_SOURCES src/topology.c src/topology_device.c src/topology_render.c)
 
-# Create the library (OBJECT — matches autotools noinst_LTLIBRARIES)
+# Create the library (OBJECT)
 add_library(mpctopology OBJECT ${MPC_TOPOLOGY_SOURCES})
 set_target_properties(mpctopology PROPERTIES POSITION_INDEPENDENT_CODE ON)
 

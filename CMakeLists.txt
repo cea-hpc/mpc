@@ -32,7 +32,7 @@ set(MPC_VERSION_PRE "${_MPC_VERSION_TAINT}")
 # ------------------------------------------------------------------
 # Project definition
 # ------------------------------------------------------------------
-# Set default compilers to match autotools (AC_PROG_CC/CXX/FC)
+# Set default compilers (AC_PROG_CC/CXX/FC)
 if(NOT CMAKE_C_COMPILER)
     find_program(DEFAULT_CC gcc)
     if(DEFAULT_CC)

@@ -1,7 +1,7 @@
 # MPC_IO/src/romio/CMakeLists.txt
 # Builds libromio.a and libpromio.a (static, noinst)
 
-# Generate internal ROMIO mpio.h (use same template as autotools)
+# Generate internal ROMIO mpio.h
 configure_file(
     "${CMAKE_SOURCE_DIR}/src/MPC_IO/include/mpio.h.in"
     "${CMAKE_BINARY_DIR}/src/MPC_IO/include/mpio.h"
@@ -12,7 +12,7 @@ configure_file(
 # ROMIO source lists
 # ------------------------------------------------------------------
 
-# MPICH glue (default, matches autotools MPIO_GLUE_MPICH=true)
+# MPICH glue (default)
 set(ROMIO_GLUE_SOURCES
     mpi-io/glue/mpich/mpio_file.c
     mpi-io/glue/mpich/mpio_err.c
@@ -20,7 +20,7 @@ set(ROMIO_GLUE_SOURCES
 
 # large_count.c provides fallback MPI_Type_size_x when ROMIO is built
 # standalone against an external MPI.  When embedded in MPC (default,
-# matching autotools BUILD_ROMIO_EMBEDDED=true), it is excluded to
+# BUILD_ROMIO_EMBEDDED), it is excluded to
 # avoid infinite recursion through the internal MPI implementation.
 if(NOT BUILD_ROMIO_EMBEDDED)
     list(APPEND ROMIO_GLUE_SOURCES mpi-io/glue/large_count.c)
@@ -173,7 +173,7 @@ set(ROMIO_ADIO_COMMON_SOURCES
     adio/common/utils.c
 )
 
-# NFS driver (enabled by default, matches autotools)
+# NFS driver (enabled by default)
 set(ROMIO_NFS_SOURCES
     adio/ad_nfs/ad_nfs.c
     adio/ad_nfs/ad_nfs_done.c
@@ -191,7 +191,7 @@ set(ROMIO_NFS_SOURCES
     adio/ad_nfs/ad_nfs_write.c
 )
 
-# UFS driver (enabled by default, matches autotools)
+# UFS driver (enabled by default)
 set(ROMIO_UFS_SOURCES
     adio/ad_ufs/ad_ufs.c
     adio/ad_ufs/ad_ufs_open.c

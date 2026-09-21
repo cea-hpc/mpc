@@ -26,7 +26,7 @@ if(MPC_LAUNCHER STREQUAL "HYDRA")
     )
 endif()
 
-# Create the library (OBJECT — matches autotools noinst_LTLIBRARIES)
+# Create the library (OBJECT)
 add_library(mpclaunch OBJECT ${MPC_LAUNCH_SOURCES})
 set_target_properties(mpclaunch PROPERTIES POSITION_INDEPENDENT_CODE ON)
 

@@ -42,7 +42,8 @@ Additionally you can specify paths for :
 - tbb
 
 MPC modules are installed in the same prefix as MPC. It is possible to
-reconfigure modules and install them again if you have any specific needs.
+build modules with a different configuration and install them again if you
+have any specific needs.
 
 
 Installation Process

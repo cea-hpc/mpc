@@ -1,7 +1,7 @@
 # MPC_Fortran/src/CMakeLists.txt
 # Code generation pipeline and libmpcfortran library
 
-# Require Python for code generation (matches autotools requirement)
+# Require Python for code generation
 find_package(Python3 REQUIRED COMPONENTS Interpreter)
 
 # Set Fortran module output directory so .mod files go to build dir

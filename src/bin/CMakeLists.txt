@@ -116,7 +116,7 @@ endforeach()
 # Install scripts
 install(PROGRAMS ${INSTALL_SCRIPTS} DESTINATION ${CMAKE_INSTALL_BINDIR})
 
-# mpcvars.sh goes to install prefix root and bin/ (matches autotools)
+# mpcvars.sh goes to install prefix root and bin/
 set(_MPCVARS_SRC "${CMAKE_CURRENT_SOURCE_DIR}/mpcvars.sh")
 set(_MPCVARS_DST "${CMAKE_CURRENT_BINARY_DIR}/mpcvars.sh")
 if(EXISTS "${_MPCVARS_SRC}.in")

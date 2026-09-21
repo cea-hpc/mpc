@@ -263,7 +263,7 @@ if(MPC_ENABLE_PROCESS_MODE)
     set(MPC_IN_PROCESS_MODE "yes")
     set(MPC_IN_PROCESS_MODE_INT 1)
 elseif(NOT HAVE_EXTLS)
-    # No extls available, fall back to process mode (matches autotools)
+    # No extls available, fall back to process mode
     message(WARNING "No extls available, fall back to process mode.")
     set(MPC_IN_PROCESS_MODE "yes")
     set(MPC_IN_PROCESS_MODE_INT 1)
