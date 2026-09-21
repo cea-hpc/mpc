@@ -46,6 +46,8 @@ This will define the following variables:
   Include directories needed to use MPCFRAMEWORK.
 ``MPCFRAMEWORK_LIBRARIES``
   Libraries needed to link to MPCFRAMEWORK.
+``MPCFRAMEWORK_MPI_FOUND``
+  True if the MPC framework ships its MPI layer
 
 FindMPI Like
 ^^^^^^^^^^^^
@@ -87,9 +89,23 @@ The following cache variables may also be set:
 #]=======================================================================]
 
 # First Proceed To the Basic PKG-CONFIG search
+# Anchor on the deepest module available: an MPC install may lack MPI
 
 find_package(PkgConfig)
+
 pkg_check_modules(MPCFRAMEWORK QUIET libmpcmpi)
+
+if(MPCFRAMEWORK_FOUND)
+    set(MPCFRAMEWORK_MPI_FOUND TRUE)
+else()
+    set(MPCFRAMEWORK_MPI_FOUND FALSE)
+
+    pkg_check_modules(MPCFRAMEWORK QUIET libmpclowcomm)
+
+    if(NOT MPCFRAMEWORK_FOUND)
+        pkg_check_modules(MPCFRAMEWORK QUIET libmpcthread)
+    endif()
+endif()
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(
@@ -99,13 +115,15 @@ find_package_handle_standard_args(
     VERSION_VAR MPCFRAMEWORK_VERSION
 )
 
-message(STATUS "MPCFRAMEWORK version ${MPCFRAMEWORK_VERSION} found in ${MPCFRAMEWORK_PREFIX}")
+if(MPCFRAMEWORK_FOUND)
+    message(STATUS "MPCFRAMEWORK version ${MPCFRAMEWORK_VERSION} found in ${MPCFRAMEWORK_PREFIX}")
+endif()
 
 mark_as_advanced(MPCFRAMEWORK_INCLUDE_DIR MPCFRAMEWORK_LIBRARY)
 
 # Not try to mimic some of the FindMPI things
 
-if(MPCFRAMEWORK_FOUND)
+if(MPCFRAMEWORK_MPI_FOUND)
     set(MPI_FOUND TRUE)
     # Yes we'll need to detect..
     set(MPI_VERSION_MAJOR "3" CACHE STRING "Major MPI version")
