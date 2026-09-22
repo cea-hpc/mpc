@@ -10,11 +10,13 @@ Options passed to the launcher options should be compatible with the launch mode
 chosen at configuration time. For more information you might read the
 documentations of mpiexec and srun respectively for Hydra and Slurm.
 
-- **Hydra**: If MPC is configured with Hydra, mpcrun should be used with
-  ``-l=mpiexec`` argument. Note that this argument is used by default if not
+- **Hydra**: If MPC is configured with Hydra, mpcrun should be used with the
+  ``-l=hydra`` argument. Note that this argument is used by default if not
   specified.
 - **SLURM**: If MPC is configured with SLURM, mpcrun should be used with ``-l=srun``
   argument.
+- **PRRTE**: If MPC is configured with PMIx and ``prterun`` is available, mpcrun
+  can be used with the ``-l=prrte`` argument to launch through PRRTE.
 
 ''''''''''''''''
 Mono-process job
@@ -97,7 +99,7 @@ embedding a MPI process.
    $ mpcrun -m=pthread      -n=8 -p=8 -net=tcp -N=2 -c=2 hello_world
 
 Note that the ``-c`` argument specified the number of cores per OS process.
-In the ebove examples, we can deduce that the nodes we want to work on have
+In the above examples, we can deduce that the nodes we want to work on have
 at least 8 cores, with four OS processes per node, and two cores per OS
 process.
 
@@ -155,6 +157,6 @@ parameter of the launcher as follow:
 
     $ mpcrun -m=ethread -n=8 -p=8 -net=tcp -N=2 --opt='-f hosts' hello_world
 
-See `Using the Hydra Process Manager`_ for more information about hydra hosts file.
+See `the MPICH documentation`_ for more information about the Hydra hosts file.
 
-.. _Using the Hydra Process Manager: https://wiki.mpich.org/mpich/index.php/Using_the_Hydra_Process_Manager
+.. _the MPICH documentation: https://www.mpich.org/documentation/guides/
