@@ -58,12 +58,12 @@ MPC also provides a process-based way of using its MPI implementation.
 OpenMP
 ''''''
 
-MPC provides its own OpenMP implementation, and fully respects the OpenMP 3.1
-standard. MPC allows compilation and execution of C/C++ and Fortran OpenMP
-applications thanks to GNU and Intel compilers support. The main MPC package
-contains a patched version of GCC (6.2) called MPC_GCC which is automatically
-installed when building MPC. The OpenMP implementation is also compatible with
-Intel C/C++ and FORTRAN compilers starting at version 15.0.
+MPC provides its own OpenMP implementation, an OpenMP 3 runtime with parts of
+the 4.0 and 5.0 standards. MPC allows compilation and execution of C/C++ and
+Fortran OpenMP applications thanks to GNU compiler support. The main MPC
+package automatically installs mpc-compiler-additions, a GCC-based privatizing
+toolchain, when building MPC. The OpenMP runtime supports both the GNU (GOMP)
+and Intel compiler ABIs.
 
 The OpenMP runtime has been optimized to efficiently support large NUMA
 architectures and hybrid MPI/OpenMP codes.
@@ -107,9 +107,8 @@ deal with global-variable sharing in the application.
 
 Such thread-safety issues are managed with automatic privatization of global
 variables. This mechanism is automatically applied by the compiler for C/C++
-and Fortran MPI codes through the new -fmpc-privatize option. This new option is
-available in MPC_GCC (provided with the MPC package) and Intel compilers
-(starting with version 15.0 for C/C++ and Fortran).
+and Fortran MPI codes through the -fmpc-privatize option. This option is
+provided by the mpc-compiler-additions toolchain bundled with the MPC package.
 
 Memory Allocator
 ################
@@ -148,10 +147,10 @@ MPC Documentation
 MPC Documentation is under active development and can be found in the following
 locations:
 
-- The Official website for the whole project: (http://mpc.hpcframework.com/)
+- The official documentation website of the project: (https://cea-hpc.github.io/mpc/)
 - In-place documentation (within source code), under Doxygen formatting. Please
   note that this is currently in progress and not everything is fully documented.
-  Feel free to contact one of the maintainers mentioned in the MAINTAINERS file.
+  Feel free to contact one of the maintainers mentioned in the AUTHORS.md file.
 - A complete documentation based on currently-written Doxygen AND Markdown files
   placed in modules that can be generated. Please consult the /doc/Doxyfile.in
   to customize the generation to the needs. Once ready, please run
@@ -189,6 +188,5 @@ Table of Contents
 .. toctree::
    :caption: Links
 
-   Official Website (mpc.hpcframework.com) <https://mpc.hpcframework.com>
+   Documentation (cea-hpc.github.io) <https://cea-hpc.github.io/mpc/>
    Repository (github.com) <https://github.com/cea-hpc/mpc>
-   Publications (mpc.hpcframework.com) <https://mpc.hpcframework.com/publications-2/>
