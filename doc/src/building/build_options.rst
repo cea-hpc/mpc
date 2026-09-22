@@ -12,19 +12,23 @@ commands :
 
 .. code-block:: console
 
-    $ mkdir $HOME/installmpc installmpc --prefix=$HOME/installmpc
+    $ mkdir -p $HOME/installmpc
+    $ ./installmpc --prefix=$HOME/installmpc
 
 In case you are building MPC offline you should place the external modules
 sources in the BUILD directory or in the $HOME/.mpc-deps. You can get all
 dependencies sources zipped archives with ``installmpc --download``. MPC
 installed dependencies are the following :
 
+- hwloc
 - openpa
 - Hydra
-- OFI
 - mpc-compiler-additions
-- mpc-allocator
-- libfabric
+- mpc-allocator (mpcalloc)
+- libfabric (OFI)
+- mpc-dmtcp
+- gdb
+- concurrency-kit
 
 
 
@@ -37,9 +41,11 @@ CMake directly, these map to the ``-DMPC_[MODULE]_PREFIX=`` and
 Additionally you can specify paths for :
 
 - cuda
-- opencl
-- openacc
+- rocm
 - tbb
+
+The ``opencl`` and ``openacc`` path options are declared but not implemented
+yet.
 
 MPC modules are installed in the same prefix as MPC. It is possible to
 build modules with a different configuration and install them again if you
@@ -55,7 +61,8 @@ Installation Process
    if this is of interest please refer to section "Modular MPC" as the rest
    of this section covers the "bundle install" of MPC using ./installmpc
 
-Once you downloaded the archive from the website, you may proceed as follows.
+Once you downloaded the release archive from the GitHub repository, you may
+proceed as follows.
 Note that by default, if you run the ``installmpc`` script directly into the
 source directory, a ``build`` directory will be automatically created to avoid
 squashing source and build altogether.
@@ -67,10 +74,8 @@ squashing source and build altogether.
 	$ mkdir BUILD && cd BUILD
 	$ ../installmpc --prefix=$PREFIX
 
-The compiler will be detected by default if a privatizing compiler is compiled. To
-avoid any ambiguous detection, one can specify the specific compiler to use
-through the ``--compiler`` option. For example, using such command with the Intel
-compiler will avoid MPC to build the embedded patched GCC compiler.
+The compiler is detected by default. To avoid any ambiguous detection, one can
+specify the compiler to use through the ``--compiler`` option.
 
 MPC relies on a number of dependencies (openpa, hwloc...) and some may be
 missing in the archive you downloaded (for archive size reasons). Considering
@@ -80,7 +85,7 @@ be overridden with a custom, already installed version, anywhere on the system.
 An option exist for each, similar to ``--with-<dep>=/path``. In these cases, it is
 up to the user to ensure the compatibility between the external dependency and
 MPC's requirement. A complete list of dependency versions can be found in
-``utils/config.txt``. On the contrary, to forward extra arguments when building embedded
+``config/version.txt``, and their source URLs in ``config/source.txt``. On the contrary, to forward extra arguments when building embedded
 dependencies, one can use ``--<dep>-<arg>``. Here two examples for HWLOC support :
 
 .. code-block:: sh
@@ -98,8 +103,10 @@ Beyond these basic options, some useful others are listed and detailed below :
 
 .. note::
 
-   By default, MPC tries to build with slurm support. If slurm is not found, it will default to using Hydra.
-   If you want to build with slurm support, you have to make sure that PMIx is available.
+   By default, MPC tries to build with Slurm support, relying on the PMI
+   interface (both PMI 1 and PMIx are detected). If Slurm is not found on the
+   system, MPC falls back to the Hydra launcher. The PMI flavor can also be
+   selected explicitly with the ``--with-pmi1`` or ``--with-pmix`` options.
 
 .. code-block:: console
 
