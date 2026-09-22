@@ -31,13 +31,11 @@ Get MPC Source code
 
 Two ways to retrieve MPC sources:
 
-.. TODO: change the website - From a release (https://mpc.hpcframework.com/download)
-
-- From a release (`release page <https://github.com/cea-hpc/mpc/releases/releases>`_)
+- From a release (`release page <https://github.com/cea-hpc/mpc/releases>`_)
    .. parsed-literal::
 
       # Get the last tarball
-      curl -k \https://github.com/cea-hpc/mpc/archive/refs/tags/MPC\_\ |version|\ .tar.gz
+      curl -L -O https://github.com/cea-hpc/mpc/archive/refs/tags/MPC\_\ |version|\ .tar.gz
       # Extract the tarball
       tar xf MPC\_\ |version|\ .tar.gz
 
@@ -114,9 +112,11 @@ compilation flag, it can be done through environment variables:
    # Compilation WITHOUT automatic privatization
    mpicc main.c
 
-   # All the lines below are equivalent and enables automatic privatization
-   mpc_cc main.c mpc_cc -fmpc-privatize main.c
-   mpicc -fmpc-privatize main.c MPI_PRIV=1 mpicc main.c
+   # All the lines below are equivalent and enable automatic privatization
+   mpc_cc main.c
+   mpc_cc -fmpc-privatize main.c
+   mpicc -fmpc-privatize main.c
+   MPI_PRIV=1 mpicc main.c
 
 Without providing any further option, MPC is installed with no *thread-based
 MPI* support, implying multiple MPI processes can not live within the same UNIX
