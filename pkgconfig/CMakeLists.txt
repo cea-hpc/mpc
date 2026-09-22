@@ -30,22 +30,12 @@ configure_file(libmpclowcomm.pc.in "${CMAKE_CURRENT_BINARY_DIR}/libmpclowcomm.pc
 configure_file(libmpcmpi.pc.in "${CMAKE_CURRENT_BINARY_DIR}/libmpcmpi.pc" @ONLY)
 
 # Install .pc files, only for the modules which are enabled
-install(
-    FILES
-        "${CMAKE_CURRENT_BINARY_DIR}/libmpclowcomm.pc"
-    DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig
-)
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/libmpclowcomm.pc" DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
 
 if(MPC_ENABLE_THREADS)
-    install(FILES
-        "${CMAKE_CURRENT_BINARY_DIR}/libmpcthread.pc"
-        DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig
-    )
+    install(FILES "${CMAKE_CURRENT_BINARY_DIR}/libmpcthread.pc" DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
 endif()
 
 if(MPC_ENABLE_MPI)
-    install(FILES
-        "${CMAKE_CURRENT_BINARY_DIR}/libmpcmpi.pc"
-        DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig
-    )
+    install(FILES "${CMAKE_CURRENT_BINARY_DIR}/libmpcmpi.pc" DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
 endif()

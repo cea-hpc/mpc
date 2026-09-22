@@ -30,7 +30,9 @@ pkg_check_modules(HWLOC REQUIRED hwloc>=2.0.0)
 # openpa (OPA)
 if(MPC_OPENPA_PREFIX)
     list(APPEND CMAKE_PREFIX_PATH "${MPC_OPENPA_PREFIX}")
-    set(ENV{PKG_CONFIG_PATH} "${MPC_OPENPA_PREFIX}/lib/pkgconfig:${MPC_OPENPA_PREFIX}/lib64/pkgconfig:$ENV{PKG_CONFIG_PATH}")
+    set(ENV{PKG_CONFIG_PATH}
+        "${MPC_OPENPA_PREFIX}/lib/pkgconfig:${MPC_OPENPA_PREFIX}/lib64/pkgconfig:$ENV{PKG_CONFIG_PATH}"
+    )
 endif()
 pkg_check_modules(OPA openpa)
 if(NOT OPA_FOUND)

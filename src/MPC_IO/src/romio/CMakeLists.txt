@@ -2,21 +2,14 @@
 # Builds libromio.a and libpromio.a (static, noinst)
 
 # Generate internal ROMIO mpio.h
-configure_file(
-    "${CMAKE_SOURCE_DIR}/src/MPC_IO/include/mpio.h.in"
-    "${CMAKE_BINARY_DIR}/src/MPC_IO/include/mpio.h"
-    @ONLY
-)
+configure_file("${CMAKE_SOURCE_DIR}/src/MPC_IO/include/mpio.h.in" "${CMAKE_BINARY_DIR}/src/MPC_IO/include/mpio.h" @ONLY)
 
 # ------------------------------------------------------------------
 # ROMIO source lists
 # ------------------------------------------------------------------
 
 # MPICH glue (default)
-set(ROMIO_GLUE_SOURCES
-    mpi-io/glue/mpich/mpio_file.c
-    mpi-io/glue/mpich/mpio_err.c
-)
+set(ROMIO_GLUE_SOURCES mpi-io/glue/mpich/mpio_file.c mpi-io/glue/mpich/mpio_err.c)
 
 # large_count.c provides fallback MPI_Type_size_x when ROMIO is built
 # standalone against an external MPI.  When embedded in MPC (default,
@@ -192,10 +185,7 @@ set(ROMIO_NFS_SOURCES
 )
 
 # UFS driver (enabled by default)
-set(ROMIO_UFS_SOURCES
-    adio/ad_ufs/ad_ufs.c
-    adio/ad_ufs/ad_ufs_open.c
-)
+set(ROMIO_UFS_SOURCES adio/ad_ufs/ad_ufs.c adio/ad_ufs/ad_ufs_open.c)
 
 # Fortran bindings (conditional on MPC_ENABLE_FORTRAN)
 set(ROMIO_FORTRAN_SOURCES
@@ -278,26 +268,28 @@ set_target_properties(romio PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 target_compile_options(romio PRIVATE -include limits.h)
 
-target_include_directories(romio PRIVATE
-    ${CMAKE_SOURCE_DIR}/src/MPC_IO/include
-    ${CMAKE_SOURCE_DIR}/src/MPC_IO/src
-    ${CMAKE_CURRENT_SOURCE_DIR}/adio/include
-    ${CMAKE_BINARY_DIR}/src/MPC_IO/include
-    ${CMAKE_CURRENT_SOURCE_DIR}/include
-    ${CMAKE_CURRENT_SOURCE_DIR}/mpi-io
-    ${CMAKE_SOURCE_DIR}/src/MPC_Common/include
-    ${CMAKE_BINARY_DIR}/src/MPC_Common/include
-    ${CMAKE_SOURCE_DIR}/src/MPC_Arch/include
-    ${CMAKE_BINARY_DIR}/src/MPC_Arch/include
-    ${CMAKE_SOURCE_DIR}/src/MPC_MPI/include
-    ${CMAKE_SOURCE_DIR}/src/MPC_Lowcomm/include
-    ${CMAKE_SOURCE_DIR}/src/MPC_Launch/include
-    ${CMAKE_SOURCE_DIR}/src/MPC_Topology/include
-    ${CMAKE_SOURCE_DIR}/src/MPC_Config/include
-    ${CMAKE_SOURCE_DIR}/src/MPC_Threads/include
-    ${CMAKE_SOURCE_DIR}/src/include
-    ${CMAKE_BINARY_DIR}/src/include
-    ${CMAKE_BINARY_DIR}
+target_include_directories(
+    romio
+    PRIVATE
+        ${CMAKE_SOURCE_DIR}/src/MPC_IO/include
+        ${CMAKE_SOURCE_DIR}/src/MPC_IO/src
+        ${CMAKE_CURRENT_SOURCE_DIR}/adio/include
+        ${CMAKE_BINARY_DIR}/src/MPC_IO/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/mpi-io
+        ${CMAKE_SOURCE_DIR}/src/MPC_Common/include
+        ${CMAKE_BINARY_DIR}/src/MPC_Common/include
+        ${CMAKE_SOURCE_DIR}/src/MPC_Arch/include
+        ${CMAKE_BINARY_DIR}/src/MPC_Arch/include
+        ${CMAKE_SOURCE_DIR}/src/MPC_MPI/include
+        ${CMAKE_SOURCE_DIR}/src/MPC_Lowcomm/include
+        ${CMAKE_SOURCE_DIR}/src/MPC_Launch/include
+        ${CMAKE_SOURCE_DIR}/src/MPC_Topology/include
+        ${CMAKE_SOURCE_DIR}/src/MPC_Config/include
+        ${CMAKE_SOURCE_DIR}/src/MPC_Threads/include
+        ${CMAKE_SOURCE_DIR}/src/include
+        ${CMAKE_BINARY_DIR}/src/include
+        ${CMAKE_BINARY_DIR}
 )
 
 target_link_libraries(romio PRIVATE mpcmpi mpcarch ${OPA_LIBRARIES} Threads::Threads)
@@ -307,9 +299,7 @@ target_link_options(romio PRIVATE ${OPA_LDFLAGS})
 # libpromio (static, noinst, profiling variant)
 # ------------------------------------------------------------------
 
-set(PROMIO_ALL_SOURCES
-    ${ROMIO_MPI_SOURCES}
-)
+set(PROMIO_ALL_SOURCES ${ROMIO_MPI_SOURCES})
 
 add_library(promio OBJECT ${PROMIO_ALL_SOURCES})
 set_target_properties(promio PROPERTIES POSITION_INDEPENDENT_CODE ON)
@@ -317,26 +307,28 @@ set_target_properties(promio PROPERTIES POSITION_INDEPENDENT_CODE ON)
 target_compile_definitions(promio PRIVATE MPIO_BUILD_PROFILING)
 target_compile_options(promio PRIVATE -include limits.h)
 
-target_include_directories(promio PRIVATE
-    ${CMAKE_SOURCE_DIR}/src/MPC_IO/include
-    ${CMAKE_SOURCE_DIR}/src/MPC_IO/src
-    ${CMAKE_CURRENT_SOURCE_DIR}/adio/include
-    ${CMAKE_BINARY_DIR}/src/MPC_IO/include
-    ${CMAKE_CURRENT_SOURCE_DIR}/include
-    ${CMAKE_CURRENT_SOURCE_DIR}/mpi-io
-    ${CMAKE_SOURCE_DIR}/src/MPC_Common/include
-    ${CMAKE_BINARY_DIR}/src/MPC_Common/include
-    ${CMAKE_SOURCE_DIR}/src/MPC_Arch/include
-    ${CMAKE_BINARY_DIR}/src/MPC_Arch/include
-    ${CMAKE_SOURCE_DIR}/src/MPC_MPI/include
-    ${CMAKE_SOURCE_DIR}/src/MPC_Lowcomm/include
-    ${CMAKE_SOURCE_DIR}/src/MPC_Launch/include
-    ${CMAKE_SOURCE_DIR}/src/MPC_Topology/include
-    ${CMAKE_SOURCE_DIR}/src/MPC_Config/include
-    ${CMAKE_SOURCE_DIR}/src/MPC_Threads/include
-    ${CMAKE_SOURCE_DIR}/src/include
-    ${CMAKE_BINARY_DIR}/src/include
-    ${CMAKE_BINARY_DIR}
+target_include_directories(
+    promio
+    PRIVATE
+        ${CMAKE_SOURCE_DIR}/src/MPC_IO/include
+        ${CMAKE_SOURCE_DIR}/src/MPC_IO/src
+        ${CMAKE_CURRENT_SOURCE_DIR}/adio/include
+        ${CMAKE_BINARY_DIR}/src/MPC_IO/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/mpi-io
+        ${CMAKE_SOURCE_DIR}/src/MPC_Common/include
+        ${CMAKE_BINARY_DIR}/src/MPC_Common/include
+        ${CMAKE_SOURCE_DIR}/src/MPC_Arch/include
+        ${CMAKE_BINARY_DIR}/src/MPC_Arch/include
+        ${CMAKE_SOURCE_DIR}/src/MPC_MPI/include
+        ${CMAKE_SOURCE_DIR}/src/MPC_Lowcomm/include
+        ${CMAKE_SOURCE_DIR}/src/MPC_Launch/include
+        ${CMAKE_SOURCE_DIR}/src/MPC_Topology/include
+        ${CMAKE_SOURCE_DIR}/src/MPC_Config/include
+        ${CMAKE_SOURCE_DIR}/src/MPC_Threads/include
+        ${CMAKE_SOURCE_DIR}/src/include
+        ${CMAKE_BINARY_DIR}/src/include
+        ${CMAKE_BINARY_DIR}
 )
 
 target_link_libraries(promio PRIVATE mpcmpi mpcarch ${OPA_LIBRARIES} Threads::Threads)
