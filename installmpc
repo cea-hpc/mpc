@@ -1685,12 +1685,12 @@ do
 			add_cmake_opt "-DMPC_ENABLE_TOPOLOGY_SIMULATION=ON"
 			;;
 		--with-pmi1=*)
-			PMIX_PREFIX=""
-			extractParamValue 'PMIX_PREFIX' 'with-pmi1=' "$arg"
+			PMI1_PREFIX=""
+			extractParamValue 'PMI1_PREFIX' 'with-pmi1=' "$arg"
 			ENABLE_SLURM='no'
 			add_cmake_opt "-DMPC_LAUNCHER=PMI1"
-			if test -n "${PMIX_PREFIX}"; then
-				add_cmake_opt "-DMPC_PMI_PREFIX=${PMIX_PREFIX}"
+			if test -n "${PMI1_PREFIX}"; then
+				add_cmake_opt "-DMPC_PMI_PREFIX=${PMI1_PREFIX}"
 			fi
 			;;
 		--with-pmi1)
@@ -2122,7 +2122,7 @@ test -d "${PREFIX}/lib/pkgconfig" && PKG_CONFIG_PATH=$(clean_env_path_var "${PRE
 test -d "${PREFIX}/lib64/pkgconfig" && PKG_CONFIG_PATH=$(clean_env_path_var "${PREFIX}/lib64/pkgconfig/:$PKG_CONFIG_PATH")
 
 # Add pkgconfig paths from all dependency prefixes
-for _pc_prefix in "${MPC_HWLOC_PREFIX}" "${MPC_OPENPA_PREFIX}" "${MPC_PMIX_PREFIX}" "${MPC_PMI_PREFIX}" "${MPC_LIBFABRIC_PREFIX}" "${MPC_MPCALLOC_PREFIX}" "${MPC_DMTCP_PREFIX}"; do
+for _pc_prefix in "${HWLOC_PREFIX}" "${OPENPA_PREFIX}" "${PMIX_PREFIX}" "${PMI1_PREFIX}" "${OFI_PREFIX}" "${MPCALLOC_PREFIX}" "${MPC_DMTCP_PREFIX}"; do
 	test -n "$_pc_prefix" && test -d "${_pc_prefix}/lib/pkgconfig" && PKG_CONFIG_PATH=$(clean_env_path_var "${_pc_prefix}/lib/pkgconfig/:$PKG_CONFIG_PATH")
 	test -n "$_pc_prefix" && test -d "${_pc_prefix}/lib64/pkgconfig" && PKG_CONFIG_PATH=$(clean_env_path_var "${_pc_prefix}/lib64/pkgconfig/:$PKG_CONFIG_PATH")
 done
