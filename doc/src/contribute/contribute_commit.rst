@@ -89,7 +89,7 @@ It is configured in `.pre-commit-config.yaml` and runs the following hooks on co
 
 * **executables have shebangs**: checks that the executables scripts begin with a shebang
 * **merge conflicts**: checks that no conflict marks are present in the commit
-* **don't commit to branch**: prevents a commit to be directly appended to the protected mainline branches
+* **don't commit to branch**: prevents a commit to be directly appended to the `main` branch
 * **python ast**: checks that python scripts are syntactically correct
 * **json**: checks that JSON files are syntactically correct
 * **yaml**: checks that YAML files are syntactically correct
