@@ -231,7 +231,8 @@ Check Precommit Rules:
     - spack load py-ruamel-yaml
     - git config --global --add safe.directory "$(ccc_home -u mpc)/mpc_pre_commit/pre_commit_hooks/pre-commit-hooks/.git"
     - git config --global --add safe.directory "$(ccc_home -u mpc)/mpc_pre_commit/pre_commit_hooks/pocc/.git"
-    - pre-commit install --install-hooks
+    # NOTE: Enable Build isolation (double negation...) and fast fail
+    - PIP_NO_BUILD_ISOLATION=0 PIP_NO_INDEX=1 pre-commit install --install-hooks
     # FIXME: Do not run the clang-tidy hook as it needs a compile_commands.json
     - pre-commit run --all-files --hook-stage manual
 
