@@ -27,7 +27,8 @@ set(MPC_LOWCOMM_SOURCES
 )
 
 # One sided
-list(APPEND MPC_LOWCOMM_SOURCES
+list(
+    APPEND MPC_LOWCOMM_SOURCES
     src/one-sided/lowcomm_one_sided.c
     src/one-sided/lowcomm_one_sided_common.c
     src/one-sided/lowcomm_one_sided_helpers.c
@@ -41,7 +42,8 @@ if(MPC_ENABLE_WORKSHARE)
 endif()
 
 # Control plane
-list(APPEND MPC_LOWCOMM_SOURCES
+list(
+    APPEND MPC_LOWCOMM_SOURCES
     src/cplane/auth.c
     src/cplane/peer.c
     src/cplane/proto.c
@@ -53,7 +55,8 @@ list(APPEND MPC_LOWCOMM_SOURCES
 )
 
 # LCP core
-list(APPEND MPC_LOWCOMM_SOURCES
+list(
+    APPEND MPC_LOWCOMM_SOURCES
     src/lcp/lcp_init.c
     src/lcp/lowcomm_lcp.c
     src/lcr/rails/tbsm/tbsm.c
@@ -68,7 +71,8 @@ list(APPEND MPC_LOWCOMM_SOURCES
 )
 
 # LCP tag
-list(APPEND MPC_LOWCOMM_SOURCES
+list(
+    APPEND MPC_LOWCOMM_SOURCES
     src/lcp/tag/lcp_tag.c
     src/lcp/tag/lcp_send.c
     src/lcp/tag/lcp_tag_offload.c
@@ -79,30 +83,16 @@ list(APPEND MPC_LOWCOMM_SOURCES
 )
 
 # LCP rndv and AM
-list(APPEND MPC_LOWCOMM_SOURCES
-    src/lcp/rndv/lcp_rndv.c
-    src/lcp/am/lcp_eager.c
-    src/lcp/am/lcp_am.c
-)
+list(APPEND MPC_LOWCOMM_SOURCES src/lcp/rndv/lcp_rndv.c src/lcp/am/lcp_eager.c src/lcp/am/lcp_am.c)
 
 # LCP RMA
-list(APPEND MPC_LOWCOMM_SOURCES
-    src/lcp/rma/lcp_rma.c
-    src/lcp/rma/lcp_ato.c
-    src/lcp/rma/lcp_ato_sw.c
-)
+list(APPEND MPC_LOWCOMM_SOURCES src/lcp/rma/lcp_rma.c src/lcp/rma/lcp_ato.c src/lcp/rma/lcp_ato_sw.c)
 
 # LCR component + SHM rail
-list(APPEND MPC_LOWCOMM_SOURCES
-    src/lcr/lcr_component.c
-    src/lcr/rails/shm/mpc_shm.c
-)
+list(APPEND MPC_LOWCOMM_SOURCES src/lcr/lcr_component.c src/lcr/rails/shm/mpc_shm.c)
 
 # TCP rail
-list(APPEND MPC_LOWCOMM_SOURCES
-    src/lcr/rails/tcp/tcp.c
-    src/lcr/rails/tcp/tcp_toolkit.c
-)
+list(APPEND MPC_LOWCOMM_SOURCES src/lcr/rails/tcp/tcp.c src/lcr/rails/tcp/tcp_toolkit.c)
 
 # Active messages (optional, requires libffi)
 if(MPC_HAVE_AM)
@@ -111,7 +101,8 @@ endif()
 
 # Portals4 rail (optional)
 if(PORTALS4_DRIVER_ENABLED)
-    list(APPEND MPC_LOWCOMM_SOURCES
+    list(
+        APPEND MPC_LOWCOMM_SOURCES
         src/lcr/rails/ptl/ptl_ep.c
         src/lcr/rails/ptl/ptl_iface.c
         src/lcr/rails/ptl/ptl_recv.c
@@ -125,7 +116,8 @@ endif()
 
 # OFI rail (optional)
 if(OFI_DRIVER_ENABLED)
-    list(APPEND MPC_LOWCOMM_SOURCES
+    list(
+        APPEND MPC_LOWCOMM_SOURCES
         src/lcr/rails/ofi/mpc_ofi_request.c
         src/lcr/rails/ofi/mpc_ofi_helpers.c
         src/lcr/rails/ofi/mpc_ofi_dns.c
@@ -138,11 +130,10 @@ endif()
 # Create the shared library
 add_library(mpclowcomm SHARED ${MPC_LOWCOMM_SOURCES})
 
-
 # Include directories
-target_include_directories(mpclowcomm
-    PUBLIC
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
+target_include_directories(
+    mpclowcomm
+    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src
         ${CMAKE_SOURCE_DIR}/src/MPC_Common/include
@@ -168,7 +159,8 @@ target_include_directories(mpclowcomm
 )
 
 if(MPC_ENABLE_THREADS)
-    target_include_directories(mpclowcomm
+    target_include_directories(
+        mpclowcomm
         PRIVATE
             ${CMAKE_SOURCE_DIR}/src/MPC_Threads/src
             ${CMAKE_SOURCE_DIR}/src/MPC_Threads/include
@@ -177,10 +169,7 @@ if(MPC_ENABLE_THREADS)
 endif()
 
 if(MPC_ENABLE_MPI)
-    target_include_directories(mpclowcomm
-        PRIVATE
-            ${CMAKE_SOURCE_DIR}/src/MPC_MPI/include
-    )
+    target_include_directories(mpclowcomm PRIVATE ${CMAKE_SOURCE_DIR}/src/MPC_MPI/include)
 endif()
 
 if(PORTALS4_DRIVER_ENABLED)
@@ -197,7 +186,8 @@ endif()
 
 # Link dependencies
 # Link OBJECT targets for include dirs/compile defs, embed OBJECTS for actual code
-target_link_libraries(mpclowcomm
+target_link_libraries(
+    mpclowcomm
     PRIVATE
         mpclaunch
         mpctopology
@@ -210,11 +200,7 @@ target_link_libraries(mpclowcomm
         ${HWLOC_LIBRARIES}
         Threads::Threads
 )
-target_sources(mpclowcomm PRIVATE
-    $<TARGET_OBJECTS:mpclaunch>
-    $<TARGET_OBJECTS:mpctopology>
-    $<TARGET_OBJECTS:mpccommon>
-)
+target_sources(mpclowcomm PRIVATE $<TARGET_OBJECTS:mpclaunch> $<TARGET_OBJECTS:mpctopology> $<TARGET_OBJECTS:mpccommon>)
 target_link_options(mpclowcomm PRIVATE ${OPA_LDFLAGS} ${HWLOC_LDFLAGS})
 if(MPCALLOC_FOUND)
     target_link_libraries(mpclowcomm PRIVATE ${ALLOC_LIBS_CMAKE})
@@ -253,39 +239,33 @@ if(MPC_HAVE_AM)
 endif()
 
 # Set output name
-set_target_properties(mpclowcomm PROPERTIES
-    OUTPUT_NAME mpclowcomm
-    VERSION ${MPC_VERSION}
-    SOVERSION ${MPC_VERSION_MAJOR}
-    POSITION_INDEPENDENT_CODE ON
+set_target_properties(
+    mpclowcomm
+    PROPERTIES OUTPUT_NAME mpclowcomm VERSION ${MPC_VERSION} SOVERSION ${MPC_VERSION_MAJOR} POSITION_INDEPENDENT_CODE ON
 )
 
 # Install library
-install(TARGETS mpclowcomm
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-)
+install(TARGETS mpclowcomm LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 # Install public headers
-install(FILES
-    include/mpc_lowcomm.h
-    include/mpc_lowcomm_rdma.h
-    include/mpc_lowcomm_communicator.h
-    include/mpc_lowcomm_group.h
-    include/mpc_lowcomm_types.h
-    include/mpc_lowcomm_ep.h
-    include/mpc_lowcomm_def.h
-    include/mpc_lowcomm_handle_ctx.h
-    include/mpc_lowcomm_mqd.h
-    include/mpc_lowcomm_datatypes.h
-    include/mpc_lowcomm_one_sided.h
-    include/lcp.h
-    include/lcp_def.h
-    include/lowcomm_config.h
+install(
+    FILES
+        include/mpc_lowcomm.h
+        include/mpc_lowcomm_rdma.h
+        include/mpc_lowcomm_communicator.h
+        include/mpc_lowcomm_group.h
+        include/mpc_lowcomm_types.h
+        include/mpc_lowcomm_ep.h
+        include/mpc_lowcomm_def.h
+        include/mpc_lowcomm_handle_ctx.h
+        include/mpc_lowcomm_mqd.h
+        include/mpc_lowcomm_datatypes.h
+        include/mpc_lowcomm_one_sided.h
+        include/lcp.h
+        include/lcp_def.h
+        include/lowcomm_config.h
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mpcframework
 )
 if(MPC_HAVE_AM)
-    install(FILES
-        include/mpc_lowcomm_am.h
-        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mpcframework
-    )
+    install(FILES include/mpc_lowcomm_am.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mpcframework)
 endif()

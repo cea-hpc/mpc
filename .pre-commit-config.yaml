@@ -65,6 +65,15 @@ repos:
             ^cmake/example/t.c$|
             ^src/MPC_Threads/src/ethread_posix.c$|  # False positive on french comments
             ^tests/
+      - id: gersemi
+        name: gersemi
+        description: Gersemi - A formatter to make your CMake code the real treasure.
+        entry: 'gersemi'
+        args: ["-i"]
+        require_serial: true
+        language: 'system'
+        types: ['text']
+        files: (\.cmake|CMakeLists.txt)(.in)?$
 exclude: |-
   (?x)
     uthash\.h$|

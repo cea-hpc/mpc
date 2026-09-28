@@ -32,7 +32,8 @@ if(MPC_ENABLE_FORTRAN)
 endif()
 
 # Dataloop sources
-list(APPEND MPC_MPI_SOURCES
+list(
+    APPEND MPC_MPI_SOURCES
     src/dataloop/contents_support.c
     src/dataloop/darray_support.c
     src/dataloop/dataloop.c
@@ -52,7 +53,8 @@ list(APPEND MPC_MPI_SOURCES
 )
 
 # Mpitypes sources
-list(APPEND MPC_MPI_SOURCES
+list(
+    APPEND MPC_MPI_SOURCES
     src/mpitypes/mpitypes.c
     src/mpitypes/mpitypes_dataloop.c
     src/mpitypes/mpitypes_transpack_flatten.c
@@ -62,9 +64,9 @@ list(APPEND MPC_MPI_SOURCES
 add_library(mpcmpi SHARED ${MPC_MPI_SOURCES})
 
 # Include directories
-target_include_directories(mpcmpi
-    PUBLIC
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
+target_include_directories(
+    mpcmpi
+    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src
         ${CMAKE_SOURCE_DIR}/src/MPC_Common/include
@@ -92,7 +94,8 @@ target_include_directories(mpcmpi
 )
 
 if(MPC_ENABLE_THREADS)
-    target_include_directories(mpcmpi
+    target_include_directories(
+        mpcmpi
         PRIVATE
             ${CMAKE_SOURCE_DIR}/src/MPC_Threads/src
             ${CMAKE_SOURCE_DIR}/src/MPC_Threads/include
@@ -101,31 +104,19 @@ if(MPC_ENABLE_THREADS)
 endif()
 
 if(OFI_DRIVER_ENABLED)
-    target_include_directories(mpcmpi
-        PRIVATE
-            ${CMAKE_SOURCE_DIR}/src/MPC_Lowcomm/src/lcr/rails/ofi
-    )
+    target_include_directories(mpcmpi PRIVATE ${CMAKE_SOURCE_DIR}/src/MPC_Lowcomm/src/lcr/rails/ofi)
 endif()
 
 if(MPC_ENABLE_OPENMP)
-    target_include_directories(mpcmpi
-        PRIVATE
-            ${CMAKE_SOURCE_DIR}/src/MPC_OpenMP/include
-            ${CMAKE_SOURCE_DIR}/src/MPC_OpenMP/src
+    target_include_directories(
+        mpcmpi
+        PRIVATE ${CMAKE_SOURCE_DIR}/src/MPC_OpenMP/include ${CMAKE_SOURCE_DIR}/src/MPC_OpenMP/src
     )
     target_link_libraries(mpcmpi PRIVATE mpcomp)
 endif()
 
 # Link dependencies
-target_link_libraries(mpcmpi
-    PUBLIC
-        mpclowcomm
-    PRIVATE
-        ${CMAKE_RT_LIBS}
-        ${CMAKE_DL_LIBS}
-        m
-        Threads::Threads
-)
+target_link_libraries(mpcmpi PUBLIC mpclowcomm PRIVATE ${CMAKE_RT_LIBS} ${CMAKE_DL_LIBS} m Threads::Threads)
 
 if(MPCALLOC_FOUND)
     target_link_directories(mpcmpi PRIVATE ${MPCALLOC_LIBRARY_DIRS})
@@ -137,22 +128,16 @@ if(MPC_ENABLE_THREADS)
 endif()
 
 # Set output name
-set_target_properties(mpcmpi PROPERTIES
-    OUTPUT_NAME mpcmpi
-    VERSION ${MPC_VERSION}
-    SOVERSION ${MPC_VERSION_MAJOR}
-    POSITION_INDEPENDENT_CODE ON
+set_target_properties(
+    mpcmpi
+    PROPERTIES OUTPUT_NAME mpcmpi VERSION ${MPC_VERSION} SOVERSION ${MPC_VERSION_MAJOR} POSITION_INDEPENDENT_CODE ON
 )
 
 # Install library
-install(TARGETS mpcmpi
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-)
+install(TARGETS mpcmpi LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 # Install public headers
-install(FILES
-    include/mpc_mpi_comm_lib.h
-    include/mpc_mpi.h
-    include/mpc_mpi_fortran.h
+install(
+    FILES include/mpc_mpi_comm_lib.h include/mpc_mpi.h include/mpc_mpi_fortran.h
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mpcframework
 )

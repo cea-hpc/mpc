@@ -44,30 +44,23 @@ target_link_libraries(mpcframework_interface INTERFACE ${ALL_MPC_LIBS})
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/mpcframework.c" "/* MPC Framework umbrella library */\n")
 add_library(mpcframework_lib SHARED "${CMAKE_CURRENT_BINARY_DIR}/mpcframework.c")
 target_link_libraries(mpcframework_lib PUBLIC ${ALL_MPC_LIBS})
-set_target_properties(mpcframework_lib PROPERTIES
-    OUTPUT_NAME mpcframework
-    VERSION ${MPC_VERSION}
-    SOVERSION ${MPC_VERSION_MAJOR}
-    POSITION_INDEPENDENT_CODE ON
+set_target_properties(
+    mpcframework_lib
+    PROPERTIES
+        OUTPUT_NAME mpcframework
+        VERSION ${MPC_VERSION}
+        SOVERSION ${MPC_VERSION_MAJOR}
+        POSITION_INDEPENDENT_CODE ON
 )
 
 # Generate and install mpc.h
-configure_file(
-    "${CMAKE_SOURCE_DIR}/src/include/mpc.h.in"
-    "${CMAKE_CURRENT_BINARY_DIR}/mpc.h"
-    @ONLY
-)
+configure_file("${CMAKE_SOURCE_DIR}/src/include/mpc.h.in" "${CMAKE_CURRENT_BINARY_DIR}/mpc.h" @ONLY)
 
 # Install library
-install(TARGETS mpcframework_lib
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-)
+install(TARGETS mpcframework_lib LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 # Install headers
-install(FILES
-    "${CMAKE_CURRENT_BINARY_DIR}/mpc.h"
-    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mpcframework
-)
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/mpc.h" DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mpcframework)
 
 if(MPC_ENABLE_THREADS)
     # Generate mpc_threads_config.h
@@ -76,16 +69,12 @@ if(MPC_ENABLE_THREADS)
         "${CMAKE_CURRENT_BINARY_DIR}/mpc_threads_config.h"
         @ONLY
     )
-    install(FILES
-        "${CMAKE_CURRENT_BINARY_DIR}/mpc_threads_config.h"
-        "${CMAKE_SOURCE_DIR}/src/include/mpc_main.h"
+    install(
+        FILES "${CMAKE_CURRENT_BINARY_DIR}/mpc_threads_config.h" "${CMAKE_SOURCE_DIR}/src/include/mpc_main.h"
         DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mpcframework
     )
 endif()
 
 if(MPC_ENABLE_MPI)
-    install(FILES
-        "${CMAKE_SOURCE_DIR}/src/include/mpi.h"
-        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mpcframework
-    )
+    install(FILES "${CMAKE_SOURCE_DIR}/src/include/mpi.h" DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mpcframework)
 endif()

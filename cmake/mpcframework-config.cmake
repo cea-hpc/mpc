@@ -91,28 +91,21 @@ The following cache variables may also be set:
 find_package(PkgConfig)
 pkg_check_modules(MPCFRAMEWORK QUIET libmpcmpi)
 
-
 include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(MPCFRAMEWORK
-  FOUND_VAR MPCFRAMEWORK_FOUND
-  REQUIRED_VARS
-    MPCFRAMEWORK_LIBRARIES
-    MPCFRAMEWORK_INCLUDE_DIRS
-  VERSION_VAR MPCFRAMEWORK_VERSION
+find_package_handle_standard_args(
+    MPCFRAMEWORK
+    FOUND_VAR MPCFRAMEWORK_FOUND
+    REQUIRED_VARS MPCFRAMEWORK_LIBRARIES MPCFRAMEWORK_INCLUDE_DIRS
+    VERSION_VAR MPCFRAMEWORK_VERSION
 )
 
-Message(STATUS "MPCFRAMEWORK version ${MPCFRAMEWORK_VERSION} found in ${MPCFRAMEWORK_PREFIX}")
+message(STATUS "MPCFRAMEWORK version ${MPCFRAMEWORK_VERSION} found in ${MPCFRAMEWORK_PREFIX}")
 
-
-mark_as_advanced(
-  MPCFRAMEWORK_INCLUDE_DIR
-  MPCFRAMEWORK_LIBRARY
-)
+mark_as_advanced(MPCFRAMEWORK_INCLUDE_DIR MPCFRAMEWORK_LIBRARY)
 
 # Not try to mimic some of the FindMPI things
 
-
-if (MPCFRAMEWORK_FOUND)
+if(MPCFRAMEWORK_FOUND)
     set(MPI_FOUND TRUE)
     # Yes we'll need to detect..
     set(MPI_VERSION_MAJOR "3" CACHE STRING "Major MPI version")
@@ -128,7 +121,6 @@ if (MPCFRAMEWORK_FOUND)
     set(MPI_CXX_INCLUDE_DIRS "${MPCFRAMEWORK_INCLUDE_DIRS}" CACHE PATH "Include Directories for CXX")
     set(MPI_CXX_LIBRARIES "${MPCFRAMEWORK_LIBRARIES}" CACHE STRING "Libraries Directories for CXX")
     find_program(MPI_CXX_COMPILER mpc_cxx PATHS ${MPCFRAMEWORK_PREFIX}/bin/ REQUIRED)
-
 
 else()
     set(MPI_FOUND FALSE)

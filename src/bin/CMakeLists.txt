@@ -51,21 +51,12 @@ set(MPC_BIN_SCRIPTS
 
 # MPI scripts (conditional)
 if(MPC_ENABLE_MPI)
-    list(APPEND MPC_BIN_SCRIPTS
-        mpicc
-        mpicxx
-        "mpic++"
-    )
+    list(APPEND MPC_BIN_SCRIPTS mpicc mpicxx "mpic++")
 endif()
 
 # OpenSHMEM scripts (conditional)
 if(MPC_ENABLE_OPENSHMEM)
-    list(APPEND MPC_BIN_SCRIPTS
-        oshcc
-        oshcxx
-        "oshc++"
-        oshrun
-    )
+    list(APPEND MPC_BIN_SCRIPTS oshcc oshcxx "oshc++" oshrun)
 endif()
 
 # Fortran scripts (conditional)
@@ -108,9 +99,7 @@ foreach(_SCRIPT IN LISTS MPC_BIN_SCRIPTS)
 endforeach()
 
 # Install scripts
-install(PROGRAMS ${INSTALL_SCRIPTS}
-    DESTINATION ${CMAKE_INSTALL_BINDIR}
-)
+install(PROGRAMS ${INSTALL_SCRIPTS} DESTINATION ${CMAKE_INSTALL_BINDIR})
 
 # mpcvars.sh goes to install prefix root and bin/ (matches autotools)
 set(_MPCVARS_SRC "${CMAKE_CURRENT_SOURCE_DIR}/mpcvars.sh")
@@ -120,33 +109,21 @@ if(EXISTS "${_MPCVARS_SRC}.in")
 else()
     configure_file("${_MPCVARS_SRC}" "${_MPCVARS_DST}" COPYONLY)
 endif()
-install(PROGRAMS "${_MPCVARS_DST}"
-    DESTINATION "."
-)
-install(PROGRAMS "${_MPCVARS_DST}"
-    DESTINATION ${CMAKE_INSTALL_BINDIR}
-)
+install(PROGRAMS "${_MPCVARS_DST}" DESTINATION ".")
+install(PROGRAMS "${_MPCVARS_DST}" DESTINATION ${CMAKE_INSTALL_BINDIR})
 
 # Install mpc_compiler_common.sh to pkgdatadir
-install(FILES mpc_compiler_common.sh
-    DESTINATION ${CMAKE_INSTALL_DATADIR}/mpcframework
-)
+install(FILES mpc_compiler_common.sh DESTINATION ${CMAKE_INSTALL_DATADIR}/mpcframework)
 
 # mpcrun plugins
-set(MPCRUN_PLUGINS
-    mpcrun_opt/mpcrun_none
-    mpcrun_opt/mpcrun_none_mpc-gdb
-)
+set(MPCRUN_PLUGINS mpcrun_opt/mpcrun_none mpcrun_opt/mpcrun_none_mpc-gdb)
 
 if(MPC_HAS_SRUN_SUPPORT)
     list(APPEND MPCRUN_PLUGINS mpcrun_opt/mpcrun_srun)
 endif()
 
 if(MPC_LAUNCHER STREQUAL "HYDRA")
-    list(APPEND MPCRUN_PLUGINS
-        mpcrun_opt/mpcrun_hydra
-        mpcrun_opt/mpcrun_salloc_hydra
-    )
+    list(APPEND MPCRUN_PLUGINS mpcrun_opt/mpcrun_hydra mpcrun_opt/mpcrun_salloc_hydra)
 endif()
 
 if(MPC_LAUNCHER_PROGRAM_PRRTE)
@@ -164,14 +141,13 @@ foreach(_PLUGIN IN LISTS MPCRUN_PLUGINS)
         configure_file("${_PLUGIN_SRC}" "${_PLUGIN_DST}" COPYONLY)
     endif()
 
-    install(PROGRAMS "${_PLUGIN_DST}"
-        DESTINATION ${CMAKE_INSTALL_DATADIR}/mpcframework/mpcrun_opt
-    )
+    install(PROGRAMS "${_PLUGIN_DST}" DESTINATION ${CMAKE_INSTALL_DATADIR}/mpcframework/mpcrun_opt)
 endforeach()
 
 # mpc_print_config binary
 add_executable(mpc_print_config ${CMAKE_SOURCE_DIR}/src/MPC_Config/src/print_config.c)
-target_include_directories(mpc_print_config
+target_include_directories(
+    mpc_print_config
     PRIVATE
         ${CMAKE_SOURCE_DIR}/src/MPC_Config/include
         ${CMAKE_SOURCE_DIR}/src/MPC_Arch/include
@@ -180,33 +156,34 @@ target_include_directories(mpc_print_config
         ${CMAKE_BINARY_DIR}/src/include
         ${CMAKE_BINARY_DIR}
 )
-target_link_libraries(mpc_print_config PRIVATE
-    mpcconfig
-    mpcarch
-    ${OPA_LIBRARIES}
-    ${OFI_LIBRARIES}
-    ${CMAKE_RT_LIBS}
-    Threads::Threads
-    -Wl,--no-as-needed
-    mpcmpi
-    mpclowcomm
-    mpcomp
-    mpcthread
-    -Wl,--as-needed
+target_link_libraries(
+    mpc_print_config
+    PRIVATE
+        mpcconfig
+        mpcarch
+        ${OPA_LIBRARIES}
+        ${OFI_LIBRARIES}
+        ${CMAKE_RT_LIBS}
+        Threads::Threads
+        -Wl,--no-as-needed
+        mpcmpi
+        mpclowcomm
+        mpcomp
+        mpcthread
+        -Wl,--as-needed
 )
 if(MPCALLOC_FOUND)
     target_include_directories(mpc_print_config PRIVATE ${MPCALLOC_INCLUDE_DIRS})
     target_link_libraries(mpc_print_config PRIVATE ${MPCALLOC_LDFLAGS})
 endif()
-install(TARGETS mpc_print_config
-    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-)
+install(TARGETS mpc_print_config RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 
 # mpc_sets binary (conditional)
 if(MPC_ENABLE_LOWCOMM)
     add_executable(mpc_sets mpc_sets.c)
 
-    target_include_directories(mpc_sets
+    target_include_directories(
+        mpc_sets
         PRIVATE
             ${CMAKE_BINARY_DIR}
             ${CMAKE_SOURCE_DIR}/src/MPC_Lowcomm/include
@@ -217,22 +194,22 @@ if(MPC_ENABLE_LOWCOMM)
             ${CMAKE_SOURCE_DIR}/src/MPC_MPI/include
     )
 
-    target_link_libraries(mpc_sets PRIVATE
-        mpcconfig
-        mpclowcomm
-        mpcarch
-        -Wl,--no-as-needed
-        mpcmpi
-        mpcomp
-        mpcthread
-        -Wl,--as-needed
-        ${OPA_LIBRARIES}
-        ${OFI_LIBRARIES}
-        ${CMAKE_RT_LIBS}
-        Threads::Threads
+    target_link_libraries(
+        mpc_sets
+        PRIVATE
+            mpcconfig
+            mpclowcomm
+            mpcarch
+            -Wl,--no-as-needed
+            mpcmpi
+            mpcomp
+            mpcthread
+            -Wl,--as-needed
+            ${OPA_LIBRARIES}
+            ${OFI_LIBRARIES}
+            ${CMAKE_RT_LIBS}
+            Threads::Threads
     )
 
-    install(TARGETS mpc_sets
-        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-    )
+    install(TARGETS mpc_sets RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 endif()

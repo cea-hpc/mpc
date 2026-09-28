@@ -37,7 +37,6 @@ check_function_exists(memalign HAVE_MEMALIGN)
 # ------------------------------------------------------------------
 check_function_exists(statfs HAVE_STATFS)
 
-
 # ------------------------------------------------------------------
 # Function checks - pthreads
 # ------------------------------------------------------------------
@@ -73,16 +72,20 @@ if(HAVE_STRING_H)
     set(_STATFS_INCLUDES "${_STATFS_INCLUDES}\n#include <string.h>")
 endif()
 
-check_c_source_compiles("
+check_c_source_compiles(
+    "
 ${_STATFS_INCLUDES}
 int main() {
     struct statfs f;
     memset(&f, 0, sizeof(f));
     return 0;
 }
-" HAVE_STRUCT_STATFS)
+"
+    HAVE_STRUCT_STATFS
+)
 
-check_c_source_compiles("
+check_c_source_compiles(
+    "
 ${_STATFS_INCLUDES}
 int main() {
     struct statfs f;
@@ -90,9 +93,12 @@ int main() {
     f.f_type = 0;
     return 0;
 }
-" ROMIO_HAVE_STRUCT_STATFS_WITH_F_TYPE)
+"
+    ROMIO_HAVE_STRUCT_STATFS_WITH_F_TYPE
+)
 
-check_c_source_compiles("
+check_c_source_compiles(
+    "
 ${_STATFS_INCLUDES}
 int main() {
     struct statfs f;
@@ -100,7 +106,9 @@ int main() {
     strncmp(\"nfs\", f.f_fstypename, 3);
     return 0;
 }
-" ROMIO_HAVE_STRUCT_STATFS_WITH_F_FSTYPENAME)
+"
+    ROMIO_HAVE_STRUCT_STATFS_WITH_F_FSTYPENAME
+)
 
 # ------------------------------------------------------------------
 # Type size checks - basic types

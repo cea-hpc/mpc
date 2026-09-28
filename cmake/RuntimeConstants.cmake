@@ -6,7 +6,8 @@
 # Helper: extract C preprocessor define values at runtime
 # ------------------------------------------------------------------
 function(mpc_extract_define HEADER DEFINE CMAKE_VAR)
-    set(_TEST_SRC "
+    set(_TEST_SRC
+        "
 #include <${HEADER}>
 #include <stdio.h>
 int main() {
@@ -17,9 +18,12 @@ int main() {
     fclose(f);
     return 0;
 }
-")
+"
+    )
     file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/define_test.c" "${_TEST_SRC}")
-    try_run(_RUN_RES _COMPILE_RES
+    try_run(
+        _RUN_RES
+        _COMPILE_RES
         "${CMAKE_CURRENT_BINARY_DIR}"
         "${CMAKE_CURRENT_BINARY_DIR}/define_test.c"
         COMPILE_OUTPUT_VARIABLE _COMPILE_OUT
@@ -117,31 +121,40 @@ mpc_extract_define("semaphore.h" "SEM_FAILED" MPC_CONFIG_SEM_FAILED)
 # ------------------------------------------------------------------
 # Compiler feature detection - compiler ID
 # ------------------------------------------------------------------
-check_c_source_compiles("
+check_c_source_compiles(
+    "
 #ifndef __GNUC__
 #error
 #endif
 int main() { return 0; }
-" MPC_COMPILER_IS_GCC)
+"
+    MPC_COMPILER_IS_GCC
+)
 
-check_c_source_compiles("
+check_c_source_compiles(
+    "
 #ifndef __clang__
 #error
 #endif
 int main() { return 0; }
-" MPC_COMPILER_IS_CLANG)
+"
+    MPC_COMPILER_IS_CLANG
+)
 
 # ------------------------------------------------------------------
 # Compiler feature detection - language features
 # ------------------------------------------------------------------
 # TLS support
 set(CMAKE_REQUIRED_FLAGS "")
-check_c_source_compiles("
+check_c_source_compiles(
+    "
 int main() {
     static _Thread_local int x = 0;
     return x;
 }
-" TLS_SUPPORT)
+"
+    TLS_SUPPORT
+)
 if(TLS_SUPPORT)
     set(TLS_SUPPORT 1)
 else()
@@ -151,19 +164,25 @@ endif()
 # pragma message support
 set(_OLD_CFLAGS "${CMAKE_C_FLAGS}")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Werror")
-check_c_source_compiles("
+check_c_source_compiles(
+    "
 int main() {
     #pragma message \"test\"
     return 0;
 }
-" HAVE_PRAGMA_MESSAGE)
+"
+    HAVE_PRAGMA_MESSAGE
+)
 set(CMAKE_C_FLAGS "${_OLD_CFLAGS}")
 
 # visibility attribute
-check_c_source_compiles("
+check_c_source_compiles(
+    "
 __attribute__((visibility(\"default\"))) int foo(void);
 int main() { return 0; }
-" HAVE_VISIBILITY)
+"
+    HAVE_VISIBILITY
+)
 if(HAVE_VISIBILITY)
     set(HAVE_VISIBILITY 1)
 else()
@@ -171,12 +190,15 @@ else()
 endif()
 
 # __builtin_expect support
-check_c_source_compiles("
+check_c_source_compiles(
+    "
 int main() {
     int x = 1;
     return __builtin_expect(x, 0);
 }
-" HAVE_BUILTIN_EXPECT)
+"
+    HAVE_BUILTIN_EXPECT
+)
 if(HAVE_BUILTIN_EXPECT)
     set(HAVE_BUILTIN_EXPECT 1)
 else()
@@ -187,13 +209,16 @@ endif()
 # Compiler feature detection - macros and variables
 # ------------------------------------------------------------------
 # __func__ support
-check_c_source_compiles("
+check_c_source_compiles(
+    "
 #include <stdio.h>
 int main() {
     printf(\"%s\", __func__);
     return 0;
 }
-" HAVE___FUNC__)
+"
+    HAVE___FUNC__
+)
 if(HAVE___FUNC__)
     set(MPC_ARCH_DETECTED_FUNCTION "__func__")
 else()
@@ -208,11 +233,14 @@ else()
 endif()
 
 # environ variable
-check_c_source_compiles("
+check_c_source_compiles(
+    "
 #include <stdlib.h>
 extern char **environ;
 int main() { return (int)(long)environ; }
-" HAVE_ENVIRON_VAR)
+"
+    HAVE_ENVIRON_VAR
+)
 
 # ------------------------------------------------------------------
 # Process mode and extls detection
