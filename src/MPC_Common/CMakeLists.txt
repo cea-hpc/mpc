@@ -66,7 +66,7 @@ add_custom_command(
 )
 list(APPEND MPC_COMMON_SOURCES "${CMAKE_CURRENT_BINARY_DIR}/src/elf_64.c")
 
-# Create the library (OBJECT — matches autotools noinst_LTLIBRARIES)
+# Create the library (OBJECT)
 add_library(mpccommon OBJECT ${MPC_COMMON_SOURCES})
 set_target_properties(mpccommon PROPERTIES POSITION_INDEPENDENT_CODE ON)
 

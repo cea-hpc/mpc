@@ -23,7 +23,7 @@ variables:
   # pcvs-benchmarks path
   GL_PCVS_BENCHMARKS_PATH: '$CI_BUILDS_DIR/$CI_PIPELINE_ID/pcvs-benchmarks'
   # Installation option used by all configuration
-  GL_INSTALL_COMMON_OPTS: --cmake --relwithdebinfo -j32
+  GL_INSTALL_COMMON_OPTS: --relwithdebinfo -j32
   # Default pipeline name for the workflow
   GL_PIPELINE_NAME: 'Manually launched on $CI_COMMIT_BRANCH'
   # Enable the extended CI testings
@@ -168,14 +168,14 @@ No MPCAlloc:
 Without Lowcomm:
   extends: ['.build_only']
   variables:
-    GL_INSTALL_OPTS: '${GL_INSTALL_COMMON_OPTS} --process-mode --mpc-option="--disable-lowcomm"'
+    GL_INSTALL_OPTS: '${GL_INSTALL_COMMON_OPTS} --process-mode --disable-lowcomm'
     HAS_PRIVATIZATION: false
     HAS_MPI: false
 
 Without MPI:
   extends: ['.build_only']
   variables:
-    GL_INSTALL_OPTS: '${GL_INSTALL_COMMON_OPTS} --process-mode --mpc-option="--disable-mpi"'
+    GL_INSTALL_OPTS: '${GL_INSTALL_COMMON_OPTS} --process-mode --disable-mpi'
     HAS_PRIVATIZATION: false
     HAS_MPI: false
 
@@ -183,9 +183,9 @@ Without Threads:
   stage: 'Build Only'
   extends: ['.build_only']
   variables:
-    GL_INSTALL_OPTS: '${GL_INSTALL_COMMON_OPTS} --process-mode --mpc-option="--disable-threads"'
+    GL_INSTALL_OPTS: '${GL_INSTALL_COMMON_OPTS} --process-mode --disable-threads'
     HAS_PRIVATIZATION: false
-    HAS_MPI: true
+    HAS_MPI: false
 
 Without PMIx (Debug):
   stage: 'Build Only'

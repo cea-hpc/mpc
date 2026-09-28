@@ -3,7 +3,7 @@
 # ==================================================================
 
 # ------------------------------------------------------------------
-# Fortran -fallow-argument-mismatch check (matches autotools)
+# Fortran -fallow-argument-mismatch check
 # ------------------------------------------------------------------
 if(MPC_ENABLE_FORTRAN)
     file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/fortran_test_check.f90" "PROGRAM foo\nEND PROGRAM\n")
@@ -25,7 +25,7 @@ else()
 endif()
 
 # ------------------------------------------------------------------
-# Fortran symbol naming convention detection (matches autotools)
+# Fortran symbol naming convention detection
 # ------------------------------------------------------------------
 if(MPC_ENABLE_FORTRAN)
     file(

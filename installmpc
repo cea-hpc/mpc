@@ -31,7 +31,6 @@ SCRIPTPATH=$(dirname "$SCRIPT")
 PROJECT_BUILD_DIR=$(readlink -f "$PWD")
 
 # enable colors by default
-MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --enable-shell-colors"
 MPC_COMP_ADD_BUILD_PARAMETERS="${MPC_COMP_ADD_BUILD_PARAMETERS} --opts=--enable-color"
 USE_COLOR="yes"
 
@@ -43,6 +42,9 @@ LSP="no"
 MAKE_J=""
 # NOTE: these are only meaningful when not using spack
 ALL_PACKAGE_ARGS=""
+# Options given through --mpc-option= / --mpcframework=, resolved once
+# the backend is known (see translate_mpc_user_option_to_cmake)
+MPC_USER_BUILD_PARAMETERS=""
 MPC_COMP_ADD_BUILD_PARAMETERS=""
 OPENPA_BUILD_PARAMETERS=""
 MPCALLOC_BUILD_PARAMETERS=""
@@ -53,8 +55,9 @@ MPC_DMTCP_BUILD_PARAMETERS="--enable-pthread-mutex-wrappers"
 MPC_GDB_BUILD_PARAMETERS="--without-zlib --disable-werror"
 DEBUG="no"
 MPC_OPTIM_OPTION_SPECIFIED="no"
-USE_CMAKE="no"
 CMAKE_OPTS=""
+DO_CLEAN="no"
+DO_DISTCLEAN="no"
 
 # Stop on error
 set -e
@@ -70,6 +73,64 @@ set -e
 add_cmake_opt()
 {
 	CMAKE_OPTS="$CMAKE_OPTS $1"
+}
+
+#
+# Translate an option given through --mpc-option= / --mpcframework= for the
+# CMake backend. Only the whitelisted module toggles are translated, any
+# other value is rejected with an explicit error, hinting at the named
+# installmpc flag when one exists.
+#
+
+translate_mpc_user_option_to_cmake()
+{
+	case "$1" in
+		--disable-lowcomm)
+			add_cmake_opt "-DMPC_ENABLE_LOWCOMM=OFF"
+			;;
+		--disable-mpi)
+			add_cmake_opt "-DMPC_ENABLE_MPI=OFF"
+			;;
+		--disable-threads)
+			add_cmake_opt "-DMPC_ENABLE_THREADS=OFF"
+			;;
+		--disable-openmp)
+			die "--mpc-option/--mpcframework: '$1' is not supported by the CMake backend, use the --disable-openmp flag"
+			;;
+		--enable-profiler)
+			die "--mpc-option/--mpcframework: '$1' is not supported by the CMake backend, use the --enable-profiler flag"
+			;;
+		--disable-mpiio)
+			die "--mpc-option/--mpcframework: '$1' is not supported by the CMake backend, use the --disable-romio flag"
+			;;
+		--disable-openshmem)
+			die "--mpc-option/--mpcframework: '$1' is not supported by the CMake backend, use the --disable-openshmem flag"
+			;;
+		--disable-fortran)
+			die "--mpc-option/--mpcframework: '$1' is not supported by the CMake backend, use the --disable-fortran flag"
+			;;
+		--disable-mpc-allocator)
+			die "--mpc-option/--mpcframework: '$1' is not supported by the CMake backend, use the --disable-mpcalloc flag"
+			;;
+		--enable-workshare)
+			die "--mpc-option/--mpcframework: '$1' is not supported by the CMake backend, use the --enable-workshare flag"
+			;;
+		--enable-topology-simulation)
+			die "--mpc-option/--mpcframework: '$1' is not supported by the CMake backend, use the --enable-topology-simulation flag"
+			;;
+		--with-dmtcp)
+			die "--mpc-option/--mpcframework: '$1' is not supported by the CMake backend, use the --enable-mpc-ft flag"
+			;;
+		--enable-shell-colors)
+			die "--mpc-option/--mpcframework: '$1' is not supported by the CMake backend, use the --enable-color flag"
+			;;
+		--disable-shell-colors)
+			die "--mpc-option/--mpcframework: '$1' is not supported by the CMake backend, use the --disable-color flag"
+			;;
+		*)
+			die "--mpc-option/--mpcframework only supports --disable-lowcomm, --disable-mpi and --disable-threads with the CMake backend (got '$1'), use a named installmpc flag (see --help) or pass CMake cache variables directly"
+			;;
+	esac
 }
 
 set_cuda_on()
@@ -248,7 +309,7 @@ notapplicable()
 #
 
 LIST_OF_FOUND_CMD=""
-COMMON_CMD="bear cmake spack patch cut ls pwd grep rm basename dirname make bzip2 gcc g++ ldd pkg-config mktemp getconf nproc lscpu wget curl mpiexec.hydra srun"
+COMMON_CMD="cmake spack patch cut ls pwd grep rm basename dirname make bzip2 gcc g++ ldd pkg-config mktemp getconf nproc lscpu wget curl mpiexec.hydra srun"
 check_for_commands()
 {
 	# Check already done
@@ -1257,9 +1318,8 @@ You may track issued commands using the "-v" flag.
   --verbose=1|2|3                         : Level of verbosity
   -v|-vv|-vvv                             : Level of verbosity
   -jN                                     : Allow N jobs at once (parallel install)
-  --enable-lsp                            : Use bear to generate a compile_commands.json file, used by Language Server Protocols
+  --enable-lsp                            : Generate a compile_commands.json file, used by Language Server Protocols (native CMake export)
   --disable-lsp                           : Do not generate a compile_commands.json file (default)
-  --cmake                                 : Build MPC using CMake instead of autotools
 
 # Features
   --with-hydra                            : Build MPC with Hydra launcher support
@@ -1277,6 +1337,11 @@ You may track issued commands using the "-v" flag.
   --with-bxi=*                            : Enable version specific features for Portal4 rail on BXI (default version 2)
 
 # Disable sub packages
+  --disable-threads                       : Disable MPC threads (also disables OpenMP and MPI)
+  --disable-lowcomm                       : Disable Lowcomm (also disables MPI and OpenSHMEM)
+  --disable-mpi                           : Disable MPI (same as --disable-MPC_MPI or --lib-mode)
+  --disable-openmp                        : Disable OpenMP support
+  --enable-profiler                       : Enable the internal profiler
   --disable-ofi                           : Disable libfabric support
   --disable-mpc-comp                      : Disable MPC compiler additions support
   --disable-mpcalloc                      : Disable MPC allocator
@@ -1327,7 +1392,8 @@ You may track issued commands using the "-v" flag.
   --mpcalloc=*                            : Add options to MPCALLOC configure
   --ofi=*                                 : Add options to OFI configure
   --dmtpc=*                               : Add options to DMTCP/HBICT configure
-  --mpcframework=*                        : Add options to mpc framework configure
+  --mpc-option=*                          : Add options to MPC's configure (with the CMake backend only --disable-lowcomm, --disable-mpi and --disable-threads are supported)
+  --mpcframework=*                        : Add options to mpc framework configure (same restrictions as --mpc-option with the CMake backend)
 EOF
 }
 
@@ -1366,7 +1432,6 @@ WORKSHARE_ENABLED="no"
 
 add_process_mode_flag_to_mpc()
 {
-	MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --enable-process-mode"
 	add_cmake_opt "-DMPC_ENABLE_PROCESS_MODE=ON"
 }
 
@@ -1379,14 +1444,12 @@ enable_src_fixes()
 
 enable_real_with_debug()
 {
-	MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --enable-debug-messages --enable-debug"
 	add_cmake_opt "-DMPC_ENABLE_DEBUG_MESSAGES=ON -DMPC_ENABLE_DEBUG=ON"
 	enable_src_fixes
 }
 
 enable_debug()
 {
-	MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --enable-debug-messages --enable-debug --enable-debug-optim"
 	MPC_COMP_ADD_BUILD_PARAMETERS="${MPC_COMP_ADD_BUILD_PARAMETERS} --opts=--enable-debug"
 	OFI_BUILD_PARAMETERS="${OFI_BUILD_PARAMETERS} --enable-debug"
 	add_cmake_opt "-DMPC_ENABLE_DEBUG=ON -DMPC_ENABLE_DEBUG_MESSAGES=ON -DMPC_ENABLE_OPTIM=OFF"
@@ -1482,7 +1545,6 @@ do
 			;;
 		################# FORTRAN GCC ###############
 		--disable-mpc-fortran|--disable-fortran)
-			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --disable-fortran"
 			add_cmake_opt "-DMPC_ENABLE_FORTRAN=OFF"
 			;;
 		################### HWLOC ###################
@@ -1495,31 +1557,25 @@ do
 			;;
 		################### CUDA ###################
 		--with-cuda)
-			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --with-cuda"
 			set_cuda_on ""
 			;;
 		--with-cuda=*)
 			extractParamValue 'CUDA_PREFIX' 'with-cuda' "$arg"
-			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --with-cuda=${CUDA_PREFIX}"
 			set_cuda_on "${CUDA_PREFIX}"
 			;;
 		################### ROCM ###################
 		--with-rocm)
-			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --with-rocm"
 			set_rocm_on ""
 			;;
 		--with-rocm=*)
 			extractParamValue 'ROCM_PREFIX' 'with-rocm' "$arg"
-			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --with-rocm=${ROCM_PREFIX}"
 			set_rocm_on "${ROCM_PREFIX}"
 			;;
 		--with-rocm-nvidia)
-			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --with-cuda --with-rocm --with-rocm-mod=nvidia"
 			set_rocm_nvidia_on ""
 			;;
 		--with-rocm-nvidia=*)
 			extractParamValue 'ROCM_PREFIX' 'with-rocm' "$arg"
-			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --with-cuda --with-rocm=${ROCM_PREFIX} --with-rocm-mod=nvidia"
 			set_rocm_nvidia_on "${ROCM_PREFIX}"
 			;;
 		################### OTHER GPU ###################
@@ -1553,12 +1609,10 @@ do
 			;;
 		#### BXI ##########
 		--with-bxi)
-			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --with-bxi=2"
 			add_cmake_opt "-DMPC_BXI_VERSION=2"
 			;;
 		--with-bxi=*)
 			extractParamValue 'BXI_PREFIX' 'with-bxi' "$arg"
-			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --with-bxi=${BXI_PREFIX}"
 			add_cmake_opt "-DMPC_BXI_VERSION=${BXI_PREFIX}"
 			;;
 		--ofi=*)
@@ -1595,7 +1649,6 @@ do
 			;;
 		################### GENERIC FT ###################
 		--enable-mpc-ft)
-			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --with-dmtcp"
 			enableParamIfNot 'MPC_DMTCP_PREFIX' "$MPC_DMTCP_PREFIX" 'disabled' 'internal'
 			add_cmake_opt "-DMPC_ENABLE_DMTCP=ON"
 			;;
@@ -1609,13 +1662,11 @@ do
 			;;
 		############### MPCFRAMEWORK ################
 		--enable-color)
-			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --enable-shell-colors"
 			MPC_COMP_ADD_BUILD_PARAMETERS="${MPC_COMP_ADD_BUILD_PARAMETERS} --opts=--enable-color"
 			USE_COLOR="yes"
 			add_cmake_opt "-DMPC_ENABLE_SHELL_COLORS=ON"
 			;;
 		--disable-color)
-			MPCFRAMEWORK_BUILD_PARAMETERS=$(echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | sed "s/--enable-shell-colors//")
 			MPC_COMP_ADD_BUILD_PARAMETERS=$(echo "$MPC_COMP_ADD_BUILD_PARAMETERS"  | sed "s/--opts=--enable-color//")
 			USE_COLOR="no"
 			add_cmake_opt "-DMPC_ENABLE_SHELL_COLORS=OFF"
@@ -1631,13 +1682,11 @@ do
 			enable_real_with_debug
 			;;
 		--enable-topology-simulation)
-			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --enable-topology-simulation"
 			add_cmake_opt "-DMPC_ENABLE_TOPOLOGY_SIMULATION=ON"
 			;;
 		--with-pmi1=*)
 			PMIX_PREFIX=""
 			extractParamValue 'PMIX_PREFIX' 'with-pmi1=' "$arg"
-			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} ${PMIX_PREFIX}"
 			ENABLE_SLURM='no'
 			add_cmake_opt "-DMPC_LAUNCHER=PMI1"
 			if test -n "${PMIX_PREFIX}"; then
@@ -1645,14 +1694,12 @@ do
 			fi
 			;;
 		--with-pmi1)
-			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --with-pmi1"
 			ENABLE_SLURM='no'
 			add_cmake_opt "-DMPC_LAUNCHER=PMI1"
 			;;
 		--with-pmix=*)
 			PMIX_PREFIX=""
 			extractParamValue 'PMIX_PREFIX' 'with-pmix=' "$arg"
-			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} ${PMIX_PREFIX}"
 			ENABLE_SLURM='no'
 			add_cmake_opt "-DMPC_LAUNCHER=PMIX"
 			if test -n "${PMIX_PREFIX}"; then
@@ -1660,7 +1707,6 @@ do
 			fi
 			;;
 		--with-pmix)
-			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --with-pmix"
 			ENABLE_SLURM='no'
 			add_cmake_opt "-DMPC_LAUNCHER=PMIX"
 			;;
@@ -1670,27 +1716,36 @@ do
 			;;
 		--with-slurm)
 			;;
-		--disable-MPC_MPI|--lib-mode)
-			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --disable-mpi"
+		--disable-MPC_MPI|--lib-mode|--disable-mpi)
 			add_cmake_opt "-DMPC_ENABLE_MPI=OFF"
 			;;
         --disable-openshmem)
-			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --disable-openshmem"
 			add_cmake_opt "-DMPC_ENABLE_OPENSHMEM=OFF"
             ;;
 		--disable-romio)
-			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --disable-mpiio"
 			add_cmake_opt "-DMPC_ENABLE_MPIIO=OFF"
 			;;
+		--disable-lowcomm)
+			add_cmake_opt "-DMPC_ENABLE_LOWCOMM=OFF"
+			;;
+		--disable-threads)
+			add_cmake_opt "-DMPC_ENABLE_THREADS=OFF"
+			;;
+		--disable-openmp)
+			add_cmake_opt "-DMPC_ENABLE_OPENMP=OFF"
+			;;
+		--enable-profiler)
+			add_cmake_opt "-DMPC_ENABLE_PROFILER=ON"
+			;;
 		--disable-prefix-check|--disable-check-install)
-			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --disable-prefix-check"
+			info "$arg is a no-op, it is only kept for command line compatibility"
 			;;
 		--mpcframework=*)
-			# Pass extra options to MPC
-			extractAndAddPackageOption 'MPCFRAMEWORK_BUILD_PARAMETERS' 'mpcframework=' "$arg"
+			# Pass extra options to MPC, resolved once the backend is known
+			extractAndAddPackageOption 'MPC_USER_BUILD_PARAMETERS' 'mpcframework=' "$arg"
 			;;
 		--mpc-option=*)
-			extractAndAddPackageOption 'MPCFRAMEWORK_BUILD_PARAMETERS' 'mpc-option=' "$arg"
+			extractAndAddPackageOption 'MPC_USER_BUILD_PARAMETERS' 'mpc-option=' "$arg"
 			;;
 		################## COMMON ###################
 		-v | --verbose | --verbose=1)
@@ -1707,9 +1762,6 @@ do
 			;;
 		-j*)
 			extractParamValueAlt 'MAKE_J' 'j' "$arg"
-			if test "x${LSP}" = "xyes"; then
-				info "--enable-lsp is set, -j will be ignored when building MPC"
-			fi
 			;;
 		--prefix=*)
 			extractParamValue 'PREFIX' 'prefix' "$arg"
@@ -1728,17 +1780,10 @@ do
 			exit 0
 		;;
 		--enable-lsp)
-			assert_cmd "bear"
 			LSP="yes"
-			if [ -n "$MAKE_J" ]; then
-				info "--enable-lsp is set, -j will be ignored when building MPC"
-			fi
 			;;
 		--disable-lsp)
 			LSP="no"
-			;;
-		--cmake)
-			USE_CMAKE="yes"
 			;;
 		--spack|--enable-spack)
 			assert_cmd "spack"
@@ -1778,7 +1823,6 @@ do
 			extractParamValue 'OVERRIDDEN_SPACK_PKGS' 'force-spack-package' "$arg"
 			;;
     	--enable-workshare)
-			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --enable-workshare"
 			WORKSHARE_ENABLED="yes"
 			add_cmake_opt "-DMPC_ENABLE_WORKSHARE=ON"
 			# Workshare is only on 7.3.0 try to force it
@@ -1790,10 +1834,12 @@ do
 			exit 0
 			;;
 		clean)
-			make clean
+			# Deferred until the backend is known (see below)
+			DO_CLEAN="yes"
 			;;
 		distclean)
-			make distclean
+			# Deferred until the backend is known (see below)
+			DO_DISTCLEAN="yes"
 			;;
 		# Deprecated options
 		--mirror=*|--with-sctk-arch=*|--sctk-arch-*|--with-mpfr=*|--mpfr-*|--with-gmp=*|--with-hbict=*|--hbict-*|--gmp-*|--with-mpc-binutils=*|--mpc-binutils-*|--disable-mpc-binutils|--with-libextls=*|--libextls-*|--with-mpc=*|--enable-check-deps|--disable-check-deps|--host=*|--target=*|--arch-library-path=*|--with-sysroot=*|--with-libxml2=*|--libxml2=*)
@@ -1804,6 +1850,31 @@ do
 			exit 1
 	esac
 done
+
+#
+# Deferred argument handling
+#
+
+# Resolve --mpc-option= / --mpcframework= values
+# The CMake backend only accepts the whitelisted module toggles
+if test -n "${MPC_USER_BUILD_PARAMETERS}"; then
+	for mpc_user_opt in ${MPC_USER_BUILD_PARAMETERS}; do
+		translate_mpc_user_option_to_cmake "${mpc_user_opt}"
+	done
+fi
+
+# Handle clean / distclean
+if test "x${DO_CLEAN}" = "xyes"; then
+	cmake --build "${PROJECT_BUILD_DIR}" --target clean
+fi
+
+if test "x${DO_DISTCLEAN}" = "xyes"; then
+	if test "x${PROJECT_BUILD_DIR}" = "x${SCRIPTPATH}"; then
+		die "Refusing to distclean the MPC source directory"
+	fi
+
+	rm -fr "${PROJECT_BUILD_DIR}"
+fi
 
 #
 # Enable output color if set
@@ -1898,10 +1969,7 @@ if [ "$ENABLE_SLURM" == "yes" ]; then
 		HYDRA_PREFIX="enabled"
 		ENABLE_SLURM="no"
 	else
-		if [ -z ${SLURM_PREFIX} ]; then
-			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --with-slurm"
-		else
-			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} ${SLURM_PREFIX}"
+		if [ -n "${SLURM_PREFIX}" ]; then
 			add_cmake_opt "-DMPC_PMIX_PREFIX=${SLURM_PREFIX}"
 		fi
 		add_cmake_opt "-DMPC_LAUNCHER=PMIX"
@@ -2043,156 +2111,82 @@ find_in_prefix_or_use_spack_optional "libunwind" "" "spackonly" "${LIBUNWIND_PRE
 
 propagate_build_env
 
-BUILD_CONF_PATH=${PROJECT_BUILD_DIR}/src/bin/mpc_build_env.sh
+#
+# CMake build
+#
 
-if test -f "${BUILD_CONF_PATH}" ; then
-	checking "Remove previous MPC configuration state"
-	show_run_cmd "rm -fr $BUILD_CONF_PATH"
-	rm -fr "${BUILD_CONF_PATH}"
+assert_cmd "cmake"
+
+# Ensure PKG_CONFIG_PATH points to the prefix where dependencies were installed
+test -d "${PREFIX}/lib/pkgconfig" && PKG_CONFIG_PATH=$(clean_env_path_var "${PREFIX}/lib/pkgconfig/:$PKG_CONFIG_PATH")
+test -d "${PREFIX}/lib64/pkgconfig" && PKG_CONFIG_PATH=$(clean_env_path_var "${PREFIX}/lib64/pkgconfig/:$PKG_CONFIG_PATH")
+
+# Add pkgconfig paths from all dependency prefixes
+for _pc_prefix in "${MPC_HWLOC_PREFIX}" "${MPC_OPENPA_PREFIX}" "${MPC_PMIX_PREFIX}" "${MPC_PMI_PREFIX}" "${MPC_LIBFABRIC_PREFIX}" "${MPC_MPCALLOC_PREFIX}" "${MPC_DMTCP_PREFIX}"; do
+	test -n "$_pc_prefix" && test -d "${_pc_prefix}/lib/pkgconfig" && PKG_CONFIG_PATH=$(clean_env_path_var "${_pc_prefix}/lib/pkgconfig/:$PKG_CONFIG_PATH")
+	test -n "$_pc_prefix" && test -d "${_pc_prefix}/lib64/pkgconfig" && PKG_CONFIG_PATH=$(clean_env_path_var "${_pc_prefix}/lib64/pkgconfig/:$PKG_CONFIG_PATH")
+done
+export PKG_CONFIG_PATH
+
+#
+# Build CMake options from installmpc variables
+# Options set during arg parsing are already in CMAKE_OPTS.
+# This section only handles CMake specifics like CMAKE_BUILD_TYPE, CMAKE_*_COMPILER & CMAKE_PREFIX_PATH.
+#
+CMAKE_OPTS="-DCMAKE_INSTALL_PREFIX=${PREFIX} $CMAKE_OPTS"
+
+# --- Build type / optimization defaults ---
+if test "${DEBUG}" = "yes"; then
+	CMAKE_OPTS="$CMAKE_OPTS -DCMAKE_BUILD_TYPE=Debug"
+elif test "${MPC_OPTIM_OPTION_SPECIFIED}" = "yes"; then
+	CMAKE_OPTS="$CMAKE_OPTS -DCMAKE_BUILD_TYPE=RelWithDebInfo"
+else
+	CMAKE_OPTS="$CMAKE_OPTS -DCMAKE_BUILD_TYPE=Release -DMPC_ENABLE_OPT_NATIVE=ON"
+fi
+
+# --- Compiler (mpc-compiler-additions / autopriv) ---
+if test "${MPC_COMP_ADD_PREFIX}" != "disabled"; then
+	CMAKE_OPTS="$CMAKE_OPTS -DCMAKE_C_COMPILER=$(command -v apcc) -DCMAKE_CXX_COMPILER=$(command -v ap++) -DCMAKE_Fortran_COMPILER=$(command -v apfortran)"
+	CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_PROCESS_MODE=OFF"
+else
+		# No mpc-compiler-additions: let CMake try extls first, fall back to process mode
+		# Don't override MPC_ENABLE_PROCESS_MODE — CMakeLists.txt default (OFF) + extls detection handles it
+		:
+fi
+
+# --- CMAKE_PREFIX_PATH for dependency discovery ---
+if test -n "${PREFIX}"; then
+	CMAKE_OPTS="$CMAKE_OPTS -DCMAKE_PREFIX_PATH=${PREFIX}"
+fi
+
+# Clean CMake cache so stale options don't persist across reruns
+if test -f "${PROJECT_BUILD_DIR}/CMakeCache.txt"; then
+	checking "Removing stale CMake cache"
+	rm -f "${PROJECT_BUILD_DIR}/CMakeCache.txt"
+	rm -rf "${PROJECT_BUILD_DIR}/CMakeFiles"
 	ok
 fi
 
-if test "x${USE_CMAKE}" != "xyes"; then
-	#
-	# Autotools build
-	#
+# --- LSP: let CMake export compile_commands.json natively ---
+if test "x${LSP}" = "xyes"; then
+	CMAKE_OPTS="$CMAKE_OPTS -DCMAKE_EXPORT_COMPILE_COMMANDS=ON"
+fi
 
-	# Enable native march to have the more release build by default
-	if [ $MPC_OPTIM_OPTION_SPECIFIED == "no" ]; then
-		MPCFRAMEWORK_BUILD_PARAMETERS="$MPCFRAMEWORK_BUILD_PARAMETERS --enable-opt-native"
-	fi
+# we want parameter expansion
+checking "Configuring MPC with CMake"
+wrap_output cmake -S "$SCRIPTPATH" -B "${PROJECT_BUILD_DIR}" $CMAKE_OPTS
+ok
 
-	MPC_CONFIGURE_OPTS="--prefix=${PREFIX} $MPCFRAMEWORK_BUILD_PARAMETERS"
+checking "Building MPC"
+wrap_output cmake --build "${PROJECT_BUILD_DIR}" -- -j ${MAKE_J}
+ok
 
-	#
-	# Autogen MPC
-	#
+checking "Installing MPC"
+wrap_output cmake --install "${PROJECT_BUILD_DIR}"
+ok
 
-	checking "Autogen MPC"
-
-	wrap_output "$SCRIPTPATH/autogen.sh" $SCRIPTPATH
-	ok
-
-	#
-	# Configure MPC
-	#
-
-	checking "Configuring MPC"
-
-	if test "${MPC_COMP_ADD_PREFIX}" = "disabled"; then
-		# we want parameter expansion
-		# shellcheck disable=SC2086
-		wrap_output "$SCRIPTPATH/configure" $MPC_CONFIGURE_OPTS $ALL_PACKAGE_ARGS
-		ok
-	else
-		# We have mpc-compiler-additions so we explicitly set CC CXX and FC
-		# we want parameter expansion
-		# shellcheck disable=SC2086
-		wrap_output "$SCRIPTPATH/configure" $MPC_CONFIGURE_OPTS CC="$(command -v apcc)" CXX="$(command -v ap++)" FC="$(command -v apfortran)"
-		ok
-	fi
-
-
-	#
-	# Display MPC status if present (and not already displayed)
-	#
-
-	if test $STEP_WRAPPER_VERBOSE -gt 0; then
-		if test -f ./src/bin/mpc_status; then
-			show_run_cmd "sh ./src/bin/mpc_status"
-			sh ./src/bin/mpc_status
-		fi
-	fi
-
-	if test "x${LSP}" = "xyes"; then
-		checking "Building & Installing MPC with Bear"
-		echo ""
-		info "This will take longer than a regular build"
-
-		# Parallel make with bear may access too many files
-		# at the same time and never finish.
-		wrap_output bear -- make install -j 1
-		ok
-
-		checking "Copying compile_commands.json to the source directory"
-		wrap_output cp ${PROJECT_BUILD_DIR}/compile_commands.json ${SCRIPTPATH}
-		ok
-	else
-		checking "Building MPC"
-		wrap_output make -j ${MAKE_J}
-		ok
-
-		checking "Installing MPC"
-		wrap_output make install -j ${MAKE_J}
-		ok
-	fi
-else
-	#
-	# CMake build
-	#
-
-	assert_cmd "cmake"
-
-	# Ensure PKG_CONFIG_PATH points to the prefix where dependencies were installed
-	test -d "${PREFIX}/lib/pkgconfig" && PKG_CONFIG_PATH=$(clean_env_path_var "${PREFIX}/lib/pkgconfig/:$PKG_CONFIG_PATH")
-	test -d "${PREFIX}/lib64/pkgconfig" && PKG_CONFIG_PATH=$(clean_env_path_var "${PREFIX}/lib64/pkgconfig/:$PKG_CONFIG_PATH")
-
-	# Add pkgconfig paths from all dependency prefixes
-	for _pc_prefix in "${MPC_HWLOC_PREFIX}" "${MPC_OPENPA_PREFIX}" "${MPC_PMIX_PREFIX}" "${MPC_PMI_PREFIX}" "${MPC_LIBFABRIC_PREFIX}" "${MPC_MPCALLOC_PREFIX}" "${MPC_DMTCP_PREFIX}"; do
-		test -n "$_pc_prefix" && test -d "${_pc_prefix}/lib/pkgconfig" && PKG_CONFIG_PATH=$(clean_env_path_var "${_pc_prefix}/lib/pkgconfig/:$PKG_CONFIG_PATH")
-		test -n "$_pc_prefix" && test -d "${_pc_prefix}/lib64/pkgconfig" && PKG_CONFIG_PATH=$(clean_env_path_var "${_pc_prefix}/lib64/pkgconfig/:$PKG_CONFIG_PATH")
-	done
-	export PKG_CONFIG_PATH
-
-	#
-	# Build CMake options from installmpc variables
-	# Options from MPCFRAMEWORK_BUILD_PARAMETERS are already in CMAKE_OPTS (set during arg parsing).
-	# This section only handles CMake specifics like CMAKE_BUILD_TYPE, CMAKE_*_COMPILER & CMAKE_PREFIX_PATH.
-	#
-	CMAKE_OPTS="-DCMAKE_INSTALL_PREFIX=${PREFIX} $CMAKE_OPTS"
-
-	# --- Build type / optimization defaults ---
-	if test "${DEBUG}" = "yes"; then
-		CMAKE_OPTS="$CMAKE_OPTS -DCMAKE_BUILD_TYPE=Debug"
-	elif test "${MPC_OPTIM_OPTION_SPECIFIED}" = "yes"; then
-		CMAKE_OPTS="$CMAKE_OPTS -DCMAKE_BUILD_TYPE=RelWithDebInfo"
-	else
-		CMAKE_OPTS="$CMAKE_OPTS -DCMAKE_BUILD_TYPE=Release -DMPC_ENABLE_OPT_NATIVE=ON"
-	fi
-
-	# --- Compiler (mpc-compiler-additions / autopriv) ---
-	if test "${MPC_COMP_ADD_PREFIX}" != "disabled"; then
-		CMAKE_OPTS="$CMAKE_OPTS -DCMAKE_C_COMPILER=$(command -v apcc) -DCMAKE_CXX_COMPILER=$(command -v ap++) -DCMAKE_Fortran_COMPILER=$(command -v apfortran)"
-		CMAKE_OPTS="$CMAKE_OPTS -DMPC_ENABLE_PROCESS_MODE=OFF"
-	else
-		# No mpc-compiler-additions: let CMake try extls first, fall back to process mode (matches autotools)
-		# Don't override MPC_ENABLE_PROCESS_MODE — CMakeLists.txt default (OFF) + extls detection handles it
-		:
-	fi
-
-	# --- CMAKE_PREFIX_PATH for dependency discovery ---
-	if test -n "${PREFIX}"; then
-		CMAKE_OPTS="$CMAKE_OPTS -DCMAKE_PREFIX_PATH=${PREFIX}"
-	fi
-
-	# Clean CMake cache so stale options don't persist across reruns
-	if test -f "${PROJECT_BUILD_DIR}/CMakeCache.txt"; then
-		checking "Removing stale CMake cache"
-		rm -f "${PROJECT_BUILD_DIR}/CMakeCache.txt"
-		rm -rf "${PROJECT_BUILD_DIR}/CMakeFiles"
-		ok
-	fi
-
-	# we want parameter expansion
-	checking "Configuring MPC with CMake"
-	wrap_output cmake -S "$SCRIPTPATH" -B "${PROJECT_BUILD_DIR}" $CMAKE_OPTS
-	ok
-
-	checking "Building MPC"
-	wrap_output cmake --build "${PROJECT_BUILD_DIR}" -- -j ${MAKE_J}
-	ok
-
-	checking "Installing MPC"
-	wrap_output cmake --install "${PROJECT_BUILD_DIR}"
+if test "x${LSP}" = "xyes"; then
+	checking "Copying compile_commands.json to the source directory"
+	wrap_output cp "${PROJECT_BUILD_DIR}/compile_commands.json" "${SCRIPTPATH}"
 	ok
 fi

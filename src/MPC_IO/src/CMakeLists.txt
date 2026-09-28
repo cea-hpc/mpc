@@ -33,7 +33,7 @@ target_include_directories(
 
 target_link_libraries(mpcio PRIVATE mpcmpi ${OPA_LIBRARIES} Threads::Threads)
 target_link_options(mpcio PRIVATE ${OPA_LDFLAGS})
-# Embed ALL romio/promio objects (matches autotools noinst_LTLIBRARIES behavior)
+# Embed ALL romio/promio objects
 target_sources(mpcio PRIVATE $<TARGET_OBJECTS:romio> $<TARGET_OBJECTS:promio>)
 
 set_target_properties(

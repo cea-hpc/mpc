@@ -12,7 +12,7 @@ set(prefix "${CMAKE_INSTALL_PREFIX}")
 set(PKG_DATADIR "${CMAKE_INSTALL_PREFIX}/share/mpcframework/")
 set(PKG_INCDIR "${CMAKE_INSTALL_PREFIX}/include/mpcframework/")
 
-# Environment path variables (from autotools)
+# Environment path variables
 set(CONFIGURE_PATH "$ENV{PATH}")
 set(CONFIGURE_LD_LIBRARY_PATH "$ENV{LD_LIBRARY_PATH}")
 set(CONFIGURE_PKG_CONFIG_PATH "$ENV{PKG_CONFIG_PATH}")
@@ -95,9 +95,13 @@ endif()
 # Misc
 # ------------------------------------------------------------------
 # Hydra
-find_program(MPIEXEC_HYDRA mpiexec.hydra)
+if(MPC_HYDRA_PREFIX)
+    find_program(MPIEXEC_HYDRA mpiexec.hydra HINTS "${MPC_HYDRA_PREFIX}/bin")
+else()
+    find_program(MPIEXEC_HYDRA mpiexec.hydra)
+endif()
 
-# MPC_LINK_ARGS (empty for now, was computed by autotools)
+# MPC_LINK_ARGS (empty for now)
 set(MPC_LINK_ARGS "")
 
 # Compiler paths (from CMake)

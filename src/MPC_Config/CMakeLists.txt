@@ -19,7 +19,7 @@ target_include_directories(
 # Link dependencies (dl for dlopen/dlsym used in mpc_conf.c)
 target_link_libraries(mpcconfig PRIVATE ${CMAKE_DL_LIBS})
 
-# Set output name to match autotools
+# Set output name
 set_target_properties(
     mpcconfig
     PROPERTIES OUTPUT_NAME mpcconfig VERSION ${MPC_VERSION} SOVERSION ${MPC_VERSION_MAJOR} POSITION_INDEPENDENT_CODE ON

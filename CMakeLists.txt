@@ -32,7 +32,7 @@ set(MPC_VERSION_PRE "${_MPC_VERSION_TAINT}")
 # ------------------------------------------------------------------
 # Project definition
 # ------------------------------------------------------------------
-# Set default compilers to match autotools (AC_PROG_CC/CXX/FC)
+# Set default compilers (AC_PROG_CC/CXX/FC)
 if(NOT CMAKE_C_COMPILER)
     find_program(DEFAULT_CC gcc)
     if(DEFAULT_CC)
@@ -154,6 +154,7 @@ set(MPC_HWLOC_PREFIX "" CACHE PATH "hwloc install prefix")
 set(MPC_OPENPA_PREFIX "" CACHE PATH "openpa install prefix")
 set(MPC_PMIX_PREFIX "" CACHE PATH "PMIx install prefix")
 set(MPC_PMI_PREFIX "" CACHE PATH "PMI1 install prefix")
+set(MPC_HYDRA_PREFIX "" CACHE PATH "Hydra launcher install prefix")
 set(MPC_LIBFABRIC_PREFIX "" CACHE PATH "libfabric install prefix")
 set(MPC_CUDA_PREFIX "" CACHE PATH "CUDA install prefix")
 set(MPC_ROCM_PREFIX "" CACHE PATH "ROCm install prefix")

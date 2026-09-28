@@ -234,13 +234,13 @@ echo ""
 
 #build instructions
 echo "%build"
-echo "./configure --disable-prefix-check --enable-debug-messages --prefix=/usr/local/mpc"
-echo "make ${MAKE_J}"
+echo "cmake -B BUILD -DCMAKE_INSTALL_PREFIX=/usr/local/mpc -DMPC_ENABLE_DEBUG_MESSAGES=ON"
+echo "cmake --build BUILD -- ${MAKE_J}"
 echo ""
 
 #installation instructions
 echo "%install"
-echo 'make install DESTDIR=$RPM_BUILD_ROOT'
+echo 'DESTDIR=$RPM_BUILD_ROOT cmake --install BUILD'
 echo ""
 
 #cleanup instruction
