@@ -21,7 +21,7 @@
 #                                                                      #
 ########################################################################
 
-if test "x${MPC_LAUNCHER}" = "xPMIX" -a -f "${LAUNCHER_CONFIG_PRTERUN_PATH}"; then
+if test "x${MPC_PMI_INTERFACE}" = "xPMIX" -a -f "${LAUNCHER_CONFIG_PRTERUN_PATH}"; then
 
     if test "$MPC_AUTO_KILL_TIMEOUT" = "0"  || test  -z "$MPC_AUTO_KILL_TIMEOUT"; then
 		autokill_opt=""

@@ -159,7 +159,7 @@ if(MPC_HAS_SRUN_SUPPORT)
     list(APPEND MPCRUN_PLUGINS mpcrun_opt/mpcrun_srun)
 endif()
 
-if(MPC_LAUNCHER STREQUAL "HYDRA")
+if(MPC_PMI_INTERFACE STREQUAL "HYDRA")
     list(APPEND MPCRUN_PLUGINS mpcrun_opt/mpcrun_hydra mpcrun_opt/mpcrun_salloc_hydra)
 endif()
 

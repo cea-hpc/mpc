@@ -126,12 +126,12 @@ configuration by running:
 $ cmake -B BUILD -LH
 ```
 
-Specify the PMI based launcher to be used by MPC as follows:
+Specify the PMI interface used by the MPC runtime as follows:
 
-- `-DMPC_LAUNCHER=HYDRA`: Compile MPC with the **Hydra** launcher (see also `-DMPC_HYDRA_PREFIX`).
+- `-DMPC_PMI_INTERFACE=HYDRA`: Compile MPC with the embedded **Hydra** PMI client (see also `-DMPC_HYDRA_PREFIX`).
   This is the default.
-- `-DMPC_LAUNCHER=PMIX`: Compile MPC with the **PMIx/SLURM** launcher (see also `-DMPC_PMIX_PREFIX`).
-- `-DMPC_LAUNCHER=PMI1`: Compile MPC with the **PMI1** launcher (see also `-DMPC_PMI_PREFIX`).
+- `-DMPC_PMI_INTERFACE=PMIX`: Compile MPC with the **PMIx** interface, used by Slurm or PRRTE (see also `-DMPC_PMIX_PREFIX`).
+- `-DMPC_PMI_INTERFACE=PMI1`: Compile MPC with the **PMI-1** interface, used by Slurm (see also `-DMPC_PMI_PREFIX`).
 
 Specify external libraries used by MPC:
 

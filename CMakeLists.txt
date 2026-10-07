@@ -161,9 +161,13 @@ set(MPC_ROCM_PREFIX "" CACHE PATH "ROCm install prefix")
 set(MPC_MPCALLOC_PREFIX "" CACHE PATH "MPC allocator install prefix")
 set(MPC_DMTCP_PREFIX "" CACHE PATH "DMTCP install prefix")
 
-# Launcher selection: HYDRA, PMI1, PMIX
-set(MPC_LAUNCHER "HYDRA" CACHE STRING "Launcher: HYDRA, PMI1, or PMIX")
-set_property(CACHE MPC_LAUNCHER PROPERTY STRINGS HYDRA PMI1 PMIX)
+# PMI interface selection: what the runtime speaks to be launched
+set(MPC_PMI_INTERFACE "HYDRA" CACHE STRING "PMI interface: HYDRA, PMI1, or PMIX")
+set_property(CACHE MPC_PMI_INTERFACE PROPERTY STRINGS HYDRA PMI1 PMIX)
+
+if(NOT MPC_PMI_INTERFACE MATCHES "^(HYDRA|PMI1|PMIX)$")
+    message(FATAL_ERROR "MPC_PMI_INTERFACE must be HYDRA, PMI1 or PMIX")
+endif()
 
 # ------------------------------------------------------------------
 # Option dependency enforcement
@@ -258,7 +262,7 @@ set(MPC_CONFIG_RESULT
   CUDA           : ${MPC_CUDA_ENABLED}
   ROCM           : ${MPC_ROCM_ENABLED}
   Active Messages: ${MPC_HAVE_AM}
-  Launcher       : ${MPC_LAUNCHER}
+  PMI interface  : ${MPC_PMI_INTERFACE}
   Networks       : ${MPC_NETWORK_LIST}
   CMA            : ${MPC_ENABLE_CMA}
   Topo sim       : ${MPC_ENABLE_TOPOLOGY_SIMULATION}

@@ -1477,18 +1477,18 @@ do
 		--with-hydra)
 			HYDRA_PREFIX="enabled"
 			ENABLE_SLURM="no"
-			add_cmake_opt "-DMPC_LAUNCHER=HYDRA"
+			add_cmake_opt "-DMPC_PMI_INTERFACE=HYDRA"
 			;;
 		--with-hydra=*)
 			ENABLE_SLURM="no"
 			extractParamValue 'HYDRA_PREFIX' 'with-hydra' "$arg"
-			add_cmake_opt "-DMPC_LAUNCHER=HYDRA -DMPC_HYDRA_PREFIX=${HYDRA_PREFIX}"
+			add_cmake_opt "-DMPC_PMI_INTERFACE=HYDRA -DMPC_HYDRA_PREFIX=${HYDRA_PREFIX}"
 			;;
 		--hydra=*)
 			ENABLE_SLURM="no"
 			extractAndAddPackageOption 'HYDRA_BUILD_PARAMETERS' 'hydra=' "$arg"
 			HYDRA_PREFIX="enabled"
-			add_cmake_opt "-DMPC_LAUNCHER=HYDRA"
+			add_cmake_opt "-DMPC_PMI_INTERFACE=HYDRA"
 			;;
 		--disable-mpc-hydra|--disable-hydra)
 			HYDRA_PREFIX='disabled'
@@ -1688,27 +1688,27 @@ do
 			PMI1_PREFIX=""
 			extractParamValue 'PMI1_PREFIX' 'with-pmi1=' "$arg"
 			ENABLE_SLURM='no'
-			add_cmake_opt "-DMPC_LAUNCHER=PMI1"
+			add_cmake_opt "-DMPC_PMI_INTERFACE=PMI1"
 			if test -n "${PMI1_PREFIX}"; then
 				add_cmake_opt "-DMPC_PMI_PREFIX=${PMI1_PREFIX}"
 			fi
 			;;
 		--with-pmi1)
 			ENABLE_SLURM='no'
-			add_cmake_opt "-DMPC_LAUNCHER=PMI1"
+			add_cmake_opt "-DMPC_PMI_INTERFACE=PMI1"
 			;;
 		--with-pmix=*)
 			PMIX_PREFIX=""
 			extractParamValue 'PMIX_PREFIX' 'with-pmix=' "$arg"
 			ENABLE_SLURM='no'
-			add_cmake_opt "-DMPC_LAUNCHER=PMIX"
+			add_cmake_opt "-DMPC_PMI_INTERFACE=PMIX"
 			if test -n "${PMIX_PREFIX}"; then
 				add_cmake_opt "-DMPC_PMIX_PREFIX=${PMIX_PREFIX}"
 			fi
 			;;
 		--with-pmix)
 			ENABLE_SLURM='no'
-			add_cmake_opt "-DMPC_LAUNCHER=PMIX"
+			add_cmake_opt "-DMPC_PMI_INTERFACE=PMIX"
 			;;
 		--with-slurm=*)
 			SLURM_PREFIX=""
@@ -1972,7 +1972,7 @@ if [ "$ENABLE_SLURM" == "yes" ]; then
 		if [ -n "${SLURM_PREFIX}" ]; then
 			add_cmake_opt "-DMPC_PMIX_PREFIX=${SLURM_PREFIX}"
 		fi
-		add_cmake_opt "-DMPC_LAUNCHER=PMIX"
+		add_cmake_opt "-DMPC_PMI_INTERFACE=PMIX"
 	fi
 fi
 

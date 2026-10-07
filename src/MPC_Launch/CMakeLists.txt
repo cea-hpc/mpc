@@ -10,7 +10,7 @@ set(MPC_LAUNCH_SOURCES
 )
 
 # Hydra launcher sources (conditional)
-if(MPC_LAUNCHER STREQUAL "HYDRA")
+if(MPC_PMI_INTERFACE STREQUAL "HYDRA")
     list(
         APPEND MPC_LAUNCH_SOURCES
         src/hydra_client/safestr2.c
@@ -48,7 +48,7 @@ target_include_directories(
         ${OPA_INCLUDE_DIRS}
 )
 
-if(MPC_LAUNCHER STREQUAL "HYDRA")
+if(MPC_PMI_INTERFACE STREQUAL "HYDRA")
     target_include_directories(mpclaunch PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src/hydra_client)
 endif()
 
@@ -69,15 +69,15 @@ target_link_libraries(
     PRIVATE ${CMAKE_DL_LIBS} ${CMAKE_RT_LIBS} ${OPA_LIBRARIES} Threads::Threads
 )
 
-if(MPC_LAUNCHER STREQUAL "PMIX")
+if(MPC_PMI_INTERFACE STREQUAL "PMIX")
     target_include_directories(mpclaunch PRIVATE ${PMIX_INCLUDE_DIRS})
     target_link_libraries(mpclaunch PRIVATE ${PMIX_LINK_LIBRARIES})
-elseif(MPC_LAUNCHER STREQUAL "PMI1")
+elseif(MPC_PMI_INTERFACE STREQUAL "PMI1")
     target_include_directories(mpclaunch PRIVATE ${PMI_INCLUDE_DIRS})
     target_link_libraries(mpclaunch PRIVATE ${PMI_LINK_LIBRARIES})
 endif()
 
-if(MPC_LAUNCHER STREQUAL "HYDRA")
+if(MPC_PMI_INTERFACE STREQUAL "HYDRA")
     target_compile_definitions(mpclaunch PRIVATE HYDRA_LAUNCHER_ENABLED=1)
 endif()
 

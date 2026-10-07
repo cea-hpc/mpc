@@ -157,8 +157,8 @@ endif()
 # Launcher dependencies
 # ------------------------------------------------------------------
 # PMIx (optional, for launcher)
-if(MPC_LAUNCHER STREQUAL "PMIX")
+if(MPC_PMI_INTERFACE STREQUAL "PMIX")
     pkg_check_modules(PMIX REQUIRED pmix)
-elseif(MPC_LAUNCHER STREQUAL "PMI1")
+elseif(MPC_PMI_INTERFACE STREQUAL "PMI1")
     pkg_check_modules(PMI REQUIRED pmi)
 endif()

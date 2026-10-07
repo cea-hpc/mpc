@@ -18,7 +18,7 @@ struct mpc_common_flags
 	/* Launch command */
 	char *       exename;
 
-	/* Launcher used for MPC */
+	/* PMI interface used by MPC (HYDRA, PMI1 or PMIX) */
 	char *       launcher;
 
 	/* MPC was launched in Fortran */

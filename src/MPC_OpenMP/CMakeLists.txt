@@ -89,9 +89,9 @@ if(MPCALLOC_FOUND)
     target_link_libraries(mpcomp PRIVATE ${ALLOC_LIBS_CMAKE})
 endif()
 
-if(MPC_LAUNCHER STREQUAL "PMIX")
+if(MPC_PMI_INTERFACE STREQUAL "PMIX")
     target_link_libraries(mpcomp PRIVATE ${PMIX_LINK_LIBRARIES})
-elseif(MPC_LAUNCHER STREQUAL "PMI1")
+elseif(MPC_PMI_INTERFACE STREQUAL "PMI1")
     target_link_libraries(mpcomp PRIVATE ${PMI_LINK_LIBRARIES})
 endif()
 

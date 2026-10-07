@@ -541,7 +541,7 @@ static inline void __set_default_values()
 	snprintf(__launch_config.mpcrun_user_launcher, MPC_CONF_STRING_SIZE, "~/.mpc/");
 	__launch_config.disable_aslr      = 1;
 	mpc_common_get_flags()->verbosity = 2;
-	mpc_common_get_flags()->launcher  = strdup(mpc_conf_stringify(MPC_LAUNCHER));
+	mpc_common_get_flags()->launcher  = strdup(mpc_conf_stringify(MPC_PMI_INTERFACE));
 
 	mpc_common_get_flags()->enable_smt_capabilities = 0;
 	mpc_common_get_flags()->task_number             = 1;

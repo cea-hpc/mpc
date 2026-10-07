@@ -21,7 +21,7 @@
 #                                                                      #
 ########################################################################
 #echo "$LAUNCH_COMMAND"
-if test "x${MPC_LAUNCHER}" = "xPMI1" -o "x${MPC_LAUNCHER}" = "xPMIX"; then
+if test "x${MPC_PMI_INTERFACE}" = "xPMI1" -o "x${MPC_PMI_INTERFACE}" = "xPMIX"; then
 	if test "$MPC_AUTO_KILL_TIMEOUT" = "0"  || test  -z "$MPC_AUTO_KILL_TIMEOUT"; then
 		autokill_opt=""
 	else

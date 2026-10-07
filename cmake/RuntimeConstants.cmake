@@ -276,19 +276,19 @@ endif()
 # Launcher program detection
 # ------------------------------------------------------------------
 set(MPC_LAUNCHER_PROGRAM "none")
-if(MPC_LAUNCHER STREQUAL "HYDRA")
+if(MPC_PMI_INTERFACE STREQUAL "HYDRA")
     set(MPC_LAUNCHER_PROGRAM "HYDRA")
 endif()
 
 # SRUN support
 find_program(SRUN_IN_PATH srun)
 set(MPC_HAS_SRUN_SUPPORT NO)
-if(SRUN_IN_PATH AND (MPC_LAUNCHER STREQUAL "PMIX" OR MPC_LAUNCHER STREQUAL "PMI1"))
+if(SRUN_IN_PATH AND (MPC_PMI_INTERFACE STREQUAL "PMIX" OR MPC_PMI_INTERFACE STREQUAL "PMI1"))
     set(MPC_HAS_SRUN_SUPPORT YES)
 endif()
 
 # PRRTE launcher program
-if(MPC_LAUNCHER STREQUAL "PMIX")
+if(MPC_PMI_INTERFACE STREQUAL "PMIX")
     find_program(PRTERUN prterun)
     if(NOT PRTERUN)
         find_program(PRTERUN prun)

@@ -11,7 +11,7 @@ export PATH=/usr/local/bin:$PATH
 STAGING=$PWD/staging
 (cd contrib/openpa && ./configure --prefix=$STAGING && make -j && make install)
 (cd contrib/hydra && ./configure --prefix=$STAGING && make -j && make install)
-cmake -B BUILD -DCMAKE_INSTALL_PREFIX=/usr/local -DMPC_OPENPA_PREFIX=$STAGING -DMPC_LAUNCHER=HYDRA -DMPC_HYDRA_PREFIX=$STAGING -DMPC_ENABLE_PROCESS_MODE=ON -DMPC_ENABLE_MPCALLOC=OFF
+cmake -B BUILD -DCMAKE_INSTALL_PREFIX=/usr/local -DMPC_OPENPA_PREFIX=$STAGING -DMPC_PMI_INTERFACE=HYDRA -DMPC_HYDRA_PREFIX=$STAGING -DMPC_ENABLE_PROCESS_MODE=ON -DMPC_ENABLE_MPCALLOC=OFF
 cmake --build BUILD --parallel
 DESTDIR=/root/installmpc cmake --install BUILD
 cd /root/ || exit 1
