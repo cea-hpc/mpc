@@ -21,6 +21,18 @@ target_include_directories(mpc_config_headers INTERFACE ${CMAKE_BINARY_DIR})
 
 find_package(PkgConfig REQUIRED)
 
+# Prepend a prefix to the pkg-config search paths
+# so that pkg_check_modules finds modules installed there
+function(mpc_pkg_config_prefix_hint _prefix)
+    list(APPEND CMAKE_PREFIX_PATH "${_prefix}")
+    set(CMAKE_PREFIX_PATH "${CMAKE_PREFIX_PATH}" PARENT_SCOPE)
+    set(_pkg_config_path "${_prefix}/lib/pkgconfig:${_prefix}/lib64/pkgconfig")
+    if(NOT "$ENV{PKG_CONFIG_PATH}" STREQUAL "")
+        set(_pkg_config_path "${_pkg_config_path}:$ENV{PKG_CONFIG_PATH}")
+    endif()
+    set(ENV{PKG_CONFIG_PATH} "${_pkg_config_path}")
+endfunction()
+
 # ------------------------------------------------------------------
 # Required dependencies
 # ------------------------------------------------------------------
@@ -29,10 +41,7 @@ pkg_check_modules(HWLOC REQUIRED hwloc>=2.0.0)
 
 # openpa (OPA)
 if(MPC_OPENPA_PREFIX)
-    list(APPEND CMAKE_PREFIX_PATH "${MPC_OPENPA_PREFIX}")
-    set(ENV{PKG_CONFIG_PATH}
-        "${MPC_OPENPA_PREFIX}/lib/pkgconfig:${MPC_OPENPA_PREFIX}/lib64/pkgconfig:$ENV{PKG_CONFIG_PATH}"
-    )
+    mpc_pkg_config_prefix_hint("${MPC_OPENPA_PREFIX}")
 endif()
 pkg_check_modules(OPA openpa)
 if(NOT OPA_FOUND)
@@ -156,9 +165,15 @@ endif()
 # ------------------------------------------------------------------
 # Launcher dependencies
 # ------------------------------------------------------------------
-# PMIx (optional, for launcher)
+# PMIx (optional, PMI interface)
 if(MPC_PMI_INTERFACE STREQUAL "PMIX")
+    if(MPC_PMIX_PREFIX)
+        mpc_pkg_config_prefix_hint("${MPC_PMIX_PREFIX}")
+    endif()
     pkg_check_modules(PMIX REQUIRED pmix)
 elseif(MPC_PMI_INTERFACE STREQUAL "PMI1")
+    if(MPC_PMI_PREFIX)
+        mpc_pkg_config_prefix_hint("${MPC_PMI_PREFIX}")
+    endif()
     pkg_check_modules(PMI REQUIRED pmi)
 endif()
