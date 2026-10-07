@@ -169,6 +169,14 @@ if(NOT MPC_PMI_INTERFACE MATCHES "^(HYDRA|PMI1|PMIX)$")
     message(FATAL_ERROR "MPC_PMI_INTERFACE must be HYDRA, PMI1 or PMIX")
 endif()
 
+# Launcher program driving the MPI runners
+# NOTE: AUTO detects it from the PATH, where srun takes precedence over PRRTE
+set(MPC_LAUNCHER_PROGRAM "AUTO" CACHE STRING "Launcher program: AUTO, SRUN, or PRRTE")
+set_property(CACHE MPC_LAUNCHER_PROGRAM PROPERTY STRINGS AUTO SRUN PRRTE)
+if(NOT MPC_LAUNCHER_PROGRAM MATCHES "^(AUTO|SRUN|PRRTE)$")
+    message(FATAL_ERROR "MPC_LAUNCHER_PROGRAM must be AUTO, SRUN or PRRTE")
+endif()
+
 # ------------------------------------------------------------------
 # Option dependency enforcement
 # ------------------------------------------------------------------
@@ -263,6 +271,7 @@ set(MPC_CONFIG_RESULT
   ROCM           : ${MPC_ROCM_ENABLED}
   Active Messages: ${MPC_HAVE_AM}
   PMI interface  : ${MPC_PMI_INTERFACE}
+  Launcher prog. : ${MPC_LAUNCHER_PROGRAM_RESOLVED}
   Networks       : ${MPC_NETWORK_LIST}
   CMA            : ${MPC_ENABLE_CMA}
   Topo sim       : ${MPC_ENABLE_TOPOLOGY_SIMULATION}
