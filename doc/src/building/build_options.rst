@@ -103,10 +103,15 @@ Beyond these basic options, some useful others are listed and detailed below :
 
 .. note::
 
-   By default, MPC tries to build with Slurm support, relying on the PMI
-   interface (both PMI 1 and PMIx are detected). If Slurm is not found on the
-   system, MPC falls back to the Hydra launcher. The PMI flavor can also be
-   selected explicitly with the ``--with-pmi1`` or ``--with-pmix`` options.
+   By default, MPC tries to build with Slurm support: the PMIx interface
+   with srun as the launcher program. If Slurm is not found, MPC falls back
+   to PRRTE when ``prterun`` is available, or to the Hydra launcher
+   otherwise. The PMI interface can also be selected explicitly with the
+   ``--with-pmi1``, ``--with-pmix`` or ``--with-hydra`` options. Passing
+   ``--with-slurm`` explicitly forces srun as the launcher program, and
+   ``--with-prrte`` selects PRRTE. When building with CMake directly, the
+   PMI interface is selected with ``-DMPC_PMI_INTERFACE=HYDRA|PMI1|PMIX``
+   and the launcher program with ``-DMPC_LAUNCHER_PROGRAM=AUTO|SRUN|PRRTE``.
 
 .. code-block:: console
 

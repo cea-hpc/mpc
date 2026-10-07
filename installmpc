@@ -309,7 +309,7 @@ notapplicable()
 #
 
 LIST_OF_FOUND_CMD=""
-COMMON_CMD="cmake spack patch cut ls pwd grep rm basename dirname make bzip2 gcc g++ ldd pkg-config mktemp getconf nproc lscpu wget curl mpiexec.hydra srun"
+COMMON_CMD="cmake spack patch cut ls pwd grep rm basename dirname make bzip2 gcc g++ ldd pkg-config mktemp getconf nproc lscpu wget curl mpiexec.hydra srun prterun prun"
 check_for_commands()
 {
 	# Check already done
@@ -358,6 +358,16 @@ assert_cmd()
 		die "$1 could not be found in path"
 	fi
 
+}
+
+# Look for the PRRTE launcher program, prterun or its prun alias
+have_prte()
+{
+	have_cmd "prterun"
+
+	if [ "${HAVE_CMD}" == "no" ]; then
+		have_cmd "prun"
+	fi
 }
 
 guess_cpu_count()
@@ -1322,10 +1332,11 @@ You may track issued commands using the "-v" flag.
   --disable-lsp                           : Do not generate a compile_commands.json file (default)
 
 # Features
-  --with-hydra                            : Build MPC with Hydra launcher support
-  --with-slurm[=prefix]                   : Build MPC with PMI support (detect 1 and x) (default)
-  --with-pmi1[=prefix]                    : Build MPC with PMI1 support
-  --with-pmix[=prefix]                    : Build MPC with PMIX support
+  --with-hydra                            : Build MPC with the embedded Hydra PMI client
+  --with-slurm[=prefix]                   : Build MPC with the PMIx interface and srun as launcher program (default)
+  --with-pmi1[=prefix]                    : Build MPC with the PMI-1 interface
+  --with-pmix[=prefix]                    : Build MPC with the PMIx interface
+  --with-prrte                             : Build MPC with the PMIx interface and prterun as launcher program
   --thread-based                          : Build MPC in thread-based (multiple MPI task per UNIX process)
   --process-mode                          : Build MPC in process-mode (1 MPI process = 1 UNIX process) (default)
   --{enable,disable}-mpc-ft               : Activate/Deactivate checkpoint/restart support
@@ -1462,6 +1473,7 @@ enable_debug()
 MPC_COMP_ADD_PREFIX="disabled"
 # Use Slurm as launcher by default
 ENABLE_SLURM="yes"
+SLURM_REQUESTED="no"
 HYDRA_PREFIX='disabled'
 
 #
@@ -1710,11 +1722,21 @@ do
 			ENABLE_SLURM='no'
 			add_cmake_opt "-DMPC_PMI_INTERFACE=PMIX"
 			;;
+		--with-prrte)
+			ENABLE_SLURM='no'
+			have_prte
+			if [ "${HAVE_CMD}" == "no" ]; then
+				die "--with-prrte: neither prterun nor prun was found in path"
+			fi
+			add_cmake_opt "-DMPC_PMI_INTERFACE=PMIX -DMPC_LAUNCHER_PROGRAM=PRRTE"
+			;;
 		--with-slurm=*)
 			SLURM_PREFIX=""
 			extractParamValue 'SLURM_PREFIX' 'with-slurm=' "$arg"
+			SLURM_REQUESTED="yes"
 			;;
 		--with-slurm)
+			SLURM_REQUESTED="yes"
 			;;
 		--disable-MPC_MPI|--lib-mode|--disable-mpi)
 			add_cmake_opt "-DMPC_ENABLE_MPI=OFF"
@@ -1964,15 +1986,31 @@ if [ "$ENABLE_SLURM" == "yes" ]; then
 	have_cmd "srun"
 
 	if [ "${HAVE_CMD}" == "no" ]; then
-		# If slurm is not available, default to hydra build and use
-		info "SLURM not found defaulting to Hydra"
-		HYDRA_PREFIX="enabled"
+		if [ "$SLURM_REQUESTED" == "yes" ]; then
+			die "--with-slurm: srun was not found in path"
+		fi
+
+		# Without Slurm, fall back to PRRTE when available, Hydra otherwise
 		ENABLE_SLURM="no"
+		have_prte
+
+		if [ "${HAVE_CMD}" == "yes" ] && pkg-config --exists pmix; then
+			info "Slurm not found, defaulting to PRRTE"
+			add_cmake_opt "-DMPC_PMI_INTERFACE=PMIX"
+		else
+			info "Slurm not found, defaulting to Hydra"
+			HYDRA_PREFIX="enabled"
+		fi
 	else
 		if [ -n "${SLURM_PREFIX}" ]; then
 			add_cmake_opt "-DMPC_PMIX_PREFIX=${SLURM_PREFIX}"
 		fi
 		add_cmake_opt "-DMPC_PMI_INTERFACE=PMIX"
+		# An explicit --with-slurm forces srun as the launcher program so
+		# that a stray prterun in the PATH cannot take precedence
+		if [ "$SLURM_REQUESTED" == "yes" ]; then
+			add_cmake_opt "-DMPC_LAUNCHER_PROGRAM=SRUN"
+		fi
 	fi
 fi
 

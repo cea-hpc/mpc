@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file. The format 
 
 - **Build**
   - Added support for building MPC with CMake and new `installmpc` module flags
+  - `installmpc` exposes the launcher program selection: an explicit `--with-slurm` forces `srun`, the new `--with-prte` selects PRRTE, and when Slurm is absent the default fallback prefers PRRTE over Hydra if `prterun` is available
 
 ### Changed
 
