@@ -10,13 +10,21 @@ Options passed to the launcher options should be compatible with the launch mode
 chosen at configuration time. For more information you might read the
 documentations of mpiexec and srun respectively for Hydra and Slurm.
 
-- **Hydra**: If MPC is configured with Hydra, mpcrun should be used with the
+The launcher program is selected at configure time: it is detected from the
+``PATH`` by default (``-DMPC_LAUNCHER_PROGRAM=AUTO``, where srun takes
+precedence over PRRTE), or forced with ``-DMPC_LAUNCHER_PROGRAM=SRUN`` or
+``-DMPC_LAUNCHER_PROGRAM=PRRTE``. The MPI runners ``mpirun`` and ``mpiexec``
+are always installed when the MPI support is enabled, dispatching to the
+selected launcher program, and the ``-l`` argument of ``mpcrun`` allows
+selecting another one explicitly.
+
+- **Hydra**: If MPC is configured with the Hydra PMI interface, mpcrun should be used with the
   ``-l=hydra`` argument. Note that this argument is used by default if not
   specified.
-- **SLURM**: If MPC is configured with SLURM, mpcrun should be used with ``-l=srun``
-  argument.
-- **PRRTE**: If MPC is configured with PMIx and ``prterun`` is available, mpcrun
-  can be used with the ``-l=prrte`` argument to launch through PRRTE.
+- **SLURM**: If MPC is configured with the PMI-1 or PMIx interface and srun is
+  the selected launcher program, ``-l=srun`` is used by default.
+- **PRRTE**: If MPC is configured with the PMIx interface and ``prterun`` is
+  the selected launcher program, ``-l=prrte`` is used by default
 
 ''''''''''''''''
 Mono-process job

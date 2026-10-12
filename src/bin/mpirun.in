@@ -59,18 +59,16 @@ MPC_ALLOCATOR="@MPC_ALLOCATOR@"
 
 MPC_IN_PROCESS_MODE="@MPC_IN_PROCESS_MODE@"
 
-# What MPC is using to start (PMIx, PMI1 or HYDRA client)
-# Used in the launcher scripts
-# shellcheck disable=SC2034
-MPC_LAUNCHER="@MPC_LAUNCHER@"
-# What is detected as launcher program (HYDRA / PRRTE)
-MPC_LAUNCHER_PROGRAM="@MPC_LAUNCHER_PROGRAM@"
+# What is detected as launcher program (HYDRA / SRUN / PRRTE)
+MPC_LAUNCHER_PROGRAM="@MPC_LAUNCHER_PROGRAM_RESOLVED@"
 
 
 
 LAUNCHER_TO_EXE = {
 	"HYDRA" : u"hydra",
 	"hydra" : u"hydra",
+	"SRUN" : u"srun",
+	"srun" : u"srun",
 	"PRRTE" : u"prrte",
 	"prrte" : u"prrte",
 	"none" : u"srun"
@@ -349,6 +347,7 @@ class MpcRunner:
 		SUPPORTED_LAUNCHER=["srun", "hydra"]
 		if launcher not in SUPPORTED_LAUNCHER:
 			sys.stderr.write("{} is not in supported launchers {}".format(launcher, SUPPORTED_LAUNCHER))
+			sys.exit(1)
 		self._launcher = launcher
 		self._subcmd = []
 

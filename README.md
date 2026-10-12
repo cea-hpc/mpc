@@ -126,12 +126,19 @@ configuration by running:
 $ cmake -B BUILD -LH
 ```
 
-Specify the PMI based launcher to be used by MPC as follows:
+Specify the PMI interface used by the MPC runtime as follows:
 
-- `-DMPC_LAUNCHER=HYDRA`: Compile MPC with the **Hydra** launcher (see also `-DMPC_HYDRA_PREFIX`).
+- `-DMPC_PMI_INTERFACE=HYDRA`: Compile MPC with the embedded **Hydra** PMI client (see also `-DMPC_HYDRA_PREFIX`).
   This is the default.
-- `-DMPC_LAUNCHER=PMIX`: Compile MPC with the **PMIx/SLURM** launcher (see also `-DMPC_PMIX_PREFIX`).
-- `-DMPC_LAUNCHER=PMI1`: Compile MPC with the **PMI1** launcher (see also `-DMPC_PMI_PREFIX`).
+- `-DMPC_PMI_INTERFACE=PMIX`: Compile MPC with the **PMIx** interface, used by Slurm or PRRTE (see also `-DMPC_PMIX_PREFIX`).
+- `-DMPC_PMI_INTERFACE=PMI1`: Compile MPC with the **PMI-1** interface, used by Slurm (see also `-DMPC_PMI_PREFIX`).
+
+The binary driving the launches (the *launcher program*) is selected independently:
+
+- `-DMPC_LAUNCHER_PROGRAM=AUTO`: detect it from the `PATH`, where `srun` takes precedence over PRRTE.
+  This is the default.
+- `-DMPC_LAUNCHER_PROGRAM=SRUN`: force `srun` (requires the `PMIX` or `PMI1` interface).
+- `-DMPC_LAUNCHER_PROGRAM=PRRTE`: force `prterun` (requires the `PMIX` interface).
 
 Specify external libraries used by MPC:
 
@@ -268,7 +275,8 @@ $ mpc_(cc|cxx|f77) --help
 #### Standard MPI runners
 
 The *MPI* standard `mpiexec` launcher and the convenience, community-adopted `mpirun` one are installed with
-*MPC* if the *MPI* support is enabled.
+*MPC* if the *MPI* support is enabled, dispatching to the launcher program selected at configure time
+(see `-DMPC_LAUNCHER_PROGRAM`).
 They can be used a drop-in replacement to the ones provided by other implementation.
 To launch a simple program with 2 process
 

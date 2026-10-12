@@ -116,6 +116,28 @@ endforeach()
 # Install scripts
 install(PROGRAMS ${INSTALL_SCRIPTS} DESTINATION ${CMAKE_INSTALL_BINDIR})
 
+# MPI runner symlinks
+set(MPC_RUNNER_LINK_TARGET "mpirun")
+set(MPC_RUNNER_LINK_NAMES "")
+if(MPC_LAUNCHER_PROGRAM_PRRTE)
+    set(MPC_RUNNER_LINK_TARGET "${PRTERUN}")
+    list(APPEND MPC_RUNNER_LINK_NAMES mpirun)
+endif()
+if(MPC_ENABLE_MPI)
+    list(APPEND MPC_RUNNER_LINK_NAMES mpiexec)
+endif()
+
+# Install the runner symlinks
+foreach(_NAME IN LISTS MPC_RUNNER_LINK_NAMES)
+    install(
+        CODE
+            "
+        file(REMOVE_RECURSE \"\$ENV{DESTDIR}${CMAKE_INSTALL_FULL_BINDIR}/${_NAME}\")
+        file(CREATE_LINK \"${MPC_RUNNER_LINK_TARGET}\" \"\$ENV{DESTDIR}${CMAKE_INSTALL_FULL_BINDIR}/${_NAME}\" SYMBOLIC)
+    "
+    )
+endforeach()
+
 # mpcvars.sh goes to install prefix root and bin/
 set(_MPCVARS_SRC "${CMAKE_CURRENT_SOURCE_DIR}/mpcvars.sh")
 set(_MPCVARS_DST "${CMAKE_CURRENT_BINARY_DIR}/mpcvars.sh")
@@ -137,7 +159,7 @@ if(MPC_HAS_SRUN_SUPPORT)
     list(APPEND MPCRUN_PLUGINS mpcrun_opt/mpcrun_srun)
 endif()
 
-if(MPC_LAUNCHER STREQUAL "HYDRA")
+if(MPC_PMI_INTERFACE STREQUAL "HYDRA")
     list(APPEND MPCRUN_PLUGINS mpcrun_opt/mpcrun_hydra mpcrun_opt/mpcrun_salloc_hydra)
 endif()
 

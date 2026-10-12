@@ -144,6 +144,6 @@
 #cmakedefine BXI_VERSION_3
 
 /* Launcher */
-#define MPC_LAUNCHER "@MPC_LAUNCHER@"
+#define MPC_PMI_INTERFACE "@MPC_PMI_INTERFACE@"
 
 #endif /* MPC_CONFIG_H */

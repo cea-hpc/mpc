@@ -273,28 +273,78 @@ else()
 endif()
 
 # ------------------------------------------------------------------
-# Launcher program detection
+# Launcher program selection
 # ------------------------------------------------------------------
-set(MPC_LAUNCHER_PROGRAM "none")
-if(MPC_LAUNCHER STREQUAL "HYDRA")
-    set(MPC_LAUNCHER_PROGRAM "HYDRA")
-endif()
+# The launcher program is the binary spawning the MPI processes
+# orthogonal to the PMI interface (MPC_PMI_INTERFACE)
+set(MPC_LAUNCHER_PROGRAM_RESOLVED "none")
 
 # SRUN support
 find_program(SRUN_IN_PATH srun)
 set(MPC_HAS_SRUN_SUPPORT NO)
-if(SRUN_IN_PATH AND (MPC_LAUNCHER STREQUAL "PMIX" OR MPC_LAUNCHER STREQUAL "PMI1"))
+if(SRUN_IN_PATH AND (MPC_PMI_INTERFACE STREQUAL "PMIX" OR MPC_PMI_INTERFACE STREQUAL "PMI1"))
     set(MPC_HAS_SRUN_SUPPORT YES)
 endif()
 
 # PRRTE launcher program
-if(MPC_LAUNCHER STREQUAL "PMIX")
+if(MPC_PMI_INTERFACE STREQUAL "PMIX")
     find_program(PRTERUN prterun)
     if(NOT PRTERUN)
         find_program(PRTERUN prun)
     endif()
-    if(PRTERUN)
-        set(MPC_LAUNCHER_PROGRAM "PRRTE")
-        set(MPC_LAUNCHER_PROGRAM_PRRTE YES)
+endif()
+
+# HYDRA launcher program
+if(MPC_HYDRA_PREFIX)
+    find_program(MPIEXEC_HYDRA mpiexec.hydra HINTS "${MPC_HYDRA_PREFIX}/bin")
+else()
+    find_program(MPIEXEC_HYDRA mpiexec.hydra)
+endif()
+
+# Validate the selection against the interface and the PATH
+if(MPC_PMI_INTERFACE STREQUAL "HYDRA" AND NOT MPC_LAUNCHER_PROGRAM STREQUAL "AUTO")
+    message(FATAL_ERROR "the HYDRA PMI interface implies mpiexec.hydra")
+endif()
+if(MPC_LAUNCHER_PROGRAM STREQUAL "SRUN" AND NOT SRUN_IN_PATH)
+    message(FATAL_ERROR "srun was not found in PATH (SRUN selected)")
+endif()
+if(MPC_LAUNCHER_PROGRAM STREQUAL "PRRTE" AND NOT MPC_PMI_INTERFACE STREQUAL "PMIX")
+    message(FATAL_ERROR "PRRTE requires the PMIX interface")
+endif()
+if(MPC_LAUNCHER_PROGRAM STREQUAL "PRRTE" AND NOT PRTERUN)
+    message(FATAL_ERROR "prterun/prun not found in PATH (PRRTE selected)")
+endif()
+
+# Resolve the launcher program from the selection or the detection
+if(MPC_PMI_INTERFACE STREQUAL "HYDRA")
+    set(MPC_LAUNCHER_PROGRAM_RESOLVED "HYDRA")
+elseif(NOT MPC_LAUNCHER_PROGRAM STREQUAL "AUTO")
+    set(MPC_LAUNCHER_PROGRAM_RESOLVED "${MPC_LAUNCHER_PROGRAM}")
+else()
+    # AUTO: detection from the PATH, srun takes precedence over PRRTE
+    if(SRUN_IN_PATH)
+        set(MPC_LAUNCHER_PROGRAM_RESOLVED "SRUN")
+    elseif(PRTERUN)
+        set(MPC_LAUNCHER_PROGRAM_RESOLVED "PRRTE")
+    else()
+        message(WARNING "no launcher program found, falling back to srun")
+    endif()
+endif()
+
+# Report the resolution and derive the frontend layout
+set(MPC_LAUNCHER_PROGRAM_PRRTE NO)
+if(MPC_LAUNCHER_PROGRAM_RESOLVED STREQUAL "PRRTE")
+    set(MPC_LAUNCHER_PROGRAM_PRRTE YES)
+    message(STATUS "Launcher program: PRRTE (${PRTERUN})")
+elseif(MPC_LAUNCHER_PROGRAM_RESOLVED STREQUAL "SRUN")
+    message(STATUS "Launcher program: srun (${SRUN_IN_PATH})")
+    if(PRTERUN AND MPC_LAUNCHER_PROGRAM STREQUAL "AUTO")
+        message(STATUS "prterun (${PRTERUN}) also found: srun takes precedence (AUTO)")
+    endif()
+elseif(MPC_LAUNCHER_PROGRAM_RESOLVED STREQUAL "HYDRA")
+    if(MPIEXEC_HYDRA)
+        message(STATUS "Launcher program: mpiexec.hydra (${MPIEXEC_HYDRA})")
+    else()
+        message(STATUS "Launcher program: mpiexec.hydra (not found in PATH)")
     endif()
 endif()

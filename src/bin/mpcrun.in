@@ -77,9 +77,9 @@ MPC_IN_PROCESS_MODE="@MPC_IN_PROCESS_MODE@"
 # What MPC is using to start (PMIx, PMI1 or HYDRA client)
 # Used in the launcher scripts
 # shellcheck disable=SC2034
-MPC_LAUNCHER="@MPC_LAUNCHER@"
-# What is detected as launcher program (HYDRA / PRRTE)
-MPC_LAUNCHER_PROGRAM="@MPC_LAUNCHER_PROGRAM@"
+MPC_PMI_INTERFACE="@MPC_PMI_INTERFACE@"
+# What is detected as launcher program (HYDRA / SRUN / PRRTE)
+MPC_LAUNCHER_PROGRAM="@MPC_LAUNCHER_PROGRAM_RESOLVED@"
 
 # Used in the launcher scripts
 # shellcheck disable=SC2034
@@ -281,6 +281,9 @@ load_mpc_configuration() {
 		case "$MPC_LAUNCHER_PROGRAM" in
 			HYDRA)
 			LAUNCHER_PLUGIN="hydra"
+			;;
+			SRUN)
+			LAUNCHER_PLUGIN="srun"
 			;;
 			PRRTE)
 			LAUNCHER_PLUGIN="prrte"
