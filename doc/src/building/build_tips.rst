@@ -26,7 +26,8 @@ It is possible to choose between the following "modules" with ``--enable/disable
 - *openmp*: requires *threads* provides OpenMP support (GOMP and Intel ABIs)
 - *mpi*: requires *lowcomm* provides the MPI 3.1 interface
 - *fortran*: requires *mpi* provides the fortran 77,90,08 bindings for MPC
-- *mpiio*: requires *mpi* provides the MPI IO interface (both Fortran and C)
+- *mpiio*: requires *mpi* provides the MPI IO interface (both Fortran and C), disabled with ``--disable-romio``
+- *openshmem*: requires *lowcomm* provides the OpenSHMEM interface
 
 For example, a lowcomm only version of MPC can be compiled with ``--disable-mpi --disable-threads``. The
 CMake configuration summary (or the mpc_status command) should provide information relative to the enabled components.

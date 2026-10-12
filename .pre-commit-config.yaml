@@ -7,7 +7,7 @@ repos:
       - id: 'check-executables-have-shebangs'
       - id: 'check-merge-conflict'
       - id: 'no-commit-to-branch'
-        args: ['--branch', 'devel', '--branch', 'master']
+        args: ['--branch', 'main']
       - id: 'check-ast'
       - id: 'check-json'
       - id: 'end-of-file-fixer'

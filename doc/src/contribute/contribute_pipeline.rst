@@ -10,7 +10,7 @@ Overall
 
 To keep a high level of code quality in the mainline branch, Gitlab is configured to rely on CI/CD pipelines (Continuous Integration/Continuous Development). The main objective is to avoid code regression and improve the time-to-merge for new features. A pipeline is a set of tasks (in-order) to be run (under a given configuration). Each task will return a status (success, fail, warn). It will display a badge (green, yellow, red) depending on that status, the main objective being to keep an "all-green" pipeline at any time. Now considering MPC, a pipeline can run in different scenarios:
 
-* If a new commit is pushed to the `devel` branch, a pipeline is automatically run to assess the code quality.
+* If a new commit is pushed to the `main` branch, a pipeline is automatically run to assess the code quality.
 
 * If a new merge-request is opened/updated, a pipeline is run on the head of this merge-request in a "detached" mode (such label can be seen in the pipeline UI) (not relevant to explain here why). Each time a new commit is pushed to the merge request, a new pipeline is triggered.
 
@@ -66,6 +66,6 @@ Run automatically a new pipeline
 
 A new pipeline is run automatically when:
 
-* A new commit (or a set of commits) is pushed to a mainline branch-like devel or pt\_devel.
+* A new commit (or a set of commits) is pushed to the mainline branch (`main`).
 
 * Each time a new commit is added to an existing merge request.

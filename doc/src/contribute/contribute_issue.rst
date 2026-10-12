@@ -37,8 +37,8 @@ When creating a new issue, multiple boxes have to be set (as shown by the UI):
   hesitate to use them. The `Preview` button allows you to see how it renders
   once published, do not hesitate to use it too! English descriptions are
   recommended and encouraged (for international purposes). Three links at the
-  bottom of the textbox allow you to (1) read the Markdown documentation, (3)
-  access the quick action list (like `/approve`) and (3) attach files.
+  bottom of the textbox allow you to (1) read the Markdown documentation, (2)
+  access the quick action list (like `/assign` or `/close`) and (3) attach files.
 
 * The issue should be assigned to the person you think is in charge of answering
   to this issue, or at least able to give his point about it. If unsure, leave

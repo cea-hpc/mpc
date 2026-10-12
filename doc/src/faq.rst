@@ -65,12 +65,11 @@ commands. Then, you may provide to the emulator, the GDB command to run. The
 
 	mpcrun -N=4 -n=4 -p=4 -c=1 xterm -e gdb -ex 'r' ./a.out
 
-or (example on Skylake)
+or, on a Slurm cluster, through an X11-forwarded allocation:
 
 .. code-block:: sh
 
-	ccc_mprun -N 1 -n 1 -c 24 -x -p sklb -E "--x11=all" xterm -e gdb -ex 'r'
-	--args ./a.out
+	srun --x11 -N 1 -n 1 -c 24 xterm -e gdb -ex 'r' --args ./a.out
 
 It is even better to rely on GDB script. Such script contains multiple lines,
 each of them being directly injected to GDB prompt. For instance, a script to
@@ -78,10 +77,18 @@ insert a breakpoint each time `sctk_malloc` is called would look like:
 
 .. code-block:: sh
 
-	set pagination off set logging file file.out set logging on set breakpoint
-	pending on break sctk_malloc
-		bt continue
-	end run set logging off quit
+	set pagination off
+	set logging file file.out
+	set logging on
+	set breakpoint pending on
+	break sctk_malloc
+		commands
+			bt
+			continue
+		end
+	run
+	set logging off
+	quit
 
 Sometimes, it may be interesting to debug only a single process (without knowing
 in advance which one). For instance, consider the situation where you want to
@@ -108,12 +115,15 @@ Then, consider a script like this named `gdb.sh`:
 
 .. code-block:: sh
 
-   nodename="inti"
-   nodeset="1000 10001 10003 10004"
-   for i in $nodeset; do
-      cat <<EOF R$i target remote $nodename$i:8080 continue EOF
-      xterm -e gdb --command R$i &
-   done
+	nodename="node"
+	nodeset="1000 10001 10003 10004"
+	for i in $nodeset; do
+		cat <<-EOF >R$i
+			target remote $nodename$i:8080
+			continue
+		EOF
+		xterm -e gdb --command R$i &
+	done
 
 
 It will start an XTerm session for each process, each running on a separate
