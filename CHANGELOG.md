@@ -6,6 +6,19 @@ All notable changes to this project will be documented in this file. The format 
 
 ### Added
 
+### Changed
+
+### Removed
+
+### Deprecated
+
+### Fixed
+
+
+## [4.5.0] - 2026-10-23
+
+### Added
+
 - **Build**
   - Added support for building MPC with CMake and new `installmpc` module flags
   - `installmpc` exposes the launcher program selection: an explicit `--with-slurm` forces `srun`, the new `--with-prte` selects PRRTE, and when Slurm is absent the default fallback prefers PRRTE over Hydra if `prterun` is available
@@ -19,8 +32,6 @@ All notable changes to this project will be documented in this file. The format 
 
 - **Build**
   - Autotools backend and the `--cmake` / `--autotools` `installmpc` flags
-
-### Deprecated
 
 ### Fixed
 
@@ -623,4 +634,5 @@ Note that some components are dependent and cannot be installed if the dependenc
 [4.3.0]: https://github.com/cea-hpc/mpc/releases/tag/MPC_4.3.0
 [4.3.1]: https://github.com/cea-hpc/mpc/releases/tag/MPC_4.3.1
 [4.4.0]: https://github.com/cea-hpc/mpc/releases/tag/MPC_4.4.0
+[4.5.0]: https://github.com/cea-hpc/mpc/releases/tag/MPC_4.5.0
 [keep a changelog]: https://keepachangelog.com/
