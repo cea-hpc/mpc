@@ -409,8 +409,8 @@ In case of question, feature or need for assistance, please contact any of the c
 
 - TABOADA Hugo hugo.taboada@cea.fr
 - REYNIER Florian florian.reynier@cea.fr
-- MARIE Nicolas nicolas.marie@uvsq.fr
 - PEYSIEUX Anis anis.peysieux@cea.fr
+- VIDON Thomas thomas.vidon@cea.fr
 - BEAULIEU Corentin corentin.beaulieu@cea.fr
 
 The MPC Team wants to thank all the maintainers and contributors who made this project what it is.
