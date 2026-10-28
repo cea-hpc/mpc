@@ -15,7 +15,7 @@ All notable changes to this project will be documented in this file. The format 
 ### Fixed
 
 
-## [4.5.0] - 2026-10-23
+## [4.5.0] - 2026-10-28
 
 ### Added
 
