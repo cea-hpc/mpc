@@ -109,11 +109,19 @@ Using the help command, the available launchers should be displayed as follow
 .. code-block:: console
    :caption: Example of available launchers
 
-   Available launch methods (default is srun):
+   Available launch methods (default is hydra):
+      - hydra
       - none
       - none_mpc-gdb
+      - prrte
       - salloc_hydra
       - srun
+
+.. note::
+
+   The default launcher depends on how MPC was configured at build time (Hydra,
+   Slurm/PMI or PMIx). Additional user-defined launchers can be declared in the
+   ``~/.mpc`` directory.
 
 .. table::
    :align: center

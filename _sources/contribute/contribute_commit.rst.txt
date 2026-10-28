@@ -7,7 +7,7 @@ Properly format a commit message
 
 This may be one of the most important HOW-TO to write. Even if no policy is enforced about commit messages (yet), we strongly encourage people to follow these simples guidelines. A commit message is composed of 4 distinct parts:
 
-* **A first-line** (preferably ending with a period). This should be a single the sentence, self-explanatory for the purpose of the commit, without giving to much details about it. Ideally, it should contain the component label it is changing the most (OMP, MessagePassing, Threads, Chores...) followed by a colon `:`
+* **A first-line** following the `<type>(<scope>): summary` convention, where the type is one of `fix`, `refactor`, `chore`, `change` or `overall`, and the scope names the most affected component (`mpi`, `threads`, `openmp`, `doc`...). It should be a single sentence, self-explanatory about the purpose of the commit, without giving too much details about it.
 
 * **a blank line**: This is mandatory if you are going to make a multi-line commit message. Without it, Git is not able to make a difference between the "title" and "body" and will consider the whole as the "title", creating really ugly layouts when coming to in-depth history searches. Please, do not forget to add a blank line, it only cost an extra keypress. **A body message**, where you can detail as much as possible the reason of these changes (not a description of the changes, it would be redundant). For instance, if you resolve multiple bugs or scenarios within one commit, you may list them here
 
@@ -21,7 +21,7 @@ This may be one of the most important HOW-TO to write. Even if no policy is enfo
 
   - `Closes #23`: close issue #23 (works also with `Fix|Resolve`). The ticket
     will be automatically closed when this commit will be merged to the default
-    project branch (probably the devel, after a merge-request). Do not expect to
+    project branch (the `main` branch, after a merge-request). Do not expect to
     see the ticket closed as soon as you pushed it!
 
 More information here: https://docs.gitlab.com/ee/user/project/issues/crosslinking_issues.html
@@ -30,13 +30,12 @@ Clearly, it is asking for a bit of work to write a good commit. But this is one 
 
 .. code-block:: text
 
-	GETOPT: simple fix for privatizing getopt vars.
+	fix(install): move get_version from utils to config
 
-	It seems that GCCs patch has difficulties not considering this getopt as system
-	header as it is being included by UNISTD.h A proposed solution is to flag them
-	__task by force.
-
-	Closes #16
+	The gitattributes limit the export of the utils directory (which we
+	want) but get_version is needed by the build system (among other
+	scripts). We moved this utility script from utils to config to keep it
+	while exporting.
 
 And remind to stay as far as possible from commit message like these (from MPC framework history itself):
 
@@ -90,11 +89,11 @@ It is configured in `.pre-commit-config.yaml` and runs the following hooks on co
 
 * **executables have shebangs**: checks that the executables scripts begin with a shebang
 * **merge conflicts**: checks that no conflict marks are present in the commit
-* **don't commit to branch**: prevents a commit to be directly appended to `devel` or `master`
+* **don't commit to branch**: prevents a commit to be directly appended to the `main` branch
 * **python ast**: checks that python scripts are syntactically correct
 * **json**: checks that JSON files are syntactically correct
 * **yaml**: checks that YAML files are syntactically correct
-* **fix end of files**: checks that files doesn't end with a newline
+* **fix end of files**: fixes files that do not end with a newline
 * **trailing whitespace**: trims the trailing whitespaces
 * **typos**: runs the typos-cli tool which is a spell-checker looking for typos in the commit
 * **clang-tidy**: runs clang-tidy to lint common mistakes
@@ -107,7 +106,7 @@ To commit without the pre-commit, you shall use the ``--no-verify`` option
 
    $ git commit --no-verify
 
-Be aware that the pre-commit is present in the CI and code on which it is failing cannot been merged into the devel branch.
+Be aware that the pre-commit is present in the CI and code on which it is failing cannot be merged into the main branch.
 
 Failing pre-commit
 ^^^^^^^^^^^^^^^^^^
@@ -164,8 +163,8 @@ clang-tidy cannot found compile_commands.json
 '''''''''''''''''''''''''''''''''''''''''''''
 
 ``clang-tidy`` requires a ``compile_commands.json`` file to provide diagnostics.
-To generate this file, you need ``bear``.
-The easiest way is to use the ``installmpc`` script with the ``--enable-lsp`` option to generate the ``compile_commands.json`` file.
+The easiest way to generate it is to use the ``installmpc`` script with the
+``--enable-lsp`` option (native CMake export).
 
 False positive from typos
 '''''''''''''''''''''''''

@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Using spack &mdash; MPC 4.4.0 documentation</title>
+  <title>Using spack &mdash; MPC 4.5.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
       <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
 
@@ -14,7 +14,7 @@
     <link rel="shortcut icon" href="../_static/mpc_logo.png"/>
       <script src="../_static/jquery.js?v=5d32c60e"></script>
       <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../_static/documentation_options.js?v=2f20d6c1"></script>
+      <script src="../_static/documentation_options.js?v=5ef59c98"></script>
       <script src="../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/js/theme.js"></script>
@@ -79,9 +79,8 @@
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Links</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference external" href="https://mpc.hpcframework.com">Official Website (mpc.hpcframework.com)</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://cea-hpc.github.io/mpc/">Documentation (cea-hpc.github.io)</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/cea-hpc/mpc">Repository (github.com)</a></li>
-<li class="toctree-l1"><a class="reference external" href="https://mpc.hpcframework.com/publications-2/">Publications (mpc.hpcframework.com)</a></li>
 </ul>
 
         </div>
@@ -119,24 +118,23 @@ For extra help on Spack, you can check out <a class="reference external" href="h
 <section id="initial-deploy">
 <h2>Initial Deploy<a class="headerlink" href="#initial-deploy" title="Link to this heading"></a></h2>
 <div class="highlight-sh notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span><span class="nv">$SCRATCHDIR</span>
-git<span class="w"> </span>clone<span class="w"> </span>git@github.com:spack/spack.git
+git<span class="w"> </span>clone<span class="w"> </span>https://github.com/spack/spack.git
 <span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;. </span><span class="nv">$SCRATCHDIR</span><span class="s2">/spack/share/spack/setup-env.sh&quot;</span><span class="w"> </span>&gt;&gt;<span class="w"> </span><span class="nv">$HOME</span>/.bashrc
 </pre></div>
 </div>
 </section>
 <section id="prepare-offline-bootstrap">
 <h2>Prepare Offline Bootstrap<a class="headerlink" href="#prepare-offline-bootstrap" title="Link to this heading"></a></h2>
-<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span><span class="c1">#</span>
-<span class="c1"># FIRST CHECK LOCAL SPACK IS THE SAME AS THE REMOTE ONE!</span>
-<span class="c1">#</span>
-https://spack.readthedocs.io/en/latest/bootstrapping.html#creating-a-mirror-for-air-gapped-systems
-<span class="c1"># On machine with the NET</span>
-spack<span class="w"> </span>bootstrap<span class="w"> </span>mirror<span class="w">  </span>--binary-packages<span class="w"> </span><span class="se">\[</span>XXX<span class="se">\]</span>/spack_bootstrap_mirror
-<span class="c1"># Copy spack_bootstrap_mirror to INTI</span>
-scp<span class="w"> </span>-r<span class="w"> </span>./spack_bootstrap_mirror<span class="w"> </span><span class="se">\[</span>XXXX<span class="se">\]</span>
+<p>To bootstrap Spack itself on a machine without network access, first create a
+mirror on a connected machine (see <a class="reference external" href="https://spack.readthedocs.io/en/latest/bootstrapping.html#creating-a-mirror-for-air-gapped-systems">the Spack bootstrapping documentation</a>
+for details), then copy it to the target machine and register it:</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span><span class="c1"># On a machine with network access</span>
+spack<span class="w"> </span>bootstrap<span class="w"> </span>mirror<span class="w"> </span>--binary-packages<span class="w"> </span>/path/to/spack_bootstrap_mirror
+<span class="c1"># Copy the mirror to the offline machine</span>
+scp<span class="w"> </span>-r<span class="w"> </span>./spack_bootstrap_mirror<span class="w"> </span>user@offline-machine:/path/to/
 <span class="c1"># Add the bootstrap mirror</span>
-spack<span class="w"> </span>bootstrap<span class="w"> </span>add<span class="w"> </span>--trust<span class="w"> </span>local-sources<span class="w"> </span><span class="se">\[</span>XXX<span class="se">\]</span>/spack_bootstrap_mirror/metadata/sources
-spack<span class="w"> </span>bootstrap<span class="w"> </span>add<span class="w"> </span>--trust<span class="w"> </span>local-binaries<span class="w"> </span><span class="se">\[</span>XXX<span class="se">\]</span>/spack_bootstrap_mirror/metadata/sources
+spack<span class="w"> </span>bootstrap<span class="w"> </span>add<span class="w"> </span>--trust<span class="w"> </span>local-sources<span class="w"> </span>/path/to/spack_bootstrap_mirror/metadata/sources
+spack<span class="w"> </span>bootstrap<span class="w"> </span>add<span class="w"> </span>--trust<span class="w"> </span>local-binaries<span class="w"> </span>/path/to/spack_bootstrap_mirror/metadata/sources
 <span class="c1"># Now trigger clingo install</span>
 spack<span class="w"> </span>spec<span class="w"> </span>hdf5
 </pre></div>
@@ -144,18 +142,19 @@ spack<span class="w"> </span>spec<span class="w"> </span>hdf5
 </section>
 <section id="add-mpc-repositories">
 <h2>Add MPC Repositories<a class="headerlink" href="#add-mpc-repositories" title="Link to this heading"></a></h2>
-<p>To do so you need access to <cite>~mpc</cite></p>
+<p>You first need to retrieve the MPC spack repository and its dependency mirror
+from the MPC team, then register both:</p>
 <div class="highlight-sh notranslate"><div class="highlight"><pre><span></span><span class="c1"># Add MPC repository</span>
-spack<span class="w"> </span>repo<span class="w"> </span>add<span class="w"> </span>~mpc/MPC_Spack/mpc_spack_repo
-<span class="c1"># Add MPC mirror (all deps for MPC and Clingo see below)</span>
-spack<span class="w"> </span>mirror<span class="w"> </span>add<span class="w"> </span>mpc<span class="w"> </span>~mpc/MPC_Spack/mpc_spack_mirror
+spack<span class="w"> </span>repo<span class="w"> </span>add<span class="w"> </span>/path/to/mpc_spack_repo
+<span class="c1"># Add MPC mirror (all dependencies for MPC)</span>
+spack<span class="w"> </span>mirror<span class="w"> </span>add<span class="w"> </span>mpc<span class="w"> </span>/path/to/mpc_spack_mirror
 </pre></div>
 </div>
 </section>
 <section id="use-with-mpc">
 <h2>Use With MPC<a class="headerlink" href="#use-with-mpc" title="Link to this heading"></a></h2>
 <p>By default MPC will try to load corresponding spack packages and they should be found when running a standard installmpc such as:</p>
-<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>srun<span class="w"> </span>--pty<span class="w"> </span>-N<span class="w"> </span><span class="m">1</span><span class="w"> </span>-c<span class="w"> </span><span class="m">32</span><span class="w"> </span>-p<span class="w"> </span>haswell<span class="w">  </span>../installmpc<span class="w"> </span>--enable-color<span class="w"> </span>--with-slurm<span class="w"> </span>--prefix<span class="o">=</span><span class="nv">$SCRATCHDIR</span>/mpcinst
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>srun<span class="w"> </span>--pty<span class="w"> </span>-N<span class="w"> </span><span class="m">1</span><span class="w"> </span>../installmpc<span class="w"> </span>--enable-color<span class="w"> </span>--with-slurm<span class="w"> </span>--prefix<span class="o">=</span><span class="nv">$SCRATCHDIR</span>/mpcinst
 </pre></div>
 </div>
 </section>

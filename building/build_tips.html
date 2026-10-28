@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Installation tips &mdash; MPC 4.4.0 documentation</title>
+  <title>Installation tips &mdash; MPC 4.5.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
       <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
 
@@ -14,7 +14,7 @@
     <link rel="shortcut icon" href="../_static/mpc_logo.png"/>
       <script src="../_static/jquery.js?v=5d32c60e"></script>
       <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../_static/documentation_options.js?v=2f20d6c1"></script>
+      <script src="../_static/documentation_options.js?v=5ef59c98"></script>
       <script src="../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/js/theme.js"></script>
@@ -75,9 +75,8 @@
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Links</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference external" href="https://mpc.hpcframework.com">Official Website (mpc.hpcframework.com)</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://cea-hpc.github.io/mpc/">Documentation (cea-hpc.github.io)</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/cea-hpc/mpc">Repository (github.com)</a></li>
-<li class="toctree-l1"><a class="reference external" href="https://mpc.hpcframework.com/publications-2/">Publications (mpc.hpcframework.com)</a></li>
 </ul>
 
         </div>
@@ -109,12 +108,13 @@
 <h1>Installation tips<a class="headerlink" href="#installation-tips" title="Link to this heading"></a></h1>
 <section id="modular-mpc">
 <h2>Modular MPC<a class="headerlink" href="#modular-mpc" title="Link to this heading"></a></h2>
-<p>MPC can also be installed directly using the configure script (see <code class="docutils literal notranslate"><span class="pre">./configure</span> <span class="pre">--help</span></code>) in this later
-case loading and installing dependencies is to be done manually.</p>
+<p>MPC can also be installed directly using CMake (see the <code class="docutils literal notranslate"><span class="pre">-LH</span></code> option of
+<code class="docutils literal notranslate"><span class="pre">cmake</span></code> for the available cache variables), in this later case loading and
+installing dependencies is to be done manually.</p>
 <p>MPC can build with the following REQUIRED dependencies:</p>
 <ul class="simple">
 <li><p>OpenPA (<code class="docutils literal notranslate"><span class="pre">spack</span> <span class="pre">install</span> <span class="pre">openpa</span></code> or <a class="reference external" href="https://github.com/pmodels/openpa/">from source</a>)</p></li>
-<li><p>HWLOC 1.11.x (<code class="docutils literal notranslate"><span class="pre">spack</span> <span class="pre">install</span> <span class="pre">hwloc</span></code> or <a class="reference external" href="http://www.open-mpi.org/software/hwloc/v1.11/">using source</a>)</p></li>
+<li><p>HWLOC (<code class="docutils literal notranslate"><span class="pre">spack</span> <span class="pre">install</span> <span class="pre">hwloc</span></code> or <a class="reference external" href="https://www.open-mpi.org/software/hwloc/">from source</a>)</p></li>
 <li><dl class="simple">
 <dt>A launcher:</dt><dd><ul>
 <li><p>Hydra (<code class="docutils literal notranslate"><span class="pre">spack</span> <span class="pre">install</span> <span class="pre">hydra</span></code> or <a class="reference external" href="http://www.mpich.org/static/downloads/3.2/">with the sources</a>)</p></li>
@@ -125,23 +125,19 @@ case loading and installing dependencies is to be done manually.</p>
 </dl>
 </li>
 </ul>
-<p>It is possible to choose between the following “modules” with <code class="docutils literal notranslate"><span class="pre">--enable/disable-X</span></code>:</p>
+<p>It is possible to choose between the following “modules” with <code class="docutils literal notranslate"><span class="pre">--enable/disable-X</span></code>
+(or <code class="docutils literal notranslate"><span class="pre">-DMPC_ENABLE_X=ON|OFF</span></code> when building with CMake directly):</p>
 <ul class="simple">
 <li><p><em>lowcomm</em>: the base networking engine for MPC can be manipulated using the mpc_lowcomm.h header</p></li>
 <li><p><em>threads</em>: user-level thread support (provides posix thread interface pthread.h, semaphore.h, ..)</p></li>
 <li><p><em>openmp</em>: requires <em>threads</em> provides OpenMP support (GOMP and Intel ABIs)</p></li>
 <li><p><em>mpi</em>: requires <em>lowcomm</em> provides the MPI 3.1 interface</p></li>
 <li><p><em>fortran</em>: requires <em>mpi</em> provides the fortran 77,90,08 bindings for MPC</p></li>
-<li><p><em>mpiio</em>: requires <em>mpi</em> provides the MPI IO interface (both Fortran and C)</p></li>
+<li><p><em>mpiio</em>: requires <em>mpi</em> provides the MPI IO interface (both Fortran and C), disabled with <code class="docutils literal notranslate"><span class="pre">--disable-romio</span></code></p></li>
+<li><p><em>openshmem</em>: requires <em>lowcomm</em> provides the OpenSHMEM interface</p></li>
 </ul>
 <p>For example, a lowcomm only version of MPC can be compiled with <code class="docutils literal notranslate"><span class="pre">--disable-mpi</span> <span class="pre">--disable-threads</span></code>. The
-configure (or the mpc_status command) should provide information relative to the enabled components.</p>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>when the configure succeeds once a reconfigure script is provided for convenience it can be used
-to pass new options to the configure. You may have to pass <code class="docutils literal notranslate"><span class="pre">--disable-prefix-check</span></code> to acknowledge that
-you may be reinstalling MPC in a non-empty prefix (at your own risks).</p>
-</div>
+CMake configuration summary (or the mpc_status command) should provide information relative to the enabled components.</p>
 </section>
 </section>
 

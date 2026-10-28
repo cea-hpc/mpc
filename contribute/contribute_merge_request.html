@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Request for merging work into mainline &mdash; MPC 4.4.0 documentation</title>
+  <title>Request for merging work into mainline &mdash; MPC 4.5.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
       <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
 
@@ -14,7 +14,7 @@
     <link rel="shortcut icon" href="../_static/mpc_logo.png"/>
       <script src="../_static/jquery.js?v=5d32c60e"></script>
       <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../_static/documentation_options.js?v=2f20d6c1"></script>
+      <script src="../_static/documentation_options.js?v=5ef59c98"></script>
       <script src="../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/js/theme.js"></script>
@@ -85,9 +85,8 @@
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Links</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference external" href="https://mpc.hpcframework.com">Official Website (mpc.hpcframework.com)</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://cea-hpc.github.io/mpc/">Documentation (cea-hpc.github.io)</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/cea-hpc/mpc">Repository (github.com)</a></li>
-<li class="toctree-l1"><a class="reference external" href="https://mpc.hpcframework.com/publications-2/">Publications (mpc.hpcframework.com)</a></li>
 </ul>
 
         </div>
@@ -121,11 +120,11 @@
 <h2>General description<a class="headerlink" href="#general-description" title="Link to this heading"></a></h2>
 <p>In order to publish changes, it is now required to do it through Merge requests (also known as Pull requests, the Github equivalent). Nobody is allowed to push directly into the default branch. Only merge requests can be approved by maintainers to do so. This enforcing will guarantee a minimal amount of regression that could be integrated into the codebase. Merge requests are integrated to the mainline through the following rules:</p>
 <ul class="simple">
-<li><p>The branch to merge has to be up-to-date with the mainline. It means that any commit belonging to the devel branch <strong>has to</strong> be in your merge-request branch. Doing either a merge or a rebase to do so is up to you. <strong>Gitlab does not allow to merge diverging branches</strong>. For more information, see the <a class="reference internal" href="#prepare"><span class="std std-ref">section</span></a> below. The merge will <em>fast-forward</em> the main branch reference to the HEAD of your merge branch. It means there is not merge here (despite the name). No “loop” will be created and a strict linear history is enforced (for now). Maybe this workflow will have to be updated in order to merge multiple complex and diverging work. If unsure about this process, please read <a class="reference internal" href="#prepare"><span class="std std-ref">the dedicated section</span></a>.</p></li>
+<li><p>The branch to merge has to be up-to-date with the mainline. It means that any commit belonging to the main branch <strong>has to</strong> be in your merge-request branch. Doing either a merge or a rebase to do so is up to you. <strong>Gitlab does not allow to merge diverging branches</strong>. For more information, see the <a class="reference internal" href="#prepare"><span class="std std-ref">section</span></a> below. The merge will <em>fast-forward</em> the main branch reference to the HEAD of your merge branch. It means there is not merge here (despite the name). No “loop” will be created and a strict linear history is enforced (for now). Maybe this workflow will have to be updated in order to merge multiple complex and diverging work. If unsure about this process, please read <a class="reference internal" href="#prepare"><span class="std std-ref">the dedicated section</span></a>.</p></li>
 <li><p>A pipeline is run for each submitted merge-request, as soon as a commit is pushed onto the source branch. Please do not abuse it by submitting one commit one hundred times a day. Prefers pushing less regularly multiple commits at once (but you can still push every commit for common branches, to save your work).</p></li>
 <li><p>When someone posts a new comment to the merge-request, a “thread” is created. To merge the branch, all opened threads have to be marked as “resolved” the the merge to be possible. Otherwise, maintainers won’t have access to the “merge” button.</p></li>
-<li><p>By adding <cite>WIP:</cite> to the merge-request title, you can let people know this MR is under progress and not intended to be reviewed or merged now. If so, the “merge” button is hidden until such a token is removed from the title. Still, a pipeline is regularly run on it.</p></li>
-<li><p>Even if only maintainers are eligible to “click” on the Merge button, the validity of changes is a team decision and any active contributor can review changes and either approve them or ask for changes (through comments). If changes seems valid to you, post a single comment containing <cite>/approve</cite> and you’ll be registered as one of the approvers. Once a Merge-request reaches <strong>three</strong> approvals, the MR is eligible for merge and a maintainer can proceed to do so (not before…). For now, there is no plan to support a <cite>/reject</cite> command. The equivalent would be a properly-written, justified and documented comment, convincing the author (or maintainers) that MR is invalid and should be closed.</p></li>
+<li><p>By marking the merge-request as a draft (start its title with <cite>Draft:</cite>), you can let people know this MR is under progress and not intended to be reviewed or merged now. If so, the “merge” button is hidden until the draft status is removed. Still, a pipeline is regularly run on it.</p></li>
+<li><p>Even if only maintainers are eligible to “click” on the Merge button, the validity of changes is a team decision and any active contributor can review changes and either approve them or ask for changes (through comments). If changes seem valid to you, click on the <strong>Approve</strong> button and you’ll be registered as one of the approvers. Once a merge-request has gathered enough approvals, the MR is eligible for merge and a maintainer can proceed to do so (not before…). The equivalent of a rejection would be a properly-written, justified and documented comment, convincing the author (or maintainers) that MR is invalid and should be closed.</p></li>
 <li><p><strong>A merge-request branch should be prefixed by `mr-`</strong>. It then implies some protection against force-push and merge/push rules. Not conformant MR might be closed.</p></li>
 </ul>
 </section>
@@ -133,25 +132,25 @@
 <h2>HOW-TOs<a class="headerlink" href="#how-tos" title="Link to this heading"></a></h2>
 <section id="prepare-the-branch-to-be-merged">
 <span id="prepare"></span><h3>Prepare the branch to be merged<a class="headerlink" href="#prepare-the-branch-to-be-merged" title="Link to this heading"></a></h3>
-<p>As said, MPC workflow expects branch to be merged to be as linear as possible. No merge-point are ‘allowed’ within a branch, to ease debug sessions. Once your work is open to be merged in a target branch (considering the devel branch here but applicable to any branch), you may create a branch prefixed by <cite>mr-</cite>, this pattern is used. This is highly encouraged to:</p>
+<p>As said, MPC workflow expects branch to be merged to be as linear as possible. No merge-point are ‘allowed’ within a branch, to ease debug sessions. Once your work is open to be merged in a target branch (considering the main branch here but applicable to any branch), you may create a branch prefixed by <cite>mr-</cite>, this pattern is used. This is highly encouraged to:</p>
 <ul class="simple">
 <li><p>easily recognize MR branches (bulk management)</p></li>
 <li><p>automatically apply protections to these MR branches</p></li>
 </ul>
-<p>For a branch to be allowed to be merged into the main branch, it <strong>has to</strong> contain the main branch history. In other words, the last commit of the devel branch (at the time of your merge) <strong>has to</strong> be in your own branch. Because the main branch can evolve (i.e. new commits) while working on your own, you’ll have to synchronize the MR branch at one point. The process we are going to describe here is to apply at any time you want to propagate in your own branch the content of the main branch, in order to sync them before the merge (or just to
+<p>For a branch to be allowed to be merged into the main branch, it <strong>has to</strong> contain the main branch history. In other words, the last commit of the main branch (at the time of your merge) <strong>has to</strong> be in your own branch. Because the main branch can evolve (i.e. new commits) while working on your own, you’ll have to synchronize the MR branch at one point. The process we are going to describe here is to apply at any time you want to propagate in your own branch the content of the main branch, in order to sync them before the merge (or just to
 keep it up-to-date to avoid later issues). Let consider your branch is labeled <cite>mr-A</cite>:</p>
 <ol class="arabic simple">
-<li><p>In your local repository, download the last version of the mirror. Considering    the Gitlab to be origin: <cite>git fetch origin –prune</cite>. The <cite>–prune</cite> allows <em>mirrored</em> branches deleted from the server to be deleted from your local copy. <strong>This does not apply to local branches</strong>. For instance,if your locally checked out the “devel” branch, it won’t make it disappear. But if the server-side devel branch is deleted, your local <cite>origin/devel</cite> will.</p></li>
-<li><p>Now, your local repo is in sync, you may proceed to update your branch. The preferred approach is to use a <strong>rebase</strong> because it keeps the history clean in your own branch, without creating any merge loop. To rebase the <cite>mr-A</cite> on top of the just-sync server-side devel branch:</p></li>
+<li><p>In your local repository, download the last version of the mirror. Considering    the Gitlab to be origin: <cite>git fetch origin –prune</cite>. The <cite>–prune</cite> allows <em>mirrored</em> branches deleted from the server to be deleted from your local copy. <strong>This does not apply to local branches</strong>. For instance, if your locally checked out the “main” branch, it won’t make it disappear. But if the server-side main branch is deleted, your local <cite>origin/main</cite> will.</p></li>
+<li><p>Now, your local repo is in sync, you may proceed to update your branch. The preferred approach is to use a <strong>rebase</strong> because it keeps the history clean in your own branch, without creating any merge loop. To rebase the <cite>mr-A</cite> on top of the just-sync server-side main branch:</p></li>
 </ol>
 <div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>checkout<span class="w"> </span>mr-A
-git<span class="w"> </span>rebase<span class="sb">`</span>origin/devel
+git<span class="w"> </span>rebase<span class="w"> </span>origin/main
 </pre></div>
 </div>
-<p>2. (bis) In some <em>rare</em> scenarios, it may not be convenient to rebase the branch. Mainly this can occur after you try to rebase it and it comes with <strong>a lot</strong> of conflicts. The main pattern is because your branch modify a set of lines multiple times (once per commit for instance) and the devel branch modified it in the meantime. When rebasing,**each commit** may create a conflict, leading to a rebasing nightmare. In that type of scenario <em>only</em>, and with the approval of the reviewing peers/maintainers, a punctual merge can be done. To do so, instead of the rebase, run the following command. You will have to resolve conflicts only
-once (only the last versions of devel &amp; mr-A branch will be compared):</p>
+<p>2. (bis) In some <em>rare</em> scenarios, it may not be convenient to rebase the branch. Mainly this can occur after you try to rebase it and it comes with <strong>a lot</strong> of conflicts. The main pattern is because your branch modify a set of lines multiple times (once per commit for instance) and the main branch modified it in the meantime. When rebasing,**each commit** may create a conflict, leading to a rebasing nightmare. In that type of scenario <em>only</em>, and with the approval of the reviewing peers/maintainers, a punctual merge can be done. To do so, instead of the rebase, run the following command. You will have to resolve conflicts only
+once (only the last versions of main &amp; mr-A branch will be compared):</p>
 <div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>checkout<span class="w"> </span>mr-A
-git<span class="w"> </span>merge<span class="w"> </span>origin/devel
+git<span class="w"> </span>merge<span class="w"> </span>origin/main
 </pre></div>
 </div>
 <p>Please note that this will create a merge loop, a thing MPC wants to avoid. Please note that only the rebase can be used to deploy the <cite>mr-A</cite> branch to the main branch, this step is done by Gitlab when approving the MR. For more explanation about merge and rebase, <a class="reference external" href="https://git-scm.com/book/en/v2/Git-Branching-Rebasing">you can check the official git documentation</a></p>
@@ -166,7 +165,7 @@ git<span class="w"> </span>merge<span class="w"> </span>origin/devel
 <li><p>Read the template available on gitlab. You should copy it. Please fulfill all the required fields in order to make requests ready for people to review it. It is mandatory to follow the template, at the risk of getting a Bot warning. The bot only checks for section headers.</p></li>
 <li><p>checked MPC is still able to build and run correctly</p></li>
 </ul>
-<p>Once these prerequisites accomplished, you may open an MR. To do so: <cite>Merge-Request &gt; New Merge Request</cite>. The source branch is the one to merge, where the changes are located (i.e. the <cite>mr-*</cite> branch). The target branch is the branch to merge with (where changes will go). You may want to select the <cite>pt_devel</cite> branch here. Then, here are the steps to fill it correctly:</p>
+<p>Once these prerequisites accomplished, you may open an MR. To do so: <cite>Merge-Request &gt; New Merge Request</cite>. The source branch is the one to merge, where the changes are located (i.e. the <cite>mr-*</cite> branch). The target branch is the branch to merge with (where changes will go). You may want to select the <cite>main</cite> branch here. Then, here are the steps to fill it correctly:</p>
 <ul>
 <li><p>As for tickets, choose an appropriate title, able to describe in one sentence the content of this pull-request</p></li>
 <li><p>Pick up as assignee the one most suitable to take care of this merge request. In case of doubt, leave it blank.</p></li>
@@ -192,12 +191,12 @@ git<span class="w"> </span>merge<span class="w"> </span>origin/devel
 <p>To review changes, click on the <cite>Changes</cite> tab and browse through the UI. You can also check the branch out and go in-depth through the command line (recommended for archive, not supported by Gitlab UI). Please check also pipeline task status, especially if anyone comes red. <strong>Take also some time to check the branch history, to detect any merge loop or severe GIt misusage</strong>. History readability and maintenance also depends on it.</p>
 <p>For each question/comment, you may have, post a comment. You can also answer to a previous comment by using the ‘note’ icon (“Reply” button). This will put your answer in a dedicated thread, easier to maintain (fold/unfold).</p>
 <p>You may also add put a comment on a specific changes line. This will encourage suggestions. To do so, click on the bubble on the left of the line to comment (in <cite>Changes</cite> tab), it will open a textbox for your comment. As Gitlab will extract a chunk of lines to display (the commented one + 5-10 lines <strong>above</strong>), add your comment to the <strong>last line</strong> to highlight for your comment to render properly. Additionally, you may add suggestions (=proposed changes). To do so, highlight the code to comment with the mouse and then click on the comment bubble. An edition icon like a “prompt” should appear, allowing you to insert a code block. Put in that code block what should replace the code selection.</p>
-<p>Once satisfied with changes/answers, you may approve the merge request by posting a comment with <cite>/approve</cite> as the only message. You are now registered as an approver of the MR. Once the MR reaches the required amount of approvals, the merge-request will be eligible for merge. Please note that Merge-request authors cannot approve their own merge-request. Also <strong>once approval is given, it is not possible (=complex) to un-approve it</strong> (no <cite>/unapprove</cite> command). Be sure to agree with submitted changes before approving.</p>
+<p>Once satisfied with changes/answers, you may approve the merge request by clicking on the <strong>Approve</strong> button. You are now registered as an approver of the MR. Once the MR reaches the required amount of approvals, the merge-request will be eligible for merge. Please note that Merge-request authors cannot approve their own merge-request. An approval can also be revoked afterwards through the same interface, but be sure to agree with submitted changes before approving.</p>
 </section>
 <section id="merge-a-new-merge-request">
 <h3>Merge a new merge-request<a class="headerlink" href="#merge-a-new-merge-request" title="Link to this heading"></a></h3>
 <p>The branch to merge has to be up-to-date with the default branch (through a merge or a rebase) to ensure the absence of conflicts. Otherwise, the request process will complain about it. Then, a pipeline will be run to ensure there wouldn’t be any regression once merged. In the meantime, any developer can review the code and potentially addressing comments or concerns. Any comment should be answered before the process to continue (each comment will open a new thread and will ask for its completion before going further).</p>
-<p>After all, comment marked as resolved AND an “all-green” pipeline, maintainers can start the merging process. The merge commits message should be edited to remove the <cite>“Merge branch…. into…”</cite> and replace it with something more clear. Note that a good convention is to start the commit message with <cite>MERGE:</cite> for consistency. Then click on the “merge” button.</p>
+<p>After all comments are marked as resolved AND with an “all-green” pipeline, maintainers can start the merging process. The merge commit message is generated by Gitlab from the merge-request title, so make sure this title is clear enough as it lands in the project history. Then click on the “merge” button.</p>
 </section>
 </section>
 </section>

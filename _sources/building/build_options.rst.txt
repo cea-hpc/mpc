@@ -12,35 +12,44 @@ commands :
 
 .. code-block:: console
 
-    $ mkdir $HOME/installmpc installmpc --prefix=$HOME/installmpc
+    $ mkdir -p $HOME/installmpc
+    $ ./installmpc --prefix=$HOME/installmpc
 
 In case you are building MPC offline you should place the external modules
 sources in the BUILD directory or in the $HOME/.mpc-deps. You can get all
 dependencies sources zipped archives with ``installmpc --download``. MPC
 installed dependencies are the following :
 
+- hwloc
 - openpa
 - Hydra
-- OFI
 - mpc-compiler-additions
-- mpc-allocator
-- libfabric
+- mpc-allocator (mpcalloc)
+- libfabric (OFI)
+- mpc-dmtcp
+- gdb
+- concurrency-kit
 
 
 
 MPC will look for pre-installed modules although you can specify paths for
 system modules. The option to specify a module path is ``--with-[module]=``.
-The option to disable a module is ``--disable-[module]``
+The option to disable a module is ``--disable-[module]``. When building with
+CMake directly, these map to the ``-DMPC_[MODULE]_PREFIX=`` and
+``-DMPC_ENABLE_[MODULE]=ON|OFF`` cache variables.
 
 Additionally you can specify paths for :
 
 - cuda
-- opencl
-- openacc
+- rocm
 - tbb
 
+The ``opencl`` and ``openacc`` path options are declared but not implemented
+yet.
+
 MPC modules are installed in the same prefix as MPC. It is possible to
-reconfigure modules and install them again if you have any specific needs.
+build modules with a different configuration and install them again if you
+have any specific needs.
 
 
 Installation Process
@@ -52,7 +61,8 @@ Installation Process
    if this is of interest please refer to section "Modular MPC" as the rest
    of this section covers the "bundle install" of MPC using ./installmpc
 
-Once you downloaded the archive from the website, you may proceed as follows.
+Once you downloaded the release archive from the GitHub repository, you may
+proceed as follows.
 Note that by default, if you run the ``installmpc`` script directly into the
 source directory, a ``build`` directory will be automatically created to avoid
 squashing source and build altogether.
@@ -64,10 +74,8 @@ squashing source and build altogether.
 	$ mkdir BUILD && cd BUILD
 	$ ../installmpc --prefix=$PREFIX
 
-The compiler will be detected by default if a privatizing compiler is compiled. To
-avoid any ambiguous detection, one can specify the specific compiler to use
-through the ``--compiler`` option. For example, using such command with the Intel
-compiler will avoid MPC to build the embedded patched GCC compiler.
+The compiler is detected by default. To avoid any ambiguous detection, one can
+specify the compiler to use through the ``--compiler`` option.
 
 MPC relies on a number of dependencies (openpa, hwloc...) and some may be
 missing in the archive you downloaded (for archive size reasons). Considering
@@ -77,13 +85,13 @@ be overridden with a custom, already installed version, anywhere on the system.
 An option exist for each, similar to ``--with-<dep>=/path``. In these cases, it is
 up to the user to ensure the compatibility between the external dependency and
 MPC's requirement. A complete list of dependency versions can be found in
-``utils/config.txt``. On the contrary, to forward extra arguments when building embedded
+``config/version.txt``, and their source URLs in ``config/source.txt``. On the contrary, to forward extra arguments when building embedded
 dependencies, one can use ``--<dep>-<arg>``. Here two examples for HWLOC support :
 
 .. code-block:: sh
 
 	$ ./installmpc --with-hwloc=/app/hwloc/
-	$ ./installmpc --hwloc-disable-cuda # forwarded to hwloc configure as --disable-cuda
+	$ ./installmpc --hwloc=--disable-cuda # forwarded to the hwloc configure as --disable-cuda
 
 Beyond these basic options, some useful others are listed and detailed below :
 
@@ -91,24 +99,31 @@ Beyond these basic options, some useful others are listed and detailed below :
   threads and therefore do not need the privatization support
 * ``--enable-debug`` to enable full debugging for MPC purpose. Will build
   MPC in debug mode *AND* will build the GDB support for MPC.
-* ``--disable-prefix-check`` to confirm you want to erase any existing
-  installation specified by $PREFIX. Not used by default to prevent accidental
-  overrides.
 * ``--enable-color`` if MPC should be build with terminal color support.
 
 .. note::
 
-   By default, MPC tries to build with slurm support. If slurm is not found, it will default to using Hydra.
-   If you want to build with slurm support, you have to make sure that PMIx is available.
+   By default, MPC tries to build with Slurm support: the PMIx interface
+   with srun as the launcher program. If Slurm is not found, MPC falls back
+   to PRRTE when ``prterun`` is available, or to the Hydra launcher
+   otherwise. The PMI interface can also be selected explicitly with the
+   ``--with-pmi1``, ``--with-pmix`` or ``--with-hydra`` options. Passing
+   ``--with-slurm`` explicitly forces srun as the launcher program, and
+   ``--with-prrte`` selects PRRTE. When building with CMake directly, the
+   PMI interface is selected with ``-DMPC_PMI_INTERFACE=HYDRA|PMI1|PMIX``
+   and the launcher program with ``-DMPC_LAUNCHER_PROGRAM=AUTO|SRUN|PRRTE``.
 
 .. code-block:: console
 
 	$ ../installmpc --prefix=$PREFIX -j8 --with-slurm
 
-Any MPC option (which can be found by running ``./configure --help``)
+A small set of MPC options (which can be found by running ``cmake -B BUILD -LH``)
 can be provided when invoking the ``installmpc`` script through the ``--mpc-option``
-argument. Ex:
+or ``--mpcframework`` arguments: only ``--disable-lowcomm``, ``--disable-mpi``
+and ``--disable-threads`` are accepted, any other value is rejected with an
+explicit error. Any other setting must be passed as a named ``installmpc`` flag
+or as a CMake cache variable. Ex:
 
 .. code-block:: console
 
-	$ ./installmpc --prefix=$PREFIX -j8 --mpcframework="--enable-cma"
+	$ ./installmpc --prefix=$PREFIX -j8 --mpcframework="--disable-mpi"

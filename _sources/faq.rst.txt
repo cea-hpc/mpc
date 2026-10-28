@@ -21,10 +21,10 @@ dependencies, to ensure consistency between software revisions. It supports
 package extraction from different sources, loading package from Spack of even
 from direct PATH references. Once updates of MPC sources have been made, one may
 think re-run the complete process is time wasting. To ease the rebuilding
-process, the ``installmpc`` script generates a ``reconfigure`` script, directly
-located at the root of the build directory. This script may be reused to
-reconfigure MPC again (e.g. with new ``./configure`` options). ``make install``
-works as well.
+process, the build directory populated by ``installmpc`` contains a regular
+CMake build tree: it can be reconfigured with new options using
+``cmake -B <BUILD> -DNEW_OPTION=...``, then rebuilt and installed with
+``cmake --build <BUILD>`` and ``cmake --install <BUILD>``.
 
 
 
@@ -40,13 +40,14 @@ To enable debug mode within MPC (and some of its dependencies), the
 .. note::
     When privatisation is enabled (with ``--thread-based``) a patched debugger is provided to make user-level threads available through GDB. To install it, please use the ``--enable-gdb`` option (experimental).
 
-To avoid re-running the whole ``installmpc`` script, MPC provides a set of
-options to be given to the ``reconfigure`` script:
+To avoid re-running the whole ``installmpc`` script, the existing CMake build
+tree can be reconfigured with the relevant cache variables:
 
-* ``--enable-debug``: debug symbols
-* ``--enable-debug-messages``: debug messages
+* ``-DCMAKE_BUILD_TYPE=Debug`` and ``-DMPC_ENABLE_DEBUG=ON``: debug symbols
+* ``-DMPC_ENABLE_DEBUG_MESSAGES=ON``: debug messages
 
-Then, run ``make && make install`` to rebuild MPC in debug mode.
+Then, run ``cmake --build <BUILD>`` and ``cmake --install <BUILD>`` to rebuild
+MPC in debug mode.
 
 
 -------
@@ -64,12 +65,11 @@ commands. Then, you may provide to the emulator, the GDB command to run. The
 
 	mpcrun -N=4 -n=4 -p=4 -c=1 xterm -e gdb -ex 'r' ./a.out
 
-or (example on Skylake)
+or, on a Slurm cluster, through an X11-forwarded allocation:
 
 .. code-block:: sh
 
-	ccc_mprun -N 1 -n 1 -c 24 -x -p sklb -E "--x11=all" xterm -e gdb -ex 'r'
-	--args ./a.out
+	srun --x11 -N 1 -n 1 -c 24 xterm -e gdb -ex 'r' --args ./a.out
 
 It is even better to rely on GDB script. Such script contains multiple lines,
 each of them being directly injected to GDB prompt. For instance, a script to
@@ -77,10 +77,18 @@ insert a breakpoint each time `sctk_malloc` is called would look like:
 
 .. code-block:: sh
 
-	set pagination off set logging file file.out set logging on set breakpoint
-	pending on break sctk_malloc
-		bt continue
-	end run set logging off quit
+	set pagination off
+	set logging file file.out
+	set logging on
+	set breakpoint pending on
+	break sctk_malloc
+		commands
+			bt
+			continue
+		end
+	run
+	set logging off
+	quit
 
 Sometimes, it may be interesting to debug only a single process (without knowing
 in advance which one). For instance, consider the situation where you want to
@@ -107,12 +115,15 @@ Then, consider a script like this named `gdb.sh`:
 
 .. code-block:: sh
 
-   nodename="inti"
-   nodeset="1000 10001 10003 10004"
-   for i in $nodeset; do
-      cat <<EOF R$i target remote $nodename$i:8080 continue EOF
-      xterm -e gdb --command R$i &
-   done
+	nodename="node"
+	nodeset="1000 10001 10003 10004"
+	for i in $nodeset; do
+		cat <<-EOF >R$i
+			target remote $nodename$i:8080
+			continue
+		EOF
+		xterm -e gdb --command R$i &
+	done
 
 
 It will start an XTerm session for each process, each running on a separate

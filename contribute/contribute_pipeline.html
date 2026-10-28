@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Run a pipeline over existing branches &mdash; MPC 4.4.0 documentation</title>
+  <title>Run a pipeline over existing branches &mdash; MPC 4.5.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
       <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
 
@@ -14,7 +14,7 @@
     <link rel="shortcut icon" href="../_static/mpc_logo.png"/>
       <script src="../_static/jquery.js?v=5d32c60e"></script>
       <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../_static/documentation_options.js?v=2f20d6c1"></script>
+      <script src="../_static/documentation_options.js?v=5ef59c98"></script>
       <script src="../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/js/theme.js"></script>
@@ -86,9 +86,8 @@
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Links</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference external" href="https://mpc.hpcframework.com">Official Website (mpc.hpcframework.com)</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://cea-hpc.github.io/mpc/">Documentation (cea-hpc.github.io)</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/cea-hpc/mpc">Repository (github.com)</a></li>
-<li class="toctree-l1"><a class="reference external" href="https://mpc.hpcframework.com/publications-2/">Publications (mpc.hpcframework.com)</a></li>
 </ul>
 
         </div>
@@ -124,7 +123,7 @@
 <h3>Overall<a class="headerlink" href="#overall" title="Link to this heading"></a></h3>
 <p>To keep a high level of code quality in the mainline branch, Gitlab is configured to rely on CI/CD pipelines (Continuous Integration/Continuous Development). The main objective is to avoid code regression and improve the time-to-merge for new features. A pipeline is a set of tasks (in-order) to be run (under a given configuration). Each task will return a status (success, fail, warn). It will display a badge (green, yellow, red) depending on that status, the main objective being to keep an “all-green” pipeline at any time. Now considering MPC, a pipeline can run in different scenarios:</p>
 <ul class="simple">
-<li><p>If a new commit is pushed to the <cite>devel</cite> branch, a pipeline is automatically run to assess the code quality.</p></li>
+<li><p>If a new commit is pushed to the <cite>main</cite> branch, a pipeline is automatically run to assess the code quality.</p></li>
 <li><p>If a new merge-request is opened/updated, a pipeline is run on the head of this merge-request in a “detached” mode (such label can be seen in the pipeline UI) (not relevant to explain here why). Each time a new commit is pushed to the merge request, a new pipeline is triggered.</p></li>
 <li><p>Manually, through the “Run Pipeline” button, one can specify any ref (branch,
 tag, SHA…) to be run through the pipeline…</p></li>
@@ -166,7 +165,7 @@ tag, SHA…) to be run through the pipeline…</p></li>
 <h3>Run automatically a new pipeline<a class="headerlink" href="#run-automatically-a-new-pipeline" title="Link to this heading"></a></h3>
 <p>A new pipeline is run automatically when:</p>
 <ul class="simple">
-<li><p>A new commit (or a set of commits) is pushed to a mainline branch-like devel or pt_devel.</p></li>
+<li><p>A new commit (or a set of commits) is pushed to the mainline branch (<cite>main</cite>).</p></li>
 <li><p>Each time a new commit is added to an existing merge request.</p></li>
 </ul>
 </section>

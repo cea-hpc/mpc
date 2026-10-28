@@ -29,18 +29,21 @@ Not further restriction, but a lot of recommended setup, listed below, to ease y
 
 .. code-block:: sh
 
-	$ git config --global
-	How to treat with "git push" (no arguments). We strongly recommend using this setup to avoid misuse!
+	# How to treat "git push" (no arguments). We strongly recommend
+	# this setup to avoid misuse!
 	git config --global push.default simple
-	# For kdiff3 aficionados when coming to resolve conflicts (vimdiff by default)
+	# For kdiff3 aficionados when resolving conflicts (vimdiff by default)
 	git config --global merge.tool kdiff3
-	#relative to the use of "git grep" command, a time-saving command for efficient programmers :)
+	# Relative to the use of the "git grep" command, a time-saving
+	# command for efficient programmers :)
 	git config --global grep.extendRegexp true
 	git config --global grep.lineNumber true
 	git config --global grep.fallbackToNoIndex true
-	# Memorize the way merge conflicts are resolved to re-apply it if the same conflict happens again
+	# Memorize the way merge conflicts are resolved to re-apply it
+	# if the same conflict happens again
 	git config --global rerere.enabled true
-	# The only proof commits are from you... Anybody can take your identify otherwise !
+	# The only proof commits are from you... Anybody can take your
+	# identity otherwise!
 	git config --global user.signingkey "First chars of your public GPG key"
 
 There is plenty of nice features, we only list a few of them. If interested, feel free to contact <corentin.beaulieu@cea.fr> directly for more of his tips  & tricks around Git (like binary diff, compact git-status, tig-like without ncurses, tuned git-grep commands, powerful ways to dig into MPC history to identify when a function has been added/deleted...)

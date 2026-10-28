@@ -81,9 +81,9 @@ Error with system header not found when compiling GCC
 from the `installmpc` script. Do not consider using `-fmpc-privatize` in such
 scenario !
 
-**Explanation**: Privatizing compiler coming with MPC is GCC 7.2.0 (currently)
-and needs an header called `ustat.h`, deprecated for a long time. Recent glibc
-(above 2.28) removed this system header, preventing GCC 7.2.0 to compile
+**Explanation**: The privatizing compiler coming with MPC is based on GCC and
+needs a header called `ustat.h`, deprecated for a long time. Recent glibc
+(above 2.28) removed this system header, preventing this compiler from building
 correctly. This includes recent Ubuntu installation (equal or later than 18.04).
 There is no solution to this currently, we are working on supporting a compiler
 recent enough to dismiss this error.
@@ -134,7 +134,7 @@ GCC compiler not found
 time, MPC relied on GCC 6.2.0. When decided to update to GCC 7.2.0, MPC
 re-installation (=same prefix) leads to an error into compiler manager files as
 old compiler path was still referenced. A fix has been made for that and is now
-merged into the devel branch.
+included in MPC releases.
 
 
 -----------------------

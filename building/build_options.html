@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Compilation options &mdash; MPC 4.4.0 documentation</title>
+  <title>Compilation options &mdash; MPC 4.5.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
       <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
 
@@ -14,7 +14,7 @@
     <link rel="shortcut icon" href="../_static/mpc_logo.png"/>
       <script src="../_static/jquery.js?v=5d32c60e"></script>
       <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../_static/documentation_options.js?v=2f20d6c1"></script>
+      <script src="../_static/documentation_options.js?v=5ef59c98"></script>
       <script src="../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/js/theme.js"></script>
@@ -76,9 +76,8 @@
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Links</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference external" href="https://mpc.hpcframework.com">Official Website (mpc.hpcframework.com)</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://cea-hpc.github.io/mpc/">Documentation (cea-hpc.github.io)</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/cea-hpc/mpc">Repository (github.com)</a></li>
-<li class="toctree-l1"><a class="reference external" href="https://mpc.hpcframework.com/publications-2/">Publications (mpc.hpcframework.com)</a></li>
 </ul>
 
         </div>
@@ -113,7 +112,8 @@
 <p>Unless building with sudo you should specify a prefix for the installation. Use
 absolute paths to avoid any issue. For a quick install you can use these
 commands :</p>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>mkdir<span class="w"> </span><span class="nv">$HOME</span>/installmpc<span class="w"> </span>installmpc<span class="w"> </span>--prefix<span class="o">=</span><span class="nv">$HOME</span>/installmpc
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>mkdir<span class="w"> </span>-p<span class="w"> </span><span class="nv">$HOME</span>/installmpc
+<span class="gp">$ </span>./installmpc<span class="w"> </span>--prefix<span class="o">=</span><span class="nv">$HOME</span>/installmpc
 </pre></div>
 </div>
 <p>In case you are building MPC offline you should place the external modules
@@ -121,25 +121,32 @@ sources in the BUILD directory or in the $HOME/.mpc-deps. You can get all
 dependencies sources zipped archives with <code class="docutils literal notranslate"><span class="pre">installmpc</span> <span class="pre">--download</span></code>. MPC
 installed dependencies are the following :</p>
 <ul class="simple">
+<li><p>hwloc</p></li>
 <li><p>openpa</p></li>
 <li><p>Hydra</p></li>
-<li><p>OFI</p></li>
 <li><p>mpc-compiler-additions</p></li>
-<li><p>mpc-allocator</p></li>
-<li><p>libfabric</p></li>
+<li><p>mpc-allocator (mpcalloc)</p></li>
+<li><p>libfabric (OFI)</p></li>
+<li><p>mpc-dmtcp</p></li>
+<li><p>gdb</p></li>
+<li><p>concurrency-kit</p></li>
 </ul>
 <p>MPC will look for pre-installed modules although you can specify paths for
 system modules. The option to specify a module path is <code class="docutils literal notranslate"><span class="pre">--with-[module]=</span></code>.
-The option to disable a module is <code class="docutils literal notranslate"><span class="pre">--disable-[module]</span></code></p>
+The option to disable a module is <code class="docutils literal notranslate"><span class="pre">--disable-[module]</span></code>. When building with
+CMake directly, these map to the <code class="docutils literal notranslate"><span class="pre">-DMPC_[MODULE]_PREFIX=</span></code> and
+<code class="docutils literal notranslate"><span class="pre">-DMPC_ENABLE_[MODULE]=ON|OFF</span></code> cache variables.</p>
 <p>Additionally you can specify paths for :</p>
 <ul class="simple">
 <li><p>cuda</p></li>
-<li><p>opencl</p></li>
-<li><p>openacc</p></li>
+<li><p>rocm</p></li>
 <li><p>tbb</p></li>
 </ul>
+<p>The <code class="docutils literal notranslate"><span class="pre">opencl</span></code> and <code class="docutils literal notranslate"><span class="pre">openacc</span></code> path options are declared but not implemented
+yet.</p>
 <p>MPC modules are installed in the same prefix as MPC. It is possible to
-reconfigure modules and install them again if you have any specific needs.</p>
+build modules with a different configuration and install them again if you
+have any specific needs.</p>
 </section>
 <section id="installation-process">
 <h2>Installation Process<a class="headerlink" href="#installation-process" title="Link to this heading"></a></h2>
@@ -149,7 +156,8 @@ reconfigure modules and install them again if you have any specific needs.</p>
 if this is of interest please refer to section “Modular MPC” as the rest
 of this section covers the “bundle install” of MPC using ./installmpc</p>
 </div>
-<p>Once you downloaded the archive from the website, you may proceed as follows.
+<p>Once you downloaded the release archive from the GitHub repository, you may
+proceed as follows.
 Note that by default, if you run the <code class="docutils literal notranslate"><span class="pre">installmpc</span></code> script directly into the
 source directory, a <code class="docutils literal notranslate"><span class="pre">build</span></code> directory will be automatically created to avoid
 squashing source and build altogether.</p>
@@ -159,10 +167,8 @@ squashing source and build altogether.</p>
 <span class="gp">$ </span>../installmpc<span class="w"> </span>--prefix<span class="o">=</span><span class="nv">$PREFIX</span>
 </pre></div>
 </div>
-<p>The compiler will be detected by default if a privatizing compiler is compiled. To
-avoid any ambiguous detection, one can specify the specific compiler to use
-through the <code class="docutils literal notranslate"><span class="pre">--compiler</span></code> option. For example, using such command with the Intel
-compiler will avoid MPC to build the embedded patched GCC compiler.</p>
+<p>The compiler is detected by default. To avoid any ambiguous detection, one can
+specify the compiler to use through the <code class="docutils literal notranslate"><span class="pre">--compiler</span></code> option.</p>
 <p>MPC relies on a number of dependencies (openpa, hwloc…) and some may be
 missing in the archive you downloaded (for archive size reasons). Considering
 the current installation process can have an internet connection, on might
@@ -171,10 +177,10 @@ be overridden with a custom, already installed version, anywhere on the system.
 An option exist for each, similar to <code class="docutils literal notranslate"><span class="pre">--with-&lt;dep&gt;=/path</span></code>. In these cases, it is
 up to the user to ensure the compatibility between the external dependency and
 MPC’s requirement. A complete list of dependency versions can be found in
-<code class="docutils literal notranslate"><span class="pre">utils/config.txt</span></code>. On the contrary, to forward extra arguments when building embedded
+<code class="docutils literal notranslate"><span class="pre">config/version.txt</span></code>, and their source URLs in <code class="docutils literal notranslate"><span class="pre">config/source.txt</span></code>. On the contrary, to forward extra arguments when building embedded
 dependencies, one can use <code class="docutils literal notranslate"><span class="pre">--&lt;dep&gt;-&lt;arg&gt;</span></code>. Here two examples for HWLOC support :</p>
 <div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>./installmpc<span class="w"> </span>--with-hwloc<span class="o">=</span>/app/hwloc/
-$<span class="w"> </span>./installmpc<span class="w"> </span>--hwloc-disable-cuda<span class="w"> </span><span class="c1"># forwarded to hwloc configure as --disable-cuda</span>
+$<span class="w"> </span>./installmpc<span class="w"> </span>--hwloc<span class="o">=</span>--disable-cuda<span class="w"> </span><span class="c1"># forwarded to the hwloc configure as --disable-cuda</span>
 </pre></div>
 </div>
 <p>Beyond these basic options, some useful others are listed and detailed below :</p>
@@ -183,23 +189,30 @@ $<span class="w"> </span>./installmpc<span class="w"> </span>--hwloc-disable-cud
 threads and therefore do not need the privatization support</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">--enable-debug</span></code> to enable full debugging for MPC purpose. Will build
 MPC in debug mode <em>AND</em> will build the GDB support for MPC.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">--disable-prefix-check</span></code> to confirm you want to erase any existing
-installation specified by $PREFIX. Not used by default to prevent accidental
-overrides.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">--enable-color</span></code> if MPC should be build with terminal color support.</p></li>
 </ul>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>By default, MPC tries to build with slurm support. If slurm is not found, it will default to using Hydra.
-If you want to build with slurm support, you have to make sure that PMIx is available.</p>
+<p>By default, MPC tries to build with Slurm support: the PMIx interface
+with srun as the launcher program. If Slurm is not found, MPC falls back
+to PRRTE when <code class="docutils literal notranslate"><span class="pre">prterun</span></code> is available, or to the Hydra launcher
+otherwise. The PMI interface can also be selected explicitly with the
+<code class="docutils literal notranslate"><span class="pre">--with-pmi1</span></code>, <code class="docutils literal notranslate"><span class="pre">--with-pmix</span></code> or <code class="docutils literal notranslate"><span class="pre">--with-hydra</span></code> options. Passing
+<code class="docutils literal notranslate"><span class="pre">--with-slurm</span></code> explicitly forces srun as the launcher program, and
+<code class="docutils literal notranslate"><span class="pre">--with-prrte</span></code> selects PRRTE. When building with CMake directly, the
+PMI interface is selected with <code class="docutils literal notranslate"><span class="pre">-DMPC_PMI_INTERFACE=HYDRA|PMI1|PMIX</span></code>
+and the launcher program with <code class="docutils literal notranslate"><span class="pre">-DMPC_LAUNCHER_PROGRAM=AUTO|SRUN|PRRTE</span></code>.</p>
 </div>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>../installmpc<span class="w"> </span>--prefix<span class="o">=</span><span class="nv">$PREFIX</span><span class="w"> </span>-j8<span class="w"> </span>--with-slurm
 </pre></div>
 </div>
-<p>Any MPC option (which can be found by running <code class="docutils literal notranslate"><span class="pre">./configure</span> <span class="pre">--help</span></code>)
+<p>A small set of MPC options (which can be found by running <code class="docutils literal notranslate"><span class="pre">cmake</span> <span class="pre">-B</span> <span class="pre">BUILD</span> <span class="pre">-LH</span></code>)
 can be provided when invoking the <code class="docutils literal notranslate"><span class="pre">installmpc</span></code> script through the <code class="docutils literal notranslate"><span class="pre">--mpc-option</span></code>
-argument. Ex:</p>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>./installmpc<span class="w"> </span>--prefix<span class="o">=</span><span class="nv">$PREFIX</span><span class="w"> </span>-j8<span class="w"> </span>--mpcframework<span class="o">=</span><span class="s2">&quot;--enable-cma&quot;</span>
+or <code class="docutils literal notranslate"><span class="pre">--mpcframework</span></code> arguments: only <code class="docutils literal notranslate"><span class="pre">--disable-lowcomm</span></code>, <code class="docutils literal notranslate"><span class="pre">--disable-mpi</span></code>
+and <code class="docutils literal notranslate"><span class="pre">--disable-threads</span></code> are accepted, any other value is rejected with an
+explicit error. Any other setting must be passed as a named <code class="docutils literal notranslate"><span class="pre">installmpc</span></code> flag
+or as a CMake cache variable. Ex:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>./installmpc<span class="w"> </span>--prefix<span class="o">=</span><span class="nv">$PREFIX</span><span class="w"> </span>-j8<span class="w"> </span>--mpcframework<span class="o">=</span><span class="s2">&quot;--disable-mpi&quot;</span>
 </pre></div>
 </div>
 </section>

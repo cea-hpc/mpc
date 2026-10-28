@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Multi-Processor Computing &mdash; MPC 4.4.0 documentation</title>
+  <title>Multi-Processor Computing &mdash; MPC 4.5.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
 
@@ -14,7 +14,7 @@
     <link rel="shortcut icon" href="_static/mpc_logo.png"/>
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="_static/documentation_options.js?v=2f20d6c1"></script>
+      <script src="_static/documentation_options.js?v=5ef59c98"></script>
       <script src="_static/doctools.js?v=fd6eb6e6"></script>
       <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/js/theme.js"></script>
@@ -66,9 +66,8 @@
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Links</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference external" href="https://mpc.hpcframework.com">Official Website (mpc.hpcframework.com)</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://cea-hpc.github.io/mpc/">Documentation (cea-hpc.github.io)</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/cea-hpc/mpc">Repository (github.com)</a></li>
-<li class="toctree-l1"><a class="reference external" href="https://mpc.hpcframework.com/publications-2/">Publications (mpc.hpcframework.com)</a></li>
 </ul>
 
         </div>
@@ -138,12 +137,12 @@ MPI/OpenMP…) and lower memory consumption.</p>
 </section>
 <section id="openmp">
 <h3>OpenMP<a class="headerlink" href="#openmp" title="Link to this heading"></a></h3>
-<p>MPC provides its own OpenMP implementation, and fully respects the OpenMP 3.1
-standard. MPC allows compilation and execution of C/C++ and Fortran OpenMP
-applications thanks to GNU and Intel compilers support. The main MPC package
-contains a patched version of GCC (6.2) called MPC_GCC which is automatically
-installed when building MPC. The OpenMP implementation is also compatible with
-Intel C/C++ and FORTRAN compilers starting at version 15.0.</p>
+<p>MPC provides its own OpenMP implementation, an OpenMP 3 runtime with parts of
+the 4.0 and 5.0 standards. MPC allows compilation and execution of C/C++ and
+Fortran OpenMP applications thanks to GNU compiler support. The main MPC
+package automatically installs mpc-compiler-additions, a GCC-based privatizing
+toolchain, when building MPC. The OpenMP runtime supports both the GNU (GOMP)
+and Intel compiler ABIs.</p>
 <p>The OpenMP runtime has been optimized to efficiently support large NUMA
 architectures and hybrid MPI/OpenMP codes.</p>
 </section>
@@ -177,9 +176,8 @@ also compatible with Allinea’s DDT Debugger.</p>
 deal with global-variable sharing in the application.</p>
 <p>Such thread-safety issues are managed with automatic privatization of global
 variables. This mechanism is automatically applied by the compiler for C/C++
-and Fortran MPI codes through the new -fmpc-privatize option. This new option is
-available in MPC_GCC (provided with the MPC package) and Intel compilers
-(starting with version 15.0 for C/C++ and Fortran).</p>
+and Fortran MPI codes through the -fmpc-privatize option. This option is
+provided by the mpc-compiler-additions toolchain bundled with the MPC package.</p>
 </section>
 <section id="memory-allocator">
 <h4>Memory Allocator<a class="headerlink" href="#memory-allocator" title="Link to this heading"></a></h4>
@@ -215,10 +213,10 @@ a factor equal to the number of cores per node.</p>
 <p>MPC Documentation is under active development and can be found in the following
 locations:</p>
 <ul class="simple">
-<li><p>The Official website for the whole project: (<a class="reference external" href="http://mpc.hpcframework.com/">http://mpc.hpcframework.com/</a>)</p></li>
+<li><p>The official documentation website of the project: (<a class="reference external" href="https://cea-hpc.github.io/mpc/">https://cea-hpc.github.io/mpc/</a>)</p></li>
 <li><p>In-place documentation (within source code), under Doxygen formatting. Please
 note that this is currently in progress and not everything is fully documented.
-Feel free to contact one of the maintainers mentioned in the MAINTAINERS file.</p></li>
+Feel free to contact one of the maintainers mentioned in the AUTHORS.md file.</p></li>
 <li><p>A complete documentation based on currently-written Doxygen AND Markdown files
 placed in modules that can be generated. Please consult the /doc/Doxyfile.in
 to customize the generation to the needs. Once ready, please run
@@ -268,28 +266,29 @@ mandatory) for drawings.</p></li>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="changelog.html">Changelog</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="changelog.html#unreleased">[Unreleased]</a></li>
-<li class="toctree-l2"><a class="reference internal" href="changelog.html#id1">4.4.0 - 2026-08-04</a></li>
-<li class="toctree-l2"><a class="reference internal" href="changelog.html#id5">4.3.1 - 2026-04-08</a></li>
-<li class="toctree-l2"><a class="reference internal" href="changelog.html#id9">4.3.0 - 2025-11-18</a></li>
-<li class="toctree-l2"><a class="reference internal" href="changelog.html#id15">4.2.0 - 2023-06-13</a></li>
-<li class="toctree-l2"><a class="reference internal" href="changelog.html#id19">4.1.0 - 2021-08-03</a></li>
-<li class="toctree-l2"><a class="reference internal" href="changelog.html#id23">4.0.0 - 2020-12-16</a></li>
-<li class="toctree-l2"><a class="reference internal" href="changelog.html#id29">3.4.0 - 2020-04-27</a></li>
-<li class="toctree-l2"><a class="reference internal" href="changelog.html#id33">3.3.1 - 2019-06-03</a></li>
-<li class="toctree-l2"><a class="reference internal" href="changelog.html#id36">3.3.0 - 2018-12-18</a></li>
-<li class="toctree-l2"><a class="reference internal" href="changelog.html#id40">3.2.0 - 2017-07-04</a></li>
-<li class="toctree-l2"><a class="reference internal" href="changelog.html#id45">3.1.0 - 2016-06-27</a></li>
-<li class="toctree-l2"><a class="reference internal" href="changelog.html#id47">3.0.0 - 2016-02-18</a></li>
-<li class="toctree-l2"><a class="reference internal" href="changelog.html#id51">2.5.2 - 2015-01-20</a></li>
-<li class="toctree-l2"><a class="reference internal" href="changelog.html#id54">2.5.1</a></li>
-<li class="toctree-l2"><a class="reference internal" href="changelog.html#id58">2.5.0 - 2014-01-30</a></li>
-<li class="toctree-l2"><a class="reference internal" href="changelog.html#id62">2.4.1 - 2012-12-21</a></li>
-<li class="toctree-l2"><a class="reference internal" href="changelog.html#id66">2.4.0 - 2012-09-25</a></li>
-<li class="toctree-l2"><a class="reference internal" href="changelog.html#id70">2.3.1 - 2011-12-09</a></li>
-<li class="toctree-l2"><a class="reference internal" href="changelog.html#id72">2.3.0 - 2011-11-23</a></li>
-<li class="toctree-l2"><a class="reference internal" href="changelog.html#id75">2.2.0 - 2011-06-14</a></li>
-<li class="toctree-l2"><a class="reference internal" href="changelog.html#id79">2.1.0 - 2011-04-29</a></li>
-<li class="toctree-l2"><a class="reference internal" href="changelog.html#id82">1.1.0</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#id1">4.5.0 - 2026-10-28</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#id6">4.4.0 - 2026-08-04</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#id10">4.3.1 - 2026-04-08</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#id14">4.3.0 - 2025-11-18</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#id20">4.2.0 - 2023-06-13</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#id24">4.1.0 - 2021-08-03</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#id28">4.0.0 - 2020-12-16</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#id34">3.4.0 - 2020-04-27</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#id38">3.3.1 - 2019-06-03</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#id41">3.3.0 - 2018-12-18</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#id45">3.2.0 - 2017-07-04</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#id50">3.1.0 - 2016-06-27</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#id52">3.0.0 - 2016-02-18</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#id56">2.5.2 - 2015-01-20</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#id59">2.5.1</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#id63">2.5.0 - 2014-01-30</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#id67">2.4.1 - 2012-12-21</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#id71">2.4.0 - 2012-09-25</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#id75">2.3.1 - 2011-12-09</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#id77">2.3.0 - 2011-11-23</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#id80">2.2.0 - 2011-06-14</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#id84">2.1.0 - 2011-04-29</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#id87">1.1.0</a></li>
 </ul>
 </li>
 </ul>
@@ -416,9 +415,8 @@ mandatory) for drawings.</p></li>
 <div class="toctree-wrapper compound">
 <p class="caption" role="heading"><span class="caption-text">Links</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference external" href="https://mpc.hpcframework.com">Official Website (mpc.hpcframework.com)</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://cea-hpc.github.io/mpc/">Documentation (cea-hpc.github.io)</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/cea-hpc/mpc">Repository (github.com)</a></li>
-<li class="toctree-l1"><a class="reference external" href="https://mpc.hpcframework.com/publications-2/">Publications (mpc.hpcframework.com)</a></li>
 </ul>
 </div>
 </section>

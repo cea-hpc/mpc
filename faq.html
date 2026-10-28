@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Frequently Asked Questions &mdash; MPC 4.4.0 documentation</title>
+  <title>Frequently Asked Questions &mdash; MPC 4.5.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
 
@@ -14,7 +14,7 @@
     <link rel="shortcut icon" href="_static/mpc_logo.png"/>
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="_static/documentation_options.js?v=2f20d6c1"></script>
+      <script src="_static/documentation_options.js?v=5ef59c98"></script>
       <script src="_static/doctools.js?v=fd6eb6e6"></script>
       <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/js/theme.js"></script>
@@ -78,9 +78,8 @@
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Links</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference external" href="https://mpc.hpcframework.com">Official Website (mpc.hpcframework.com)</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://cea-hpc.github.io/mpc/">Documentation (cea-hpc.github.io)</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/cea-hpc/mpc">Repository (github.com)</a></li>
-<li class="toctree-l1"><a class="reference external" href="https://mpc.hpcframework.com/publications-2/">Publications (mpc.hpcframework.com)</a></li>
 </ul>
 
         </div>
@@ -120,10 +119,10 @@ dependencies, to ensure consistency between software revisions. It supports
 package extraction from different sources, loading package from Spack of even
 from direct PATH references. Once updates of MPC sources have been made, one may
 think re-run the complete process is time wasting. To ease the rebuilding
-process, the <code class="docutils literal notranslate"><span class="pre">installmpc</span></code> script generates a <code class="docutils literal notranslate"><span class="pre">reconfigure</span></code> script, directly
-located at the root of the build directory. This script may be reused to
-reconfigure MPC again (e.g. with new <code class="docutils literal notranslate"><span class="pre">./configure</span></code> options). <code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">install</span></code>
-works as well.</p>
+process, the build directory populated by <code class="docutils literal notranslate"><span class="pre">installmpc</span></code> contains a regular
+CMake build tree: it can be reconfigured with new options using
+<code class="docutils literal notranslate"><span class="pre">cmake</span> <span class="pre">-B</span> <span class="pre">&lt;BUILD&gt;</span> <span class="pre">-DNEW_OPTION=...</span></code>, then rebuilt and installed with
+<code class="docutils literal notranslate"><span class="pre">cmake</span> <span class="pre">--build</span> <span class="pre">&lt;BUILD&gt;</span></code> and <code class="docutils literal notranslate"><span class="pre">cmake</span> <span class="pre">--install</span> <span class="pre">&lt;BUILD&gt;</span></code>.</p>
 </section>
 <section id="enabling-debug-mode-afterwards">
 <h3>Enabling “debug” mode afterwards<a class="headerlink" href="#enabling-debug-mode-afterwards" title="Link to this heading"></a></h3>
@@ -137,13 +136,14 @@ works as well.</p>
 <p class="admonition-title">Note</p>
 <p>When privatisation is enabled (with <code class="docutils literal notranslate"><span class="pre">--thread-based</span></code>) a patched debugger is provided to make user-level threads available through GDB. To install it, please use the <code class="docutils literal notranslate"><span class="pre">--enable-gdb</span></code> option (experimental).</p>
 </div>
-<p>To avoid re-running the whole <code class="docutils literal notranslate"><span class="pre">installmpc</span></code> script, MPC provides a set of
-options to be given to the <code class="docutils literal notranslate"><span class="pre">reconfigure</span></code> script:</p>
+<p>To avoid re-running the whole <code class="docutils literal notranslate"><span class="pre">installmpc</span></code> script, the existing CMake build
+tree can be reconfigured with the relevant cache variables:</p>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">--enable-debug</span></code>: debug symbols</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">--enable-debug-messages</span></code>: debug messages</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">-DCMAKE_BUILD_TYPE=Debug</span></code> and <code class="docutils literal notranslate"><span class="pre">-DMPC_ENABLE_DEBUG=ON</span></code>: debug symbols</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">-DMPC_ENABLE_DEBUG_MESSAGES=ON</span></code>: debug messages</p></li>
 </ul>
-<p>Then, run <code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">&amp;&amp;</span> <span class="pre">make</span> <span class="pre">install</span></code> to rebuild MPC in debug mode.</p>
+<p>Then, run <code class="docutils literal notranslate"><span class="pre">cmake</span> <span class="pre">--build</span> <span class="pre">&lt;BUILD&gt;</span></code> and <code class="docutils literal notranslate"><span class="pre">cmake</span> <span class="pre">--install</span> <span class="pre">&lt;BUILD&gt;</span></code> to rebuild
+MPC in debug mode.</p>
 </section>
 </section>
 <section id="runtime">
@@ -156,18 +156,25 @@ commands. Then, you may provide to the emulator, the GDB command to run. The
 <blockquote>
 <div><p>mpcrun -N=4 -n=4 -p=4 -c=1 xterm -e gdb -ex ‘r’ ./a.out</p>
 </div></blockquote>
-<p>or (example on Skylake)</p>
-<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>ccc_mprun<span class="w"> </span>-N<span class="w"> </span><span class="m">1</span><span class="w"> </span>-n<span class="w"> </span><span class="m">1</span><span class="w"> </span>-c<span class="w"> </span><span class="m">24</span><span class="w"> </span>-x<span class="w"> </span>-p<span class="w"> </span>sklb<span class="w"> </span>-E<span class="w"> </span><span class="s2">&quot;--x11=all&quot;</span><span class="w"> </span>xterm<span class="w"> </span>-e<span class="w"> </span>gdb<span class="w"> </span>-ex<span class="w"> </span><span class="s1">&#39;r&#39;</span>
---args<span class="w"> </span>./a.out
+<p>or, on a Slurm cluster, through an X11-forwarded allocation:</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>srun<span class="w"> </span>--x11<span class="w"> </span>-N<span class="w"> </span><span class="m">1</span><span class="w"> </span>-n<span class="w"> </span><span class="m">1</span><span class="w"> </span>-c<span class="w"> </span><span class="m">24</span><span class="w"> </span>xterm<span class="w"> </span>-e<span class="w"> </span>gdb<span class="w"> </span>-ex<span class="w"> </span><span class="s1">&#39;r&#39;</span><span class="w"> </span>--args<span class="w"> </span>./a.out
 </pre></div>
 </div>
 <p>It is even better to rely on GDB script. Such script contains multiple lines,
 each of them being directly injected to GDB prompt. For instance, a script to
 insert a breakpoint each time <cite>sctk_malloc</cite> is called would look like:</p>
-<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span><span class="nb">set</span><span class="w"> </span>pagination<span class="w"> </span>off<span class="w"> </span><span class="nb">set</span><span class="w"> </span>logging<span class="w"> </span>file<span class="w"> </span>file.out<span class="w"> </span><span class="nb">set</span><span class="w"> </span>logging<span class="w"> </span>on<span class="w"> </span><span class="nb">set</span><span class="w"> </span>breakpoint
-pending<span class="w"> </span>on<span class="w"> </span><span class="k">break</span><span class="w"> </span>sctk_malloc
-<span class="w">        </span>bt<span class="w"> </span><span class="k">continue</span>
-end<span class="w"> </span>run<span class="w"> </span><span class="nb">set</span><span class="w"> </span>logging<span class="w"> </span>off<span class="w"> </span>quit
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span><span class="nb">set</span><span class="w"> </span>pagination<span class="w"> </span>off
+<span class="nb">set</span><span class="w"> </span>logging<span class="w"> </span>file<span class="w"> </span>file.out
+<span class="nb">set</span><span class="w"> </span>logging<span class="w"> </span>on
+<span class="nb">set</span><span class="w"> </span>breakpoint<span class="w"> </span>pending<span class="w"> </span>on
+<span class="k">break</span><span class="w"> </span>sctk_malloc
+<span class="w">        </span>commands
+<span class="w">                </span>bt
+<span class="w">                </span><span class="k">continue</span>
+<span class="w">        </span>end
+run
+<span class="nb">set</span><span class="w"> </span>logging<span class="w"> </span>off
+quit
 </pre></div>
 </div>
 <p>Sometimes, it may be interesting to debug only a single process (without knowing
@@ -188,11 +195,14 @@ program similarly to this :</p>
 </pre></div>
 </div>
 <p>Then, consider a script like this named <cite>gdb.sh</cite>:</p>
-<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span><span class="nv">nodename</span><span class="o">=</span><span class="s2">&quot;inti&quot;</span>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span><span class="nv">nodename</span><span class="o">=</span><span class="s2">&quot;node&quot;</span>
 <span class="nv">nodeset</span><span class="o">=</span><span class="s2">&quot;1000 10001 10003 10004&quot;</span>
 <span class="k">for</span><span class="w"> </span>i<span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="nv">$nodeset</span><span class="p">;</span><span class="w"> </span><span class="k">do</span>
-<span class="w">   </span>cat<span class="w"> </span><span class="s">&lt;&lt;EOF R$i target remote $nodename$i:8080 continue EOF</span>
-<span class="w">   </span>xterm<span class="w"> </span>-e<span class="w"> </span>gdb<span class="w"> </span>--command<span class="w"> </span>R<span class="nv">$i</span><span class="w"> </span><span class="p">&amp;</span>
+<span class="w">        </span>cat<span class="w"> </span><span class="s">&lt;&lt;-EOF &gt;R$i</span>
+<span class="s">                target remote $nodename$i:8080</span>
+<span class="s">                continue</span>
+<span class="s">        EOF</span>
+<span class="w">        </span>xterm<span class="w"> </span>-e<span class="w"> </span>gdb<span class="w"> </span>--command<span class="w"> </span>R<span class="nv">$i</span><span class="w"> </span><span class="p">&amp;</span>
 <span class="k">done</span>
 </pre></div>
 </div>

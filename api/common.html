@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>MPC_Common &mdash; MPC 4.4.0 documentation</title>
+  <title>MPC_Common &mdash; MPC 4.5.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
       <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
 
@@ -14,7 +14,7 @@
     <link rel="shortcut icon" href="../_static/mpc_logo.png"/>
       <script src="../_static/jquery.js?v=5d32c60e"></script>
       <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../_static/documentation_options.js?v=2f20d6c1"></script>
+      <script src="../_static/documentation_options.js?v=5ef59c98"></script>
       <script src="../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/js/theme.js"></script>
@@ -121,9 +121,8 @@
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Links</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference external" href="https://mpc.hpcframework.com">Official Website (mpc.hpcframework.com)</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://cea-hpc.github.io/mpc/">Documentation (cea-hpc.github.io)</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/cea-hpc/mpc">Repository (github.com)</a></li>
-<li class="toctree-l1"><a class="reference external" href="https://mpc.hpcframework.com/publications-2/">Publications (mpc.hpcframework.com)</a></li>
 </ul>
 
         </div>
@@ -500,7 +499,7 @@ For example: <code class="docutils literal notranslate"><span class="pre">MPC_SY
 <p class="breathe-sectiondef-title rubric" id="breathe-section-title-functions">Functions</p>
 <dl class="c function">
 <dt class="sig sig-object c">
-<span class="target" id="d0/d5e/group__rank__getters_1ga21b56080f2092a6708909ea3a641e14f"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_common_get_process_count</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">void</span></span><span class="sig-paren">)</span><br /></dt>
+<span class="target" id="id7"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_common_get_process_count</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">void</span></span><span class="sig-paren">)</span><br /></dt>
 <dd><p>Get the number of UNIX processes. </p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
@@ -511,7 +510,7 @@ For example: <code class="docutils literal notranslate"><span class="pre">MPC_SY
 
 <dl class="c function">
 <dt class="sig sig-object c">
-<span class="target" id="d0/d5e/group__rank__getters_1ga6f881c18f4f7d342f494883c7d77d428"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_common_get_process_rank</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">void</span></span><span class="sig-paren">)</span><br /></dt>
+<span class="target" id="id8"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_common_get_process_rank</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">void</span></span><span class="sig-paren">)</span><br /></dt>
 <dd><p>Get the rank for current UNIX process. </p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
@@ -522,7 +521,7 @@ For example: <code class="docutils literal notranslate"><span class="pre">MPC_SY
 
 <dl class="c function">
 <dt class="sig sig-object c">
-<span class="target" id="d0/d5e/group__rank__getters_1gae2af89708d8a9d0843b4eb87154127b6"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_common_get_local_process_count</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">void</span></span><span class="sig-paren">)</span><br /></dt>
+<span class="target" id="id9"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_common_get_local_process_count</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">void</span></span><span class="sig-paren">)</span><br /></dt>
 <dd><p>Get the number of local UNIX processes (on same NONE) </p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
@@ -533,7 +532,7 @@ For example: <code class="docutils literal notranslate"><span class="pre">MPC_SY
 
 <dl class="c function">
 <dt class="sig sig-object c">
-<span class="target" id="d0/d5e/group__rank__getters_1gad08046660a48152526682996516b069c"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_common_get_local_process_rank</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">void</span></span><span class="sig-paren">)</span><br /></dt>
+<span class="target" id="id10"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_common_get_local_process_rank</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">void</span></span><span class="sig-paren">)</span><br /></dt>
 <dd><p>Get the rank in local UNIX processes for current process. </p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
@@ -544,7 +543,7 @@ For example: <code class="docutils literal notranslate"><span class="pre">MPC_SY
 
 <dl class="c function">
 <dt class="sig sig-object c">
-<span class="target" id="d0/d5e/group__rank__getters_1ga52f3e7aa709ae6dd5dc9f7ba17875bc6"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_common_get_node_count</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">void</span></span><span class="sig-paren">)</span><br /></dt>
+<span class="target" id="id11"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_common_get_node_count</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">void</span></span><span class="sig-paren">)</span><br /></dt>
 <dd><p>Get node count. </p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
@@ -555,7 +554,7 @@ For example: <code class="docutils literal notranslate"><span class="pre">MPC_SY
 
 <dl class="c function">
 <dt class="sig sig-object c">
-<span class="target" id="d0/d5e/group__rank__getters_1ga3e9f9238dfd96554b3a0ca763160dd5f"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_common_get_node_rank</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">void</span></span><span class="sig-paren">)</span><br /></dt>
+<span class="target" id="id12"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_common_get_node_rank</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">void</span></span><span class="sig-paren">)</span><br /></dt>
 <dd><p>Get node rank for current process. </p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
@@ -569,43 +568,43 @@ For example: <code class="docutils literal notranslate"><span class="pre">MPC_SY
 <p class="breathe-sectiondef-title rubric" id="breathe-section-title-variables">Variables</p>
 <dl class="c var">
 <dt class="sig sig-object c">
-<span class="target" id="d0/d5e/group__rank__getters_1gac592f64ce600e56aaf9d9aa187cf81b1"></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">__process_count</span></span></span><br /></dt>
+<span class="target" id="id0"></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">__process_count</span></span></span><br /></dt>
 <dd><p>Global variables storing process count. </p>
 </dd></dl>
 
 <dl class="c var">
 <dt class="sig sig-object c">
-<span class="target" id="d0/d5e/group__rank__getters_1ga966413937b2690c46680277f6b1928e5"></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">__process_rank</span></span></span><br /></dt>
+<span class="target" id="id1"></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">__process_rank</span></span></span><br /></dt>
 <dd><p>Global variable storing process rank. </p>
 </dd></dl>
 
 <dl class="c var">
 <dt class="sig sig-object c">
-<span class="target" id="d0/d5e/group__rank__getters_1ga44bfbc2f417b5c78bf0df59b760244c6"></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">__process_app_rank</span></span></span><br /></dt>
+<span class="target" id="id2"></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">__process_app_rank</span></span></span><br /></dt>
 <dd><p>Global variable storing app rank. </p>
 </dd></dl>
 
 <dl class="c var">
 <dt class="sig sig-object c">
-<span class="target" id="d0/d5e/group__rank__getters_1ga84dc4777851a0e98df82b5b8c52744dd"></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">__local_process_count</span></span></span><br /></dt>
+<span class="target" id="id3"></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">__local_process_count</span></span></span><br /></dt>
 <dd><p>Storage for the number of local UNIX processes. </p>
 </dd></dl>
 
 <dl class="c var">
 <dt class="sig sig-object c">
-<span class="target" id="d0/d5e/group__rank__getters_1gab0375991d7eacbd71f1e6a3ec1cfbeab"></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">__local_process_rank</span></span></span><br /></dt>
+<span class="target" id="id4"></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">__local_process_rank</span></span></span><br /></dt>
 <dd><p>Storage for the rank of local UNUX process. </p>
 </dd></dl>
 
 <dl class="c var">
 <dt class="sig sig-object c">
-<span class="target" id="d0/d5e/group__rank__getters_1gad45ee5e3c77f54a9bd80ce5d87dec912"></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">__node_count</span></span></span><br /></dt>
+<span class="target" id="id5"></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">__node_count</span></span></span><br /></dt>
 <dd><p>Storage for node count. </p>
 </dd></dl>
 
 <dl class="c var">
 <dt class="sig sig-object c">
-<span class="target" id="d0/d5e/group__rank__getters_1ga1e7587c42e22ef8162ab2e2342d90644"></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">__node_rank</span></span></span><br /></dt>
+<span class="target" id="id6"></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">__node_rank</span></span></span><br /></dt>
 <dd><p>Storage for node rank. </p>
 </dd></dl>
 
@@ -615,32 +614,32 @@ For example: <code class="docutils literal notranslate"><span class="pre">MPC_SY
 <p class="breathe-sectiondef-title rubric" id="breathe-section-title-functions">Functions</p>
 <dl class="c function">
 <dt class="sig sig-object c">
-<span class="target" id="d4/d31/group__generic__rank__getters_1ga36a87a7eb0fc810aa85719e5a1653c66"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_common_get_app_rank</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><br /></dt>
+<span class="target" id="id13"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_common_get_app_rank</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><br /></dt>
 <dd></dd></dl>
 
 <dl class="c function">
 <dt class="sig sig-object c">
-<span class="target" id="d4/d31/group__generic__rank__getters_1gac1078533d66daa6c128f6bfa6f7f99c8"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_common_set_app_rank</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">app_rank</span></span><span class="sig-paren">)</span><br /></dt>
+<span class="target" id="id14"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_common_set_app_rank</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">app_rank</span></span><span class="sig-paren">)</span><br /></dt>
 <dd></dd></dl>
 
 <dl class="c function">
 <dt class="sig sig-object c">
-<span class="target" id="d4/d31/group__generic__rank__getters_1ga1351a5d8e71f7dc6b11346ee94a83329"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_common_get_app_size</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><br /></dt>
+<span class="target" id="id15"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_common_get_app_size</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><br /></dt>
 <dd></dd></dl>
 
 <dl class="c function">
 <dt class="sig sig-object c">
-<span class="target" id="d4/d31/group__generic__rank__getters_1ga3d9028a2e14fca8a74d413d7d5a9c33d"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_common_get_app_num</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><br /></dt>
+<span class="target" id="id16"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_common_get_app_num</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><br /></dt>
 <dd></dd></dl>
 
 <dl class="c function">
 <dt class="sig sig-object c">
-<span class="target" id="d4/d31/group__generic__rank__getters_1ga54d4d2a5a5407bbafe7585cdd0e5d5e6"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_common_get_app_count</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><br /></dt>
+<span class="target" id="id17"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_common_get_app_count</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><br /></dt>
 <dd></dd></dl>
 
 <dl class="c function">
 <dt class="sig sig-object c">
-<span class="target" id="d4/d31/group__generic__rank__getters_1ga072fddca4e336f0206d398b9b77b42fc"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_common_get_task_count</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">void</span></span><span class="sig-paren">)</span><br /></dt>
+<span class="target" id="id18"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_common_get_task_count</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">void</span></span><span class="sig-paren">)</span><br /></dt>
 <dd><p>Get task count in current UNIX process. </p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
@@ -651,7 +650,7 @@ For example: <code class="docutils literal notranslate"><span class="pre">MPC_SY
 
 <dl class="c function">
 <dt class="sig sig-object c">
-<span class="target" id="d4/d31/group__generic__rank__getters_1gaea260816ecd0ad32ffc5cfb74451229f"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_common_get_task_rank</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">void</span></span><span class="sig-paren">)</span><br /></dt>
+<span class="target" id="id19"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_common_get_task_rank</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">void</span></span><span class="sig-paren">)</span><br /></dt>
 <dd><p>Get the task rank for current thread. </p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
@@ -662,7 +661,7 @@ For example: <code class="docutils literal notranslate"><span class="pre">MPC_SY
 
 <dl class="c function">
 <dt class="sig sig-object c">
-<span class="target" id="d4/d31/group__generic__rank__getters_1ga946f75b3c34fe40ff650f3b7e6e37994"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_common_get_local_task_count</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">void</span></span><span class="sig-paren">)</span><br /></dt>
+<span class="target" id="id20"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_common_get_local_task_count</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">void</span></span><span class="sig-paren">)</span><br /></dt>
 <dd><p>Get the number of tasks in current process. </p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
@@ -673,7 +672,7 @@ For example: <code class="docutils literal notranslate"><span class="pre">MPC_SY
 
 <dl class="c function">
 <dt class="sig sig-object c">
-<span class="target" id="d4/d31/group__generic__rank__getters_1gaf43b2e52b0bfb81f08592a938ddd6d5d"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_common_get_local_task_rank</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">void</span></span><span class="sig-paren">)</span><br /></dt>
+<span class="target" id="id21"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_common_get_local_task_rank</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">void</span></span><span class="sig-paren">)</span><br /></dt>
 <dd><p>Get the task rank of given thread in current process. </p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
@@ -684,7 +683,7 @@ For example: <code class="docutils literal notranslate"><span class="pre">MPC_SY
 
 <dl class="c function">
 <dt class="sig sig-object c">
-<span class="target" id="d4/d31/group__generic__rank__getters_1gaf5146f63f1beaf3597c8d4ad59c86925"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_common_get_thread_id</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">void</span></span><span class="sig-paren">)</span><br /></dt>
+<span class="target" id="id22"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_common_get_thread_id</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">void</span></span><span class="sig-paren">)</span><br /></dt>
 <dd><p>Return the thread id for current thread (only when in MPC threads) returns the PID otherwise. </p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
@@ -699,32 +698,32 @@ For example: <code class="docutils literal notranslate"><span class="pre">MPC_SY
 <p class="breathe-sectiondef-title rubric" id="breathe-section-title-functions">Functions</p>
 <dl class="c function">
 <dt class="sig sig-object c">
-<span class="target" id="d4/d31/group__generic__rank__getters_1ga36a87a7eb0fc810aa85719e5a1653c66"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_common_get_app_rank</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><br /></dt>
+<span class="target" id="id23"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_common_get_app_rank</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><br /></dt>
 <dd></dd></dl>
 
 <dl class="c function">
 <dt class="sig sig-object c">
-<span class="target" id="d4/d31/group__generic__rank__getters_1gac1078533d66daa6c128f6bfa6f7f99c8"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_common_set_app_rank</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">app_rank</span></span><span class="sig-paren">)</span><br /></dt>
+<span class="target" id="id24"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_common_set_app_rank</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">app_rank</span></span><span class="sig-paren">)</span><br /></dt>
 <dd></dd></dl>
 
 <dl class="c function">
 <dt class="sig sig-object c">
-<span class="target" id="d4/d31/group__generic__rank__getters_1ga1351a5d8e71f7dc6b11346ee94a83329"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_common_get_app_size</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><br /></dt>
+<span class="target" id="id25"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_common_get_app_size</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><br /></dt>
 <dd></dd></dl>
 
 <dl class="c function">
 <dt class="sig sig-object c">
-<span class="target" id="d4/d31/group__generic__rank__getters_1ga3d9028a2e14fca8a74d413d7d5a9c33d"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_common_get_app_num</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><br /></dt>
+<span class="target" id="id26"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_common_get_app_num</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><br /></dt>
 <dd></dd></dl>
 
 <dl class="c function">
 <dt class="sig sig-object c">
-<span class="target" id="d4/d31/group__generic__rank__getters_1ga54d4d2a5a5407bbafe7585cdd0e5d5e6"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_common_get_app_count</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><br /></dt>
+<span class="target" id="id27"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_common_get_app_count</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><br /></dt>
 <dd></dd></dl>
 
 <dl class="c function">
 <dt class="sig sig-object c">
-<span class="target" id="d4/d31/group__generic__rank__getters_1ga072fddca4e336f0206d398b9b77b42fc"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_common_get_task_count</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">void</span></span><span class="sig-paren">)</span><br /></dt>
+<span class="target" id="id28"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_common_get_task_count</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">void</span></span><span class="sig-paren">)</span><br /></dt>
 <dd><p>Get task count in current UNIX process. </p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
@@ -735,7 +734,7 @@ For example: <code class="docutils literal notranslate"><span class="pre">MPC_SY
 
 <dl class="c function">
 <dt class="sig sig-object c">
-<span class="target" id="d4/d31/group__generic__rank__getters_1gaea260816ecd0ad32ffc5cfb74451229f"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_common_get_task_rank</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">void</span></span><span class="sig-paren">)</span><br /></dt>
+<span class="target" id="id29"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_common_get_task_rank</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">void</span></span><span class="sig-paren">)</span><br /></dt>
 <dd><p>Get the task rank for current thread. </p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
@@ -746,7 +745,7 @@ For example: <code class="docutils literal notranslate"><span class="pre">MPC_SY
 
 <dl class="c function">
 <dt class="sig sig-object c">
-<span class="target" id="d4/d31/group__generic__rank__getters_1ga946f75b3c34fe40ff650f3b7e6e37994"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_common_get_local_task_count</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">void</span></span><span class="sig-paren">)</span><br /></dt>
+<span class="target" id="id30"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_common_get_local_task_count</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">void</span></span><span class="sig-paren">)</span><br /></dt>
 <dd><p>Get the number of tasks in current process. </p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
@@ -757,7 +756,7 @@ For example: <code class="docutils literal notranslate"><span class="pre">MPC_SY
 
 <dl class="c function">
 <dt class="sig sig-object c">
-<span class="target" id="d4/d31/group__generic__rank__getters_1gaf43b2e52b0bfb81f08592a938ddd6d5d"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_common_get_local_task_rank</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">void</span></span><span class="sig-paren">)</span><br /></dt>
+<span class="target" id="id31"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_common_get_local_task_rank</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">void</span></span><span class="sig-paren">)</span><br /></dt>
 <dd><p>Get the task rank of given thread in current process. </p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
@@ -768,7 +767,7 @@ For example: <code class="docutils literal notranslate"><span class="pre">MPC_SY
 
 <dl class="c function">
 <dt class="sig sig-object c">
-<span class="target" id="d4/d31/group__generic__rank__getters_1gaf5146f63f1beaf3597c8d4ad59c86925"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_common_get_thread_id</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">void</span></span><span class="sig-paren">)</span><br /></dt>
+<span class="target" id="id32"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_common_get_thread_id</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">void</span></span><span class="sig-paren">)</span><br /></dt>
 <dd><p>Return the thread id for current thread (only when in MPC threads) returns the PID otherwise. </p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
@@ -783,7 +782,7 @@ For example: <code class="docutils literal notranslate"><span class="pre">MPC_SY
 <p class="breathe-sectiondef-title rubric" id="breathe-section-title-functions">Functions</p>
 <dl class="c function">
 <dt class="sig sig-object c">
-<span class="target" id="da/ddb/group__rank__setters_1gab79fb70972a77b1d72694a4c8c6e2920"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_common_set_process_count</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">process_count</span></span><span class="sig-paren">)</span><br /></dt>
+<span class="target" id="id33"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_common_set_process_count</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">process_count</span></span><span class="sig-paren">)</span><br /></dt>
 <dd><p>Set the number of UNIX processes. </p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -796,7 +795,7 @@ For example: <code class="docutils literal notranslate"><span class="pre">MPC_SY
 
 <dl class="c function">
 <dt class="sig sig-object c">
-<span class="target" id="da/ddb/group__rank__setters_1ga6d826d20f20a4daf863f307692fd5703"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_common_set_process_rank</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">process_rank</span></span><span class="sig-paren">)</span><br /></dt>
+<span class="target" id="id34"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_common_set_process_rank</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">process_rank</span></span><span class="sig-paren">)</span><br /></dt>
 <dd><p>Set the UNIX process rank. </p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -809,7 +808,7 @@ For example: <code class="docutils literal notranslate"><span class="pre">MPC_SY
 
 <dl class="c function">
 <dt class="sig sig-object c">
-<span class="target" id="da/ddb/group__rank__setters_1gabf7ff729eb861e883a6b85821fe39ceb"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_common_set_local_process_count</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">local_process_count</span></span><span class="sig-paren">)</span><br /></dt>
+<span class="target" id="id35"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_common_set_local_process_count</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">local_process_count</span></span><span class="sig-paren">)</span><br /></dt>
 <dd><p>Set the number of local UNIX process (on same NODE) </p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -822,7 +821,7 @@ For example: <code class="docutils literal notranslate"><span class="pre">MPC_SY
 
 <dl class="c function">
 <dt class="sig sig-object c">
-<span class="target" id="da/ddb/group__rank__setters_1ga49c8e2f16f9508b866823d4edc9ca767"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_common_set_local_process_rank</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">local_process_rank</span></span><span class="sig-paren">)</span><br /></dt>
+<span class="target" id="id36"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_common_set_local_process_rank</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">local_process_rank</span></span><span class="sig-paren">)</span><br /></dt>
 <dd><p>Set the local rank for UNIX process (on same NONE) </p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -835,7 +834,7 @@ For example: <code class="docutils literal notranslate"><span class="pre">MPC_SY
 
 <dl class="c function">
 <dt class="sig sig-object c">
-<span class="target" id="da/ddb/group__rank__setters_1ga9c6694b1210989894855b859a2763e95"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_common_set_node_count</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">node_count</span></span><span class="sig-paren">)</span><br /></dt>
+<span class="target" id="id37"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_common_set_node_count</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">node_count</span></span><span class="sig-paren">)</span><br /></dt>
 <dd><p>Set the number of nodes. </p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -848,7 +847,7 @@ For example: <code class="docutils literal notranslate"><span class="pre">MPC_SY
 
 <dl class="c function">
 <dt class="sig sig-object c">
-<span class="target" id="da/ddb/group__rank__setters_1gacc22092760963a133261fbbfb700a076"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_common_set_node_rank</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">node_rank</span></span><span class="sig-paren">)</span><br /></dt>
+<span class="target" id="id38"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mpc_common_set_node_rank</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">node_rank</span></span><span class="sig-paren">)</span><br /></dt>
 <dd><p>The the node rank for current UNIX process. </p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>

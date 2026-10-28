@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Prerequisites before starting to contribute &mdash; MPC 4.4.0 documentation</title>
+  <title>Prerequisites before starting to contribute &mdash; MPC 4.5.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
       <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
 
@@ -14,7 +14,7 @@
     <link rel="shortcut icon" href="../_static/mpc_logo.png"/>
       <script src="../_static/jquery.js?v=5d32c60e"></script>
       <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../_static/documentation_options.js?v=2f20d6c1"></script>
+      <script src="../_static/documentation_options.js?v=5ef59c98"></script>
       <script src="../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/js/theme.js"></script>
@@ -82,9 +82,8 @@
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Links</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference external" href="https://mpc.hpcframework.com">Official Website (mpc.hpcframework.com)</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://cea-hpc.github.io/mpc/">Documentation (cea-hpc.github.io)</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/cea-hpc/mpc">Repository (github.com)</a></li>
-<li class="toctree-l1"><a class="reference external" href="https://mpc.hpcframework.com/publications-2/">Publications (mpc.hpcframework.com)</a></li>
 </ul>
 
         </div>
@@ -130,18 +129,21 @@ git<span class="w"> </span>config<span class="w"> </span>--global<span class="w"
 <li><p>Check you do <strong>NOT</strong> have multiple identities in MPC history. To ensure that, run <cite>git shortlog -sne</cite> and look for duplicates. If so, please edit the <cite>/.mailmap</cite> file accordingly.</p></li>
 </ul>
 <p>Not further restriction, but a lot of recommended setup, listed below, to ease your experience with MPC &amp; Gitlab (and general-purpose Git usage):</p>
-<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>git<span class="w"> </span>config<span class="w"> </span>--global
-How<span class="w"> </span>to<span class="w"> </span>treat<span class="w"> </span>with<span class="w"> </span><span class="s2">&quot;git push&quot;</span><span class="w"> </span><span class="o">(</span>no<span class="w"> </span>arguments<span class="o">)</span>.<span class="w"> </span>We<span class="w"> </span>strongly<span class="w"> </span>recommend<span class="w"> </span>using<span class="w"> </span>this<span class="w"> </span>setup<span class="w"> </span>to<span class="w"> </span>avoid<span class="w"> </span>misuse!
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span><span class="c1"># How to treat &quot;git push&quot; (no arguments). We strongly recommend</span>
+<span class="c1"># this setup to avoid misuse!</span>
 git<span class="w"> </span>config<span class="w"> </span>--global<span class="w"> </span>push.default<span class="w"> </span>simple
-<span class="c1"># For kdiff3 aficionados when coming to resolve conflicts (vimdiff by default)</span>
+<span class="c1"># For kdiff3 aficionados when resolving conflicts (vimdiff by default)</span>
 git<span class="w"> </span>config<span class="w"> </span>--global<span class="w"> </span>merge.tool<span class="w"> </span>kdiff3
-<span class="c1">#relative to the use of &quot;git grep&quot; command, a time-saving command for efficient programmers :)</span>
+<span class="c1"># Relative to the use of the &quot;git grep&quot; command, a time-saving</span>
+<span class="c1"># command for efficient programmers :)</span>
 git<span class="w"> </span>config<span class="w"> </span>--global<span class="w"> </span>grep.extendRegexp<span class="w"> </span><span class="nb">true</span>
 git<span class="w"> </span>config<span class="w"> </span>--global<span class="w"> </span>grep.lineNumber<span class="w"> </span><span class="nb">true</span>
 git<span class="w"> </span>config<span class="w"> </span>--global<span class="w"> </span>grep.fallbackToNoIndex<span class="w"> </span><span class="nb">true</span>
-<span class="c1"># Memorize the way merge conflicts are resolved to re-apply it if the same conflict happens again</span>
+<span class="c1"># Memorize the way merge conflicts are resolved to re-apply it</span>
+<span class="c1"># if the same conflict happens again</span>
 git<span class="w"> </span>config<span class="w"> </span>--global<span class="w"> </span>rerere.enabled<span class="w"> </span><span class="nb">true</span>
-<span class="c1"># The only proof commits are from you... Anybody can take your identify otherwise !</span>
+<span class="c1"># The only proof commits are from you... Anybody can take your</span>
+<span class="c1"># identity otherwise!</span>
 git<span class="w"> </span>config<span class="w"> </span>--global<span class="w"> </span>user.signingkey<span class="w"> </span><span class="s2">&quot;First chars of your public GPG key&quot;</span>
 </pre></div>
 </div>
